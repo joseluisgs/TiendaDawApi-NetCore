@@ -1,0 +1,229 @@
+### Pedidos API Testing
+### Base URL
+@baseUrl = http://localhost:5031
+@token = YOUR_JWT_TOKEN_HERE
+@adminToken = YOUR_ADMIN_JWT_TOKEN_HERE
+
+### ============================================================================
+### AUTHENTICATION (Required to get tokens first)
+### ============================================================================
+
+### Register a new user
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "Test123!",
+  "fullName": "Test User"
+}
+
+### Login to get JWT token
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "Test123!"
+}
+
+### ============================================================================
+### PEDIDOS ENDPOINTS
+### ============================================================================
+
+### 1. Create a new Pedido (requires authentication)
+### Replace @token with actual JWT token from login
+POST {{baseUrl}}/api/pedidos
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "items": [
+    {
+      "productoId": 1,
+      "cantidad": 2
+    },
+    {
+      "productoId": 2,
+      "cantidad": 1
+    }
+  ]
+}
+
+### 2. Get my pedidos (authenticated user's orders)
+GET {{baseUrl}}/api/pedidos/me
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 3. Get pedido by ID (user can only see their own, admins can see all)
+GET {{baseUrl}}/api/pedidos/YOUR_PEDIDO_ID_HERE
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 4. Update pedido estado (ADMIN only)
+### Replace @adminToken with actual admin JWT token
+PUT {{baseUrl}}/api/pedidos/YOUR_PEDIDO_ID_HERE/estado
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "estado": "PROCESANDO"
+}
+
+### Valid estados: PENDIENTE, PROCESANDO, ENVIADO, ENTREGADO, CANCELADO
+
+### ============================================================================
+### PRODUCTOS (to verify stock and get product IDs for testing)
+### ============================================================================
+
+### Get all products (public)
+GET {{baseUrl}}/api/productos
+Accept: application/json
+
+### Get product by ID (public)
+GET {{baseUrl}}/api/productos/1
+Accept: application/json
+
+### ============================================================================
+### WEBSOCKET CONNECTION TESTING
+### ============================================================================
+### Use a WebSocket client to connect to:
+### ws://localhost:5031/ws/v1/pedidos
+###
+### You'll receive real-time notifications when:
+### - A new pedido is created (type: PEDIDO_CREATED)
+### - A pedido estado is updated (type: PEDIDO_ESTADO_UPDATED)
+###
+### Example notification:
+### {
+###   "type": "PEDIDO_CREATED",
+###   "pedidoId": "507f1f77bcf86cd799439011",
+###   "userId": 1,
+###   "estado": "PENDIENTE",
+###   "data": { ... pedido details ... },
+###   "timestamp": "2024-10-27T19:30:00.000Z"
+### }
+
+### ============================================================================
+### TESTING WORKFLOW
+### ============================================================================
+
+### Step 1: Start the application with docker-compose (MongoDB, PostgreSQL, Redis)
+### docker-compose up -d
+
+### Step 2: Register a user and login to get JWT token
+
+### Step 3: Get available products to know which product IDs exist
+GET {{baseUrl}}/api/productos
+
+### Step 4: Create a pedido with valid product IDs
+### The service will:
+### - Verify products exist
+### - Check sufficient stock
+### - Reserve stock in PostgreSQL
+### - Create pedido document in MongoDB
+### - Send email notification
+### - Broadcast WebSocket notification
+
+### Step 5: Check your pedidos
+GET {{baseUrl}}/api/pedidos/me
+Authorization: Bearer {{token}}
+
+### Step 6: (As Admin) Update pedido estado
+### Requires ADMIN role in JWT token
+PUT {{baseUrl}}/api/pedidos/{pedidoId}/estado
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "estado": "ENVIADO"
+}
+
+### ============================================================================
+### ERROR CASES TO TEST
+### ============================================================================
+
+### Test 1: Create pedido with invalid product ID
+POST {{baseUrl}}/api/pedidos
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "items": [
+    {
+      "productoId": 99999,
+      "cantidad": 1
+    }
+  ]
+}
+### Expected: 404 Not Found - "Producto con ID 99999 no encontrado"
+
+### Test 2: Create pedido with insufficient stock
+POST {{baseUrl}}/api/pedidos
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "items": [
+    {
+      "productoId": 1,
+      "cantidad": 10000
+    }
+  ]
+}
+### Expected: 400 Bad Request - "Stock insuficiente..."
+
+### Test 3: Create pedido with invalid cantidad
+POST {{baseUrl}}/api/pedidos
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "items": [
+    {
+      "productoId": 1,
+      "cantidad": 0
+    }
+  ]
+}
+### Expected: 400 Bad Request - "La cantidad debe ser mayor que 0..."
+
+### Test 4: Create pedido without authentication
+POST {{baseUrl}}/api/pedidos
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productoId": 1,
+      "cantidad": 1
+    }
+  ]
+}
+### Expected: 401 Unauthorized
+
+### Test 5: Access another user's pedido
+GET {{baseUrl}}/api/pedidos/SOMEONE_ELSES_PEDIDO_ID
+Authorization: Bearer {{token}}
+### Expected: 403 Forbidden (unless you're an admin)
+
+### Test 6: Update estado with invalid value
+PUT {{baseUrl}}/api/pedidos/YOUR_PEDIDO_ID_HERE/estado
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "estado": "INVALID_ESTADO"
+}
+### Expected: 400 Bad Request - "Estado inválido. Valores permitidos: ..."
+
+### Test 7: Update estado as non-admin user
+PUT {{baseUrl}}/api/pedidos/YOUR_PEDIDO_ID_HERE/estado
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "estado": "PROCESANDO"
+}
+### Expected: 403 Forbidden

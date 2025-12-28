@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database for Categorías, Productos, Users
+  postgres:
+    image: postgres:15-alpine
+    container_name: tienda-postgres
+    environment:
+      POSTGRES_DB: tienda
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d tienda"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB database for Pedidos
+  mongodb:
+    image: mongo:7
+    container_name: tienda-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: tienda
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching (optional but included for completeness)
+  redis:
+    image: redis:7-alpine
+    container_name: tienda-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TiendaApi - .NET Web API
+  # Uncomment this section when you want to run the API in Docker
+  # For development, run locally with: dotnet run
+  # api:
+  #   build:
+  #     context: ./TiendaApi
+  #     dockerfile: Dockerfile
+  #   container_name: tienda-api
+  #   ports:
+  #     - "5000:8080"
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ConnectionStrings__DefaultConnection=Host=postgres;Database=tienda;Username=admin;Password=admin123
+  #     - ConnectionStrings__MongoDB=mongodb://admin:admin123@mongodb:27017/tienda?authSource=admin
+  #     - ConnectionStrings__Redis=redis:6379
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     mongodb:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+
+volumes:
+  postgres-data:
+  mongodb-data:
+  redis-data:
