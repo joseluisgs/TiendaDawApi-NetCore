@@ -126,6 +126,12 @@ public class AuthController : ControllerBase
         _logger.LogInformation("Signin request for username: {Username}", sanitizedUsername);
 
         // Find user by username
+        if (string.IsNullOrWhiteSpace(dto.Username))
+        {
+            _logger.LogWarning("Signin failed: Username cannot be null or empty");
+            return Unauthorized(new { message = "Invalid username or password" });
+        }
+        
         var user = await _userRepository.FindByUsernameAsync(dto.Username);
         if (user == null)
         {
