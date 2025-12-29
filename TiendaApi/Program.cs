@@ -5,6 +5,7 @@ using GraphQL.Types;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using TiendaApi.Data;
 using TiendaApi.GraphQL;
 using TiendaApi.GraphQL.Types;
@@ -32,7 +33,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new() 
+    options.SwaggerDoc("v1", new OpenApiInfo
     { 
         Title = "TiendaApi - Dual Error Handling Demo",
         Version = "v1",
@@ -302,10 +303,10 @@ app.Logger.LogInformation("""
     
     🔴 TRADITIONAL EXCEPTIONS (like Java/Spring Boot):
        GET    /api/categorias          - List all categories
-       GET    /api/categorias/{id}     - Get category by ID
+       GET    /api/categorias/{{id}}     - Get category by ID
        POST   /api/categorias          - Create category
-       PUT    /api/categorias/{id}     - Update category
-       DELETE /api/categorias/{id}     - Delete category
+       PUT    /api/categorias/{{id}}     - Update category
+       DELETE /api/categorias/{{id}}     - Delete category
        
        → Uses try/catch, throws exceptions
        → GlobalExceptionHandler catches exceptions
@@ -313,10 +314,10 @@ app.Logger.LogInformation("""
     
     🟢 MODERN RESULT PATTERN (functional programming):
        GET    /api/productos           - List all products (with Redis cache)
-       GET    /api/productos/{id}      - Get product by ID (with cache-aside)
+       GET    /api/productos/{{id}}      - Get product by ID (with cache-aside)
        POST   /api/productos           - Create product (WebSocket + Email notification)
-       PUT    /api/productos/{id}      - Update product (WebSocket notification)
-       DELETE /api/productos/{id}      - Delete product (WebSocket notification)
+       PUT    /api/productos/{{id}}      - Update product (WebSocket notification)
+       DELETE /api/productos/{{id}}      - Delete product (WebSocket notification)
        
        → Returns Result<T, AppError>
        → NO try/catch blocks
@@ -343,7 +344,7 @@ app.Logger.LogInformation("""
        GET    /graphiql                - GraphiQL interactive UI
        
        → Query productos and categorias
-       → Example: { productos { id nombre precio } }
+       → Example: productos with id nombre precio
     
     📖 Swagger Documentation: http://localhost:5000
     

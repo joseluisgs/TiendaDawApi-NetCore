@@ -65,41 +65,45 @@ public class ErrorHandlingComparisonTests
         );
     }
 
-    #region Exception-Based Tests (Traditional Approach - Categorías)
+    #region Result Pattern Tests (Categorías - Actualizado)
 
     /// <summary>
-    /// TEST EXCEPTION APPROACH: Testing for exceptions
+    /// TEST RESULT PATTERN: Testing for failures
     /// 
-    /// Java equivalent:
-    /// @Test(expected = NotFoundException.class)
-    /// public void findById_WhenNotFound_ThrowsException() { ... }
+    /// ANTES (Exception): Assert.ThrowsAsync<NotFoundException>
+    /// AHORA (Result): result.IsFailure.Should().BeTrue()
     /// 
-    /// Characteristics:
-    /// - Uses Assert.ThrowsAsync to catch exceptions
-    /// - Requires understanding of exception types
-    /// - Less explicit about what can fail
+    /// Ventajas:
+    /// - No hay excepciones que capturar
+    /// - El fallo es explícito en el tipo de retorno
+    /// - Más fácil de entender y mantener
     /// </summary>
     [Test]
-    public async Task CategoriaService_FindById_WhenNotFound_ThrowsNotFoundException()
+    public async Task CategoriaService_FindById_WhenNotFound_ReturnsFailure()
     {
         // Arrange
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Categoria?)null);
 
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<NotFoundException>(async () =>
-            await _categoriaService.FindByIdAsync(999)
-        );
+        // Act
+        var result = await _categoriaService.FindByIdAsync(999);
 
-        ex.Message.Should().Contain("no encontrada");
+        // Assert - Sin excepciones, verificación explícita
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Message.Should().Contain("no encontrada");
     }
 
     /// <summary>
-    /// TEST EXCEPTION APPROACH: Success case
-    /// No exception = success (implicit)
+    /// TEST RESULT PATTERN: Success case
+    /// 
+    /// ANTES (Exception): No exception = success (implícito)
+    /// AHORA (Result): result.IsSuccess.Should().BeTrue() (explícito)
+    /// 
+    /// El éxito es explícito y type-safe
     /// </summary>
     [Test]
-    public async Task CategoriaService_FindById_WhenFound_ReturnsDto()
+    public async Task CategoriaService_FindById_WhenFound_ReturnsSuccess()
     {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Test" };
@@ -113,10 +117,10 @@ public class ErrorHandlingComparisonTests
         // Act
         var result = await _categoriaService.FindByIdAsync(1);
 
-        // Assert
-        result.Should().NotBeNull();
-        result.Id.Should().Be(1);
-        result.Nombre.Should().Be("Test");
+        // Assert - Verificación explícita de éxito y datos
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Id.Should().Be(1);
+        result.Value.Nombre.Should().Be("Test");
     }
 
     #endregion
@@ -222,16 +226,18 @@ public class ErrorHandlingComparisonTests
     #region Comparison Test - Exception vs Result
 
     /// <summary>
-    /// COMPARISON TEST: Shows the difference in test complexity
+    /// COMPARISON TEST: Muestra la consistencia del Result Pattern
     /// 
-    /// Notice how:
-    /// - Exception test needs Assert.ThrowsAsync
-    /// - Result test just checks resultado.IsFailure
-    /// - Result pattern is more readable
-    /// - No try/catch or exception handling needed
+    /// ACTUALIZADO: Ambos servicios ahora usan Result Pattern
+    /// 
+    /// Notice cómo:
+    /// - CategoriaService ahora usa Result (actualizado desde excepciones)
+    /// - ProductoService ya usaba Result
+    /// - Ambos se testean de la misma manera
+    /// - Consistencia en toda la aplicación
     /// </summary>
     [Test]
-    public void Comparison_ExceptionVsResult_NotFoundScenario()
+    public void Comparison_BothUseResultPattern_NotFoundScenario()
     {
         // Setup for both
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
@@ -239,21 +245,21 @@ public class ErrorHandlingComparisonTests
         _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Producto?)null);
 
-        // EXCEPTION APPROACH (Traditional):
-        // - Requires Assert.ThrowsAsync
-        // - Less explicit about error type
-        Assert.ThrowsAsync<NotFoundException>(async () =>
-            await _categoriaService.FindByIdAsync(999)
-        );
-
-        // RESULT PATTERN (Modern):
+        // CATEGORIASERVICE (Result Pattern):
         // - Direct result checking
         // - Explicit error information
+        var resultadoCategoria = _categoriaService.FindByIdAsync(999).Result;
+        resultadoCategoria.IsFailure.Should().BeTrue();
+        resultadoCategoria.Error.Type.Should().Be(ErrorType.NotFound);
+
+        // PRODUCTOSERVICE (Result Pattern):
+        // - Same pattern, same verification
         // - No exception handling needed
-        var resultado = _productoService.FindByIdAsync(999).Result;
+        var resultadoProducto = _productoService.FindByIdAsync(999).Result;
+        resultadoProducto.IsFailure.Should().BeTrue();
+        resultadoProducto.Error.Type.Should().Be(ErrorType.NotFound);
         
-        resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Type.Should().Be(ErrorType.NotFound);
+        // Ambos servicios ahora manejan errores de manera consistente
     }
 
     #endregion
