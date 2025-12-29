@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi.Tests\\TiendaApi.Tests.csproj": {}
+    "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi.Tests/TiendaApi.Tests.csproj": {}
   },
   "projects": {
-    "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi.Tests\\TiendaApi.Tests.csproj": {
+    "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi.Tests/TiendaApi.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi.Tests\\TiendaApi.Tests.csproj",
+        "projectUniqueName": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi.Tests/TiendaApi.Tests.csproj",
         "projectName": "TiendaApi.Tests",
-        "projectPath": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi.Tests\\TiendaApi.Tests.csproj",
-        "packagesPath": "C:\\Users\\joseluisgs\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi.Tests\\obj\\",
+        "projectPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi.Tests/TiendaApi.Tests.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi.Tests/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\joseluisgs\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/home/runner/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -26,8 +26,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj": {
-                "projectPath": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj"
+              "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj": {
+                "projectPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj"
               }
             }
           }
@@ -100,40 +100,26 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[9.0.11, 9.0.11]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[9.0.11, 9.0.11]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[9.0.11, 9.0.11]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj": {
+    "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj",
+        "projectUniqueName": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj",
         "projectName": "TiendaApi",
-        "projectPath": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj",
-        "packagesPath": "C:\\Users\\joseluisgs\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\obj\\",
+        "projectPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\joseluisgs\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/home/runner/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -245,24 +231,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[9.0.11, 9.0.11]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[9.0.11, 9.0.11]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[9.0.11, 9.0.11]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[9.0.11, 9.0.11]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -271,7 +239,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

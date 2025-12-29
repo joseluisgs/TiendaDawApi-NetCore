@@ -4627,19 +4627,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\joseluisgs\\.nuget\\packages\\": {}
+    "/home/runner/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj",
+      "projectUniqueName": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj",
       "projectName": "TiendaApi",
-      "projectPath": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj",
-      "packagesPath": "C:\\Users\\joseluisgs\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\obj\\",
+      "projectPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj",
+      "packagesPath": "/home/runner/.nuget/packages/",
+      "outputPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\joseluisgs\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/home/runner/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -4751,24 +4751,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[9.0.11, 9.0.11]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[9.0.11, 9.0.11]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[9.0.11, 9.0.11]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[9.0.11, 9.0.11]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -4777,7 +4759,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json"
       }
     }
   },
@@ -4786,7 +4768,7 @@
       "code": "NU1603",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "TiendaApi depende de StackExchange.Redis (>= 2.7.0), pero no se encontró StackExchange.Redis 2.7.0. StackExchange.Redis 2.7.4 se resolvió en su lugar.",
+      "message": "TiendaApi depends on StackExchange.Redis (>= 2.7.0) but StackExchange.Redis 2.7.0 was not found. StackExchange.Redis 2.7.4 was resolved instead.",
       "libraryId": "StackExchange.Redis",
       "targetGraphs": [
         "net9.0"
