@@ -1,35 +1,35 @@
 using Microsoft.AspNetCore.Mvc;
-using TiendaApi.Exceptions;
+using TiendaApi.Common;
 using TiendaApi.Models.DTOs;
 using TiendaApi.Services;
 
 namespace TiendaApi.Controllers;
 
 /// <summary>
-/// Controller for Categorías using TRADITIONAL EXCEPTION-BASED approach
+/// Controller para Categorías usando RESULT PATTERN (Railway Oriented Programming)
 /// 
-/// This controller demonstrates the familiar Java/Spring Boot pattern:
-/// - try/catch blocks in every action
-/// - Service methods throw exceptions
-/// - Manual exception-to-HTTP mapping
+/// ANTES (Excepciones):
+/// - try/catch en cada acción
+/// - Excepciones ocultas en el servicio
+/// - Manejo manual de exception-to-HTTP
 /// 
-/// Java Spring Boot equivalent:
-/// @RestController
-/// @RequestMapping("/api/categorias")
-/// public class CategoriaController { ... }
+/// AHORA (Result Pattern):
+/// - SIN try/catch
+/// - Errores explícitos en tipo de retorno: Result<T, AppError>
+/// - Pattern matching con .Match() para convertir a HTTP
+/// - Código más limpio y declarativo
 /// 
-/// EDUCATIONAL NOTE: Compare this with ProductosController (Result Pattern)
+/// Comparación con Java/Spring Boot:
+/// - Java: @ExceptionHandler en @ControllerAdvice
+/// - C# con excepciones: GlobalExceptionHandler middleware
+/// - C# con Result: Match en el controller (explícito)
 /// 
-/// Traditional Exception Handling:
-/// - Familiar to Java developers
-/// - @ExceptionHandler in Spring → GlobalExceptionHandler middleware in C#
-/// - Hidden control flow (exceptions can be thrown anywhere)
-/// - Performance overhead of exception stack unwinding
-/// 
-/// When to use this approach:
-/// - When porting from Java/Spring Boot
-/// - Team familiar with exceptions
-/// - Simple CRUD with standard errors
+/// Ventajas Result Pattern:
+/// 1. Errores visibles en la firma - no hay sorpresas
+/// 2. Sin overhead de excepciones
+/// 3. Pattern matching expresivo
+/// 4. Más fácil testear (sin mocks de excepciones)
+/// 5. Railway: encadenar operaciones con .Bind(), .Map(), .Tap()
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -39,160 +39,151 @@ public class CategoriasController : ControllerBase
     private readonly CategoriaService _service;
     private readonly ILogger<CategoriasController> _logger;
 
-    public CategoriasController(CategoriaService service, ILogger<CategoriasController> logger)
+    public CategoriasController(CategoriaService service, ILogger<CategoriasController> _logger)
     {
         _service = service;
-        _logger = logger;
+        this._logger = _logger;
     }
 
     /// <summary>
-    /// Get all categories
+    /// Obtiene todas las categorías
     /// GET /api/categorias
+    /// 
+    /// NOTA PEDAGÓGICA:
+    /// Observa que NO hay try/catch. El servicio retorna Result<T, AppError>
+    /// y usamos .Match() para convertir Success/Failure a respuesta HTTP.
+    /// 
+    /// En Java/Spring Boot equivaldría a:
+    /// @GetMapping
+    /// public ResponseEntity<List<CategoriaDto>> getAll() { ... }
     /// </summary>
-    /// <returns>List of categories</returns>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<CategoriaDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
-        try
-        {
-            var categorias = await _service.FindAllAsync();
-            return Ok(categorias);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting all categorias");
-            // GlobalExceptionHandler will catch this
-            throw;
-        }
+        var resultado = await _service.FindAllAsync();
+        
+        // Pattern matching: convierte Result a IActionResult
+        return resultado.Match(
+            onSuccess: categorias => Ok(categorias),
+            onFailure: error => StatusCode(500, new { message = error.Message })
+        );
     }
 
     /// <summary>
-    /// Get category by ID
+    /// Obtiene una categoría por ID
     /// GET /api/categorias/{id}
     /// 
-    /// Java: @GetMapping("/{id}")
+    /// RAILWAY PATTERN visible:
+    /// - Si la categoría existe → 200 OK con los datos
+    /// - Si no existe → 404 Not Found
+    /// 
+    /// Sin try/catch, sin código boilerplate - solo Match
     /// </summary>
-    /// <param name="id">Category ID</param>
-    /// <returns>Category details</returns>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(long id)
     {
-        try
-        {
-            // Service throws NotFoundException if not found
-            var categoria = await _service.FindByIdAsync(id);
-            return Ok(categoria);
-        }
-        catch (NotFoundException ex)
-        {
-            // Manual catch - or let GlobalExceptionHandler handle it
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting categoria {Id}", id);
-            throw;
-        }
+        var resultado = await _service.FindByIdAsync(id);
+        
+        return resultado.Match(
+            onSuccess: categoria => Ok(categoria),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
     }
 
     /// <summary>
-    /// Create new category
+    /// Crea una nueva categoría
     /// POST /api/categorias
     /// 
-    /// Java: @PostMapping
-    ///       @Valid @RequestBody CategoriaRequestDto dto
+    /// NOTA PEDAGÓGICA - Pattern Matching avanzado:
+    /// El switch expression mapea cada ErrorType a su HTTP status correspondiente:
+    /// - NotFound → 404
+    /// - Validation → 400
+    /// - Conflict → 409
+    /// - Internal → 500
+    /// 
+    /// Compara con try/catch tradicional - aquí es explícito y type-safe
     /// </summary>
-    /// <param name="dto">Category data</param>
-    /// <returns>Created category</returns>
     [HttpPost]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create([FromBody] CategoriaRequestDto dto)
     {
-        try
-        {
-            // Service throws ValidationException if invalid
-            var created = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-        }
-        catch (ValidationException ex)
-        {
-            // Manual catch - or let GlobalExceptionHandler handle it
-            return BadRequest(new { message = ex.Message, errors = ex.Errors });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating categoria");
-            throw;
-        }
+        var resultado = await _service.CreateAsync(dto);
+        
+        return resultado.Match(
+            onSuccess: categoria => CreatedAtAction(
+                nameof(GetById), 
+                new { id = categoria.Id }, 
+                categoria
+            ),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.Validation => BadRequest(new { message = error.Message }),
+                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
     }
 
     /// <summary>
-    /// Update existing category
+    /// Actualiza una categoría existente
     /// PUT /api/categorias/{id}
     /// 
-    /// Java: @PutMapping("/{id}")
+    /// Railway Pattern completo:
+    /// - Validar → buscar → verificar duplicados → actualizar
+    /// - Cualquier fallo desvía a la vía de error
+    /// - El controller solo hace Match al final
     /// </summary>
-    /// <param name="id">Category ID</param>
-    /// <param name="dto">Updated category data</param>
-    /// <returns>Updated category</returns>
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(long id, [FromBody] CategoriaRequestDto dto)
     {
-        try
-        {
-            // Service throws NotFoundException or ValidationException
-            var updated = await _service.UpdateAsync(id, dto);
-            return Ok(updated);
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (ValidationException ex)
-        {
-            return BadRequest(new { message = ex.Message, errors = ex.Errors });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating categoria {Id}", id);
-            throw;
-        }
+        var resultado = await _service.UpdateAsync(id, dto);
+        
+        return resultado.Match(
+            onSuccess: categoria => Ok(categoria),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                ErrorType.Validation => BadRequest(new { message = error.Message }),
+                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
     }
 
     /// <summary>
-    /// Delete category
+    /// Elimina una categoría (soft delete)
     /// DELETE /api/categorias/{id}
     /// 
-    /// Java: @DeleteMapping("/{id}")
+    /// NOTA: Usamos Result<Unit, AppError> para operaciones void
+    /// Unit es el equivalente funcional de void
     /// </summary>
-    /// <param name="id">Category ID</param>
-    /// <returns>No content</returns>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(long id)
     {
-        try
-        {
-            // Service throws NotFoundException if not found
-            await _service.DeleteAsync(id);
-            return NoContent();
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting categoria {Id}", id);
-            throw;
-        }
+        var resultado = await _service.DeleteAsync(id);
+        
+        return resultado.Match<IActionResult>(
+            onSuccess: _ => NoContent(),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
     }
 }

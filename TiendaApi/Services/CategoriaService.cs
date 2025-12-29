@@ -1,5 +1,5 @@
 using AutoMapper;
-using TiendaApi.Exceptions;
+using TiendaApi.Common;
 using TiendaApi.Models.DTOs;
 using TiendaApi.Models.Entities;
 using TiendaApi.Repositories;
@@ -7,18 +7,22 @@ using TiendaApi.Repositories;
 namespace TiendaApi.Services;
 
 /// <summary>
-/// Service for Categoria using TRADITIONAL EXCEPTION-BASED approach
+/// Servicio para Categoria usando RESULT PATTERN (Railway Oriented Programming)
 /// 
-/// This service demonstrates the familiar Java/Spring Boot pattern:
-/// - throw new NotFoundException()
-/// - throw new ValidationException()
-/// - Exceptions caught by GlobalExceptionHandler middleware
+/// ANTES (Excepciones): throw new NotFoundException()
+/// AHORA (Result): return Result.Failure(AppError.NotFound(...))
 /// 
-/// Java Spring Boot equivalent:
-/// @Service class with methods that throw exceptions
-/// @ControllerAdvice catches and maps to HTTP responses
+/// Ventajas del Result Pattern:
+/// 1. Errores explícitos en la firma del método (Task<Result<T, AppError>>)
+/// 2. Sin overhead de excepciones (no stack unwinding)
+/// 3. Más fácil de testear (sin try/catch)
+/// 4. Encadenamiento funcional con .Bind(), .Map(), .Tap()
+/// 5. Type-safe: el compilador garantiza que se manejen los errores
 /// 
-/// EDUCATIONAL NOTE: Compare this with ProductoService (Result Pattern)
+/// Comparación con Java/Spring Boot:
+/// - Java: Optional<T> + custom Either<Error, Value>
+/// - Spring: @ControllerAdvice maneja excepciones → aquí el controller hace Match
+/// - Vavr library: Either<L, R> es muy similar a Result<T, E>
 /// </summary>
 public class CategoriaService
 {
@@ -37,133 +41,211 @@ public class CategoriaService
     }
 
     /// <summary>
-    /// Get all categories
-    /// Java: public List<CategoriaDto> findAll()
+    /// Obtiene todas las categorías
+    /// 
+    /// NOTA: Este método no puede fallar realmente (retorna lista vacía si no hay datos),
+    /// pero usamos Result por consistencia con los demás métodos del servicio.
+    /// En Java sería: public List<CategoriaDto> findAll() - nunca lanza excepciones
     /// </summary>
-    public async Task<IEnumerable<CategoriaDto>> FindAllAsync()
+    public async Task<Result<IEnumerable<CategoriaDto>, AppError>> FindAllAsync()
     {
-        _logger.LogInformation("Finding all categorias");
+        _logger.LogInformation("Buscando todas las categorías");
         var categorias = await _repository.FindAllAsync();
-        return _mapper.Map<IEnumerable<CategoriaDto>>(categorias);
+        var dtos = _mapper.Map<IEnumerable<CategoriaDto>>(categorias);
+        return Result<IEnumerable<CategoriaDto>, AppError>.Success(dtos);
     }
 
     /// <summary>
-    /// Find categoria by ID
-    /// Java: public CategoriaDto findById(Long id) throws NotFoundException
+    /// Busca una categoría por ID
     /// 
-    /// THROWS NotFoundException if not found - traditional approach
+    /// Railway Pattern en acción:
+    /// - Vía Éxito: Categoría encontrada → mapea a DTO → retorna Success
+    /// - Vía Fracaso: No encontrada → retorna Failure con AppError.NotFound
+    /// 
+    /// NO lanza excepciones - el error está en el tipo de retorno
     /// </summary>
-    public async Task<CategoriaDto> FindByIdAsync(long id)
+    public async Task<Result<CategoriaDto, AppError>> FindByIdAsync(long id)
     {
-        _logger.LogInformation("Finding categoria with id: {Id}", id);
+        _logger.LogInformation("Buscando categoría con id: {Id}", id);
         
         var categoria = await _repository.FindByIdAsync(id);
         
         if (categoria == null)
         {
-            _logger.LogWarning("Categoria with id {Id} not found", id);
-            throw new NotFoundException($"Categoría con ID {id} no encontrada");
+            _logger.LogWarning("Categoría con id {Id} no encontrada", id);
+            return Result<CategoriaDto, AppError>.Failure(
+                AppError.NotFound($"Categoría con ID {id} no encontrada")
+            );
         }
         
-        return _mapper.Map<CategoriaDto>(categoria);
+        var dto = _mapper.Map<CategoriaDto>(categoria);
+        return Result<CategoriaDto, AppError>.Success(dto);
     }
 
     /// <summary>
-    /// Create new categoria
-    /// Java: public CategoriaDto create(CategoriaRequestDto dto) throws ValidationException
+    /// Crea una nueva categoría
     /// 
-    /// THROWS ValidationException if validation fails
+    /// Railway Oriented Programming - encadenamiento de validaciones:
+    /// 1. ValidateNombre → si falla, todo el pipeline falla
+    /// 2. CheckNombreDuplicado → si existe, falla
+    /// 3. SaveCategoria → guarda en BD
+    /// 4. Map → convierte entidad a DTO
+    /// 5. Tap → logging de éxito
+    /// 
+    /// Cada paso puede desviar a la "vía del fracaso", pero una vez allí,
+    /// los pasos siguientes se omiten automáticamente.
     /// </summary>
-    public async Task<CategoriaDto> CreateAsync(CategoriaRequestDto dto)
+    public async Task<Result<CategoriaDto, AppError>> CreateAsync(CategoriaRequestDto dto)
     {
-        _logger.LogInformation("Creating categoria: {Nombre}", dto.Nombre);
+        _logger.LogInformation("Creando categoría: {Nombre}", dto.Nombre);
         
-        // Validation - throws exception on error
-        await ValidateNombreAsync(dto.Nombre);
+        // Validar el nombre
+        var validationResult = ValidateNombre(dto.Nombre);
+        if (validationResult.IsFailure)
+        {
+            return Result<CategoriaDto, AppError>.Failure(validationResult.Error);
+        }
         
+        // Verificar duplicados
+        var duplicateCheck = await CheckNombreDuplicado(dto.Nombre);
+        if (duplicateCheck.IsFailure)
+        {
+            return Result<CategoriaDto, AppError>.Failure(duplicateCheck.Error);
+        }
+        
+        // Crear y guardar
         var categoria = _mapper.Map<Categoria>(dto);
         var saved = await _repository.SaveAsync(categoria);
         
-        _logger.LogInformation("Categoria created with id: {Id}", saved.Id);
-        return _mapper.Map<CategoriaDto>(saved);
+        _logger.LogInformation("Categoría creada con id: {Id}", saved.Id);
+        var result = _mapper.Map<CategoriaDto>(saved);
+        return Result<CategoriaDto, AppError>.Success(result);
     }
 
     /// <summary>
-    /// Update existing categoria
-    /// THROWS NotFoundException or ValidationException
+    /// Actualiza una categoría existente
+    /// 
+    /// Railway Pattern: validar → buscar → verificar duplicados → actualizar
     /// </summary>
-    public async Task<CategoriaDto> UpdateAsync(long id, CategoriaRequestDto dto)
+    public async Task<Result<CategoriaDto, AppError>> UpdateAsync(long id, CategoriaRequestDto dto)
     {
-        _logger.LogInformation("Updating categoria with id: {Id}", id);
+        _logger.LogInformation("Actualizando categoría con id: {Id}", id);
         
-        var categoria = await _repository.FindByIdAsync(id);
-        
-        if (categoria == null)
+        // Validar nombre
+        var validationResult = ValidateNombre(dto.Nombre);
+        if (validationResult.IsFailure)
         {
-            _logger.LogWarning("Categoria with id {Id} not found for update", id);
-            throw new NotFoundException($"Categoría con ID {id} no encontrada");
+            return Result<CategoriaDto, AppError>.Failure(validationResult.Error);
         }
         
-        // Validation - throws exception on error
-        await ValidateNombreAsync(dto.Nombre, id);
+        // Buscar categoría existente
+        var categoria = await _repository.FindByIdAsync(id);
+        if (categoria == null)
+        {
+            _logger.LogWarning("Categoría con id {Id} no encontrada para actualizar", id);
+            return Result<CategoriaDto, AppError>.Failure(
+                AppError.NotFound($"Categoría con ID {id} no encontrada")
+            );
+        }
         
+        // Verificar duplicados (excluyendo el ID actual)
+        var duplicateCheck = await CheckNombreDuplicado(dto.Nombre, id);
+        if (duplicateCheck.IsFailure)
+        {
+            return Result<CategoriaDto, AppError>.Failure(duplicateCheck.Error);
+        }
+        
+        // Actualizar
         categoria.Nombre = dto.Nombre;
         var updated = await _repository.UpdateAsync(categoria);
         
-        _logger.LogInformation("Categoria updated with id: {Id}", id);
-        return _mapper.Map<CategoriaDto>(updated);
+        _logger.LogInformation("Categoría actualizada con id: {Id}", id);
+        var result = _mapper.Map<CategoriaDto>(updated);
+        return Result<CategoriaDto, AppError>.Success(result);
     }
 
     /// <summary>
-    /// Delete categoria (soft delete)
-    /// THROWS NotFoundException if not found
+    /// Elimina una categoría (soft delete)
+    /// 
+    /// Retorna Result<Unit, AppError> porque la operación no retorna datos,
+    /// solo indica éxito o fracaso.
     /// </summary>
-    public async Task DeleteAsync(long id)
+    public async Task<Result<Unit, AppError>> DeleteAsync(long id)
     {
-        _logger.LogInformation("Deleting categoria with id: {Id}", id);
+        _logger.LogInformation("Eliminando categoría con id: {Id}", id);
         
         var categoria = await _repository.FindByIdAsync(id);
-        
         if (categoria == null)
         {
-            _logger.LogWarning("Categoria with id {Id} not found for delete", id);
-            throw new NotFoundException($"Categoría con ID {id} no encontrada");
+            _logger.LogWarning("Categoría con id {Id} no encontrada para eliminar", id);
+            return Result<Unit, AppError>.Failure(
+                AppError.NotFound($"Categoría con ID {id} no encontrada")
+            );
         }
         
         await _repository.DeleteAsync(id);
-        _logger.LogInformation("Categoria deleted with id: {Id}", id);
+        _logger.LogInformation("Categoría eliminada con id: {Id}", id);
+        
+        return Result<Unit, AppError>.Success(Unit.Value);
     }
 
+    // ============================================================================
+    // MÉTODOS DE VALIDACIÓN PRIVADOS - Retornan Result en lugar de lanzar excepciones
+    // ============================================================================
+
     /// <summary>
-    /// Validation method - THROWS ValidationException on error
+    /// Valida el nombre de la categoría
     /// 
-    /// This is the TRADITIONAL approach:
-    /// - Validation failures throw exceptions
-    /// - GlobalExceptionHandler converts to 400 Bad Request
+    /// ANTES: throw new ValidationException(...)
+    /// AHORA: return Result.Failure(AppError.Validation(...))
     /// 
-    /// Java Spring Boot: Similar to @Valid with MethodArgumentNotValidException
+    /// Beneficio: El método es una función pura - dado el mismo input,
+    /// siempre retorna el mismo output, sin efectos secundarios ocultos (excepciones).
     /// </summary>
-    private async Task ValidateNombreAsync(string nombre, long? excludeId = null)
+    private Result<bool, AppError> ValidateNombre(string nombre)
     {
         if (string.IsNullOrWhiteSpace(nombre))
         {
-            throw new ValidationException("El nombre de la categoría es requerido");
+            return Result<bool, AppError>.Failure(
+                AppError.Validation("El nombre de la categoría es requerido")
+            );
         }
         
         if (nombre.Length < 3)
         {
-            throw new ValidationException("El nombre debe tener al menos 3 caracteres");
+            return Result<bool, AppError>.Failure(
+                AppError.Validation("El nombre debe tener al menos 3 caracteres")
+            );
         }
         
         if (nombre.Length > 100)
         {
-            throw new ValidationException("El nombre no puede exceder 100 caracteres");
+            return Result<bool, AppError>.Failure(
+                AppError.Validation("El nombre no puede exceder 100 caracteres")
+            );
         }
         
+        return Result<bool, AppError>.Success(true);
+    }
+
+    /// <summary>
+    /// Verifica si existe una categoría con el mismo nombre
+    /// 
+    /// NOTA PEDAGÓGICA:
+    /// Este método es async porque consulta la BD, pero retorna Result.
+    /// Muestra cómo combinar async/await con Result Pattern.
+    /// </summary>
+    private async Task<Result<bool, AppError>> CheckNombreDuplicado(string nombre, long? excludeId = null)
+    {
         var exists = await _repository.ExistsByNombreAsync(nombre, excludeId);
+        
         if (exists)
         {
-            throw new ValidationException($"Ya existe una categoría con el nombre '{nombre}'");
+            return Result<bool, AppError>.Failure(
+                AppError.Conflict($"Ya existe una categoría con el nombre '{nombre}'")
+            );
         }
+        
+        return Result<bool, AppError>.Success(true);
     }
 }
