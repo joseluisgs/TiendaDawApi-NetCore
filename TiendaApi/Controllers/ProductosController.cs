@@ -100,7 +100,7 @@ public class ProductosController : ControllerBase
             onFailure: error => error.Type switch
             {
                 ErrorType.NotFound => NotFound(new { message = error.Message }),
-                _ => StatusCode(404, new { message = error.Message })
+                _ => StatusCode(500, new { message = error.Message })
             }
         );
     }
@@ -122,7 +122,7 @@ public class ProductosController : ControllerBase
             onFailure: error => error.Type switch
             {
                 ErrorType.NotFound => NotFound(new { message = error.Message }),
-                _ => StatusCode(404, new { message = error.Message })
+                _ => StatusCode(500, new { message = error.Message })
             }
         );
     }
@@ -160,7 +160,7 @@ public class ProductosController : ControllerBase
                     errors = error.ValidationErrors 
                 }),
                 ErrorType.NotFound => NotFound(new { message = error.Message }),
-                _ => StatusCode(404, new { message = error.Message })
+                _ => StatusCode(500, new { message = error.Message })
             }
         );
     }
