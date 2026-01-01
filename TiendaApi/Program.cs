@@ -75,8 +75,9 @@ builder.Services.AddScoped<CategoriaService>();
 builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<IPedidosService, PedidosService>();
 
-// JWT Service
+// Authentication Services
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Cache Service (Redis)
 builder.Services.AddStackExchangeRedisCache(options =>
