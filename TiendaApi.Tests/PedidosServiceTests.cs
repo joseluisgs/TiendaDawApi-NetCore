@@ -9,6 +9,7 @@ using TiendaApi.Repositories;
 using TiendaApi.Services.Cache;
 using TiendaApi.Services.Email;
 using TiendaApi.Services.Pedidos;
+using TiendaApi.WebSockets;
 
 namespace TiendaApi.Tests;
 
@@ -25,6 +26,7 @@ public class PedidosServiceTests
     private Mock<ICacheService> _mockCacheService = null!;
     private Mock<IEmailService> _mockEmailService = null!;
     private Mock<IConfiguration> _mockConfiguration = null!;
+    private Mock<PedidoWebSocketHandler> _mockWebSocketHandler = null!;
     private IPedidosService _service = null!;
 
     [SetUp]
@@ -37,6 +39,7 @@ public class PedidosServiceTests
         _mockCacheService = new Mock<ICacheService>();
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockWebSocketHandler = new Mock<PedidoWebSocketHandler>(Mock.Of<ILogger<PedidoWebSocketHandler>>());
 
         // Setup default configuration
         _mockConfiguration.Setup(c => c["Smtp:AdminEmail"]).Returns("admin@test.com");
@@ -48,7 +51,8 @@ public class PedidosServiceTests
             _mockLogger.Object,
             _mockCacheService.Object,
             _mockEmailService.Object,
-            _mockConfiguration.Object
+            _mockConfiguration.Object,
+            _mockWebSocketHandler.Object
         );
     }
 
