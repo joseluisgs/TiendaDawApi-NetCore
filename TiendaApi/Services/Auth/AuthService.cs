@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using TiendaApi.Common;
 using TiendaApi.Models.DTOs;
 using TiendaApi.Models.Entities;
@@ -177,7 +178,8 @@ public class AuthService : IAuthService
             );
         }
 
-        if (!dto.Email.Contains('@'))
+        // Use proper email validation
+        if (!new EmailAddressAttribute().IsValid(dto.Email))
         {
             return Result<Unit, AppError>.Failure(
                 AppError.Validation("Valid email is required")
@@ -225,12 +227,17 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Check for duplicate username or email
+    /// Check for duplicate username or email concurrently for better performance
     /// </summary>
     private async Task<Result<Unit, AppError>> CheckDuplicatesAsync(RegisterDto dto)
     {
-        // Check for duplicate username
-        var existingUser = await _userRepository.FindByUsernameAsync(dto.Username);
+        // Run both checks concurrently for better performance
+        var usernameCheckTask = _userRepository.FindByUsernameAsync(dto.Username!);
+        var emailCheckTask = _userRepository.FindByEmailAsync(dto.Email!);
+
+        await Task.WhenAll(usernameCheckTask, emailCheckTask);
+
+        var existingUser = await usernameCheckTask;
         if (existingUser != null)
         {
             return Result<Unit, AppError>.Failure(
@@ -238,8 +245,7 @@ public class AuthService : IAuthService
             );
         }
 
-        // Check for duplicate email
-        var existingEmail = await _userRepository.FindByEmailAsync(dto.Email);
+        var existingEmail = await emailCheckTask;
         if (existingEmail != null)
         {
             return Result<Unit, AppError>.Failure(
