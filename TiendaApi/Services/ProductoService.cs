@@ -201,7 +201,7 @@ public class ProductoService
         });
         
         // Notificar via WebSocket (side-effect - fire-and-forget)
-        _ = Task.Run(() => NotificarWebSocketProductoCreado(saved.Id, saved.Nombre));
+        _ = Task.Run(async () => await NotificarWebSocketProductoCreado(saved.Id, saved.Nombre));
         
         // Queue email notification (fire-and-forget)
         _ = Task.Run(async () =>
@@ -293,7 +293,7 @@ public class ProductoService
         });
         
         // Notificar via WebSocket (side-effect - fire-and-forget)
-        _ = Task.Run(() => NotificarWebSocketProductoActualizado(updated.Id, updated.Nombre));
+        _ = Task.Run(async () => await NotificarWebSocketProductoActualizado(updated.Id, updated.Nombre));
         
         return Result<ProductoDto, AppError>.Success(resultDto);
     }
@@ -337,7 +337,7 @@ public class ProductoService
         });
         
         // Notificar via WebSocket (side-effect - fire-and-forget)
-        _ = Task.Run(() => NotificarWebSocketProductoEliminado(id, productoNombre));
+        _ = Task.Run(async () => await NotificarWebSocketProductoEliminado(id, productoNombre));
         
         return Result<AppError>.Success();
     }

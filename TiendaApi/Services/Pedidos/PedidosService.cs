@@ -275,7 +275,7 @@ public class PedidosService : IPedidosService
             if (!string.IsNullOrEmpty(savedPedido.Id))
             {
                 var pedidoId = savedPedido.Id;
-                _ = Task.Run(() => NotificarWebSocketPedidoCreado(pedidoId, userId, resultDto));
+                _ = Task.Run(async () => await NotificarWebSocketPedidoCreado(pedidoId, userId, resultDto));
             }
             
             return Result<PedidoDto, AppError>.Success(resultDto);
