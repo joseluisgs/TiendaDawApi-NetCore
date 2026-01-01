@@ -34,6 +34,373 @@ Este proyecto es una muestra de lo que se ha ido viendo en clase siguiendo los p
 
 Podrás seguir sus pasos commit a commit o en las ramas indicadas por clase.
 
+## 🚀 Inicio Rápido
+
+### Requisitos Previos
+- .NET 10 SDK
+- Docker y Docker Compose (para bases de datos)
+- PostgreSQL (o usa Docker)
+- Redis (o usa Docker)
+- MongoDB (o usa Docker)
+
+### Instalación y Ejecución
+
+1. **Clonar el repositorio**
+```bash
+git clone https://github.com/joseluisgs/TiendaDawApi-NetCore.git
+cd TiendaDawApi-NetCore
+```
+
+2. **Iniciar servicios con Docker**
+```bash
+docker-compose up -d
+```
+
+Esto iniciará:
+- PostgreSQL en puerto 5432
+- Redis en puerto 6379
+- MongoDB en puerto 27017
+
+3. **Restaurar dependencias**
+```bash
+dotnet restore
+```
+
+4. **Ejecutar la aplicación**
+```bash
+cd TiendaApi
+dotnet run
+```
+
+5. **Acceder a la API**
+- **Swagger UI**: http://localhost:5000
+- **GraphiQL**: http://localhost:5000/graphiql
+- **API REST**: http://localhost:5000/api
+
+### Comandos Docker Útiles
+
+```bash
+# Iniciar todos los servicios
+docker-compose up -d
+
+# Ver logs de los servicios
+docker-compose logs -f
+
+# Detener todos los servicios
+docker-compose down
+
+# Detener y eliminar volúmenes (datos)
+docker-compose down -v
+
+# Reiniciar un servicio específico
+docker-compose restart postgres
+docker-compose restart redis
+docker-compose restart mongodb
+```
+
+### Comandos de Desarrollo
+
+```bash
+# Compilar el proyecto
+dotnet build
+
+# Ejecutar tests
+dotnet test
+
+# Ejecutar con hot reload
+dotnet watch run --project TiendaApi
+
+# Limpiar y compilar
+dotnet clean && dotnet build
+
+# Crear migración de base de datos
+dotnet ef migrations add NombreMigracion --project TiendaApi
+
+# Aplicar migraciones
+dotnet ef database update --project TiendaApi
+```
+
+## 🔐 Credenciales de Prueba
+
+La aplicación se inicializa con usuarios por defecto para facilitar las pruebas:
+
+### Usuario Administrador
+- **Username**: `admin`
+- **Email**: `admin@tienda.com`
+- **Password**: `Admin123`
+- **Rol**: ADMIN
+- **Permisos**: Acceso completo a todos los endpoints
+
+### Usuario Normal
+- **Username**: `user`
+- **Email**: `user@tienda.com`
+- **Password**: `User123`
+- **Rol**: USER
+- **Permisos**: Acceso limitado (solo lectura en la mayoría de endpoints)
+
+### Autenticación JWT
+
+1. Usa el endpoint `POST /v1/auth/signin` con las credenciales
+2. Recibirás un token JWT en la respuesta
+3. En Swagger: Haz clic en el botón 🔒 **Authorize** y pega el token
+4. En Postman: El token se guarda automáticamente con los scripts incluidos
+5. En otras herramientas: Añade el header `Authorization: Bearer <token>`
+
+## 📮 Guía de Uso con Postman
+
+### Importar la Colección
+
+1. Abre Postman
+2. Haz clic en **Import** en la esquina superior izquierda
+3. Selecciona el archivo `TiendaApi-Postman-Collection.json` del repositorio
+4. La colección se importará con todas las peticiones organizadas
+
+### Configuración Inicial
+
+Las variables de entorno ya están configuradas en la colección:
+- `base_url`: http://localhost:5000 (cámbiala si usas otro puerto)
+- `jwt_token`: Se rellena automáticamente al hacer login
+- Variables de IDs: Se guardan automáticamente después de crear recursos
+
+### Flujo de Trabajo Recomendado
+
+1. **Autenticación**
+   - Ejecuta `Login Admin` o `Login User`
+   - El token JWT se guarda automáticamente
+   - Todas las peticiones posteriores usarán este token
+
+2. **Explorar Categorías** (Patrón Tradicional)
+   - `Get All Categorías` - Lista todas
+   - `Create Categoría` - Crea una nueva (requiere ADMIN)
+   - El ID se guarda automáticamente
+
+3. **Explorar Productos** (Result Pattern Moderno)
+   - `Get All Productos` - Cacheo con Redis
+   - `Create Producto` - WebSocket + Email (requiere ADMIN)
+   - Prueba también la versión XML
+
+4. **Crear Pedidos**
+   - `Create Pedido` - Crea un pedido con productos
+   - WebSocket notifica en tiempo real
+   - Email asíncrono de confirmación
+
+5. **Probar GraphQL**
+   - Ejecuta queries GraphQL desde la carpeta GraphQL
+   - O visita http://localhost:5000/graphiql en el navegador
+
+### Scripts Automáticos
+
+La colección incluye scripts que:
+- ✅ Extraen y guardan el token JWT automáticamente
+- ✅ Guardan IDs de recursos creados para usarlos en otras peticiones
+- ✅ Muestran mensajes informativos en la consola de Postman
+- ✅ Validan respuestas con tests automáticos
+
+## 🎯 Conceptos Clave para Estudiantes 2DAW
+
+### Railway Oriented Programming (ROP)
+
+Railway Oriented Programming es una forma de pensar sobre el flujo de tu código como dos vías de tren paralelas:
+
+```
+😊 VÍA DEL ÉXITO (Happy Path)
+═══════════════════════════════════════════════════════════════
+    Validar    →    Procesar    →    Guardar    →    Responder
+═══════════════════════════════════════════════════════════════
+
+❌ VÍA DEL ERROR (Failure Path)
+─────────────────────────────────────────────────────────────── 
+         ↓              ↓              ↓              ↓
+    Error 400     Error 404      Error 500      Error 409
+─────────────────────────────────────────────────────────────── 
+```
+
+#### Características de ROP:
+
+1. **Dos Caminos**: Éxito o Fracaso, nunca ambos
+2. **Sin Sorpresas**: Los errores son valores, no excepciones
+3. **Composición**: Encadena operaciones fácilmente
+4. **Explícito**: La firma del método dice "esto puede fallar"
+
+#### Implementación en este Proyecto:
+
+**Productos** usa Result Pattern (ROP):
+```csharp
+// Servicio retorna Result<ProductoDto, AppError>
+var resultado = await _service.CreateAsync(dto);
+
+// Pattern matching - dos caminos claros
+return resultado.Match(
+    onSuccess: producto => Created(...),  // 😊 Camino del éxito
+    onFailure: error => BadRequest(...)   // ❌ Camino del error
+);
+```
+
+**Categorías** usa el enfoque tradicional con excepciones para comparación:
+```csharp
+try {
+    var categoria = await _service.CreateAsync(dto);
+    return Created(...);
+} catch (NotFoundException ex) {
+    return NotFound(...);
+} catch (ValidationException ex) {
+    return BadRequest(...);
+}
+```
+
+#### ¿Cuándo usar cada enfoque?
+
+**ROP/Result Pattern** (Moderno):
+- ✅ Lógica de negocio compleja
+- ✅ Múltiples puntos de fallo
+- ✅ Necesitas composición funcional
+- ✅ Quieres rendimiento óptimo
+- ✅ Proyectos greenfield modernos
+
+**Excepciones** (Tradicional):
+- ✅ Errores verdaderamente excepcionales
+- ✅ Integrando con librerías que lanzan excepciones
+- ✅ Código legacy o equipo acostumbrado a excepciones
+- ✅ Errores de los que no puedes recuperarte
+
+### Patrones de Arquitectura Implementados
+
+#### 1. **Repository Pattern**
+Abstrae el acceso a datos:
+```
+Controller → Service → Repository → Database
+```
+
+#### 2. **Dependency Injection**
+Todas las dependencias se inyectan, similar a Spring Boot:
+```csharp
+builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
+builder.Services.AddScoped<ProductoService>();
+```
+
+#### 3. **DTO Pattern**
+Separación entre entidades de dominio y contratos de API:
+- `Producto` (Entidad) → No se expone directamente
+- `ProductoDto` (DTO) → Respuestas de API
+- `ProductoRequestDto` (DTO) → Peticiones de API
+
+#### 4. **Middleware Pipeline**
+Similar a Spring Security filter chain:
+```
+Request → Exception Handler → CORS → Auth → Controllers
+```
+
+### Características Runtime Avanzadas
+
+#### 🔴 Redis Cache (Cache-Aside Pattern)
+Los productos implementan cacheo con Redis:
+
+1. **Primera petición**: Lee de PostgreSQL, guarda en Redis
+2. **Siguientes peticiones**: Lee directamente de Redis (más rápido)
+3. **Invalidación**: Al crear/actualizar/eliminar, se limpia el cache
+
+```csharp
+// Buscar en cache primero
+var cached = await _cache.GetAsync<ProductoDto>($"producto:{id}");
+if (cached != null) return Result.Success(cached);
+
+// Si no está en cache, buscar en DB y cachear
+var producto = await _repo.FindByIdAsync(id);
+await _cache.SetAsync($"producto:{id}", producto, TimeSpan.FromMinutes(10));
+```
+
+#### 🔌 WebSocket (Notificaciones en Tiempo Real)
+Cuando se crea/actualiza/elimina un producto:
+
+1. Operación se completa en el servidor
+2. WebSocket envía notificación a todos los clientes conectados
+3. Los clientes reciben actualizaciones en tiempo real
+
+**Conectarse al WebSocket**:
+```javascript
+const ws = new WebSocket('ws://localhost:5000/ws/v1/productos');
+ws.onmessage = (event) => {
+    const notification = JSON.parse(event.data);
+    console.log('Producto actualizado:', notification);
+};
+```
+
+#### 📧 Email Asíncrono (Background Workers)
+Los emails no bloquean las peticiones HTTP:
+
+1. Petición crea un producto
+2. Mensaje de email se añade a una cola (Channel)
+3. Respuesta HTTP se devuelve inmediatamente
+4. Background worker procesa emails de la cola
+5. Emails se envían en segundo plano con MailKit
+
+#### 🗄️ Múltiples Bases de Datos
+- **PostgreSQL**: Usuarios, Categorías, Productos (relacional)
+- **MongoDB**: Pedidos y líneas de pedido (NoSQL, documentos)
+- **Redis**: Cache para mejorar rendimiento (in-memory)
+
+### Estructura del Proyecto
+
+```
+TiendaApi/
+├── Controllers/              # Capa de presentación (REST API)
+│   ├── AuthController.cs    # Autenticación JWT
+│   ├── CategoriasController.cs  # CRUD Categorías (Exception pattern)
+│   ├── ProductosController.cs   # CRUD Productos (Result pattern)
+│   ├── PedidosController.cs     # CRUD Pedidos (MongoDB)
+│   └── GraphQLController.cs     # Endpoint GraphQL
+├── Services/                 # Lógica de negocio
+│   ├── Auth/                # Servicios de autenticación
+│   ├── Cache/               # Abstracción de Redis
+│   ├── Email/               # Envío de emails con MailKit
+│   ├── Pedidos/             # Lógica de pedidos
+│   └── Users/               # Gestión de usuarios
+├── Repositories/             # Acceso a datos
+│   ├── CategoriaRepository.cs
+│   ├── ProductoRepository.cs
+│   ├── UserRepository.cs
+│   └── PedidosRepository.cs
+├── Models/                   # Entidades y DTOs
+│   ├── Entities/            # Entidades de dominio
+│   └── DTOs/                # Data Transfer Objects
+├── Data/                     # Configuración de bases de datos
+│   └── TiendaDbContext.cs   # DbContext de Entity Framework
+├── Common/                   # Tipos y utilidades comunes
+│   ├── Result.cs            # Implementación Result Pattern
+│   ├── AppError.cs          # Tipos de errores
+│   └── Unit.cs              # Tipo Unit (void funcional)
+├── Middleware/               # Middleware personalizado
+│   └── GlobalExceptionHandler.cs
+├── WebSockets/               # Handlers de WebSocket
+│   ├── ProductoWebSocketHandler.cs
+│   └── PedidoWebSocketHandler.cs
+├── GraphQL/                  # Configuración GraphQL
+│   ├── Types/               # Tipos GraphQL
+│   └── TiendaSchema.cs      # Esquema GraphQL
+├── Mappings/                 # Perfiles de AutoMapper
+└── Program.cs               # Configuración y startup
+
+TiendaApi.Tests/              # Pruebas unitarias e integración
+├── Controllers/             # Tests de controllers
+├── Services/                # Tests de servicios
+└── Repositories/            # Tests de repositorios
+```
+
+### Comparación con Java/Spring Boot
+
+Para estudiantes que vienen de Java:
+
+| Concepto | Java/Spring Boot | C#/ASP.NET Core |
+|----------|------------------|-----------------|
+| Anotaciones | `@RestController`, `@Service` | Atributos `[ApiController]`, inyección en constructor |
+| Inyección de dependencias | `@Autowired` | Constructor injection (recomendado) |
+| Configuración | `application.properties` | `appsettings.json` |
+| ORM | JPA/Hibernate | Entity Framework Core |
+| Validaciones | `@Valid`, Bean Validation | FluentValidation o Data Annotations |
+| Manejo de errores | `@ExceptionHandler`, `@ControllerAdvice` | Middleware + Result Pattern |
+| DTOs | Clases POJO | Records (C# 9+) |
+| Async | `CompletableFuture<T>` | `async`/`await` con `Task<T>` |
+
 # Problema
 Vamos a crear una API REST y página web de una tienda de productos
 - Tenemos una serie de productos con sus atributos

@@ -1,0 +1,864 @@
+{
+	"info": {
+		"_postman_id": "tienda-api-collection",
+		"name": "TiendaApi - Dual Error Handling Demo",
+		"description": "# TiendaApi - API REST Educativa\n\nColección completa para interactuar con la API TiendaDaw que demuestra dos enfoques de manejo de errores:\n\n## 🎯 Características\n\n- **Autenticación JWT**: Extracción automática del token\n- **Categorías**: Enfoque tradicional con excepciones\n- **Productos**: Result Pattern moderno\n- **Pedidos**: Gestión completa con WebSocket y Email\n- **Variables de entorno**: Configuración centralizada\n\n## 🚀 Uso Rápido\n\n1. **Configurar variables de entorno**: Ajusta `base_url` en las variables de la colección\n2. **Autenticarse**: Ejecuta \"Login Admin\" o \"Login User\"\n3. **Explorar**: El token se guarda automáticamente para todas las peticiones\n\n## 🔐 Credenciales de Prueba\n\n- **Admin**: admin@tienda.com / Admin123\n- **User**: user@tienda.com / User123\n\n## 📚 Conceptos Educativos\n\n### Railway Oriented Programming (ROP)\nLos endpoints de Productos usan Result Pattern que implementa ROP:\n- ✅ Camino feliz: Operación exitosa\n- ❌ Camino de error: Fallo con detalles\n- 🔗 Errores fluyen sin try/catch\n\n### Comparación de Enfoques\n- **Categorías** (tradicional): Excepciones + GlobalExceptionHandler\n- **Productos** (moderno): Result Pattern + Pattern Matching",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Register New User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Guardar token automáticamente si el registro es exitoso",
+									"if (pm.response.code === 201) {",
+									"    const responseData = pm.response.json();",
+									"    if (responseData.token) {",
+									"        pm.collectionVariables.set('jwt_token', responseData.token);",
+									"        pm.collectionVariables.set('user_id', responseData.user.id);",
+									"        pm.collectionVariables.set('username', responseData.user.username);",
+									"        console.log('✅ Token JWT guardado automáticamente');",
+									"        console.log('✅ Usuario registrado:', responseData.user.username);",
+									"    }",
+									"}",
+									"",
+									"// Tests de validación",
+									"pm.test('Status code es 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Respuesta contiene token JWT', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData).to.have.property('token');",
+									"    pm.expect(responseData.token).to.be.a('string').and.to.have.lengthOf.above(20);",
+									"});",
+									"",
+									"pm.test('Respuesta contiene datos del usuario', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData).to.have.property('user');",
+									"    pm.expect(responseData.user).to.have.property('username');",
+									"    pm.expect(responseData.user).to.have.property('email');",
+									"    pm.expect(responseData.user).to.have.property('role');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@tienda.com\",\n  \"password\": \"NewUser123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/signup",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "auth", "signup"]
+						},
+						"description": "Registra un nuevo usuario en el sistema.\n\n**Result Pattern**: Este endpoint usa Result<AuthResponseDto, AppError> internamente.\n\n**Códigos de respuesta**:\n- 201: Usuario creado exitosamente con token JWT\n- 400: Datos de entrada inválidos\n- 409: El usuario o email ya existe"
+					},
+					"response": []
+				},
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Guardar token automáticamente",
+									"if (pm.response.code === 200) {",
+									"    const responseData = pm.response.json();",
+									"    if (responseData.token) {",
+									"        pm.collectionVariables.set('jwt_token', responseData.token);",
+									"        pm.collectionVariables.set('user_id', responseData.user.id);",
+									"        pm.collectionVariables.set('username', responseData.user.username);",
+									"        pm.collectionVariables.set('user_role', responseData.user.role);",
+									"        console.log('✅ Token JWT guardado automáticamente');",
+									"        console.log('✅ Usuario autenticado:', responseData.user.username);",
+									"        console.log('✅ Rol:', responseData.user.role);",
+									"    }",
+									"}",
+									"",
+									"// Tests",
+									"pm.test('Login exitoso - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Token JWT presente', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData.token).to.be.a('string');",
+									"});",
+									"",
+									"pm.test('Usuario es ADMIN', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData.user.role).to.eql('ADMIN');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/signin",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "auth", "signin"]
+						},
+						"description": "Inicia sesión con credenciales de administrador.\n\n**Credenciales por defecto**: admin / Admin123\n\n**Result Pattern**: Sin try/catch, devuelve Result<AuthResponseDto, AppError>\n\n**Script automático**: El token JWT se guarda automáticamente en las variables de colección para todas las peticiones posteriores."
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Guardar token automáticamente",
+									"if (pm.response.code === 200) {",
+									"    const responseData = pm.response.json();",
+									"    if (responseData.token) {",
+									"        pm.collectionVariables.set('jwt_token', responseData.token);",
+									"        pm.collectionVariables.set('user_id', responseData.user.id);",
+									"        pm.collectionVariables.set('username', responseData.user.username);",
+									"        pm.collectionVariables.set('user_role', responseData.user.role);",
+									"        console.log('✅ Token JWT guardado automáticamente');",
+									"        console.log('✅ Usuario autenticado:', responseData.user.username);",
+									"        console.log('✅ Rol:', responseData.user.role);",
+									"    }",
+									"}",
+									"",
+									"// Tests",
+									"pm.test('Login exitoso - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Token JWT presente', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData.token).to.be.a('string');",
+									"});",
+									"",
+									"pm.test('Usuario es USER', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData.user.role).to.eql('USER');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"user\",\n  \"password\": \"User123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/signin",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "auth", "signin"]
+						},
+						"description": "Inicia sesión con credenciales de usuario normal.\n\n**Credenciales por defecto**: user / User123\n\n**Permisos**: Los usuarios normales tienen acceso limitado comparado con administradores."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints de autenticación JWT.\n\nLos tokens se guardan automáticamente mediante scripts de Postman."
+		},
+		{
+			"name": "📦 Categorías (Exception Pattern)",
+			"item": [
+				{
+					"name": "Get All Categorías",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code es 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Respuesta es un array', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData).to.be.an('array');",
+									"});",
+									"",
+									"// Guardar primera categoría para otros tests",
+									"if (pm.response.code === 200) {",
+									"    const categorias = pm.response.json();",
+									"    if (categorias.length > 0) {",
+									"        pm.collectionVariables.set('categoria_id', categorias[0].id);",
+									"        console.log('✅ ID de categoría guardado:', categorias[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categorias",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categorias"]
+						},
+						"description": "Obtiene todas las categorías disponibles.\n\n**Patrón**: Result Pattern (NO excepciones)\n\n**Educativo**: Compara este enfoque con el de Productos para ver las diferencias."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Categoría by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/categorias/{{categoria_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categorias", "{{categoria_id}}"]
+						},
+						"description": "Obtiene una categoría específica por su ID.\n\n**Railway Pattern**: Si existe → 200 OK, si no → 404 Not Found"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Categoría",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const newCategoria = pm.response.json();",
+									"    pm.collectionVariables.set('new_categoria_id', newCategoria.id);",
+									"    console.log('✅ Nueva categoría creada con ID:', newCategoria.id);",
+									"}",
+									"",
+									"pm.test('Status code es 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Respuesta contiene ID', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData).to.have.property('id');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Electrónica\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categorias",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categorias"]
+						},
+						"description": "Crea una nueva categoría.\n\n**Requiere**: Autenticación JWT con rol ADMIN\n\n**Validaciones**: El nombre es obligatorio y debe ser único"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Categoría",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Electrónica Actualizada\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categorias/{{new_categoria_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categorias", "{{new_categoria_id}}"]
+						},
+						"description": "Actualiza una categoría existente.\n\n**Requiere**: Autenticación JWT con rol ADMIN"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Categoría",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/categorias/{{new_categoria_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categorias", "{{new_categoria_id}}"]
+						},
+						"description": "Elimina una categoría.\n\n**Requiere**: Autenticación JWT con rol ADMIN\n\n**Nota**: No se puede eliminar si tiene productos asociados"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones CRUD de Categorías usando Result Pattern.\n\n**Enfoque educativo**: Estas operaciones NO lanzan excepciones, usan Result<T, AppError>"
+		},
+		{
+			"name": "🛍️ Productos (Result Pattern)",
+			"item": [
+				{
+					"name": "Get All Productos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code es 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Respuesta es un array', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData).to.be.an('array');",
+									"});",
+									"",
+									"// Guardar primer producto",
+									"if (pm.response.code === 200) {",
+									"    const productos = pm.response.json();",
+									"    if (productos.length > 0) {",
+									"        pm.collectionVariables.set('producto_id', productos[0].id);",
+									"        console.log('✅ ID de producto guardado:', productos[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/productos",
+							"host": ["{{base_url}}"],
+							"path": ["api", "productos"]
+						},
+						"description": "Obtiene todos los productos.\n\n**Características**:\n- Acceso público (no requiere autenticación)\n- Integrado con Redis Cache\n- Result Pattern sin try/catch\n- Cache-aside pattern implementado"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Productos (XML)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/xml",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/productos",
+							"host": ["{{base_url}}"],
+							"path": ["api", "productos"]
+						},
+						"description": "Obtiene todos los productos en formato XML.\n\n**Content Negotiation**: La API soporta tanto JSON como XML.\n\nCambia el header Accept para obtener diferentes formatos:\n- application/json → JSON\n- application/xml → XML"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Producto by ID",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/productos/{{producto_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "productos", "{{producto_id}}"]
+						},
+						"description": "Obtiene un producto específico por ID.\n\n**Redis Cache**: Implementa cache-aside pattern\n- Primera llamada: Lee de DB y guarda en cache\n- Siguientes: Lee directamente del cache"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Producto",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const newProducto = pm.response.json();",
+									"    pm.collectionVariables.set('new_producto_id', newProducto.id);",
+									"    console.log('✅ Nuevo producto creado con ID:', newProducto.id);",
+									"}",
+									"",
+									"pm.test('Status code es 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Producto creado contiene ID', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData).to.have.property('id');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Laptop HP\",\n  \"descripcion\": \"Laptop HP 15 pulgadas con procesador Intel i7\",\n  \"precio\": 899.99,\n  \"stock\": 10,\n  \"imagen\": \"laptop-hp.jpg\",\n  \"categoriaId\": {{categoria_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/productos",
+							"host": ["{{base_url}}"],
+							"path": ["api", "productos"]
+						},
+						"description": "Crea un nuevo producto.\n\n**Requiere**: Autenticación JWT con rol ADMIN\n\n**Características**:\n- Validaciones automáticas\n- Notificación en tiempo real vía WebSocket\n- Email asíncrono al administrador\n- Invalidación de cache\n\n**Result Pattern**: Sin try/catch, errores manejados explícitamente"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Producto",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Laptop HP Actualizada\",\n  \"descripcion\": \"Laptop HP 15 pulgadas - Versión mejorada\",\n  \"precio\": 949.99,\n  \"stock\": 8,\n  \"imagen\": \"laptop-hp-v2.jpg\",\n  \"categoriaId\": {{categoria_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/productos/{{new_producto_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "productos", "{{new_producto_id}}"]
+						},
+						"description": "Actualiza un producto existente.\n\n**Requiere**: Autenticación JWT con rol ADMIN\n\n**Acciones automáticas**:\n- Notificación WebSocket (producto actualizado)\n- Invalidación de cache"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Producto",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/productos/{{new_producto_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "productos", "{{new_producto_id}}"]
+						},
+						"description": "Elimina un producto.\n\n**Requiere**: Autenticación JWT con rol ADMIN\n\n**Acciones automáticas**:\n- Notificación WebSocket (producto eliminado)\n- Invalidación de cache\n\n**Status**: 204 No Content en caso de éxito"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones CRUD de Productos con Result Pattern moderno.\n\n**Características avanzadas**:\n- Redis Cache con cache-aside pattern\n- WebSocket para notificaciones en tiempo real\n- Email asíncrono con background workers\n- Sin try/catch, todo manejado con Result<T, E>"
+		},
+		{
+			"name": "🛒 Pedidos (MongoDB + WebSocket)",
+			"item": [
+				{
+					"name": "Get All Pedidos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code es 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Guardar primer pedido",
+									"if (pm.response.code === 200) {",
+									"    const pedidos = pm.response.json();",
+									"    if (pedidos.length > 0) {",
+									"        pm.collectionVariables.set('pedido_id', pedidos[0].id);",
+									"        console.log('✅ ID de pedido guardado:', pedidos[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pedidos",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pedidos"]
+						},
+						"description": "Obtiene todos los pedidos.\n\n**Requiere**: Autenticación JWT con rol ADMIN\n\n**Base de datos**: MongoDB (NoSQL) para almacenamiento de pedidos"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pedido by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pedidos/{{pedido_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pedidos", "{{pedido_id}}"]
+						},
+						"description": "Obtiene un pedido específico por ID.\n\n**Requiere**: Autenticación JWT"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Pedido",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const newPedido = pm.response.json();",
+									"    pm.collectionVariables.set('new_pedido_id', newPedido.id);",
+									"    console.log('✅ Nuevo pedido creado con ID:', newPedido.id);",
+									"    console.log('✅ Total del pedido:', newPedido.total);",
+									"}",
+									"",
+									"pm.test('Status code es 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Pedido contiene total calculado', function () {",
+									"    const responseData = pm.response.json();",
+									"    pm.expect(responseData).to.have.property('total');",
+									"    pm.expect(responseData.total).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"items\": [\n    {\n      \"productoId\": {{producto_id}},\n      \"cantidad\": 2\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pedidos",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pedidos"]
+						},
+						"description": "Crea un nuevo pedido para el usuario autenticado.\n\n**Requiere**: Autenticación JWT\n\n**Características**:\n- Calcula automáticamente subtotales y total\n- Valida stock disponible\n- Notificación WebSocket en tiempo real\n- Email asíncrono de confirmación\n- Almacenado en MongoDB\n\n**Validaciones**:\n- Productos deben existir\n- Stock suficiente\n- Cantidad > 0"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Pedido Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"items\": [\n    {\n      \"productoId\": {{producto_id}},\n      \"cantidad\": 3\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pedidos/{{new_pedido_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pedidos", "{{new_pedido_id}}"]
+						},
+						"description": "Actualiza un pedido existente.\n\n**Requiere**: Autenticación JWT con rol ADMIN\n\n**WebSocket**: Notifica a clientes conectados sobre la actualización"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Pedido",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pedidos/{{new_pedido_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pedidos", "{{new_pedido_id}}"]
+						},
+						"description": "Elimina un pedido.\n\n**Requiere**: Autenticación JWT con rol ADMIN\n\n**Status**: 204 No Content en caso de éxito"
+					},
+					"response": []
+				}
+			],
+			"description": "Gestión de pedidos con MongoDB.\n\n**Tecnologías integradas**:\n- MongoDB para almacenamiento NoSQL\n- WebSocket para notificaciones en tiempo real\n- Email asíncrono con MailKit\n- Background workers"
+		},
+		{
+			"name": "🔍 GraphQL",
+			"item": [
+				{
+					"name": "Query All Productos",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"{ productos { id nombre descripcion precio stock categoriaNombre } }\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": ["{{base_url}}"],
+							"path": ["graphql"]
+						},
+						"description": "Query GraphQL para obtener todos los productos.\n\n**GraphiQL UI**: Visita /graphiql en el navegador para una interfaz interactiva.\n\n**Ventajas GraphQL**:\n- Pide solo los campos que necesitas\n- Una sola petición para múltiples recursos\n- Tipado fuerte"
+					},
+					"response": []
+				},
+				{
+					"name": "Query Producto by ID",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"{ producto(id: {{producto_id}}) { id nombre descripcion precio stock imagen categoriaNombre } }\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": ["{{base_url}}"],
+							"path": ["graphql"]
+						},
+						"description": "Query GraphQL para obtener un producto específico por ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Query All Categorías",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"{ categorias { id nombre } }\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": ["{{base_url}}"],
+							"path": ["graphql"]
+						},
+						"description": "Query GraphQL para obtener todas las categorías."
+					},
+					"response": []
+				}
+			],
+			"description": "Consultas GraphQL.\n\n**Endpoint GraphiQL**: {{base_url}}/graphiql - Interfaz interactiva para explorar el esquema GraphQL"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Script que se ejecuta antes de cada petición",
+					"// El token JWT se añade automáticamente desde las variables de colección"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Script global que se ejecuta después de cada petición",
+					"",
+					"// Verificar si hay errores de autenticación",
+					"if (pm.response.code === 401) {",
+					"    console.log('⚠️ Error 401: Token JWT inválido o expirado');",
+					"    console.log('💡 Ejecuta \"Login Admin\" o \"Login User\" para obtener un nuevo token');",
+					"}",
+					"",
+					"// Verificar permisos",
+					"if (pm.response.code === 403) {",
+					"    console.log('⚠️ Error 403: No tienes permisos para esta operación');",
+					"    console.log('💡 Necesitas rol ADMIN. Ejecuta \"Login Admin\" para obtener permisos');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_role",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "categoria_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "new_categoria_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "producto_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "new_producto_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "pedido_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "new_pedido_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

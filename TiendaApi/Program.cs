@@ -25,9 +25,15 @@ var builder = WebApplication.CreateBuilder(args);
 // CONFIGURATION - Similar to Spring Boot's application.properties
 // ============================================================================
 
-// Add Controllers (MVC pattern)
+// Add Controllers (MVC pattern) with Content Negotiation
 // Java Spring Boot: @RestController classes automatically scanned
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.RespectBrowserAcceptHeader = true;
+    options.ReturnHttpNotAcceptable = true;
+})
+.AddXmlSerializerFormatters()
+.AddXmlDataContractSerializerFormatters();
 
 // Add Swagger/OpenAPI documentation
 // Java Spring Boot: SpringDoc OpenAPI (springdoc-openapi-ui)
@@ -43,8 +49,100 @@ builder.Services.AddSwaggerGen(options =>
 **Categorías**: Enfoque Tradicional con Exceptions (familiar para Java devs)
 **Productos**: Result Pattern Moderno (functional programming)
 
-Compara ambos enfoques para aprender cuándo usar cada uno."
+Compara ambos enfoques para aprender cuándo usar cada uno.
+
+## 🔐 Autenticación
+
+Esta API utiliza **JWT (JSON Web Tokens)** para la autenticación.
+
+### Pasos para autenticarse:
+
+1. **Registrar un usuario**: `POST /v1/auth/signup`
+2. **Iniciar sesión**: `POST /v1/auth/signin` → Recibirás un token JWT
+3. **Usar el token**: Haz clic en el botón 🔒 **Authorize** arriba
+4. **Introduce el token** en el campo que aparece (sin 'Bearer')
+5. Todos los endpoints protegidos ahora funcionarán automáticamente
+
+## 📚 Credenciales de prueba
+
+- **Usuario Admin**: 
+  - Email: `admin@tienda.com`
+  - Password: `Admin123`
+
+- **Usuario Normal**: 
+  - Email: `user@tienda.com`
+  - Password: `User123`
+
+## 🎯 Conceptos Clave
+
+### Railway Oriented Programming (ROP)
+Los endpoints de **Productos** usan el patrón Result<T, E> que implementa ROP:
+- ✅ Camino feliz: Operación exitosa devuelve Result.Success
+- ❌ Camino de error: Fallo devuelve Result.Failure con detalles
+- 🔗 Los errores fluyen automáticamente sin try/catch
+
+### Comparación de enfoques:
+- **Categorías** (tradicional): Lanza excepciones, GlobalExceptionHandler las captura
+- **Productos** (moderno): Sin excepciones, pattern matching con Result<T,E>
+
+Explora ambos para entender las ventajas de cada enfoque! 🚀",
+        Contact = new OpenApiContact
+        {
+            Name = "José Luis González Sánchez",
+            Email = "joseluis.gonzalez@iesluisvives.org",
+            Url = new Uri("https://joseluisgs.dev")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "Creative Commons BY-NC-SA 4.0",
+            Url = new Uri("https://creativecommons.org/licenses/by-nc-sa/4.0/")
+        }
     });
+
+    // Configuración JWT Bearer para Swagger
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = @"Autenticación JWT usando el esquema Bearer.
+
+**Introduce solo el token JWT** (sin la palabra 'Bearer').
+
+Ejemplo: Si tu token es `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+Simplemente pega ese valor aquí.
+
+Pasos:
+1. Obtén tu token llamando a POST /v1/auth/signin
+2. Haz clic en el botón 🔒 Authorize arriba
+3. Pega el token JWT en el campo 'Value'
+4. Haz clic en Authorize"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Incluir comentarios XML en la documentación
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+    }
 });
 
 // ============================================================================
