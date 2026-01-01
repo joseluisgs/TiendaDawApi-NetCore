@@ -82,8 +82,9 @@ public class TiendaDbContext : DbContext
 
     private static void SeedData(ModelBuilder modelBuilder)
     {
-        // Seed admin user (password: Admin123!)
+        // Seed users
         modelBuilder.Entity<User>().HasData(
+            // Admin user (password: Admin123!)
             new User
             {
                 Id = 1,
@@ -92,6 +93,19 @@ public class TiendaDbContext : DbContext
                 // BCrypt hash of "Admin123!" - in production use proper hashing
                 PasswordHash = "$2a$11$vHqmFyFyRqKtaVJEz0XqFeI/xlPNGOKJbBYGzN0PqnQZQqZm3LzYy",
                 Role = UserRoles.ADMIN,
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // Regular user (password: User123!)
+            new User
+            {
+                Id = 2,
+                Username = "userdaw",
+                Email = "userdaw@tienda.com",
+                // BCrypt hash of "User123!" with workFactor 11
+                PasswordHash = "$2a$11$y6x2PMrc.RgbGfXM.UVMReFNNQs6YnmsdAm2S3ieRo/FlWb86gLsi",
+                Role = UserRoles.USER,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
