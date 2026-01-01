@@ -4,9 +4,21 @@ using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Common;
 using TiendaApi.Models.DTOs;
 using TiendaApi.Services.Pedidos;
-using TiendaApi.WebSockets;
 
 namespace TiendaApi.Controllers;
+
+/*
+ * CONTROLADOR LIMPIO - SIN LÓGICA DE NEGOCIO
+ * 
+ * Este controller solo:
+ * ✅ Extrae el userId del token JWT
+ * ✅ Llama al servicio
+ * ✅ Convierte Result a HTTP response
+ * 
+ * ❌ NO tiene lógica de WebSockets (está en PedidosService)
+ * ❌ NO tiene lógica de Email (está en PedidosService)
+ * ❌ NO tiene validaciones (está en PedidosService)
+ */
 
 /// <summary>
 /// Controller for Pedidos using Result Pattern
@@ -19,16 +31,13 @@ public class PedidosController : ControllerBase
 {
     private readonly IPedidosService _service;
     private readonly ILogger<PedidosController> _logger;
-    private readonly PedidoWebSocketHandler _webSocketHandler;
 
     public PedidosController(
         IPedidosService service, 
-        ILogger<PedidosController> logger,
-        PedidoWebSocketHandler webSocketHandler)
+        ILogger<PedidosController> logger)
     {
         _service = service;
         _logger = logger;
-        _webSocketHandler = webSocketHandler;
     }
 
     /// <summary>
@@ -57,21 +66,6 @@ public class PedidosController : ControllerBase
         if (resultado.IsSuccess)
         {
             var pedido = resultado.Value;
-            
-            // Send WebSocket notification (fire-and-forget)
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await _webSocketHandler.NotifyPedidoCreatedAsync(pedido.Id, pedido.UserId, pedido);
-                    _logger.LogDebug("WebSocket notification sent for pedido creation: {PedidoId}", pedido.Id);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to send WebSocket notification for pedido creation");
-                }
-            });
-            
             return CreatedAtAction(nameof(GetPedidoById), new { id = pedido.Id }, pedido);
         }
 
@@ -176,25 +170,6 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> UpdatePedidoEstado(string id, [FromBody] UpdateEstadoDto dto)
     {
         var resultado = await _service.UpdateEstadoAsync(id, dto.Estado);
-
-        if (resultado.IsSuccess)
-        {
-            var pedido = resultado.Value;
-            
-            // Send WebSocket notification (fire-and-forget)
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await _webSocketHandler.NotifyPedidoEstadoUpdatedAsync(pedido.Id, pedido.UserId, pedido.Estado, pedido);
-                    _logger.LogDebug("WebSocket notification sent for pedido estado update: {PedidoId}", pedido.Id);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to send WebSocket notification for pedido estado update");
-                }
-            });
-        }
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),

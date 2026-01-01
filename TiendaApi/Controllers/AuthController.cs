@@ -1,11 +1,36 @@
 using Microsoft.AspNetCore.Mvc;
+using TiendaApi.Common;
 using TiendaApi.Models.DTOs;
-using TiendaApi.Models.Entities;
-using TiendaApi.Repositories;
 using TiendaApi.Services.Auth;
-using BCrypt.Net;
 
 namespace TiendaApi.Controllers;
+
+/*
+ * CONTROLADOR LIMPIO - SIN LÓGICA DE NEGOCIO
+ * 
+ * Este controller solo se encarga de:
+ * ✅ Recibir las peticiones HTTP
+ * ✅ Delegar toda la lógica de negocio al AuthService
+ * ✅ Convertir Result<T, AppError> a respuestas HTTP usando Match()
+ * 
+ * ❌ NO tiene validaciones (están en AuthService)
+ * ❌ NO tiene lógica de BCrypt (está en AuthService)
+ * ❌ NO accede a repositorios directamente (usa AuthService)
+ * ❌ NO tiene verificación de duplicados (está en AuthService)
+ * 
+ * COMPARACIÓN CON JAVA/SPRING BOOT:
+ * - Spring: Controller → Service → Repository
+ * - Este patrón: Controller → Service → Repository (igual)
+ * - Diferencia: Usamos Result Pattern en lugar de excepciones
+ * - Spring: @ExceptionHandler maneja excepciones
+ * - Aquí: Match() convierte Result a HTTP status codes
+ * 
+ * VENTAJAS:
+ * - Controller delgado y fácil de mantener
+ * - Lógica de negocio reutilizable (AuthService puede usarse desde GraphQL, gRPC, etc.)
+ * - Testeo más fácil (solo testeamos conversión HTTP)
+ * - Separación de responsabilidades clara
+ */
 
 /// <summary>
 /// Authentication controller for user signup and signin
@@ -16,23 +41,26 @@ namespace TiendaApi.Controllers;
 [Produces("application/json")]
 public class AuthController : ControllerBase
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IJwtService _jwtService;
+    private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
-        IUserRepository userRepository,
-        IJwtService jwtService,
+        IAuthService authService,
         ILogger<AuthController> logger)
     {
-        _userRepository = userRepository;
-        _jwtService = jwtService;
+        _authService = authService;
         _logger = logger;
     }
 
     /// <summary>
     /// Register a new user
     /// POST /v1/auth/signup
+    /// 
+    /// Railway Oriented Programming:
+    /// 1. Llama al servicio (una sola línea)
+    /// 2. El servicio retorna Result<AuthResponseDto, AppError>
+    /// 3. Usa Match() para convertir a HTTP response
+    /// 4. Switch expression mapea ErrorType a HTTP status codes
     /// </summary>
     [HttpPost("signup")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
@@ -40,133 +68,43 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> SignUp([FromBody] RegisterDto dto)
     {
-        // Sanitize username for logging to prevent log forging
-        var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
-        _logger.LogInformation("Signup request for username: {Username}", sanitizedUsername);
-
-        // Validate input
-        if (string.IsNullOrWhiteSpace(dto.Username) || dto.Username.Length < 3)
-        {
-            return BadRequest(new { message = "Username must be at least 3 characters" });
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Email) || !dto.Email.Contains('@'))
-        {
-            return BadRequest(new { message = "Valid email is required" });
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
-        {
-            return BadRequest(new { message = "Password must be at least 6 characters" });
-        }
-
-        // Check if username already exists
-        var existingUser = await _userRepository.FindByUsernameAsync(dto.Username);
-        if (existingUser != null)
-        {
-            return Conflict(new { message = "Username already exists" });
-        }
-
-        // Check if email already exists
-        var existingEmail = await _userRepository.FindByEmailAsync(dto.Email);
-        if (existingEmail != null)
-        {
-            return Conflict(new { message = "Email already exists" });
-        }
-
-        // Hash password using BCrypt
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
-
-        // Create new user
-        var user = new User
-        {
-            Username = dto.Username,
-            Email = dto.Email,
-            PasswordHash = passwordHash,
-            Role = UserRoles.USER, // Default role
-            IsDeleted = false
-        };
-
-        var savedUser = await _userRepository.SaveAsync(user);
-
-        // Generate JWT token
-        var token = _jwtService.GenerateToken(savedUser);
-
-        var userDto = new UserDto
-        {
-            Id = savedUser.Id,
-            Username = savedUser.Username,
-            Email = savedUser.Email,
-            Role = savedUser.Role,
-            CreatedAt = savedUser.CreatedAt
-        };
-
-        var response = new AuthResponseDto
-        {
-            Token = token,
-            User = userDto
-        };
-
-        _logger.LogInformation("User registered successfully: {Username}", sanitizedUsername);
-
-        return CreatedAtAction(nameof(SignUp), response);
+        var resultado = await _authService.SignUpAsync(dto);
+        
+        return resultado.Match(
+            onSuccess: response => CreatedAtAction(nameof(SignUp), response),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.Validation => BadRequest(new { message = error.Message }),
+                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
     }
 
     /// <summary>
     /// Authenticate user and return JWT token
     /// POST /v1/auth/signin
+    /// 
+    /// Railway Oriented Programming:
+    /// 1. Llama al servicio (una sola línea)
+    /// 2. El servicio retorna Result<AuthResponseDto, AppError>
+    /// 3. Usa Match() para convertir a HTTP response
     /// </summary>
     [HttpPost("signin")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SignIn([FromBody] LoginDto dto)
     {
-        // Sanitize username for logging to prevent log forging
-        var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
-        _logger.LogInformation("Signin request for username: {Username}", sanitizedUsername);
-
-        // Find user by username
-        if (string.IsNullOrWhiteSpace(dto.Username))
-        {
-            _logger.LogWarning("Signin failed: Username cannot be null or empty");
-            return Unauthorized(new { message = "Invalid username or password" });
-        }
+        var resultado = await _authService.SignInAsync(dto);
         
-        var user = await _userRepository.FindByUsernameAsync(dto.Username);
-        if (user == null)
-        {
-            _logger.LogWarning("Signin failed: User not found - {Username}", sanitizedUsername);
-            return Unauthorized(new { message = "Invalid username or password" });
-        }
-
-        // Verify password
-        var passwordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
-        if (!passwordValid)
-        {
-            _logger.LogWarning("Signin failed: Invalid password - {Username}", sanitizedUsername);
-            return Unauthorized(new { message = "Invalid username or password" });
-        }
-
-        // Generate JWT token
-        var token = _jwtService.GenerateToken(user);
-
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role,
-            CreatedAt = user.CreatedAt
-        };
-
-        var response = new AuthResponseDto
-        {
-            Token = token,
-            User = userDto
-        };
-
-        _logger.LogInformation("User signed in successfully: {Username}", sanitizedUsername);
-
-        return Ok(response);
+        return resultado.Match(
+            onSuccess: response => Ok(response),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
+                ErrorType.Validation => BadRequest(new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
     }
 }

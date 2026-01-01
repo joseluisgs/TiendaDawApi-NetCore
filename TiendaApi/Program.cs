@@ -16,6 +16,7 @@ using TiendaApi.Services.Auth;
 using TiendaApi.Services.Cache;
 using TiendaApi.Services.Email;
 using TiendaApi.Services.Pedidos;
+using TiendaApi.Services.Users;
 using TiendaApi.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -75,9 +76,10 @@ builder.Services.AddScoped<CategoriaService>();
 builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<IPedidosService, PedidosService>();
 
-// Authentication Services
+// Auth and User Services with Result Pattern
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Cache Service (Redis)
 builder.Services.AddStackExchangeRedisCache(options =>

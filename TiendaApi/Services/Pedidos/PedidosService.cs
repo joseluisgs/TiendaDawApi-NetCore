@@ -5,6 +5,7 @@ using TiendaApi.Models.Entities;
 using TiendaApi.Repositories;
 using TiendaApi.Services.Cache;
 using TiendaApi.Services.Email;
+using TiendaApi.WebSockets;
 
 namespace TiendaApi.Services.Pedidos;
 
@@ -21,6 +22,7 @@ public class PedidosService : IPedidosService
     private readonly ICacheService _cacheService;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
+    private readonly PedidoWebSocketHandler _webSocketHandler;
 
     public PedidosService(
         IPedidosRepository pedidosRepository,
@@ -29,7 +31,8 @@ public class PedidosService : IPedidosService
         ILogger<PedidosService> logger,
         ICacheService cacheService,
         IEmailService emailService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        PedidoWebSocketHandler webSocketHandler)
     {
         _pedidosRepository = pedidosRepository;
         _productoRepository = productoRepository;
@@ -38,6 +41,7 @@ public class PedidosService : IPedidosService
         _cacheService = cacheService;
         _emailService = emailService;
         _configuration = configuration;
+        _webSocketHandler = webSocketHandler;
     }
 
     public async Task<Result<IEnumerable<PedidoDto>, AppError>> FindAllAsync()
@@ -267,6 +271,12 @@ public class PedidosService : IPedidosService
                 }
             });
             
+            // Notificar via WebSocket (side-effect - no debe fallar la operación)
+            if (!string.IsNullOrEmpty(savedPedido.Id))
+            {
+                await NotificarWebSocketPedidoCreado(savedPedido.Id, userId, resultDto);
+            }
+            
             return Result<PedidoDto, AppError>.Success(resultDto);
         }
         catch (Exception ex)
@@ -378,4 +388,25 @@ public class PedidosService : IPedidosService
         
         return Result<PedidoDto, AppError>.Success(resultDto);
     }
+
+    #region Private Helper Methods
+
+    /// <summary>
+    /// Notifica via WebSocket la creación de un pedido
+    /// Side-effect que NO debe fallar la operación principal
+    /// </summary>
+    private async Task NotificarWebSocketPedidoCreado(string pedidoId, long userId, PedidoDto pedido)
+    {
+        try
+        {
+            await _webSocketHandler.NotifyPedidoCreatedAsync(pedidoId, userId, pedido);
+            _logger.LogDebug("WebSocket notification sent for pedido: {PedidoId}", pedidoId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed WebSocket notification for pedido: {PedidoId}", pedidoId);
+        }
+    }
+
+    #endregion
 }

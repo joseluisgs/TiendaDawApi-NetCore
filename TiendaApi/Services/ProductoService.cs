@@ -200,19 +200,8 @@ public class ProductoService
             }
         });
         
-        // Send WebSocket notification (fire-and-forget)
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await _webSocketHandler.NotifyProductoCreatedAsync(saved.Id, saved.Nombre, resultDto);
-                _logger.LogDebug("WebSocket notification sent for producto creation");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to send WebSocket notification for producto creation");
-            }
-        });
+        // Notificar via WebSocket (side-effect)
+        await NotificarWebSocketProductoCreado(saved.Id, saved.Nombre);
         
         // Queue email notification (fire-and-forget)
         _ = Task.Run(async () =>
@@ -303,19 +292,8 @@ public class ProductoService
             }
         });
         
-        // Send WebSocket notification (fire-and-forget)
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await _webSocketHandler.NotifyProductoUpdatedAsync(updated.Id, updated.Nombre, resultDto);
-                _logger.LogDebug("WebSocket notification sent for producto update");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to send WebSocket notification for producto update");
-            }
-        });
+        // Notificar via WebSocket (side-effect)
+        await NotificarWebSocketProductoActualizado(updated.Id, updated.Nombre);
         
         return Result<ProductoDto, AppError>.Success(resultDto);
     }
@@ -358,22 +336,66 @@ public class ProductoService
             }
         });
         
-        // Send WebSocket notification (fire-and-forget)
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await _webSocketHandler.NotifyProductoDeletedAsync(id, productoNombre);
-                _logger.LogDebug("WebSocket notification sent for producto deletion");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to send WebSocket notification for producto deletion");
-            }
-        });
+        // Notificar via WebSocket (side-effect)
+        await NotificarWebSocketProductoEliminado(id, productoNombre);
         
         return Result<AppError>.Success();
     }
+
+    #region Private Helper Methods
+
+    /// <summary>
+    /// Notifica via WebSocket la creación de un producto
+    /// Side-effect que NO debe fallar la operación principal
+    /// </summary>
+    private async Task NotificarWebSocketProductoCreado(long productoId, string productoNombre)
+    {
+        try
+        {
+            await _webSocketHandler.NotifyProductoCreatedAsync(productoId, productoNombre);
+            _logger.LogDebug("WebSocket notification sent for producto creation: {ProductoId}", productoId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed WebSocket notification for producto: {ProductoId}", productoId);
+        }
+    }
+
+    /// <summary>
+    /// Notifica via WebSocket la actualización de un producto
+    /// Side-effect que NO debe fallar la operación principal
+    /// </summary>
+    private async Task NotificarWebSocketProductoActualizado(long productoId, string productoNombre)
+    {
+        try
+        {
+            await _webSocketHandler.NotifyProductoUpdatedAsync(productoId, productoNombre);
+            _logger.LogDebug("WebSocket notification sent for producto update: {ProductoId}", productoId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed WebSocket notification for producto update: {ProductoId}", productoId);
+        }
+    }
+
+    /// <summary>
+    /// Notifica via WebSocket la eliminación de un producto
+    /// Side-effect que NO debe fallar la operación principal
+    /// </summary>
+    private async Task NotificarWebSocketProductoEliminado(long productoId, string productoNombre)
+    {
+        try
+        {
+            await _webSocketHandler.NotifyProductoDeletedAsync(productoId, productoNombre);
+            _logger.LogDebug("WebSocket notification sent for producto deletion: {ProductoId}", productoId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed WebSocket notification for producto deletion: {ProductoId}", productoId);
+        }
+    }
+
+    #endregion
 
     /// <summary>
     /// Validation method using Result Pattern
