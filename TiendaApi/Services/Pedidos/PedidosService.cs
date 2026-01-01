@@ -271,10 +271,11 @@ public class PedidosService : IPedidosService
                 }
             });
             
-            // Notificar via WebSocket (side-effect - no debe fallar la operación)
+            // Notificar via WebSocket (side-effect - fire-and-forget)
             if (!string.IsNullOrEmpty(savedPedido.Id))
             {
-                await NotificarWebSocketPedidoCreado(savedPedido.Id, userId, resultDto);
+                var pedidoId = savedPedido.Id;
+                _ = Task.Run(() => NotificarWebSocketPedidoCreado(pedidoId, userId, resultDto));
             }
             
             return Result<PedidoDto, AppError>.Success(resultDto);
