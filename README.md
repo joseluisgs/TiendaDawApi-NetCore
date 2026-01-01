@@ -2,6 +2,36 @@
 Proyecto de una API REST usando .NET Core y ASP.NET Core con C#.
 - [TiendaApiDaw-NetCore](#tiendaapidaw-netcore)
 - [Proyecto](#proyecto)
+  - [🚀 Inicio Rápido](#-inicio-rápido)
+    - [Requisitos Previos](#requisitos-previos)
+    - [Instalación y Ejecución](#instalación-y-ejecución)
+    - [Comandos Docker Útiles](#comandos-docker-útiles)
+    - [Comandos de Desarrollo](#comandos-de-desarrollo)
+  - [🔐 Credenciales de Prueba](#-credenciales-de-prueba)
+    - [Usuario Administrador](#usuario-administrador)
+    - [Usuario Normal](#usuario-normal)
+    - [Autenticación JWT](#autenticación-jwt)
+  - [📮 Guía de Uso con Postman](#-guía-de-uso-con-postman)
+    - [Importar la Colección](#importar-la-colección)
+    - [Configuración Inicial](#configuración-inicial)
+    - [Flujo de Trabajo Recomendado](#flujo-de-trabajo-recomendado)
+    - [Scripts Automáticos](#scripts-automáticos)
+  - [🎯 Conceptos Clave para Estudiantes 2DAW](#-conceptos-clave-para-estudiantes-2daw)
+    - [Railway Oriented Programming (ROP)](#railway-oriented-programming-rop)
+      - [Características de ROP:](#características-de-rop)
+      - [Implementación en este Proyecto:](#implementación-en-este-proyecto)
+      - [¿Cuándo usar cada enfoque?](#cuándo-usar-cada-enfoque)
+    - [Patrones de Arquitectura Implementados](#patrones-de-arquitectura-implementados)
+      - [1. **Repository Pattern**](#1-repository-pattern)
+      - [2. **Dependency Injection**](#2-dependency-injection)
+      - [3. **DTO Pattern**](#3-dto-pattern)
+      - [4. **Middleware Pipeline**](#4-middleware-pipeline)
+    - [Características Runtime Avanzadas](#características-runtime-avanzadas)
+      - [🔴 Redis Cache (Cache-Aside Pattern)](#-redis-cache-cache-aside-pattern)
+      - [🔌 WebSocket (Notificaciones en Tiempo Real)](#-websocket-notificaciones-en-tiempo-real)
+      - [📧 Email Asíncrono (Background Workers)](#-email-asíncrono-background-workers)
+      - [🗄️ Múltiples Bases de Datos](#️-múltiples-bases-de-datos)
+    - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Problema](#problema)
   - [Elementos del dominio](#elementos-del-dominio)
   - [Diagrama](#diagrama)
@@ -386,21 +416,6 @@ TiendaApi.Tests/              # Pruebas unitarias e integración
 └── Repositories/            # Tests de repositorios
 ```
 
-### Comparación con Java/Spring Boot
-
-Para estudiantes que vienen de Java:
-
-| Concepto | Java/Spring Boot | C#/ASP.NET Core |
-|----------|------------------|-----------------|
-| Anotaciones | `@RestController`, `@Service` | Atributos `[ApiController]`, inyección en constructor |
-| Inyección de dependencias | `@Autowired` | Constructor injection (recomendado) |
-| Configuración | `application.properties` | `appsettings.json` |
-| ORM | JPA/Hibernate | Entity Framework Core |
-| Validaciones | `@Valid`, Bean Validation | FluentValidation o Data Annotations |
-| Manejo de errores | `@ExceptionHandler`, `@ControllerAdvice` | Middleware + Result Pattern |
-| DTOs | Clases POJO | Records (C# 9+) |
-| Async | `CompletableFuture<T>` | `async`/`await` con `Task<T>` |
-
 # Problema
 Vamos a crear una API REST y página web de una tienda de productos
 - Tenemos una serie de productos con sus atributos
@@ -437,6 +452,54 @@ Entidad: Role
 
 ## Diagrama
 Role * <----- * Usuario 1 ----- * Pedido 1 -----> * Línea de Pedido * -----> 1 Producto * ----- Categoría
+
+```mermaid
+classDiagram
+    class Usuario {
+        +int ID_Usuario
+        +String Nombre
+        +String Direccion
+        +String Tipo
+    }
+
+    class Role {
+        +int ID_Role
+        +String Nombre
+    }
+
+    class Pedido {
+        +BSON_ID ID_Pedido
+        +DateTime Fecha
+        +double Total
+        +Object Cliente_Embebido
+    }
+
+    class LineaPedido {
+        +int ID_Linea
+        +int Cantidad
+        +double Subtotal
+    }
+
+    class Producto {
+        +int ID_Producto
+        +String Nombre
+        +double Precio
+        +String Imagen
+    }
+
+    class Categoria {
+        +UUID ID_Categoria
+        +String Nombre
+    }
+
+    %% Relaciones
+    Usuario "*" o-- "*" Role : tiene
+    Usuario "1" -- "*" Pedido : realiza
+    Pedido "1" *-- "*" LineaPedido : compuesto por (embebido)
+    LineaPedido "*" -- "1" Producto : referencia
+    Producto "*" -- "1" Categoria : pertenece
+
+```
 
 ## Bases de datos:
 Se analizará ventajas e inconvenientes para gestionar la información y alternativas.
