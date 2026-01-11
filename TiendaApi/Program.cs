@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using TiendaApi.Data;
 using TiendaApi.GraphQL;
 using TiendaApi.GraphQL.Types;
@@ -25,15 +28,30 @@ using TiendaApi.Services.Users;
 using TiendaApi.WebSockets.Pedidos;
 using TiendaApi.WebSockets.Productos;
 
+// Configuración de Serilog: Logger visual y potente
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+        theme: AnsiConsoleTheme.Code)
+    .CreateLogger();
+
 var builder = WebApplication.CreateBuilder(args);
 
+// Usar Serilog para logging
+builder.Host.UseSerilog();
+
+Log.Information("🚀 Inicializando TiendaApi...");
+
 // ============================================================================
-// CONFIGURACIÓN DE LA APLICACIÓN
+// 🔧 CONFIGURACIÓN DE SERVICIOS
 // ============================================================================
 
-// Añadimos soporte para controladores MVC con negociación de contenido.
-// Esto permite que la API devuelva diferentes formatos (JSON, XML) según
-// lo que solicite el cliente (header Accept).
+// Controladores MVC con negociación de contenido (JSON/XML)
+Log.Information("📦 Configurando controladores MVC...");
 builder.Services.AddControllers(options =>
 {
     options.RespectBrowserAcceptHeader = true;
@@ -42,58 +60,24 @@ builder.Services.AddControllers(options =>
 .AddXmlSerializerFormatters()
 .AddXmlDataContractSerializerFormatters();
 
-// Configuración de Swagger/OpenAPI para documentación interactiva de la API.
-// Swagger proporciona una interfaz web para explorar y probar los endpoints.
+// Documentación Swagger/OpenAPI
+Log.Information("📖 Configurando Swagger/OpenAPI...");
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     { 
-        Title = "TiendaApi - API REST con Doble Enfoque de Manejo de Errores",
+        Title = "TiendaApi - API REST Educativa",
         Version = "v1",
-        Description = @"API REST educativa que demuestra DOS enfoques diferentes 
-de manejo de errores en el desarrollo de software:
-        
-**Categorías**: Enfoque Tradicional con Excepciones (método clásico)
-**Productos**: Patrón Result Moderno (programación funcional)
-        
-Esta API permite comparar ambos enfoques para entender cuándo usar cada uno.
+        Description = @"API REST educativa con dos enfoques de manejo de errores:
 
-## 🔐 Autenticación
+**Categorías**: Enfoque Tradicional con Excepciones
+**Productos**: Patrón Result Moderno (Programación Funcional)
 
-Esta API utiliza **JWT (JSON Web Tokens)** para la autenticación.
-
-### Pasos para autenticarse:
-
-1. **Registrar un usuario**: `POST /v1/auth/signup`
-2. **Iniciar sesión**: `POST /v1/auth/signin` → Recibirás un token JWT
-3. **Usar el token**: Haz clic en el botón 🔒 **Authorize** arriba
-4. **Introduce el token** en el campo que aparece (sin 'Bearer')
-5. Todos los endpoints protegidos ahora funcionarán automáticamente
-
-## 📚 Credenciales de prueba
-
-- **Usuario Admin**: 
-  - Email: `admin@tienda.com`
-  - Password: `Admin123`
-
-- **Usuario Normal**: 
-  - Email: `user@tienda.com`
-  - Password: `User123`
-
-## 🎯 Conceptos Clave
-
-### Programación Orientada al Resultado (ROP)
-Los endpoints de **Productos** usan el patrón Result<T, E>:
-- ✅ Camino feliz: Operación exitosa devuelve Result.Success
-- ❌ Camino de error: Fallo devuelve Result.Failure con detalles
-- 🔗 Los errores fluyen automáticamente sin necesidad de try/catch
-
-### Comparación de enfoques:
-- **Categorías** (tradicional): Lanza excepciones, GlobalExceptionHandler las captura
-- **Productos** (moderno): Sin excepciones, pattern matching con Result<T,E>
-
-Explora ambos para entender las ventajas de cada enfoque! 🚀",
+🔐 Autenticación JWT:
+1. POST /v1/auth/signup → Registrar usuario
+2. POST /v1/auth/signin → Obtener token JWT
+3. Usar token en header Authorization: Bearer <token>",
         Contact = new OpenApiContact
         {
             Name = "José Luis González Sánchez",
@@ -107,7 +91,7 @@ Explora ambos para entender las ventajas de cada enfoque! 🚀",
         }
     });
 
-    // Configuración del esquema de seguridad JWT para Swagger.
+    // Configuración JWT Bearer para Swagger
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -115,18 +99,7 @@ Explora ambos para entender las ventajas de cada enfoque! 🚀",
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = @"Autenticación JWT usando el esquema Bearer.
-
-**Introduce solo el token JWT** (sin la palabra 'Bearer').
-
-Ejemplo: Si tu token es `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-Simplemente pega ese valor aquí.
-
-Pasos:
-1. Obtén tu token llamando a POST /v1/auth/signin
-2. Haz clic en el botón 🔒 Authorize arriba
-3. Pega el token JWT en el campo 'Value'
-4. Haz clic en Authorize"
+        Description = "Introduce solo el token JWT (sin 'Bearer')"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -144,7 +117,7 @@ Pasos:
         }
     });
 
-    // Incluir comentarios XML en la documentación de Swagger.
+    // Incluir comentarios XML en Swagger
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -154,43 +127,40 @@ Pasos:
 });
 
 // ============================================================================
-// CONFIGURACIÓN DE BASE DE DATOS
+// 🗄️ CONFIGURACIÓN DE BASE DE DATOS
 // ============================================================================
 
-// Configuración de PostgreSQL con Entity Framework Core.
-// La cadena de conexión se lee del archivo de configuración (appsettings.json).
+Log.Information("🗄️ Configurando base de datos PostgreSQL...");
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? "Host=localhost;Database=tienda;Username=admin;Password=admin123";
 
-// Registro del DbContext con soporte para PostgreSQL.
-// UseNpgsql es el proveedor específico para PostgreSQL.
+Log.Debug("🔗 Cadena de conexión: {ConnectionString}", connectionString.Split(';')[0] + "...");
+
 builder.Services.AddDbContext<TiendaDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // ============================================================================
-// INYECCIÓN DE DEPENDENCIAS
+// 📦 INYECCIÓN DE DEPENDENCIAS
 // ============================================================================
 
-// Registramos los repositorios como serviciosScoped (una instancia por solicitud).
-// Los repositorios encapsulan el acceso a datos y proporcionan abstracción.
+Log.Information("📦 Registrando repositorios...");
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPedidosRepository, PedidosRepository>();
 
-// Registramos los servicios de dominio.
-// Los servicios contienen la lógica de negocio y usan los repositorios.
+Log.Information("⚙️ Registrando servicios...");
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IPedidosService, PedidosService>();
 
-// Servicios de autenticación y gestión de usuarios.
+Log.Information("🔐 Registrando servicios de autenticación...");
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Servicio de caché distribuida con Redis.
-// Redis almacena datos en memoria para acceso rápido.
+// Caché Redis
+Log.Information("💾 Configurando caché Redis...");
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
@@ -199,36 +169,41 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
-// Servicio de correo electrónico con procesamiento en segundo plano.
-// Channel<T> permite comunicación asíncrona entre productores y consumidores.
+// Email asíncrono
+Log.Information("📧 Configurando servicio de email...");
 builder.Services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 builder.Services.AddScoped<IEmailService, MailKitEmailService>();
 builder.Services.AddHostedService<EmailBackgroundService>();
 
-// Handlers de WebSocket para notificaciones en tiempo real.
+// WebSockets
+Log.Information("🔌 Registrando handlers de WebSocket...");
 builder.Services.AddSingleton<ProductoWebSocketHandler>();
 builder.Services.AddSingleton<PedidoWebSocketHandler>();
 
-// Servicios de GraphQL para consultas dinámicas.
+// GraphQL
+Log.Information("🔍 Configurando GraphQL...");
 builder.Services.AddScoped<IDocumentExecuter, DocumentExecuter>();
 builder.Services.AddScoped<ISchema, TiendaSchema>();
 builder.Services.AddScoped<TiendaQuery>();
 builder.Services.AddScoped<ProductoType>();
 builder.Services.AddScoped<CategoriaType>();
 
-// Configuración de AutoMapper para mapeo automático entre entidades y DTOs.
+// AutoMapper
+Log.Information("🔄 Configurando AutoMapper...");
 builder.Services.AddAutoMapper(typeof(MappingProfile), typeof(PedidoProfile));
 
 // ============================================================================
-// AUTENTICACIÓN Y AUTORIZACIÓN
+// 🔐 AUTENTICACIÓN Y AUTORIZACIÓN
 // ============================================================================
 
-// Configuración de autenticación JWT (JSON Web Tokens).
-// JWT es un estándar para crear tokens de acceso seguros.
+Log.Information("🔐 Configurando autenticación JWT...");
 var jwtKey = builder.Configuration["Jwt:Key"] 
-    ?? throw new InvalidOperationException("JWT Key not configured");
+    ?? throw new InvalidOperationException("JWT Key no configurada");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "TiendaApi";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "TiendaApi";
+
+Log.Debug("🔑 JWT Issuer: {Issuer}", jwtIssuer);
+Log.Debug("🎯 JWT Audience: {Audience}", jwtAudience);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -250,17 +225,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Definición de políticas de autorización basadas en roles.
+Log.Information("🛡️ Configurando políticas de autorización...");
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("RequireAdminRole", policy => policy.RequireRole("ADMIN"))
     .AddPolicy("RequireUserRole", policy => policy.RequireRole("USER", "ADMIN"));
 
 // ============================================================================
-// CONFIGURACIÓN CORS (Cross-Origin Resource Sharing)
+// 🌐 CONFIGURACIÓN CORS
 // ============================================================================
 
-// CORS permite que aplicaciones frontend desde dominios diferentes
-// puedan acceder a esta API.
+Log.Information("🌐 Configurando CORS...");
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -272,27 +246,31 @@ builder.Services.AddCors(options =>
 });
 
 // ============================================================================
-// CONSTRUCCIÓN DE LA APLICACIÓN
+// 🚀 CONSTRUCCIÓN DE LA APLICACIÓN
 // ============================================================================
+
 var app = builder.Build();
 
+Log.Information("✅ Aplicación construida");
+
 // ============================================================================
-// PIPELINE DE MIDDLEWARE
+// 📍 PIPELINE DE MIDDLEWARE
 // ============================================================================
 
-// Middleware de Swagger: solo disponible en desarrollo.
+// Swagger UI (solo en desarrollo)
 if (app.Environment.IsDevelopment())
 {
+    Log.Information("📖 Habilitando Swagger UI...");
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "TiendaApi v1");
-        options.RoutePrefix = string.Empty; // Swagger en la URL raíz
+        options.RoutePrefix = string.Empty;
     });
 }
 
-// Interfaz GraphiQL para probar consultas GraphQL.
-// Accesible en /graphiql
+// GraphiQL UI
+Log.Information("🔍 Configurando GraphiQL UI...");
 app.MapGet("/graphiql", async context =>
 {
     context.Response.ContentType = "text/html";
@@ -316,27 +294,33 @@ app.MapGet("/graphiql", async context =>
         );
     </script>
 </body>
-</html>
-");
+</html>");
 });
 
-// Middleware global para manejo de excepciones.
-// Captura excepciones no controladas y las convierte en respuestas HTTP apropiadas.
+// Manejador global de excepciones
+Log.Information("🚨 Configurando manejador global de excepciones...");
 app.UseGlobalExceptionHandler();
 
+// Redirección HTTPS
+Log.Information("🔒 Configurando redirección HTTPS...");
 app.UseHttpsRedirection();
 
-// Middleware de CORS.
+// CORS
+Log.Information("🌐 Aplicando política CORS...");
 app.UseCors("AllowAll");
 
-// Middleware de autenticación y autorización.
+// Autenticación y Autorización
+Log.Information("🔐 Aplicando middleware de autenticación...");
 app.UseAuthentication();
+Log.Information("🛡️ Aplicando middleware de autorización...");
 app.UseAuthorization();
 
-// Soporte para conexiones WebSocket.
+// WebSockets
+Log.Information("🔌 Habilitando WebSockets...");
 app.UseWebSockets();
 
-// Endpoint WebSocket para notificaciones de productos.
+// Endpoints WebSocket
+Log.Information("📡 Configurando endpoint WebSocket: /ws/v1/productos");
 app.Map("/ws/v1/productos", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
@@ -351,7 +335,7 @@ app.Map("/ws/v1/productos", async context =>
     }
 });
 
-// Endpoint WebSocket para notificaciones de pedidos.
+Log.Information("📡 Configurando endpoint WebSocket: /ws/v1/pedidos");
 app.Map("/ws/v1/pedidos", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
@@ -366,14 +350,15 @@ app.Map("/ws/v1/pedidos", async context =>
     }
 });
 
-// Mapeo automático de controladores.
+// Controladores
+Log.Information("🎯 Mapeando controladores...");
 app.MapControllers();
 
 // ============================================================================
-// INICIALIZACIÓN DE BASE DE DATOS
+// 🗄️ INICIALIZACIÓN DE BASE DE DATOS
 // ============================================================================
 
-// Aplicamos migraciones y sembramos datos iniciales al iniciar.
+Log.Information("🗄️ Inicializando base de datos...");
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -381,25 +366,54 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<TiendaDbContext>();
         
-        // Crear la base de datos si no existe.
+        Log.Information("📋 Verificando/creando esquema de base de datos...");
         context.Database.EnsureCreated();
-        
-        // O aplicar migraciones pendientes (usar en producción).
-        // context.Database.Migrate();
-        
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("Base de datos inicializada");
+        Log.Information("✅ Base de datos inicializada correctamente");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Error al inicializar la base de datos");
+        logger.LogError(ex, "❌ Error al inicializar la base de datos");
     }
 }
 
 // ============================================================================
-// INICIO DE LA APLICACIÓN
+// 🎯 INFORMACIÓN DE ACCESO
 // ============================================================================
 
+var urls = builder.Configuration["ASPNETCORE_URLS"]?.Split(';') ?? new[] { "http://localhost:5000" };
+var port = urls.FirstOrDefault()?.Split(':').LastOrDefault() ?? "5000";
 
-app.Run();
+Log.Information("╔═══════════════════════════════════════════════════════════════════");
+Log.Information("║              🏬 TiendaApi - API REST Educativa                    ║");
+Log.Information("╠═══════════════════════════════════════════════════════════════════");
+Log.Information("║  📖 Documentación Swagger:  http://localhost:{Port}/              ║", port);
+Log.Information("║  🔍 GraphiQL UI:             http://localhost:{Port}/graphiql    ║", port);
+Log.Information("║  🔌 WebSocket Productos:    ws://localhost:{Port}/ws/v1/productos ║", port);
+Log.Information("║  🔌 WebSocket Pedidos:      ws://localhost:{Port}/ws/v1/pedidos   ║", port);
+Log.Information("╠═══════════════════════════════════════════════════════════════════");
+Log.Information("║  🔐 CREDENCIALES DE PRUEBA:                                       ║");
+Log.Information("║     Admin: admin@tienda.com / Admin123                            ║");
+Log.Information("║     User:  user@tienda.com / User123                              ║");
+Log.Information("╠═══════════════════════════════════════════════════════════════════");
+Log.Information("║  📚 ENDPOINTS:                                                    ║");
+Log.Information("║     🔴 Categorías (Excepciones):  GET/POST/PUT/DELETE /api/categorias    ║");
+Log.Information("║     🟢 Productos (Result Pattern): GET/POST/PUT/DELETE /api/productos   ║");
+Log.Information("║     📧 Pedidos:                  GET/POST /api/pedidos                    ║");
+Log.Information("║     🔐 Auth:                     POST /v1/auth/signup/signin              ║");
+Log.Information("╚═══════════════════════════════════════════════════════════════════");
+
+try
+{
+    Log.Information("🚀 Aplicación iniciada correctamente");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "💥 La aplicación falló al iniciar");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
