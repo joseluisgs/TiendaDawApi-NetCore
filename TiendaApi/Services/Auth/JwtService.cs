@@ -7,9 +7,8 @@ using TiendaApi.Models;
 namespace TiendaApi.Services.Auth;
 
 /// <summary>
-/// JWT Service implementation for token generation and validation
-/// Java Spring Security equivalent: JwtTokenProvider implementation
-/// Uses symmetric key from configuration (appsettings.json)
+/// Implementación del servicio JWT.
+/// Usa clave simétrica configurada en appsettings.json.
 /// </summary>
 public class JwtService : IJwtService
 {
@@ -23,8 +22,8 @@ public class JwtService : IJwtService
     }
 
     /// <summary>
-    /// Generate JWT token with user claims
-    /// Token includes: username, email, role, user ID
+    /// Genera un token JWT con los claims del usuario.
+    /// El token incluye: username, email, rol, ID de usuario.
     /// </summary>
     public string GenerateToken(User user)
     {
@@ -56,15 +55,14 @@ public class JwtService : IJwtService
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
         
-        // Note: user.Username comes from database (already validated), not user input
-        _logger.LogInformation("JWT token generated for user: {Username}", user.Username);
+        _logger.LogInformation("Token JWT generado para usuario: {Username}", user.Username);
         
         return tokenString;
     }
 
     /// <summary>
-    /// Validate JWT token and extract username
-    /// Returns null if token is invalid
+    /// Valida un token JWT y extrae el username.
+    /// Retorna null si el token no es válido.
     /// </summary>
     public string? ValidateToken(string token)
     {
@@ -97,7 +95,7 @@ public class JwtService : IJwtService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "JWT token validation failed");
+            _logger.LogWarning(ex, "Validación de token JWT fallida");
             return null;
         }
     }

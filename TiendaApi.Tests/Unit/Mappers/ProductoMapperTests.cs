@@ -6,15 +6,15 @@ using TiendaApi.Models;
 namespace TiendaApi.Tests.Unit.Mappers;
 
 /// <summary>
-/// Comprehensive test suite for ProductoMapper extension methods
-/// Tests all entity-DTO conversions for Producto domain
+/// Tests unitarios para el mapeador de productos.
+/// Prueba todas las conversiones entidad-DTO para el dominio de Producto.
 /// </summary>
 public class ProductoMapperTests
 {
     #region ToDto Tests
 
     [Test]
-    public void ToDto_WithAllFields_ShouldMapCorrectly()
+    public void ToDto_ConTodosLosCampos_MapeaCorrectamente()
     {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
@@ -47,7 +47,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_WithNullCategoria_ShouldReturnEmptyCategoriaNombre()
+    public void ToDto_ConCategoriaNula_RetornaCategoriaNombreVacio()
     {
         // Arrange
         var producto = new Producto
@@ -65,7 +65,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_WithNullCategoriaNombre_ShouldReturnEmpty()
+    public void ToDto_ConCategoriaNombreNulo_RetornaVacio()
     {
         // Arrange
         var producto = new Producto
@@ -83,7 +83,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_WithDecimalPrecios_ShouldMapCorrectly()
+    public void ToDto_ConPreciosDecimales_MapeaCorrectamente()
     {
         // Arrange
         var producto = new Producto
@@ -101,7 +101,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_WithZeroStock_ShouldMapCorrectly()
+    public void ToDto_ConStockCero_MapeaCorrectamente()
     {
         // Arrange
         var producto = new Producto
@@ -119,7 +119,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_WithNullImagen_ShouldMapNull()
+    public void ToDto_ConImagenNula_MapeaNulo()
     {
         // Arrange
         var producto = new Producto
@@ -137,7 +137,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ShouldPreserveTimestamps()
+    public void ToDto_DebePreservarMarcasDeTiempo()
     {
         // Arrange
         var createdAt = new DateTime(2024, 1, 1, 10, 0, 0);
@@ -163,7 +163,7 @@ public class ProductoMapperTests
     #region ToEntity Tests
 
     [Test]
-    public void ToEntity_WithAllFields_ShouldMapCorrectly()
+    public void ToEntity_ConTodosLosCampos_MapeaCorrectamente()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -189,7 +189,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldSetTimestamps()
+    public void ToEntity_DebeEstablecerMarcasDeTiempo()
     {
         // Arrange
         var dto = new ProductoRequestDto { Nombre = "Test" };
@@ -207,7 +207,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToEntity_WithEmptyDescripcion_ShouldMapEmpty()
+    public void ToEntity_ConDescripcionVacia_MapeaVacia()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -224,7 +224,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToEntity_WithZeroPrecio_ShouldMapZero()
+    public void ToEntity_ConPrecioCero_MapeaCero()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -241,7 +241,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToEntity_WithNegativeStock_ShouldMapNegative()
+    public void ToEntity_ConStockNegativo_MapeaNegativo()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -262,7 +262,7 @@ public class ProductoMapperTests
     #region UpdateEntity Tests
 
     [Test]
-    public void UpdateEntity_ShouldUpdateAllFields()
+    public void UpdateEntity_DebeActualizarTodosLosCampos()
     {
         // Arrange
         var producto = new Producto
@@ -296,7 +296,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldUpdateTimestamp()
+    public void UpdateEntity_DebeActualizarMarcaDeTiempo()
     {
         // Arrange
         var oldUpdatedAt = DateTime.UtcNow.AddHours(-5);
@@ -316,7 +316,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldNotModifyId()
+    public void UpdateEntity_NoDebeModificarId()
     {
         // Arrange
         var producto = new Producto { Id = 999, Nombre = "Original" };
@@ -330,7 +330,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldNotModifyCreatedAt()
+    public void UpdateEntity_NoDebeModificarCreatedAt()
     {
         // Arrange
         var originalCreatedAt = new DateTime(2023, 6, 15);
@@ -350,7 +350,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_WithNullImagen_ShouldNotUpdateImagen()
+    public void UpdateEntity_ConImagenNula_NoActualizaImagen()
     {
         // Arrange
         var producto = new Producto
@@ -373,7 +373,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_WithNonEmptyImagen_ShouldUpdateImagen()
+    public void UpdateEntity_ConImagenNoVacia_ActualizaImagen()
     {
         // Arrange
         var producto = new Producto
@@ -400,7 +400,7 @@ public class ProductoMapperTests
     #region ToDtoList Tests
 
     [Test]
-    public void ToDtoList_WithMultipleProductos_ShouldMapAll()
+    public void ToDtoList_ConMultiplesProductos_MapeaTodos()
     {
         // Arrange
         var productos = new List<Producto>
@@ -421,7 +421,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDtoList_WithEmptyList_ShouldReturnEmpty()
+    public void ToDtoList_ConListaVacia_RetornaVacia()
     {
         // Arrange
         var productos = new List<Producto>();
@@ -434,7 +434,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDtoList_ShouldPreserveOrder()
+    public void ToDtoList_DebePreservarOrden()
     {
         // Arrange
         var productos = new List<Producto>
@@ -458,7 +458,7 @@ public class ProductoMapperTests
     #region Roundtrip Tests
 
     [Test]
-    public void ToEntity_ThenToDto_ShouldPreserveBasicData()
+    public void ToEntity_LuegoToDto_DebePreservarDatosBasicos()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -486,7 +486,7 @@ public class ProductoMapperTests
     #region Edge Cases Tests
 
     [Test]
-    public void ToDto_WithMaxPrecios_ShouldMapCorrectly()
+    public void ToDto_ConPreciosMaximos_MapeaCorrectamente()
     {
         // Arrange
         var producto = new Producto
@@ -504,7 +504,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_WithMaxStock_ShouldMapCorrectly()
+    public void ToDto_ConStockMaximo_MapeaCorrectamente()
     {
         // Arrange
         var producto = new Producto
@@ -522,7 +522,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_WithVeryLongDescription_ShouldMapCorrectly()
+    public void ToDto_ConDescripcionMuyLarga_MapeaCorrectamente()
     {
         // Arrange
         var longDesc = new string('X', 5000);
@@ -542,7 +542,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_WithEmoji_ShouldMapCorrectly()
+    public void ToDto_ConEmoji_MapeaCorrectamente()
     {
         // Arrange
         var producto = new Producto

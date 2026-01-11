@@ -4,18 +4,23 @@ using TiendaApi.Models;
 namespace TiendaApi.GraphQL.Types;
 
 /// <summary>
-/// GraphQL type for Categoria entity
+/// Tipo de GraphQL para la entidad Categoria.
 /// </summary>
 public class CategoriaType : ObjectGraphType<Categoria>
 {
+    /// <summary>
+    /// Constructor del tipo Categoria.
+    /// Define los campos disponibles para la consulta de categorías.
+    /// Returns: void
+    /// </summary>
     public CategoriaType()
     {
         Name = "Categoria";
-        Description = "Categoria entity";
+        Description = "Entidad Categoria";
 
-        Field(c => c.Id, type: typeof(IdGraphType)).Description("The ID of the categoria");
-        Field(c => c.Nombre).Description("The name of the categoria");
-        Field(c => c.CreatedAt).Description("Creation timestamp");
-        Field(c => c.UpdatedAt).Description("Last update timestamp");
+        Field(c => c.Id, type: typeof(IdGraphType)).Description("El ID de la categoría");
+        Field(c => c.Nombre).Description("El nombre de la categoría");
+        Field(c => c.CreatedAt).Description("Fecha de creación");
+        Field(c => c.UpdatedAt).Description("Fecha de última actualización");
     }
 }

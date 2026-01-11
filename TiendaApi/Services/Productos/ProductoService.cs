@@ -12,26 +12,7 @@ using TiendaApi.WebSockets.Productos;
 namespace TiendaApi.Services.Productos;
 
 /// <summary>
-/// Service for Producto using MODERN RESULT PATTERN approach
-/// 
-/// This service demonstrates the functional programming pattern:
-/// - return Result.Success() or DomainError.NotFound()
-/// - NO exceptions for business logic errors
-/// - Explicit error handling in controller
-/// 
-/// Java comparison:
-/// - Similar to Either<Error, Value> from Vavr
-/// - Like Optional<T> but with error information
-/// - CompletableFuture<Either<Error, T>> pattern
-/// 
-/// EDUCATIONAL NOTE: Compare this with CategoriaService (Exception-based)
-/// 
-/// Benefits of Result Pattern:
-/// 1. Type-safe error handling
-/// 2. No hidden control flow (exceptions)
-/// 3. Easier to test (no try/catch needed)
-/// 4. Explicit in method signatures what can fail
-/// 5. Better performance (no stack unwinding)
+/// Servicio de productos usando Patrón Result.
 /// </summary>
 public class ProductoService : IProductoService
 {
@@ -62,29 +43,25 @@ public class ProductoService : IProductoService
     }
 
     /// <summary>
-    /// Get all products with cache-aside pattern
-    /// Returns Success with list - doesn't fail
-    /// Java: Either.right(List<ProductoDto>)
+    /// Obtener todos los productos con patrón cache-aside.
+    /// Returns: Result.Success(List) | Result.Failure nunca
     /// </summary>
     public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync()
     {
-        _logger.LogInformation("Finding all productos");
+        _logger.LogInformation("Obteniendo todos los productos");
         
-        // Try cache first (cache-aside pattern)
         const string cacheKey = "productos:all";
         var cachedProductos = await _cacheService.GetAsync<IEnumerable<ProductoDto>>(cacheKey);
         
         if (cachedProductos != null)
         {
-            _logger.LogInformation("Returning productos from cache");
+            _logger.LogInformation("Devolviendo productos desde caché");
             return Result.Success<IEnumerable<ProductoDto>, DomainError>(cachedProductos);
         }
         
-        // Cache miss - read from database
         var productos = await _productoRepository.FindAllAsync();
         var dtos = productos.ToDtoList();
         
-        // Update cache with TTL
         var cacheTTL = TimeSpan.FromMinutes(
             int.Parse(_configuration["Cache:ProductoCacheTTLMinutes"] ?? "10"));
         await _cacheService.SetAsync(cacheKey, dtos, cacheTTL);
@@ -93,34 +70,27 @@ public class ProductoService : IProductoService
     }
 
     /// <summary>
-    /// Find product by ID with cache-aside pattern
-    /// RETURNS Result - Success with ProductoDto OR Failure with DomainError
-    /// 
-    /// Java equivalent:
-    /// Either<DomainError, ProductoDto> findById(Long id)
-    /// 
-    /// NO EXCEPTIONS thrown - error is returned as value
+    /// Obtener un producto por ID con patrón cache-aside.
+    /// Returns: Result.Success(ProductoDto) | Result.Failure(NotFound)
     /// </summary>
     public async Task<Result<ProductoDto, DomainError>> FindByIdAsync(long id)
     {
-        _logger.LogInformation("Finding producto with id: {Id}", id);
+        _logger.LogInformation("Obteniendo producto con ID: {Id}", id);
         
-        // Try cache first (cache-aside pattern)
         var cacheKey = $"productos:{id}";
         var cachedProducto = await _cacheService.GetAsync<ProductoDto>(cacheKey);
         
         if (cachedProducto != null)
         {
-            _logger.LogInformation("Returning producto from cache: {Id}", id);
+            _logger.LogInformation("Devolviendo producto desde caché: {Id}", id);
             return Result.Success<ProductoDto, DomainError>(cachedProducto);
         }
         
-        // Cache miss - read from database
         var producto = await _productoRepository.FindByIdAsync(id);
         
         if (producto == null)
         {
-            _logger.LogWarning("Producto with id {Id} not found", id);
+            _logger.LogWarning("Producto con ID {Id} no encontrado", id);
             return Result.Failure<ProductoDto, DomainError>(
                 DomainError.NotFound($"Producto con ID {id} no encontrado")
             );
@@ -128,7 +98,6 @@ public class ProductoService : IProductoService
         
         var dto = producto.ToDto();
         
-        // Update cache with TTL
         var cacheTTL = TimeSpan.FromMinutes(
             int.Parse(_configuration["Cache:ProductoCacheTTLMinutes"] ?? "10"));
         await _cacheService.SetAsync(cacheKey, dto, cacheTTL);
@@ -137,13 +106,13 @@ public class ProductoService : IProductoService
     }
 
     /// <summary>
-    /// Find products by category
+    /// Obtener productos por categoría.
+    /// Returns: Result.Success(List) | Result.Failure(NotFound)
     /// </summary>
     public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindByCategoriaIdAsync(long categoriaId)
     {
-        _logger.LogInformation("Finding productos for categoria: {CategoriaId}", categoriaId);
+        _logger.LogInformation("Obteniendo productos para categoría: {CategoriaId}", categoriaId);
         
-        // Verify category exists
         var categoria = await _categoriaRepository.FindByIdAsync(categoriaId);
         if (categoria == null)
         {
@@ -159,19 +128,13 @@ public class ProductoService : IProductoService
     }
 
     /// <summary>
-    /// Create new product
-    /// RETURNS Result - no exceptions
-    /// 
-    /// Validation failures return DomainError.Validation
-    /// Business rule violations return DomainError.BusinessRule
-    /// 
-    /// Java: Either<DomainError, ProductoDto> create(ProductoRequestDto dto)
+    /// Crear un nuevo producto.
+    /// Returns: Result.Success(ProductoDto) | Result.Failure(Validation/NotFound)
     /// </summary>
     public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
     {
-        _logger.LogInformation("Creating producto: {Nombre}", dto.Nombre);
+        _logger.LogInformation("Creando producto: {Nombre}", dto.Nombre);
         
-        // Validation using Result Pattern
         var validationResult = await ValidateProductoAsync(dto);
         if (validationResult.IsFailure)
         {
@@ -181,28 +144,25 @@ public class ProductoService : IProductoService
         var producto = dto.ToEntity();
         var saved = await _productoRepository.SaveAsync(producto);
         
-        _logger.LogInformation("Producto created with id: {Id}", saved.Id);
+        _logger.LogInformation("Producto creado con ID: {Id}", saved.Id);
         
         var resultDto = saved.ToDto();
         
-        // Invalidate cache (fire-and-forget)
         _ = Task.Run(async () =>
         {
             try
             {
                 await _cacheService.RemoveAsync("productos:all");
-                _logger.LogDebug("Cache invalidated after producto creation");
+                _logger.LogDebug("Caché invalidada tras crear producto");
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to invalidate cache after producto creation");
+                _logger.LogWarning(ex, "Error al invalidar caché tras crear producto");
             }
         });
         
-        // Notificar via WebSocket (side-effect - fire-and-forget)
         _ = Task.Run(async () => await NotificarWebSocketProductoCreado(resultDto));
         
-        // Queue email notification (fire-and-forget)
         _ = Task.Run(async () =>
         {
             try
@@ -214,23 +174,20 @@ public class ProductoService : IProductoService
                     {
                         To = adminEmail,
                         Subject = "Nuevo Producto Creado",
-                        Body = $@"
-                            <h2>Nuevo Producto Creado</h2>
+                        Body = $@"<h2>Nuevo Producto Creado</h2>
                             <p><strong>ID:</strong> {saved.Id}</p>
                             <p><strong>Nombre:</strong> {saved.Nombre}</p>
                             <p><strong>Precio:</strong> ${saved.Precio}</p>
-                            <p><strong>Stock:</strong> {saved.Stock}</p>
-                            <p><strong>Fecha:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
-                        ",
+                            <p><strong>Stock:</strong> {saved.Stock}</p>",
                         IsHtml = true
                     };
                     await _emailService.EnqueueEmailAsync(emailMessage);
-                    _logger.LogDebug("Email notification queued for producto creation");
+                    _logger.LogDebug("Email de notificación encolado tras crear producto");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to queue email notification for producto creation");
+                _logger.LogWarning(ex, "Error al encolar email de notificación");
             }
         });
         
@@ -238,31 +195,29 @@ public class ProductoService : IProductoService
     }
 
     /// <summary>
-    /// Update existing product
-    /// RETURNS Result - no exceptions
+    /// Actualizar un producto existente.
+    /// Returns: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
     public async Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto)
     {
-        _logger.LogInformation("Updating producto with id: {Id}", id);
+        _logger.LogInformation("Actualizando producto con ID: {Id}", id);
         
         var producto = await _productoRepository.FindByIdAsync(id);
         
         if (producto == null)
         {
-            _logger.LogWarning("Producto with id {Id} not found for update", id);
+            _logger.LogWarning("Producto con ID {Id} no encontrado para actualizar", id);
             return Result.Failure<ProductoDto, DomainError>(
                 DomainError.NotFound($"Producto con ID {id} no encontrado")
             );
         }
         
-        // Validation using Result Pattern
         var validationResult = await ValidateProductoAsync(dto);
         if (validationResult.IsFailure)
         {
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
         
-        // Update fields
         producto.Nombre = dto.Nombre;
         producto.Descripcion = dto.Descripcion;
         producto.Precio = dto.Precio;
@@ -272,145 +227,123 @@ public class ProductoService : IProductoService
         
         var updated = await _productoRepository.UpdateAsync(producto);
         
-        _logger.LogInformation("Producto updated with id: {Id}", id);
+        _logger.LogInformation("Producto actualizado con ID: {Id}", id);
         
         var resultDto = updated.ToDto();
         
-        // Invalidate cache (fire-and-forget)
         _ = Task.Run(async () =>
         {
             try
             {
                 await _cacheService.RemoveAsync($"productos:{id}");
                 await _cacheService.RemoveAsync("productos:all");
-                _logger.LogDebug("Cache invalidated after producto update");
+                _logger.LogDebug("Caché invalidada tras actualizar producto");
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to invalidate cache after producto update");
+                _logger.LogWarning(ex, "Error al invalidar caché tras actualizar producto");
             }
         });
         
-        // Notificar via WebSocket (side-effect - fire-and-forget)
         _ = Task.Run(async () => await NotificarWebSocketProductoActualizado(resultDto));
         
         return Result.Success<ProductoDto, DomainError>(resultDto);
     }
 
     /// <summary>
-    /// Delete product (soft delete)
-    /// RETURNS UnitResult<DomainError> - void operation with potential error
+    /// Eliminar un producto.
+    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
-        _logger.LogInformation("Deleting producto with id: {Id}", id);
+        _logger.LogInformation("Eliminando producto con ID: {Id}", id);
         
         var producto = await _productoRepository.FindByIdAsync(id);
         
         if (producto == null)
         {
-            _logger.LogWarning("Producto with id {Id} not found for delete", id);
+            _logger.LogWarning("Producto con ID {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
                 DomainError.NotFound($"Producto con ID {id} no encontrado")
             );
         }
         
-        var productoNombre = producto.Nombre;
-        
         await _productoRepository.DeleteAsync(id);
-        _logger.LogInformation("Producto deleted with id: {Id}", id);
+        _logger.LogInformation("Producto eliminado con ID: {Id}", id);
         
-        // Invalidate cache (fire-and-forget)
         _ = Task.Run(async () =>
         {
             try
             {
                 await _cacheService.RemoveAsync($"productos:{id}");
                 await _cacheService.RemoveAsync("productos:all");
-                _logger.LogDebug("Cache invalidated after producto deletion");
+                _logger.LogDebug("Caché invalidada tras eliminar producto");
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to invalidate cache after producto deletion");
+                _logger.LogWarning(ex, "Error al invalidar caché tras eliminar producto");
             }
         });
         
-        // Notificar via WebSocket (side-effect - fire-and-forget)
         _ = Task.Run(async () => await NotificarWebSocketProductoEliminado(id));
         
         return UnitResult.Success<DomainError>();
     }
 
-    #region Private Helper Methods
-
     /// <summary>
-    /// Notifica via WebSocket la creación de un producto
-    /// Side-effect que NO debe fallar la operación principal
+    /// Notifica vía WebSocket la creación de un producto.
     /// </summary>
     private async Task NotificarWebSocketProductoCreado(ProductoDto producto)
     {
         try
         {
             await _webSocketHandler.NotifyProductoCreatedAsync(producto);
-            _logger.LogDebug("WebSocket notification sent for producto creation: {ProductoId}", producto.Id);
+            _logger.LogDebug("Notificación WebSocket enviada tras crear producto: {ProductoId}", producto.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed WebSocket notification for producto: {ProductoId}", producto.Id);
+            _logger.LogWarning(ex, "Error en notificación WebSocket al crear producto: {ProductoId}", producto.Id);
         }
     }
 
     /// <summary>
-    /// Notifica via WebSocket la actualización de un producto
-    /// Side-effect que NO debe fallar la operación principal
+    /// Notifica vía WebSocket la actualización de un producto.
     /// </summary>
     private async Task NotificarWebSocketProductoActualizado(ProductoDto producto)
     {
         try
         {
             await _webSocketHandler.NotifyProductoUpdatedAsync(producto);
-            _logger.LogDebug("WebSocket notification sent for producto update: {ProductoId}", producto.Id);
+            _logger.LogDebug("Notificación WebSocket enviada tras actualizar producto: {ProductoId}", producto.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed WebSocket notification for producto update: {ProductoId}", producto.Id);
+            _logger.LogWarning(ex, "Error en notificación WebSocket al actualizar producto: {ProductoId}", producto.Id);
         }
     }
 
     /// <summary>
-    /// Notifica via WebSocket la eliminación de un producto
-    /// Side-effect que NO debe fallar la operación principal
+    /// Notifica vía WebSocket la eliminación de un producto.
     /// </summary>
     private async Task NotificarWebSocketProductoEliminado(long productoId)
     {
         try
         {
             await _webSocketHandler.NotifyProductoDeletedAsync(productoId);
-            _logger.LogDebug("WebSocket notification sent for producto deletion: {ProductoId}", productoId);
+            _logger.LogDebug("Notificación WebSocket enviada tras eliminar producto: {ProductoId}", productoId);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed WebSocket notification for producto deletion: {ProductoId}", productoId);
+            _logger.LogWarning(ex, "Error en notificación WebSocket al eliminar producto: {ProductoId}", productoId);
         }
     }
 
-    #endregion
-
     /// <summary>
-    /// Validation method using Result Pattern
-    /// 
-    /// RETURNS UnitResult<DomainError> instead of throwing exceptions
-    /// 
-    /// This is the MODERN approach:
-    /// - Validation failures are returned as UnitResult
-    /// - No exceptions thrown
-    /// - Controller can handle gracefully
-    /// 
-    /// Java: Either<DomainError, Unit> validate(ProductoRequestDto dto)
+    /// Valida los datos de un producto.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation/NotFound)
     /// </summary>
     private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto)
     {
-        // Validate nombre
         if (string.IsNullOrWhiteSpace(dto.Nombre))
         {
             return UnitResult.Failure<DomainError>(
@@ -432,7 +365,6 @@ public class ProductoService : IProductoService
             );
         }
         
-        // Validate precio
         if (dto.Precio <= 0)
         {
             return UnitResult.Failure<DomainError>(
@@ -440,7 +372,6 @@ public class ProductoService : IProductoService
             );
         }
         
-        // Validate stock
         if (dto.Stock < 0)
         {
             return UnitResult.Failure<DomainError>(
@@ -448,7 +379,6 @@ public class ProductoService : IProductoService
             );
         }
         
-        // Validate categoria exists
         var categoriaExists = await _categoriaRepository.FindByIdAsync(dto.CategoriaId);
         if (categoriaExists == null)
         {

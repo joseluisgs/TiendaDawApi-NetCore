@@ -1,18 +1,28 @@
 namespace TiendaApi.Dtos.Pedidos;
 
 /// <summary>
-/// DTO for creating a Pedido (request)
+/// DTO para crear un nuevo pedido.
 /// </summary>
 public record PedidoRequestDto
 {
+    /// <summary>
+    /// Lista de artículos a incluir en el pedido.
+    /// </summary>
     public List<PedidoItemRequestDto> Items { get; init; } = new();
 }
 
 /// <summary>
-/// DTO for Pedido item in request
+/// DTO de artículo de pedido para solicitudes.
 /// </summary>
 public record PedidoItemRequestDto
 {
+    /// <summary>
+    /// Identificador del producto.
+    /// </summary>
     public long ProductoId { get; init; }
+
+    /// <summary>
+    /// Cantidad solicitada del producto.
+    /// </summary>
     public int Cantidad { get; init; }
 }

@@ -8,7 +8,7 @@ using TiendaApi.Services.Auth;
 namespace TiendaApi.Tests.Unit.Services.Auth;
 
 /// <summary>
-/// Smoke tests for JWT authentication service
+/// Tests de smoke para servicio de autenticación JWT
 /// </summary>
 public class JwtServiceTests
 {
@@ -35,7 +35,7 @@ public class JwtServiceTests
     }
 
     [Test]
-    public void GenerateToken_ShouldReturnValidToken()
+    public void GenerateToken_DebeRetornarTokenValido()
     {
         // Arrange
         var user = new User
@@ -55,7 +55,7 @@ public class JwtServiceTests
     }
 
     [Test]
-    public void ValidateToken_WithValidToken_ShouldReturnUsername()
+    public void ValidateToken_ConTokenValido_DebeRetornarUsername()
     {
         // Arrange
         var user = new User
@@ -75,7 +75,7 @@ public class JwtServiceTests
     }
 
     [Test]
-    public void ValidateToken_WithInvalidToken_ShouldReturnNull()
+    public void ValidateToken_ConTokenInvalido_DebeRetornarNull()
     {
         // Arrange
         var invalidToken = "invalid.token.value";
@@ -88,7 +88,7 @@ public class JwtServiceTests
     }
 
     [Test]
-    public void GenerateToken_ForDifferentRoles_ShouldIncludeRole()
+    public void GenerateToken_ParaRolesDistintos_DebeIncluirRol()
     {
         // Arrange
         var adminUser = new User

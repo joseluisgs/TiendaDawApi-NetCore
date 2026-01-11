@@ -5,15 +5,25 @@ using System.Text.Json;
 
 namespace TiendaApi.WebSockets.Pedidos;
 
+/// <summary>
+/// Tipos de notificación para eventos de pedidos.
+/// </summary>
 public static class PedidoNotificationType
 {
+    /// <summary>
+    /// Notificación de pedido creado.
+    /// </summary>
     public const string CREATED = "PEDIDO_CREATED";
+    
+    /// <summary>
+    /// Notificación de cambio de estado de pedido.
+    /// </summary>
     public const string ESTADO_UPDATED = "PEDIDO_ESTADO_UPDATED";
 }
 
 /// <summary>
-/// WebSocket handler for pedidos notifications
-/// Manages connected clients and broadcasts pedido events
+/// Handler de WebSocket para notificaciones de pedidos.
+/// Gestiona clientes conectados y emite eventos de pedidos.
 /// </summary>
 public class PedidoWebSocketHandler
 {
@@ -21,6 +31,10 @@ public class PedidoWebSocketHandler
     private readonly ILogger<PedidoWebSocketHandler> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
 
+    /// <summary>
+    /// Inicializa una nueva instancia del handler de WebSocket para pedidos.
+    /// </summary>
+    /// <param name="logger">Instancia del logger.</param>
     public PedidoWebSocketHandler(ILogger<PedidoWebSocketHandler> logger)
     {
         _connections = new ConcurrentDictionary<string, WebSocket>();
@@ -32,18 +46,20 @@ public class PedidoWebSocketHandler
     }
 
     /// <summary>
-    /// Handle new WebSocket connection
+    /// Maneja una nueva conexión WebSocket para pedidos.
     /// </summary>
+    /// <param name="context">Contexto HTTP de la conexión.</param>
+    /// <param name="webSocket">Instancia del WebSocket.</param>
+    /// <returns>Tarea asíncrona representando la conexión.</returns>
     public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket)
     {
         var connectionId = Guid.NewGuid().ToString();
         _connections.TryAdd(connectionId, webSocket);
         
-        _logger.LogInformation("WebSocket connection established for pedidos: {ConnectionId}", connectionId);
+        _logger.LogInformation("Conexión WebSocket establecida para pedidos: {ConnectionId}", connectionId);
 
         try
         {
-            // Keep connection alive and listen for messages (ping/pong)
             var buffer = new byte[1024 * 4];
             var result = await webSocket.ReceiveAsync(
                 new ArraySegment<byte>(buffer), 
@@ -51,7 +67,6 @@ public class PedidoWebSocketHandler
 
             while (!result.CloseStatus.HasValue)
             {
-                // Echo back any received messages (optional)
                 result = await webSocket.ReceiveAsync(
                     new ArraySegment<byte>(buffer), 
                     CancellationToken.None);
@@ -64,18 +79,22 @@ public class PedidoWebSocketHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "WebSocket connection error for pedidos: {ConnectionId}", connectionId);
+            _logger.LogError(ex, "Error en conexión WebSocket para pedidos: {ConnectionId}", connectionId);
         }
         finally
         {
             _connections.TryRemove(connectionId, out _);
-            _logger.LogInformation("WebSocket connection closed for pedidos: {ConnectionId}", connectionId);
+            _logger.LogInformation("Conexión WebSocket cerrada para pedidos: {ConnectionId}", connectionId);
         }
     }
 
     /// <summary>
-    /// Notify all connected clients about pedido creation
+    /// Notifica a todos los clientes conectados la creación de un pedido.
     /// </summary>
+    /// <param name="pedidoId">ID del pedido creado.</param>
+    /// <param name="userId">ID del usuario.</param>
+    /// <param name="data">Datos adicionales opcionales.</param>
+    /// <returns>Tarea asíncrona de la notificación.</returns>
     public async Task NotifyPedidoCreatedAsync(string pedidoId, long userId, object? data = null)
     {
         var notification = new PedidoNotificationDto
@@ -92,8 +111,13 @@ public class PedidoWebSocketHandler
     }
 
     /// <summary>
-    /// Notify all connected clients about pedido estado update
+    /// Notifica a todos los clientes conectados el cambio de estado de un pedido.
     /// </summary>
+    /// <param name="pedidoId">ID del pedido.</param>
+    /// <param name="userId">ID del usuario.</param>
+    /// <param name="nuevoEstado">Nuevo estado del pedido.</param>
+    /// <param name="data">Datos adicionales opcionales.</param>
+    /// <returns>Tarea asíncrona de la notificación.</returns>
     public async Task NotifyPedidoEstadoUpdatedAsync(string pedidoId, long userId, string nuevoEstado, object? data = null)
     {
         var notification = new PedidoNotificationDto
@@ -110,15 +134,17 @@ public class PedidoWebSocketHandler
     }
 
     /// <summary>
-    /// Broadcast notification to all connected clients
+    /// Envía una notificación a todos los clientes WebSocket conectados.
     /// </summary>
+    /// <param name="notification">Notificación a broadcast.</param>
+    /// <returns>Tarea asíncrona del broadcast.</returns>
     private async Task BroadcastAsync(PedidoNotificationDto notification)
     {
         var json = JsonSerializer.Serialize(notification, _jsonOptions);
         var bytes = Encoding.UTF8.GetBytes(json);
         var arraySegment = new ArraySegment<byte>(bytes);
         
-        _logger.LogInformation("Broadcasting pedido notification: {Type}, PedidoId: {PedidoId} to {Count} clients", 
+        _logger.LogInformation("Broadcasting notificación de pedido: {Type}, PedidoId: {PedidoId} a {Count} clientes", 
             notification.Type, notification.PedidoId, _connections.Count);
 
         var disconnectedConnections = new List<string>();
@@ -137,7 +163,7 @@ public class PedidoWebSocketHandler
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to send notification to connection: {ConnectionId}", connectionId);
+                    _logger.LogWarning(ex, "Error al enviar notificación a la conexión: {ConnectionId}", connectionId);
                     disconnectedConnections.Add(connectionId);
                 }
             }
@@ -147,11 +173,10 @@ public class PedidoWebSocketHandler
             }
         }
 
-        // Clean up disconnected connections
         foreach (var connectionId in disconnectedConnections)
         {
             _connections.TryRemove(connectionId, out _);
-            _logger.LogDebug("Removed disconnected pedido WebSocket connection: {ConnectionId}", connectionId);
+            _logger.LogDebug("Eliminada conexión WebSocket de pedido desconectada: {ConnectionId}", connectionId);
         }
     }
 }

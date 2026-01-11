@@ -8,22 +8,8 @@ using TiendaApi.Services.Pedidos;
 
 namespace TiendaApi.Controllers;
 
-/*
- * CONTROLADOR LIMPIO - SIN LÓGICA DE NEGOCIO
- * 
- * Este controller solo:
- * ✅ Extrae el userId del token JWT
- * ✅ Llama al servicio
- * ✅ Convierte Result a HTTP response
- * 
- * ❌ NO tiene lógica de WebSockets (está en PedidosService)
- * ❌ NO tiene lógica de Email (está en PedidosService)
- * ❌ NO tiene validaciones (está en PedidosService)
- */
-
 /// <summary>
-/// Controller for Pedidos using Result Pattern
-/// Handles order creation, retrieval, and status updates
+/// Controlador de pedidos usando Patrón Result.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -33,17 +19,16 @@ public class PedidosController : ControllerBase
     private readonly IPedidosService _service;
     private readonly ILogger<PedidosController> _logger;
 
-    public PedidosController(
-        IPedidosService service, 
-        ILogger<PedidosController> logger)
+    public PedidosController(IPedidosService service, ILogger<PedidosController> logger)
     {
         _service = service;
         _logger = logger;
     }
 
     /// <summary>
-    /// Create a new pedido for authenticated user
+    /// Crear un nuevo pedido.
     /// POST /api/pedidos
+    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
     /// </summary>
     [HttpPost]
     [Authorize]
@@ -53,14 +38,10 @@ public class PedidosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreatePedido([FromBody] PedidoRequestDto dto)
     {
-        // Get user ID from JWT token
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
-        {
-            _logger.LogWarning("Invalid user ID in token");
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
-        }
 
         var resultado = await _service.CreateAsync(userId, dto);
 
@@ -70,7 +51,6 @@ public class PedidosController : ControllerBase
             return CreatedAtAction(nameof(GetPedidoById), new { id = pedido.Id }, pedido);
         }
 
-        // Handle failure case
         var error = resultado.Error;
         return error.Type switch
         {
@@ -85,8 +65,9 @@ public class PedidosController : ControllerBase
     }
 
     /// <summary>
-    /// Get pedidos for authenticated user
+    /// Obtener pedidos del usuario autenticado.
     /// GET /api/pedidos/me
+    /// Returns: 200 OK | 401 Unauthorized
     /// </summary>
     [HttpGet("me")]
     [Authorize]
@@ -94,14 +75,10 @@ public class PedidosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyPedidos()
     {
-        // Get user ID from JWT token
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
-        {
-            _logger.LogWarning("Invalid user ID in token");
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
-        }
 
         var resultado = await _service.FindByUserIdAsync(userId);
 
@@ -112,8 +89,9 @@ public class PedidosController : ControllerBase
     }
 
     /// <summary>
-    /// Get pedido by ID (user can only see their own pedidos, admins can see all)
+    /// Obtener un pedido por ID.
     /// GET /api/pedidos/{id}
+    /// Returns: 200 OK | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpGet("{id}")]
     [Authorize]
@@ -137,29 +115,22 @@ public class PedidosController : ControllerBase
 
         var pedido = resultado.Value;
         
-        // Get user ID from JWT token
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
         
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
-        {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
-        }
 
-        // Check authorization: user can only see their own pedidos, admins can see all
         if (pedido.UserId != userId && userRole != "ADMIN")
-        {
-            _logger.LogWarning("User {UserId} attempted to access pedido {PedidoId} that belongs to user {OwnerId}", 
-                userId, id, pedido.UserId);
             return Forbid();
-        }
 
         return Ok(pedido);
     }
 
     /// <summary>
-    /// Update pedido estado (admin only)
+    /// Actualizar estado de un pedido (solo administradores).
     /// PUT /api/pedidos/{id}/estado
+    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpPut("{id}/estado")]
     [Authorize(Roles = "ADMIN")]
@@ -188,7 +159,7 @@ public class PedidosController : ControllerBase
 }
 
 /// <summary>
-/// DTO for updating pedido estado
+/// DTO para actualizar el estado de un pedido.
 /// </summary>
 public record UpdateEstadoDto
 {

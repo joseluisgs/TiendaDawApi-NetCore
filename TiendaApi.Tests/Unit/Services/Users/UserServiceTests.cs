@@ -10,8 +10,8 @@ using TiendaApi.Services.Users;
 namespace TiendaApi.Tests.Unit.Services.Users;
 
 /// <summary>
-/// Unit tests for UserService using Result Pattern
-/// Tests CRUD operations, validation, and error handling
+/// Tests unitarios para UserService usando Result Pattern
+/// Prueba operaciones CRUD, validación y manejo de errores
 /// </summary>
 public class UserServiceTests
 {
@@ -34,7 +34,7 @@ public class UserServiceTests
     #region FindAllAsync Tests
 
     [Test]
-    public async Task FindAllAsync_WithUsers_ReturnsAllUsers()
+    public async Task FindAllAsync_ConUsuarios_RetornaTodosLosUsuarios()
     {
         // Arrange
         var users = new List<User>
@@ -55,7 +55,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_WithNoUsers_ReturnsEmptyList()
+    public async Task FindAllAsync_SinUsuarios_RetornaListaVacia()
     {
         // Arrange
         _mockUserRepository.Setup(x => x.FindAllAsync())
@@ -70,7 +70,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_FiltersDeletedUsers()
+    public async Task FindAllAsync_FiltraUsuariosEliminados()
     {
         // Arrange
         var users = new List<User>
@@ -95,7 +95,7 @@ public class UserServiceTests
     #region FindByIdAsync Tests
 
     [Test]
-    public async Task FindByIdAsync_WithExistingId_ReturnsSuccess()
+    public async Task FindByIdAsync_ConIdExistente_RetornaExito()
     {
         // Arrange
         var user = new User 
@@ -119,7 +119,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_WithNonExistentId_ReturnsNotFoundFailure()
+    public async Task FindByIdAsync_ConIdNoExistente_RetornaFalloNoEncontrado()
     {
         // Arrange
         _mockUserRepository.Setup(x => x.FindByIdAsync(999))
@@ -135,7 +135,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_WithDeletedUser_ReturnsNotFoundFailure()
+    public async Task FindByIdAsync_ConUsuarioEliminado_RetornaFalloNoEncontrado()
     {
         // Arrange
         var deletedUser = new User 
@@ -161,7 +161,7 @@ public class UserServiceTests
     #region CreateAsync Tests
 
     [Test]
-    public async Task CreateAsync_WithValidData_ReturnsSuccess()
+    public async Task CreateAsync_ConDatosValidos_RetornaExito()
     {
         // Arrange
         var registerDto = new RegisterDto
@@ -201,7 +201,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithDuplicateUsername_ReturnsConflictFailure()
+    public async Task CreateAsync_ConUsernameDuplicado_RetornaFalloConflicto()
     {
         // Arrange
         var registerDto = new RegisterDto
@@ -231,7 +231,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithDuplicateEmail_ReturnsConflictFailure()
+    public async Task CreateAsync_ConEmailDuplicado_RetornaFalloConflicto()
     {
         // Arrange
         var registerDto = new RegisterDto
@@ -264,7 +264,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithInvalidPassword_ReturnsValidationFailure()
+    public async Task CreateAsync_ConPasswordInvalido_RetornaFalloValidacion()
     {
         // Arrange
         var registerDto = new RegisterDto
@@ -284,7 +284,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithEmptyUsername_ReturnsValidationFailure()
+    public async Task CreateAsync_ConUsernameVacio_RetornaFalloValidacion()
     {
         // Arrange
         var registerDto = new RegisterDto
@@ -304,7 +304,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithShortUsername_ReturnsValidationFailure()
+    public async Task CreateAsync_ConUsernameCorto_RetornaFalloValidacion()
     {
         // Arrange
         var registerDto = new RegisterDto
@@ -324,7 +324,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithInvalidEmail_ReturnsValidationFailure()
+    public async Task CreateAsync_ConEmailInvalido_RetornaFalloValidacion()
     {
         // Arrange
         var registerDto = new RegisterDto
@@ -348,7 +348,7 @@ public class UserServiceTests
     #region UpdateAsync Tests
 
     [Test]
-    public async Task UpdateAsync_WithValidData_ReturnsSuccess()
+    public async Task UpdateAsync_ConDatosValidos_RetornaExito()
     {
         // Arrange
         var existingUser = new User
@@ -392,7 +392,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_WithNonExistentId_ReturnsNotFoundFailure()
+    public async Task UpdateAsync_ConIdNoExistente_RetornaFalloNoEncontrado()
     {
         // Arrange
         var updateDto = new UserUpdateDto
@@ -412,7 +412,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_WithDuplicateEmail_ReturnsConflictFailure()
+    public async Task UpdateAsync_ConEmailDuplicado_RetornaFalloConflicto()
     {
         // Arrange
         var existingUser = new User
@@ -451,7 +451,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_WithInvalidEmail_ReturnsValidationFailure()
+    public async Task UpdateAsync_ConEmailInvalido_RetornaFalloValidacion()
     {
         // Arrange
         var existingUser = new User
@@ -484,7 +484,7 @@ public class UserServiceTests
     #region DeleteAsync Tests
 
     [Test]
-    public async Task DeleteAsync_WithExistingId_ReturnsSuccess()
+    public async Task DeleteAsync_ConIdExistente_RetornaExito()
     {
         // Arrange
         var user = new User
@@ -510,7 +510,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task DeleteAsync_WithNonExistentId_ReturnsNotFoundFailure()
+    public async Task DeleteAsync_ConIdNoExistente_RetornaFalloNoEncontrado()
     {
         // Arrange
         _mockUserRepository.Setup(x => x.FindByIdAsync(999))
@@ -525,7 +525,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task DeleteAsync_WithAlreadyDeletedUser_ReturnsNotFoundFailure()
+    public async Task DeleteAsync_ConUsuarioYaEliminado_RetornaFalloNoEncontrado()
     {
         // Arrange
         var deletedUser = new User

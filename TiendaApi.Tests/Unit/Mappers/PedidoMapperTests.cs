@@ -6,15 +6,15 @@ using TiendaApi.Models;
 namespace TiendaApi.Tests.Unit.Mappers;
 
 /// <summary>
-/// Comprehensive test suite for PedidoMapper extension methods
-/// Tests all entity-DTO conversions for Pedido domain
+/// Tests unitarios para el mapeador de pedidos.
+/// Prueba todas las conversiones entidad-DTO para el dominio de Pedido.
 /// </summary>
 public class PedidoMapperTests
 {
     #region Pedido ToDto Tests
 
     [Test]
-    public void ToDto_WithAllFields_ShouldMapCorrectly()
+    public void ToDto_ConTodosLosCampos_MapeaCorrectamente()
     {
         // Arrange
         var pedido = new Pedido
@@ -44,7 +44,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_WithNullId_ShouldReturnEmptyString()
+    public void ToDto_ConIdNulo_RetornaStringVacio()
     {
         // Arrange
         var pedido = new Pedido
@@ -62,7 +62,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_WithDefaultEstado_ShouldBePendiente()
+    public void ToDto_ConEstadoPredeterminado_DebeSerPendiente()
     {
         // Arrange
         var pedido = new Pedido { Id = "123" };
@@ -75,7 +75,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_WithEmptyItems_ShouldReturnEmptyList()
+    public void ToDto_ConItemsVacios_RetornaListaVacia()
     {
         // Arrange
         var pedido = new Pedido
@@ -93,7 +93,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_WithNullItems_ShouldReturnEmptyList()
+    public void ToDto_ConItemsNulos_RetornaListaVacia()
     {
         // Arrange
         var pedido = new Pedido
@@ -111,7 +111,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ShouldCalculateItemsSubtotals()
+    public void ToDto_DebeCalcularSubtotalesDeItems()
     {
         // Arrange
         var pedido = new Pedido
@@ -131,7 +131,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_WithAllEstados_ShouldMapCorrectly()
+    public void ToDto_ConTodosLosEstados_MapeaCorrectamente()
     {
         // Arrange
         var estados = new[] { PedidoEstado.PENDIENTE, PedidoEstado.PROCESANDO, PedidoEstado.ENVIADO, PedidoEstado.ENTREGADO, PedidoEstado.CANCELADO };
@@ -144,7 +144,7 @@ public class PedidoMapperTests
             var dto = pedido.ToDto();
 
             // Assert
-            dto.Estado.Should().Be(estado, $"Estado {estado} should map correctly");
+            dto.Estado.Should().Be(estado, $"El estado {estado} debe mapear correctamente");
         }
     }
 
@@ -153,7 +153,7 @@ public class PedidoMapperTests
     #region PedidoItem ToDto Tests
 
     [Test]
-    public void PedidoItem_ToDto_ShouldMapAllFields()
+    public void PedidoItem_ToDto_DebeMapearTodosLosCampos()
     {
         // Arrange
         var item = new PedidoItem
@@ -177,7 +177,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void PedidoItem_ToDto_WithEmptyNombre_ShouldReturnEmpty()
+    public void PedidoItem_ToDto_ConNombreVacio_RetornaVacio()
     {
         // Arrange
         var item = new PedidoItem
@@ -200,7 +200,7 @@ public class PedidoMapperTests
     #region ToEntity (PedidoRequestDto) Tests
 
     [Test]
-    public void ToEntity_WithItems_ShouldMapCorrectly()
+    public void ToEntity_ConItems_MapeaCorrectamente()
     {
         // Arrange
         var dto = new PedidoRequestDto
@@ -223,7 +223,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldSetDefaultEstado()
+    public void ToEntity_DebeEstablecerEstadoPredeterminado()
     {
         // Arrange
         var dto = new PedidoRequestDto
@@ -239,7 +239,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldSetTimestamps()
+    public void ToEntity_DebeEstablecerMarcasDeTiempo()
     {
         // Arrange
         var dto = new PedidoRequestDto
@@ -260,7 +260,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_WithEmptyItems_ShouldCreateEmptyList()
+    public void ToEntity_ConItemsVacios_CreaListaVacia()
     {
         // Arrange
         var dto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
@@ -278,7 +278,7 @@ public class PedidoMapperTests
     #region PedidoItemRequestDto ToEntity Tests
 
     [Test]
-    public void PedidoItemRequestDto_ToEntity_WithDefaults_ShouldMap()
+    public void PedidoItemRequestDto_ToEntity_ConPredeterminados_Mapea()
     {
         // Arrange
         var dto = new PedidoItemRequestDto
@@ -299,7 +299,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void PedidoItemRequestDto_ToEntity_ShouldCalculateSubtotal()
+    public void PedidoItemRequestDto_ToEntity_DebeCalcularSubtotal()
     {
         // Arrange
         var dto = new PedidoItemRequestDto
@@ -316,7 +316,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void PedidoItemRequestDto_ToEntity_WithNullNombre_ShouldUseEmpty()
+    public void PedidoItemRequestDto_ToEntity_ConNombreNulo_UsaVacio()
     {
         // Arrange
         var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 1 };
@@ -329,7 +329,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void PedidoItemRequestDto_ToEntity_WithNullPrecio_ShouldUseZero()
+    public void PedidoItemRequestDto_ToEntity_ConPrecioNulo_UsaCero()
     {
         // Arrange
         var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 1 };
@@ -347,7 +347,7 @@ public class PedidoMapperTests
     #region ToDtoList Tests
 
     [Test]
-    public void ToDtoList_WithMultiplePedidos_ShouldMapAll()
+    public void ToDtoList_ConMultiplesPedidos_MapeaTodos()
     {
         // Arrange
         var pedidos = new List<Pedido>
@@ -368,7 +368,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDtoList_WithEmptyList_ShouldReturnEmpty()
+    public void ToDtoList_ConListaVacia_RetornaVacia()
     {
         // Arrange
         var pedidos = new List<Pedido>();
@@ -381,7 +381,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDtoList_ShouldPreserveOrder()
+    public void ToDtoList_DebePreservarOrden()
     {
         // Arrange
         var pedidos = new List<Pedido>
@@ -405,7 +405,7 @@ public class PedidoMapperTests
     #region Roundtrip Tests
 
     [Test]
-    public void ToEntity_ThenToDto_ShouldPreserveUserId()
+    public void ToEntity_LuegoToDto_DebePreservarUserId()
     {
         // Arrange
         var dto = new PedidoRequestDto
@@ -426,7 +426,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_ThenToDto_ShouldPreserveItems()
+    public void ToEntity_LuegoToDto_DebePreservarItems()
     {
         // Arrange
         var dto = new PedidoRequestDto
@@ -451,7 +451,7 @@ public class PedidoMapperTests
     #region Edge Cases Tests
 
     [Test]
-    public void ToDto_WithZeroTotal_ShouldMapCorrectly()
+    public void ToDto_ConTotalCero_MapeaCorrectamente()
     {
         // Arrange
         var pedido = new Pedido
@@ -468,7 +468,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_WithVeryLargeTotal_ShouldMapCorrectly()
+    public void ToDto_ConTotalMuyGrande_MapeaCorrectamente()
     {
         // Arrange
         var pedido = new Pedido
@@ -485,7 +485,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_WithManyItems_ShouldMapAll()
+    public void ToDto_ConMuchosItems_MapeaTodos()
     {
         // Arrange
         var items = Enumerable.Range(1, 100)
@@ -508,7 +508,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldHandleLargeQuantities()
+    public void ToEntity_DebeManejarCantidadesGrandes()
     {
         // Arrange
         var dto = new PedidoRequestDto
@@ -532,7 +532,7 @@ public class PedidoMapperTests
     #region Null Safety Tests
 
     [Test]
-    public void ToDto_WithNullPedido_ShouldThrow()
+    public void ToDto_ConPedidoNulos_LanzaExcepcion()
     {
         // Arrange
         Pedido? pedido = null;
@@ -542,7 +542,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDtoList_WithNullPedidos_ShouldThrow()
+    public void ToDtoList_ConPedidosNulos_LanzaExcepcion()
     {
         // Arrange
         IEnumerable<Pedido>? pedidos = null;

@@ -7,8 +7,7 @@ using TiendaApi.Dtos.Productos;
 namespace TiendaApi.WebSockets.Productos;
 
 /// <summary>
-/// WebSocket handler for managing producto notification connections
-/// Uses generic Notificacion<T> pattern for all notifications
+/// Handler de WebSocket para gestionar conexiones de notificaciones de productos.
 /// </summary>
 public class ProductoWebSocketHandler
 {
@@ -16,6 +15,10 @@ public class ProductoWebSocketHandler
     private readonly ILogger<ProductoWebSocketHandler> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
 
+    /// <summary>
+    /// Inicializa una nueva instancia del handler de WebSocket para productos.
+    /// </summary>
+    /// <param name="logger">Instancia del logger.</param>
     public ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
     {
         _connections = new ConcurrentDictionary<string, WebSocket>();
@@ -26,12 +29,18 @@ public class ProductoWebSocketHandler
         };
     }
 
+    /// <summary>
+    /// Maneja una nueva conexión WebSocket para productos.
+    /// </summary>
+    /// <param name="context">Contexto HTTP de la conexión.</param>
+    /// <param name="webSocket">Instancia del WebSocket.</param>
+    /// <returns>Tarea asíncrona representando la conexión.</returns>
     public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket)
     {
         var connectionId = Guid.NewGuid().ToString();
         _connections.TryAdd(connectionId, webSocket);
         
-        _logger.LogInformation("WebSocket connection established for productos: {ConnectionId}", connectionId);
+        _logger.LogInformation("Conexión WebSocket establecida para productos: {ConnectionId}", connectionId);
 
         try
         {
@@ -54,15 +63,20 @@ public class ProductoWebSocketHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "WebSocket connection error for productos: {ConnectionId}", connectionId);
+            _logger.LogError(ex, "Error en conexión WebSocket para productos: {ConnectionId}", connectionId);
         }
         finally
         {
             _connections.TryRemove(connectionId, out _);
-            _logger.LogInformation("WebSocket connection closed for productos: {ConnectionId}", connectionId);
+            _logger.LogInformation("Conexión WebSocket cerrada para productos: {ConnectionId}", connectionId);
         }
     }
 
+    /// <summary>
+    /// Notifica a todos los clientes conectados la creación de un producto.
+    /// </summary>
+    /// <param name="producto">Datos del producto creado.</param>
+    /// <returns>Tarea asíncrona de la notificación.</returns>
     public async Task NotifyProductoCreatedAsync(ProductoDto producto)
     {
         var notification = Notificacion<ProductoDto>.Create(
@@ -73,6 +87,11 @@ public class ProductoWebSocketHandler
         await BroadcastNotificationAsync(notification);
     }
 
+    /// <summary>
+    /// Notifica a todos los clientes conectados la actualización de un producto.
+    /// </summary>
+    /// <param name="producto">Datos del producto actualizado.</param>
+    /// <returns>Tarea asíncrona de la notificación.</returns>
     public async Task NotifyProductoUpdatedAsync(ProductoDto producto)
     {
         var notification = Notificacion<ProductoDto>.Create(
@@ -83,6 +102,11 @@ public class ProductoWebSocketHandler
         await BroadcastNotificationAsync(notification);
     }
 
+    /// <summary>
+    /// Notifica a todos los clientes conectados la eliminación de un producto.
+    /// </summary>
+    /// <param name="productoId">ID del producto eliminado.</param>
+    /// <returns>Tarea asíncrona de la notificación.</returns>
     public async Task NotifyProductoDeletedAsync(long productoId)
     {
         var data = new { productoId };
@@ -94,11 +118,17 @@ public class ProductoWebSocketHandler
         await BroadcastNotificationAsync(notification);
     }
 
+    /// <summary>
+    /// Envía una notificación a todos los clientes WebSocket conectados.
+    /// </summary>
+    /// <typeparam name="T">Tipo de datos de la notificación.</typeparam>
+    /// <param name="notification">Notificación a broadcast.</param>
+    /// <returns>Tarea asíncrona del broadcast.</returns>
     private async Task BroadcastNotificationAsync<T>(Notificacion<T> notification)
     {
         if (_connections.IsEmpty)
         {
-            _logger.LogDebug("No WebSocket clients connected for productos, skipping notification");
+            _logger.LogDebug("No hay clientes WebSocket conectados para productos, omitiendo notificación");
             return;
         }
 
@@ -107,7 +137,7 @@ public class ProductoWebSocketHandler
         var buffer = new ArraySegment<byte>(bytes);
 
         _logger.LogInformation(
-            "Broadcasting producto notification: {Type} for entity {Entity}", 
+            "Broadcasting notificación de producto: {Type} para entidad {Entity}", 
             notification.Type, 
             notification.Entity);
 
@@ -132,7 +162,7 @@ public class ProductoWebSocketHandler
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to send notification to connection: {ConnectionId}", kvp.Key);
+                _logger.LogWarning(ex, "Error al enviar notificación a la conexión: {ConnectionId}", kvp.Key);
                 disconnectedConnections.Add(kvp.Key);
             }
         }
@@ -140,7 +170,7 @@ public class ProductoWebSocketHandler
         foreach (var connectionId in disconnectedConnections)
         {
             _connections.TryRemove(connectionId, out _);
-            _logger.LogDebug("Removed disconnected producto WebSocket client: {ConnectionId}", connectionId);
+            _logger.LogDebug("Eliminado cliente WebSocket de producto desconectado: {ConnectionId}", connectionId);
         }
     }
 }

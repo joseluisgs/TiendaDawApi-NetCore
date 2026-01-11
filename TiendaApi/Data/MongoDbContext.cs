@@ -3,10 +3,8 @@ using MongoDB.Driver;
 namespace TiendaApi.Data;
 
 /// <summary>
-/// MongoDB database context
-/// 
-/// Java Spring Boot equivalent: @Configuration with MongoTemplate
-/// Provides access to MongoDB collections for Pedidos
+/// Contexto de base de datos MongoDB.
+/// Proporciona acceso a las colecciones de MongoDB para Pedidos.
 /// </summary>
 public class MongoDbContext
 {
@@ -25,7 +23,7 @@ public class MongoDbContext
 }
 
 /// <summary>
-/// MongoDB configuration settings
+/// Configuración de MongoDB.
 /// </summary>
 public class MongoDbSettings
 {

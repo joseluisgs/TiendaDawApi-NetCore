@@ -8,30 +8,28 @@ using TiendaApi.Models;
 namespace TiendaApi.Mappers;
 
 /// <summary>
-/// AutoMapper profiles for entity-DTO mappings
-/// 
-/// Java equivalent: ModelMapper or MapStruct configuration
-/// Automatically converts between entities and DTOs
+/// Perfiles de AutoMapper para mapeos entidad-DTO.
+/// Convierte automáticamente entre entidades y DTOs.
 /// </summary>
 public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // Categoria mappings
+        // Mapeos de categoría
         CreateMap<Categoria, CategoriaDto>();
         CreateMap<CategoriaRequestDto, Categoria>();
 
-        // Producto mappings
+        // Mapeos de producto
         CreateMap<Producto, ProductoDto>()
             .ForMember(dest => dest.CategoriaNombre,
                 opt => opt.MapFrom(src => src.Categoria.Nombre));
         CreateMap<ProductoRequestDto, Producto>();
 
-        // User mappings
+        // Mapeos de usuario
         CreateMap<User, UserDto>();
         CreateMap<RegisterDto, User>();
 
-        // Pedido mappings
+        // Mapeos de pedido
         CreateMap<Pedido, PedidoDto>();
         CreateMap<PedidoItem, PedidoItemDto>();
         CreateMap<PedidoRequestDto, Pedido>()

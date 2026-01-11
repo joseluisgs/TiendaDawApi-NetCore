@@ -8,6 +8,10 @@ using TiendaApi.Repositories.Usuarios;
 
 namespace TiendaApi.Services.Users;
 
+/// <summary>
+/// Servicio de usuarios usando Patrón Result.
+/// Maneja las operaciones CRUD de usuarios con Programación Orientada al Resultado.
+/// </summary>
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
@@ -21,9 +25,13 @@ public class UserService : IUserService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Obtiene todos los usuarios (excluyendo eliminados).
+    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// </summary>
     public async Task<Result<IEnumerable<UserDto>, DomainError>> FindAllAsync()
     {
-        _logger.LogInformation("Finding all users");
+        _logger.LogInformation("Obteniendo todos los usuarios");
         
         var users = await _userRepository.FindAllAsync();
         
@@ -34,15 +42,19 @@ public class UserService : IUserService
         return Result.Success<IEnumerable<UserDto>, DomainError>(dtos);
     }
 
+    /// <summary>
+    /// Obtiene un usuario por su ID.
+    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound)
+    /// </summary>
     public async Task<Result<UserDto, DomainError>> FindByIdAsync(long id)
     {
-        _logger.LogInformation("Finding user with id: {Id}", id);
+        _logger.LogInformation("Buscando usuario con id: {Id}", id);
         
         var user = await _userRepository.FindByIdAsync(id);
         
         if (user == null || user.IsDeleted)
         {
-            _logger.LogWarning("User with id {Id} not found", id);
+            _logger.LogWarning("Usuario con id {Id} no encontrado", id);
             return Result.Failure<UserDto, DomainError>(
                 DomainError.NotFound($"Usuario con ID {id} no encontrado")
             );
@@ -53,9 +65,13 @@ public class UserService : IUserService
         return Result.Success<UserDto, DomainError>(dto);
     }
 
+    /// <summary>
+    /// Crea un nuevo usuario.
+    /// Returns: Result.Success(UserDto) | Result.Failure(Validation/Conflict)
+    /// </summary>
     public async Task<Result<UserDto, DomainError>> CreateAsync(RegisterDto dto)
     {
-        _logger.LogInformation("Creating user: {Username}", dto.Username);
+        _logger.LogInformation("Creando usuario: {Username}", dto.Username);
         
         var validationResult = ValidateRegistration(dto);
         if (validationResult.IsFailure)
@@ -84,22 +100,26 @@ public class UserService : IUserService
         
         var savedUser = await _userRepository.SaveAsync(user);
         
-        _logger.LogInformation("User created with id: {Id}", savedUser.Id);
+        _logger.LogInformation("Usuario creado con id: {Id}", savedUser.Id);
         
         var resultDto = savedUser.ToDto();
         
         return Result.Success<UserDto, DomainError>(resultDto);
     }
 
+    /// <summary>
+    /// Actualiza un usuario existente.
+    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound/Validation/Conflict)
+    /// </summary>
     public async Task<Result<UserDto, DomainError>> UpdateAsync(long id, UserUpdateDto dto)
     {
-        _logger.LogInformation("Updating user with id: {Id}", id);
+        _logger.LogInformation("Actualizando usuario con id: {Id}", id);
         
         var user = await _userRepository.FindByIdAsync(id);
         
         if (user == null || user.IsDeleted)
         {
-            _logger.LogWarning("User with id {Id} not found for update", id);
+            _logger.LogWarning("Usuario con id {Id} no encontrado para actualizar", id);
             return Result.Failure<UserDto, DomainError>(
                 DomainError.NotFound($"Usuario con ID {id} no encontrado")
             );
@@ -131,22 +151,26 @@ public class UserService : IUserService
         
         var updated = await _userRepository.UpdateAsync(user);
         
-        _logger.LogInformation("User updated with id: {Id}", id);
+        _logger.LogInformation("Usuario actualizado con id: {Id}", id);
         
         var resultDto = updated.ToDto();
         
         return Result.Success<UserDto, DomainError>(resultDto);
     }
 
+    /// <summary>
+    /// Elimina un usuario (soft delete).
+    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
+    /// </summary>
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
-        _logger.LogInformation("Deleting user with id: {Id}", id);
+        _logger.LogInformation("Eliminando usuario con id: {Id}", id);
         
         var user = await _userRepository.FindByIdAsync(id);
         
         if (user == null || user.IsDeleted)
         {
-            _logger.LogWarning("User with id {Id} not found for delete", id);
+            _logger.LogWarning("Usuario con id {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
                 DomainError.NotFound($"Usuario con ID {id} no encontrado")
             );
@@ -157,11 +181,15 @@ public class UserService : IUserService
         
         await _userRepository.UpdateAsync(user);
         
-        _logger.LogInformation("User soft deleted with id: {Id}", id);
+        _logger.LogInformation("Usuario eliminado lógicamente con id: {Id}", id);
         
         return UnitResult.Success<DomainError>();
     }
 
+    /// <summary>
+    /// Valida los datos de registro de un usuario.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// </summary>
     private UnitResult<DomainError> ValidateRegistration(RegisterDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Username))
@@ -209,6 +237,10 @@ public class UserService : IUserService
         return UnitResult.Success<DomainError>();
     }
 
+    /// <summary>
+    /// Valida los datos de actualización de un usuario.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// </summary>
     private UnitResult<DomainError> ValidateUpdate(UserUpdateDto dto)
     {
         if (!string.IsNullOrWhiteSpace(dto.Email))
@@ -234,6 +266,10 @@ public class UserService : IUserService
         return UnitResult.Success<DomainError>();
     }
 
+    /// <summary>
+    /// Verifica duplicados de username y email.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Conflict)
+    /// </summary>
     private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(
         string? username, 
         string? email, 

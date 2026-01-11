@@ -8,17 +8,8 @@ using TiendaApi.Repositories.Usuarios;
 namespace TiendaApi.Services.Auth;
 
 /// <summary>
-/// Authentication Service using RESULT PATTERN (Railway Oriented Programming)
-/// 
-/// ANTES (Excepciones en Controller): throw new ConflictException()
-/// AHORA (Result Pattern): return Result.Failure(DomainError.Conflict(...))
-/// 
-/// Ventajas del Result Pattern:
-/// 1. Errores explícitos en la firma del método (Task<Result<T, DomainError>>)
-/// 2. Sin overhead de excepciones (no stack unwinding)
-/// 3. Más fácil de testear (sin try/catch)
-/// 4. Encadenamiento funcional con .Bind(), .Map(), .Tap()
-/// 5. Type-safe: el compilador garantiza que se manejen los errores
+/// Servicio de autenticación usando Patrón Result.
+/// Encapsula la lógica de autenticación con Programación Orientada al Resultado.
 /// </summary>
 public class AuthService : IAuthService
 {
@@ -36,6 +27,10 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Registra un nuevo usuario.
+    /// Returns: Result.Success(AuthResponseDto) | Result.Failure(Validation/Conflict)
+    /// </summary>
     public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto)
     {
         var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
@@ -74,6 +69,10 @@ public class AuthService : IAuthService
         return Result.Success<AuthResponseDto, DomainError>(authResponse);
     }
 
+    /// <summary>
+    /// Autentica un usuario existente.
+    /// Returns: Result.Success(AuthResponseDto) | Result.Failure(Validation/Unauthorized/NotFound)
+    /// </summary>
     public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto)
     {
         var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
@@ -88,23 +87,23 @@ public class AuthService : IAuthService
         var user = await _userRepository.FindByUsernameAsync(dto.Username!);
         if (user == null)
         {
-            _logger.LogWarning("SignIn failed: User not found - {Username}", sanitizedUsername);
+            _logger.LogWarning("SignIn fallido: Usuario no encontrado - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
-                DomainError.Unauthorized("Invalid username or password")
+                DomainError.Unauthorized("Credenciales inválidas")
             );
         }
 
         var passwordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
         if (!passwordValid)
         {
-            _logger.LogWarning("SignIn failed: Invalid password - {Username}", sanitizedUsername);
+            _logger.LogWarning("SignIn fallido: Password inválido - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
-                DomainError.Unauthorized("Invalid username or password")
+                DomainError.Unauthorized("Credenciales inválidas")
             );
         }
 
         var authResponse = GenerateAuthResponse(user);
-        _logger.LogInformation("User signed in successfully: {Username}", sanitizedUsername);
+        _logger.LogInformation("Usuario inició sesión correctamente: {Username}", sanitizedUsername);
 
         return Result.Success<AuthResponseDto, DomainError>(authResponse);
     }
@@ -113,52 +112,60 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrWhiteSpace(dto.Username))
         {
-            return UnitResult.Failure(DomainError.Validation("Username is required"));
+            return UnitResult.Failure(DomainError.Validation("El nombre de usuario es requerido"));
         }
 
         if (dto.Username.Length < 3)
         {
-            return UnitResult.Failure(DomainError.Validation("Username must be at least 3 characters"));
+            return UnitResult.Failure(DomainError.Validation("El nombre de usuario debe tener al menos 3 caracteres"));
         }
 
         if (string.IsNullOrWhiteSpace(dto.Email))
         {
-            return UnitResult.Failure(DomainError.Validation("Email is required"));
+            return UnitResult.Failure(DomainError.Validation("El email es requerido"));
         }
 
         if (!new EmailAddressAttribute().IsValid(dto.Email))
         {
-            return UnitResult.Failure(DomainError.Validation("Valid email is required"));
+            return UnitResult.Failure(DomainError.Validation("El email no es válido"));
         }
 
         if (string.IsNullOrWhiteSpace(dto.Password))
         {
-            return UnitResult.Failure(DomainError.Validation("Password is required"));
+            return UnitResult.Failure(DomainError.Validation("La contraseña es requerida"));
         }
 
         if (dto.Password.Length < 6)
         {
-            return UnitResult.Failure(DomainError.Validation("Password must be at least 6 characters"));
+            return UnitResult.Failure(DomainError.Validation("La contraseña debe tener al menos 6 caracteres"));
         }
 
         return UnitResult.Success<DomainError>();
     }
 
+    /// <summary>
+    /// Valida los datos de inicio de sesión.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// </summary>
     private UnitResult<DomainError> ValidateLogin(LoginDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Username))
         {
-            return UnitResult.Failure(DomainError.Validation("Username is required"));
+            return UnitResult.Failure(DomainError.Validation("El nombre de usuario es requerido"));
         }
 
         if (string.IsNullOrWhiteSpace(dto.Password))
         {
-            return UnitResult.Failure(DomainError.Validation("Password is required"));
+            return UnitResult.Failure(DomainError.Validation("La contraseña es requerida"));
         }
 
         return UnitResult.Success<DomainError>();
     }
 
+    /// <summary>
+    /// Verifica duplicados de username y email.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Conflict)
+    /// </summary>
     private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(RegisterDto dto)
     {
         var usernameCheckTask = _userRepository.FindByUsernameAsync(dto.Username!);
@@ -169,18 +176,22 @@ public class AuthService : IAuthService
         var existingUser = await usernameCheckTask;
         if (existingUser != null)
         {
-            return UnitResult.Failure(DomainError.Conflict("Username already exists"));
+            return UnitResult.Failure(DomainError.Conflict("El nombre de usuario ya existe"));
         }
 
         var existingEmail = await emailCheckTask;
         if (existingEmail != null)
         {
-            return UnitResult.Failure(DomainError.Conflict("Email already exists"));
+            return UnitResult.Failure(DomainError.Conflict("El email ya existe"));
         }
 
         return UnitResult.Success<DomainError>();
     }
 
+    /// <summary>
+    /// Genera la respuesta de autenticación con token JWT.
+    /// Returns: AuthResponseDto
+    /// </summary>
     private AuthResponseDto GenerateAuthResponse(User user)
     {
         var token = _jwtService.GenerateToken(user);

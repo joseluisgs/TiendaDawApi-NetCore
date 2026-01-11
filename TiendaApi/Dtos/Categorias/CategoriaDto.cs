@@ -1,25 +1,39 @@
 namespace TiendaApi.Dtos.Categorias;
 
 /// <summary>
-/// DTO for Categoria responses
-/// Separates internal entity from API contract
-/// 
-/// Java equivalent: Response DTO without @Entity annotations
-/// Spring Boot: Similar to ResponseEntity body classes
+/// DTO de categoría para respuestas de API.
+/// Separa la entidad interna del contrato de API.
 /// </summary>
 public record CategoriaDto
 {
+    /// <summary>
+    /// Identificador único de la categoría.
+    /// </summary>
     public long Id { get; init; }
+
+    /// <summary>
+    /// Nombre de la categoría.
+    /// </summary>
     public string Nombre { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Fecha de creación del registro.
+    /// </summary>
     public DateTime CreatedAt { get; init; }
+
+    /// <summary>
+    /// Fecha de última actualización del registro.
+    /// </summary>
     public DateTime UpdatedAt { get; init; }
 }
 
 /// <summary>
-/// DTO for creating/updating Categoria
-/// Java equivalent: Request DTO with @Valid annotations
+/// DTO de categoría para solicitudes de creación o actualización.
 /// </summary>
 public record CategoriaRequestDto
 {
+    /// <summary>
+    /// Nombre de la categoría.
+    /// </summary>
     public string Nombre { get; init; } = string.Empty;
 }

@@ -4,13 +4,14 @@ using TiendaApi.Models;
 namespace TiendaApi.Mappers;
 
 /// <summary>
-/// Extension methods for Pedido entity-DTO conversions
-/// Alternative to AutoMapper for educational purposes
+/// Métodos de extensión para mapeo de pedidos.
+/// Alternativa a AutoMapper con fines educativos.
 /// </summary>
 public static class PedidoMapper
 {
     /// <summary>
-    /// Converts Pedido entity to PedidoDto
+    /// Convierte un pedido a DTO.
+    /// Returns: Dtos.Pedidos.PedidoDto
     /// </summary>
     public static Dtos.Pedidos.PedidoDto ToDto(this Pedido pedido)
     {
@@ -26,7 +27,8 @@ public static class PedidoMapper
     }
 
     /// <summary>
-    /// Converts IEnumerable<Pedido> to IEnumerable<PedidoDto>
+    /// Convierte una lista de pedidos a lista de DTOs.
+    /// Returns: IEnumerable<Dtos.Pedidos.PedidoDto>
     /// </summary>
     public static IEnumerable<Dtos.Pedidos.PedidoDto> ToDtoList(this IEnumerable<Pedido> pedidos)
     {
@@ -34,7 +36,8 @@ public static class PedidoMapper
     }
 
     /// <summary>
-    /// Converts PedidoItem entity to PedidoItemDto
+    /// Convierte un ítem de pedido a DTO.
+    /// Returns: Dtos.Pedidos.PedidoItemDto
     /// </summary>
     public static Dtos.Pedidos.PedidoItemDto ToDto(this PedidoItem item)
     {
@@ -49,7 +52,8 @@ public static class PedidoMapper
     }
 
     /// <summary>
-    /// Converts PedidoRequestDto to Pedido entity
+    /// Convierte un DTO de solicitud de pedido a entidad pedido.
+    /// Returns: Pedido
     /// </summary>
     public static Pedido ToEntity(this Dtos.Pedidos.PedidoRequestDto dto, long userId)
     {
@@ -64,7 +68,8 @@ public static class PedidoMapper
     }
 
     /// <summary>
-    /// Converts PedidoItemRequestDto to PedidoItem entity
+    /// Convierte un DTO de solicitud de ítem a entidad ítem de pedido.
+    /// Returns: PedidoItem
     /// </summary>
     public static PedidoItem ToEntity(this Dtos.Pedidos.PedidoItemRequestDto dto, string? nombreProducto = null, decimal? precio = null)
     {

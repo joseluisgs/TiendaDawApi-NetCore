@@ -8,36 +8,7 @@ using TiendaApi.Services.Productos;
 namespace TiendaApi.Controllers;
 
 /// <summary>
-/// Controller for Productos using MODERN RESULT PATTERN approach
-/// 
-/// This controller demonstrates the functional programming pattern:
-/// - NO try/catch blocks needed
-/// - Service methods return Result<T, DomainError>
-/// - Pattern matching to convert Result to HTTP response
-/// 
-/// Java comparison:
-/// - Similar to Either<Error, Value>.fold()
-/// - Like CompletableFuture.handle()
-/// - Vavr's Try.fold() pattern
-/// 
-/// EDUCATIONAL NOTE: Compare this with CategoriasController (Exception-based)
-/// 
-/// Result Pattern Benefits:
-/// 1. NO try/catch blocks cluttering code
-/// 2. Explicit in method signature what can fail
-/// 3. Type-safe error handling
-/// 4. Easier to test (no exception mocking)
-/// 5. Better performance (no stack unwinding)
-/// 6. Functional programming style
-/// 
-/// When to use this approach:
-/// - Complex business logic with multiple failure paths
-/// - Performance-critical code
-/// - Functional programming mindset
-/// - Want explicit error handling
-/// - Modern greenfield projects
-/// 
-/// PROTECTED: Requires JWT authentication for POST, PUT, DELETE operations
+/// Controlador de productos usando Patrón Result.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -54,18 +25,17 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// Get all products (public access)
+    /// Obtener todos los productos.
     /// GET /api/productos
+    /// Returns: 200 OK
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
-        // NO try/catch needed - Result Pattern handles errors
         var resultado = await _service.FindAllAsync();
         
-        // Pattern matching - clean and explicit
         return resultado.Match(
             onSuccess: productos => Ok(productos),
             onFailure: error => StatusCode(500, new { message = error.Message })
@@ -73,18 +43,9 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// Get product by ID (public access)
+    /// Obtener un producto por ID.
     /// GET /api/productos/{id}
-    /// 
-    /// NO try/catch - errors are values returned by service
-    /// Pattern matching converts Result to HTTP response
-    /// 
-    /// Java equivalent:
-    /// return service.findById(id)
-    ///     .fold(
-    ///         error -> ResponseEntity.status(error.toHttpStatus()).body(error),
-    ///         product -> ResponseEntity.ok(product)
-    ///     );
+    /// Returns: 200 OK | 404 Not Found
     /// </summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
@@ -94,8 +55,6 @@ public class ProductosController : ControllerBase
     {
         var resultado = await _service.FindByIdAsync(id);
         
-        // Match pattern - convert Result to IActionResult
-        // Much cleaner than try/catch!
         return resultado.Match(
             onSuccess: producto => Ok(producto),
             onFailure: error => error.Type switch
@@ -107,8 +66,9 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// Get products by category (public access)
+    /// Obtener productos por categoría.
     /// GET /api/productos/categoria/{categoriaId}
+    /// Returns: 200 OK | 404 Not Found
     /// </summary>
     [HttpGet("categoria/{categoriaId}")]
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
@@ -129,13 +89,9 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// Create new product (requires authentication)
+    /// Crear un nuevo producto.
     /// POST /api/productos
-    /// 
-    /// NO try/catch for validation errors
-    /// Service returns Result with validation errors as value
-    /// 
-    /// Compare with CategoriasController.Create() - no try/catch!
+    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status201Created)]
@@ -148,18 +104,10 @@ public class ProductosController : ControllerBase
         var resultado = await _service.CreateAsync(dto);
         
         return resultado.Match(
-            onSuccess: producto => CreatedAtAction(
-                nameof(GetById),
-                new { id = producto.Id },
-                producto
-            ),
+            onSuccess: producto => CreatedAtAction(nameof(GetById), new { id = producto.Id }, producto),
             onFailure: error => error.Type switch
             {
-                ErrorType.Validation => BadRequest(new 
-                { 
-                    message = error.Message,
-                    errors = error.ValidationErrors 
-                }),
+                ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
                 ErrorType.NotFound => NotFound(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
@@ -167,44 +115,35 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// Update existing product (requires authentication)
+    /// Actualizar un producto existente.
     /// PUT /api/productos/{id}
-    /// 
-    /// Multiple failure scenarios handled cleanly with pattern matching
-    /// NO try/catch cascades!
+    /// Returns: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized
     /// </summary>
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Authorize(Policy = "RequireUserRole")]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Update(long id, [FromBody] ProductoRequestDto dto)
     {
         var resultado = await _service.UpdateAsync(id, dto);
         
-        // Clean error handling - all cases explicit
         return resultado.Match(
             onSuccess: producto => Ok(producto),
             onFailure: error => error.Type switch
             {
                 ErrorType.NotFound => NotFound(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new 
-                { 
-                    message = error.Message,
-                    errors = error.ValidationErrors 
-                }),
+                ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
     }
 
     /// <summary>
-    /// Delete product (requires authentication)
+    /// Eliminar un producto.
     /// DELETE /api/productos/{id}
-    /// 
-    /// Result<AppError> for void operations
-    /// Still type-safe and explicit!
+    /// Returns: 204 No Content | 404 Not Found | 401 Unauthorized
     /// </summary>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -226,31 +165,3 @@ public class ProductosController : ControllerBase
         };
     }
 }
-
-/// <summary>
-/// SUMMARY: Exception vs Result Pattern Comparison
-/// 
-/// ╔════════════════════════════════╦═════════════════════════════════╗
-/// ║   Traditional Exceptions       ║      Result Pattern             ║
-/// ╠════════════════════════════════╬═════════════════════════════════╣
-/// ║ try/catch in every method      ║ No try/catch needed             ║
-/// ║ throw new NotFoundException()  ║ return AppError.NotFound()      ║
-/// ║ Hidden control flow            ║ Explicit error paths            ║
-/// ║ Performance overhead           ║ Better performance              ║
-/// ║ Familiar to Java devs          ║ Functional programming style    ║
-/// ║ GlobalExceptionHandler         ║ Pattern matching in controller  ║
-/// ║ @ExceptionHandler in Spring    ║ result.Match() in C#            ║
-/// ╚════════════════════════════════╩═════════════════════════════════╝
-/// 
-/// Choose Exceptions when:
-/// - Team familiar with Spring Boot
-/// - Simple CRUD operations
-/// - Standard HTTP errors only
-/// 
-/// Choose Result Pattern when:
-/// - Complex business logic
-/// - Multiple failure scenarios
-/// - Want explicit error handling
-/// - Performance critical
-/// - Modern functional style
-/// </summary>

@@ -8,7 +8,7 @@ using TiendaApi.Services.Email;
 namespace TiendaApi.Tests.Unit.Services.Email;
 
 /// <summary>
-/// Smoke tests for email service
+/// Tests de smoke para servicio de email
 /// </summary>
 public class EmailServiceTests
 {
@@ -30,7 +30,7 @@ public class EmailServiceTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ShouldAddMessageToChannel()
+    public async Task EnqueueEmailAsync_DebeAgregarMensajeAlCanal()
     {
         // Arrange
         var emailMessage = new EmailMessage
@@ -53,7 +53,7 @@ public class EmailServiceTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_MultipleMessages_ShouldQueueAll()
+    public async Task EnqueueEmailAsync_MultiplesMensajes_DebeEncolarTodos()
     {
         // Arrange
         var message1 = new EmailMessage { To = "test1@example.com", Subject = "Test 1", Body = "Body 1" };

@@ -28,11 +28,12 @@ using TiendaApi.WebSockets.Productos;
 var builder = WebApplication.CreateBuilder(args);
 
 // ============================================================================
-// CONFIGURATION - Similar to Spring Boot's application.properties
+// CONFIGURACIÓN DE LA APLICACIÓN
 // ============================================================================
 
-// Add Controllers (MVC pattern) with Content Negotiation
-// Java Spring Boot: @RestController classes automatically scanned
+// Añadimos soporte para controladores MVC con negociación de contenido.
+// Esto permite que la API devuelva diferentes formatos (JSON, XML) según
+// lo que solicite el cliente (header Accept).
 builder.Services.AddControllers(options =>
 {
     options.RespectBrowserAcceptHeader = true;
@@ -41,21 +42,22 @@ builder.Services.AddControllers(options =>
 .AddXmlSerializerFormatters()
 .AddXmlDataContractSerializerFormatters();
 
-// Add Swagger/OpenAPI documentation
-// Java Spring Boot: SpringDoc OpenAPI (springdoc-openapi-ui)
+// Configuración de Swagger/OpenAPI para documentación interactiva de la API.
+// Swagger proporciona una interfaz web para explorar y probar los endpoints.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     { 
-        Title = "TiendaApi - Dual Error Handling Demo",
+        Title = "TiendaApi - API REST con Doble Enfoque de Manejo de Errores",
         Version = "v1",
-        Description = @"API REST educativa demostrando DOS enfoques de manejo de errores:
+        Description = @"API REST educativa que demuestra DOS enfoques diferentes 
+de manejo de errores en el desarrollo de software:
         
-**Categorías**: Enfoque Tradicional con Exceptions (familiar para Java devs)
-**Productos**: Result Pattern Moderno (functional programming)
-
-Compara ambos enfoques para aprender cuándo usar cada uno.
+**Categorías**: Enfoque Tradicional con Excepciones (método clásico)
+**Productos**: Patrón Result Moderno (programación funcional)
+        
+Esta API permite comparar ambos enfoques para entender cuándo usar cada uno.
 
 ## 🔐 Autenticación
 
@@ -81,11 +83,11 @@ Esta API utiliza **JWT (JSON Web Tokens)** para la autenticación.
 
 ## 🎯 Conceptos Clave
 
-### Railway Oriented Programming (ROP)
-Los endpoints de **Productos** usan el patrón Result<T, E> que implementa ROP:
+### Programación Orientada al Resultado (ROP)
+Los endpoints de **Productos** usan el patrón Result<T, E>:
 - ✅ Camino feliz: Operación exitosa devuelve Result.Success
 - ❌ Camino de error: Fallo devuelve Result.Failure con detalles
-- 🔗 Los errores fluyen automáticamente sin try/catch
+- 🔗 Los errores fluyen automáticamente sin necesidad de try/catch
 
 ### Comparación de enfoques:
 - **Categorías** (tradicional): Lanza excepciones, GlobalExceptionHandler las captura
@@ -105,7 +107,7 @@ Explora ambos para entender las ventajas de cada enfoque! 🚀",
         }
     });
 
-    // Configuración JWT Bearer para Swagger
+    // Configuración del esquema de seguridad JWT para Swagger.
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -142,7 +144,7 @@ Pasos:
         }
     });
 
-    // Incluir comentarios XML en la documentación
+    // Incluir comentarios XML en la documentación de Swagger.
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -152,40 +154,43 @@ Pasos:
 });
 
 // ============================================================================
-// DATABASE CONFIGURATION
+// CONFIGURACIÓN DE BASE DE DATOS
 // ============================================================================
 
-// PostgreSQL with Entity Framework Core
-// Java Spring Boot: spring.datasource.url + JPA configuration
+// Configuración de PostgreSQL con Entity Framework Core.
+// La cadena de conexión se lee del archivo de configuración (appsettings.json).
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? "Host=localhost;Database=tienda;Username=admin;Password=admin123";
 
+// Registro del DbContext con soporte para PostgreSQL.
+// UseNpgsql es el proveedor específico para PostgreSQL.
 builder.Services.AddDbContext<TiendaDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // ============================================================================
-// DEPENDENCY INJECTION - Similar to Spring's @Autowired
+// INYECCIÓN DE DEPENDENCIAS
 // ============================================================================
 
-// Repositories
-// Java Spring Boot: @Repository classes automatically registered
+// Registramos los repositorios como serviciosScoped (una instancia por solicitud).
+// Los repositorios encapsulan el acceso a datos y proporcionan abstracción.
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPedidosRepository, PedidosRepository>();
 
-// Services
-// Java Spring Boot: @Service classes automatically registered
+// Registramos los servicios de dominio.
+// Los servicios contienen la lógica de negocio y usan los repositorios.
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IPedidosService, PedidosService>();
 
-// Auth and User Services with Result Pattern
+// Servicios de autenticación y gestión de usuarios.
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Cache Service (Redis)
+// Servicio de caché distribuida con Redis.
+// Redis almacena datos en memoria para acceso rápido.
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
@@ -194,32 +199,32 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
-// Email Service with Background Worker
+// Servicio de correo electrónico con procesamiento en segundo plano.
+// Channel<T> permite comunicación asíncrona entre productores y consumidores.
 builder.Services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 builder.Services.AddScoped<IEmailService, MailKitEmailService>();
 builder.Services.AddHostedService<EmailBackgroundService>();
 
-// WebSocket Handler
+// Handlers de WebSocket para notificaciones en tiempo real.
 builder.Services.AddSingleton<ProductoWebSocketHandler>();
 builder.Services.AddSingleton<PedidoWebSocketHandler>();
 
-// GraphQL Services
+// Servicios de GraphQL para consultas dinámicas.
 builder.Services.AddScoped<IDocumentExecuter, DocumentExecuter>();
 builder.Services.AddScoped<ISchema, TiendaSchema>();
 builder.Services.AddScoped<TiendaQuery>();
 builder.Services.AddScoped<ProductoType>();
 builder.Services.AddScoped<CategoriaType>();
 
-// AutoMapper
-// Java Spring Boot: ModelMapper bean configuration
+// Configuración de AutoMapper para mapeo automático entre entidades y DTOs.
 builder.Services.AddAutoMapper(typeof(MappingProfile), typeof(PedidoProfile));
 
 // ============================================================================
-// AUTHENTICATION & AUTHORIZATION - Similar to Spring Security
+// AUTENTICACIÓN Y AUTORIZACIÓN
 // ============================================================================
 
-// JWT Authentication
-// Java Spring Boot: Spring Security with JWT filter
+// Configuración de autenticación JWT (JSON Web Tokens).
+// JWT es un estándar para crear tokens de acceso seguros.
 var jwtKey = builder.Configuration["Jwt:Key"] 
     ?? throw new InvalidOperationException("JWT Key not configured");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "TiendaApi";
@@ -245,16 +250,17 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Authorization policies
-// Java Spring Boot: @PreAuthorize("hasRole('ADMIN')")
+// Definición de políticas de autorización basadas en roles.
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("RequireAdminRole", policy => policy.RequireRole("ADMIN"))
     .AddPolicy("RequireUserRole", policy => policy.RequireRole("USER", "ADMIN"));
 
 // ============================================================================
-// CORS Configuration (for frontend apps)
-// Java Spring Boot: @CrossOrigin or WebMvcConfigurer
+// CONFIGURACIÓN CORS (Cross-Origin Resource Sharing)
 // ============================================================================
+
+// CORS permite que aplicaciones frontend desde dominios diferentes
+// puedan acceder a esta API.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -266,28 +272,27 @@ builder.Services.AddCors(options =>
 });
 
 // ============================================================================
-// BUILD APPLICATION
+// CONSTRUCCIÓN DE LA APLICACIÓN
 // ============================================================================
 var app = builder.Build();
 
 // ============================================================================
-// MIDDLEWARE PIPELINE - Similar to Spring Security filter chain
-// Java Spring Boot: Filter chain and @ControllerAdvice
+// PIPELINE DE MIDDLEWARE
 // ============================================================================
 
-// Development-only: Swagger UI
+// Middleware de Swagger: solo disponible en desarrollo.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "TiendaApi v1");
-        options.RoutePrefix = string.Empty; // Swagger at root URL
+        options.RoutePrefix = string.Empty; // Swagger en la URL raíz
     });
 }
 
-// GraphiQL UI for GraphQL queries
-// Accessible at /graphiql
+// Interfaz GraphiQL para probar consultas GraphQL.
+// Accesible en /graphiql
 app.MapGet("/graphiql", async context =>
 {
     context.Response.ContentType = "text/html";
@@ -315,26 +320,23 @@ app.MapGet("/graphiql", async context =>
 ");
 });
 
-// Global Exception Handler Middleware
-// Java Spring Boot: @ControllerAdvice with @ExceptionHandler
-// ONLY handles exceptions from Categorías (traditional approach)
+// Middleware global para manejo de excepciones.
+// Captura excepciones no controladas y las convierte en respuestas HTTP apropiadas.
 app.UseGlobalExceptionHandler();
 
 app.UseHttpsRedirection();
 
-// CORS
+// Middleware de CORS.
 app.UseCors("AllowAll");
 
-// Authentication & Authorization
-// Java Spring Boot: Spring Security filter chain
+// Middleware de autenticación y autorización.
 app.UseAuthentication();
 app.UseAuthorization();
 
-// WebSocket support
-// Java Spring Boot: @ServerEndpoint or WebSocketHandler
+// Soporte para conexiones WebSocket.
 app.UseWebSockets();
 
-// WebSocket endpoint for producto notifications
+// Endpoint WebSocket para notificaciones de productos.
 app.Map("/ws/v1/productos", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
@@ -349,7 +351,7 @@ app.Map("/ws/v1/productos", async context =>
     }
 });
 
-// WebSocket endpoint for pedido notifications
+// Endpoint WebSocket para notificaciones de pedidos.
 app.Map("/ws/v1/pedidos", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
@@ -364,15 +366,14 @@ app.Map("/ws/v1/pedidos", async context =>
     }
 });
 
-// Map Controllers
-// Java Spring Boot: @RestController classes automatically mapped
+// Mapeo automático de controladores.
 app.MapControllers();
 
 // ============================================================================
-// DATABASE INITIALIZATION
+// INICIALIZACIÓN DE BASE DE DATOS
 // ============================================================================
 
-// Apply migrations and seed data on startup
+// Aplicamos migraciones y sembramos datos iniciales al iniciar.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -380,83 +381,25 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<TiendaDbContext>();
         
-        // Create database if it doesn't exist
+        // Crear la base de datos si no existe.
         context.Database.EnsureCreated();
         
-        // Or apply pending migrations (use this for production)
+        // O aplicar migraciones pendientes (usar en producción).
         // context.Database.Migrate();
         
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("Database initialized successfully");
+        logger.LogInformation("Base de datos inicializada");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while initializing the database");
+        logger.LogError(ex, "Error al inicializar la base de datos");
     }
 }
 
 // ============================================================================
-// RUN APPLICATION
+// INICIO DE LA APLICACIÓN
 // ============================================================================
 
-app.Logger.LogInformation("""
-    
-    ════════════════════════════════════════════════════════════════════════════
-    🏬 TiendaApi - Educational Dual Error Handling Demo + Runtime Features
-    ════════════════════════════════════════════════════════════════════════════
-    
-    📚 EDUCATIONAL ENDPOINTS:
-    
-    🔴 TRADITIONAL EXCEPTIONS (like Java/Spring Boot):
-       GET    /api/categorias          - List all categories
-       GET    /api/categorias/{{id}}     - Get category by ID
-       POST   /api/categorias          - Create category
-       PUT    /api/categorias/{{id}}     - Update category
-       DELETE /api/categorias/{{id}}     - Delete category
-       
-       → Uses try/catch, throws exceptions
-       → GlobalExceptionHandler catches exceptions
-       → Familiar to Java/Spring Boot developers
-    
-    🟢 MODERN RESULT PATTERN (functional programming):
-       GET    /api/productos           - List all products (with Redis cache)
-       GET    /api/productos/{{id}}      - Get product by ID (with cache-aside)
-       POST   /api/productos           - Create product (WebSocket + Email notification)
-       PUT    /api/productos/{{id}}      - Update product (WebSocket notification)
-       DELETE /api/productos/{{id}}      - Delete product (WebSocket notification)
-       
-       → Returns Result<T, AppError>
-       → NO try/catch blocks
-       → Pattern matching for error handling
-       → Explicit, type-safe, better performance
-       → Integrated with Redis cache, WebSocket, Email
-    
-    🔐 AUTHENTICATION (JWT):
-       POST   /v1/auth/signup          - Register new user
-       POST   /v1/auth/signin          - Login and get JWT token
-       
-       → BCrypt password hashing
-       → JWT token generation
-       → Use token in Authorization: Bearer <token> header
-    
-    🔌 WEBSOCKET (Real-time notifications):
-       WS     /ws/v1/productos         - WebSocket endpoint for producto notifications
-       
-       → Connect with WebSocket client
-       → Receive real-time notifications on producto CREATED/UPDATED/DELETED
-    
-    🔍 GRAPHQL:
-       POST   /graphql                 - GraphQL query endpoint
-       GET    /graphiql                - GraphiQL interactive UI
-       
-       → Query productos and categorias
-       → Example: productos with id nombre precio
-    
-    📖 Swagger Documentation: http://localhost:5000
-    
-    Compare both error handling approaches and explore the runtime features! 🚀
-    ════════════════════════════════════════════════════════════════════════════
-    """);
 
 app.Run();

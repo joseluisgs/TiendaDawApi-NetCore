@@ -4,13 +4,14 @@ using TiendaApi.Models;
 namespace TiendaApi.Mappers;
 
 /// <summary>
-/// Extension methods for Producto entity-DTO conversions
-/// Alternative to AutoMapper for educational purposes
+/// Métodos de extensión para mapeo de productos.
+/// Alternativa a AutoMapper con fines educativos.
 /// </summary>
 public static class ProductoMapper
 {
     /// <summary>
-    /// Converts Producto entity to ProductoDto
+    /// Convierte un producto a DTO.
+    /// Returns: ProductoDto
     /// </summary>
     public static ProductoDto ToDto(this Producto producto)
     {
@@ -30,7 +31,8 @@ public static class ProductoMapper
     }
 
     /// <summary>
-    /// Converts IEnumerable<Producto> to IEnumerable<ProductoDto>
+    /// Convierte una lista de productos a lista de DTOs.
+    /// Returns: IEnumerable<ProductoDto>
     /// </summary>
     public static IEnumerable<ProductoDto> ToDtoList(this IEnumerable<Producto> productos)
     {
@@ -38,7 +40,8 @@ public static class ProductoMapper
     }
 
     /// <summary>
-    /// Converts ProductoRequestDto to Producto entity
+    /// Convierte un DTO de solicitud a entidad producto.
+    /// Returns: Producto
     /// </summary>
     public static Producto ToEntity(this ProductoRequestDto dto)
     {
@@ -56,7 +59,8 @@ public static class ProductoMapper
     }
 
     /// <summary>
-    /// Updates an existing Producto entity with data from ProductoRequestDto
+    /// Actualiza una entidad producto con datos del DTO de solicitud.
+    /// Returns: void
     /// </summary>
     public static void UpdateEntity(this ProductoRequestDto dto, Producto producto)
     {

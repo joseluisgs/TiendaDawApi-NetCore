@@ -15,8 +15,8 @@ using TiendaApi.WebSockets.Pedidos;
 namespace TiendaApi.Tests.Unit.Services.Pedidos;
 
 /// <summary>
-/// Unit tests for PedidosService using Result Pattern
-/// Tests business logic, stock validation, and error handling
+/// Tests unitarios para PedidosService usando Result Pattern
+/// Prueba lógica de negocio, validación de stock y manejo de errores
 /// </summary>
 public class PedidosServiceTests
 {
@@ -55,7 +55,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_ShouldReturnAllPedidos()
+    public async Task FindAllAsync_DebeRetornarTodosLosPedidos()
     {
         // Arrange
         var pedidos = new List<Pedido>
@@ -77,7 +77,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_WithExistingId_ShouldReturnPedido()
+    public async Task FindByIdAsync_ConIdExistente_DebeRetornarPedido()
     {
         // Arrange
         var pedidoId = "123";
@@ -98,7 +98,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_WithNonExistingId_ShouldReturnNotFoundError()
+    public async Task FindByIdAsync_ConIdNoExistente_DebeRetornarErrorNoEncontrado()
     {
         // Arrange
         var pedidoId = "999";
@@ -116,7 +116,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithEmptyItems_ShouldReturnValidationError()
+    public async Task CreateAsync_ConItemsVacios_DebeRetornarErrorValidacion()
     {
         // Arrange
         var userId = 1L;
@@ -132,7 +132,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithInvalidQuantity_ShouldReturnValidationError()
+    public async Task CreateAsync_ConCantidadInvalida_DebeRetornarErrorValidacion()
     {
         // Arrange
         var userId = 1L;
@@ -154,7 +154,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithNonExistingProduct_ShouldReturnNotFoundError()
+    public async Task CreateAsync_ConProductoNoExistente_DebeRetornarErrorNoEncontrado()
     {
         // Arrange
         var userId = 1L;
@@ -179,7 +179,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithInsufficientStock_ShouldReturnBusinessRuleError()
+    public async Task CreateAsync_ConStockInsuficiente_DebeRetornarErrorReglaNegocio()
     {
         // Arrange
         var userId = 1L;
@@ -212,7 +212,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithValidData_ShouldCreatePedido()
+    public async Task CreateAsync_ConDatosValidos_DebeCrearPedido()
     {
         // Arrange
         var userId = 1L;
@@ -270,7 +270,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_WithInvalidEstado_ShouldReturnValidationError()
+    public async Task UpdateEstadoAsync_ConEstadoInvalido_DebeRetornarErrorValidacion()
     {
         // Arrange
         var pedidoId = "123";
@@ -286,7 +286,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_WithNonExistingPedido_ShouldReturnNotFoundError()
+    public async Task UpdateEstadoAsync_ConPedidoNoExistente_DebeRetornarErrorNoEncontrado()
     {
         // Arrange
         var pedidoId = "999";
@@ -304,7 +304,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_WithValidData_ShouldUpdateEstado()
+    public async Task UpdateEstadoAsync_ConDatosValidos_DebeActualizarEstado()
     {
         // Arrange
         var pedidoId = "123";

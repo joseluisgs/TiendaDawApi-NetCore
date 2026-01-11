@@ -7,6 +7,10 @@ using TiendaApi.Repositories.Categorias;
 
 namespace TiendaApi.Services.Categorias;
 
+/// <summary>
+/// Servicio de categorías usando Patrón Result.
+/// Maneja la lógica de negocio: validaciones, verificación de duplicados.
+/// </summary>
 public class CategoriaService : ICategoriaService
 {
     private readonly ICategoriaRepository _repository;
@@ -20,6 +24,10 @@ public class CategoriaService : ICategoriaService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Obtiene todas las categorías.
+    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// </summary>
     public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync()
     {
         _logger.LogInformation("Buscando todas las categorías");
@@ -28,6 +36,10 @@ public class CategoriaService : ICategoriaService
         return Result.Success<IEnumerable<CategoriaDto>, DomainError>(dtos);
     }
 
+    /// <summary>
+    /// Obtiene una categoría por su ID.
+    /// Returns: Result.Success(CategoriaDto) | Result.Failure(NotFound)
+    /// </summary>
     public async Task<Result<CategoriaDto, DomainError>> FindByIdAsync(long id)
     {
         _logger.LogInformation("Buscando categoría con id: {Id}", id);
@@ -46,6 +58,10 @@ public class CategoriaService : ICategoriaService
         return Result.Success<CategoriaDto, DomainError>(dto);
     }
 
+    /// <summary>
+    /// Crea una nueva categoría.
+    /// Returns: Result.Success(CategoriaDto) | Result.Failure(Validation/Conflict)
+    /// </summary>
     public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto)
     {
         _logger.LogInformation("Creando categoría: {Nombre}", dto.Nombre);
@@ -70,6 +86,10 @@ public class CategoriaService : ICategoriaService
         return Result.Success<CategoriaDto, DomainError>(result);
     }
 
+    /// <summary>
+    /// Actualiza una categoría existente.
+    /// Returns: Result.Success(CategoriaDto) | Result.Failure(NotFound/Validation/Conflict)
+    /// </summary>
     public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto)
     {
         _logger.LogInformation("Actualizando categoría con id: {Id}", id);
@@ -103,6 +123,10 @@ public class CategoriaService : ICategoriaService
         return Result.Success<CategoriaDto, DomainError>(result);
     }
 
+    /// <summary>
+    /// Elimina una categoría.
+    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
+    /// </summary>
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
         _logger.LogInformation("Eliminando categoría con id: {Id}", id);
@@ -122,6 +146,10 @@ public class CategoriaService : ICategoriaService
         return UnitResult.Success<DomainError>();
     }
 
+    /// <summary>
+    /// Valida el nombre de la categoría.
+    /// Returns: Result.Success(true) | Result.Failure(Validation)
+    /// </summary>
     private Result<bool, DomainError> ValidateNombre(string nombre)
     {
         if (string.IsNullOrWhiteSpace(nombre))
@@ -148,6 +176,10 @@ public class CategoriaService : ICategoriaService
         return Result.Success<bool, DomainError>(true);
     }
 
+    /// <summary>
+    /// Verifica si el nombre ya existe en otra categoría.
+    /// Returns: Result.Success(true) | Result.Failure(Conflict)
+    /// </summary>
     private async Task<Result<bool, DomainError>> CheckNombreDuplicado(string nombre, long? excludeId = null)
     {
         var exists = await _repository.ExistsByNombreAsync(nombre, excludeId);

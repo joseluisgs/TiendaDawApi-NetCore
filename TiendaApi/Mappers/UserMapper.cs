@@ -4,13 +4,14 @@ using TiendaApi.Models;
 namespace TiendaApi.Mappers;
 
 /// <summary>
-/// Extension methods for User entity-DTO conversions
-/// Alternative to AutoMapper for educational purposes
+/// Métodos de extensión para mapeo de usuarios.
+/// Alternativa a AutoMapper con fines educativos.
 /// </summary>
 public static class UserMapper
 {
     /// <summary>
-    /// Converts User entity to UserDto
+    /// Convierte un usuario a DTO.
+    /// Returns: UserDto
     /// </summary>
     public static UserDto ToDto(this User user)
     {
@@ -25,7 +26,8 @@ public static class UserMapper
     }
 
     /// <summary>
-    /// Converts IEnumerable<User> to IEnumerable<UserDto>
+    /// Convierte una lista de usuarios a lista de DTOs.
+    /// Returns: IEnumerable<UserDto>
     /// </summary>
     public static IEnumerable<UserDto> ToDtoList(this IEnumerable<User> users)
     {
@@ -33,7 +35,8 @@ public static class UserMapper
     }
 
     /// <summary>
-    /// Converts RegisterDto to User entity (for signup)
+    /// Convierte un DTO de registro a entidad usuario.
+    /// Returns: User
     /// </summary>
     public static User ToEntity(this RegisterDto dto, string passwordHash)
     {
@@ -50,7 +53,8 @@ public static class UserMapper
     }
 
     /// <summary>
-    /// Updates an existing User entity with data from UserUpdateDto
+    /// Actualiza una entidad usuario con datos del DTO de actualización.
+    /// Returns: void
     /// </summary>
     public static void UpdateEntity(this UserUpdateDto dto, User user)
     {

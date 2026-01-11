@@ -5,7 +5,7 @@ using TiendaApi.Models;
 namespace TiendaApi.Repositories.Productos;
 
 /// <summary>
-/// Implementation of Producto repository using Entity Framework Core
+/// Implementación del repositorio de productos usando Entity Framework Core.
 /// </summary>
 public class ProductoRepository : IProductoRepository
 {
@@ -16,6 +16,10 @@ public class ProductoRepository : IProductoRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Obtiene todos los productos ordenados por nombre.
+    /// </summary>
+    /// <returns>Colección de productos con su categoría incluida.</returns>
     public async Task<IEnumerable<Producto>> FindAllAsync()
     {
         return await _context.Productos
@@ -24,6 +28,11 @@ public class ProductoRepository : IProductoRepository
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Obtiene un producto por su identificador.
+    /// </summary>
+    /// <param name="id">Identificador del producto.</param>
+    /// <returns>El producto encontrado con su categoría o null.</returns>
     public async Task<Producto?> FindByIdAsync(long id)
     {
         return await _context.Productos
@@ -31,6 +40,11 @@ public class ProductoRepository : IProductoRepository
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
+    /// <summary>
+    /// Obtiene productos por identificador de categoría.
+    /// </summary>
+    /// <param name="categoriaId">Identificador de la categoría.</param>
+    /// <returns>Colección de productos de la categoría ordenada por nombre.</returns>
     public async Task<IEnumerable<Producto>> FindByCategoriaIdAsync(long categoriaId)
     {
         return await _context.Productos
@@ -40,6 +54,11 @@ public class ProductoRepository : IProductoRepository
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Guarda un nuevo producto.
+    /// </summary>
+    /// <param name="producto">Producto a guardar.</param>
+    /// <returns>El producto guardado con fecha de creación y categoría cargada.</returns>
     public async Task<Producto> SaveAsync(Producto producto)
     {
         producto.CreatedAt = DateTime.UtcNow;
@@ -48,7 +67,6 @@ public class ProductoRepository : IProductoRepository
         _context.Productos.Add(producto);
         await _context.SaveChangesAsync();
         
-        // Reload with Categoria
         await _context.Entry(producto)
             .Reference(p => p.Categoria)
             .LoadAsync();
@@ -56,6 +74,11 @@ public class ProductoRepository : IProductoRepository
         return producto;
     }
 
+    /// <summary>
+    /// Actualiza un producto existente.
+    /// </summary>
+    /// <param name="producto">Producto con datos actualizados.</param>
+    /// <returns>El producto actualizado con categoría cargada.</returns>
     public async Task<Producto> UpdateAsync(Producto producto)
     {
         producto.UpdatedAt = DateTime.UtcNow;
@@ -63,7 +86,6 @@ public class ProductoRepository : IProductoRepository
         _context.Productos.Update(producto);
         await _context.SaveChangesAsync();
         
-        // Reload with Categoria
         await _context.Entry(producto)
             .Reference(p => p.Categoria)
             .LoadAsync();
@@ -71,6 +93,11 @@ public class ProductoRepository : IProductoRepository
         return producto;
     }
 
+    /// <summary>
+    /// Elimina un producto por su identificador (eliminación suave).
+    /// </summary>
+    /// <param name="id">Identificador del producto a eliminar.</param>
+    /// <returns>Tarea asíncrona.</returns>
     public async Task DeleteAsync(long id)
     {
         var producto = await FindByIdAsync(id);
@@ -82,6 +109,11 @@ public class ProductoRepository : IProductoRepository
         }
     }
 
+    /// <summary>
+    /// Verifica si existe un producto con el identificador especificado.
+    /// </summary>
+    /// <param name="id">Identificador del producto.</param>
+    /// <returns>True si existe, False en caso contrario.</returns>
     public async Task<bool> ExistsAsync(long id)
     {
         return await _context.Productos.AnyAsync(p => p.Id == id);

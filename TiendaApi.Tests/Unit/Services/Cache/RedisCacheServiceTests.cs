@@ -7,7 +7,7 @@ using TiendaApi.Services.Cache;
 namespace TiendaApi.Tests.Unit.Services.Cache;
 
 /// <summary>
-/// Smoke tests for Redis cache service
+/// Tests de smoke para servicio de cache Redis
 /// </summary>
 public class RedisCacheServiceTests
 {
@@ -23,7 +23,7 @@ public class RedisCacheServiceTests
     }
 
     [Test]
-    public async Task GetAsync_WithCacheMiss_ShouldReturnDefault()
+    public async Task GetAsync_SinCacheHit_DebeRetornarPredeterminado()
     {
         // Arrange
         _mockCache.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -37,7 +37,7 @@ public class RedisCacheServiceTests
     }
 
     [Test]
-    public async Task SetAsync_ShouldCallDistributedCache()
+    public async Task SetAsync_DebeLlamarDistributedCache()
     {
         // Arrange
         var key = "test-key";
@@ -59,7 +59,7 @@ public class RedisCacheServiceTests
     }
 
     [Test]
-    public async Task RemoveAsync_ShouldCallDistributedCache()
+    public async Task RemoveAsync_DebeLlamarDistributedCache()
     {
         // Arrange
         var key = "test-key";

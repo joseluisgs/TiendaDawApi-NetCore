@@ -14,14 +14,14 @@ using TiendaApi.WebSockets.Productos;
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 
 /// <summary>
-/// Test suite demonstrating the difference between Exception-based and Result Pattern
-/// 
-/// EDUCATIONAL NOTE:
-/// Compare how CategoriaService tests (exception-based) differ from 
-/// ProductoService tests (Result Pattern) in terms of:
-/// - Test setup complexity
-/// - Assertion clarity
-/// - Error handling verification
+/// Suite de tests que demuestra la diferencia entre manejo basado en Excepciones y Result Pattern
+///
+/// NOTA EDUCATIVA:
+/// Compara cómo los tests de CategoriaService (basado en excepciones) difieren de
+/// los tests de ProductoService (Result Pattern) en términos de:
+/// - Complejidad de setup de tests
+/// - Claridad en aserciones
+/// - Verificación de manejo de errores
 /// </summary>
 public class ErrorHandlingComparisonTests
 {
@@ -76,7 +76,7 @@ public class ErrorHandlingComparisonTests
     /// - Más fácil de entender y mantener
     /// </summary>
     [Test]
-    public async Task CategoriaService_FindById_WhenNotFound_ReturnsFailure()
+    public async Task CategoriaService_FindById_CuandoNoEncontrado_RetornaFallo()
     {
         // Arrange
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
@@ -100,7 +100,7 @@ public class ErrorHandlingComparisonTests
     /// El éxito es explícito y type-safe
     /// </summary>
     [Test]
-    public async Task CategoriaService_FindById_WhenFound_ReturnsSuccess()
+    public async Task CategoriaService_FindById_CuandoEncontrado_RetornaExito()
     {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Test" };
@@ -122,21 +122,21 @@ public class ErrorHandlingComparisonTests
     #region Result Pattern Tests (Modern Approach - Productos)
 
     /// <summary>
-    /// TEST RESULT PATTERN: Testing for failures
+    /// TEST RESULT PATTERN: Probando fallos
     /// 
-    /// Java equivalent:
+    /// Equivalente en Java:
     /// Either<AppError, ProductoDto> result = service.findById(999);
     /// assertTrue(result.isLeft());
     /// assertEquals(ErrorType.NOT_FOUND, result.getLeft().getType());
     /// 
-    /// Characteristics:
-    /// - No exceptions needed
-    /// - Result type makes failure explicit
-    /// - Clear what can fail
-    /// - Easy to test without try/catch
+    /// Características:
+    /// - No se necesitan excepciones
+    /// - El tipo Result hace el fallo explícito
+    /// - Claro qué puede fallar
+    /// - Fácil de testar sin try/catch
     /// </summary>
     [Test]
-    public async Task ProductoService_FindById_WhenNotFound_ReturnsFailure()
+    public async Task ProductoService_FindById_CuandoNoEncontrado_RetornaFallo()
     {
         // Arrange
         _mockProductoRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
@@ -153,11 +153,11 @@ public class ErrorHandlingComparisonTests
     }
 
     /// <summary>
-    /// TEST RESULT PATTERN: Success case
-    /// Explicit success state
+    /// TEST RESULT PATTERN: Caso de éxito
+    /// Estado de éxito explícito
     /// </summary>
     [Test]
-    public async Task ProductoService_FindById_WhenFound_ReturnsSuccess()
+    public async Task ProductoService_FindById_CuandoEncontrado_RetornaExito()
     {
         // Arrange
         var producto = new Producto 
@@ -181,11 +181,11 @@ public class ErrorHandlingComparisonTests
     }
 
     /// <summary>
-    /// TEST RESULT PATTERN: Validation errors
-    /// Clean handling of validation without exceptions
+    /// TEST RESULT PATTERN: Errores de validación
+    /// Manejo limpio de validación sin excepciones
     /// </summary>
     [Test]
-    public async Task ProductoService_Create_WithInvalidPrice_ReturnsValidationError()
+    public async Task ProductoService_Create_ConPrecioInvalido_RetornaErrorValidacion()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -211,7 +211,7 @@ public class ErrorHandlingComparisonTests
     #region Comparison Test - Exception vs Result
 
     /// <summary>
-    /// COMPARISON TEST: Muestra la consistencia del Result Pattern
+    /// TEST DE COMPARACIÓN: Muestra la consistencia del Result Pattern
     /// 
     /// ACTUALIZADO: Ambos servicios ahora usan Result Pattern
     /// 
@@ -222,7 +222,7 @@ public class ErrorHandlingComparisonTests
     /// - Consistencia en toda la aplicación
     /// </summary>
     [Test]
-    public void Comparison_BothUseResultPattern_NotFoundScenario()
+    public void Comparison_AmbosUsanResultPattern_EscenarioNoEncontrado()
     {
         // Setup for both
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
@@ -251,17 +251,17 @@ public class ErrorHandlingComparisonTests
 }
 
 /// <summary>
-/// SUMMARY: Testing Comparison
+/// RESUMEN: Comparación de Tests
 /// 
 /// ╔════════════════════════════════╦═════════════════════════════════╗
-/// ║   Exception Tests              ║      Result Pattern Tests       ║
+/// ║   Tests con Excepciones        ║      Tests con Result Pattern    ║
 /// ╠════════════════════════════════╬═════════════════════════════════╣
-/// ║ Assert.ThrowsAsync required    ║ Direct result.IsFailure check   ║
-/// ║ Exception type matching        ║ Error type checking             ║
-/// ║ try/catch in tests             ║ No exception handling           ║
-/// ║ Implicit success (no throw)    ║ Explicit result.IsSuccess       ║
-/// ║ Less readable                  ║ More readable                   ║
-/// ║ Familiar to Java devs          ║ Functional style                ║
+/// ║ Assert.ThrowsAsync requerido   ║ Verificación directa IsFailure   ║
+/// ║ Coincidencia tipo excepción    ║ Verificación tipo error          ║
+/// ║ try/catch en tests             ║ Sin manejo de excepciones        ║
+/// ║ Éxito implícito (no lanza)     ║ Éxito explícito IsSuccess        ║
+/// ║ Menos legible                 ║ Más legible                      ║
+/// ║ Familiar para devs Java       ║ Estilo funcional                 ║
 /// ╚════════════════════════════════╩═════════════════════════════════╝
 /// </summary>
 

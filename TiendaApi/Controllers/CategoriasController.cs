@@ -7,30 +7,7 @@ using TiendaApi.Services.Categorias;
 namespace TiendaApi.Controllers;
 
 /// <summary>
-/// Controller para Categorías usando RESULT PATTERN (Railway Oriented Programming)
-/// 
-/// ANTES (Excepciones):
-/// - try/catch en cada acción
-/// - Excepciones ocultas en el servicio
-/// - Manejo manual de exception-to-HTTP
-/// 
-/// AHORA (Result Pattern):
-/// - SIN try/catch
-/// - Errores explícitos en tipo de retorno: Result<T, DomainError>
-/// - Pattern matching con .Match() para convertir a HTTP
-/// - Código más limpio y declarativo
-/// 
-/// Comparación con Java/Spring Boot:
-/// - Java: @ExceptionHandler en @ControllerAdvice
-/// - C# con excepciones: GlobalExceptionHandler middleware
-/// - C# con Result: Match en el controller (explícito)
-/// 
-/// Ventajas Result Pattern:
-/// 1. Errores visibles en la firma - no hay sorpresas
-/// 2. Sin overhead de excepciones
-/// 3. Pattern matching expresivo
-/// 4. Más fácil testear (sin mocks de excepciones)
-/// 5. Railway: encadenar operaciones con .Bind(), .Map(), .Tap()
+/// Controlador de categorías usando Patrón Result.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -40,23 +17,16 @@ public class CategoriasController : ControllerBase
     private readonly ICategoriaService _service;
     private readonly ILogger<CategoriasController> _logger;
 
-    public CategoriasController(ICategoriaService service, ILogger<CategoriasController> _logger)
+    public CategoriasController(ICategoriaService service, ILogger<CategoriasController> logger)
     {
         _service = service;
-        this._logger = _logger;
+        _logger = logger;
     }
 
     /// <summary>
-    /// Obtiene todas las categorías
+    /// Obtener todas las categorías.
     /// GET /api/categorias
-    /// 
-    /// NOTA PEDAGÓGICA:
-    /// Observa que NO hay try/catch. El servicio retorna Result<T, AppError>
-    /// y usamos .Match() para convertir Success/Failure a respuesta HTTP.
-    /// 
-    /// En Java/Spring Boot equivaldría a:
-    /// @GetMapping
-    /// public ResponseEntity<List<CategoriaDto>> getAll() { ... }
+    /// Returns: 200 OK
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<CategoriaDto>), StatusCodes.Status200OK)]
@@ -64,7 +34,6 @@ public class CategoriasController : ControllerBase
     {
         var resultado = await _service.FindAllAsync();
         
-        // Pattern matching: convierte Result a IActionResult
         return resultado.Match(
             onSuccess: categorias => Ok(categorias),
             onFailure: error => StatusCode(500, new { message = error.Message })
@@ -72,14 +41,9 @@ public class CategoriasController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene una categoría por ID
+    /// Obtener una categoría por ID.
     /// GET /api/categorias/{id}
-    /// 
-    /// RAILWAY PATTERN visible:
-    /// - Si la categoría existe → 200 OK con los datos
-    /// - Si no existe → 404 Not Found
-    /// 
-    /// Sin try/catch, sin código boilerplate - solo Match
+    /// Returns: 200 OK | 404 Not Found
     /// </summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
@@ -99,17 +63,9 @@ public class CategoriasController : ControllerBase
     }
 
     /// <summary>
-    /// Crea una nueva categoría
+    /// Crear una nueva categoría.
     /// POST /api/categorias
-    /// 
-    /// NOTA PEDAGÓGICA - Pattern Matching avanzado:
-    /// El switch expression mapea cada ErrorType a su HTTP status correspondiente:
-    /// - NotFound → 404
-    /// - Validation → 400
-    /// - Conflict → 409
-    /// - Internal → 500
-    /// 
-    /// Compara con try/catch tradicional - aquí es explícito y type-safe
+    /// Returns: 201 Created | 400 Bad Request | 409 Conflict
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status201Created)]
@@ -120,11 +76,7 @@ public class CategoriasController : ControllerBase
         var resultado = await _service.CreateAsync(dto);
         
         return resultado.Match(
-            onSuccess: categoria => CreatedAtAction(
-                nameof(GetById), 
-                new { id = categoria.Id }, 
-                categoria
-            ),
+            onSuccess: categoria => CreatedAtAction(nameof(GetById), new { id = categoria.Id }, categoria),
             onFailure: error => error.Type switch
             {
                 ErrorType.Validation => BadRequest(new { message = error.Message }),
@@ -135,13 +87,9 @@ public class CategoriasController : ControllerBase
     }
 
     /// <summary>
-    /// Actualiza una categoría existente
+    /// Actualizar una categoría existente.
     /// PUT /api/categorias/{id}
-    /// 
-    /// Railway Pattern completo:
-    /// - Validar → buscar → verificar duplicados → actualizar
-    /// - Cualquier fallo desvía a la vía de error
-    /// - El controller solo hace Match al final
+    /// Returns: 200 OK | 404 Not Found | 400 Bad Request | 409 Conflict
     /// </summary>
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
@@ -165,11 +113,9 @@ public class CategoriasController : ControllerBase
     }
 
     /// <summary>
-    /// Elimina una categoría (soft delete)
+    /// Eliminar una categoría.
     /// DELETE /api/categorias/{id}
-    /// 
-    /// NOTA: Usamos Result<Unit, AppError> para operaciones void
-    /// Unit es el equivalente funcional de void
+    /// Returns: 204 No Content | 404 Not Found
     /// </summary>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

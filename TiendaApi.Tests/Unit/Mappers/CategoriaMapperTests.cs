@@ -6,15 +6,15 @@ using TiendaApi.Models;
 namespace TiendaApi.Tests.Unit.Mappers;
 
 /// <summary>
-/// Comprehensive test suite for CategoriaMapper extension methods
-/// Tests all entity-DTO conversions for Categoria domain
+/// Tests unitarios para el mapeador de categorías.
+/// Prueba todas las conversiones entidad-DTO para el dominio de Categoría.
 /// </summary>
 public class CategoriaMapperTests
 {
     #region ToDto Tests
 
     [Test]
-    public void ToDto_WithAllFields_ShouldMapCorrectly()
+    public void ToDto_ConTodosLosCampos_MapeaCorrectamente()
     {
         // Arrange
         var categoria = new Categoria
@@ -35,7 +35,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_WithMinimalFields_ShouldMapCorrectly()
+    public void ToDto_ConCamposMinimos_MapeaCorrectamente()
     {
         // Arrange
         var categoria = new Categoria
@@ -53,7 +53,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_WithLongNombre_ShouldMapCorrectly()
+    public void ToDto_ConNombreLargo_MapeaCorrectamente()
     {
         // Arrange
         var longNombre = new string('A', 200);
@@ -72,7 +72,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_WithSpecialCharacters_ShouldMapCorrectly()
+    public void ToDto_ConCaracteresEspeciales_MapeaCorrectamente()
     {
         // Arrange
         var categoria = new Categoria
@@ -89,7 +89,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_ShouldBeIdempotent()
+    public void ToDto_DebeSerIdempotente()
     {
         // Arrange
         var categoria = new Categoria
@@ -111,7 +111,7 @@ public class CategoriaMapperTests
     #region ToEntity Tests
 
     [Test]
-    public void ToEntity_WithAllFields_ShouldMapCorrectly()
+    public void ToEntity_ConTodosLosCampos_MapeaCorrectamente()
     {
         // Arrange
         var dto = new CategoriaRequestDto
@@ -129,7 +129,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_WithEmptyNombre_ShouldMapEmptyString()
+    public void ToEntity_ConNombreVacio_MapeaStringVacio()
     {
         // Arrange
         var dto = new CategoriaRequestDto
@@ -145,7 +145,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_WithWhitespaceNombre_ShouldMapWhitespace()
+    public void ToEntity_ConNombreBlanco_MapeaBlanco()
     {
         // Arrange
         var dto = new CategoriaRequestDto
@@ -161,7 +161,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldSetDefaultTimestamps()
+    public void ToEntity_DebeEstablecerMarcasDeTiempoPredeterminadas()
     {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Test" };
@@ -183,7 +183,7 @@ public class CategoriaMapperTests
     #region UpdateEntity Tests
 
     [Test]
-    public void UpdateEntity_ShouldUpdateNombre()
+    public void UpdateEntity_DebeActualizarNombre()
     {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Old Name" };
@@ -199,7 +199,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldUpdateUpdatedAt()
+    public void UpdateEntity_DebeActualizarUpdatedAt()
     {
         // Arrange
         var categoria = new Categoria
@@ -219,7 +219,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void UpdateEntity_WithEmptyNombre_ShouldUpdateToEmpty()
+    public void UpdateEntity_ConNombreVacio_ActualizaAVacio()
     {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Original Name" };
@@ -233,7 +233,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldNotModifyId()
+    public void UpdateEntity_NoDebeModificarId()
     {
         // Arrange
         var categoria = new Categoria { Id = 42, Nombre = "Original" };
@@ -247,7 +247,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldNotModifyCreatedAt()
+    public void UpdateEntity_NoDebeModificarCreatedAt()
     {
         // Arrange
         var originalCreatedAt = new DateTime(2023, 1, 1);
@@ -271,7 +271,7 @@ public class CategoriaMapperTests
     #region ToDtoList Tests
 
     [Test]
-    public void ToDtoList_WithMultipleCategorias_ShouldMapAll()
+    public void ToDtoList_ConMultiplesCategorias_MapeaTodas()
     {
         // Arrange
         var categorias = new List<Categoria>
@@ -295,7 +295,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDtoList_WithEmptyList_ShouldReturnEmpty()
+    public void ToDtoList_ConListaVacia_RetornaVacia()
     {
         // Arrange
         var categorias = new List<Categoria>();
@@ -308,7 +308,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDtoList_ShouldMaintainOrder()
+    public void ToDtoList_DebeMantenerOrden()
     {
         // Arrange
         var categorias = new List<Categoria>
@@ -328,7 +328,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDtoList_ShouldBeLazy()
+    public void ToDtoList_DebeSerPerezoso()
     {
         // Arrange
         var categorias = new List<Categoria>
@@ -345,7 +345,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDtoList_CanBeIteratedMultipleTimes()
+    public void ToDtoList_PuedeIterarseMultiplesVeces()
     {
         // Arrange
         var categorias = new List<Categoria>
@@ -368,7 +368,7 @@ public class CategoriaMapperTests
     #region Roundtrip Tests
 
     [Test]
-    public void ToDto_ThenToEntity_ShouldPreserveData()
+    public void ToDto_LuegoToEntity_DebePreservarDatos()
     {
         // Arrange
         var original = new Categoria
@@ -387,7 +387,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_ThenToDto_ShouldPreserveNombre()
+    public void ToEntity_LuegoToDto_DebePreservarNombre()
     {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Persistence Test" };
@@ -405,7 +405,7 @@ public class CategoriaMapperTests
     #region Edge Cases Tests
 
     [Test]
-    public void ToDto_WithMaxId_ShouldMapCorrectly()
+    public void ToDto_ConMaxId_MapeaCorrectamente()
     {
         // Arrange
         var categoria = new Categoria
@@ -422,7 +422,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_WithUnicodeCharacters_ShouldMapCorrectly()
+    public void ToDto_ConCaracteresUnicode_MapeaCorrectamente()
     {
         // Arrange
         var categoria = new Categoria
@@ -439,7 +439,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_WithUnicodeNombre_ShouldMapCorrectly()
+    public void ToEntity_ConNombreUnicode_MapeaCorrectamente()
     {
         // Arrange
         var dto = new CategoriaRequestDto

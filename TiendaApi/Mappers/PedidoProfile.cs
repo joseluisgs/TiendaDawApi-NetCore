@@ -5,18 +5,18 @@ using TiendaApi.Models;
 namespace TiendaApi.Mappers;
 
 /// <summary>
-/// AutoMapper profile for Pedido entity-DTO mappings
-/// Maps between Pedido entities and their corresponding DTOs
+/// Perfil de AutoMapper para mapeos de entidad Pedido a DTOs.
+/// Asigna entre entidades Pedido y sus DTOs correspondientes.
 /// </summary>
 public class PedidoProfile : Profile
 {
     public PedidoProfile()
     {
-        // Pedido entity to DTO mappings
+        // Mapeos de entidad Pedido a DTO
         CreateMap<Pedido, PedidoDto>();
         CreateMap<PedidoItem, PedidoItemDto>();
         
-        // Request DTO to entity mappings
+        // Mapeos de DTO de solicitud a entidad
         CreateMap<PedidoRequestDto, Pedido>();
         CreateMap<PedidoItemRequestDto, PedidoItem>();
     }

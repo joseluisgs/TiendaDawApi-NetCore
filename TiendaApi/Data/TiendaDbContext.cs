@@ -4,13 +4,9 @@ using TiendaApi.Models;
 namespace TiendaApi.Data;
 
 /// <summary>
-/// Entity Framework Core DbContext for PostgreSQL
-/// 
-/// Java equivalent: extends JpaRepository or uses EntityManager
-/// Spring Boot: Similar to @Configuration with JPA setup
-/// 
-/// Manages Categorías, Productos, and Users
-/// Pedidos are stored in MongoDB (separate configuration)
+/// DbContext de Entity Framework Core para PostgreSQL.
+/// Gestiona Categorías, Productos y Users.
+/// Los Pedidos se almacenan en MongoDB (configuración separada).
 /// </summary>
 public class TiendaDbContext : DbContext
 {
@@ -35,7 +31,7 @@ public class TiendaDbContext : DbContext
             entity.HasIndex(c => c.Nombre).IsUnique();
             entity.Property(c => c.IsDeleted).HasDefaultValue(false);
             
-            // Soft delete filter - similar to Hibernate @Where
+            // Filtro de eliminación suave
             entity.HasQueryFilter(c => !c.IsDeleted);
         });
 
@@ -50,7 +46,7 @@ public class TiendaDbContext : DbContext
             entity.Property(p => p.Stock).IsRequired();
             entity.Property(p => p.IsDeleted).HasDefaultValue(false);
             
-            // Relationship with Categoria - similar to JPA @ManyToOne
+            // Relación con Categoria
             entity.HasOne(p => p.Categoria)
                 .WithMany(c => c.Productos)
                 .HasForeignKey(p => p.CategoriaId)

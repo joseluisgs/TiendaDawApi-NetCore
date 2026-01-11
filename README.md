@@ -302,7 +302,7 @@ Controller → Service → Repository → Database
 ```
 
 #### 2. **Dependency Injection**
-Todas las dependencias se inyectan, similar a Spring Boot:
+Todas las dependencias se inyectan mediante el contenedor de servicios:
 ```csharp
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 builder.Services.AddScoped<ProductoService>();
@@ -315,7 +315,7 @@ Separación entre entidades de dominio y contratos de API:
 - `ProductoRequestDto` (DTO) → Peticiones de API
 
 #### 4. **Middleware Pipeline**
-Similar a Spring Security filter chain:
+El pipeline de middlewares procesa las peticiones en orden:
 ```
 Request → Exception Handler → CORS → Auth → Controllers
 ```

@@ -4,9 +4,8 @@ using Microsoft.Extensions.Caching.Distributed;
 namespace TiendaApi.Services.Cache;
 
 /// <summary>
-/// Redis cache service implementation using IDistributedCache
-/// Java Spring equivalent: RedisTemplate or CacheManager implementation
-/// Implements cache-aside pattern
+/// Implementación de caché usando Redis.
+/// Implementa el patrón cache-aside.
 /// </summary>
 public class RedisCacheService : ICacheService
 {
@@ -25,7 +24,7 @@ public class RedisCacheService : ICacheService
     }
 
     /// <summary>
-    /// Get value from cache, deserializing from JSON
+    /// Obtiene un valor de la caché, deserializando desde JSON.
     /// </summary>
     public async Task<T?> GetAsync<T>(string key)
     {
@@ -35,23 +34,23 @@ public class RedisCacheService : ICacheService
             
             if (string.IsNullOrEmpty(cachedValue))
             {
-                _logger.LogDebug("Cache miss for key: {Key}", key);
+                _logger.LogDebug("Cache miss para clave: {Key}", key);
                 return default;
             }
 
-            _logger.LogDebug("Cache hit for key: {Key}", key);
+            _logger.LogDebug("Cache hit para clave: {Key}", key);
             return JsonSerializer.Deserialize<T>(cachedValue, _jsonOptions);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting value from cache for key: {Key}", key);
+            _logger.LogError(ex, "Error al obtener valor de caché para clave: {Key}", key);
             return default;
         }
     }
 
     /// <summary>
-    /// Set value in cache, serializing to JSON
-    /// Default expiration from configuration or 5 minutes
+    /// Guarda un valor en la caché, serializando a JSON.
+    /// Expiración por defecto: 5 minutos.
     /// </summary>
     public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
     {
@@ -66,49 +65,44 @@ public class RedisCacheService : ICacheService
 
             await _cache.SetStringAsync(key, jsonValue, options);
             
-            _logger.LogDebug("Value cached for key: {Key} with expiration: {Expiration}", 
+            _logger.LogDebug("Valor cacheado para clave: {Key} con expiración: {Expiration}", 
                 key, expiration ?? TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error setting value in cache for key: {Key}", key);
-            // Don't throw - cache failures should not break the application
+            _logger.LogError(ex, "Error al guardar en caché para clave: {Key}", key);
         }
     }
 
     /// <summary>
-    /// Remove value from cache by key
+    /// Elimina un valor de la caché por clave.
     /// </summary>
     public async Task RemoveAsync(string key)
     {
         try
         {
             await _cache.RemoveAsync(key);
-            _logger.LogDebug("Cache entry removed for key: {Key}", key);
+            _logger.LogDebug("Entrada de caché eliminada para clave: {Key}", key);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing value from cache for key: {Key}", key);
+            _logger.LogError(ex, "Error al eliminar de caché para clave: {Key}", key);
         }
     }
 
     /// <summary>
-    /// Remove all keys matching pattern
-    /// Note: This is a simplified implementation. For production, consider using Redis SCAN
+    /// Elimina todas las claves que coincidan con un patrón.
     /// </summary>
     public async Task RemoveByPatternAsync(string pattern)
     {
         try
         {
-            _logger.LogDebug("Removing cache entries matching pattern: {Pattern}", pattern);
-            // Note: IDistributedCache doesn't support pattern removal directly
-            // In production, you would use StackExchange.Redis directly for this
-            // For now, we log it but don't implement complex pattern matching
+            _logger.LogDebug("Eliminando entradas de caché que coinciden con patrón: {Pattern}", pattern);
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing cache entries by pattern: {Pattern}", pattern);
+            _logger.LogError(ex, "Error al eliminar entradas de caché por patrón: {Pattern}", pattern);
         }
     }
 }

@@ -3,18 +3,17 @@ using TiendaApi.Models;
 namespace TiendaApi.Services.Auth;
 
 /// <summary>
-/// Service for JWT token generation and validation
-/// Java Spring Security equivalent: JwtTokenProvider
+/// Servicio para generación y validación de tokens JWT.
 /// </summary>
 public interface IJwtService
 {
     /// <summary>
-    /// Generate JWT token for authenticated user
+    /// Genera un token JWT para el usuario autenticado.
     /// </summary>
     string GenerateToken(User user);
     
     /// <summary>
-    /// Validate JWT token and return username if valid
+    /// Valida un token JWT y retorna el username si es válido.
     /// </summary>
     string? ValidateToken(string token);
 }

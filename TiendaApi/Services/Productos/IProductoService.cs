@@ -5,8 +5,7 @@ using TiendaApi.Errors;
 namespace TiendaApi.Services.Productos;
 
 /// <summary>
-/// Interface for Producto service using Result Pattern
-/// Railway Oriented Programming approach for error handling
+/// Interfaz del servicio de productos usando Patrón Result.
 /// </summary>
 public interface IProductoService
 {

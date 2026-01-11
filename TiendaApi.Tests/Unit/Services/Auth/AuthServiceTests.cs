@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Dtos.Usuarios;
@@ -11,8 +10,7 @@ using TiendaApi.Services.Auth;
 namespace TiendaApi.Tests.Unit.Services.Auth;
 
 /// <summary>
-/// Unit tests for AuthService using Result Pattern
-/// Tests the Railway Oriented Programming flow for SignUp and SignIn
+/// Tests unitarios para AuthService usando Patrón Result.
 /// </summary>
 public class AuthServiceTests
 {
@@ -35,12 +33,11 @@ public class AuthServiceTests
         );
     }
 
-    #region SignUp Tests
+    #region Tests SignUp
 
     [Test]
-    public async Task SignUpAsync_WithValidData_ShouldReturnSuccess()
+    public async Task SignUpAsync_ConDatosValidos_DebeRetornarExito()
     {
-        // Arrange
         var registerDto = new RegisterDto
         {
             Username = "newuser",
@@ -70,10 +67,8 @@ public class AuthServiceTests
         _mockJwtService.Setup(x => x.GenerateToken(It.IsAny<User>()))
             .Returns("test-jwt-token");
 
-        // Act
         var result = await _authService.SignUpAsync(registerDto);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Token.Should().Be("test-jwt-token");
         result.Value.User.Username.Should().Be("newuser");
@@ -82,9 +77,8 @@ public class AuthServiceTests
     }
 
     [Test]
-    public async Task SignUpAsync_WithEmptyUsername_ShouldReturnValidationError()
+    public async Task SignUpAsync_ConUsernameVacio_DebeRetornarErrorValidacion()
     {
-        // Arrange
         var registerDto = new RegisterDto
         {
             Username = "",
@@ -92,19 +86,16 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
-        // Act
         var result = await _authService.SignUpAsync(registerDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("Username");
+        result.Error.Message.Should().Contain("nombre de usuario");
     }
 
     [Test]
-    public async Task SignUpAsync_WithShortUsername_ShouldReturnValidationError()
+    public async Task SignUpAsync_ConUsernameCorto_DebeRetornarErrorValidacion()
     {
-        // Arrange
         var registerDto = new RegisterDto
         {
             Username = "ab",
@@ -112,19 +103,16 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
-        // Act
         var result = await _authService.SignUpAsync(registerDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("at least 3 characters");
+        result.Error.Message.Should().Contain("al menos 3 caracteres");
     }
 
     [Test]
-    public async Task SignUpAsync_WithInvalidEmail_ShouldReturnValidationError()
+    public async Task SignUpAsync_ConEmailInvalido_DebeRetornarErrorValidacion()
     {
-        // Arrange
         var registerDto = new RegisterDto
         {
             Username = "testuser",
@@ -132,19 +120,16 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
-        // Act
         var result = await _authService.SignUpAsync(registerDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
         result.Error.Message.Should().Contain("email");
     }
 
     [Test]
-    public async Task SignUpAsync_WithShortPassword_ShouldReturnValidationError()
+    public async Task SignUpAsync_ConPasswordCorto_DebeRetornarErrorValidacion()
     {
-        // Arrange
         var registerDto = new RegisterDto
         {
             Username = "testuser",
@@ -152,19 +137,16 @@ public class AuthServiceTests
             Password = "12345"
         };
 
-        // Act
         var result = await _authService.SignUpAsync(registerDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("at least 6 characters");
+        result.Error.Message.Should().Contain("al menos 6 caracteres");
     }
 
     [Test]
-    public async Task SignUpAsync_WithDuplicateUsername_ShouldReturnConflict()
+    public async Task SignUpAsync_ConUsernameDuplicado_DebeRetornarConflicto()
     {
-        // Arrange
         var registerDto = new RegisterDto
         {
             Username = "existinguser",
@@ -182,19 +164,16 @@ public class AuthServiceTests
         _mockUserRepository.Setup(x => x.FindByUsernameAsync("existinguser"))
             .ReturnsAsync(existingUser);
 
-        // Act
         var result = await _authService.SignUpAsync(registerDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Conflict);
-        result.Error.Message.Should().Contain("Username already exists");
+        result.Error.Message.Should().Contain("nombre de usuario ya existe");
     }
 
     [Test]
-    public async Task SignUpAsync_WithDuplicateEmail_ShouldReturnConflict()
+    public async Task SignUpAsync_ConEmailDuplicado_DebeRetornarConflicto()
     {
-        // Arrange
         var registerDto = new RegisterDto
         {
             Username = "newuser",
@@ -215,23 +194,20 @@ public class AuthServiceTests
         _mockUserRepository.Setup(x => x.FindByEmailAsync("existing@test.com"))
             .ReturnsAsync(existingUser);
 
-        // Act
         var result = await _authService.SignUpAsync(registerDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Conflict);
-        result.Error.Message.Should().Contain("Email already exists");
+        result.Error.Message.Should().Contain("email ya existe");
     }
 
     #endregion
 
-    #region SignIn Tests
+    #region Tests SignIn
 
     [Test]
-    public async Task SignInAsync_WithValidCredentials_ShouldReturnSuccess()
+    public async Task SignInAsync_ConCredencialesValidas_DebeRetornarExito()
     {
-        // Arrange
         var loginDto = new LoginDto
         {
             Username = "testuser",
@@ -256,57 +232,48 @@ public class AuthServiceTests
         _mockJwtService.Setup(x => x.GenerateToken(It.IsAny<User>()))
             .Returns("test-jwt-token");
 
-        // Act
         var result = await _authService.SignInAsync(loginDto);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Token.Should().Be("test-jwt-token");
         result.Value.User.Username.Should().Be("testuser");
     }
 
     [Test]
-    public async Task SignInAsync_WithEmptyUsername_ShouldReturnValidationError()
+    public async Task SignInAsync_ConUsernameVacio_DebeRetornarErrorValidacion()
     {
-        // Arrange
         var loginDto = new LoginDto
         {
             Username = "",
             Password = "Password123!"
         };
 
-        // Act
         var result = await _authService.SignInAsync(loginDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("Username");
+        result.Error.Message.Should().Contain("nombre de usuario");
     }
 
     [Test]
-    public async Task SignInAsync_WithEmptyPassword_ShouldReturnValidationError()
+    public async Task SignInAsync_ConPasswordVacio_DebeRetornarErrorValidacion()
     {
-        // Arrange
         var loginDto = new LoginDto
         {
             Username = "testuser",
             Password = ""
         };
 
-        // Act
         var result = await _authService.SignInAsync(loginDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("Password");
+        result.Error.Message.Should().Contain("contraseña");
     }
 
     [Test]
-    public async Task SignInAsync_WithNonExistentUser_ShouldReturnUnauthorized()
+    public async Task SignInAsync_ConUsuarioNoExistente_DebeRetornarNoAutorizado()
     {
-        // Arrange
         var loginDto = new LoginDto
         {
             Username = "nonexistent",
@@ -316,19 +283,16 @@ public class AuthServiceTests
         _mockUserRepository.Setup(x => x.FindByUsernameAsync("nonexistent"))
             .ReturnsAsync((User?)null);
 
-        // Act
         var result = await _authService.SignInAsync(loginDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Unauthorized);
-        result.Error.Message.Should().Contain("Invalid username or password");
+        result.Error.Message.Should().Contain("Credenciales");
     }
 
     [Test]
-    public async Task SignInAsync_WithInvalidPassword_ShouldReturnUnauthorized()
+    public async Task SignInAsync_ConPasswordInvalido_DebeRetornarNoAutorizado()
     {
-        // Arrange
         var loginDto = new LoginDto
         {
             Username = "testuser",
@@ -349,13 +313,11 @@ public class AuthServiceTests
         _mockUserRepository.Setup(x => x.FindByUsernameAsync("testuser"))
             .ReturnsAsync(user);
 
-        // Act
         var result = await _authService.SignInAsync(loginDto);
 
-        // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Unauthorized);
-        result.Error.Message.Should().Contain("Invalid username or password");
+        result.Error.Message.Should().Contain("Credenciales");
     }
 
     #endregion

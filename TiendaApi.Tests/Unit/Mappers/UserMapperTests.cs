@@ -6,15 +6,15 @@ using TiendaApi.Models;
 namespace TiendaApi.Tests.Unit.Mappers;
 
 /// <summary>
-/// Comprehensive test suite for UserMapper extension methods
-/// Tests all entity-DTO conversions for User domain
+/// Tests unitarios para el mapeador de usuarios.
+/// Prueba todas las conversiones entidad-DTO para el dominio de Usuario.
 /// </summary>
 public class UserMapperTests
 {
     #region ToDto Tests
 
     [Test]
-    public void ToDto_WithAllFields_ShouldMapCorrectly()
+    public void ToDto_ConTodosLosCampos_MapeaCorrectamente()
     {
         // Arrange
         var user = new User
@@ -41,7 +41,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_ShouldNotExposePasswordHash()
+    public void ToDto_NoDebeExponerPasswordHash()
     {
         // Arrange
         var user = new User
@@ -62,7 +62,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_WithAdminRole_ShouldMapCorrectly()
+    public void ToDto_ConRolAdmin_MapeaCorrectamente()
     {
         // Arrange
         var user = new User
@@ -81,7 +81,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_WithDeletedUser_ShouldStillMap()
+    public void ToDto_ConUsuarioEliminado_AunMapea()
     {
         // Arrange
         var user = new User
@@ -101,7 +101,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_ShouldPreserveCreatedAt()
+    public void ToDto_DebePreservarCreatedAt()
     {
         // Arrange
         var createdAt = new DateTime(2023, 6, 15, 10, 0, 0);
@@ -125,7 +125,7 @@ public class UserMapperTests
     #region ToEntity (RegisterDto) Tests
 
     [Test]
-    public void ToEntity_WithRegisterDto_ShouldMapCorrectly()
+    public void ToEntity_ConRegisterDto_MapeaCorrectamente()
     {
         // Arrange
         var dto = new RegisterDto
@@ -148,7 +148,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldSetDefaultRoleToUser()
+    public void ToEntity_DebeEstablecerRolPredeterminadoAUsuario()
     {
         // Arrange
         var dto = new RegisterDto
@@ -166,7 +166,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldSetIsDeletedToFalse()
+    public void ToEntity_DebeEstablecerIsDeletedAFalse()
     {
         // Arrange
         var dto = new RegisterDto { Username = "test", Password = "pass" };
@@ -179,7 +179,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldSetTimestamps()
+    public void ToEntity_DebeEstablecerMarcasDeTiempo()
     {
         // Arrange
         var dto = new RegisterDto { Username = "test", Password = "pass" };
@@ -197,7 +197,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_ShouldUseProvidedPasswordHash()
+    public void ToEntity_DebeUsarPasswordHashProporcionado()
     {
         // Arrange
         var dto = new RegisterDto
@@ -221,7 +221,7 @@ public class UserMapperTests
     #region UpdateEntity Tests
 
     [Test]
-    public void UpdateEntity_WithEmail_ShouldUpdateEmail()
+    public void UpdateEntity_ConEmail_ActualizaEmail()
     {
         // Arrange
         var user = new User
@@ -242,7 +242,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_WithPassword_ShouldUpdatePasswordHash()
+    public void UpdateEntity_ConPassword_ActualizaPasswordHash()
     {
         // Arrange
         var user = new User
@@ -263,7 +263,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldUpdateTimestamp()
+    public void UpdateEntity_DebeActualizarMarcaDeTiempo()
     {
         // Arrange
         var oldUpdatedAt = DateTime.UtcNow.AddDays(-1);
@@ -283,7 +283,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_WithEmptyEmail_ShouldNotUpdateEmail()
+    public void UpdateEntity_ConEmailVacio_NoActualizaEmail()
     {
         // Arrange
         var user = new User
@@ -302,7 +302,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_WithEmptyPassword_ShouldNotUpdatePassword()
+    public void UpdateEntity_ConPasswordVacio_NoActualizaPassword()
     {
         // Arrange
         var originalHash = "original_bcrypt_hash";
@@ -322,7 +322,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldNotModifyId()
+    public void UpdateEntity_NoDebeModificarId()
     {
         // Arrange
         var user = new User { Id = 999, Username = "test" };
@@ -336,7 +336,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldNotModifyCreatedAt()
+    public void UpdateEntity_NoDebeModificarCreatedAt()
     {
         // Arrange
         var originalCreatedAt = new DateTime(2022, 1, 1);
@@ -356,7 +356,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ShouldNotModifyUsername()
+    public void UpdateEntity_NoDebeModificarUsername()
     {
         // Arrange
         var user = new User { Id = 1, Username = "original_username" };
@@ -374,7 +374,7 @@ public class UserMapperTests
     #region ToDtoList Tests
 
     [Test]
-    public void ToDtoList_WithMultipleUsers_ShouldMapAll()
+    public void ToDtoList_ConMultiplesUsuarios_MapeaTodos()
     {
         // Arrange
         var users = new List<User>
@@ -395,7 +395,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDtoList_WithEmptyList_ShouldReturnEmpty()
+    public void ToDtoList_ConListaVacia_RetornaVacia()
     {
         // Arrange
         var users = new List<User>();
@@ -408,7 +408,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDtoList_ShouldPreserveOrder()
+    public void ToDtoList_DebePreservarOrden()
     {
         // Arrange
         var users = new List<User>
@@ -432,7 +432,7 @@ public class UserMapperTests
     #region Roundtrip Tests
 
     [Test]
-    public void ToDto_ThenToEntity_ShouldPreserveBasicData()
+    public void ToDto_LuegoToEntity_DebePreservarDatosBasicos()
     {
         // Arrange
         var user = new User
@@ -461,7 +461,7 @@ public class UserMapperTests
     #region Edge Cases Tests
 
     [Test]
-    public void ToDto_WithMaxId_ShouldMapCorrectly()
+    public void ToDto_ConMaxId_MapeaCorrectamente()
     {
         // Arrange
         var user = new User
@@ -478,7 +478,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_WithVeryLongUsername_ShouldMapCorrectly()
+    public void ToDto_ConUsernameMuyLargo_MapeaCorrectamente()
     {
         // Arrange
         var longUsername = new string('U', 100);
@@ -497,7 +497,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_WithUnicodeEmail_ShouldMapCorrectly()
+    public void ToDto_ConEmailUnicode_MapeaCorrectamente()
     {
         // Arrange
         var user = new User
@@ -515,7 +515,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_WithUnicodeUsername_ShouldMapCorrectly()
+    public void ToEntity_ConUsernameUnicode_MapeaCorrectamente()
     {
         // Arrange
         var dto = new RegisterDto
@@ -537,7 +537,7 @@ public class UserMapperTests
     #region Security Tests
 
     [Test]
-    public void ToDto_ShouldNeverExposePasswordHash()
+    public void ToDto_NuncaDebeExponerPasswordHash()
     {
         // Arrange
         var user = new User
@@ -555,7 +555,7 @@ public class UserMapperTests
 
         // Assert - Verify PasswordHash is not a property of DTO
         var hasPasswordHash = properties.Any(p => p.Name.Contains("Password", StringComparison.OrdinalIgnoreCase));
-        hasPasswordHash.Should().BeFalse("DTO should not expose password hash for security");
+        hasPasswordHash.Should().BeFalse("DTO no debe exponer password hash por seguridad");
     }
 
     #endregion

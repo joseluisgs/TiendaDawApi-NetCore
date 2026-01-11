@@ -15,8 +15,8 @@ using TiendaApi.WebSockets.Productos;
 namespace TiendaApi.Tests.Unit.Services.Productos;
 
 /// <summary>
-/// Test suite for ProductoService
-/// Tests Result Pattern approach for product operations
+/// Suite de tests para ProductoService
+/// Prueba el enfoque Result Pattern para operaciones de productos
 /// </summary>
 public class ProductoServiceTests
 {
@@ -56,7 +56,7 @@ public class ProductoServiceTests
     #region FindAllAsync Tests
 
     [Test]
-    public async Task FindAllAsync_WithProducts_ReturnsAllProducts()
+    public async Task FindAllAsync_ConProductos_RetornaTodosLosProductos()
     {
         // Arrange
         var productos = new List<Producto>
@@ -79,7 +79,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_WithCache_ReturnsFromCache()
+    public async Task FindAllAsync_ConCache_RetornaDesdeCache()
     {
         // Arrange
         var cachedDtos = new List<ProductoDto>
@@ -105,7 +105,7 @@ public class ProductoServiceTests
     #region FindByIdAsync Tests
 
     [Test]
-    public async Task FindByIdAsync_WithExistingId_ReturnsSuccess()
+    public async Task FindByIdAsync_ConIdExistente_RetornaExito()
     {
         // Arrange
         var producto = new Producto
@@ -130,7 +130,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_WithNonExistentId_ReturnsNotFound()
+    public async Task FindByIdAsync_ConIdNoExistente_RetornaNoEncontrado()
     {
         // Arrange
         _mockCacheService.Setup(c => c.GetAsync<ProductoDto>("productos:999"))
@@ -151,7 +151,7 @@ public class ProductoServiceTests
     #region FindByCategoriaIdAsync Tests
 
     [Test]
-    public async Task FindByCategoriaIdAsync_WithExistingCategoria_ReturnsProducts()
+    public async Task FindByCategoriaIdAsync_ConCategoriaExistente_RetornaProductos()
     {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
@@ -174,7 +174,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task FindByCategoriaIdAsync_WithNonExistentCategoria_ReturnsNotFound()
+    public async Task FindByCategoriaIdAsync_ConCategoriaNoExistente_RetornaNoEncontrado()
     {
         // Arrange
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
@@ -193,7 +193,7 @@ public class ProductoServiceTests
     #region CreateAsync Tests
 
     [Test]
-    public async Task CreateAsync_WithValidData_ReturnsSuccess()
+    public async Task CreateAsync_ConDatosValidos_RetornaExito()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -229,7 +229,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithInvalidPrice_ReturnsValidationError()
+    public async Task CreateAsync_ConPrecioInvalido_RetornaErrorValidacion()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -250,7 +250,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithInvalidStock_ReturnsValidationError()
+    public async Task CreateAsync_ConStockInvalido_RetornaErrorValidacion()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -270,7 +270,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_WithNonExistentCategoria_ReturnsNotFound()
+    public async Task CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -297,7 +297,7 @@ public class ProductoServiceTests
     #region UpdateAsync Tests
 
     [Test]
-    public async Task UpdateAsync_WithValidData_ReturnsSuccess()
+    public async Task UpdateAsync_ConDatosValidos_RetornaExito()
     {
         // Arrange
         var dto = new ProductoRequestDto
@@ -327,7 +327,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_WithNonExistentId_ReturnsNotFound()
+    public async Task UpdateAsync_ConIdNoExistente_RetornaNoEncontrado()
     {
         // Arrange
         var dto = new ProductoRequestDto { Nombre = "Updated" };
@@ -347,7 +347,7 @@ public class ProductoServiceTests
     #region DeleteAsync Tests
 
     [Test]
-    public async Task DeleteAsync_WithExistingId_ReturnsSuccess()
+    public async Task DeleteAsync_ConIdExistente_RetornaExito()
     {
         // Arrange
         var producto = new Producto { Id = 1, Nombre = "To Delete" };
@@ -362,7 +362,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task DeleteAsync_WithNonExistentId_ReturnsNotFound()
+    public async Task DeleteAsync_ConIdNoExistente_RetornaNoEncontrado()
     {
         // Arrange
         _mockProductoRepo.Setup(r => r.FindByIdAsync(999))

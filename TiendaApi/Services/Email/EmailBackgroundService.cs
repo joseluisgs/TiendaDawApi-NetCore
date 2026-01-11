@@ -3,9 +3,8 @@ using System.Threading.Channels;
 namespace TiendaApi.Services.Email;
 
 /// <summary>
-/// Background service for processing email queue
-/// Java Spring equivalent: @Scheduled or @Async method processing queue
-/// Uses Channel for thread-safe queue management
+/// Servicio en segundo plano para procesar la cola de emails.
+/// Usa Channel para gestión thread-safe de la cola.
 /// </summary>
 public class EmailBackgroundService : BackgroundService
 {
@@ -25,29 +24,27 @@ public class EmailBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Email Background Service started");
+        _logger.LogInformation("Servicio de email en segundo plano iniciado");
 
         await foreach (var emailMessage in _emailChannel.Reader.ReadAllAsync(stoppingToken))
         {
             try
             {
-                // Create a scope to resolve scoped services
                 using var scope = _serviceProvider.CreateScope();
                 var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-                _logger.LogInformation("Processing email from queue to: {To}", emailMessage.To);
+                _logger.LogInformation("Procesando email de la cola para: {To}", emailMessage.To);
                 
                 await emailService.SendEmailAsync(emailMessage);
                 
-                _logger.LogInformation("Email processed successfully to: {To}", emailMessage.To);
+                _logger.LogInformation("Email procesado exitosamente para: {To}", emailMessage.To);
             }
             catch (Exception ex)
             {
-                // Log error but don't crash the background service
-                _logger.LogError(ex, "Error processing email to: {To}", emailMessage.To);
+                _logger.LogError(ex, "Error procesando email para: {To}", emailMessage.To);
             }
         }
 
-        _logger.LogInformation("Email Background Service stopped");
+        _logger.LogInformation("Servicio de email en segundo plano detenido");
     }
 }

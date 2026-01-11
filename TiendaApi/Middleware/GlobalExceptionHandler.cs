@@ -5,15 +5,9 @@ using TiendaApi.Exceptions;
 namespace TiendaApi.Middleware;
 
 /// <summary>
-/// Global exception handler middleware
-/// Catches exceptions thrown by Categorías endpoints (traditional approach)
-/// 
-/// Java Spring Boot equivalent:
-/// @ControllerAdvice with @ExceptionHandler methods
-/// Centralizes exception-to-HTTP response mapping
-/// 
-/// Note: This ONLY handles exceptions from Categorías
-/// Productos/Pedidos/Users use Result Pattern and don't throw exceptions
+/// Manejador global de excepciones.
+/// Captura excepciones lanzadas por los endpoints de Categorías.
+/// Convierte excepciones en respuestas HTTP consistentes.
 /// </summary>
 public class GlobalExceptionHandler
 {
@@ -34,7 +28,7 @@ public class GlobalExceptionHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Exception occurred: {Message}", ex.Message);
+            _logger.LogError(ex, "Ocurrió una excepción: {Message}", ex.Message);
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -75,7 +69,7 @@ public class GlobalExceptionHandler
 }
 
 /// <summary>
-/// Extension method to register the middleware
+/// Método de extensión para registrar el middleware.
 /// </summary>
 public static class GlobalExceptionHandlerExtensions
 {

@@ -4,24 +4,29 @@ using TiendaApi.Models;
 namespace TiendaApi.GraphQL.Types;
 
 /// <summary>
-/// GraphQL type for Producto entity
+/// Tipo de GraphQL para la entidad Producto.
 /// </summary>
 public class ProductoType : ObjectGraphType<Producto>
 {
+    /// <summary>
+    /// Constructor del tipo Producto.
+    /// Define los campos disponibles para la consulta de productos.
+    /// Returns: void
+    /// </summary>
     public ProductoType()
     {
         Name = "Producto";
-        Description = "Producto entity";
+        Description = "Entidad Producto";
 
-        Field(p => p.Id, type: typeof(IdGraphType)).Description("The ID of the producto");
-        Field(p => p.Nombre).Description("The name of the producto");
-        Field(p => p.Descripcion, nullable: true).Description("The description of the producto");
-        Field(p => p.Precio).Description("The price of the producto");
-        Field(p => p.Stock).Description("Stock quantity");
-        Field(p => p.Imagen, nullable: true).Description("Image URL");
-        Field(p => p.CategoriaId).Description("The ID of the categoria");
-        Field(p => p.CreatedAt).Description("Creation timestamp");
-        Field(p => p.UpdatedAt).Description("Last update timestamp");
+        Field(p => p.Id, type: typeof(IdGraphType)).Description("El ID del producto");
+        Field(p => p.Nombre).Description("El nombre del producto");
+        Field(p => p.Descripcion, nullable: true).Description("La descripción del producto");
+        Field(p => p.Precio).Description("El precio del producto");
+        Field(p => p.Stock).Description("Cantidad en stock");
+        Field(p => p.Imagen, nullable: true).Description("URL de la imagen");
+        Field(p => p.CategoriaId).Description("El ID de la categoría");
+        Field(p => p.CreatedAt).Description("Fecha de creación");
+        Field(p => p.UpdatedAt).Description("Fecha de última actualización");
         
         Field<CategoriaType>("categoria")
             .Resolve(context => context.Source.Categoria);

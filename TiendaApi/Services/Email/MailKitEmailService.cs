@@ -5,9 +5,8 @@ using MimeKit;
 namespace TiendaApi.Services.Email;
 
 /// <summary>
-/// MailKit email service implementation
-/// Java Spring equivalent: JavaMailSender implementation
-/// Sends emails via SMTP using MailKit library
+/// Servicio de email usando MailKit.
+/// Envía emails a través de SMTP.
 /// </summary>
 public class MailKitEmailService : IEmailService
 {
@@ -26,7 +25,8 @@ public class MailKitEmailService : IEmailService
     }
 
     /// <summary>
-    /// Send email immediately using SMTP
+    /// Envía un email inmediatamente usando SMTP.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation/Internal)
     /// </summary>
     public async Task SendEmailAsync(EmailMessage message)
     {
@@ -41,7 +41,7 @@ public class MailKitEmailService : IEmailService
 
             if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpUser))
             {
-                _logger.LogWarning("SMTP not configured, skipping email send");
+                _logger.LogWarning("SMTP no configurado, omitiendo envío de email");
                 return;
             }
 
@@ -67,29 +67,30 @@ public class MailKitEmailService : IEmailService
             await client.SendAsync(mimeMessage);
             await client.DisconnectAsync(true);
 
-            _logger.LogInformation("Email sent successfully to: {To}", message.To);
+            _logger.LogInformation("Email enviado exitosamente a: {To}", message.To);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to: {To}", message.To);
+            _logger.LogError(ex, "Error al enviar email a: {To}", message.To);
             throw;
         }
     }
 
     /// <summary>
-    /// Queue email for background processing
-    /// Non-blocking operation that adds to channel
+    /// Encola un email para procesamiento en segundo plano.
+    /// Operación no bloqueante que añade al canal.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Internal)
     /// </summary>
     public async Task EnqueueEmailAsync(EmailMessage message)
     {
         try
         {
             await _emailChannel.Writer.WriteAsync(message);
-            _logger.LogInformation("Email queued for background processing to: {To}", message.To);
+            _logger.LogInformation("Email encolado para procesamiento en segundo plano a: {To}", message.To);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to queue email for: {To}", message.To);
+            _logger.LogError(ex, "Error al encolar email para: {To}", message.To);
         }
     }
 }

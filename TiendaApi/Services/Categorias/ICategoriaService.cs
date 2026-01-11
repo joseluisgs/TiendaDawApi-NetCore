@@ -5,8 +5,7 @@ using TiendaApi.Errors;
 namespace TiendaApi.Services.Categorias;
 
 /// <summary>
-/// Interface for Categoria service using Result Pattern
-/// Railway Oriented Programming approach for error handling
+/// Interfaz del servicio de categorías usando Patrón Result.
 /// </summary>
 public interface ICategoriaService
 {

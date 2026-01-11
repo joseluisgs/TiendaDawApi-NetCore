@@ -12,8 +12,8 @@ using TiendaApi.WebSockets.Pedidos;
 namespace TiendaApi.Services.Pedidos;
 
 /// <summary>
-/// Service for Pedidos using Result Pattern
-/// Handles business logic: stock verification, reservation, MongoDB storage, notifications
+/// Servicio de pedidos usando Patrón Result.
+/// Maneja la lógica de negocio: verificación de stock, reservas, almacenamiento MongoDB, notificaciones.
 /// </summary>
 public class PedidosService : IPedidosService
 {
@@ -43,9 +43,13 @@ public class PedidosService : IPedidosService
         _webSocketHandler = webSocketHandler;
     }
 
+    /// <summary>
+    /// Obtiene todos los pedidos.
+    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// </summary>
     public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync()
     {
-        _logger.LogInformation("Finding all pedidos");
+        _logger.LogInformation("Obteniendo todos los pedidos");
         
         var pedidos = await _pedidosRepository.FindAllAsync();
         var dtos = pedidos.ToDtoList();
@@ -53,41 +57,46 @@ public class PedidosService : IPedidosService
         return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
     }
 
+    /// <summary>
+    /// Obtiene los pedidos de un usuario con caché.
+    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// </summary>
     public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId)
     {
-        _logger.LogInformation("Finding pedidos for user: {UserId}", userId);
+        _logger.LogInformation("Obteniendo pedidos del usuario: {UserId}", userId);
         
-        // Try cache first
         var cacheKey = $"pedidos:user:{userId}";
         var cachedPedidos = await _cacheService.GetAsync<IEnumerable<PedidoDto>>(cacheKey);
         
         if (cachedPedidos != null)
         {
-            _logger.LogInformation("Returning pedidos from cache for user: {UserId}", userId);
+            _logger.LogInformation("Devolviendo pedidos desde caché para usuario: {UserId}", userId);
             return Result.Success<IEnumerable<PedidoDto>, DomainError>(cachedPedidos);
         }
         
         var pedidos = await _pedidosRepository.FindByUserIdAsync(userId);
         var dtos = pedidos.ToDtoList();
         
-        // Cache with TTL
         var cacheTTL = TimeSpan.FromMinutes(5);
         await _cacheService.SetAsync(cacheKey, dtos, cacheTTL);
         
         return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
     }
 
+    /// <summary>
+    /// Obtiene un pedido por su ID con caché.
+    /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound)
+    /// </summary>
     public async Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id)
     {
-        _logger.LogInformation("Finding pedido: {Id}", id);
+        _logger.LogInformation("Obteniendo pedido: {Id}", id);
         
-        // Try cache first
         var cacheKey = $"pedidos:{id}";
         var cachedPedido = await _cacheService.GetAsync<PedidoDto>(cacheKey);
         
         if (cachedPedido != null)
         {
-            _logger.LogInformation("Returning pedido from cache: {Id}", id);
+            _logger.LogInformation("Devolviendo pedido desde caché: {Id}", id);
             return Result.Success<PedidoDto, DomainError>(cachedPedido);
         }
         
@@ -95,7 +104,7 @@ public class PedidosService : IPedidosService
         
         if (pedido == null)
         {
-            _logger.LogWarning("Pedido not found: {Id}", id);
+            _logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
                 DomainError.NotFound($"Pedido con ID {id} no encontrado")
             );
@@ -103,18 +112,20 @@ public class PedidosService : IPedidosService
         
         var dto = pedido.ToDto();
         
-        // Cache with TTL
         var cacheTTL = TimeSpan.FromMinutes(5);
         await _cacheService.SetAsync(cacheKey, dto, cacheTTL);
         
         return Result.Success<PedidoDto, DomainError>(dto);
     }
 
+    /// <summary>
+    /// Crea un nuevo pedido con verificación y reserva de stock.
+    /// Returns: Result.Success(PedidoDto) | Result.Failure(Validation/NotFound/BusinessRule/Internal)
+    /// </summary>
     public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto)
     {
-        _logger.LogInformation("Creating pedido for user: {UserId} with {ItemCount} items", userId, dto.Items.Count);
+        _logger.LogInformation("Creando pedido para usuario: {UserId} con {ItemCount} items", userId, dto.Items.Count);
         
-        // Validate items
         if (dto.Items == null || !dto.Items.Any())
         {
             return Result.Failure<PedidoDto, DomainError>(
@@ -126,7 +137,6 @@ public class PedidosService : IPedidosService
         var productosToUpdate = new List<Producto>();
         decimal total = 0;
         
-        // Verify products and calculate totals
         foreach (var itemDto in dto.Items)
         {
             if (itemDto.Cantidad <= 0)
@@ -164,29 +174,26 @@ public class PedidosService : IPedidosService
                 Subtotal = subtotal
             });
             
-            // Prepare product for stock update
             producto.Stock -= itemDto.Cantidad;
             productosToUpdate.Add(producto);
         }
         
-        // Reserve stock in PostgreSQL (transaction-like behavior)
         try
         {
             foreach (var producto in productosToUpdate)
             {
                 await _productoRepository.UpdateAsync(producto);
-                _logger.LogDebug("Stock reserved for producto: {ProductoId}, new stock: {Stock}", producto.Id, producto.Stock);
+                _logger.LogDebug("Stock reservado para producto: {ProductoId}, nuevo stock: {Stock}", producto.Id, producto.Stock);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to reserve stock for pedido");
+            _logger.LogError(ex, "Error al reservar stock para pedido");
             return Result.Failure<PedidoDto, DomainError>(
                 DomainError.Internal("Error al reservar el stock de productos")
             );
         }
         
-        // Create pedido document in MongoDB
         var pedido = new Pedido
         {
             UserId = userId,
@@ -200,40 +207,37 @@ public class PedidosService : IPedidosService
         try
         {
             var savedPedido = await _pedidosRepository.SaveAsync(pedido);
-            _logger.LogInformation("Pedido created: {Id} for user: {UserId}, total: {Total}", savedPedido.Id, userId, total);
+            _logger.LogInformation("Pedido creado: {Id} para usuario: {UserId}, total: {Total}", savedPedido.Id, userId, total);
             
             var resultDto = savedPedido.ToDto();
             
-            // Invalidate cache (fire-and-forget)
             _ = Task.Run(async () =>
             {
                 try
                 {
                     await _cacheService.RemoveAsync($"pedidos:user:{userId}");
-                    _logger.LogDebug("Cache invalidated for user pedidos: {UserId}", userId);
+                    _logger.LogDebug("Caché invalidada para pedidos del usuario: {UserId}", userId);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to invalidate cache after pedido creation");
+                    _logger.LogWarning(ex, "Error al invalidar caché tras crear pedido");
                 }
             });
             
-            // Cache the newly created pedido (fire-and-forget)
             _ = Task.Run(async () =>
             {
                 try
                 {
                     var cacheTTL = TimeSpan.FromMinutes(5);
                     await _cacheService.SetAsync($"pedidos:{savedPedido.Id}", resultDto, cacheTTL);
-                    _logger.LogDebug("Cached new pedido: {Id}", savedPedido.Id);
+                    _logger.LogDebug("Pedido cacheado: {Id}", savedPedido.Id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to cache new pedido");
+                    _logger.LogWarning(ex, "Error al cachear nuevo pedido");
                 }
             });
             
-            // Send confirmation email to user (fire-and-forget)
             _ = Task.Run(async () =>
             {
                 try
@@ -261,16 +265,15 @@ public class PedidosService : IPedidosService
                             IsHtml = true
                         };
                         await _emailService.EnqueueEmailAsync(emailMessage);
-                        _logger.LogDebug("Email notification queued for pedido creation");
+                        _logger.LogDebug("Email de notificación encolado tras crear pedido");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to queue email notification for pedido creation");
+                    _logger.LogWarning(ex, "Error al encolar email de notificación tras crear pedido");
                 }
             });
             
-            // Notificar via WebSocket (side-effect - fire-and-forget)
             if (!string.IsNullOrEmpty(savedPedido.Id))
             {
                 var pedidoId = savedPedido.Id;
@@ -281,9 +284,8 @@ public class PedidosService : IPedidosService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save pedido to MongoDB, attempting stock compensation");
+            _logger.LogError(ex, "Error al guardar pedido en MongoDB, compensando stock");
             
-            // Compensation: Restore stock if MongoDB save fails
             _ = Task.Run(async () =>
             {
                 try
@@ -292,12 +294,12 @@ public class PedidosService : IPedidosService
                     {
                         producto.Stock += pedidoItems.First(i => i.ProductoId == producto.Id).Cantidad;
                         await _productoRepository.UpdateAsync(producto);
-                        _logger.LogInformation("Stock restored for producto: {ProductoId} after pedido save failure", producto.Id);
+                        _logger.LogInformation("Stock restaurado para producto: {ProductoId} tras error al guardar pedido", producto.Id);
                     }
                 }
                 catch (Exception compensationEx)
                 {
-                    _logger.LogError(compensationEx, "CRITICAL: Failed to restore stock after pedido save failure");
+                    _logger.LogError(compensationEx, "CRÍTICO: Error al restaurar stock tras error al guardar pedido");
                 }
             });
             
@@ -307,11 +309,14 @@ public class PedidosService : IPedidosService
         }
     }
 
+    /// <summary>
+    /// Actualiza el estado de un pedido.
+    /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation)
+    /// </summary>
     public async Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado)
     {
-        _logger.LogInformation("Updating pedido estado: {Id} to {Estado}", id, nuevoEstado);
+        _logger.LogInformation("Actualizando estado del pedido: {Id} a {Estado}", id, nuevoEstado);
         
-        // Validate estado
         var validEstados = new[] { PedidoEstado.PENDIENTE, PedidoEstado.PROCESANDO, PedidoEstado.ENVIADO, PedidoEstado.ENTREGADO, PedidoEstado.CANCELADO };
         if (!validEstados.Contains(nuevoEstado))
         {
@@ -324,7 +329,7 @@ public class PedidosService : IPedidosService
         
         if (pedido == null)
         {
-            _logger.LogWarning("Pedido not found: {Id}", id);
+            _logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
                 DomainError.NotFound($"Pedido con ID {id} no encontrado")
             );
@@ -334,26 +339,24 @@ public class PedidosService : IPedidosService
         pedido.Estado = nuevoEstado;
         
         var updated = await _pedidosRepository.UpdateAsync(pedido);
-        _logger.LogInformation("Pedido estado updated: {Id}, from {OldEstado} to {NewEstado}", id, estadoAnterior, nuevoEstado);
+        _logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
         
         var resultDto = updated.ToDto();
         
-        // Invalidate cache (fire-and-forget)
         _ = Task.Run(async () =>
         {
             try
             {
                 await _cacheService.RemoveAsync($"pedidos:{id}");
                 await _cacheService.RemoveAsync($"pedidos:user:{pedido.UserId}");
-                _logger.LogDebug("Cache invalidated after pedido estado update");
+                _logger.LogDebug("Caché invalidada tras actualizar estado del pedido");
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to invalidate cache after pedido estado update");
+                _logger.LogWarning(ex, "Error al invalidar caché tras actualizar estado del pedido");
             }
         });
         
-        // Send status change notification email (fire-and-forget)
         _ = Task.Run(async () =>
         {
             try
@@ -377,34 +380,34 @@ public class PedidosService : IPedidosService
                         IsHtml = true
                     };
                     await _emailService.EnqueueEmailAsync(emailMessage);
-                    _logger.LogDebug("Email notification queued for pedido estado change");
+                    _logger.LogDebug("Email de notificación encolado tras cambio de estado del pedido");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to queue email notification for pedido estado change");
+                _logger.LogWarning(ex, "Error al encolar email de notificación tras cambio de estado");
             }
         });
         
         return Result.Success<PedidoDto, DomainError>(resultDto);
     }
 
-    #region Private Helper Methods
+    #region Métodos Privados
 
     /// <summary>
-    /// Notifica via WebSocket la creación de un pedido
-    /// Side-effect que NO debe fallar la operación principal
+    /// Notifica vía WebSocket la creación de un pedido.
+    /// Efecto secundario que no debe fallar la operación principal.
     /// </summary>
     private async Task NotificarWebSocketPedidoCreado(string pedidoId, long userId, PedidoDto pedido)
     {
         try
         {
             await _webSocketHandler.NotifyPedidoCreatedAsync(pedidoId, userId, pedido);
-            _logger.LogDebug("WebSocket notification sent for pedido: {PedidoId}", pedidoId);
+            _logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", pedidoId);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed WebSocket notification for pedido: {PedidoId}", pedidoId);
+            _logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", pedidoId);
         }
     }
 

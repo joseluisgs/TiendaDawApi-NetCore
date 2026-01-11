@@ -7,7 +7,7 @@ using TiendaApi.WebSockets.Productos;
 namespace TiendaApi.Tests.Unit.WebSockets.Productos;
 
 /// <summary>
-/// Smoke tests for WebSocket handler
+/// Tests de smoke para el manejador de WebSocket
 /// </summary>
 public class WebSocketHandlerTests
 {
@@ -21,7 +21,7 @@ public class WebSocketHandlerTests
     }
 
     [Test]
-    public async Task NotifyProductoCreatedAsync_WithNoConnections_ShouldNotThrow()
+    public async Task NotifyProductoCreatedAsync_SinConexiones_NoLanzaExcepcion()
     {
         // Arrange
         var producto = new ProductoDto { Id = 1, Nombre = "Test Product" };
@@ -32,7 +32,7 @@ public class WebSocketHandlerTests
     }
 
     [Test]
-    public async Task NotifyProductoUpdatedAsync_WithNoConnections_ShouldNotThrow()
+    public async Task NotifyProductoUpdatedAsync_SinConexiones_NoLanzaExcepcion()
     {
         // Arrange
         var producto = new ProductoDto { Id = 1, Nombre = "Test Product" };
@@ -43,7 +43,7 @@ public class WebSocketHandlerTests
     }
 
     [Test]
-    public async Task NotifyProductoDeletedAsync_WithNoConnections_ShouldNotThrow()
+    public async Task NotifyProductoDeletedAsync_SinConexiones_NoLanzaExcepcion()
     {
         // Arrange
         var productoId = 1L;
