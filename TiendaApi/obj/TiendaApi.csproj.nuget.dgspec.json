@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj": {}
+    "C:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj": {}
   },
   "projects": {
-    "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj": {
+    "C:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj",
+        "projectUniqueName": "C:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj",
         "projectName": "TiendaApi",
-        "projectPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/TiendaApi.csproj",
-        "packagesPath": "/home/runner/.nuget/packages/",
-        "outputPath": "/home/runner/work/TiendaDawApi-NetCore/TiendaDawApi-NetCore/TiendaApi/obj/",
+        "projectPath": "C:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\TiendaApi.csproj",
+        "packagesPath": "C:\\Users\\joseluisgs\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\joseluisgs\\Projects\\TiendaDawApi-NetCore\\TiendaApi\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/runner/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\joseluisgs\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -134,7 +134,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
