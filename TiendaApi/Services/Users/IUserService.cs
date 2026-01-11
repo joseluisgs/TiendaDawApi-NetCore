@@ -1,5 +1,6 @@
-using TiendaApi.Common;
-using TiendaApi.Models.DTOs;
+using CFE = CSharpFunctionalExtensions;
+using TiendaApi.Dtos.Usuarios;
+using TiendaApi.Errors;
 
 namespace TiendaApi.Services.Users;
 
@@ -11,13 +12,13 @@ namespace TiendaApi.Services.Users;
 /// 
 /// Comparación con Java/Spring Boot:
 /// - Java: UserService con métodos que retornan Optional<User> o lanzan excepciones
-/// - Este servicio: Retorna Result<T, AppError> - sin excepciones
+/// - Este servicio: Retorna Result<T, DomainError> - sin excepciones
 /// - Más explícito y type-safe que Optional
 /// 
 /// Patrón de retorno:
-/// - Result<IEnumerable<UserDto>, AppError>: Lista de usuarios (nunca falla)
-/// - Result<UserDto, AppError>: Usuario encontrado o error NotFound
-/// - Result<Unit, AppError>: Operación sin retorno (ej: Delete)
+/// - CFE.Result<IEnumerable<UserDto>, DomainError>: Lista de usuarios (nunca falla)
+/// - CFE.Result<UserDto, DomainError>: Usuario encontrado o error NotFound
+/// - CFE.UnitResult<DomainError>: Operación sin retorno (ej: Delete)
 /// </summary>
 public interface IUserService
 {
@@ -25,13 +26,13 @@ public interface IUserService
     /// Get all users (excluding deleted)
     /// Never fails - returns empty list if no users
     /// </summary>
-    Task<Result<IEnumerable<UserDto>, AppError>> FindAllAsync();
+    Task<CFE.Result<IEnumerable<UserDto>, DomainError>> FindAllAsync();
 
     /// <summary>
     /// Find user by ID
     /// Returns NotFound error if user doesn't exist or is deleted
     /// </summary>
-    Task<Result<UserDto, AppError>> FindByIdAsync(long id);
+    Task<CFE.Result<UserDto, DomainError>> FindByIdAsync(long id);
 
     /// <summary>
     /// Create a new user
@@ -47,7 +48,7 @@ public interface IUserService
     /// - Validation: Invalid input data
     /// - Conflict: Username or email already exists
     /// </summary>
-    Task<Result<UserDto, AppError>> CreateAsync(RegisterDto dto);
+    Task<CFE.Result<UserDto, DomainError>> CreateAsync(RegisterDto dto);
 
     /// <summary>
     /// Update existing user
@@ -65,7 +66,7 @@ public interface IUserService
     /// - Validation: Invalid input data
     /// - Conflict: Email already exists
     /// </summary>
-    Task<Result<UserDto, AppError>> UpdateAsync(long id, UserUpdateDto dto);
+    Task<CFE.Result<UserDto, DomainError>> UpdateAsync(long id, UserUpdateDto dto);
 
     /// <summary>
     /// Delete user (soft delete - sets IsDeleted = true)
@@ -79,5 +80,5 @@ public interface IUserService
     /// Possible errors:
     /// - NotFound: User doesn't exist
     /// </summary>
-    Task<Result<Unit, AppError>> DeleteAsync(long id);
+    Task<CFE.UnitResult<DomainError>> DeleteAsync(long id);
 }

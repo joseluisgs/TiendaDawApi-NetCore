@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TiendaApi.Models.Entities;
+using TiendaApi.Models;
 
 namespace TiendaApi.Data;
 

@@ -1,8 +1,9 @@
 using System.Security.Claims;
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TiendaApi.Common;
-using TiendaApi.Models.DTOs;
+using TiendaApi.Dtos.Pedidos;
+using TiendaApi.Errors;
 using TiendaApi.Services.Pedidos;
 
 namespace TiendaApi.Controllers;

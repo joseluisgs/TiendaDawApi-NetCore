@@ -1,6 +1,7 @@
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
-using TiendaApi.Common;
-using TiendaApi.Models.DTOs;
+using TiendaApi.Dtos.Usuarios;
+using TiendaApi.Errors;
 using TiendaApi.Services.Auth;
 
 namespace TiendaApi.Controllers;

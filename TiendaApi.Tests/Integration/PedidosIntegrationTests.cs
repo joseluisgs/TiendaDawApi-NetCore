@@ -3,8 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
-using TiendaApi.Models.DTOs;
-using TiendaApi.Models.Entities;
+using TiendaApi.Dtos.Pedidos;
+using TiendaApi.Models;
 using TiendaApi.Repositories;
 using TiendaApi.Services.Pedidos;
 

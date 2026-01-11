@@ -1,4 +1,4 @@
-using TiendaApi.Models.Entities;
+using TiendaApi.Models;
 
 namespace TiendaApi.Services.Auth;
 

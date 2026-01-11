@@ -67,7 +67,7 @@ Podrás seguir sus pasos commit a commit o en las ramas indicadas por clase.
 ## 🚀 Inicio Rápido
 
 ### Requisitos Previos
-- .NET 10 SDK
+- .NET 10 SDK y C#14
 - Docker y Docker Compose (para bases de datos)
 - PostgreSQL (o usa Docker)
 - Redis (o usa Docker)

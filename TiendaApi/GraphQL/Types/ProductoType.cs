@@ -1,5 +1,5 @@
 using GraphQL.Types;
-using TiendaApi.Models.Entities;
+using TiendaApi.Models;
 
 namespace TiendaApi.GraphQL.Types;
 

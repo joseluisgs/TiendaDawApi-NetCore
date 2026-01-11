@@ -1,11 +1,13 @@
-using AutoMapper;
-using TiendaApi.Common;
-using TiendaApi.Models.DTOs;
-using TiendaApi.Models.Entities;
-using TiendaApi.Repositories;
+using CSharpFunctionalExtensions;
+using TiendaApi.Dtos.Pedidos;
+using TiendaApi.Errors;
+using TiendaApi.Mappers;
+using TiendaApi.Models;
+using TiendaApi.Repositories.Pedidos;
+using TiendaApi.Repositories.Productos;
 using TiendaApi.Services.Cache;
 using TiendaApi.Services.Email;
-using TiendaApi.WebSockets;
+using TiendaApi.WebSockets.Pedidos;
 
 namespace TiendaApi.Services.Pedidos;
 
@@ -17,7 +19,6 @@ public class PedidosService : IPedidosService
 {
     private readonly IPedidosRepository _pedidosRepository;
     private readonly IProductoRepository _productoRepository;
-    private readonly IMapper _mapper;
     private readonly ILogger<PedidosService> _logger;
     private readonly ICacheService _cacheService;
     private readonly IEmailService _emailService;
@@ -27,7 +28,6 @@ public class PedidosService : IPedidosService
     public PedidosService(
         IPedidosRepository pedidosRepository,
         IProductoRepository productoRepository,
-        IMapper mapper,
         ILogger<PedidosService> logger,
         ICacheService cacheService,
         IEmailService emailService,
@@ -36,7 +36,6 @@ public class PedidosService : IPedidosService
     {
         _pedidosRepository = pedidosRepository;
         _productoRepository = productoRepository;
-        _mapper = mapper;
         _logger = logger;
         _cacheService = cacheService;
         _emailService = emailService;
@@ -44,17 +43,17 @@ public class PedidosService : IPedidosService
         _webSocketHandler = webSocketHandler;
     }
 
-    public async Task<Result<IEnumerable<PedidoDto>, AppError>> FindAllAsync()
+    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync()
     {
         _logger.LogInformation("Finding all pedidos");
         
         var pedidos = await _pedidosRepository.FindAllAsync();
-        var dtos = _mapper.Map<IEnumerable<PedidoDto>>(pedidos);
+        var dtos = pedidos.ToDtoList();
         
-        return Result<IEnumerable<PedidoDto>, AppError>.Success(dtos);
+        return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
     }
 
-    public async Task<Result<IEnumerable<PedidoDto>, AppError>> FindByUserIdAsync(long userId)
+    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId)
     {
         _logger.LogInformation("Finding pedidos for user: {UserId}", userId);
         
@@ -65,20 +64,20 @@ public class PedidosService : IPedidosService
         if (cachedPedidos != null)
         {
             _logger.LogInformation("Returning pedidos from cache for user: {UserId}", userId);
-            return Result<IEnumerable<PedidoDto>, AppError>.Success(cachedPedidos);
+            return Result.Success<IEnumerable<PedidoDto>, DomainError>(cachedPedidos);
         }
         
         var pedidos = await _pedidosRepository.FindByUserIdAsync(userId);
-        var dtos = _mapper.Map<IEnumerable<PedidoDto>>(pedidos);
+        var dtos = pedidos.ToDtoList();
         
         // Cache with TTL
         var cacheTTL = TimeSpan.FromMinutes(5);
         await _cacheService.SetAsync(cacheKey, dtos, cacheTTL);
         
-        return Result<IEnumerable<PedidoDto>, AppError>.Success(dtos);
+        return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
     }
 
-    public async Task<Result<PedidoDto, AppError>> FindByIdAsync(string id)
+    public async Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id)
     {
         _logger.LogInformation("Finding pedido: {Id}", id);
         
@@ -89,7 +88,7 @@ public class PedidosService : IPedidosService
         if (cachedPedido != null)
         {
             _logger.LogInformation("Returning pedido from cache: {Id}", id);
-            return Result<PedidoDto, AppError>.Success(cachedPedido);
+            return Result.Success<PedidoDto, DomainError>(cachedPedido);
         }
         
         var pedido = await _pedidosRepository.FindByIdAsync(id);
@@ -97,29 +96,29 @@ public class PedidosService : IPedidosService
         if (pedido == null)
         {
             _logger.LogWarning("Pedido not found: {Id}", id);
-            return Result<PedidoDto, AppError>.Failure(
-                AppError.NotFound($"Pedido con ID {id} no encontrado")
+            return Result.Failure<PedidoDto, DomainError>(
+                DomainError.NotFound($"Pedido con ID {id} no encontrado")
             );
         }
         
-        var dto = _mapper.Map<PedidoDto>(pedido);
+        var dto = pedido.ToDto();
         
         // Cache with TTL
         var cacheTTL = TimeSpan.FromMinutes(5);
         await _cacheService.SetAsync(cacheKey, dto, cacheTTL);
         
-        return Result<PedidoDto, AppError>.Success(dto);
+        return Result.Success<PedidoDto, DomainError>(dto);
     }
 
-    public async Task<Result<PedidoDto, AppError>> CreateAsync(long userId, PedidoRequestDto dto)
+    public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto)
     {
         _logger.LogInformation("Creating pedido for user: {UserId} with {ItemCount} items", userId, dto.Items.Count);
         
         // Validate items
         if (dto.Items == null || !dto.Items.Any())
         {
-            return Result<PedidoDto, AppError>.Failure(
-                AppError.Validation("El pedido debe contener al menos un producto")
+            return Result.Failure<PedidoDto, DomainError>(
+                DomainError.Validation("El pedido debe contener al menos un producto")
             );
         }
         
@@ -132,8 +131,8 @@ public class PedidosService : IPedidosService
         {
             if (itemDto.Cantidad <= 0)
             {
-                return Result<PedidoDto, AppError>.Failure(
-                    AppError.Validation($"La cantidad debe ser mayor que 0 para el producto {itemDto.ProductoId}")
+                return Result.Failure<PedidoDto, DomainError>(
+                    DomainError.Validation($"La cantidad debe ser mayor que 0 para el producto {itemDto.ProductoId}")
                 );
             }
             
@@ -141,15 +140,15 @@ public class PedidosService : IPedidosService
             
             if (producto == null)
             {
-                return Result<PedidoDto, AppError>.Failure(
-                    AppError.NotFound($"Producto con ID {itemDto.ProductoId} no encontrado")
+                return Result.Failure<PedidoDto, DomainError>(
+                    DomainError.NotFound($"Producto con ID {itemDto.ProductoId} no encontrado")
                 );
             }
             
             if (producto.Stock < itemDto.Cantidad)
             {
-                return Result<PedidoDto, AppError>.Failure(
-                    AppError.BusinessRule($"Stock insuficiente para el producto {producto.Nombre}. Disponible: {producto.Stock}, Solicitado: {itemDto.Cantidad}")
+                return Result.Failure<PedidoDto, DomainError>(
+                    DomainError.BusinessRule($"Stock insuficiente para el producto {producto.Nombre}. Disponible: {producto.Stock}, Solicitado: {itemDto.Cantidad}")
                 );
             }
             
@@ -182,8 +181,8 @@ public class PedidosService : IPedidosService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to reserve stock for pedido");
-            return Result<PedidoDto, AppError>.Failure(
-                AppError.Internal("Error al reservar el stock de productos")
+            return Result.Failure<PedidoDto, DomainError>(
+                DomainError.Internal("Error al reservar el stock de productos")
             );
         }
         
@@ -203,7 +202,7 @@ public class PedidosService : IPedidosService
             var savedPedido = await _pedidosRepository.SaveAsync(pedido);
             _logger.LogInformation("Pedido created: {Id} for user: {UserId}, total: {Total}", savedPedido.Id, userId, total);
             
-            var resultDto = _mapper.Map<PedidoDto>(savedPedido);
+            var resultDto = savedPedido.ToDto();
             
             // Invalidate cache (fire-and-forget)
             _ = Task.Run(async () =>
@@ -278,7 +277,7 @@ public class PedidosService : IPedidosService
                 _ = Task.Run(async () => await NotificarWebSocketPedidoCreado(pedidoId, userId, resultDto));
             }
             
-            return Result<PedidoDto, AppError>.Success(resultDto);
+            return Result.Success<PedidoDto, DomainError>(resultDto);
         }
         catch (Exception ex)
         {
@@ -302,13 +301,13 @@ public class PedidosService : IPedidosService
                 }
             });
             
-            return Result<PedidoDto, AppError>.Failure(
-                AppError.Internal("Error al crear el pedido")
+            return Result.Failure<PedidoDto, DomainError>(
+                DomainError.Internal("Error al crear el pedido")
             );
         }
     }
 
-    public async Task<Result<PedidoDto, AppError>> UpdateEstadoAsync(string id, string nuevoEstado)
+    public async Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado)
     {
         _logger.LogInformation("Updating pedido estado: {Id} to {Estado}", id, nuevoEstado);
         
@@ -316,8 +315,8 @@ public class PedidosService : IPedidosService
         var validEstados = new[] { PedidoEstado.PENDIENTE, PedidoEstado.PROCESANDO, PedidoEstado.ENVIADO, PedidoEstado.ENTREGADO, PedidoEstado.CANCELADO };
         if (!validEstados.Contains(nuevoEstado))
         {
-            return Result<PedidoDto, AppError>.Failure(
-                AppError.Validation($"Estado inválido. Valores permitidos: {string.Join(", ", validEstados)}")
+            return Result.Failure<PedidoDto, DomainError>(
+                DomainError.Validation($"Estado inválido. Valores permitidos: {string.Join(", ", validEstados)}")
             );
         }
         
@@ -326,8 +325,8 @@ public class PedidosService : IPedidosService
         if (pedido == null)
         {
             _logger.LogWarning("Pedido not found: {Id}", id);
-            return Result<PedidoDto, AppError>.Failure(
-                AppError.NotFound($"Pedido con ID {id} no encontrado")
+            return Result.Failure<PedidoDto, DomainError>(
+                DomainError.NotFound($"Pedido con ID {id} no encontrado")
             );
         }
         
@@ -337,7 +336,7 @@ public class PedidosService : IPedidosService
         var updated = await _pedidosRepository.UpdateAsync(pedido);
         _logger.LogInformation("Pedido estado updated: {Id}, from {OldEstado} to {NewEstado}", id, estadoAnterior, nuevoEstado);
         
-        var resultDto = _mapper.Map<PedidoDto>(updated);
+        var resultDto = updated.ToDto();
         
         // Invalidate cache (fire-and-forget)
         _ = Task.Run(async () =>
@@ -387,7 +386,7 @@ public class PedidosService : IPedidosService
             }
         });
         
-        return Result<PedidoDto, AppError>.Success(resultDto);
+        return Result.Success<PedidoDto, DomainError>(resultDto);
     }
 
     #region Private Helper Methods

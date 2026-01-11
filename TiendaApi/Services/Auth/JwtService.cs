@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using TiendaApi.Models.Entities;
+using TiendaApi.Models;
 
 namespace TiendaApi.Services.Auth;
 

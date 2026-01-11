@@ -1,8 +1,9 @@
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TiendaApi.Common;
-using TiendaApi.Models.DTOs;
-using TiendaApi.Services;
+using TiendaApi.Dtos.Productos;
+using TiendaApi.Errors;
+using TiendaApi.Services.Productos;
 
 namespace TiendaApi.Controllers;
 
@@ -11,7 +12,7 @@ namespace TiendaApi.Controllers;
 /// 
 /// This controller demonstrates the functional programming pattern:
 /// - NO try/catch blocks needed
-/// - Service methods return Result<T, AppError>
+/// - Service methods return Result<T, DomainError>
 /// - Pattern matching to convert Result to HTTP response
 /// 
 /// Java comparison:
@@ -43,10 +44,10 @@ namespace TiendaApi.Controllers;
 [Produces("application/json")]
 public class ProductosController : ControllerBase
 {
-    private readonly ProductoService _service;
+    private readonly IProductoService _service;
     private readonly ILogger<ProductosController> _logger;
 
-    public ProductosController(ProductoService service, ILogger<ProductosController> logger)
+    public ProductosController(IProductoService service, ILogger<ProductosController> logger)
     {
         _service = service;
         _logger = logger;
@@ -214,14 +215,15 @@ public class ProductosController : ControllerBase
     {
         var resultado = await _service.DeleteAsync(id);
         
-        return resultado.Match<IActionResult>(
-            onSuccess: () => NoContent(),
-            onFailure: error => error.Type switch
-            {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
-        );
+        if (resultado.IsSuccess)
+            return NoContent();
+        
+        var error = resultado.Error;
+        return error.Type switch
+        {
+            ErrorType.NotFound => NotFound(new { message = error.Message }),
+            _ => StatusCode(500, new { message = error.Message })
+        };
     }
 }
 

@@ -1,6 +1,7 @@
 using GraphQL;
 using GraphQL.Types;
-using TiendaApi.Repositories;
+using TiendaApi.Repositories.Productos;
+using TiendaApi.Repositories.Categorias;
 
 namespace TiendaApi.GraphQL.Types;
 

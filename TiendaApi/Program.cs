@@ -10,14 +10,20 @@ using TiendaApi.Data;
 using TiendaApi.GraphQL;
 using TiendaApi.GraphQL.Types;
 using TiendaApi.Middleware;
-using TiendaApi.Repositories;
-using TiendaApi.Services;
+using TiendaApi.Mappers;
+using TiendaApi.Repositories.Categorias;
+using TiendaApi.Repositories.Productos;
+using TiendaApi.Repositories.Usuarios;
+using TiendaApi.Repositories.Pedidos;
 using TiendaApi.Services.Auth;
 using TiendaApi.Services.Cache;
+using TiendaApi.Services.Categorias;
 using TiendaApi.Services.Email;
 using TiendaApi.Services.Pedidos;
+using TiendaApi.Services.Productos;
 using TiendaApi.Services.Users;
-using TiendaApi.WebSockets;
+using TiendaApi.WebSockets.Pedidos;
+using TiendaApi.WebSockets.Productos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -170,8 +176,8 @@ builder.Services.AddScoped<IPedidosRepository, PedidosRepository>();
 
 // Services
 // Java Spring Boot: @Service classes automatically registered
-builder.Services.AddScoped<CategoriaService>();
-builder.Services.AddScoped<ProductoService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IPedidosService, PedidosService>();
 
 // Auth and User Services with Result Pattern
@@ -206,7 +212,7 @@ builder.Services.AddScoped<CategoriaType>();
 
 // AutoMapper
 // Java Spring Boot: ModelMapper bean configuration
-builder.Services.AddAutoMapper(typeof(MappingProfile), typeof(TiendaApi.Mappings.PedidoProfile));
+builder.Services.AddAutoMapper(typeof(MappingProfile), typeof(PedidoProfile));
 
 // ============================================================================
 // AUTHENTICATION & AUTHORIZATION - Similar to Spring Security

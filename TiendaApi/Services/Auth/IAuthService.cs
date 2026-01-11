@@ -1,5 +1,6 @@
-using TiendaApi.Common;
-using TiendaApi.Models.DTOs;
+using CSharpFunctionalExtensions;
+using TiendaApi.Dtos.Usuarios;
+using TiendaApi.Errors;
 
 namespace TiendaApi.Services.Auth;
 
@@ -24,9 +25,9 @@ public interface IAuthService
     /// 5. Generate JWT token
     /// 6. Return authentication response
     /// 
-    /// Returns Result with AuthResponseDto on success or AppError on failure
+    /// Returns Result with AuthResponseDto on success or DomainError on failure
     /// </summary>
-    Task<Result<AuthResponseDto, AppError>> SignUpAsync(RegisterDto dto);
+    Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto);
 
     /// <summary>
     /// Authenticate an existing user
@@ -38,7 +39,7 @@ public interface IAuthService
     /// 4. Generate JWT token
     /// 5. Return authentication response
     /// 
-    /// Returns Result with AuthResponseDto on success or AppError on failure
+    /// Returns Result with AuthResponseDto on success or DomainError on failure
     /// </summary>
-    Task<Result<AuthResponseDto, AppError>> SignInAsync(LoginDto dto);
+    Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto);
 }

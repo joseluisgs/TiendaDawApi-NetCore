@@ -1,7 +1,8 @@
+using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Mvc;
-using TiendaApi.Common;
-using TiendaApi.Models.DTOs;
-using TiendaApi.Services;
+using TiendaApi.Dtos.Categorias;
+using TiendaApi.Errors;
+using TiendaApi.Services.Categorias;
 
 namespace TiendaApi.Controllers;
 
@@ -15,7 +16,7 @@ namespace TiendaApi.Controllers;
 /// 
 /// AHORA (Result Pattern):
 /// - SIN try/catch
-/// - Errores explícitos en tipo de retorno: Result<T, AppError>
+/// - Errores explícitos en tipo de retorno: Result<T, DomainError>
 /// - Pattern matching con .Match() para convertir a HTTP
 /// - Código más limpio y declarativo
 /// 
@@ -36,10 +37,10 @@ namespace TiendaApi.Controllers;
 [Produces("application/json")]
 public class CategoriasController : ControllerBase
 {
-    private readonly CategoriaService _service;
+    private readonly ICategoriaService _service;
     private readonly ILogger<CategoriasController> _logger;
 
-    public CategoriasController(CategoriaService service, ILogger<CategoriasController> _logger)
+    public CategoriasController(ICategoriaService service, ILogger<CategoriasController> _logger)
     {
         _service = service;
         this._logger = _logger;
@@ -177,13 +178,14 @@ public class CategoriasController : ControllerBase
     {
         var resultado = await _service.DeleteAsync(id);
         
-        return resultado.Match<IActionResult>(
-            onSuccess: _ => NoContent(),
-            onFailure: error => error.Type switch
-            {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
-        );
+        if (resultado.IsSuccess)
+            return NoContent();
+        
+        var error = resultado.Error;
+        return error.Type switch
+        {
+            ErrorType.NotFound => NotFound(new { message = error.Message }),
+            _ => StatusCode(500, new { message = error.Message })
+        };
     }
 }
