@@ -14,6 +14,14 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+# Test results
+TestResults/
+*.trx
+*.testResults.xml
+
+# Coverage
+[Cc]overage/
+
 # Visual Studio cache/options directory
 .vs/
 .vscode/

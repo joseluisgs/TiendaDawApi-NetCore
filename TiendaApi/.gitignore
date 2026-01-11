@@ -1,0 +1,24 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# Test results
+[Test]Results/
+*.trx
+*.testResults.xml
+
+# Coverage
+[Cc]overage/
+coverage.json
+coverage.info
+coverage.opencover.xml
+*.coverageinfo
+
+# IDE
+.idea/
+*.suo
+*.user
+
+# NuGet
+*.nupkg
+packages/
