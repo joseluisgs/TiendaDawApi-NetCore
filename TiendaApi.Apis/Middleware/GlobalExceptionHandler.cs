@@ -1,13 +1,16 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Exceptions;
 
 namespace TiendaApi.Apis.Middleware;
 
 /// <summary>
 /// Manejador global de excepciones.
-/// Captura excepciones lanzadas por los endpoints de Categorías.
-/// Convierte excepciones en respuestas HTTP consistentes.
+/// Maneja excepciones y errores del dominio (Result Pattern).
+/// Genera respuestas HTTP consistentes y trazables.
 /// </summary>
 public class GlobalExceptionHandler
 {
@@ -28,43 +31,98 @@ public class GlobalExceptionHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ocurrió una excepción: {Message}", ex.Message);
-            await HandleExceptionAsync(context, ex);
+            var errorId = Guid.NewGuid().ToString()[..8];
+            _logger.LogError(ex, "Excepción no manejada. ErrorId: {ErrorId}, Message: {Message}", 
+                errorId, ex.Message);
+            await HandleExceptionAsync(context, ex, errorId);
         }
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception, string errorId)
     {
-        var (statusCode, message, errors) = exception switch
+        context.Response.ContentType = "application/json";
+        
+        var (statusCode, message, errors, errorType) = exception switch
         {
-            NotFoundException notFound => 
-                (HttpStatusCode.NotFound, notFound.Message, (Dictionary<string, string[]>?)null),
+            // Excepciones personalizadas
+            NotFoundException notFound => (
+                HttpStatusCode.NotFound,
+                notFound.Message,
+                (Dictionary<string, string[]>?)null,
+                ErrorType.NotFound
+            ),
             
-            ValidationException validation => 
-                (HttpStatusCode.BadRequest, validation.Message, validation.Errors),
+            ValidationException validation => (
+                HttpStatusCode.BadRequest,
+                validation.Message,
+                validation.Errors,
+                ErrorType.Validation
+            ),
             
-            BusinessException business => 
-                (HttpStatusCode.BadRequest, business.Message, (Dictionary<string, string[]>?)null),
+            BusinessException business => (
+                HttpStatusCode.BadRequest,
+                business.Message,
+                (Dictionary<string, string[]>?)null,
+                ErrorType.BusinessRule
+            ),
             
-            _ => 
-                (HttpStatusCode.InternalServerError, "Error interno del servidor", (Dictionary<string, string[]>?)null)
+            UnauthorizedAccessException => (
+                HttpStatusCode.Unauthorized,
+                "No autorizado",
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Unauthorized
+            ),
+            
+            ArgumentException argument => (
+                HttpStatusCode.BadRequest,
+                argument.Message,
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Validation
+            ),
+            
+            DbUpdateException dbUpdate => (
+                HttpStatusCode.Conflict,
+                "Error al actualizar la base de datos",
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Internal
+            ),
+            
+            TimeoutException => (
+                HttpStatusCode.RequestTimeout,
+                "Tiempo de espera agotado",
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Internal
+            ),
+            
+            // Default - Error interno no manejado
+            _ => (
+                HttpStatusCode.InternalServerError,
+                "Ha ocurrido un error interno",
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Internal
+            )
         };
 
-        object response = errors != null
-            ? new { message, errors }
-            : new { message };
-
-        context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
+
+        var response = new
+        {
+            errorId,
+            message,
+            errorType = errorType.ToString(),
+            timestamp = DateTime.UtcNow.ToString("o"),
+            path = context.Request.Path,
+            method = context.Request.Method,
+            errors
+        };
 
         var jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        return context.Response.WriteAsync(
-            JsonSerializer.Serialize(response, jsonOptions));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
     }
 }
 
