@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MongoDB.Bson;
 using TiendaApi.Dtos.Categorias;
 using TiendaApi.Dtos.Pedidos;
 using TiendaApi.Dtos.Productos;
@@ -264,9 +265,10 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDto_DebeMapearTodosLosCampos()
     {
         // Arrange
+        var pedidoId = ObjectId.GenerateNewId();
         var pedido = new Pedido
         {
-            Id = "order123",
+            _id = pedidoId,
             UserId = 1,
             Total = 150.00m,
             Estado = PedidoEstado.PENDIENTE,
@@ -282,7 +284,7 @@ public class MapperExtensionTests
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Id.Should().Be("order123");
+        dto.Id.Should().Be(pedidoId.ToString());
         dto.UserId.Should().Be(1);
         dto.Total.Should().Be(150.00m);
         dto.Estado.Should().Be(PedidoEstado.PENDIENTE);
@@ -295,9 +297,10 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDto_DebeManejarItemsVacios()
     {
         // Arrange
+        var pedidoId = ObjectId.GenerateNewId();
         var pedido = new Pedido
         {
-            Id = "order123",
+            _id = pedidoId,
             Items = new List<PedidoItem>()
         };
 
@@ -307,6 +310,7 @@ public class MapperExtensionTests
         // Assert
         dto.Items.Should().NotBeNull();
         dto.Items.Should().BeEmpty();
+        dto.Id.Should().Be(pedidoId.ToString());
     }
 
     [Test]
@@ -355,10 +359,12 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDtoList_DebeMapearMultiplesPedidos()
     {
         // Arrange
+        var pedidoId1 = ObjectId.GenerateNewId();
+        var pedidoId2 = ObjectId.GenerateNewId();
         var pedidos = new List<Pedido>
         {
-            new() { Id = "order1", Total = 100 },
-            new() { Id = "order2", Total = 200 }
+            new() { _id = pedidoId1, Total = 100 },
+            new() { _id = pedidoId2, Total = 200 }
         };
 
         // Act
@@ -366,8 +372,8 @@ public class MapperExtensionTests
 
         // Assert
         dtos.Should().HaveCount(2);
-        dtos[0].Id.Should().Be("order1");
-        dtos[1].Id.Should().Be("order2");
+        dtos[0].Id.Should().Be(pedidoId1.ToString());
+        dtos[1].Id.Should().Be(pedidoId2.ToString());
     }
 
     #endregion

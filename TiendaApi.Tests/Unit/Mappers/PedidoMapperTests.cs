@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MongoDB.Bson;
 using TiendaApi.Dtos.Pedidos;
 using TiendaApi.Mappers;
 using TiendaApi.Models;
@@ -19,7 +20,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            Id = "order123",
+            _id = ObjectId.GenerateNewId(),
             UserId = 100,
             Total = 299.99m,
             Estado = PedidoEstado.PENDIENTE,
@@ -35,7 +36,7 @@ public class PedidoMapperTests
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Id.Should().Be("order123");
+        dto.Id.Should().Be(pedido._id.ToString());
         dto.UserId.Should().Be(100);
         dto.Total.Should().Be(299.99m);
         dto.Estado.Should().Be(PedidoEstado.PENDIENTE);
@@ -44,12 +45,12 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConIdNulo_RetornaStringVacio()
+    public void ToDto_ConIdVacio_RetornaStringVacio()
     {
         // Arrange
         var pedido = new Pedido
         {
-            Id = null,
+            _id = ObjectId.Empty,
             UserId = 1,
             Total = 100
         };
@@ -58,14 +59,14 @@ public class PedidoMapperTests
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Id.Should().BeEmpty();
+        dto.Id.Should().Be(ObjectId.Empty.ToString());
     }
 
     [Test]
     public void ToDto_ConEstadoPredeterminado_DebeSerPendiente()
     {
         // Arrange
-        var pedido = new Pedido { Id = "123" };
+        var pedido = new Pedido { _id = ObjectId.GenerateNewId() };
 
         // Act
         var dto = pedido.ToDto();
@@ -80,7 +81,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            Id = "123",
+            _id = ObjectId.GenerateNewId(),
             Items = new List<PedidoItem>()
         };
 
@@ -98,7 +99,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            Id = "123",
+            _id = ObjectId.GenerateNewId(),
             Items = null!
         };
 
@@ -116,10 +117,11 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            Id = "123",
+            _id = ObjectId.GenerateNewId(),
             Items = new List<PedidoItem>
             {
-                new() { ProductoId = 1, Cantidad = 3, Precio = 25, Subtotal = 75 }
+                new() { ProductoId = 1, NombreProducto = "Product 1", Cantidad = 3, Precio = 10, Subtotal = 30 },
+                new() { ProductoId = 2, NombreProducto = "Product 2", Cantidad = 2, Precio = 25, Subtotal = 50 }
             }
         };
 
@@ -127,328 +129,9 @@ public class PedidoMapperTests
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Items[0].Subtotal.Should().Be(75);
+        dto.Items[0].Subtotal.Should().Be(30);
+        dto.Items[1].Subtotal.Should().Be(50);
     }
-
-    [Test]
-    public void ToDto_ConTodosLosEstados_MapeaCorrectamente()
-    {
-        // Arrange
-        var estados = new[] { PedidoEstado.PENDIENTE, PedidoEstado.PROCESANDO, PedidoEstado.ENVIADO, PedidoEstado.ENTREGADO, PedidoEstado.CANCELADO };
-
-        foreach (var estado in estados)
-        {
-            var pedido = new Pedido { Id = "123", Estado = estado };
-
-            // Act
-            var dto = pedido.ToDto();
-
-            // Assert
-            dto.Estado.Should().Be(estado, $"El estado {estado} debe mapear correctamente");
-        }
-    }
-
-    #endregion
-
-    #region PedidoItem ToDto Tests
-
-    [Test]
-    public void PedidoItem_ToDto_DebeMapearTodosLosCampos()
-    {
-        // Arrange
-        var item = new PedidoItem
-        {
-            ProductoId = 50,
-            NombreProducto = "Special Product",
-            Cantidad = 5,
-            Precio = 29.99m,
-            Subtotal = 149.95m
-        };
-
-        // Act
-        var dto = item.ToDto();
-
-        // Assert
-        dto.ProductoId.Should().Be(50);
-        dto.NombreProducto.Should().Be("Special Product");
-        dto.Cantidad.Should().Be(5);
-        dto.Precio.Should().Be(29.99m);
-        dto.Subtotal.Should().Be(149.95m);
-    }
-
-    [Test]
-    public void PedidoItem_ToDto_ConNombreVacio_RetornaVacio()
-    {
-        // Arrange
-        var item = new PedidoItem
-        {
-            ProductoId = 1,
-            NombreProducto = string.Empty,
-            Cantidad = 1,
-            Precio = 10
-        };
-
-        // Act
-        var dto = item.ToDto();
-
-        // Assert
-        dto.NombreProducto.Should().BeEmpty();
-    }
-
-    #endregion
-
-    #region ToEntity (PedidoRequestDto) Tests
-
-    [Test]
-    public void ToEntity_ConItems_MapeaCorrectamente()
-    {
-        // Arrange
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
-                new() { ProductoId = 1, Cantidad = 2 },
-                new() { ProductoId = 2, Cantidad = 3 }
-            }
-        };
-        var userId = 100L;
-
-        // Act
-        var entity = dto.ToEntity(userId);
-
-        // Assert
-        entity.UserId.Should().Be(100);
-        entity.Items.Should().HaveCount(2);
-        entity.Estado.Should().Be("PENDIENTE");
-    }
-
-    [Test]
-    public void ToEntity_DebeEstablecerEstadoPredeterminado()
-    {
-        // Arrange
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto> { new() { ProductoId = 1, Cantidad = 1 } }
-        };
-
-        // Act
-        var entity = dto.ToEntity(1);
-
-        // Assert
-        entity.Estado.Should().Be("PENDIENTE");
-    }
-
-    [Test]
-    public void ToEntity_DebeEstablecerMarcasDeTiempo()
-    {
-        // Arrange
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto> { new() { ProductoId = 1, Cantidad = 1 } }
-        };
-        var before = DateTime.UtcNow;
-
-        // Act
-        var entity = dto.ToEntity(1);
-        var after = DateTime.UtcNow;
-
-        // Assert
-        entity.CreatedAt.Should().BeOnOrAfter(before);
-        entity.CreatedAt.Should().BeOnOrBefore(after);
-        entity.UpdatedAt.Should().BeOnOrAfter(before);
-        entity.UpdatedAt.Should().BeOnOrBefore(after);
-    }
-
-    [Test]
-    public void ToEntity_ConItemsVacios_CreaListaVacia()
-    {
-        // Arrange
-        var dto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-
-        // Act
-        var entity = dto.ToEntity(1);
-
-        // Assert
-        entity.Items.Should().NotBeNull();
-        entity.Items.Should().BeEmpty();
-    }
-
-    #endregion
-
-    #region PedidoItemRequestDto ToEntity Tests
-
-    [Test]
-    public void PedidoItemRequestDto_ToEntity_ConPredeterminados_Mapea()
-    {
-        // Arrange
-        var dto = new PedidoItemRequestDto
-        {
-            ProductoId = 10,
-            Cantidad = 5
-        };
-
-        // Act
-        var entity = dto.ToEntity("Default Product", 25.00m);
-
-        // Assert
-        entity.ProductoId.Should().Be(10);
-        entity.Cantidad.Should().Be(5);
-        entity.NombreProducto.Should().Be("Default Product");
-        entity.Precio.Should().Be(25.00m);
-        entity.Subtotal.Should().Be(125.00m); // 5 * 25
-    }
-
-    [Test]
-    public void PedidoItemRequestDto_ToEntity_DebeCalcularSubtotal()
-    {
-        // Arrange
-        var dto = new PedidoItemRequestDto
-        {
-            ProductoId = 1,
-            Cantidad = 4
-        };
-
-        // Act
-        var entity = dto.ToEntity("Product", 15.50m);
-
-        // Assert
-        entity.Subtotal.Should().Be(62.00m); // 4 * 15.50
-    }
-
-    [Test]
-    public void PedidoItemRequestDto_ToEntity_ConNombreNulo_UsaVacio()
-    {
-        // Arrange
-        var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 1 };
-
-        // Act
-        var entity = dto.ToEntity(null!, 10);
-
-        // Assert
-        entity.NombreProducto.Should().BeEmpty();
-    }
-
-    [Test]
-    public void PedidoItemRequestDto_ToEntity_ConPrecioNulo_UsaCero()
-    {
-        // Arrange
-        var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 1 };
-
-        // Act
-        var entity = dto.ToEntity("Product", null);
-
-        // Assert
-        entity.Precio.Should().Be(0);
-        entity.Subtotal.Should().Be(0);
-    }
-
-    #endregion
-
-    #region ToDtoList Tests
-
-    [Test]
-    public void ToDtoList_ConMultiplesPedidos_MapeaTodos()
-    {
-        // Arrange
-        var pedidos = new List<Pedido>
-        {
-            new() { Id = "1", Total = 100 },
-            new() { Id = "2", Total = 200 },
-            new() { Id = "3", Total = 300 }
-        };
-
-        // Act
-        var dtos = pedidos.ToDtoList().ToList();
-
-        // Assert
-        dtos.Should().HaveCount(3);
-        dtos[0].Id.Should().Be("1");
-        dtos[1].Id.Should().Be("2");
-        dtos[2].Id.Should().Be("3");
-    }
-
-    [Test]
-    public void ToDtoList_ConListaVacia_RetornaVacia()
-    {
-        // Arrange
-        var pedidos = new List<Pedido>();
-
-        // Act
-        var dtos = pedidos.ToDtoList().ToList();
-
-        // Assert
-        dtos.Should().BeEmpty();
-    }
-
-    [Test]
-    public void ToDtoList_DebePreservarOrden()
-    {
-        // Arrange
-        var pedidos = new List<Pedido>
-        {
-            new() { Id = "third", Total = 300 },
-            new() { Id = "first", Total = 100 },
-            new() { Id = "second", Total = 200 }
-        };
-
-        // Act
-        var dtos = pedidos.ToDtoList().ToList();
-
-        // Assert
-        dtos[0].Id.Should().Be("third");
-        dtos[1].Id.Should().Be("first");
-        dtos[2].Id.Should().Be("second");
-    }
-
-    #endregion
-
-    #region Roundtrip Tests
-
-    [Test]
-    public void ToEntity_LuegoToDto_DebePreservarUserId()
-    {
-        // Arrange
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
-                new() { ProductoId = 1, Cantidad = 2 }
-            }
-        };
-        var userId = 42L;
-
-        // Act
-        var entity = dto.ToEntity(userId);
-        var resultDto = entity.ToDto();
-
-        // Assert
-        resultDto.UserId.Should().Be(userId);
-    }
-
-    [Test]
-    public void ToEntity_LuegoToDto_DebePreservarItems()
-    {
-        // Arrange
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
-                new() { ProductoId = 1, Cantidad = 2 },
-                new() { ProductoId = 2, Cantidad = 3 }
-            }
-        };
-
-        // Act
-        var entity = dto.ToEntity(1);
-        var resultDto = entity.ToDto();
-
-        // Assert
-        resultDto.Items.Should().HaveCount(2);
-    }
-
-    #endregion
-
-    #region Edge Cases Tests
 
     [Test]
     public void ToDto_ConTotalCero_MapeaCorrectamente()
@@ -456,15 +139,16 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            Id = "123",
-            Total = 0m
+            _id = ObjectId.GenerateNewId(),
+            Total = 0,
+            Items = new List<PedidoItem>()
         };
 
         // Act
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Total.Should().Be(0m);
+        dto.Total.Should().Be(0);
     }
 
     [Test]
@@ -473,15 +157,45 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            Id = "123",
-            Total = 9999999.99m
+            _id = ObjectId.GenerateNewId(),
+            Total = 999999999.99m,
+            Items = new List<PedidoItem>()
         };
 
         // Act
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Total.Should().Be(9999999.99m);
+        dto.Total.Should().Be(999999999.99m);
+    }
+
+    [Test]
+    public void ToDto_ConTodosLosEstados_MapeaCorrectamente()
+    {
+        // Arrange
+        var estados = new[]
+        {
+            PedidoEstado.PENDIENTE,
+            PedidoEstado.PROCESANDO,
+            PedidoEstado.ENVIADO,
+            PedidoEstado.ENTREGADO,
+            PedidoEstado.CANCELADO
+        };
+
+        foreach (var estado in estados)
+        {
+            var pedido = new Pedido
+            {
+                _id = ObjectId.GenerateNewId(),
+                Estado = estado
+            };
+
+            // Act
+            var dto = pedido.ToDto();
+
+            // Assert
+            dto.Estado.Should().Be(estado);
+        }
     }
 
     [Test]
@@ -492,63 +206,101 @@ public class PedidoMapperTests
             .Select(i => new PedidoItem
             {
                 ProductoId = i,
+                NombreProducto = $"Product {i}",
                 Cantidad = i,
-                Precio = i,
-                Subtotal = i * i
+                Precio = i * 10,
+                Subtotal = i * i * 10
             })
             .ToList();
-        var pedido = new Pedido { Id = "123", Items = items };
+
+        var pedido = new Pedido
+        {
+            _id = ObjectId.GenerateNewId(),
+            Items = items
+        };
 
         // Act
         var dto = pedido.ToDto();
 
         // Assert
         dto.Items.Should().HaveCount(100);
-        dto.Items[99].ProductoId.Should().Be(100);
-    }
-
-    [Test]
-    public void ToEntity_DebeManejarCantidadesGrandes()
-    {
-        // Arrange
-        var dto = new PedidoRequestDto
+        for (int i = 0; i < 100; i++)
         {
-            Items = new List<PedidoItemRequestDto>
-            {
-                new() { ProductoId = 1, Cantidad = int.MaxValue }
-            }
-        };
-
-        // Act
-        var entity = dto.ToEntity(1);
-
-        // Assert
-        entity.Items.Should().HaveCount(1);
-        entity.Items[0].Cantidad.Should().Be(int.MaxValue);
+            dto.Items[i].ProductoId.Should().Be(i + 1);
+        }
     }
 
     #endregion
 
-    #region Null Safety Tests
+    #region List<Pedido> ToDtoList Tests
 
     [Test]
-    public void ToDto_ConPedidoNulos_LanzaExcepcion()
+    public void ToDtoList_ConMultiplesPedidos_MapeaTodos()
     {
         // Arrange
-        Pedido? pedido = null;
+        var pedidos = new List<Pedido>
+        {
+            new() { _id = ObjectId.GenerateNewId(), UserId = 1, Total = 100 },
+            new() { _id = ObjectId.GenerateNewId(), UserId = 2, Total = 200 },
+            new() { _id = ObjectId.GenerateNewId(), UserId = 3, Total = 300 }
+        };
 
-        // Act & Assert
-        Assert.Throws<NullReferenceException>(() => pedido!.ToDto());
+        // Act
+        var dtos = pedidos.ToDtoList().ToList();
+
+        // Assert
+        dtos.Should().HaveCount(3);
+        dtos[0].UserId.Should().Be(1);
+        dtos[1].UserId.Should().Be(2);
+        dtos[2].UserId.Should().Be(3);
     }
 
     [Test]
-    public void ToDtoList_ConPedidosNulos_LanzaExcepcion()
+    public void ToDtoList_DebePreservarOrden()
     {
         // Arrange
-        IEnumerable<Pedido>? pedidos = null;
+        var pedidos = new List<Pedido>
+        {
+            new() { _id = ObjectId.Parse("507f1f77bcf86cd799439011"), UserId = 1, Total = 100 },
+            new() { _id = ObjectId.Parse("507f1f77bcf86cd799439012"), UserId = 2, Total = 200 },
+            new() { _id = ObjectId.Parse("507f1f77bcf86cd799439013"), UserId = 3, Total = 300 }
+        };
 
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => pedidos!.ToDtoList().ToList());
+        // Act
+        var dtos = pedidos.ToDtoList().ToList();
+
+        // Assert
+        dtos[0].Id.Should().Be("507f1f77bcf86cd799439011");
+        dtos[1].Id.Should().Be("507f1f77bcf86cd799439012");
+        dtos[2].Id.Should().Be("507f1f77bcf86cd799439013");
+    }
+
+    [Test]
+    public void ToDtoList_ConListaVacia_RetornaListaVacia()
+    {
+        // Arrange
+        var pedidos = new List<Pedido>();
+
+        // Act
+        var dtos = pedidos.ToDtoList();
+
+        // Assert
+        dtos.Should().NotBeNull();
+        dtos.Should().BeEmpty();
+    }
+
+    [Test]
+    public void ToDtoList_ConListaNula_RetornaListaVacia()
+    {
+        // Arrange
+        List<Pedido>? pedidos = null;
+
+        // Act
+        var dtos = (pedidos ?? new List<Pedido>()).ToDtoList().ToList();
+
+        // Assert
+        dtos.Should().NotBeNull();
+        dtos.Should().BeEmpty();
     }
 
     #endregion

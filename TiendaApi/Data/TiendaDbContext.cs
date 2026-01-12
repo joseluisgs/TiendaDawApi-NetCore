@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using MongoDB.EntityFrameworkCore.Extensions;
 using TiendaApi.Models;
 
 namespace TiendaApi.Data;
 
 /// <summary>
-/// DbContext de Entity Framework Core para PostgreSQL.
-/// Gestiona Categorías, Productos y Users.
-/// Los Pedidos se almacenan en MongoDB (configuración separada).
+/// DbContext de Entity Framework Core.
+/// Gestiona Categorías, Productos y Users (PostgreSQL) y Pedidos (MongoDB).
 /// </summary>
 public class TiendaDbContext : DbContext
 {
@@ -17,12 +17,13 @@ public class TiendaDbContext : DbContext
     public DbSet<Categoria> Categorias { get; set; } = null!;
     public DbSet<Producto> Productos { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Pedido> Pedidos { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure Categoria entity
+        // Configure Categoria entity (PostgreSQL)
         modelBuilder.Entity<Categoria>(entity =>
         {
             entity.ToTable("categorias");
@@ -31,11 +32,10 @@ public class TiendaDbContext : DbContext
             entity.HasIndex(c => c.Nombre).IsUnique();
             entity.Property(c => c.IsDeleted).HasDefaultValue(false);
             
-            // Filtro de eliminación suave
             entity.HasQueryFilter(c => !c.IsDeleted);
         });
 
-        // Configure Producto entity
+        // Configure Producto entity (PostgreSQL)
         modelBuilder.Entity<Producto>(entity =>
         {
             entity.ToTable("productos");
@@ -46,7 +46,6 @@ public class TiendaDbContext : DbContext
             entity.Property(p => p.Stock).IsRequired();
             entity.Property(p => p.IsDeleted).HasDefaultValue(false);
             
-            // Relación con Categoria
             entity.HasOne(p => p.Categoria)
                 .WithMany(c => c.Productos)
                 .HasForeignKey(p => p.CategoriaId)
@@ -55,7 +54,7 @@ public class TiendaDbContext : DbContext
             entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
-        // Configure User entity
+        // Configure User entity (PostgreSQL)
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users");
@@ -72,34 +71,37 @@ public class TiendaDbContext : DbContext
             entity.HasQueryFilter(u => !u.IsDeleted);
         });
 
-        // Seed initial data
+        // Configure Pedido entity (MongoDB)
+        modelBuilder.Entity<Pedido>(entity =>
+        {
+            entity.ToCollection("pedidos");
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Estado).IsRequired().HasMaxLength(50);
+            entity.Property(p => p.Total).HasPrecision(10, 2);
+        });
+
         SeedData(modelBuilder);
     }
 
     private static void SeedData(ModelBuilder modelBuilder)
     {
-        // Seed users
         modelBuilder.Entity<User>().HasData(
-            // Admin user (password: Admin123!)
             new User
             {
                 Id = 1,
                 Username = "admin",
                 Email = "admin@tienda.com",
-                // BCrypt hash of "Admin123!" - in production use proper hashing
                 PasswordHash = "$2a$11$vHqmFyFyRqKtaVJEz0XqFeI/xlPNGOKJbBYGzN0PqnQZQqZm3LzYy",
                 Role = UserRoles.ADMIN,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            // Regular user (password: User123!)
             new User
             {
                 Id = 2,
                 Username = "userdaw",
                 Email = "userdaw@tienda.com",
-                // BCrypt hash of "User123!" with workFactor 11
                 PasswordHash = "$2a$11$y6x2PMrc.RgbGfXM.UVMReFNNQs6YnmsdAm2S3ieRo/FlWb86gLsi",
                 Role = UserRoles.USER,
                 IsDeleted = false,
@@ -108,7 +110,6 @@ public class TiendaDbContext : DbContext
             }
         );
 
-        // Seed categories
         modelBuilder.Entity<Categoria>().HasData(
             new Categoria
             {
@@ -136,7 +137,6 @@ public class TiendaDbContext : DbContext
             }
         );
 
-        // Seed products
         modelBuilder.Entity<Producto>().HasData(
             new Producto
             {

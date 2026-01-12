@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using Moq;
 using TiendaApi.Dtos.Pedidos;
 using TiendaApi.Errors;
@@ -58,10 +59,12 @@ public class PedidosServiceTests
     public async Task FindAllAsync_DebeRetornarTodosLosPedidos()
     {
         // Arrange
+        var pedidoId1 = ObjectId.GenerateNewId();
+        var pedidoId2 = ObjectId.GenerateNewId();
         var pedidos = new List<Pedido>
         {
-            new() { Id = "1", UserId = 1, Total = 100 },
-            new() { Id = "2", UserId = 2, Total = 200 }
+            new() { _id = pedidoId1, UserId = 1, Total = 100 },
+            new() { _id = pedidoId2, UserId = 2, Total = 200 }
         };
 
         _mockPedidosRepo.Setup(r => r.FindAllAsync())
@@ -80,21 +83,21 @@ public class PedidosServiceTests
     public async Task FindByIdAsync_ConIdExistente_DebeRetornarPedido()
     {
         // Arrange
-        var pedidoId = "123";
-        var pedido = new Pedido { Id = pedidoId, UserId = 1, Total = 100 };
+        var pedidoId = ObjectId.GenerateNewId();
+        var pedido = new Pedido { _id = pedidoId, UserId = 1, Total = 100 };
 
         _mockCacheService.Setup(c => c.GetAsync<PedidoDto>(It.IsAny<string>()))
             .ReturnsAsync((PedidoDto?)null);
-        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId.ToString()))
             .ReturnsAsync(pedido);
 
         // Act
-        var result = await _service.FindByIdAsync(pedidoId);
+        var result = await _service.FindByIdAsync(pedidoId.ToString());
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Id.Should().Be(pedidoId);
-        _mockPedidosRepo.Verify(r => r.FindByIdAsync(pedidoId), Times.Once);
+        result.Value.Id.Should().Be(pedidoId.ToString());
+        _mockPedidosRepo.Verify(r => r.FindByIdAsync(pedidoId.ToString()), Times.Once);
     }
 
     [Test]
@@ -232,9 +235,10 @@ public class PedidosServiceTests
             Stock = 10
         };
 
+        var savedPedidoId = ObjectId.GenerateNewId();
         var savedPedido = new Pedido
         {
-            Id = "new-pedido-id",
+            _id = savedPedidoId,
             UserId = userId,
             Items = new List<PedidoItem>
             {
@@ -263,7 +267,7 @@ public class PedidosServiceTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Id.Should().Be("new-pedido-id");
+        result.Value.Id.Should().Be(savedPedidoId.ToString());
         result.Value.Total.Should().Be(100);
         _mockProductoRepo.Verify(r => r.UpdateAsync(It.Is<Producto>(p => p.Stock == 8)), Times.Once);
         _mockPedidosRepo.Verify(r => r.SaveAsync(It.IsAny<Pedido>()), Times.Once);
@@ -289,7 +293,7 @@ public class PedidosServiceTests
     public async Task UpdateEstadoAsync_ConPedidoNoExistente_DebeRetornarErrorNoEncontrado()
     {
         // Arrange
-        var pedidoId = "999";
+        var pedidoId = ObjectId.GenerateNewId().ToString();
         var nuevoEstado = PedidoEstado.PROCESANDO;
 
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
@@ -307,11 +311,11 @@ public class PedidosServiceTests
     public async Task UpdateEstadoAsync_ConDatosValidos_DebeActualizarEstado()
     {
         // Arrange
-        var pedidoId = "123";
+        var pedidoId = ObjectId.GenerateNewId();
         var nuevoEstado = PedidoEstado.PROCESANDO;
         var pedido = new Pedido
         {
-            Id = pedidoId,
+            _id = pedidoId,
             UserId = 1,
             Total = 100,
             Estado = PedidoEstado.PENDIENTE
@@ -319,19 +323,19 @@ public class PedidosServiceTests
 
         var updatedPedido = new Pedido
         {
-            Id = pedidoId,
+            _id = pedidoId,
             UserId = 1,
             Total = 100,
             Estado = nuevoEstado
         };
 
-        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId.ToString()))
             .ReturnsAsync(pedido);
         _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(updatedPedido);
 
         // Act
-        var result = await _service.UpdateEstadoAsync(pedidoId, nuevoEstado);
+        var result = await _service.UpdateEstadoAsync(pedidoId.ToString(), nuevoEstado);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
