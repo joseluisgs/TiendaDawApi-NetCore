@@ -66,7 +66,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
-    { 
+    {
         Title = "TiendaApi - API REST Educativa",
         Version = "v1",
         Description = @"API REST educativa con dos enfoques de manejo de errores:
@@ -131,7 +131,7 @@ builder.Services.AddSwaggerGen(options =>
 // ============================================================================
 
 Log.Information("🗄️ Configurando base de datos PostgreSQL...");
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Host=localhost;Database=tienda;Username=admin;Password=admin123";
 
 Log.Debug("🔗 Cadena de conexión: {ConnectionString}", connectionString.Split(';')[0] + "...");
@@ -197,7 +197,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfile), typeof(PedidoProfile));
 // ============================================================================
 
 Log.Information("🔐 Configurando autenticación JWT...");
-var jwtKey = builder.Configuration["Jwt:Key"] 
+var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT Key no configurada");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "TiendaApi";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "TiendaApi";
@@ -365,7 +365,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<TiendaDbContext>();
-        
+
         Log.Information("📋 Verificando/creando esquema de base de datos...");
         context.Database.EnsureCreated();
         Log.Information("✅ Base de datos inicializada correctamente");
@@ -384,24 +384,24 @@ using (var scope = app.Services.CreateScope())
 var urls = builder.Configuration["ASPNETCORE_URLS"]?.Split(';') ?? new[] { "http://localhost:5000" };
 var port = urls.FirstOrDefault()?.Split(':').LastOrDefault() ?? "5000";
 
-Log.Information("╔═══════════════════════════════════════════════════════════════════");
-Log.Information("║              🏬 TiendaApi - API REST Educativa                    ║");
-Log.Information("╠═══════════════════════════════════════════════════════════════════");
-Log.Information("║  📖 Documentación Swagger:  http://localhost:{Port}/              ║", port);
-Log.Information("║  🔍 GraphiQL UI:             http://localhost:{Port}/graphiql     ║", port);
-Log.Information("║  🔌 WebSocket Productos:    ws://localhost:{Port}/ws/v1/productos ║", port);
-Log.Information("║  🔌 WebSocket Pedidos:      ws://localhost:{Port}/ws/v1/pedidos   ║", port);
-Log.Information("╠═══════════════════════════════════════════════════════════════════");
-Log.Information("║  🔐 CREDENCIALES DE PRUEBA:                                       ║");
-Log.Information("║     Admin: admin@tienda.com / Admin123                            ║");
-Log.Information("║     User:  user@tienda.com / User123                              ║");
-Log.Information("╠═══════════════════════════════════════════════════════════════════");
-Log.Information("║  📚 ENDPOINTS:                                                    ║");
-Log.Information("║     🔴 Categorías (Excepciones):  GET/POST/PUT/DELETE /api/categorias    ║");
-Log.Information("║     🟢 Productos (Result Pattern): GET/POST/PUT/DELETE /api/productos   ║");
-Log.Information("║     📧 Pedidos:                  GET/POST /api/pedidos                    ║");
-Log.Information("║     🔐 Auth:                     POST /v1/auth/signup/signin              ║");
-Log.Information("╚═══════════════════════════════════════════════════════════════════");
+Log.Information("=================================================================");
+Log.Information("TiendaApi - API REST Educativa");
+Log.Information("=================================================================");
+Log.Information("Documentacion Swagger:  http://localhost:{Port}/", port);
+Log.Information("GraphiQL UI:            http://localhost:{Port}/graphiql", port);
+Log.Information("WebSocket Productos:    ws://localhost:{Port}/ws/v1/productos", port);
+Log.Information("WebSocket Pedidos:      ws://localhost:{Port}/ws/v1/pedidos", port);
+Log.Information("=================================================================");
+Log.Information("CREDENCIALES DE PRUEBA:");
+Log.Information("  Admin: admin@tienda.com / Admin123");
+Log.Information("  User:  user@tienda.com / User123");
+Log.Information("=================================================================");
+Log.Information("ENDPOINTS:");
+Log.Information("  Categorias: GET/POST/PUT/DELETE /api/categorias");
+Log.Information("  Productos: GET/POST/PUT/DELETE /api/productos");
+Log.Information("  Pedidos: GET/POST /api/pedidos");
+Log.Information("  Auth: POST /v1/auth/signup/signin");
+Log.Information("=================================================================");
 
 try
 {
