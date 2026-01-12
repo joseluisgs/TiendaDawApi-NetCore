@@ -37,7 +37,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis for caching (optional but included for completeness)
+  # Redis for caching
   redis:
     image: redis:7-alpine
     container_name: tienda-redis
@@ -52,27 +52,28 @@ services:
       retries: 5
 
   # TiendaApi - .NET Web API
-  # Uncomment this section when you want to run the API in Docker
-  # For development, run locally with: dotnet run
-  # api:
-  #   build:
-  #     context: ./TiendaApi
-  #     dockerfile: Dockerfile
-  #   container_name: tienda-api
-  #   ports:
-  #     - "5000:8080"
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ConnectionStrings__DefaultConnection=Host=postgres;Database=tienda;Username=admin;Password=admin123
-  #     - ConnectionStrings__MongoDB=mongodb://admin:admin123@mongodb:27017/tienda?authSource=admin
-  #     - ConnectionStrings__Redis=redis:6379
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     mongodb:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
+  api:
+    build:
+      context: ./TiendaApi.Apis
+      dockerfile: Dockerfile
+    container_name: tienda-api
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=tienda;Username=admin;Password=admin123
+      - ConnectionStrings__MongoDB=mongodb://admin:admin123@mongodb:27017/tienda?authSource=admin
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Key=SuperSecretKeyForJWTAuthenticationThatShouldBeLongEnough
+      - Jwt__Issuer=TiendaApi
+      - Jwt__Audience=TiendaApi
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres-data:
