@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
@@ -16,7 +17,7 @@ namespace TiendaApi.Apis.Services.Pedidos;
 
 /// <summary>
 /// Servicio de pedidos usando Patrón Result.
-/// Maneja la lógica de negocio: verificación de stock, reservas, almacenamiento MongoDB, notificaciones.
+/// Implementa el enfoque híbrido: Serializable + Retry para garantizar integridad en operaciones críticas.
 /// </summary>
 public class PedidosService(
     IPedidosRepository pedidosRepository,
@@ -29,6 +30,8 @@ public class PedidosService(
     IValidator<PedidoRequestDto> pedidoValidator,
     IValidator<PedidoItemRequestDto> pedidoItemValidator
 ) : IPedidosService {
+
+    private const int MaxRetries = 3;
 
     /// <summary>
     /// Obtiene todos los pedidos.
@@ -100,8 +103,10 @@ public class PedidosService(
     }
 
     /// <summary>
-    /// Crea un nuevo pedido con verificación y reserva de stock.
-    /// Returns: Result.Success(PedidoDto) | Result.Failure(Validation/NotFound/BusinessRule/Internal)
+    /// Crea un nuevo pedido con verificación de stock usando enfoque híbrido: Serializable + Retry.
+    /// Este método implementa control de concurrencia optimista con reintentos automáticos
+    /// en caso de errores de serialización de PostgreSQL (código 40001).
+    /// Returns: Result.Success(PedidoDto) | Result.Failure(Validation/NotFound/BusinessRule/Conflict/Internal)
     /// </summary>
     public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto) {
         logger.LogInformation("Creando pedido para usuario: {UserId} con {ItemCount} items", userId, dto.Items.Count);
@@ -111,153 +116,177 @@ public class PedidosService(
             return Result.Failure<PedidoDto, DomainError>(validationResult.Error);
         }
         
-        var pedidoItems = new List<PedidoItem>();
-        var productosDecrementados = new List<(long ProductoId, int Cantidad)>();
-        decimal total = 0;
-        const int MaxRetries = 3;
-        
-        foreach (var itemDto in dto.Items) {
-            var itemValidation = await ValidatePedidoItemAsync(itemDto);
-            if (itemValidation.IsFailure) {
-                return Result.Failure<PedidoDto, DomainError>(itemValidation.Error);
+        for (int attempt = 1; attempt <= MaxRetries; attempt++)
+        {
+            try
+            {
+                return await CreateWithSerializableTransactionAsync(userId, dto);
             }
-            
-            var producto = await productoRepository.FindByIdAsync(itemDto.ProductoId);
-            
-            if (producto == null) {
-                await CompensarStockAsync(productosDecrementados);
-                return Result.Failure<PedidoDto, DomainError>(
-                    DomainError.NotFound($"Producto con ID {itemDto.ProductoId} no encontrado")
-                );
+            catch (SerializationFailureException)
+            {
+                if (attempt == MaxRetries)
+                {
+                    logger.LogWarning(
+                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}", 
+                        userId);
+                    return Result.Failure<PedidoDto, DomainError>(
+                        DomainError.Conflict(
+                            "El producto fue adquirido por otro usuario. Por favor, reintente la operacion."));
+                }
+                
+                var delayMs = 50 * attempt;
+                logger.LogDebug(
+                    "Reintento {Attempt}/{MaxRetries} tras error de serializacion para usuario {UserId}, delay: {Delay}ms",
+                    attempt, MaxRetries, userId, delayMs);
+                
+                await Task.Delay(delayMs);
             }
-            
-            if (producto.Stock < itemDto.Cantidad) {
-                await CompensarStockAsync(productosDecrementados);
-                return Result.Failure<PedidoDto, DomainError>(
-                    DomainError.BusinessRule($"Stock insuficiente para el producto {producto.Nombre}. Disponible: {producto.Stock}, Solicitado: {itemDto.Cantidad}")
-                );
+            catch (NpgsqlException ex) when (IsSerializationFailureMessage(ex.Message))
+            {
+                if (attempt == MaxRetries)
+                {
+                    logger.LogWarning(
+                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}", 
+                        userId);
+                    return Result.Failure<PedidoDto, DomainError>(
+                        DomainError.Conflict(
+                            "El producto fue adquirido por otro usuario. Por favor, reintente la operacion."));
+                }
+                
+                var delayMs = 50 * attempt;
+                logger.LogDebug(
+                    "Reintento {Attempt}/{MaxRetries} tras error de serializacion para usuario {UserId}, delay: {Delay}ms",
+                    attempt, MaxRetries, userId, delayMs);
+                
+                await Task.Delay(delayMs);
             }
-            
-            var subtotal = producto.Precio * itemDto.Cantidad;
-            total += subtotal;
-            
-            var item = new PedidoItem {
-                ProductoId = producto.Id,
-                NombreProducto = producto.Nombre,
-                Cantidad = itemDto.Cantidad,
-                Precio = producto.Precio,
-                Subtotal = subtotal
-            };
-            pedidoItems.Add(item);
-            
-            var stockDecremented = await DecrementStockWithRetryAsync(producto.Id, itemDto.Cantidad, producto.RowVersion, MaxRetries);
-            if (!stockDecremented) {
-                await CompensarStockAsync(productosDecrementados);
-                logger.LogError("No se pudo decrementar stock para producto {ProductoId} tras {MaxRetries} reintentos", producto.Id, MaxRetries);
-                return Result.Failure<PedidoDto, DomainError>(
-                    DomainError.Conflict($"No se pudo reservar stock para el producto {producto.Nombre}. Por favor, intente nuevamente.")
-                );
-            }
-            
-            productosDecrementados.Add((producto.Id, itemDto.Cantidad));
-            logger.LogDebug("Stock reservado para producto: {ProductoId}, cantidad: {Cantidad}", producto.Id, itemDto.Cantidad);
         }
         
-        var pedido = new Pedido {
-            UserId = userId,
-            Items = pedidoItems,
-            Total = total,
-            Estado = PedidoEstado.PENDIENTE,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        return Result.Failure<PedidoDto, DomainError>(
+            DomainError.Internal("Error inesperado al procesar el pedido"));
+    }
+
+    /// <summary>
+    /// Crea el pedido dentro de una transacción Serializable.
+    /// Si ocurre un error de serialización (40001), lanza SerializationFailureException.
+    /// </summary>
+    private async Task<Result<PedidoDto, DomainError>> CreateWithSerializableTransactionAsync(
+        long userId, 
+        PedidoRequestDto dto)
+    {
+        await using var transaction = await productoRepository.BeginTransactionAsync(
+            System.Data.IsolationLevel.Serializable);
         
-        try {
+        try
+        {
+            var pedidoItems = new List<PedidoItem>();
+            decimal total = 0;
+            
+            foreach (var itemDto in dto.Items)
+            {
+                var itemValidation = await ValidatePedidoItemAsync(itemDto);
+                if (itemValidation.IsFailure)
+                {
+                    await transaction.RollbackAsync();
+                    return Result.Failure<PedidoDto, DomainError>(itemValidation.Error);
+                }
+                
+                var producto = await productoRepository.FindByIdAsync(itemDto.ProductoId);
+                
+                if (producto == null)
+                {
+                    await transaction.RollbackAsync();
+                    return Result.Failure<PedidoDto, DomainError>(
+                        DomainError.NotFound($"Producto con ID {itemDto.ProductoId} no encontrado"));
+                }
+                
+                if (producto.Stock < itemDto.Cantidad)
+                {
+                    await transaction.RollbackAsync();
+                    return Result.Failure<PedidoDto, DomainError>(
+                        DomainError.BusinessRule(
+                            $"Stock insuficiente para el producto {producto.Nombre}. Disponible: {producto.Stock}, Solicitado: {itemDto.Cantidad}"));
+                }
+                
+                producto.Stock -= itemDto.Cantidad;
+                producto.UpdatedAt = DateTime.UtcNow;
+                
+                await productoRepository.UpdateAsync(producto);
+                
+                var subtotal = producto.Precio * itemDto.Cantidad;
+                total += subtotal;
+                
+                pedidoItems.Add(new PedidoItem {
+                    ProductoId = producto.Id,
+                    NombreProducto = producto.Nombre,
+                    Cantidad = itemDto.Cantidad,
+                    Precio = producto.Precio,
+                    Subtotal = subtotal
+                });
+                
+                logger.LogDebug("Stock decrementado para producto: {ProductoId}, cantidad: {Cantidad}", 
+                    producto.Id, itemDto.Cantidad);
+            }
+            
+            var pedido = new Pedido {
+                UserId = userId,
+                Items = pedidoItems,
+                Total = total,
+                Estado = PedidoEstado.PENDIENTE,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            
             var savedPedido = await pedidosRepository.SaveAsync(pedido);
-            logger.LogInformation("Pedido creado: {Id} para usuario: {UserId}, total: {Total}", savedPedido.Id, userId, total);
+            
+            await transaction.CommitAsync();
+            
+            logger.LogInformation("Pedido creado: {Id} para usuario: {UserId}, total: {Total}", 
+                savedPedido.Id, userId, total);
             
             var resultDto = savedPedido.ToDto();
             
-            _ = Task.Run(async () =>
-            {
-                try {
-                    await cacheService.RemoveAsync($"pedidos:user:{userId}");
-                    logger.LogDebug("Caché invalidada para pedidos del usuario: {UserId}", userId);
-                }
-                catch (Exception ex) {
-                    logger.LogWarning(ex, "Error al invalidar caché tras crear pedido");
-                }
-            });
-            
-            _ = Task.Run(async () =>
-            {
-                try {
-                    var cacheTTL = TimeSpan.FromMinutes(5);
-                    await cacheService.SetAsync($"pedidos:{savedPedido.Id}", resultDto, cacheTTL);
-                    logger.LogDebug("Pedido cacheado: {Id}", savedPedido.Id);
-                }
-                catch (Exception ex) {
-                    logger.LogWarning(ex, "Error al cachear nuevo pedido");
-                }
-            });
-            
-            _ = Task.Run(async () =>
-            {
-                try {
-                    var adminEmail = configuration["Smtp:AdminEmail"];
-                    if (!string.IsNullOrEmpty(adminEmail)) {
-                        var itemsHtml = string.Join("", pedidoItems.Select(i => 
-                            $"<li>{i.NombreProducto} - Cantidad: {i.Cantidad} - Precio: ${i.Precio:F2} - Subtotal: ${i.Subtotal:F2}</li>"));
-                        
-                        var emailMessage = new EmailMessage {
-                            To = adminEmail,
-                            Subject = $"Nuevo Pedido #{savedPedido.Id}",
-                            Body = $@"
-                                <h2>Nuevo Pedido Recibido</h2>
-                                <p><strong>ID Pedido:</strong> {savedPedido.Id}</p>
-                                <p><strong>Usuario ID:</strong> {userId}</p>
-                                <p><strong>Estado:</strong> {savedPedido.Estado}</p>
-                                <p><strong>Total:</strong> ${total:F2}</p>
-                                <h3>Items:</h3>
-                                <ul>{itemsHtml}</ul>
-                                <p><strong>Fecha:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
-                            ",
-                            IsHtml = true
-                        };
-                        await emailService.EnqueueEmailAsync(emailMessage);
-                        logger.LogDebug("Email de notificación encolado tras crear pedido");
-                    }
-                }
-                catch (Exception ex) {
-                    logger.LogWarning(ex, "Error al encolar email de notificación tras crear pedido");
-                }
-            });
-            
-            if (!string.IsNullOrEmpty(savedPedido.Id)) {
-                var pedidoId = savedPedido.Id;
-                _ = Task.Run(async () => await NotificarWebSocketPedidoCreado(pedidoId, userId, resultDto));
-            }
+            _ = Task.Run(async () => await NotificarPedidoCreadoAsync(userId, resultDto, pedidoItems, total));
             
             return Result.Success<PedidoDto, DomainError>(resultDto);
         }
-        catch (Exception ex) {
-            logger.LogError(ex, "Error al guardar pedido en MongoDB, compensando stock");
-            
-            _ = Task.Run(async () =>
-            {
-                try {
-                    await CompensarStockAsync(productosDecrementados);
-                    logger.LogInformation("Stock restaurado tras error al guardar pedido");
-                }
-                catch (Exception compensationEx) {
-                    logger.LogError(compensationEx, "CRÍTICO: Error al restaurar stock tras error al guardar pedido");
-                }
-            });
-            
-            return Result.Failure<PedidoDto, DomainError>(
-                DomainError.Internal("Error al crear el pedido")
-            );
+        catch (DbUpdateException ex) when (IsSerializationFailure(ex))
+        {
+            await transaction.RollbackAsync();
+            logger.LogWarning(ex, "Error de serializacion PostgreSQL (40001) al crear pedido para usuario {UserId}", userId);
+            throw new SerializationFailureException("Conflicto de serializacion, reintentar", ex);
         }
+        catch (NpgsqlException ex) when (IsSerializationFailureMessage(ex.Message))
+        {
+            await transaction.RollbackAsync();
+            logger.LogWarning(ex, "Error de serializacion PostgreSQL (40001) al crear pedido para usuario {UserId}", userId);
+            throw new SerializationFailureException("Conflicto de serializacion, reintentar", ex);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            logger.LogError(ex, "Error al crear pedido para usuario {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Determina si la excepción es un error de serialización de PostgreSQL (código 40001) desde DbUpdateException.
+    /// </summary>
+    private bool IsSerializationFailure(DbUpdateException ex)
+    {
+        return ex.InnerException is NpgsqlException npgsqlEx &&
+               IsSerializationFailureMessage(npgsqlEx.Message);
+    }
+
+    /// <summary>
+    /// Determina si el mensaje de excepción indica un error de serialización de PostgreSQL (código 40001).
+    /// </summary>
+    private bool IsSerializationFailureMessage(string message)
+    {
+        return message.Contains("40001") ||
+               message.Contains("serialization") ||
+               message.Contains("serializacion");
     }
 
     /// <summary>
@@ -335,16 +364,65 @@ public class PedidosService(
     }
 
     /// <summary>
-    /// Notifica vía WebSocket la creación de un pedido.
-    /// Efecto secundario que no debe fallar la operación principal.
+    /// Notifica la creación del pedido vía WebSocket, email y caché.
+    /// Efectos secundarios que no deben fallar la operación principal.
     /// </summary>
-    private async Task NotificarWebSocketPedidoCreado(string pedidoId, long userId, PedidoDto pedido) {
+    private async Task NotificarPedidoCreadoAsync(long userId, PedidoDto resultDto, List<PedidoItem> pedidoItems, decimal total)
+    {
         try {
-            await webSocketHandler.NotifyPedidoCreatedAsync(pedidoId, userId, pedido);
-            logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", pedidoId);
+            await cacheService.RemoveAsync($"pedidos:user:{userId}");
+            logger.LogDebug("Caché invalidada para pedidos del usuario: {UserId}", userId);
         }
         catch (Exception ex) {
-            logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", pedidoId);
+            logger.LogWarning(ex, "Error al invalidar caché tras crear pedido");
+        }
+        
+        try {
+            var cacheTTL = TimeSpan.FromMinutes(5);
+            await cacheService.SetAsync($"pedidos:{resultDto.Id}", resultDto, cacheTTL);
+            logger.LogDebug("Pedido cacheado: {Id}", resultDto.Id);
+        }
+        catch (Exception ex) {
+            logger.LogWarning(ex, "Error al cachear nuevo pedido");
+        }
+        
+        try {
+            var adminEmail = configuration["Smtp:AdminEmail"];
+            if (!string.IsNullOrEmpty(adminEmail)) {
+                var itemsHtml = string.Join("", pedidoItems.Select(i => 
+                    $"<li>{i.NombreProducto} - Cantidad: {i.Cantidad} - Precio: ${i.Precio:F2} - Subtotal: ${i.Subtotal:F2}</li>"));
+                
+                var emailMessage = new EmailMessage {
+                    To = adminEmail,
+                    Subject = $"Nuevo Pedido #{resultDto.Id}",
+                    Body = $@"
+                        <h2>Nuevo Pedido Recibido</h2>
+                        <p><strong>ID Pedido:</strong> {resultDto.Id}</p>
+                        <p><strong>Usuario ID:</strong> {userId}</p>
+                        <p><strong>Estado:</strong> {resultDto.Estado}</p>
+                        <p><strong>Total:</strong> ${total:F2}</p>
+                        <h3>Items:</h3>
+                        <ul>{itemsHtml}</ul>
+                        <p><strong>Fecha:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+                    ",
+                    IsHtml = true
+                };
+                await emailService.EnqueueEmailAsync(emailMessage);
+                logger.LogDebug("Email de notificación encolado tras crear pedido");
+            }
+        }
+        catch (Exception ex) {
+            logger.LogWarning(ex, "Error al encolar email de notificación tras crear pedido");
+        }
+        
+        if (!string.IsNullOrEmpty(resultDto.Id)) {
+            try {
+                await webSocketHandler.NotifyPedidoCreatedAsync(resultDto.Id, userId, resultDto);
+                logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", resultDto.Id);
+            }
+            catch (Exception ex) {
+                logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", resultDto.Id);
+            }
         }
     }
 
@@ -396,80 +474,5 @@ public class PedidosService(
         }
         
         return UnitResult.Success<DomainError>();
-    }
-
-    /// <summary>
-    /// Decrementa el stock de un producto con reintentos en caso de conflicto de concurrencia.
-    /// Implementa control de concurrencia optimista con exponential backoff.
-    /// </summary>
-    private async Task<bool> DecrementStockWithRetryAsync(
-        long productoId, 
-        int cantidad, 
-        byte[] rowVersion, 
-        int maxRetries)
-    {
-        for (int attempt = 1; attempt <= maxRetries; attempt++)
-        {
-            try
-            {
-                return await productoRepository.DecrementStockAsync(productoId, cantidad, rowVersion);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (attempt == maxRetries)
-                {
-                    logger.LogWarning(
-                        "Maximos reintentos alcanzados para decrementar stock del producto {ProductoId}", 
-                        productoId);
-                    return false;
-                }
-                
-                var delayMs = 100 * attempt;
-                logger.LogDebug(
-                    "Reintento {Attempt}/{MaxRetries} para decrementar stock del producto {ProductoId} tras {Delay}ms",
-                    attempt, maxRetries, productoId, delayMs);
-                
-                await Task.Delay(delayMs);
-                
-                var productoActualizado = await productoRepository.FindByIdAsync(productoId);
-                if (productoActualizado != null)
-                {
-                    rowVersion = productoActualizado.RowVersion;
-                }
-            }
-        }
-        
-        return false;
-    }
-
-    /// <summary>
-    /// Compensa el stock restaurando las cantidades de productos decrementados.
-    /// Se usa en caso de fallo durante la creacion del pedido.
-    /// </summary>
-    private async Task CompensarStockAsync(IEnumerable<(long ProductoId, int Cantidad)> productos)
-    {
-        foreach (var (productoId, cantidad) in productos)
-        {
-            try
-            {
-                var producto = await productoRepository.FindByIdAsync(productoId);
-                if (producto != null)
-                {
-                    producto.Stock += cantidad;
-                    producto.UpdatedAt = DateTime.UtcNow;
-                    await productoRepository.UpdateAsync(producto);
-                    logger.LogInformation(
-                        "Stock compensado para producto: {ProductoId}, cantidad restaurada: {Cantidad}",
-                        productoId, cantidad);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(
-                    ex, 
-                    "Error al compensar stock para producto {ProductoId}", 
-                    productoId);
-            }
-        }
     }
 }

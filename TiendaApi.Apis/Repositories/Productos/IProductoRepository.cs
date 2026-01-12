@@ -1,3 +1,4 @@
+using System.Data;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Productos;
@@ -64,4 +65,12 @@ public interface IProductoRepository
     /// <param name="expectedRowVersion">Versión esperada del registro (para control de concurrencia).</param>
     /// <returns>True si el stock fue decrementado, False si el producto no existe.</returns>
     Task<bool> DecrementStockAsync(long productoId, int cantidad, byte[] expectedRowVersion);
+
+    /// <summary>
+    /// Inicia una transacción con el nivel de aislamiento especificado.
+    /// Usado para el enfoque híbrido Serializable + Retry.
+    /// </summary>
+    /// <param name="isolationLevel">Nivel de aislamiento de la transacción.</param>
+    /// <returns>La transacción iniciada.</returns>
+    Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel);
 }

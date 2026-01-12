@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Apis.Data;
 using TiendaApi.Apis.Models;
@@ -147,5 +148,17 @@ public class ProductoRepository(
             logger.LogWarning(ex, "Conflicto de concurrencia al decrementar stock para producto: {ProductoId}", productoId);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Inicia una transacción con el nivel de aislamiento especificado.
+    /// Usado para el enfoque híbrido Serializable + Retry.
+    /// </summary>
+    /// <param name="isolationLevel">Nivel de aislamiento de la transacción.</param>
+    /// <returns>La transacción iniciada.</returns>
+    public async Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel) {
+        var transaction = await context.Database.BeginTransactionAsync(isolationLevel);
+        logger.LogDebug("Transacción iniciada con nivel de aislamiento: {IsolationLevel}", isolationLevel);
+        return transaction;
     }
 }

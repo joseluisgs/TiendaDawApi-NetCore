@@ -595,6 +595,220 @@ private async Task<bool> DecrementStockWithRetryAsync(
 }
 ```
 
+### 7.5 Enfoque Híbrido: Serializable + Retry para Operaciones Críticas
+
+El enfoque híbrido combina lo mejor de ambos mundos: usa **Serializable** para operaciones críticas de muy corta duración (como decrementar stock) y maneja errores de serialización con **retry automático**.
+
+#### 7.5.1 ¿Por qué híbrido?
+
+```mermaid
+flowchart TB
+    subgraph "Problema Real"
+        A["Compra en e-commerce"] --> B{Conflicto?}
+        B -->|99% del tiempo: No| C["No hay conflicto<br/>Serializable succeeds"]
+        B -->|1% del tiempo: Sí| D["Error 40001<br/>Serialization failure"]
+        D --> E{Retry posible?}
+        E -->|Sí: stock aún disponible| F["Retry succeed<br/>Usuario compra"]
+        E -->|No: stock agotado| G["Error claro<br/>'Producto no disponible'"]
+    end
+    
+    subgraph "Lo que gana el usuario"
+        C --> H["Transacción rápida<br/>Sin locks prolongados"]
+        F --> H
+        G --> I["Mensaje claro<br/>Sin confusión"]
+    end
+```
+
+**El problema con purista Optimista:**
+```csharp
+// En un escenario real, hay una race condition:
+// Usuario A: ve stock=1
+// Usuario B: ve stock=1
+// Ambos intentan comprar
+// Optimista: uno falla y debe reintentar
+// Resultado: mala experiencia de usuario
+```
+
+**El problema con purista Serializable:**
+```csharp
+// En alto volumen, los locks bloquean demasiado
+// Y puede haber deadlocks
+// Error 40001 es difícil de manejar elegantemente
+```
+
+#### 7.5.2 La solución híbrida
+
+```csharp
+public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto)
+{
+    // Intentar con retry en caso de conflicto de serialización
+    for (int attempt = 1; attempt <= MaxRetries; attempt++)
+    {
+        try
+        {
+            return await CreateWithSerializableTransactionAsync(userId, dto);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("40001") == true)
+        {
+            if (attempt == MaxRetries)
+            {
+                logger.LogWarning("Maximos reintentos alcanzados por conflicto de serializacion");
+                return Result.Failure<PedidoDto, DomainError>(
+                    DomainError.Conflict("El producto fue adquirido por otro usuario. Por favor, reintente."));
+            }
+            
+            await Task.Delay(50 * attempt); // Backoff curto
+            logger.LogDebug("Retry {Attempt}/{MaxRetries} tras error de serializacion", attempt, MaxRetries);
+        }
+    }
+    
+    return Result.Failure<PedidoDto, DomainError>(
+        DomainError.Internal("Error inesperado al procesar el pedido"));
+}
+
+private async Task<Result<PedidoDto, DomainError>> CreateWithSerializableTransactionAsync(
+    long userId, 
+    PedidoRequestDto dto)
+{
+    await using var transaction = await context.Database
+        .BeginTransactionAsync(IsolationLevel.Serializable);
+    
+    try
+    {
+        var pedidoItems = new List<PedidoItem>();
+        decimal total = 0;
+        
+        foreach (var item in dto.Items)
+        {
+            var producto = await context.Productos
+                .FirstOrDefaultAsync(p => p.Id == item.ProductoId);
+            
+            if (producto == null)
+            {
+                await transaction.RollbackAsync();
+                return Result.Failure<PedidoDto, DomainError>(
+                    DomainError.NotFound($"Producto {item.ProductoId} no encontrado"));
+            }
+            
+            if (producto.Stock < item.Cantidad)
+            {
+                await transaction.RollbackAsync();
+                return Result.Failure<PedidoDto, DomainError>(
+                    DomainError.BusinessRule($"Stock insuficiente para {producto.Nombre}"));
+            }
+            
+            producto.Stock -= item.Cantidad;
+            producto.UpdatedAt = DateTime.UtcNow;
+            
+            pedidoItems.Add(new PedidoItem {
+                ProductoId = producto.Id,
+                NombreProducto = producto.Nombre,
+                Cantidad = item.Cantidad,
+                Precio = producto.Precio,
+                Subtotal = producto.Precio * item.Cantidad
+            });
+            
+            total += producto.Precio * item.Cantidad;
+        }
+        
+        var pedido = new Pedido {
+            UserId = userId,
+            Items = pedidoItems,
+            Total = total,
+            Estado = PedidoEstado.PENDIENTE,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        
+        pedidosRepository.Add(pedido);
+        
+        await transaction.CommitAsync();
+        
+        return Result.Success<PedidoDto, DomainError>(pedido.ToDto());
+    }
+    catch (Exception ex)
+    {
+        await transaction.RollbackAsync();
+        throw;
+    }
+}
+```
+
+#### 7.5.3 ¿Cuándo usar el enfoque híbrido?
+
+```mermaid
+flowchart TD
+    A["¿Tu escenario?"] --> B{Transacción muy corta<br/>y crítica?}
+    B -->|Sí| C{¿Perder venta = fatal?}
+    B -->|No| D["Usa RowVersion<br/>más simple"]
+    
+    C -->|Sí: e-commerce, banking| E["Usa Híbrido<br/>Serializable + Retry"]
+    C -->|No: preferencias, likes| F["Usa RowVersion<br/>con retry"]
+    
+    E --> G{¿Alto volumen<br/>mismo recurso?}
+    G -->|Sí| H["Mantén reintentos<br/>mínimos (1-2)"]
+    G -->|No| I["Retry estándar<br/>(3 reintentos)"]
+```
+
+| Escenario | Recomendado | Razón |
+|-----------|-------------|-------|
+| E-commerce con inventario limitado | **Híbrido** | Integridad absoluta, transacción corta |
+| Sistema de reservas | **Híbrido** | No puedes reservar dos veces el mismo slot |
+| Banking/transferencias | **Híbrido** | Errores de serialización = rollbacks seguros |
+| Feed de actividad | RowVersion | Perder un "like" no es crítico |
+| Contador de visitas | RowVersion | Exactitud eventual aceptable |
+| Carrito de compras (sesión larga) | RowVersion | Tiempo para reintentar |
+
+#### 7.5.4 Pros y Contras del Híbrido
+
+| Aspecto | Valor |
+|---------|-------|
+| **✅ Integridad** | Garantizada por Serializable para operaciones críticas |
+| **✅ UX** | Reintentos transparentes para el 99% de casos |
+| **✅ Simplicidad** | Backend simple, el retry es invisible al usuario |
+| **✅ Escalabilidad** | Solo hay lock en la fila por milisegundos |
+| **❌ Complejidad** | Más complejo que usar solo uno |
+| **❌ Error handling** | Necesita manejar error 40001 de PostgreSQL |
+
+#### 7.5.5 Comparativa Final
+
+```mermaid
+graph LR
+    subgraph "RowVersion Puro"
+        A["read stock"] --> B{stock >= cantidad?}
+        B -->|Sí| C["update stock"]
+        C --> D{"conflicto?"}
+        D -->|Sí| E["retry o error"]
+        D -->|No| F["continuar"]
+    end
+    
+    subgraph "Serializable Puro"
+        G["begin serializable"] --> H["read for update"]
+        H --> I{"serialization failure?"}
+        I -->|Sí| J["error hard"]
+        I -->|No| K["update stock"]
+        K --> L["commit"]
+    end
+    
+    subgraph "Híbrido (Recomendado)"
+        M["begin serializable"] --> N["read for update"]
+        N --> O{"40001 error?"}
+        O -->|Sí| P{"retry < max?"}
+        P -->|Sí| Q["delay + retry"]
+        P -->|No| R["error claro"]
+        O -->|No| S["update + commit"]
+    end
+    
+    style M fill:#90EE90
+    style N fill:#90EE90
+    style O fill:#FFD700
+    style P fill:#FFD700
+    style Q fill:#90EE90
+    style S fill:#90EE90
+```
+
+---
+
 ### 7.6 Manejo de Errores de Concurrencia en GlobalExceptionHandler
 
 ```csharp
@@ -613,6 +827,34 @@ catch (DbUpdateConcurrencyException ex)
 }
 ```
 
+#### 7.6.1 Manejo Específico del Error 40001 de PostgreSQL
+
+Cuando usas Serializable, PostgreSQL puede lanzar el error `40001 - serialization_failure`. Este error debe manejarse específicamente:
+
+```csharp
+catch (DbUpdateException ex) when (
+    ex.InnerException is NpgsqlException npgsqlEx && 
+    npgsqlEx.Message.Contains("40001"))
+{
+    logger.LogWarning(ex, 
+        "Error de serializacion PostgreSQL. Usuario: {UserId}. Reintento: {Attempt}", 
+        userId, attempt);
+    
+    // El caller decide si reintentar
+    throw new SerializationFailureException("Conflicto de serializacion, reintentar", ex);
+}
+
+public class SerializationFailureException : Exception
+{
+    public SerializationFailureException(string message, Exception inner) : base(message, inner) { }
+}
+```
+
+**Identificadores del error 40001:**
+- `NpgsqlException.Message.Contains("40001")`
+- `NpgsqlException.Message.Contains("serialization")`
+- PostgreSQL state: `40001`
+
 ---
 
 ## 8. Referencia Rapida
@@ -624,3 +866,5 @@ catch (DbUpdateConcurrencyException ex)
 | Get DB values | `await entry.GetDatabaseValuesAsync()` |
 | Refresh entity | `await entry.ReloadAsync()` |
 | Serializable | `BeginTransactionAsync(IsolationLevel.Serializable)` |
+| Serializable + Retry | Ver sección 7.5 - Enfoque Híbrido |
+| Error 40001 | `ex.InnerException.Message.Contains("40001")` |
