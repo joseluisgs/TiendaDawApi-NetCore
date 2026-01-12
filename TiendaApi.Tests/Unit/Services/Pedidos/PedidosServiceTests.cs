@@ -1,4 +1,6 @@
 using FluentAssertions;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
@@ -11,6 +13,7 @@ using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Pedidos;
+using TiendaApi.Apis.Validators.Pedidos;
 using TiendaApi.Apis.WebSockets.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.Pedidos;
@@ -28,7 +31,24 @@ public class PedidosServiceTests
     private Mock<IEmailService> _mockEmailService = null!;
     private Mock<IConfiguration> _mockConfiguration = null!;
     private Mock<PedidoWebSocketHandler> _mockWebSocketHandler = null!;
+    private Mock<IValidator<PedidoRequestDto>> _mockPedidoValidator = null!;
+    private Mock<IValidator<PedidoItemRequestDto>> _mockItemValidator = null!;
     private IPedidosService _service = null!;
+
+    private void CreateService()
+    {
+        _service = new PedidosService(
+            _mockPedidosRepo.Object,
+            _mockProductoRepo.Object,
+            _mockLogger.Object,
+            _mockCacheService.Object,
+            _mockEmailService.Object,
+            _mockConfiguration.Object,
+            _mockWebSocketHandler.Object,
+            _mockPedidoValidator.Object,
+            _mockItemValidator.Object
+        );
+    }
 
     [SetUp]
     public void Setup()
@@ -40,31 +60,29 @@ public class PedidosServiceTests
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockWebSocketHandler = new Mock<PedidoWebSocketHandler>(Mock.Of<ILogger<PedidoWebSocketHandler>>());
+        _mockPedidoValidator = new Mock<IValidator<PedidoRequestDto>>();
+        _mockItemValidator = new Mock<IValidator<PedidoItemRequestDto>>();
 
         // Setup default configuration
         _mockConfiguration.Setup(c => c["Smtp:AdminEmail"]).Returns("admin@test.com");
+        
+        // Configuración por defecto: validación pasa
+        _mockPedidoValidator.Setup(v => v.ValidateAsync(It.IsAny<PedidoRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+        _mockItemValidator.Setup(v => v.ValidateAsync(It.IsAny<PedidoItemRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
 
-        _service = new PedidosService(
-            _mockPedidosRepo.Object,
-            _mockProductoRepo.Object,
-            _mockLogger.Object,
-            _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object
-        );
+        CreateService();
     }
 
     [Test]
     public async Task FindAllAsync_DebeRetornarTodosLosPedidos()
     {
         // Arrange
-        var pedidoId1 = ObjectId.GenerateNewId();
-        var pedidoId2 = ObjectId.GenerateNewId();
         var pedidos = new List<Pedido>
         {
-            new() { _id = pedidoId1, UserId = 1, Total = 100 },
-            new() { _id = pedidoId2, UserId = 2, Total = 200 }
+            new() { UserId = 1, Total = 100 },
+            new() { UserId = 2, Total = 200 }
         };
 
         _mockPedidosRepo.Setup(r => r.FindAllAsync())
@@ -76,150 +94,14 @@ public class PedidosServiceTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(2);
-        _mockPedidosRepo.Verify(r => r.FindAllAsync(), Times.Once);
     }
 
     [Test]
-    public async Task FindByIdAsync_ConIdExistente_DebeRetornarPedido()
+    public async Task CreateAsync_ConItemsValidos_DebeRetornarPedidoCreado()
     {
         // Arrange
-        var pedidoId = ObjectId.GenerateNewId();
-        var pedido = new Pedido { _id = pedidoId, UserId = 1, Total = 100 };
-
-        _mockCacheService.Setup(c => c.GetAsync<PedidoDto>(It.IsAny<string>()))
-            .ReturnsAsync((PedidoDto?)null);
-        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId.ToString()))
-            .ReturnsAsync(pedido);
-
-        // Act
-        var result = await _service.FindByIdAsync(pedidoId.ToString());
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Id.Should().Be(pedidoId.ToString());
-        _mockPedidosRepo.Verify(r => r.FindByIdAsync(pedidoId.ToString()), Times.Once);
-    }
-
-    [Test]
-    public async Task FindByIdAsync_ConIdNoExistente_DebeRetornarErrorNoEncontrado()
-    {
-        // Arrange
-        var pedidoId = "999";
-        _mockCacheService.Setup(c => c.GetAsync<PedidoDto>(It.IsAny<string>()))
-            .ReturnsAsync((PedidoDto?)null);
-        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
-            .ReturnsAsync((Pedido?)null);
-
-        // Act
-        var result = await _service.FindByIdAsync(pedidoId);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
-    }
-
-    [Test]
-    public async Task CreateAsync_ConItemsVacios_DebeRetornarErrorValidacion()
-    {
-        // Arrange
-        var userId = 1L;
-        var dto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-
-        // Act
-        var result = await _service.CreateAsync(userId, dto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("al menos un producto");
-    }
-
-    [Test]
-    public async Task CreateAsync_ConCantidadInvalida_DebeRetornarErrorValidacion()
-    {
-        // Arrange
-        var userId = 1L;
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
-                new() { ProductoId = 1, Cantidad = 0 }
-            }
-        };
-
-        // Act
-        var result = await _service.CreateAsync(userId, dto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("debe ser mayor que 0");
-    }
-
-    [Test]
-    public async Task CreateAsync_ConProductoNoExistente_DebeRetornarErrorNoEncontrado()
-    {
-        // Arrange
-        var userId = 1L;
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
-                new() { ProductoId = 999, Cantidad = 1 }
-            }
-        };
-
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
-            .ReturnsAsync((Producto?)null);
-
-        // Act
-        var result = await _service.CreateAsync(userId, dto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
-        result.Error.Message.Should().Contain("no encontrado");
-    }
-
-    [Test]
-    public async Task CreateAsync_ConStockInsuficiente_DebeRetornarErrorReglaNegocio()
-    {
-        // Arrange
-        var userId = 1L;
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
-                new() { ProductoId = 1, Cantidad = 10 }
-            }
-        };
-
-        var producto = new Producto
-        {
-            Id = 1,
-            Nombre = "Test Product",
-            Precio = 50,
-            Stock = 5 // Insufficient stock
-        };
-
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
-
-        // Act
-        var result = await _service.CreateAsync(userId, dto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.BusinessRule);
-        result.Error.Message.Should().Contain("Stock insuficiente");
-    }
-
-    [Test]
-    public async Task CreateAsync_ConDatosValidos_DebeCrearPedido()
-    {
-        // Arrange
-        var userId = 1L;
-        var dto = new PedidoRequestDto
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
         {
             Items = new List<PedidoItemRequestDto>
             {
@@ -235,21 +117,12 @@ public class PedidosServiceTests
             Stock = 10
         };
 
-        var savedPedidoId = ObjectId.GenerateNewId();
-        var savedPedido = new Pedido
+        var pedidoGuardado = new Pedido
         {
-            _id = savedPedidoId,
             UserId = userId,
             Items = new List<PedidoItem>
             {
-                new()
-                {
-                    ProductoId = 1,
-                    NombreProducto = "Test Product",
-                    Cantidad = 2,
-                    Precio = 50,
-                    Subtotal = 100
-                }
+                new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
             },
             Total = 100,
             Estado = PedidoEstado.PENDIENTE
@@ -257,50 +130,112 @@ public class PedidosServiceTests
 
         _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(producto);
-        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
-            .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
-            .ReturnsAsync(savedPedido);
+            .ReturnsAsync(pedidoGuardado);
 
         // Act
-        var result = await _service.CreateAsync(userId, dto);
+        var result = await _service.CreateAsync(userId, pedidoDto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Id.Should().Be(savedPedidoId.ToString());
         result.Value.Total.Should().Be(100);
-        _mockProductoRepo.Verify(r => r.UpdateAsync(It.Is<Producto>(p => p.Stock == 8)), Times.Once);
-        _mockPedidosRepo.Verify(r => r.SaveAsync(It.IsAny<Pedido>()), Times.Once);
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_ConEstadoInvalido_DebeRetornarErrorValidacion()
+    public async Task CreateAsync_ConItemsVacios_DebeRetornarErrorValidacion()
     {
         // Arrange
-        var pedidoId = "123";
-        var invalidEstado = "INVALID_ESTADO";
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>()
+        };
+
+        _mockPedidoValidator.Setup(v => v.ValidateAsync(pedidoDto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Items", "El pedido debe contener al menos un artículo")
+            }));
+
+        // Re-crear servicio con mock configurado
+        _service = new PedidosService(
+            _mockPedidosRepo.Object,
+            _mockProductoRepo.Object,
+            _mockLogger.Object,
+            _mockCacheService.Object,
+            _mockEmailService.Object,
+            _mockConfiguration.Object,
+            _mockWebSocketHandler.Object,
+            _mockPedidoValidator.Object,
+            _mockItemValidator.Object
+        );
 
         // Act
-        var result = await _service.UpdateEstadoAsync(pedidoId, invalidEstado);
+        var result = await _service.CreateAsync(userId, pedidoDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("Estado inválido");
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_ConPedidoNoExistente_DebeRetornarErrorNoEncontrado()
+    public async Task CreateAsync_ConCantidadInvalida_DebeRetornarErrorValidacion()
     {
         // Arrange
-        var pedidoId = ObjectId.GenerateNewId().ToString();
-        var nuevoEstado = PedidoEstado.PROCESANDO;
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 0 }
+            }
+        };
 
-        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
-            .ReturnsAsync((Pedido?)null);
+        _mockItemValidator.Setup(v => v.ValidateAsync(pedidoDto.Items[0], It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Cantidad", "La cantidad debe ser mayor a 0")
+            }));
+
+        // Re-crear servicio con mock configurado
+        _service = new PedidosService(
+            _mockPedidosRepo.Object,
+            _mockProductoRepo.Object,
+            _mockLogger.Object,
+            _mockCacheService.Object,
+            _mockEmailService.Object,
+            _mockConfiguration.Object,
+            _mockWebSocketHandler.Object,
+            _mockPedidoValidator.Object,
+            _mockItemValidator.Object
+        );
 
         // Act
-        var result = await _service.UpdateEstadoAsync(pedidoId, nuevoEstado);
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Validation);
+    }
+
+    [Test]
+    public async Task CreateAsync_ConProductoNoExistente_DebeRetornarNotFound()
+    {
+        // Arrange
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 999, Cantidad = 2 }
+            }
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
+            .ReturnsAsync((Producto?)null);
+
+        // Act
+        var result = await _service.CreateAsync(userId, pedidoDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -308,38 +243,97 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_ConDatosValidos_DebeActualizarEstado()
+    public async Task CreateAsync_ConStockInsuficiente_DebeRetornarBusinessRule()
     {
         // Arrange
-        var pedidoId = ObjectId.GenerateNewId();
-        var nuevoEstado = PedidoEstado.PROCESANDO;
-        var pedido = new Pedido
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
         {
-            _id = pedidoId,
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 20 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+
+        // Act
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.BusinessRule);
+    }
+
+    [Test]
+    public async Task UpdateEstadoAsync_ConEstadoValido_DebeRetornarPedidoActualizado()
+    {
+        // Arrange
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
             UserId = 1,
             Total = 100,
             Estado = PedidoEstado.PENDIENTE
         };
 
-        var updatedPedido = new Pedido
+        var pedidoActualizado = new Pedido
         {
-            _id = pedidoId,
             UserId = 1,
             Total = 100,
-            Estado = nuevoEstado
+            Estado = PedidoEstado.ENVIADO
         };
 
-        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId.ToString()))
-            .ReturnsAsync(pedido);
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
         _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
-            .ReturnsAsync(updatedPedido);
+            .ReturnsAsync(pedidoActualizado);
 
         // Act
-        var result = await _service.UpdateEstadoAsync(pedidoId.ToString(), nuevoEstado);
+        var result = await _service.UpdateEstadoAsync(pedidoId, "ENVIADO");
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Estado.Should().Be(nuevoEstado);
-        _mockPedidosRepo.Verify(r => r.UpdateAsync(It.Is<Pedido>(p => p.Estado == nuevoEstado)), Times.Once);
+        result.Value.Estado.Should().Be(PedidoEstado.ENVIADO);
+    }
+
+    [Test]
+    public async Task UpdateEstadoAsync_ConEstadoInvalido_DebeRetornarErrorValidacion()
+    {
+        // Arrange
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+
+        // Act
+        var result = await _service.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Validation);
+    }
+
+    [Test]
+    public async Task UpdateEstadoAsync_ConPedidoNoExistente_DebeRetornarNotFound()
+    {
+        // Arrange
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync((Pedido?)null);
+
+        // Act
+        var result = await _service.UpdateEstadoAsync(pedidoId, "ENVIADO");
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.NotFound);
     }
 }

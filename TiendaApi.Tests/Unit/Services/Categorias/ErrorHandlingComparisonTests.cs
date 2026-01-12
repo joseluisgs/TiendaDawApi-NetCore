@@ -1,4 +1,6 @@
 using FluentAssertions;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Dtos.Categorias;
@@ -9,6 +11,8 @@ using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Categorias;
 using TiendaApi.Apis.Services.Productos;
+using TiendaApi.Apis.Validators.Categorias;
+using TiendaApi.Apis.Validators.Productos;
 using TiendaApi.Apis.WebSockets.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
@@ -29,6 +33,8 @@ public class ErrorHandlingComparisonTests
     private Mock<IProductoRepository> _mockProductoRepo = null!;
     private Mock<ILogger<CategoriaService>> _mockCategoriaLogger = null!;
     private Mock<ILogger<ProductoService>> _mockProductoLogger = null!;
+    private Mock<IValidator<CategoriaRequestDto>> _mockCategoriaValidator = null!;
+    private Mock<IValidator<ProductoRequestDto>> _mockProductoValidator = null!;
     
     private CategoriaService _categoriaService = null!;
     private ProductoService _productoService = null!;
@@ -40,15 +46,24 @@ public class ErrorHandlingComparisonTests
         _mockProductoRepo = new Mock<IProductoRepository>();
         _mockCategoriaLogger = new Mock<ILogger<CategoriaService>>();
         _mockProductoLogger = new Mock<ILogger<ProductoService>>();
+        _mockCategoriaValidator = new Mock<IValidator<CategoriaRequestDto>>();
+        _mockProductoValidator = new Mock<IValidator<ProductoRequestDto>>();
+        
+        // Configurar validadores para que pasen por defecto
+        _mockCategoriaValidator.Setup(v => v.ValidateAsync(It.IsAny<CategoriaRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+        _mockProductoValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
         
         _categoriaService = new CategoriaService(
             _mockCategoriaRepo.Object,
-            _mockCategoriaLogger.Object
+            _mockCategoriaLogger.Object,
+            _mockCategoriaValidator.Object
         );
         
         var mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductoWebSocketHandler>>());
-var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
-var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
+        var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
+        var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
         
         _productoService = new ProductoService(
@@ -58,7 +73,8 @@ var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
             mockCacheService.Object,
             mockWebSocketHandler.Object,
             mockEmailService.Object,
-            mockConfiguration.Object
+            mockConfiguration.Object,
+            _mockProductoValidator.Object
         );
     }
 
@@ -197,13 +213,42 @@ var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
             CategoriaId = 1
         };
 
+        // Configurar mock de categoría para que pase la validación de existencia
+        var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
+        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(categoria);
+
+        // Configurar validator para que falle
+        _mockProductoValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Precio", "El precio debe ser mayor a 0")
+            }));
+
+        // Re-crear servicio con mocks configurados
+        var mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductoWebSocketHandler>>());
+        var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
+        var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
+        var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+        
+        _productoService = new ProductoService(
+            _mockProductoRepo.Object,
+            _mockCategoriaRepo.Object,
+            _mockProductoLogger.Object,
+            mockCacheService.Object,
+            mockWebSocketHandler.Object,
+            mockEmailService.Object,
+            mockConfiguration.Object,
+            _mockProductoValidator.Object
+        );
+
         // Act
         var resultado = await _productoService.CreateAsync(dto);
 
         // Assert - Clean validation error handling!
         resultado.IsFailure.Should().BeTrue();
         resultado.Error.Type.Should().Be(ErrorType.Validation);
-        resultado.Error.Message.Should().Contain("precio");
+        resultado.Error.ValidationErrors.Should().ContainKey("Precio");
     }
 
     #endregion

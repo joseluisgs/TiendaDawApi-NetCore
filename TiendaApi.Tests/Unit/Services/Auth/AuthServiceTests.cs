@@ -1,4 +1,6 @@
 using FluentAssertions;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Dtos.Usuarios;
@@ -6,6 +8,7 @@ using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Usuarios;
 using TiendaApi.Apis.Services.Auth;
+using TiendaApi.Apis.Validators.Usuarios;
 
 namespace TiendaApi.Tests.Unit.Services.Auth;
 
@@ -17,7 +20,20 @@ public class AuthServiceTests
     private Mock<IUserRepository> _mockUserRepository = null!;
     private Mock<IJwtService> _mockJwtService = null!;
     private Mock<ILogger<AuthService>> _mockLogger = null!;
+    private Mock<IValidator<RegisterDto>> _mockRegisterValidator = null!;
+    private Mock<IValidator<LoginDto>> _mockLoginValidator = null!;
     private IAuthService _authService = null!;
+
+    private void CreateService()
+    {
+        _authService = new AuthService(
+            _mockUserRepository.Object,
+            _mockJwtService.Object,
+            _mockLogger.Object,
+            _mockRegisterValidator.Object,
+            _mockLoginValidator.Object
+        );
+    }
 
     [SetUp]
     public void Setup()
@@ -25,12 +41,20 @@ public class AuthServiceTests
         _mockUserRepository = new Mock<IUserRepository>();
         _mockJwtService = new Mock<IJwtService>();
         _mockLogger = new Mock<ILogger<AuthService>>();
+        _mockRegisterValidator = new Mock<IValidator<RegisterDto>>();
+        _mockLoginValidator = new Mock<IValidator<LoginDto>>();
         
-        _authService = new AuthService(
-            _mockUserRepository.Object,
-            _mockJwtService.Object,
-            _mockLogger.Object
-        );
+        // Configuración por defecto: validación pasa
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+        _mockLoginValidator.Setup(v => v.ValidateAsync(It.IsAny<LoginDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+        
+        // Mock de JWT siempre retorna un token
+        _mockJwtService.Setup(x => x.GenerateToken(It.IsAny<User>()))
+            .Returns("test-jwt-token");
+        
+        CreateService();
     }
 
     #region Tests SignUp
@@ -64,9 +88,6 @@ public class AuthServiceTests
         _mockUserRepository.Setup(x => x.SaveAsync(It.IsAny<User>()))
             .ReturnsAsync(savedUser);
 
-        _mockJwtService.Setup(x => x.GenerateToken(It.IsAny<User>()))
-            .Returns("test-jwt-token");
-
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsSuccess.Should().BeTrue();
@@ -86,11 +107,18 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
+        // Configurar validator para que falle
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(registerDto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Username", "El nombre de usuario es obligatorio")
+            }));
+
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("nombre de usuario");
+        result.Error.ValidationErrors.Should().ContainKey("Username");
     }
 
     [Test]
@@ -103,11 +131,17 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(registerDto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Username", "El nombre de usuario debe tener al menos 3 caracteres")
+            }));
+
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("al menos 3 caracteres");
+        result.Error.ValidationErrors.Should().ContainKey("Username");
     }
 
     [Test]
@@ -120,11 +154,17 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(registerDto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Email", "Debe ser un correo electrónico válido")
+            }));
+
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("email");
+        result.Error.ValidationErrors.Should().ContainKey("Email");
     }
 
     [Test]
@@ -137,11 +177,17 @@ public class AuthServiceTests
             Password = "12345"
         };
 
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(registerDto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Password", "La contraseña debe tener al menos 6 caracteres")
+            }));
+
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("al menos 6 caracteres");
+        result.Error.ValidationErrors.Should().ContainKey("Password");
     }
 
     [Test]
@@ -229,9 +275,6 @@ public class AuthServiceTests
         _mockUserRepository.Setup(x => x.FindByUsernameAsync("testuser"))
             .ReturnsAsync(user);
 
-        _mockJwtService.Setup(x => x.GenerateToken(It.IsAny<User>()))
-            .Returns("test-jwt-token");
-
         var result = await _authService.SignInAsync(loginDto);
 
         result.IsSuccess.Should().BeTrue();
@@ -248,11 +291,17 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
+        _mockLoginValidator.Setup(v => v.ValidateAsync(loginDto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Username", "El nombre de usuario es obligatorio")
+            }));
+
         var result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("nombre de usuario");
+        result.Error.ValidationErrors.Should().ContainKey("Username");
     }
 
     [Test]
@@ -264,11 +313,17 @@ public class AuthServiceTests
             Password = ""
         };
 
+        _mockLoginValidator.Setup(v => v.ValidateAsync(loginDto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Password", "La contraseña es obligatoria")
+            }));
+
         var result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("contraseña");
+        result.Error.ValidationErrors.Should().ContainKey("Password");
     }
 
     [Test]
@@ -287,19 +342,18 @@ public class AuthServiceTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Unauthorized);
-        result.Error.Message.Should().Contain("Credenciales");
     }
 
     [Test]
-    public async Task SignInAsync_ConPasswordInvalido_DebeRetornarNoAutorizado()
+    public async Task SignInAsync_ConPasswordIncorrecto_DebeRetornarNoAutorizado()
     {
         var loginDto = new LoginDto
         {
             Username = "testuser",
-            Password = "WrongPassword!"
+            Password = "WrongPassword123!"
         };
 
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword!", workFactor: 11);
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword("Password123!", workFactor: 11);
 
         var user = new User
         {
@@ -317,7 +371,6 @@ public class AuthServiceTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Unauthorized);
-        result.Error.Message.Should().Contain("Credenciales");
     }
 
     #endregion

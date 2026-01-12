@@ -1,4 +1,6 @@
 using FluentAssertions;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -10,6 +12,7 @@ using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Productos;
+using TiendaApi.Apis.Validators.Productos;
 using TiendaApi.Apis.WebSockets.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Productos;
@@ -27,6 +30,7 @@ public class ProductoServiceTests
     private Mock<ProductoWebSocketHandler> _mockWebSocketHandler = null!;
     private Mock<IEmailService> _mockEmailService = null!;
     private Mock<IConfiguration> _mockConfiguration = null!;
+    private Mock<IValidator<ProductoRequestDto>> _mockValidator = null!;
     private ProductoService _service = null!;
 
     [SetUp]
@@ -39,8 +43,13 @@ public class ProductoServiceTests
         _mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(Mock.Of<ILogger<ProductoWebSocketHandler>>());
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockValidator = new Mock<IValidator<ProductoRequestDto>>();
 
         _mockConfiguration.Setup(c => c["Cache:ProductoCacheTTLMinutes"]).Returns("10");
+        
+        // Configurar validador para que pase por defecto
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
         _service = new ProductoService(
             _mockProductoRepo.Object,
@@ -49,7 +58,8 @@ public class ProductoServiceTests
             _mockCacheService.Object,
             _mockWebSocketHandler.Object,
             _mockEmailService.Object,
-            _mockConfiguration.Object
+            _mockConfiguration.Object,
+            _mockValidator.Object
         );
     }
 
@@ -240,13 +250,37 @@ public class ProductoServiceTests
             CategoriaId = 1
         };
 
+        // Configurar mock de categoría para que pase la validación de existencia
+        var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
+        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(categoria);
+
+        // Configurar validator para que falle
+        _mockValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Precio", "El precio debe ser mayor a 0")
+            }));
+
+        // Re-crear servicio con mocks configurados
+        _service = new ProductoService(
+            _mockProductoRepo.Object,
+            _mockCategoriaRepo.Object,
+            _mockLogger.Object,
+            _mockCacheService.Object,
+            _mockWebSocketHandler.Object,
+            _mockEmailService.Object,
+            _mockConfiguration.Object,
+            _mockValidator.Object
+        );
+
         // Act
         var result = await _service.CreateAsync(dto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("precio");
+        result.Error.ValidationErrors.Should().ContainKey("Precio");
     }
 
     [Test]
@@ -261,12 +295,37 @@ public class ProductoServiceTests
             CategoriaId = 1
         };
 
+        // Configurar mock de categoría para que pase la validación de existencia
+        var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
+        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(categoria);
+
+        // Configurar validator para que falle
+        _mockValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Stock", "El stock no puede ser negativo")
+            }));
+
+        // Re-crear servicio con mocks configurados
+        _service = new ProductoService(
+            _mockProductoRepo.Object,
+            _mockCategoriaRepo.Object,
+            _mockLogger.Object,
+            _mockCacheService.Object,
+            _mockWebSocketHandler.Object,
+            _mockEmailService.Object,
+            _mockConfiguration.Object,
+            _mockValidator.Object
+        );
+
         // Act
         var result = await _service.CreateAsync(dto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.ValidationErrors.Should().ContainKey("Stock");
     }
 
     [Test]
