@@ -7,22 +7,19 @@ namespace TiendaApi.Repositories.Productos;
 /// <summary>
 /// Implementación del repositorio de productos usando Entity Framework Core.
 /// </summary>
-public class ProductoRepository : IProductoRepository
-{
-    private readonly TiendaDbContext _context;
-
-    public ProductoRepository(TiendaDbContext context)
-    {
-        _context = context;
-    }
+public class ProductoRepository(
+    TiendaDbContext context,
+    ILogger<ProductoRepository> logger
+) : IProductoRepository {
 
     /// <summary>
     /// Obtiene todos los productos ordenados por nombre.
     /// </summary>
     /// <returns>Colección de productos con su categoría incluida.</returns>
-    public async Task<IEnumerable<Producto>> FindAllAsync()
-    {
-        return await _context.Productos
+    public async Task<IEnumerable<Producto>> FindAllAsync() {
+        logger.LogDebug("Buscando todos los productos");
+        
+        return await context.Productos
             .Include(p => p.Categoria)
             .OrderBy(p => p.Nombre)
             .ToListAsync();
@@ -33,9 +30,8 @@ public class ProductoRepository : IProductoRepository
     /// </summary>
     /// <param name="id">Identificador del producto.</param>
     /// <returns>El producto encontrado con su categoría o null.</returns>
-    public async Task<Producto?> FindByIdAsync(long id)
-    {
-        return await _context.Productos
+    public async Task<Producto?> FindByIdAsync(long id) {
+        return await context.Productos
             .Include(p => p.Categoria)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
@@ -45,9 +41,10 @@ public class ProductoRepository : IProductoRepository
     /// </summary>
     /// <param name="categoriaId">Identificador de la categoría.</param>
     /// <returns>Colección de productos de la categoría ordenada por nombre.</returns>
-    public async Task<IEnumerable<Producto>> FindByCategoriaIdAsync(long categoriaId)
-    {
-        return await _context.Productos
+    public async Task<IEnumerable<Producto>> FindByCategoriaIdAsync(long categoriaId) {
+        logger.LogDebug("Buscando productos para categoría: {CategoriaId}", categoriaId);
+        
+        return await context.Productos
             .Include(p => p.Categoria)
             .Where(p => p.CategoriaId == categoriaId)
             .OrderBy(p => p.Nombre)
@@ -59,17 +56,18 @@ public class ProductoRepository : IProductoRepository
     /// </summary>
     /// <param name="producto">Producto a guardar.</param>
     /// <returns>El producto guardado con fecha de creación y categoría cargada.</returns>
-    public async Task<Producto> SaveAsync(Producto producto)
-    {
+    public async Task<Producto> SaveAsync(Producto producto) {
         producto.CreatedAt = DateTime.UtcNow;
         producto.UpdatedAt = DateTime.UtcNow;
         
-        _context.Productos.Add(producto);
-        await _context.SaveChangesAsync();
+        context.Productos.Add(producto);
+        await context.SaveChangesAsync();
         
-        await _context.Entry(producto)
+        await context.Entry(producto)
             .Reference(p => p.Categoria)
             .LoadAsync();
+        
+        logger.LogInformation("Producto guardado con ID: {Id}", producto.Id);
         
         return producto;
     }
@@ -79,16 +77,17 @@ public class ProductoRepository : IProductoRepository
     /// </summary>
     /// <param name="producto">Producto con datos actualizados.</param>
     /// <returns>El producto actualizado con categoría cargada.</returns>
-    public async Task<Producto> UpdateAsync(Producto producto)
-    {
+    public async Task<Producto> UpdateAsync(Producto producto) {
         producto.UpdatedAt = DateTime.UtcNow;
         
-        _context.Productos.Update(producto);
-        await _context.SaveChangesAsync();
+        context.Productos.Update(producto);
+        await context.SaveChangesAsync();
         
-        await _context.Entry(producto)
+        await context.Entry(producto)
             .Reference(p => p.Categoria)
             .LoadAsync();
+        
+        logger.LogInformation("Producto actualizado con ID: {Id}", producto.Id);
         
         return producto;
     }
@@ -98,14 +97,14 @@ public class ProductoRepository : IProductoRepository
     /// </summary>
     /// <param name="id">Identificador del producto a eliminar.</param>
     /// <returns>Tarea asíncrona.</returns>
-    public async Task DeleteAsync(long id)
-    {
+    public async Task DeleteAsync(long id) {
         var producto = await FindByIdAsync(id);
-        if (producto != null)
-        {
+        if (producto != null) {
             producto.IsDeleted = true;
             producto.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation("Producto eliminado lógicamente con ID: {Id}", id);
         }
     }
 
@@ -114,8 +113,7 @@ public class ProductoRepository : IProductoRepository
     /// </summary>
     /// <param name="id">Identificador del producto.</param>
     /// <returns>True si existe, False en caso contrario.</returns>
-    public async Task<bool> ExistsAsync(long id)
-    {
-        return await _context.Productos.AnyAsync(p => p.Id == id);
+    public async Task<bool> ExistsAsync(long id) {
+        return await context.Productos.AnyAsync(p => p.Id == id);
     }
 }

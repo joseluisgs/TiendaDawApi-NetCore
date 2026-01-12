@@ -14,14 +14,13 @@ namespace TiendaApi.Tests.Unit.Controllers;
 public class CategoriasControllerTests
 {
     private readonly Mock<ICategoriaService> _mockService;
-    private readonly Mock<ILogger<CategoriasController>> _mockLogger;
     private readonly CategoriasController _controller;
 
     public CategoriasControllerTests()
     {
         _mockService = new Mock<ICategoriaService>();
-        _mockLogger = new Mock<ILogger<CategoriasController>>();
-        _controller = new CategoriasController(_mockService.Object, _mockLogger.Object);
+        var mockLogger = new Mock<ILogger<CategoriasController>>();
+        _controller = new CategoriasController(_mockService.Object, mockLogger.Object);
     }
 
     #region GetAll Tests

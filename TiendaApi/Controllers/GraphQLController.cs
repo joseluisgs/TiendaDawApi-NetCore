@@ -9,18 +9,11 @@ namespace TiendaApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("[controller]")]
-public class GraphQLController : ControllerBase
-{
-    private readonly IDocumentExecuter _documentExecuter;
-    private readonly ISchema _schema;
-    private readonly ILogger<GraphQLController> _logger;
-
-    public GraphQLController(IDocumentExecuter documentExecuter, ISchema schema, ILogger<GraphQLController> logger)
-    {
-        _documentExecuter = documentExecuter;
-        _schema = schema;
-        _logger = logger;
-    }
+public class GraphQLController(
+    IDocumentExecuter documentExecuter,
+    ISchema schema,
+    ILogger<GraphQLController> logger
+) : ControllerBase {
 
     /// <summary>
     /// Ejecutar una consulta GraphQL.
@@ -30,8 +23,7 @@ public class GraphQLController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Post([FromBody] GraphQLRequest request)
-    {
+    public async Task<IActionResult> Post([FromBody] GraphQLRequest request) {
         if (string.IsNullOrWhiteSpace(request.Query))
             return BadRequest(new { message = "Query es requerida" });
 
@@ -39,20 +31,19 @@ public class GraphQLController : ControllerBase
         if (sanitizedQuery.Length > 100)
             sanitizedQuery = sanitizedQuery.Substring(0, 97) + "...";
         
-        _logger.LogInformation("Ejecutando consulta GraphQL: {Query}", sanitizedQuery);
+        logger.LogInformation("Ejecutando consulta GraphQL: {Query}", sanitizedQuery);
 
-        var result = await _documentExecuter.ExecuteAsync(options =>
+        var result = await documentExecuter.ExecuteAsync(options =>
         {
-            options.Schema = _schema;
+            options.Schema = schema;
             options.Query = request.Query;
             options.Variables = request.Variables;
             options.OperationName = request.OperationName;
             options.RequestServices = HttpContext.RequestServices;
         });
 
-        if (result.Errors?.Any() == true)
-        {
-            _logger.LogWarning("Errores en consulta GraphQL: {Errors}", result.Errors);
+        if (result.Errors?.Any() == true) {
+            logger.LogWarning("Errores en consulta GraphQL: {Errors}", result.Errors);
             return BadRequest(new { errors = result.Errors.Select(e => e.Message) });
         }
 
@@ -67,8 +58,7 @@ public class GraphQLController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Get([FromQuery] string query, [FromQuery] string? operationName = null)
-    {
+    public async Task<IActionResult> Get([FromQuery] string query, [FromQuery] string? operationName = null) {
         if (string.IsNullOrWhiteSpace(query))
             return BadRequest(new { message = "Query es requerida" });
 
@@ -80,8 +70,7 @@ public class GraphQLController : ControllerBase
 /// <summary>
 /// Modelo de petición GraphQL.
 /// </summary>
-public class GraphQLRequest
-{
+public class GraphQLRequest {
     public string Query { get; set; } = string.Empty;
     public string? OperationName { get; set; }
     public Inputs? Variables { get; set; }

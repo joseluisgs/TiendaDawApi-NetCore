@@ -7,25 +7,18 @@ namespace TiendaApi.Repositories.Usuarios;
 /// <summary>
 /// Implementación del repositorio de usuarios usando Entity Framework Core.
 /// </summary>
-public class UserRepository : IUserRepository
-{
-    private readonly TiendaDbContext _context;
-    private readonly ILogger<UserRepository> _logger;
-
-    public UserRepository(TiendaDbContext context, ILogger<UserRepository> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
+public class UserRepository(
+    TiendaDbContext context,
+    ILogger<UserRepository> logger
+) : IUserRepository {
 
     /// <summary>
     /// Obtiene un usuario por su identificador.
     /// </summary>
     /// <param name="id">Identificador del usuario.</param>
     /// <returns>El usuario encontrado o null.</returns>
-    public async Task<User?> FindByIdAsync(long id)
-    {
-        return await _context.Users.FindAsync(id);
+    public async Task<User?> FindByIdAsync(long id) {
+        return await context.Users.FindAsync(id);
     }
 
     /// <summary>
@@ -33,9 +26,8 @@ public class UserRepository : IUserRepository
     /// </summary>
     /// <param name="username">Nombre de usuario.</param>
     /// <returns>El usuario encontrado o null.</returns>
-    public async Task<User?> FindByUsernameAsync(string username)
-    {
-        return await _context.Users
+    public async Task<User?> FindByUsernameAsync(string username) {
+        return await context.Users
             .FirstOrDefaultAsync(u => u.Username == username);
     }
 
@@ -44,9 +36,8 @@ public class UserRepository : IUserRepository
     /// </summary>
     /// <param name="email">Correo electrónico.</param>
     /// <returns>El usuario encontrado o null.</returns>
-    public async Task<User?> FindByEmailAsync(string email)
-    {
-        return await _context.Users
+    public async Task<User?> FindByEmailAsync(string email) {
+        return await context.Users
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
@@ -54,9 +45,8 @@ public class UserRepository : IUserRepository
     /// Obtiene todos los usuarios.
     /// </summary>
     /// <returns>Colección de todos los usuarios.</returns>
-    public async Task<IEnumerable<User>> FindAllAsync()
-    {
-        return await _context.Users.ToListAsync();
+    public async Task<IEnumerable<User>> FindAllAsync() {
+        return await context.Users.ToListAsync();
     }
 
     /// <summary>
@@ -64,15 +54,14 @@ public class UserRepository : IUserRepository
     /// </summary>
     /// <param name="user">Usuario a guardar.</param>
     /// <returns>El usuario guardado con fechas de creación y modificación.</returns>
-    public async Task<User> SaveAsync(User user)
-    {
+    public async Task<User> SaveAsync(User user) {
         user.CreatedAt = DateTime.UtcNow;
         user.UpdatedAt = DateTime.UtcNow;
         
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
         
-        _logger.LogInformation("Usuario creado con id: {Id}", user.Id);
+        logger.LogInformation("Usuario creado con id: {Id}", user.Id);
         
         return user;
     }
@@ -82,14 +71,13 @@ public class UserRepository : IUserRepository
     /// </summary>
     /// <param name="user">Usuario con datos actualizados.</param>
     /// <returns>El usuario actualizado.</returns>
-    public async Task<User> UpdateAsync(User user)
-    {
+    public async Task<User> UpdateAsync(User user) {
         user.UpdatedAt = DateTime.UtcNow;
         
-        _context.Users.Update(user);
-        await _context.SaveChangesAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
         
-        _logger.LogInformation("Usuario actualizado con id: {Id}", user.Id);
+        logger.LogInformation("Usuario actualizado con id: {Id}", user.Id);
         
         return user;
     }
@@ -99,16 +87,14 @@ public class UserRepository : IUserRepository
     /// </summary>
     /// <param name="id">Identificador del usuario a eliminar.</param>
     /// <returns>Tarea asíncrona.</returns>
-    public async Task DeleteAsync(long id)
-    {
+    public async Task DeleteAsync(long id) {
         var user = await FindByIdAsync(id);
-        if (user != null)
-        {
+        if (user != null) {
             user.IsDeleted = true;
             user.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             
-            _logger.LogInformation("Usuario eliminado suavemente con id: {Id}", id);
+            logger.LogInformation("Usuario eliminado suavemente con id: {Id}", id);
         }
     }
 }
