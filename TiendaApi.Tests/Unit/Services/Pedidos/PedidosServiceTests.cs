@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
@@ -114,7 +115,8 @@ public class PedidosServiceTests
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
-            Stock = 10
+            Stock = 10,
+            RowVersion = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }
         };
 
         var pedidoGuardado = new Pedido
@@ -130,6 +132,8 @@ public class PedidosServiceTests
 
         _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()))
+            .ReturnsAsync(true);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
@@ -335,5 +339,304 @@ public class PedidosServiceTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.NotFound);
+    }
+
+    [Test]
+    public async Task CreateAsync_ConDecrementoExitoso_DebeRetornarPedidoCreado()
+    {
+        // Arrange
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10,
+            RowVersion = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Items = new List<PedidoItem>
+            {
+                new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
+            },
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()))
+            .ReturnsAsync(true);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        // Act
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Total.Should().Be(100);
+        _mockProductoRepo.Verify(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()), Times.Once);
+    }
+
+    [Test]
+    public async Task CreateAsync_ConflictoDeConcurrencia_DebeRetornarErrorConflict()
+    {
+        // Arrange
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10,
+            RowVersion = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()))
+            .ThrowsAsync(new DbUpdateConcurrencyException("Conflicto de concurrencia"));
+
+        // Act
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Conflict);
+    }
+
+    [Test]
+    public async Task CreateAsync_ReintentoExitosoTrasConflicto_DebeRetornarPedidoCreado()
+    {
+        // Arrange
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10,
+            RowVersion = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }
+        };
+
+        var productoActualizado = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10,
+            RowVersion = new byte[] { 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 }
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Items = new List<PedidoItem>
+            {
+                new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
+            },
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        var callCount = 0;
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(() => callCount == 0 ? producto : productoActualizado);
+        
+        _mockProductoRepo.SetupSequence(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()))
+            .ThrowsAsync(new DbUpdateConcurrencyException("Conflicto de concurrencia"))
+            .ReturnsAsync(true);
+            
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        // Act
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _mockProductoRepo.Verify(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()), Times.Exactly(2));
+    }
+
+    [Test]
+    public async Task CreateAsync_MaximosReintentosAlcanzados_DebeRetornarError()
+    {
+        // Arrange
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10,
+            RowVersion = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()))
+            .ThrowsAsync(new DbUpdateConcurrencyException("Conflicto de concurrencia"));
+
+        // Act
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Conflict);
+        _mockProductoRepo.Verify(
+            r => r.DecrementStockAsync(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<byte[]>()), 
+            Times.Exactly(3));
+    }
+
+    [Test]
+    public async Task CreateAsync_MultiplesItems_DecrementaStockParaCadaUno()
+    {
+        // Arrange
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 },
+                new() { ProductoId = 2, Cantidad = 3 }
+            }
+        };
+
+        var producto1 = new Producto
+        {
+            Id = 1,
+            Nombre = "Product 1",
+            Precio = 50,
+            Stock = 10,
+            RowVersion = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }
+        };
+
+        var producto2 = new Producto
+        {
+            Id = 2,
+            Nombre = "Product 2",
+            Precio = 25,
+            Stock = 20,
+            RowVersion = new byte[] { 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 }
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Items = new List<PedidoItem>
+            {
+                new() { ProductoId = 1, NombreProducto = "Product 1", Cantidad = 2, Precio = 50, Subtotal = 100 },
+                new() { ProductoId = 2, NombreProducto = "Product 2", Cantidad = 3, Precio = 25, Subtotal = 75 }
+            },
+            Total = 175,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto1);
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(2))
+            .ReturnsAsync(producto2);
+        _mockProductoRepo.Setup(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()))
+            .ReturnsAsync(true);
+        _mockProductoRepo.Setup(r => r.DecrementStockAsync(2, 3, It.IsAny<byte[]>()))
+            .ReturnsAsync(true);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        // Act
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Total.Should().Be(175);
+        _mockProductoRepo.Verify(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()), Times.Once);
+        _mockProductoRepo.Verify(r => r.DecrementStockAsync(2, 3, It.IsAny<byte[]>()), Times.Once);
+    }
+
+    [Test]
+    public async Task CreateAsync_FalloEnSegundoItem_CompensaStockDelPrimero()
+    {
+        // Arrange
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 },
+                new() { ProductoId = 2, Cantidad = 3 }
+            }
+        };
+
+        var producto1 = new Producto
+        {
+            Id = 1,
+            Nombre = "Product 1",
+            Precio = 50,
+            Stock = 10,
+            RowVersion = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 }
+        };
+
+        var producto2 = new Producto
+        {
+            Id = 2,
+            Nombre = "Product 2",
+            Precio = 25,
+            Stock = 10,
+            RowVersion = new byte[] { 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 }
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto1);
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(2))
+            .ReturnsAsync(producto2);
+        _mockProductoRepo.Setup(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()))
+            .ReturnsAsync(true);
+        _mockProductoRepo.Setup(r => r.DecrementStockAsync(2, 3, It.IsAny<byte[]>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Conflict);
+        _mockProductoRepo.Verify(r => r.DecrementStockAsync(1, 2, It.IsAny<byte[]>()), Times.Once);
+        _mockProductoRepo.Verify(r => r.DecrementStockAsync(2, 3, It.IsAny<byte[]>()), Times.Once);
     }
 }

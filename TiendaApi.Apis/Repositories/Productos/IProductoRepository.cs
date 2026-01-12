@@ -54,4 +54,14 @@ public interface IProductoRepository
     /// <param name="id">Identificador del producto.</param>
     /// <returns>True si existe, False en caso contrario.</returns>
     Task<bool> ExistsAsync(long id);
+
+    /// <summary>
+    /// Decrementa el stock de un producto atómicamente usando control de concurrencia optimista.
+    /// Genera DbUpdateConcurrencyException si el RowVersion no coincide.
+    /// </summary>
+    /// <param name="productoId">Identificador del producto.</param>
+    /// <param name="cantidad">Cantidad a decrementar del stock.</param>
+    /// <param name="expectedRowVersion">Versión esperada del registro (para control de concurrencia).</param>
+    /// <returns>True si el stock fue decrementado, False si el producto no existe.</returns>
+    Task<bool> DecrementStockAsync(long productoId, int cantidad, byte[] expectedRowVersion);
 }

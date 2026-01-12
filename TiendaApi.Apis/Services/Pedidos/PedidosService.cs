@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
@@ -111,8 +112,9 @@ public class PedidosService(
         }
         
         var pedidoItems = new List<PedidoItem>();
-        var productosToUpdate = new List<Producto>();
+        var productosDecrementados = new List<(long ProductoId, int Cantidad)>();
         decimal total = 0;
+        const int MaxRetries = 3;
         
         foreach (var itemDto in dto.Items) {
             var itemValidation = await ValidatePedidoItemAsync(itemDto);
@@ -123,12 +125,14 @@ public class PedidosService(
             var producto = await productoRepository.FindByIdAsync(itemDto.ProductoId);
             
             if (producto == null) {
+                await CompensarStockAsync(productosDecrementados);
                 return Result.Failure<PedidoDto, DomainError>(
                     DomainError.NotFound($"Producto con ID {itemDto.ProductoId} no encontrado")
                 );
             }
             
             if (producto.Stock < itemDto.Cantidad) {
+                await CompensarStockAsync(productosDecrementados);
                 return Result.Failure<PedidoDto, DomainError>(
                     DomainError.BusinessRule($"Stock insuficiente para el producto {producto.Nombre}. Disponible: {producto.Stock}, Solicitado: {itemDto.Cantidad}")
                 );
@@ -137,29 +141,26 @@ public class PedidosService(
             var subtotal = producto.Precio * itemDto.Cantidad;
             total += subtotal;
             
-            pedidoItems.Add(new PedidoItem {
+            var item = new PedidoItem {
                 ProductoId = producto.Id,
                 NombreProducto = producto.Nombre,
                 Cantidad = itemDto.Cantidad,
                 Precio = producto.Precio,
                 Subtotal = subtotal
-            });
+            };
+            pedidoItems.Add(item);
             
-            producto.Stock -= itemDto.Cantidad;
-            productosToUpdate.Add(producto);
-        }
-        
-        try {
-            foreach (var producto in productosToUpdate) {
-                await productoRepository.UpdateAsync(producto);
-                logger.LogDebug("Stock reservado para producto: {ProductoId}, nuevo stock: {Stock}", producto.Id, producto.Stock);
+            var stockDecremented = await DecrementStockWithRetryAsync(producto.Id, itemDto.Cantidad, producto.RowVersion, MaxRetries);
+            if (!stockDecremented) {
+                await CompensarStockAsync(productosDecrementados);
+                logger.LogError("No se pudo decrementar stock para producto {ProductoId} tras {MaxRetries} reintentos", producto.Id, MaxRetries);
+                return Result.Failure<PedidoDto, DomainError>(
+                    DomainError.Conflict($"No se pudo reservar stock para el producto {producto.Nombre}. Por favor, intente nuevamente.")
+                );
             }
-        }
-        catch (Exception ex) {
-            logger.LogError(ex, "Error al reservar stock para pedido");
-            return Result.Failure<PedidoDto, DomainError>(
-                DomainError.Internal("Error al reservar el stock de productos")
-            );
+            
+            productosDecrementados.Add((producto.Id, itemDto.Cantidad));
+            logger.LogDebug("Stock reservado para producto: {ProductoId}, cantidad: {Cantidad}", producto.Id, itemDto.Cantidad);
         }
         
         var pedido = new Pedido {
@@ -245,11 +246,8 @@ public class PedidosService(
             _ = Task.Run(async () =>
             {
                 try {
-                    foreach (var producto in productosToUpdate) {
-                        producto.Stock += pedidoItems.First(i => i.ProductoId == producto.Id).Cantidad;
-                        await productoRepository.UpdateAsync(producto);
-                        logger.LogInformation("Stock restaurado para producto: {ProductoId} tras error al guardar pedido", producto.Id);
-                    }
+                    await CompensarStockAsync(productosDecrementados);
+                    logger.LogInformation("Stock restaurado tras error al guardar pedido");
                 }
                 catch (Exception compensationEx) {
                     logger.LogError(compensationEx, "CRÍTICO: Error al restaurar stock tras error al guardar pedido");
@@ -398,5 +396,80 @@ public class PedidosService(
         }
         
         return UnitResult.Success<DomainError>();
+    }
+
+    /// <summary>
+    /// Decrementa el stock de un producto con reintentos en caso de conflicto de concurrencia.
+    /// Implementa control de concurrencia optimista con exponential backoff.
+    /// </summary>
+    private async Task<bool> DecrementStockWithRetryAsync(
+        long productoId, 
+        int cantidad, 
+        byte[] rowVersion, 
+        int maxRetries)
+    {
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                return await productoRepository.DecrementStockAsync(productoId, cantidad, rowVersion);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (attempt == maxRetries)
+                {
+                    logger.LogWarning(
+                        "Maximos reintentos alcanzados para decrementar stock del producto {ProductoId}", 
+                        productoId);
+                    return false;
+                }
+                
+                var delayMs = 100 * attempt;
+                logger.LogDebug(
+                    "Reintento {Attempt}/{MaxRetries} para decrementar stock del producto {ProductoId} tras {Delay}ms",
+                    attempt, maxRetries, productoId, delayMs);
+                
+                await Task.Delay(delayMs);
+                
+                var productoActualizado = await productoRepository.FindByIdAsync(productoId);
+                if (productoActualizado != null)
+                {
+                    rowVersion = productoActualizado.RowVersion;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /// <summary>
+    /// Compensa el stock restaurando las cantidades de productos decrementados.
+    /// Se usa en caso de fallo durante la creacion del pedido.
+    /// </summary>
+    private async Task CompensarStockAsync(IEnumerable<(long ProductoId, int Cantidad)> productos)
+    {
+        foreach (var (productoId, cantidad) in productos)
+        {
+            try
+            {
+                var producto = await productoRepository.FindByIdAsync(productoId);
+                if (producto != null)
+                {
+                    producto.Stock += cantidad;
+                    producto.UpdatedAt = DateTime.UtcNow;
+                    await productoRepository.UpdateAsync(producto);
+                    logger.LogInformation(
+                        "Stock compensado para producto: {ProductoId}, cantidad restaurada: {Cantidad}",
+                        productoId, cantidad);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex, 
+                    "Error al compensar stock para producto {ProductoId}", 
+                    productoId);
+            }
+        }
     }
 }

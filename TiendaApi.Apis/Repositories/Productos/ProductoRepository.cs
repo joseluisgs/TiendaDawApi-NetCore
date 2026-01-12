@@ -116,4 +116,36 @@ public class ProductoRepository(
     public async Task<bool> ExistsAsync(long id) {
         return await context.Productos.AnyAsync(p => p.Id == id);
     }
+
+    /// <summary>
+    /// Decrementa el stock de un producto atómicamente usando control de concurrencia optimista.
+    /// Genera DbUpdateConcurrencyException si el RowVersion no coincide.
+    /// </summary>
+    /// <param name="productoId">Identificador del producto.</param>
+    /// <param name="cantidad">Cantidad a decrementar del stock.</param>
+    /// <param name="expectedRowVersion">Versión esperada del registro (para control de concurrencia).</param>
+    /// <returns>True si el stock fue decrementado, False si el producto no existe.</returns>
+    public async Task<bool> DecrementStockAsync(long productoId, int cantidad, byte[] expectedRowVersion) {
+        logger.LogDebug("Intentando decrementar stock para producto: {ProductoId}, cantidad: {Cantidad}", productoId, cantidad);
+        
+        var producto = await context.Productos.FindAsync(productoId);
+        
+        if (producto == null) {
+            logger.LogWarning("Producto no encontrado para decrementar stock: {ProductoId}", productoId);
+            return false;
+        }
+        
+        producto.Stock -= cantidad;
+        producto.UpdatedAt = DateTime.UtcNow;
+        
+        try {
+            await context.SaveChangesAsync();
+            logger.LogInformation("Stock decrementado exitosamente para producto: {ProductoId}, nuevo stock: {Stock}", productoId, producto.Stock);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException ex) {
+            logger.LogWarning(ex, "Conflicto de concurrencia al decrementar stock para producto: {ProductoId}", productoId);
+            throw;
+        }
+    }
 }
