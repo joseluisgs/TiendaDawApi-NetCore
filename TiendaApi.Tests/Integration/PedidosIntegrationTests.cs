@@ -3,16 +3,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
-using TiendaApi.Models.DTOs;
-using TiendaApi.Models.Entities;
-using TiendaApi.Repositories;
-using TiendaApi.Services.Pedidos;
+using TiendaApi.Apis.Dtos.Pedidos;
+using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Repositories;
+using TiendaApi.Apis.Services.Pedidos;
 
 namespace TiendaApi.Tests.Integration;
 
 /// <summary>
-/// Integration tests for Pedidos functionality using Testcontainers
-/// Tests real database interactions with MongoDB and PostgreSQL containers
+/// Tests de integración para funcionalidad de Pedidos usando Testcontainers
+/// Prueba interacciones reales con bases de datos usando contenedores MongoDB y PostgreSQL
 /// </summary>
 [TestFixture]
 public class PedidosIntegrationTests
@@ -97,8 +97,8 @@ public class PedidosIntegrationTests
     }
 
     [Test]
-    [Ignore("Integration test scaffold - implement when full DI setup is ready")]
-    public async Task CreatePedido_WithRealDatabases_ShouldPersistToMongoDB()
+    [Ignore("Test de integración scaffold - implementar cuando esté listo el DI completo")]
+    public async Task CreatePedido_ConBasesDeDatosReales_DebePersistirEnMongoDB()
     {
         // This is a scaffold test demonstrating the structure
         // Actual implementation requires full DI setup
@@ -125,8 +125,8 @@ public class PedidosIntegrationTests
     }
 
     [Test]
-    [Ignore("Integration test scaffold - implement when full DI setup is ready")]
-    public async Task FindAllPedidos_WithRealMongoDB_ShouldReturnPedidos()
+    [Ignore("Test de integración scaffold - implementar cuando esté listo el DI completo")]
+    public async Task FindAllPedidos_ConMongoDBReald_DebeRetornarPedidos()
     {
         // This is a scaffold test demonstrating the structure
         
@@ -143,8 +143,8 @@ public class PedidosIntegrationTests
     }
 
     [Test]
-    [Ignore("Integration test scaffold - implement when full DI setup is ready")]
-    public async Task UpdatePedidoEstado_WithRealMongoDB_ShouldPersistChanges()
+    [Ignore("Test de integración scaffold - implementar cuando esté listo el DI completo")]
+    public async Task UpdatePedidoEstado_ConMongoDBReal_DebePersistirCambios()
     {
         // This is a scaffold test demonstrating the structure
         
@@ -165,7 +165,7 @@ public class PedidosIntegrationTests
     }
 
     /// <summary>
-    /// Example of how to verify MongoDB connection
+    /// Ejemplo de cómo verificar conexión MongoDB
     /// </summary>
     [Test]
     public async Task MongoDBContainer_ShouldBeRunning()
@@ -179,7 +179,7 @@ public class PedidosIntegrationTests
     }
 
     /// <summary>
-    /// Example of how to verify PostgreSQL connection
+    /// Ejemplo de cómo verificar conexión PostgreSQL
     /// </summary>
     [Test]
     public async Task PostgreSQLContainer_ShouldBeRunning()
