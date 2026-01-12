@@ -388,7 +388,7 @@ Log.Information("╔════════════════════
 Log.Information("║              🏬 TiendaApi - API REST Educativa                    ║");
 Log.Information("╠═══════════════════════════════════════════════════════════════════");
 Log.Information("║  📖 Documentación Swagger:  http://localhost:{Port}/              ║", port);
-Log.Information("║  🔍 GraphiQL UI:             http://localhost:{Port}/graphiql    ║", port);
+Log.Information("║  🔍 GraphiQL UI:             http://localhost:{Port}/graphiql     ║", port);
 Log.Information("║  🔌 WebSocket Productos:    ws://localhost:{Port}/ws/v1/productos ║", port);
 Log.Information("║  🔌 WebSocket Pedidos:      ws://localhost:{Port}/ws/v1/pedidos   ║", port);
 Log.Information("╠═══════════════════════════════════════════════════════════════════");
