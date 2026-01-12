@@ -400,4 +400,236 @@ public class ProductoRequestValidatorTests
     }
 
     #endregion
+
+    #region Casos Borde Adicionales
+
+    [Test]
+    public void CreateAsync_ConNombreConCaracteresEspeciales_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Producto #1 - Deluxe Edition®",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 1
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
+    }
+
+    [Test]
+    public void CreateAsync_ConNombreConEspacios_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = " producto con espacios ",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 1
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
+    }
+
+    [Test]
+    public void CreateAsync_ConPrecioDecimal_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Precio = 0.01m,
+            Stock = 5,
+            CategoriaId = 1
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Precio);
+    }
+
+    [Test]
+    public void CreateAsync_ConPrecioMuyAlto_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Precio = 9999999.99m,
+            Stock = 5,
+            CategoriaId = 1
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Precio);
+    }
+
+    [Test]
+    public void CreateAsync_ConStockMuyAlto_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Precio = 10,
+            Stock = int.MaxValue,
+            CategoriaId = 1
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Stock);
+    }
+
+    [Test]
+    public void CreateAsync_ConCategoriaIdMuyAlto_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 999999999
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
+    }
+
+    [Test]
+    public void CreateAsync_ConUrlSinProtocolo_DeberiaTenerError()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 1,
+            Imagen = "www.ejemplo.com/imagen.jpg"
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldHaveValidationErrorFor(x => x.Imagen)
+            .WithErrorMessage("Debe ser una URL válida (http:// o https://)");
+    }
+
+    [Test]
+    public void CreateAsync_ConUrlConQueryString_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 1,
+            Imagen = "https://ejemplo.com/imagen.jpg?width=100&height=200"
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
+    }
+
+    [Test]
+    public void CreateAsync_ConDescripcionConSaltoDeLinea_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Descripcion = "Primera línea\nSegunda línea\r\nTercera línea",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 1
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
+    }
+
+    [Test]
+    public void CreateAsync_ConDescripcionConCaracteresEspeciales_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Descripcion = "Producto con acentos: áéíóúñÑ y símbolos: @#$%",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 1
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
+    }
+
+    [Test]
+    public void CreateAsync_ConDescripcionEnIngles_DeberiaPasar()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Descripcion = "This is a product description in English with special chars: ñ, ü, ö",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 1
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
+    }
+
+    [Test]
+    public void CreateAsync_ConSoloErroresDeStock_DeberiaTenerErrorSoloEnStock()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Descripcion = "A valid description",
+            Precio = 10,
+            Stock = -1,
+            CategoriaId = 1,
+            Imagen = "https://ejemplo.com/imagen.jpg"
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldHaveValidationErrorFor(x => x.Stock);
+        result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
+        result.ShouldNotHaveValidationErrorFor(x => x.Precio);
+        result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
+        result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
+        result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
+    }
+
+    [Test]
+    public void CreateAsync_ConSoloErroresDeCategoria_DeberiaTenerErrorSoloEnCategoria()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test Product",
+            Descripcion = "A valid description",
+            Precio = 10,
+            Stock = 5,
+            CategoriaId = 0,
+            Imagen = "https://ejemplo.com/imagen.jpg"
+        };
+
+        var result = _validator.TestValidate(dto);
+
+        result.ShouldHaveValidationErrorFor(x => x.CategoriaId);
+        result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
+        result.ShouldNotHaveValidationErrorFor(x => x.Precio);
+        result.ShouldNotHaveValidationErrorFor(x => x.Stock);
+        result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
+        result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
+    }
+
+    #endregion
 }
