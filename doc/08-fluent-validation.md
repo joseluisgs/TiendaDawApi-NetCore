@@ -38,19 +38,39 @@ dotnet add package FluentValidation.AspNetCore
 
 ## 2. Validadores
 
+### Estructura de Directorios
+
+```
+TiendaApi.Apis/Validators/
+├── Productos/
+│   └── ProductoRequestValidator.cs
+├── Categorias/
+│   └── CategoriaRequestValidator.cs
+├── Pedidos/
+│   ├── PedidoRequestValidator.cs
+│   └── PedidoItemRequestValidator.cs
+└── Usuarios/
+    ├── RegisterValidator.cs
+    ├── LoginValidator.cs
+    └── UserUpdateValidator.cs
+```
+
+### Ejemplo de Validador
+
 ```csharp
 using FluentValidation;
 using TiendaApi.Apis.Dtos.Productos;
 
-namespace TiendaApi.Apis.Services.Productos;
+namespace TiendaApi.Apis.Validators.Productos;
 
 public class ProductoRequestValidator : AbstractValidator<ProductoRequestDto>
 {
     public ProductoRequestValidator()
     {
         RuleFor(p => p.Nombre)
-            .NotEmpty().WithMessage("El nombre es requerido")
-            .Length(3, 200).WithMessage("El nombre debe tener entre 3 y 200 caracteres");
+            .NotEmpty().WithMessage("El nombre es obligatorio")
+            .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")
+            .MaximumLength(200).WithMessage("El nombre no puede exceder 200 caracteres");
 
         RuleFor(p => p.Precio)
             .GreaterThan(0).WithMessage("El precio debe ser mayor a 0");
@@ -59,7 +79,14 @@ public class ProductoRequestValidator : AbstractValidator<ProductoRequestDto>
             .GreaterThanOrEqualTo(0).WithMessage("El stock no puede ser negativo");
 
         RuleFor(p => p.CategoriaId)
-            .GreaterThan(0).WithMessage("Debe seleccionar una categoria valida");
+            .GreaterThan(0).WithMessage("Debe seleccionar una categoría válida");
+
+        RuleFor(p => p.Imagen)
+            .Must(url => string.IsNullOrEmpty(url) || 
+                Uri.TryCreate(url, UriKind.Absolute, out var uri) && 
+                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            .WithMessage("Debe ser una URL válida (http:// o https://)")
+            .When(p => !string.IsNullOrEmpty(p.Imagen));
     }
 }
 ```

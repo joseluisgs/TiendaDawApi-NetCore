@@ -13,9 +13,9 @@ flowchart LR
     end
     
     subgraph "Coverage Report"
-        L["Line: 49.79%"]
-        B["Branch: 56.01%"]
-        M["Method: 70.73%"]
+        L["Line: 54.56%"]
+        B["Branch: 58.22%"]
+        M["Method: 74.36%"]
     end
     
     subgraph "Thresholds"
@@ -27,6 +27,14 @@ flowchart LR
     T --> M
     L -.->|Below| A
 ```
+
+### Coverage Actual
+
+| Métrica | Porcentaje | Objetivo |
+|---------|------------|----------|
+| **Lines** | 54.56% | 70% |
+| **Branches** | 58.22% | 60% |
+| **Methods** | 74.36% | 80% |
 
 ---
 
@@ -60,14 +68,16 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ---
 
-## 4. Reporte de Coverage
+## 4. Reporte de Coverage Actual
 
 ```
-+-----------+--------+--------+--------+
-| Module    | Line   | Branch | Method |
-+-----------+--------+--------+--------+
-| TiendaApi | 49.79% | 56.01% | 70.73% |
-+-----------+--------+--------+--------+
++----------------+--------+--------+--------+
+| Module         | Line   | Branch | Method |
++----------------+--------+--------+--------+
+| TiendaApi.Apis | 54.56% | 58.22% | 74.36% |
++----------------+--------+--------+--------+
+
+Total: 350 tests unitarios
 ```
 
 ---

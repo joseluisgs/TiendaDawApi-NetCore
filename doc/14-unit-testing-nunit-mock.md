@@ -38,8 +38,132 @@ TiendaApi.Tests/
 │   ├── Services/
 │   │   ├── CategoriaServiceTests.cs
 │   │   └── ProductoServiceTests.cs
-│   └── Mappers/
-│       └── ProductoMapperTests.cs
+│   ├── Validators/
+│   │   ├── Productos/
+│   │   │   └── ProductoRequestValidatorTests.cs
+│   │   ├── Categorias/
+│   │   │   └── CategoriaRequestValidatorTests.cs
+│   │   ├── Pedidos/
+│   │   │   ├── PedidoRequestValidatorTests.cs
+│   │   │   └── PedidoItemRequestValidatorTests.cs
+│   │   └── Usuarios/
+│   │       ├── RegisterValidatorTests.cs
+│   │       └── LoginValidatorTests.cs
+│   ├── Mappers/
+│   │   └── ProductoMapperTests.cs
+│   └── Middleware/
+│       └── GlobalExceptionHandlerTests.cs
+```
+
+### Tests de Validadores
+
+```csharp
+using FluentValidation.TestHelper;
+using TiendaApi.Apis.Dtos.Productos;
+using TiendaApi.Apis.Validators.Productos;
+
+namespace TiendaApi.Tests.Unit.Validators.Productos;
+
+public class ProductoRequestValidatorTests
+{
+    private readonly ProductoRequestValidator _validator = new();
+
+    [Test]
+    public void CreateAsync_ConNombreVacio_DeberiaTenerError()
+    {
+        var dto = new ProductoRequestDto { Nombre = "", Precio = 10, Stock = 5, CategoriaId = 1 };
+        var result = _validator.TestValidate(dto);
+        result.ShouldHaveValidationErrorFor(x => x.Nombre)
+            .WithErrorMessage("El nombre es obligatorio");
+    }
+
+    [Test]
+    public void CreateAsync_ConPrecioNegativo_DeberiaTenerError()
+    {
+        var dto = new ProductoRequestDto { Nombre = "Test", Precio = -10, Stock = 5, CategoriaId = 1 };
+        var result = _validator.TestValidate(dto);
+        result.ShouldHaveValidationErrorFor(x => x.Precio)
+            .WithErrorMessage("El precio debe ser mayor a 0");
+    }
+
+    [Test]
+    public void CreateAsync_ConDtoValido_NoDeberiaTenerErrores()
+    {
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "iPhone 15 Pro",
+            Precio = 999.99m,
+            Stock = 50,
+            CategoriaId = 1,
+            Imagen = "https://ejemplo.com/iphone.jpg"
+        };
+        var result = _validator.TestValidate(dto);
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+}
+```
+
+### Tests de Middleware
+
+```csharp
+using FluentAssertions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Moq;
+using TiendaApi.Apis.Exceptions;
+using TiendaApi.Apis.Middleware;
+
+namespace TiendaApi.Tests.Unit.Middleware;
+
+public class GlobalExceptionHandlerTests
+{
+    private readonly Mock<RequestDelegate> _mockNext = new();
+    private readonly Mock<ILogger<GlobalExceptionHandler>> _mockLogger = new();
+    private readonly GlobalExceptionHandler _handler;
+
+    [SetUp]
+    public void Setup()
+    {
+        _handler = new GlobalExceptionHandler(_mockNext.Object, _mockLogger.Object);
+    }
+
+    [Test]
+    public async Task InvokeAsync_ConNotFoundException_DeberiaRetornar404()
+    {
+        // Arrange
+        var exception = new NotFoundException("Producto no encontrado");
+        var httpContext = new DefaultHttpContext();
+        httpContext.Response.Body = new MemoryStream();
+        _mockNext.Setup(next => next(It.IsAny<HttpContext>())).Throws(exception);
+
+        // Act
+        await _handler.InvokeAsync(httpContext);
+
+        // Assert
+        httpContext.Response.StatusCode.Should().Be(404);
+    }
+
+    [Test]
+    public async Task InvokeAsync_ConExceptionGenerica_NoDeberiaExponerDetalles()
+    {
+        // Arrange
+        var exception = new NullReferenceException("Object reference not set");
+        var httpContext = new DefaultHttpContext();
+        httpContext.Response.Body = new MemoryStream();
+        _mockNext.Setup(next => next(It.IsAny<HttpContext>())).Throws(exception);
+
+        // Act
+        await _handler.InvokeAsync(httpContext);
+
+        // Assert
+        httpContext.Response.StatusCode.Should().Be(500);
+        httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+        using var reader = new StreamReader(httpContext.Response.Body);
+        var body = await reader.ReadToEndAsync();
+        body.Should().Contain("Ha ocurrido un error interno");
+        body.Should().NotContain("NullReferenceException");
+    }
+}
 ```
 
 ---

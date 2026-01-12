@@ -217,6 +217,15 @@ flowchart LR
 ### 5.2 Ejemplo de Exception Handler Completo
 
 ```csharp
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Exceptions;
+
+namespace TiendaApi.Apis.Middleware;
+
 public class GlobalExceptionHandler
 {
     private readonly RequestDelegate _next;
@@ -236,58 +245,128 @@ public class GlobalExceptionHandler
         }
         catch (Exception ex)
         {
-            await HandleExceptionAsync(context, ex);
+            var errorId = Guid.NewGuid().ToString()[..8];
+            _logger.LogError(ex, "Excepción no manejada. ErrorId: {ErrorId}", errorId);
+            await HandleExceptionAsync(context, ex, errorId);
         }
     }
 
-    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception, string errorId)
     {
-        var errorId = Guid.NewGuid();
-        
-        // Log con correlation ID
-        _logger.LogError(exception, "Error no manejado. ErrorId: {ErrorId}", errorId);
-
         context.Response.ContentType = "application/json";
         
-        var (statusCode, message) = exception switch
+        var (statusCode, message, errors, errorType) = exception switch
         {
-            // Excepciones de validación
-            ValidationException => (400, exception.Message),
+            NotFoundException notFound => (
+                HttpStatusCode.NotFound,
+                notFound.Message,
+                (Dictionary<string, string[]>?)null,
+                ErrorType.NotFound
+            ),
             
-            // Excepciones de autorización
-            UnauthorizedAccessException => (401, "No autorizado"),
-            InvalidOperationException => (403, "Operación no permitida"),
+            ValidationException validation => (
+                HttpStatusCode.BadRequest,
+                validation.Message,
+                validation.Errors,
+                ErrorType.Validation
+            ),
             
-            // Excepciones de datos
-            KeyNotFoundException => (404, "Recurso no encontrado"),
-            DbUpdateException => (409, "Conflicto al actualizar datos"),
+            BusinessException business => (
+                HttpStatusCode.BadRequest,
+                business.Message,
+                (Dictionary<string, string[]>?)null,
+                ErrorType.BusinessRule
+            ),
             
-            // Excepciones de argumentos
-            ArgumentException => (400, exception.Message),
-            ArgumentNullException => (400, "Parámetro requerido"),
+            UnauthorizedAccessException => (
+                HttpStatusCode.Unauthorized,
+                "No autorizado",
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Unauthorized
+            ),
             
-            // Timeout
-            TimeoutException => (408, "Tiempo de espera agotado"),
+            ArgumentException argument => (
+                HttpStatusCode.BadRequest,
+                argument.Message,
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Validation
+            ),
             
-            // Default - Error interno
-            _ => (500, "Ha ocurrido un error interno")
+            DbUpdateException => (
+                HttpStatusCode.Conflict,
+                "Error al actualizar la base de datos",
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Internal
+            ),
+            
+            TimeoutException => (
+                HttpStatusCode.RequestTimeout,
+                "Tiempo de espera agotado",
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Internal
+            ),
+            
+            _ => (
+                HttpStatusCode.InternalServerError,
+                "Ha ocurrido un error interno",
+                (Dictionary<string, string[]>?)null,
+                ErrorType.Internal
+            )
         };
 
-        context.Response.StatusCode = statusCode;
-        
+        context.Response.StatusCode = (int)statusCode;
+
         var response = new
         {
-            message,
             errorId,
-            timestamp = DateTime.UtcNow
+            message,
+            errorType = errorType.ToString(),
+            timestamp = DateTime.UtcNow.ToString("o"),
+            path = context.Request.Path,
+            method = context.Request.Method,
+            errors
         };
-        
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
     }
 }
 ```
 
-### 5.3 Registro en Program.cs
+### 5.3 Ejemplo de Respuesta JSON
+
+```json
+{
+  "errorId": "82efb196",
+  "message": "Producto no encontrado",
+  "errorType": "NotFound",
+  "timestamp": "2026-01-12T16:53:42.0944317Z",
+  "path": "/api/productos/999",
+  "method": "GET"
+}
+```
+
+```json
+{
+  "errorId": "7bee413d",
+  "message": "Errores de validación",
+  "errorType": "Validation",
+  "timestamp": "2026-01-12T16:53:42.2154861Z",
+  "path": "/api/productos",
+  "method": "POST",
+  "errors": {
+    "Nombre": ["El nombre es obligatorio"],
+    "Precio": ["El precio debe ser mayor a 0"]
+  }
+}
+```
+
+### 5.5 Registro en Program.cs
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -318,7 +397,7 @@ app.UseAuthorization();
 app.MapControllers();
 ```
 
-### 5.4 Pipeline Completo de Middlewares
+### 5.6 Pipeline Completo de Middlewares
 
 ```mermaid
 flowchart LR
