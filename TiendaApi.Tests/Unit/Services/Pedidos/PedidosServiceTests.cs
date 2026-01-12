@@ -465,4 +465,625 @@ public class PedidosServiceTests
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.NotFound);
     }
+
+    #region Tests de Deteccion de Errores 40001
+
+    [Test]
+    public async Task CreateAsync_DbUpdateExceptionCon40001_DebeReintentar()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        var npgsqlException = new NpgsqlException("40001: could not serialize");
+        var dbUpdateException = new DbUpdateException("Error", npgsqlException);
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Items = new List<PedidoItem>
+            {
+                new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
+            },
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+            .ThrowsAsync(new SerializationFailureException("serialization failure", dbUpdateException))
+            .ReturnsAsync(_mockTransaction.Object);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Total.Should().Be(100);
+    }
+
+    [Test]
+    public async Task CreateAsync_NpgsqlExceptionConSerializacionIngles_DebeReintentar()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Items = new List<PedidoItem>
+            {
+                new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
+            },
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        var npgsqlException = new NpgsqlException("40001: could not serialize access due to concurrent update");
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+            .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
+            .ReturnsAsync(_mockTransaction.Object);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task CreateAsync_NpgsqlExceptionConSerializacionEspanol_DebeReintentar()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Items = new List<PedidoItem>
+            {
+                new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
+            },
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        var npgsqlException = new NpgsqlException("error de serializacion al actualizar");
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+            .ThrowsAsync(new SerializationFailureException("error de serializacion", npgsqlException))
+            .ReturnsAsync(_mockTransaction.Object);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Tests de Comportamiento de Transaccion
+
+    [Test]
+    public async Task CreateAsync_Exito_DebeLlamarCommit()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        await _service.CreateAsync(userId, pedidoDto);
+
+        _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task CreateAsync_ValidationFails_DebeLlamarRollback()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>()
+        };
+
+        _mockPedidoValidator.Setup(v => v.ValidateAsync(pedidoDto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[]
+            {
+                new ValidationFailure("Items", "El pedido debe contener al menos un artículo")
+            }));
+
+        _service = new PedidosService(
+            _mockPedidosRepo.Object,
+            _mockProductoRepo.Object,
+            _mockLogger.Object,
+            _mockCacheService.Object,
+            _mockEmailService.Object,
+            _mockConfiguration.Object,
+            _mockWebSocketHandler.Object,
+            _mockPedidoValidator.Object,
+            _mockItemValidator.Object
+        );
+
+        await _service.CreateAsync(userId, pedidoDto);
+
+        _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task CreateAsync_ProductoNoExiste_DebeLlamarRollback()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 999, Cantidad = 2 }
+            }
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
+            .ReturnsAsync((Producto?)null);
+
+        await _service.CreateAsync(userId, pedidoDto);
+
+        _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task CreateAsync_StockInsuficiente_DebeLlamarRollback()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 100 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+
+        await _service.CreateAsync(userId, pedidoDto);
+
+        _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region Tests de Retry con Diferentes Intentos
+
+    [Test]
+    public async Task CreateAsync_PrimerIntentoFalla_SegundoExito_RetornaPedido()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        var npgsqlException = new NpgsqlException("40001: serialization_failure");
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+            .ThrowsAsync(npgsqlException)
+            .ReturnsAsync(_mockTransaction.Object);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Total.Should().Be(100);
+        _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task CreateAsync_DosIntentosFallan_TerceroExito_RetornaPedido()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        var npgsqlException = new NpgsqlException("40001: serialization_failure");
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+            .ThrowsAsync(npgsqlException)
+            .ThrowsAsync(npgsqlException)
+            .ReturnsAsync(_mockTransaction.Object);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Total.Should().Be(100);
+        _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Tests de Multiples Items con Fallo
+
+    [Test]
+    public async Task CreateAsync_TercerItemFalla_TransaccionHaceRollback()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 },
+                new() { ProductoId = 2, Cantidad = 3 },
+                new() { ProductoId = 3, Cantidad = 100 }
+            }
+        };
+
+        var producto1 = new Producto { Id = 1, Nombre = "Product 1", Precio = 50, Stock = 10 };
+        var producto2 = new Producto { Id = 2, Nombre = "Product 2", Precio = 25, Stock = 20 };
+        var producto3 = new Producto { Id = 3, Nombre = "Product 3", Precio = 30, Stock = 5 };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(producto1);
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(2)).ReturnsAsync(producto2);
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(3)).ReturnsAsync(producto3);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync((Producto p) => p);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.BusinessRule);
+        _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task CreateAsync_TodosItemsExito_DecrementaStockCorrectamente()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 },
+                new() { ProductoId = 2, Cantidad = 1 }
+            }
+        };
+
+        var producto1 = new Producto { Id = 1, Nombre = "Product 1", Precio = 50, Stock = 10 };
+        var producto2 = new Producto { Id = 2, Nombre = "Product 2", Precio = 25, Stock = 5 };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Total = 125,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(producto1);
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(2)).ReturnsAsync(producto2);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync((Producto p) => p);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Total.Should().Be(125);
+        _mockProductoRepo.Verify(r => r.UpdateAsync(It.Is<Producto>(p => p.Id == 1 && p.Stock == 8)), Times.Once);
+        _mockProductoRepo.Verify(r => r.UpdateAsync(It.Is<Producto>(p => p.Id == 2 && p.Stock == 4)), Times.Once);
+    }
+
+    #endregion
+
+    #region Tests de Casos Borde
+
+    [Test]
+    public async Task CreateAsync_ItemConCantidadExactaStock_Exito()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 5 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 5
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Total = 250,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.Is<Producto>(p => p.Stock == 0)))
+            .ReturnsAsync(producto);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Total.Should().Be(250);
+    }
+
+    [Test]
+    public async Task CreateAsync_UnSoloItem_DebeFuncionarCorrectamente()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 1 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Single Item Product",
+            Precio = 99.99m,
+            Stock = 100
+        };
+
+        var pedidoGuardado = new Pedido
+        {
+            UserId = userId,
+            Total = 99.99m,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync(pedidoGuardado);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Total.Should().Be(99.99m);
+        _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task CreateAsync_ErrorNoDeSerializacion_NoReintenta()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        var genericException = new SerializationFailureException("connection timeout", 
+            new NpgsqlException("connection timeout"));
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+            .ThrowsAsync(genericException)
+            .ThrowsAsync(genericException)
+            .ThrowsAsync(genericException)
+            .ReturnsAsync(_mockTransaction.Object);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Conflict);
+    }
+
+    [Test]
+    public async Task CreateAsync_MaxRetriesConDiferentesDelays_EsperaCorrectamente()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        var npgsqlException = new NpgsqlException("40001: serialization_failure");
+
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+            .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
+            .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
+            .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
+            .ReturnsAsync(_mockTransaction.Object);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Conflict);
+        
+        _mockLogger.Verify(
+            l => l.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Maximos reintentos alcanzados")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
+            Times.Once);
+    }
+
+    #endregion
 }
