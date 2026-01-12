@@ -17,13 +17,15 @@ public class CategoriaService(
     ICategoriaRepository repository,
     ILogger<CategoriaService> logger,
     IValidator<CategoriaRequestDto> categoriaValidator
-) : ICategoriaService {
+) : ICategoriaService
+{
 
     /// <summary>
     /// Obtiene todas las categorías.
     /// Returns: Result.Success(List) | Result.Failure nunca
     /// </summary>
-    public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync() {
+    public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync()
+    {
         logger.LogInformation("Buscando todas las categorías");
         var categorias = await repository.FindAllAsync();
         var dtos = categorias.ToDtoList();
@@ -34,18 +36,20 @@ public class CategoriaService(
     /// Obtiene una categoría por su ID.
     /// Returns: Result.Success(CategoriaDto) | Result.Failure(NotFound)
     /// </summary>
-    public async Task<Result<CategoriaDto, DomainError>> FindByIdAsync(long id) {
+    public async Task<Result<CategoriaDto, DomainError>> FindByIdAsync(long id)
+    {
         logger.LogInformation("Buscando categoría con id: {Id}", id);
-        
+
         var categoria = await repository.FindByIdAsync(id);
-        
-        if (categoria == null) {
+
+        if (categoria == null)
+        {
             logger.LogWarning("Categoría con id {Id} no encontrada", id);
             return Result.Failure<CategoriaDto, DomainError>(
                 DomainError.NotFound($"Categoría con ID {id} no encontrada")
             );
         }
-        
+
         var dto = categoria.ToDto();
         return Result.Success<CategoriaDto, DomainError>(dto);
     }
@@ -54,22 +58,25 @@ public class CategoriaService(
     /// Crea una nueva categoría.
     /// Returns: Result.Success(CategoriaDto) | Result.Failure(Validation/Conflict)
     /// </summary>
-    public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto) {
+    public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto)
+    {
         logger.LogInformation("Creando categoría: {Nombre}", dto.Nombre);
-        
+
         var validationResult = await ValidateCategoriaAsync(dto);
-        if (validationResult.IsFailure) {
+        if (validationResult.IsFailure)
+        {
             return Result.Failure<CategoriaDto, DomainError>(validationResult.Error);
         }
-        
+
         var duplicateCheck = await CheckNombreDuplicado(dto.Nombre);
-        if (duplicateCheck.IsFailure) {
+        if (duplicateCheck.IsFailure)
+        {
             return Result.Failure<CategoriaDto, DomainError>(duplicateCheck.Error);
         }
-        
+
         var categoria = dto.ToEntity();
         var saved = await repository.SaveAsync(categoria);
-        
+
         logger.LogInformation("Categoría creada con id: {Id}", saved.Id);
         var result = saved.ToDto();
         return Result.Success<CategoriaDto, DomainError>(result);
@@ -79,30 +86,34 @@ public class CategoriaService(
     /// Actualiza una categoría existente.
     /// Returns: Result.Success(CategoriaDto) | Result.Failure(NotFound/Validation/Conflict)
     /// </summary>
-    public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto) {
+    public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto)
+    {
         logger.LogInformation("Actualizando categoría con id: {Id}", id);
-        
+
         var validationResult = await ValidateCategoriaAsync(dto);
-        if (validationResult.IsFailure) {
+        if (validationResult.IsFailure)
+        {
             return Result.Failure<CategoriaDto, DomainError>(validationResult.Error);
         }
-        
+
         var categoria = await repository.FindByIdAsync(id);
-        if (categoria == null) {
+        if (categoria == null)
+        {
             logger.LogWarning("Categoría con id {Id} no encontrada para actualizar", id);
             return Result.Failure<CategoriaDto, DomainError>(
                 DomainError.NotFound($"Categoría con ID {id} no encontrada")
             );
         }
-        
+
         var duplicateCheck = await CheckNombreDuplicado(dto.Nombre, id);
-        if (duplicateCheck.IsFailure) {
+        if (duplicateCheck.IsFailure)
+        {
             return Result.Failure<CategoriaDto, DomainError>(duplicateCheck.Error);
         }
-        
+
         categoria.Nombre = dto.Nombre;
         var updated = await repository.UpdateAsync(categoria);
-        
+
         logger.LogInformation("Categoría actualizada con id: {Id}", id);
         var result = updated.ToDto();
         return Result.Success<CategoriaDto, DomainError>(result);
@@ -112,20 +123,22 @@ public class CategoriaService(
     /// Elimina una categoría.
     /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>
-    public async Task<UnitResult<DomainError>> DeleteAsync(long id) {
+    public async Task<UnitResult<DomainError>> DeleteAsync(long id)
+    {
         logger.LogInformation("Eliminando categoría con id: {Id}", id);
-        
+
         var categoria = await repository.FindByIdAsync(id);
-        if (categoria == null) {
+        if (categoria == null)
+        {
             logger.LogWarning("Categoría con id {Id} no encontrada para eliminar", id);
             return UnitResult.Failure<DomainError>(
                 DomainError.NotFound($"Categoría con ID {id} no encontrada")
             );
         }
-        
+
         await repository.DeleteAsync(id);
         logger.LogInformation("Categoría eliminada con id: {Id}", id);
-        
+
         return UnitResult.Success<DomainError>();
     }
 
@@ -136,7 +149,7 @@ public class CategoriaService(
     private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto)
     {
         var validationResult = await categoriaValidator.ValidateAsync(dto);
-        
+
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors
@@ -145,12 +158,12 @@ public class CategoriaService(
                     g => g.Key,
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
-            
+
             return UnitResult.Failure<DomainError>(
                 DomainError.Validation("Errores de validación", errors)
             );
         }
-        
+
         return UnitResult.Success<DomainError>();
     }
 
@@ -158,15 +171,17 @@ public class CategoriaService(
     /// Verifica si el nombre ya existe en otra categoría.
     /// Returns: Result.Success(true) | Result.Failure(Conflict)
     /// </summary>
-    private async Task<Result<bool, DomainError>> CheckNombreDuplicado(string nombre, long? excludeId = null) {
+    private async Task<Result<bool, DomainError>> CheckNombreDuplicado(string nombre, long? excludeId = null)
+    {
         var exists = await repository.ExistsByNombreAsync(nombre, excludeId);
-        
-        if (exists) {
+
+        if (exists)
+        {
             return Result.Failure<bool, DomainError>(
                 DomainError.Conflict($"Ya existe una categoría con el nombre '{nombre}'")
             );
         }
-        
+
         return Result.Success<bool, DomainError>(true);
     }
 }

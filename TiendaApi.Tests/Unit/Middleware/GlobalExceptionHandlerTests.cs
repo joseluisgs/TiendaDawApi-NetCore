@@ -305,7 +305,7 @@ public class GlobalExceptionHandlerTests
 
         // Act & Assert - No debe lanzar
         await _handler.InvokeAsync(httpContext);
-        
+
         // Verificar que no hubo error (Status 200)
         httpContext.Response.StatusCode.Should().Be(200);
     }

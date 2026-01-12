@@ -34,9 +34,9 @@ public class EmailBackgroundService : BackgroundService
                 var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
                 _logger.LogInformation("Procesando email de la cola para: {To}", emailMessage.To);
-                
+
                 await emailService.SendEmailAsync(emailMessage);
-                
+
                 _logger.LogInformation("Email procesado exitosamente para: {To}", emailMessage.To);
             }
             catch (Exception ex)

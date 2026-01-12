@@ -254,4 +254,109 @@ public class CategoriasControllerTests
     }
 
     #endregion
+
+    #region Tests Adicionales - Casos Borde
+
+    [Test]
+    public async Task GetById_ConIdCero_RetornaNotFound()
+    {
+        var error = DomainError.NotFound("Categoría no encontrada");
+
+        _mockService.Setup(s => s.FindByIdAsync(0))
+            .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
+
+        var result = await _controller.GetById(0);
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Test]
+    public async Task GetById_ConIdNegativo_RetornaNotFound()
+    {
+        var error = DomainError.NotFound("Categoría no encontrada");
+
+        _mockService.Setup(s => s.FindByIdAsync(-1))
+            .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
+
+        var result = await _controller.GetById(-1);
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Test]
+    public async Task Create_ConNombreLargo_RetornaCreated()
+    {
+        var nombreLargo = new string('A', 100);
+        var requestDto = new CategoriaRequestDto { Nombre = nombreLargo };
+        var categoriaDto = new CategoriaDto { Id = 1, Nombre = nombreLargo };
+
+        _mockService.Setup(s => s.CreateAsync(requestDto))
+            .ReturnsAsync(Result.Success<CategoriaDto, DomainError>(categoriaDto));
+
+        var result = await _controller.Create(requestDto);
+
+        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        createdResult.Value.Should().NotBeNull();
+    }
+
+    [Test]
+    public async Task Create_ConNombreConCaracteresEspeciales_RetornaCreated()
+    {
+        var requestDto = new CategoriaRequestDto { Nombre = "Categoría #1 - Test®" };
+        var categoriaDto = new CategoriaDto { Id = 1, Nombre = requestDto.Nombre };
+
+        _mockService.Setup(s => s.CreateAsync(requestDto))
+            .ReturnsAsync(Result.Success<CategoriaDto, DomainError>(categoriaDto));
+
+        var result = await _controller.Create(requestDto);
+
+        result.Should().BeOfType<CreatedAtActionResult>();
+    }
+
+    [Test]
+    public async Task Update_ConflictoPorNombreDuplicado_RetornaConflict()
+    {
+        var id = 1L;
+        var requestDto = new CategoriaRequestDto { Nombre = "Existente" };
+        var error = DomainError.Conflict("Ya existe una categoría con ese nombre");
+
+        _mockService.Setup(s => s.UpdateAsync(id, requestDto))
+            .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
+
+        var result = await _controller.Update(id, requestDto);
+
+        result.Should().BeOfType<ConflictObjectResult>();
+    }
+
+    [Test]
+    public async Task Update_ErrorInterno_Retorna500()
+    {
+        var id = 1L;
+        var requestDto = new CategoriaRequestDto { Nombre = "Actualizada" };
+        var error = DomainError.Internal("Error en base de datos");
+
+        _mockService.Setup(s => s.UpdateAsync(id, requestDto))
+            .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
+
+        var result = await _controller.Update(id, requestDto);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    [Test]
+    public async Task Delete_CategoriaConProductos_Retorna500()
+    {
+        var error = DomainError.BusinessRule("No se puede eliminar una categoría con productos asociados");
+
+        _mockService.Setup(s => s.DeleteAsync(1))
+            .ReturnsAsync(UnitResult.Failure<DomainError>(error));
+
+        var result = await _controller.Delete(1);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    #endregion
 }

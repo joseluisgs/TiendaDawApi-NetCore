@@ -27,7 +27,7 @@ public class ProductoType : ObjectGraphType<Producto>
         Field(p => p.CategoriaId).Description("El ID de la categoría");
         Field(p => p.CreatedAt).Description("Fecha de creación");
         Field(p => p.UpdatedAt).Description("Fecha de última actualización");
-        
+
         Field<CategoriaType>("categoria")
             .Resolve(context => context.Source.Categoria);
     }

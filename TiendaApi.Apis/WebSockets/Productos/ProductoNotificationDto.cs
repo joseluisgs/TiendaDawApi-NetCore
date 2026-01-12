@@ -9,22 +9,22 @@ public class ProductoNotificationDto
     /// Tipo de notificación (CREATED, UPDATED, DELETED).
     /// </summary>
     public string Type { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// ID del producto.
     /// </summary>
     public long ProductoId { get; set; }
-    
+
     /// <summary>
     /// Nombre del producto.
     /// </summary>
     public string ProductoNombre { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Timestamp de la notificación.
     /// </summary>
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    
+
     /// <summary>
     /// Datos adicionales de la notificación (opcional).
     /// </summary>
@@ -40,12 +40,12 @@ public static class NotificationType
     /// Notificación de producto creado.
     /// </summary>
     public const string CREATED = "CREATED";
-    
+
     /// <summary>
     /// Notificación de producto actualizado.
     /// </summary>
     public const string UPDATED = "UPDATED";
-    
+
     /// <summary>
     /// Notificación de producto eliminado.
     /// </summary>

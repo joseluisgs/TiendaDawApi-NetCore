@@ -51,7 +51,7 @@ public class RedisCacheServiceTests
         var testObject = new TestData { Id = 1, Name = "Test" };
         var json = JsonSerializer.Serialize(testObject);
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-        
+
         _mockCache.Setup(c => c.Get("test-key"))
             .Returns(bytes);
 

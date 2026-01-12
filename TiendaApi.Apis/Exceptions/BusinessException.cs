@@ -15,7 +15,7 @@ public class BusinessException : Exception
     /// <summary>
     /// Crea una nueva excepción de negocio con inner exception.
     /// </summary>
-    public BusinessException(string message, Exception innerException) 
+    public BusinessException(string message, Exception innerException)
         : base(message, innerException)
     {
     }

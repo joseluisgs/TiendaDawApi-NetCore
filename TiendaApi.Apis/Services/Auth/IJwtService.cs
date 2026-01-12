@@ -11,7 +11,7 @@ public interface IJwtService
     /// Genera un token JWT para el usuario autenticado.
     /// </summary>
     string GenerateToken(User user);
-    
+
     /// <summary>
     /// Valida un token JWT y retorna el username si es válido.
     /// </summary>

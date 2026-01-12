@@ -29,7 +29,8 @@ public class PedidosService(
     PedidoWebSocketHandler webSocketHandler,
     IValidator<PedidoRequestDto> pedidoValidator,
     IValidator<PedidoItemRequestDto> pedidoItemValidator
-) : IPedidosService {
+) : IPedidosService
+{
 
     private const int MaxRetries = 3;
 
@@ -37,12 +38,13 @@ public class PedidosService(
     /// Obtiene todos los pedidos.
     /// Returns: Result.Success(List) | Result.Failure nunca
     /// </summary>
-    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync() {
+    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync()
+    {
         logger.LogInformation("Obteniendo todos los pedidos");
-        
+
         var pedidos = await pedidosRepository.FindAllAsync();
         var dtos = pedidos.ToDtoList();
-        
+
         return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
     }
 
@@ -50,23 +52,25 @@ public class PedidosService(
     /// Obtiene los pedidos de un usuario con caché.
     /// Returns: Result.Success(List) | Result.Failure nunca
     /// </summary>
-    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId) {
+    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId)
+    {
         logger.LogInformation("Obteniendo pedidos del usuario: {UserId}", userId);
-        
+
         var cacheKey = $"pedidos:user:{userId}";
         var cachedPedidos = await cacheService.GetAsync<IEnumerable<PedidoDto>>(cacheKey);
-        
-        if (cachedPedidos != null) {
+
+        if (cachedPedidos != null)
+        {
             logger.LogInformation("Devolviendo pedidos desde caché para usuario: {UserId}", userId);
             return Result.Success<IEnumerable<PedidoDto>, DomainError>(cachedPedidos);
         }
-        
+
         var pedidos = await pedidosRepository.FindByUserIdAsync(userId);
         var dtos = pedidos.ToDtoList();
-        
+
         var cacheTTL = TimeSpan.FromMinutes(5);
         await cacheService.SetAsync(cacheKey, dtos, cacheTTL);
-        
+
         return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
     }
 
@@ -74,31 +78,34 @@ public class PedidosService(
     /// Obtiene un pedido por su ID con caché.
     /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound)
     /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id) {
+    public async Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id)
+    {
         logger.LogInformation("Obteniendo pedido: {Id}", id);
-        
+
         var cacheKey = $"pedidos:{id}";
         var cachedPedido = await cacheService.GetAsync<PedidoDto>(cacheKey);
-        
-        if (cachedPedido != null) {
+
+        if (cachedPedido != null)
+        {
             logger.LogInformation("Devolviendo pedido desde caché: {Id}", id);
             return Result.Success<PedidoDto, DomainError>(cachedPedido);
         }
-        
+
         var pedido = await pedidosRepository.FindByIdAsync(id);
-        
-        if (pedido == null) {
+
+        if (pedido == null)
+        {
             logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
                 DomainError.NotFound($"Pedido con ID {id} no encontrado")
             );
         }
-        
+
         var dto = pedido.ToDto();
-        
+
         var cacheTTL = TimeSpan.FromMinutes(5);
         await cacheService.SetAsync(cacheKey, dto, cacheTTL);
-        
+
         return Result.Success<PedidoDto, DomainError>(dto);
     }
 
@@ -108,14 +115,16 @@ public class PedidosService(
     /// en caso de errores de serialización de PostgreSQL (código 40001).
     /// Returns: Result.Success(PedidoDto) | Result.Failure(Validation/NotFound/BusinessRule/Conflict/Internal)
     /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto) {
+    public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto)
+    {
         logger.LogInformation("Creando pedido para usuario: {UserId} con {ItemCount} items", userId, dto.Items.Count);
-        
+
         var validationResult = await ValidatePedidoAsync(dto);
-        if (validationResult.IsFailure) {
+        if (validationResult.IsFailure)
+        {
             return Result.Failure<PedidoDto, DomainError>(validationResult.Error);
         }
-        
+
         for (int attempt = 1; attempt <= MaxRetries; attempt++)
         {
             try
@@ -127,18 +136,18 @@ public class PedidosService(
                 if (attempt == MaxRetries)
                 {
                     logger.LogWarning(
-                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}", 
+                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
                         userId);
                     return Result.Failure<PedidoDto, DomainError>(
                         DomainError.Conflict(
                             "El producto fue adquirido por otro usuario. Por favor, reintente la operacion."));
                 }
-                
+
                 var delayMs = 50 * attempt;
                 logger.LogDebug(
                     "Reintento {Attempt}/{MaxRetries} tras error de serializacion para usuario {UserId}, delay: {Delay}ms",
                     attempt, MaxRetries, userId, delayMs);
-                
+
                 await Task.Delay(delayMs);
             }
             catch (NpgsqlException ex) when (IsSerializationFailureMessage(ex.Message))
@@ -146,22 +155,22 @@ public class PedidosService(
                 if (attempt == MaxRetries)
                 {
                     logger.LogWarning(
-                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}", 
+                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
                         userId);
                     return Result.Failure<PedidoDto, DomainError>(
                         DomainError.Conflict(
                             "El producto fue adquirido por otro usuario. Por favor, reintente la operacion."));
                 }
-                
+
                 var delayMs = 50 * attempt;
                 logger.LogDebug(
                     "Reintento {Attempt}/{MaxRetries} tras error de serializacion para usuario {UserId}, delay: {Delay}ms",
                     attempt, MaxRetries, userId, delayMs);
-                
+
                 await Task.Delay(delayMs);
             }
         }
-        
+
         return Result.Failure<PedidoDto, DomainError>(
             DomainError.Internal("Error inesperado al procesar el pedido"));
     }
@@ -171,17 +180,17 @@ public class PedidosService(
     /// Si ocurre un error de serialización (40001), lanza SerializationFailureException.
     /// </summary>
     private async Task<Result<PedidoDto, DomainError>> CreateWithSerializableTransactionAsync(
-        long userId, 
+        long userId,
         PedidoRequestDto dto)
     {
         await using var transaction = await productoRepository.BeginTransactionAsync(
             System.Data.IsolationLevel.Serializable);
-        
+
         try
         {
             var pedidoItems = new List<PedidoItem>();
             decimal total = 0;
-            
+
             foreach (var itemDto in dto.Items)
             {
                 var itemValidation = await ValidatePedidoItemAsync(itemDto);
@@ -190,16 +199,16 @@ public class PedidosService(
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(itemValidation.Error);
                 }
-                
+
                 var producto = await productoRepository.FindByIdAsync(itemDto.ProductoId);
-                
+
                 if (producto == null)
                 {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
                         DomainError.NotFound($"Producto con ID {itemDto.ProductoId} no encontrado"));
                 }
-                
+
                 if (producto.Stock < itemDto.Cantidad)
                 {
                     await transaction.RollbackAsync();
@@ -207,28 +216,30 @@ public class PedidosService(
                         DomainError.BusinessRule(
                             $"Stock insuficiente para el producto {producto.Nombre}. Disponible: {producto.Stock}, Solicitado: {itemDto.Cantidad}"));
                 }
-                
+
                 producto.Stock -= itemDto.Cantidad;
                 producto.UpdatedAt = DateTime.UtcNow;
-                
+
                 await productoRepository.UpdateAsync(producto);
-                
+
                 var subtotal = producto.Precio * itemDto.Cantidad;
                 total += subtotal;
-                
-                pedidoItems.Add(new PedidoItem {
+
+                pedidoItems.Add(new PedidoItem
+                {
                     ProductoId = producto.Id,
                     NombreProducto = producto.Nombre,
                     Cantidad = itemDto.Cantidad,
                     Precio = producto.Precio,
                     Subtotal = subtotal
                 });
-                
-                logger.LogDebug("Stock decrementado para producto: {ProductoId}, cantidad: {Cantidad}", 
+
+                logger.LogDebug("Stock decrementado para producto: {ProductoId}, cantidad: {Cantidad}",
                     producto.Id, itemDto.Cantidad);
             }
-            
-            var pedido = new Pedido {
+
+            var pedido = new Pedido
+            {
                 UserId = userId,
                 Items = pedidoItems,
                 Total = total,
@@ -236,18 +247,18 @@ public class PedidosService(
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
-            
+
             var savedPedido = await pedidosRepository.SaveAsync(pedido);
-            
+
             await transaction.CommitAsync();
-            
-            logger.LogInformation("Pedido creado: {Id} para usuario: {UserId}, total: {Total}", 
+
+            logger.LogInformation("Pedido creado: {Id} para usuario: {UserId}, total: {Total}",
                 savedPedido.Id, userId, total);
-            
+
             var resultDto = savedPedido.ToDto();
-            
+
             _ = Task.Run(async () => await NotificarPedidoCreadoAsync(userId, resultDto, pedidoItems, total));
-            
+
             return Result.Success<PedidoDto, DomainError>(resultDto);
         }
         catch (DbUpdateException ex) when (IsSerializationFailure(ex))
@@ -293,51 +304,59 @@ public class PedidosService(
     /// Actualiza el estado de un pedido.
     /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado) {
+    public async Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado)
+    {
         logger.LogInformation("Actualizando estado del pedido: {Id} a {Estado}", id, nuevoEstado);
-        
+
         var validEstados = new[] { PedidoEstado.PENDIENTE, PedidoEstado.PROCESANDO, PedidoEstado.ENVIADO, PedidoEstado.ENTREGADO, PedidoEstado.CANCELADO };
-        if (!validEstados.Contains(nuevoEstado)) {
+        if (!validEstados.Contains(nuevoEstado))
+        {
             return Result.Failure<PedidoDto, DomainError>(
                 DomainError.Validation($"Estado inválido. Valores permitidos: {string.Join(", ", validEstados)}")
             );
         }
-        
+
         var pedido = await pedidosRepository.FindByIdAsync(id);
-        
-        if (pedido == null) {
+
+        if (pedido == null)
+        {
             logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
                 DomainError.NotFound($"Pedido con ID {id} no encontrado")
             );
         }
-        
+
         var estadoAnterior = pedido.Estado;
         pedido.Estado = nuevoEstado;
-        
+
         var updated = await pedidosRepository.UpdateAsync(pedido);
         logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
-        
+
         var resultDto = updated.ToDto();
-        
+
         _ = Task.Run(async () =>
         {
-            try {
+            try
+            {
                 await cacheService.RemoveAsync($"pedidos:{id}");
                 await cacheService.RemoveAsync($"pedidos:user:{pedido.UserId}");
                 logger.LogDebug("Caché invalidada tras actualizar estado del pedido");
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 logger.LogWarning(ex, "Error al invalidar caché tras actualizar estado del pedido");
             }
         });
-        
+
         _ = Task.Run(async () =>
         {
-            try {
+            try
+            {
                 var adminEmail = configuration["Smtp:AdminEmail"];
-                if (!string.IsNullOrEmpty(adminEmail)) {
-                    var emailMessage = new EmailMessage {
+                if (!string.IsNullOrEmpty(adminEmail))
+                {
+                    var emailMessage = new EmailMessage
+                    {
                         To = adminEmail,
                         Subject = $"Pedido #{id} - Cambio de Estado",
                         Body = $@"
@@ -355,11 +374,12 @@ public class PedidosService(
                     logger.LogDebug("Email de notificación encolado tras cambio de estado del pedido");
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 logger.LogWarning(ex, "Error al encolar email de notificación tras cambio de estado");
             }
         });
-        
+
         return Result.Success<PedidoDto, DomainError>(resultDto);
     }
 
@@ -369,30 +389,37 @@ public class PedidosService(
     /// </summary>
     private async Task NotificarPedidoCreadoAsync(long userId, PedidoDto resultDto, List<PedidoItem> pedidoItems, decimal total)
     {
-        try {
+        try
+        {
             await cacheService.RemoveAsync($"pedidos:user:{userId}");
             logger.LogDebug("Caché invalidada para pedidos del usuario: {UserId}", userId);
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             logger.LogWarning(ex, "Error al invalidar caché tras crear pedido");
         }
-        
-        try {
+
+        try
+        {
             var cacheTTL = TimeSpan.FromMinutes(5);
             await cacheService.SetAsync($"pedidos:{resultDto.Id}", resultDto, cacheTTL);
             logger.LogDebug("Pedido cacheado: {Id}", resultDto.Id);
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             logger.LogWarning(ex, "Error al cachear nuevo pedido");
         }
-        
-        try {
+
+        try
+        {
             var adminEmail = configuration["Smtp:AdminEmail"];
-            if (!string.IsNullOrEmpty(adminEmail)) {
-                var itemsHtml = string.Join("", pedidoItems.Select(i => 
+            if (!string.IsNullOrEmpty(adminEmail))
+            {
+                var itemsHtml = string.Join("", pedidoItems.Select(i =>
                     $"<li>{i.NombreProducto} - Cantidad: {i.Cantidad} - Precio: ${i.Precio:F2} - Subtotal: ${i.Subtotal:F2}</li>"));
-                
-                var emailMessage = new EmailMessage {
+
+                var emailMessage = new EmailMessage
+                {
                     To = adminEmail,
                     Subject = $"Nuevo Pedido #{resultDto.Id}",
                     Body = $@"
@@ -411,16 +438,20 @@ public class PedidosService(
                 logger.LogDebug("Email de notificación encolado tras crear pedido");
             }
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             logger.LogWarning(ex, "Error al encolar email de notificación tras crear pedido");
         }
-        
-        if (!string.IsNullOrEmpty(resultDto.Id)) {
-            try {
+
+        if (!string.IsNullOrEmpty(resultDto.Id))
+        {
+            try
+            {
                 await webSocketHandler.NotifyPedidoCreatedAsync(resultDto.Id, userId, resultDto);
                 logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", resultDto.Id);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", resultDto.Id);
             }
         }
@@ -433,7 +464,7 @@ public class PedidosService(
     private async Task<UnitResult<DomainError>> ValidatePedidoAsync(PedidoRequestDto dto)
     {
         var validationResult = await pedidoValidator.ValidateAsync(dto);
-        
+
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors
@@ -442,12 +473,12 @@ public class PedidosService(
                     g => g.Key,
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
-            
+
             return UnitResult.Failure<DomainError>(
                 DomainError.Validation("Errores de validación", errors)
             );
         }
-        
+
         return UnitResult.Success<DomainError>();
     }
 
@@ -458,7 +489,7 @@ public class PedidosService(
     private async Task<UnitResult<DomainError>> ValidatePedidoItemAsync(PedidoItemRequestDto dto)
     {
         var validationResult = await pedidoItemValidator.ValidateAsync(dto);
-        
+
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors
@@ -467,12 +498,12 @@ public class PedidosService(
                     g => g.Key,
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
-            
+
             return UnitResult.Failure<DomainError>(
                 DomainError.Validation("Errores de validación", errors)
             );
         }
-        
+
         return UnitResult.Success<DomainError>();
     }
 }

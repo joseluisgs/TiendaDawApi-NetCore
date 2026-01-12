@@ -27,8 +27,8 @@ public class ProductoRequestValidator : AbstractValidator<ProductoRequestDto>
 
         RuleFor(p => p.Imagen)
             .MaximumLength(500).WithMessage("La URL de la imagen no puede exceder 500 caracteres")
-            .Must(url => string.IsNullOrEmpty(url) || 
-                (Uri.TryCreate(url, UriKind.Absolute, out var uri) && 
+            .Must(url => string.IsNullOrEmpty(url) ||
+                (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
                  (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
             .WithMessage("Debe ser una URL válida (http:// o https://)")
             .When(p => !string.IsNullOrEmpty(p.Imagen));

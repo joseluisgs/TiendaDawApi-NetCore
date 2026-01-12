@@ -356,4 +356,167 @@ public class ProductosControllerTests
     }
 
     #endregion
+
+    #region Tests Adicionales - Casos Borde
+
+    [Test]
+    public async Task GetById_ConIdCero_RetornaNotFound()
+    {
+        var error = DomainError.NotFound("Producto no encontrado");
+
+        _mockService.Setup(s => s.FindByIdAsync(0))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.GetById(0);
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Test]
+    public async Task GetById_ConIdNegativo_RetornaNotFound()
+    {
+        var error = DomainError.NotFound("Producto no encontrado");
+
+        _mockService.Setup(s => s.FindByIdAsync(-1))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.GetById(-1);
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Test]
+    public async Task Create_ConNombreVacio_RetornaBadRequest()
+    {
+        var requestDto = new ProductoRequestDto
+        {
+            Nombre = "",
+            Precio = 99.99m,
+            Stock = 10
+        };
+        var error = DomainError.Validation("El nombre es obligatorio");
+
+        _mockService.Setup(s => s.CreateAsync(requestDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.Create(requestDto);
+
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequestResult.Value.Should().NotBeNull();
+    }
+
+    [Test]
+    public async Task Create_ConCategoriaIdCero_RetornaBadRequest()
+    {
+        var requestDto = new ProductoRequestDto
+        {
+            Nombre = "Producto",
+            Precio = 99.99m,
+            Stock = 10,
+            CategoriaId = 0
+        };
+        var error = DomainError.Validation("Debe seleccionar una categoría válida");
+
+        _mockService.Setup(s => s.CreateAsync(requestDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.Create(requestDto);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Test]
+    public async Task Update_ConflictoDeStock_RetornaBadRequest()
+    {
+        var id = 1L;
+        var requestDto = new ProductoRequestDto
+        {
+            Nombre = "Producto",
+            Precio = 99.99m,
+            Stock = 1000
+        };
+        var error = DomainError.BusinessRule("No hay suficiente stock");
+
+        _mockService.Setup(s => s.UpdateAsync(id, requestDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.Update(id, requestDto);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    [Test]
+    public async Task Create_ErrorInterno_Retorna500()
+    {
+        var requestDto = new ProductoRequestDto
+        {
+            Nombre = "Producto",
+            Precio = 99.99m,
+            Stock = 10
+        };
+        var error = DomainError.Internal("Error en base de datos");
+
+        _mockService.Setup(s => s.CreateAsync(requestDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.Create(requestDto);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    [Test]
+    public async Task GetByCategoria_ConCategoriaValida_RetornaOk()
+    {
+        var productos = new List<ProductoDto>
+        {
+            new() { Id = 1, Nombre = "Laptop", Precio = 999.99m, CategoriaId = 1 },
+            new() { Id = 2, Nombre = "Mouse", Precio = 29.99m, CategoriaId = 1 }
+        };
+
+        _mockService.Setup(s => s.FindByCategoriaIdAsync(1))
+            .ReturnsAsync(Result.Success<IEnumerable<ProductoDto>, DomainError>(productos));
+
+        var result = await _controller.GetByCategoria(1);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProductos = okResult.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
+        returnedProductos.Should().HaveCount(2);
+    }
+
+    [Test]
+    public async Task GetByCategoria_CategoriaVacia_RetornaOkConListaVacia()
+    {
+        _mockService.Setup(s => s.FindByCategoriaIdAsync(999))
+            .ReturnsAsync(Result.Success<IEnumerable<ProductoDto>, DomainError>(new List<ProductoDto>()));
+
+        var result = await _controller.GetByCategoria(999);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProductos = okResult.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
+        returnedProductos.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task Create_ConflictoPorDuplicado_Retorna409()
+    {
+        var requestDto = new ProductoRequestDto
+        {
+            Nombre = "Producto Existente",
+            Precio = 99.99m,
+            Stock = 10
+        };
+        var error = DomainError.Conflict("El producto ya existe");
+
+        _mockService.Setup(s => s.CreateAsync(requestDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.Create(requestDto);
+
+        var objectResult = result.Should().BeAssignableTo<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(409);
+    }
+
+    #endregion
 }

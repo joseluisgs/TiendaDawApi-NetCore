@@ -61,7 +61,7 @@ public record DomainError(string Message, ErrorType Type, string? Details = null
     /// <summary>
     /// Representación en string del error de dominio.
     /// </summary>
-    public override string ToString() => 
+    public override string ToString() =>
         $"{Type}: {Message}" + (Details != null ? $" - {Details}" : "");
 }
 

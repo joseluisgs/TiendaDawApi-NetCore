@@ -27,7 +27,7 @@ public class JwtService : IJwtService
     /// </summary>
     public string GenerateToken(User user)
     {
-        var key = _configuration["Jwt:Key"] 
+        var key = _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT Key not configured");
         var issuer = _configuration["Jwt:Issuer"] ?? "TiendaApi";
         var audience = _configuration["Jwt:Audience"] ?? "TiendaApi";
@@ -54,9 +54,9 @@ public class JwtService : IJwtService
         );
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        
+
         _logger.LogInformation("Token JWT generado para usuario: {Username}", user.Username);
-        
+
         return tokenString;
     }
 
@@ -68,7 +68,7 @@ public class JwtService : IJwtService
     {
         try
         {
-            var key = _configuration["Jwt:Key"] 
+            var key = _configuration["Jwt:Key"]
                 ?? throw new InvalidOperationException("JWT Key not configured");
             var issuer = _configuration["Jwt:Issuer"] ?? "TiendaApi";
             var audience = _configuration["Jwt:Audience"] ?? "TiendaApi";

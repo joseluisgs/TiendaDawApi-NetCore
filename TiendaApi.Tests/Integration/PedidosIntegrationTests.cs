@@ -59,7 +59,7 @@ public class PedidosIntegrationTests
 
         // Setup DI container
         var services = new ServiceCollection();
-        
+
         // Note: This is a scaffold for integration tests
         // Full implementation would require:
         // 1. DbContext setup with PostgreSQL container
@@ -69,7 +69,7 @@ public class PedidosIntegrationTests
         // 5. Cache and email service mocks
 
         services.AddSingleton<IConfiguration>(configuration);
-        
+
         // TODO: Add full service registration when implementing
         // services.AddDbContext<TiendaDbContext>(...);
         // services.AddScoped<IPedidosRepository, PedidosRepository>();
@@ -84,12 +84,12 @@ public class PedidosIntegrationTests
     public async Task OneTimeTearDown()
     {
         _serviceProvider?.Dispose();
-        
+
         if (_mongoContainer != null)
         {
             await _mongoContainer.DisposeAsync();
         }
-        
+
         if (_postgresContainer != null)
         {
             await _postgresContainer.DisposeAsync();
@@ -102,15 +102,15 @@ public class PedidosIntegrationTests
     {
         // This is a scaffold test demonstrating the structure
         // Actual implementation requires full DI setup
-        
+
         // Arrange
         // var pedidosService = _serviceProvider!.GetRequiredService<IPedidosService>();
         // var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
-        
+
         // Setup test data in PostgreSQL
         // var testProducto = new Producto { ... };
         // await productoRepo.SaveAsync(testProducto);
-        
+
         // var pedidoRequest = new PedidoRequestDto { ... };
 
         // Act
@@ -120,7 +120,7 @@ public class PedidosIntegrationTests
         // result.IsSuccess.Should().BeTrue();
         // Verify pedido was saved to MongoDB
         // Verify stock was updated in PostgreSQL
-        
+
         await Task.CompletedTask;
     }
 
@@ -129,16 +129,16 @@ public class PedidosIntegrationTests
     public async Task FindAllPedidos_ConMongoDBReald_DebeRetornarPedidos()
     {
         // This is a scaffold test demonstrating the structure
-        
+
         // Arrange
         // var pedidosService = _serviceProvider!.GetRequiredService<IPedidosService>();
-        
+
         // Act
         // var result = await pedidosService.FindAllAsync();
 
         // Assert
         // result.IsSuccess.Should().BeTrue();
-        
+
         await Task.CompletedTask;
     }
 
@@ -147,7 +147,7 @@ public class PedidosIntegrationTests
     public async Task UpdatePedidoEstado_ConMongoDBReal_DebePersistirCambios()
     {
         // This is a scaffold test demonstrating the structure
-        
+
         // Arrange
         // Create a pedido first
         // var pedidosService = _serviceProvider!.GetRequiredService<IPedidosService>();
@@ -160,7 +160,7 @@ public class PedidosIntegrationTests
         // Assert
         // result.IsSuccess.Should().BeTrue();
         // result.Value.Estado.Should().Be(nuevoEstado);
-        
+
         await Task.CompletedTask;
     }
 
@@ -174,7 +174,7 @@ public class PedidosIntegrationTests
         var connectionString = _mongoContainer!.GetConnectionString();
         connectionString.Should().NotBeNullOrEmpty();
         connectionString.Should().Contain("mongodb://");
-        
+
         await Task.CompletedTask;
     }
 
@@ -188,7 +188,7 @@ public class PedidosIntegrationTests
         var connectionString = _postgresContainer!.GetConnectionString();
         connectionString.Should().NotBeNullOrEmpty();
         connectionString.Should().Contain("Host=");
-        
+
         await Task.CompletedTask;
     }
 }

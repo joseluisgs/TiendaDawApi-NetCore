@@ -13,19 +13,19 @@ public record Notificacion<T>
     /// </summary>
     [JsonPropertyName("entity")]
     public string Entity { get; init; } = string.Empty;
-    
+
     /// <summary>
     /// Tipo de operación realizada.
     /// </summary>
     [JsonPropertyName("type")]
     public Tipo Type { get; init; }
-    
+
     /// <summary>
     /// Datos de la notificación.
     /// </summary>
     [JsonPropertyName("data")]
     public T Data { get; init; } = default!;
-    
+
     /// <summary>
     /// Timestamp de creación en formato ISO 8601.
     /// </summary>

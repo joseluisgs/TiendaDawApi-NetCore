@@ -16,7 +16,8 @@ namespace TiendaApi.Apis.Controllers;
 [Produces("application/json")]
 public class PedidosController(
     IPedidosService service
-) : ControllerBase {
+) : ControllerBase
+{
 
     /// <summary>
     /// Crear un nuevo pedido.
@@ -29,21 +30,27 @@ public class PedidosController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CreatePedido([FromBody] PedidoRequestDto dto) {
+    public async Task<IActionResult> CreatePedido([FromBody] PedidoRequestDto dto)
+    {
+        if (User?.Identity == null || !User.Identity.IsAuthenticated)
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
+
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var resultado = await service.CreateAsync(userId, dto);
 
-        if (resultado.IsSuccess) {
+        if (resultado.IsSuccess)
+        {
             var pedido = resultado.Value;
             return CreatedAtAction(nameof(GetPedidoById), new { id = pedido.Id }, pedido);
         }
 
         var error = resultado.Error;
-        return error.Type switch {
+        return error.Type switch
+        {
             ErrorType.NotFound => NotFound(new { message = error.Message }),
             ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
             ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
@@ -63,9 +70,13 @@ public class PedidosController(
     [Authorize]
     [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetMyPedidos() {
+    public async Task<IActionResult> GetMyPedidos()
+    {
+        if (User?.Identity == null || !User.Identity.IsAuthenticated)
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
+
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
@@ -88,22 +99,28 @@ public class PedidosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPedidoById(string id) {
+    public async Task<IActionResult> GetPedidoById(string id)
+    {
+        if (User?.Identity == null || !User.Identity.IsAuthenticated)
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
         var resultado = await service.FindByIdAsync(id);
 
-        if (resultado.IsFailure) {
+        if (resultado.IsFailure)
+        {
             var error = resultado.Error;
-            return error.Type switch {
+            return error.Type switch
+            {
                 ErrorType.NotFound => NotFound(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             };
         }
 
         var pedido = resultado.Value;
-        
+
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-        
+
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
@@ -125,12 +142,14 @@ public class PedidosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdatePedidoEstado(string id, [FromBody] UpdateEstadoDto dto) {
+    public async Task<IActionResult> UpdatePedidoEstado(string id, [FromBody] UpdateEstadoDto dto)
+    {
         var resultado = await service.UpdateEstadoAsync(id, dto.Estado);
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error.Type switch {
+            onFailure: error => error.Type switch
+            {
                 ErrorType.NotFound => NotFound(new { message = error.Message }),
                 ErrorType.Validation => BadRequest(new { message = error.Message }),
                 ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
@@ -145,6 +164,7 @@ public class PedidosController(
 /// <summary>
 /// DTO para actualizar el estado de un pedido.
 /// </summary>
-public record UpdateEstadoDto {
+public record UpdateEstadoDto
+{
     public string Estado { get; init; } = string.Empty;
 }

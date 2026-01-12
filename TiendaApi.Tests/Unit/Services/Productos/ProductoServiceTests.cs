@@ -46,7 +46,7 @@ public class ProductoServiceTests
         _mockValidator = new Mock<IValidator<ProductoRequestDto>>();
 
         _mockConfiguration.Setup(c => c["Cache:ProductoCacheTTLMinutes"]).Returns("10");
-        
+
         // Configurar validador para que pase por defecto
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());

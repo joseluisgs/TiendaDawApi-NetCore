@@ -14,7 +14,7 @@ public static class PedidoNotificationType
     /// Notificación de pedido creado.
     /// </summary>
     public const string CREATED = "PEDIDO_CREATED";
-    
+
     /// <summary>
     /// Notificación de cambio de estado de pedido.
     /// </summary>
@@ -55,26 +55,26 @@ public class PedidoWebSocketHandler
     {
         var connectionId = Guid.NewGuid().ToString();
         _connections.TryAdd(connectionId, webSocket);
-        
+
         _logger.LogInformation("Conexión WebSocket establecida para pedidos: {ConnectionId}", connectionId);
 
         try
         {
             var buffer = new byte[1024 * 4];
             var result = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), 
+                new ArraySegment<byte>(buffer),
                 CancellationToken.None);
 
             while (!result.CloseStatus.HasValue)
             {
                 result = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), 
+                    new ArraySegment<byte>(buffer),
                     CancellationToken.None);
             }
 
             await webSocket.CloseAsync(
-                result.CloseStatus.Value, 
-                result.CloseStatusDescription, 
+                result.CloseStatus.Value,
+                result.CloseStatusDescription,
                 CancellationToken.None);
         }
         catch (Exception ex)
@@ -106,7 +106,7 @@ public class PedidoWebSocketHandler
             Data = data,
             Timestamp = DateTime.UtcNow
         };
-        
+
         await BroadcastAsync(notification);
     }
 
@@ -129,7 +129,7 @@ public class PedidoWebSocketHandler
             Data = data,
             Timestamp = DateTime.UtcNow
         };
-        
+
         await BroadcastAsync(notification);
     }
 
@@ -143,8 +143,8 @@ public class PedidoWebSocketHandler
         var json = JsonSerializer.Serialize(notification, _jsonOptions);
         var bytes = Encoding.UTF8.GetBytes(json);
         var arraySegment = new ArraySegment<byte>(bytes);
-        
-        _logger.LogInformation("Broadcasting notificación de pedido: {Type}, PedidoId: {PedidoId} a {Count} clientes", 
+
+        _logger.LogInformation("Broadcasting notificación de pedido: {Type}, PedidoId: {PedidoId} a {Count} clientes",
             notification.Type, notification.PedidoId, _connections.Count);
 
         var disconnectedConnections = new List<string>();

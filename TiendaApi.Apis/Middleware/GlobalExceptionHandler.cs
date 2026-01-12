@@ -32,7 +32,7 @@ public class GlobalExceptionHandler
         catch (Exception ex)
         {
             var errorId = Guid.NewGuid().ToString()[..8];
-            _logger.LogError(ex, "Excepción no manejada. ErrorId: {ErrorId}, Message: {Message}", 
+            _logger.LogError(ex, "Excepción no manejada. ErrorId: {ErrorId}, Message: {Message}",
                 errorId, ex.Message);
             await HandleExceptionAsync(context, ex, errorId);
         }
@@ -41,7 +41,7 @@ public class GlobalExceptionHandler
     private async Task HandleExceptionAsync(HttpContext context, Exception exception, string errorId)
     {
         context.Response.ContentType = "application/json";
-        
+
         var (statusCode, message, errors, errorType) = exception switch
         {
             // Excepciones personalizadas
@@ -51,49 +51,49 @@ public class GlobalExceptionHandler
                 (Dictionary<string, string[]>?)null,
                 ErrorType.NotFound
             ),
-            
+
             ValidationException validation => (
                 HttpStatusCode.BadRequest,
                 validation.Message,
                 validation.Errors,
                 ErrorType.Validation
             ),
-            
+
             BusinessException business => (
                 HttpStatusCode.BadRequest,
                 business.Message,
                 (Dictionary<string, string[]>?)null,
                 ErrorType.BusinessRule
             ),
-            
+
             UnauthorizedAccessException => (
                 HttpStatusCode.Unauthorized,
                 "No autorizado",
                 (Dictionary<string, string[]>?)null,
                 ErrorType.Unauthorized
             ),
-            
+
             ArgumentException argument => (
                 HttpStatusCode.BadRequest,
                 argument.Message,
                 (Dictionary<string, string[]>?)null,
                 ErrorType.Validation
             ),
-            
+
             DbUpdateException dbUpdate => (
                 HttpStatusCode.Conflict,
                 "Error al actualizar la base de datos",
                 (Dictionary<string, string[]>?)null,
                 ErrorType.Internal
             ),
-            
+
             TimeoutException => (
                 HttpStatusCode.RequestTimeout,
                 "Tiempo de espera agotado",
                 (Dictionary<string, string[]>?)null,
                 ErrorType.Internal
             ),
-            
+
             // Default - Error interno no manejado
             _ => (
                 HttpStatusCode.InternalServerError,

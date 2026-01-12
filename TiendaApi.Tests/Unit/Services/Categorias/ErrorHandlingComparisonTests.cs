@@ -35,7 +35,7 @@ public class ErrorHandlingComparisonTests
     private Mock<ILogger<ProductoService>> _mockProductoLogger = null!;
     private Mock<IValidator<CategoriaRequestDto>> _mockCategoriaValidator = null!;
     private Mock<IValidator<ProductoRequestDto>> _mockProductoValidator = null!;
-    
+
     private CategoriaService _categoriaService = null!;
     private ProductoService _productoService = null!;
 
@@ -48,24 +48,24 @@ public class ErrorHandlingComparisonTests
         _mockProductoLogger = new Mock<ILogger<ProductoService>>();
         _mockCategoriaValidator = new Mock<IValidator<CategoriaRequestDto>>();
         _mockProductoValidator = new Mock<IValidator<ProductoRequestDto>>();
-        
+
         // Configurar validadores para que pasen por defecto
         _mockCategoriaValidator.Setup(v => v.ValidateAsync(It.IsAny<CategoriaRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
         _mockProductoValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
-        
+
         _categoriaService = new CategoriaService(
             _mockCategoriaRepo.Object,
             _mockCategoriaLogger.Object,
             _mockCategoriaValidator.Object
         );
-        
+
         var mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductoWebSocketHandler>>());
         var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
         var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
-        
+
         _productoService = new ProductoService(
             _mockProductoRepo.Object,
             _mockCategoriaRepo.Object,
@@ -120,7 +120,7 @@ public class ErrorHandlingComparisonTests
     {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Test" };
-        
+
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(categoria);
 
@@ -176,13 +176,13 @@ public class ErrorHandlingComparisonTests
     public async Task ProductoService_FindById_CuandoEncontrado_RetornaExito()
     {
         // Arrange
-        var producto = new Producto 
-        { 
-            Id = 1, 
+        var producto = new Producto
+        {
+            Id = 1,
             Nombre = "Test",
             Categoria = new Categoria { Id = 1, Nombre = "Cat" }
         };
-        
+
         _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(producto);
 
@@ -230,7 +230,7 @@ public class ErrorHandlingComparisonTests
         var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
         var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
-        
+
         _productoService = new ProductoService(
             _mockProductoRepo.Object,
             _mockCategoriaRepo.Object,
@@ -288,7 +288,7 @@ public class ErrorHandlingComparisonTests
         var resultadoProducto = _productoService.FindByIdAsync(999).Result;
         resultadoProducto.IsFailure.Should().BeTrue();
         resultadoProducto.Error.Type.Should().Be(ErrorType.NotFound);
-        
+
         // Ambos servicios ahora manejan errores de manera consistente
     }
 

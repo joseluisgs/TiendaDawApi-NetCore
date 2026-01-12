@@ -21,7 +21,7 @@ public class ValidationException : Exception
     /// <summary>
     /// Crea una nueva excepción de validación con errores específicos.
     /// </summary>
-    public ValidationException(string message, Dictionary<string, string[]> errors) 
+    public ValidationException(string message, Dictionary<string, string[]> errors)
         : base(message)
     {
         Errors = errors;
@@ -30,7 +30,7 @@ public class ValidationException : Exception
     /// <summary>
     /// Crea una nueva excepción de validación con inner exception.
     /// </summary>
-    public ValidationException(string message, Exception innerException) 
+    public ValidationException(string message, Exception innerException)
         : base(message, innerException)
     {
         Errors = new Dictionary<string, string[]>();

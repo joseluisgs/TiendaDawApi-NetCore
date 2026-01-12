@@ -15,7 +15,7 @@ public class PedidoProfile : Profile
         // Mapeos de entidad Pedido a DTO
         CreateMap<Pedido, PedidoDto>();
         CreateMap<PedidoItem, PedidoItemDto>();
-        
+
         // Mapeos de DTO de solicitud a entidad
         CreateMap<PedidoRequestDto, Pedido>();
         CreateMap<PedidoItemRequestDto, PedidoItem>();

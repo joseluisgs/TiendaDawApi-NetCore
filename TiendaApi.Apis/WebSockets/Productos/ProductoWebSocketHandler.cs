@@ -39,26 +39,26 @@ public class ProductoWebSocketHandler
     {
         var connectionId = Guid.NewGuid().ToString();
         _connections.TryAdd(connectionId, webSocket);
-        
+
         _logger.LogInformation("Conexión WebSocket establecida para productos: {ConnectionId}", connectionId);
 
         try
         {
             var buffer = new byte[1024 * 4];
             var result = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), 
+                new ArraySegment<byte>(buffer),
                 CancellationToken.None);
 
             while (!result.CloseStatus.HasValue)
             {
                 result = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), 
+                    new ArraySegment<byte>(buffer),
                     CancellationToken.None);
             }
 
             await webSocket.CloseAsync(
-                result.CloseStatus.Value, 
-                result.CloseStatusDescription, 
+                result.CloseStatus.Value,
+                result.CloseStatusDescription,
                 CancellationToken.None);
         }
         catch (Exception ex)
@@ -137,8 +137,8 @@ public class ProductoWebSocketHandler
         var buffer = new ArraySegment<byte>(bytes);
 
         _logger.LogInformation(
-            "Broadcasting notificación de producto: {Type} para entidad {Entity}", 
-            notification.Type, 
+            "Broadcasting notificación de producto: {Type} para entidad {Entity}",
+            notification.Type,
             notification.Entity);
 
         var disconnectedConnections = new List<string>();

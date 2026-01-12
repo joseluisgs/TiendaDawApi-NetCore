@@ -24,7 +24,7 @@ public class UserServiceTests
     {
         _mockUserRepository = new Mock<IUserRepository>();
         _mockLogger = new Mock<ILogger<UserService>>();
-        
+
         _userService = new UserService(
             _mockUserRepository.Object,
             _mockLogger.Object
@@ -98,12 +98,12 @@ public class UserServiceTests
     public async Task FindByIdAsync_ConIdExistente_RetornaExito()
     {
         // Arrange
-        var user = new User 
-        { 
-            Id = 1, 
-            Username = "testuser", 
-            Email = "test@test.com", 
-            IsDeleted = false 
+        var user = new User
+        {
+            Id = 1,
+            Username = "testuser",
+            Email = "test@test.com",
+            IsDeleted = false
         };
 
         _mockUserRepository.Setup(x => x.FindByIdAsync(1))
@@ -138,11 +138,11 @@ public class UserServiceTests
     public async Task FindByIdAsync_ConUsuarioEliminado_RetornaFalloNoEncontrado()
     {
         // Arrange
-        var deletedUser = new User 
-        { 
-            Id = 1, 
-            Username = "deleteduser", 
-            IsDeleted = true 
+        var deletedUser = new User
+        {
+            Id = 1,
+            Username = "deleteduser",
+            IsDeleted = true
         };
 
         _mockUserRepository.Setup(x => x.FindByIdAsync(1))
@@ -173,7 +173,7 @@ public class UserServiceTests
 
         _mockUserRepository.Setup(x => x.FindByUsernameAsync(It.IsAny<string>()))
             .ReturnsAsync((User?)null);
-        
+
         _mockUserRepository.Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
             .ReturnsAsync((User?)null);
 

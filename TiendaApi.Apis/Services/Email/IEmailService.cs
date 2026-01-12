@@ -21,7 +21,7 @@ public interface IEmailService
     /// Returns: Task completada
     /// </summary>
     Task SendEmailAsync(EmailMessage message);
-    
+
     /// <summary>
     /// Encola un email para procesamiento en segundo plano.
     /// Returns: Task completada

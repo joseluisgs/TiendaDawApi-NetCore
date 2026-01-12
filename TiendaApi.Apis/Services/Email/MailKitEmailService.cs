@@ -15,7 +15,7 @@ public class MailKitEmailService : IEmailService
     private readonly Channel<EmailMessage> _emailChannel;
 
     public MailKitEmailService(
-        IConfiguration configuration, 
+        IConfiguration configuration,
         ILogger<MailKitEmailService> logger,
         Channel<EmailMessage> emailChannel)
     {

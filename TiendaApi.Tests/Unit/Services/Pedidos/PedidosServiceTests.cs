@@ -68,7 +68,7 @@ public class PedidosServiceTests
         _mockTransaction = new Mock<IDbContextTransaction>();
 
         _mockConfiguration.Setup(c => c["Smtp:AdminEmail"]).Returns("admin@test.com");
-        
+
         _mockPedidoValidator.Setup(v => v.ValidateAsync(It.IsAny<PedidoRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
         _mockItemValidator.Setup(v => v.ValidateAsync(It.IsAny<PedidoItemRequestDto>(), It.IsAny<CancellationToken>()))
@@ -76,7 +76,7 @@ public class PedidosServiceTests
 
         _mockProductoRepo.Setup(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
             .ReturnsAsync(_mockTransaction.Object);
-        
+
         _mockTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()));
         _mockTransaction.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>()));
 
@@ -291,7 +291,7 @@ public class PedidosServiceTests
 
         _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(producto);
-        
+
         _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
             .ThrowsAsync(npgsqlException)
             .ThrowsAsync(npgsqlException)
@@ -343,7 +343,7 @@ public class PedidosServiceTests
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
-        
+
         _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
             .ThrowsAsync(npgsqlException)
             .ReturnsAsync(_mockTransaction.Object);
@@ -1021,12 +1021,12 @@ public class PedidosServiceTests
             Stock = 10
         };
 
-        var genericException = new SerializationFailureException("connection timeout", 
+        var genericException = new SerializationFailureException("connection timeout",
             new NpgsqlException("connection timeout"));
 
         _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(producto);
-        
+
         _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
             .ThrowsAsync(genericException)
             .ThrowsAsync(genericException)
@@ -1063,7 +1063,7 @@ public class PedidosServiceTests
 
         _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(producto);
-        
+
         _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
             .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
             .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
@@ -1074,7 +1074,7 @@ public class PedidosServiceTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.Conflict);
-        
+
         _mockLogger.Verify(
             l => l.Log(
                 LogLevel.Warning,

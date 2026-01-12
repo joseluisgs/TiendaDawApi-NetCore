@@ -15,7 +15,7 @@ public class NotFoundException : Exception
     /// <summary>
     /// Crea una nueva excepción de recurso no encontrado con inner exception.
     /// </summary>
-    public NotFoundException(string message, Exception innerException) 
+    public NotFoundException(string message, Exception innerException)
         : base(message, innerException)
     {
     }

@@ -13,7 +13,8 @@ public class GraphQLController(
     IDocumentExecuter documentExecuter,
     ISchema schema,
     ILogger<GraphQLController> logger
-) : ControllerBase {
+) : ControllerBase
+{
 
     /// <summary>
     /// Ejecutar una consulta GraphQL.
@@ -23,14 +24,15 @@ public class GraphQLController(
     [HttpPost]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Post([FromBody] GraphQLRequest request) {
+    public async Task<IActionResult> Post([FromBody] GraphQLRequest request)
+    {
         if (string.IsNullOrWhiteSpace(request.Query))
             return BadRequest(new { message = "Query es requerida" });
 
         var sanitizedQuery = request.Query.Replace("\n", " ").Replace("\r", "");
         if (sanitizedQuery.Length > 100)
             sanitizedQuery = sanitizedQuery.Substring(0, 97) + "...";
-        
+
         logger.LogInformation("Ejecutando consulta GraphQL: {Query}", sanitizedQuery);
 
         var result = await documentExecuter.ExecuteAsync(options =>
@@ -42,7 +44,8 @@ public class GraphQLController(
             options.RequestServices = HttpContext.RequestServices;
         });
 
-        if (result.Errors?.Any() == true) {
+        if (result.Errors?.Any() == true)
+        {
             logger.LogWarning("Errores en consulta GraphQL: {Errors}", result.Errors);
             return BadRequest(new { errors = result.Errors.Select(e => e.Message) });
         }
@@ -58,7 +61,8 @@ public class GraphQLController(
     [HttpGet]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Get([FromQuery] string query, [FromQuery] string? operationName = null) {
+    public async Task<IActionResult> Get([FromQuery] string query, [FromQuery] string? operationName = null)
+    {
         if (string.IsNullOrWhiteSpace(query))
             return BadRequest(new { message = "Query es requerida" });
 
@@ -70,7 +74,8 @@ public class GraphQLController(
 /// <summary>
 /// Modelo de petición GraphQL.
 /// </summary>
-public class GraphQLRequest {
+public class GraphQLRequest
+{
     public string Query { get; set; } = string.Empty;
     public string? OperationName { get; set; }
     public Inputs? Variables { get; set; }

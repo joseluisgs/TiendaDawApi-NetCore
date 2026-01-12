@@ -18,29 +18,34 @@ public class AuthService(
     ILogger<AuthService> logger,
     IValidator<RegisterDto> registerValidator,
     IValidator<LoginDto> loginValidator
-) : IAuthService {
+) : IAuthService
+{
 
     /// <summary>
     /// Registra un nuevo usuario.
     /// Returns: Result.Success(AuthResponseDto) | Result.Failure(Validation/Conflict)
     /// </summary>
-    public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto) {
+    public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto)
+    {
         var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
         logger.LogInformation("SignUp request for username: {Username}", sanitizedUsername);
 
         var validationResult = await ValidateRegistrationAsync(dto);
-        if (validationResult.IsFailure) {
+        if (validationResult.IsFailure)
+        {
             return Result.Failure<AuthResponseDto, DomainError>(validationResult.Error);
         }
 
         var duplicateCheck = await CheckDuplicatesAsync(dto);
-        if (duplicateCheck.IsFailure) {
+        if (duplicateCheck.IsFailure)
+        {
             return Result.Failure<AuthResponseDto, DomainError>(duplicateCheck.Error);
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
 
-        var user = new User {
+        var user = new User
+        {
             Username = dto.Username!,
             Email = dto.Email!,
             PasswordHash = passwordHash,
@@ -62,17 +67,20 @@ public class AuthService(
     /// Autentica un usuario existente.
     /// Returns: Result.Success(AuthResponseDto) | Result.Failure(Validation/Unauthorized/NotFound)
     /// </summary>
-    public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto) {
+    public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto)
+    {
         var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
         logger.LogInformation("SignIn request for username: {Username}", sanitizedUsername);
 
         var validationResult = await ValidateLoginAsync(dto);
-        if (validationResult.IsFailure) {
+        if (validationResult.IsFailure)
+        {
             return Result.Failure<AuthResponseDto, DomainError>(validationResult.Error);
         }
 
         var user = await userRepository.FindByUsernameAsync(dto.Username!);
-        if (user == null) {
+        if (user == null)
+        {
             logger.LogWarning("SignIn fallido: Usuario no encontrado - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
                 DomainError.Unauthorized("Credenciales inválidas")
@@ -80,7 +88,8 @@ public class AuthService(
         }
 
         var passwordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
-        if (!passwordValid) {
+        if (!passwordValid)
+        {
             logger.LogWarning("SignIn fallido: Password inválido - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
                 DomainError.Unauthorized("Credenciales inválidas")
@@ -100,7 +109,7 @@ public class AuthService(
     private async Task<UnitResult<DomainError>> ValidateRegistrationAsync(RegisterDto dto)
     {
         var validationResult = await registerValidator.ValidateAsync(dto);
-        
+
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors
@@ -109,12 +118,12 @@ public class AuthService(
                     g => g.Key,
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
-            
+
             return UnitResult.Failure<DomainError>(
                 DomainError.Validation("Errores de validación", errors)
             );
         }
-        
+
         return UnitResult.Success<DomainError>();
     }
 
@@ -125,7 +134,7 @@ public class AuthService(
     private async Task<UnitResult<DomainError>> ValidateLoginAsync(LoginDto dto)
     {
         var validationResult = await loginValidator.ValidateAsync(dto);
-        
+
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors
@@ -134,12 +143,12 @@ public class AuthService(
                     g => g.Key,
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
-            
+
             return UnitResult.Failure<DomainError>(
                 DomainError.Validation("Errores de validación", errors)
             );
         }
-        
+
         return UnitResult.Success<DomainError>();
     }
 
@@ -147,19 +156,22 @@ public class AuthService(
     /// Verifica duplicados de username y email.
     /// Returns: UnitResult.Success | UnitResult.Failure(Conflict)
     /// </summary>
-    private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(RegisterDto dto) {
+    private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(RegisterDto dto)
+    {
         var usernameCheckTask = userRepository.FindByUsernameAsync(dto.Username!);
         var emailCheckTask = userRepository.FindByEmailAsync(dto.Email!);
 
         await Task.WhenAll(usernameCheckTask, emailCheckTask);
 
         var existingUser = await usernameCheckTask;
-        if (existingUser != null) {
+        if (existingUser != null)
+        {
             return UnitResult.Failure(DomainError.Conflict("El nombre de usuario ya existe"));
         }
 
         var existingEmail = await emailCheckTask;
-        if (existingEmail != null) {
+        if (existingEmail != null)
+        {
             return UnitResult.Failure(DomainError.Conflict("El email ya existe"));
         }
 
@@ -170,10 +182,12 @@ public class AuthService(
     /// Genera la respuesta de autenticación con token JWT.
     /// Returns: AuthResponseDto
     /// </summary>
-    private AuthResponseDto GenerateAuthResponse(User user) {
+    private AuthResponseDto GenerateAuthResponse(User user)
+    {
         var token = jwtService.GenerateToken(user);
 
-        var userDto = new UserDto {
+        var userDto = new UserDto
+        {
             Id = user.Id,
             Username = user.Username,
             Email = user.Email,
@@ -181,7 +195,8 @@ public class AuthService(
             CreatedAt = user.CreatedAt
         };
 
-        return new AuthResponseDto {
+        return new AuthResponseDto
+        {
             Token = token,
             User = userDto
         };

@@ -31,7 +31,7 @@ public class TiendaDbContext : DbContext
             entity.Property(c => c.Nombre).IsRequired().HasMaxLength(100);
             entity.HasIndex(c => c.Nombre).IsUnique();
             entity.Property(c => c.IsDeleted).HasDefaultValue(false);
-            
+
             entity.HasQueryFilter(c => !c.IsDeleted);
         });
 
@@ -45,12 +45,12 @@ public class TiendaDbContext : DbContext
             entity.Property(p => p.Precio).HasPrecision(10, 2);
             entity.Property(p => p.Stock).IsRequired();
             entity.Property(p => p.IsDeleted).HasDefaultValue(false);
-            
+
             entity.HasOne(p => p.Categoria)
                 .WithMany(c => c.Productos)
                 .HasForeignKey(p => p.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
-            
+
             entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
@@ -64,10 +64,10 @@ public class TiendaDbContext : DbContext
             entity.Property(u => u.PasswordHash).IsRequired();
             entity.Property(u => u.Role).IsRequired().HasMaxLength(20);
             entity.Property(u => u.IsDeleted).HasDefaultValue(false);
-            
+
             entity.HasIndex(u => u.Username).IsUnique();
             entity.HasIndex(u => u.Email).IsUnique();
-            
+
             entity.HasQueryFilter(u => !u.IsDeleted);
         });
 

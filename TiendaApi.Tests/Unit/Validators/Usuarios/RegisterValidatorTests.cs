@@ -156,10 +156,10 @@ public class RegisterValidatorTests
         };
 
         var result = _validator.TestValidate(dto);
-        
+
         // El EmailAddress validation pasa, verifiquemos que no hay error
         result.ShouldNotHaveValidationErrorFor(x => x.Email);
-        
+
         // Ahora probemos con un email que exceda el límite
         var dto2 = new RegisterDto
         {
@@ -167,7 +167,7 @@ public class RegisterValidatorTests
             Email = new string('a', 95) + "@test.com", // 95 + @test.com = 104 caracteres
             Password = "Password123"
         };
-        
+
         var result2 = _validator.TestValidate(dto2);
         result2.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("El correo no puede exceder 100 caracteres");

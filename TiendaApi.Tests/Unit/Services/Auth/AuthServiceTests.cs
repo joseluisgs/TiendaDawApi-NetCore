@@ -43,17 +43,17 @@ public class AuthServiceTests
         _mockLogger = new Mock<ILogger<AuthService>>();
         _mockRegisterValidator = new Mock<IValidator<RegisterDto>>();
         _mockLoginValidator = new Mock<IValidator<LoginDto>>();
-        
+
         // Configuración por defecto: validación pasa
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
         _mockLoginValidator.Setup(v => v.ValidateAsync(It.IsAny<LoginDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
-        
+
         // Mock de JWT siempre retorna un token
         _mockJwtService.Setup(x => x.GenerateToken(It.IsAny<User>()))
             .Returns("test-jwt-token");
-        
+
         CreateService();
     }
 
@@ -71,7 +71,7 @@ public class AuthServiceTests
 
         _mockUserRepository.Setup(x => x.FindByUsernameAsync(It.IsAny<string>()))
             .ReturnsAsync((User?)null);
-        
+
         _mockUserRepository.Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
             .ReturnsAsync((User?)null);
 

@@ -23,7 +23,7 @@ public class EmailServiceTests
         _mockConfiguration = new Mock<IConfiguration>();
         _emailChannel = Channel.CreateUnbounded<EmailMessage>();
         _mockLogger = new Mock<ILogger<MailKitEmailService>>();
-        
+
         _emailService = new MailKitEmailService(
             _mockConfiguration.Object,
             _mockLogger.Object,

@@ -31,7 +31,7 @@ public class RedisCacheService : ICacheService
         try
         {
             var cachedValue = await _cache.GetStringAsync(key);
-            
+
             if (string.IsNullOrEmpty(cachedValue))
             {
                 _logger.LogDebug("Cache miss para clave: {Key}", key);
@@ -57,15 +57,15 @@ public class RedisCacheService : ICacheService
         try
         {
             var jsonValue = JsonSerializer.Serialize(value, _jsonOptions);
-            
+
             var options = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(5)
             };
 
             await _cache.SetStringAsync(key, jsonValue, options);
-            
-            _logger.LogDebug("Valor cacheado para clave: {Key} con expiración: {Expiration}", 
+
+            _logger.LogDebug("Valor cacheado para clave: {Key} con expiración: {Expiration}",
                 key, expiration ?? TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
