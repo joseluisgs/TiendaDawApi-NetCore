@@ -2,8 +2,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Models;
-using TiendaApi.Services.Auth;
+using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Services.Auth;
 
 namespace TiendaApi.Tests.Unit.Services.Auth;
 

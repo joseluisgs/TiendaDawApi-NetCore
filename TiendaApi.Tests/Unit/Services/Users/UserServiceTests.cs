@@ -1,11 +1,11 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Dtos.Usuarios;
-using TiendaApi.Errors;
-using TiendaApi.Models;
-using TiendaApi.Repositories.Usuarios;
-using TiendaApi.Services.Users;
+using TiendaApi.Apis.Dtos.Usuarios;
+using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Repositories.Usuarios;
+using TiendaApi.Apis.Services.Users;
 
 namespace TiendaApi.Tests.Unit.Services.Users;
 

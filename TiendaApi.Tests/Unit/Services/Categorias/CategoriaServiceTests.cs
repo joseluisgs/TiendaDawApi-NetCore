@@ -1,11 +1,11 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Dtos.Categorias;
-using TiendaApi.Errors;
-using TiendaApi.Models;
-using TiendaApi.Repositories.Categorias;
-using TiendaApi.Services.Categorias;
+using TiendaApi.Apis.Dtos.Categorias;
+using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Repositories.Categorias;
+using TiendaApi.Apis.Services.Categorias;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 

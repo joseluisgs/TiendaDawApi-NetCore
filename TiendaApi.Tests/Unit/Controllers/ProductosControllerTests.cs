@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Controllers;
-using TiendaApi.Dtos.Productos;
-using TiendaApi.Errors;
-using TiendaApi.Services.Productos;
+using TiendaApi.Apis.Controllers;
+using TiendaApi.Apis.Dtos.Productos;
+using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Services.Productos;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 

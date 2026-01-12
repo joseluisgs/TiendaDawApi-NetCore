@@ -2,15 +2,15 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Dtos.Productos;
-using TiendaApi.Errors;
-using TiendaApi.Models;
-using TiendaApi.Repositories.Categorias;
-using TiendaApi.Repositories.Productos;
-using TiendaApi.Services.Cache;
-using TiendaApi.Services.Email;
-using TiendaApi.Services.Productos;
-using TiendaApi.WebSockets.Productos;
+using TiendaApi.Apis.Dtos.Productos;
+using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Repositories.Categorias;
+using TiendaApi.Apis.Repositories.Productos;
+using TiendaApi.Apis.Services.Cache;
+using TiendaApi.Apis.Services.Email;
+using TiendaApi.Apis.Services.Productos;
+using TiendaApi.Apis.WebSockets.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Productos;
 

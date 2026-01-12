@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Dtos.Productos;
-using TiendaApi.WebSockets.Productos;
+using TiendaApi.Apis.Dtos.Productos;
+using TiendaApi.Apis.WebSockets.Productos;
 
 namespace TiendaApi.Tests.Unit.WebSockets.Productos;
 

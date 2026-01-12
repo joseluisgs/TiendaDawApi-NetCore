@@ -1,15 +1,15 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Dtos.Categorias;
-using TiendaApi.Dtos.Productos;
-using TiendaApi.Errors;
-using TiendaApi.Models;
-using TiendaApi.Repositories.Categorias;
-using TiendaApi.Repositories.Productos;
-using TiendaApi.Services.Categorias;
-using TiendaApi.Services.Productos;
-using TiendaApi.WebSockets.Productos;
+using TiendaApi.Apis.Dtos.Categorias;
+using TiendaApi.Apis.Dtos.Productos;
+using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Repositories.Categorias;
+using TiendaApi.Apis.Repositories.Productos;
+using TiendaApi.Apis.Services.Categorias;
+using TiendaApi.Apis.Services.Productos;
+using TiendaApi.Apis.WebSockets.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 
@@ -47,8 +47,8 @@ public class ErrorHandlingComparisonTests
         );
         
         var mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductoWebSocketHandler>>());
-        var mockEmailService = new Mock<TiendaApi.Services.Email.IEmailService>();
-        var mockCacheService = new Mock<TiendaApi.Services.Cache.ICacheService>();
+var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
+var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
         
         _productoService = new ProductoService(

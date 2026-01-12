@@ -3,15 +3,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using Moq;
-using TiendaApi.Dtos.Pedidos;
-using TiendaApi.Errors;
-using TiendaApi.Models;
-using TiendaApi.Repositories.Pedidos;
-using TiendaApi.Repositories.Productos;
-using TiendaApi.Services.Cache;
-using TiendaApi.Services.Email;
-using TiendaApi.Services.Pedidos;
-using TiendaApi.WebSockets.Pedidos;
+using TiendaApi.Apis.Dtos.Pedidos;
+using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Repositories.Pedidos;
+using TiendaApi.Apis.Repositories.Productos;
+using TiendaApi.Apis.Services.Cache;
+using TiendaApi.Apis.Services.Email;
+using TiendaApi.Apis.Services.Pedidos;
+using TiendaApi.Apis.WebSockets.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.Pedidos;
 

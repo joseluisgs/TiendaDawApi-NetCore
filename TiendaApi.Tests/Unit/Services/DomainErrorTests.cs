@@ -1,5 +1,5 @@
 using FluentAssertions;
-using TiendaApi.Errors;
+using TiendaApi.Apis.Errors;
 
 namespace TiendaApi.Tests.Unit.Services;
 
