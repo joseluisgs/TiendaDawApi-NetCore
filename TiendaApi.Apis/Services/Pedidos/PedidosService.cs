@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using FluentValidation;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
@@ -7,6 +8,7 @@ using TiendaApi.Apis.Repositories.Pedidos;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
+using TiendaApi.Apis.Validators.Pedidos;
 using TiendaApi.Apis.WebSockets.Pedidos;
 
 namespace TiendaApi.Apis.Services.Pedidos;
@@ -22,7 +24,9 @@ public class PedidosService(
     ICacheService cacheService,
     IEmailService emailService,
     IConfiguration configuration,
-    PedidoWebSocketHandler webSocketHandler
+    PedidoWebSocketHandler webSocketHandler,
+    IValidator<PedidoRequestDto> pedidoValidator,
+    IValidator<PedidoItemRequestDto> pedidoItemValidator
 ) : IPedidosService {
 
     /// <summary>
@@ -101,10 +105,9 @@ public class PedidosService(
     public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto) {
         logger.LogInformation("Creando pedido para usuario: {UserId} con {ItemCount} items", userId, dto.Items.Count);
         
-        if (dto.Items == null || !dto.Items.Any()) {
-            return Result.Failure<PedidoDto, DomainError>(
-                DomainError.Validation("El pedido debe contener al menos un producto")
-            );
+        var validationResult = await ValidatePedidoAsync(dto);
+        if (validationResult.IsFailure) {
+            return Result.Failure<PedidoDto, DomainError>(validationResult.Error);
         }
         
         var pedidoItems = new List<PedidoItem>();
@@ -112,10 +115,9 @@ public class PedidosService(
         decimal total = 0;
         
         foreach (var itemDto in dto.Items) {
-            if (itemDto.Cantidad <= 0) {
-                return Result.Failure<PedidoDto, DomainError>(
-                    DomainError.Validation($"La cantidad debe ser mayor que 0 para el producto {itemDto.ProductoId}")
-                );
+            var itemValidation = await ValidatePedidoItemAsync(itemDto);
+            if (itemValidation.IsFailure) {
+                return Result.Failure<PedidoDto, DomainError>(itemValidation.Error);
             }
             
             var producto = await productoRepository.FindByIdAsync(itemDto.ProductoId);
@@ -346,5 +348,55 @@ public class PedidosService(
         catch (Exception ex) {
             logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", pedidoId);
         }
+    }
+
+    /// <summary>
+    /// Valida el pedido usando FluentValidation.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// </summary>
+    private async Task<UnitResult<DomainError>> ValidatePedidoAsync(PedidoRequestDto dto)
+    {
+        var validationResult = await pedidoValidator.ValidateAsync(dto);
+        
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            
+            return UnitResult.Failure<DomainError>(
+                DomainError.Validation("Errores de validación", errors)
+            );
+        }
+        
+        return UnitResult.Success<DomainError>();
+    }
+
+    /// <summary>
+    /// Valida un item de pedido usando FluentValidation.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// </summary>
+    private async Task<UnitResult<DomainError>> ValidatePedidoItemAsync(PedidoItemRequestDto dto)
+    {
+        var validationResult = await pedidoItemValidator.ValidateAsync(dto);
+        
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            
+            return UnitResult.Failure<DomainError>(
+                DomainError.Validation("Errores de validación", errors)
+            );
+        }
+        
+        return UnitResult.Success<DomainError>();
     }
 }

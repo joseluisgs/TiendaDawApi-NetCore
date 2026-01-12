@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using FluentValidation;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
@@ -7,6 +8,7 @@ using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
+using TiendaApi.Apis.Validators.Productos;
 using TiendaApi.Apis.WebSockets.Productos;
 
 namespace TiendaApi.Apis.Services.Productos;
@@ -21,7 +23,8 @@ public class ProductoService(
     ICacheService cacheService,
     ProductoWebSocketHandler webSocketHandler,
     IEmailService emailService,
-    IConfiguration configuration
+    IConfiguration configuration,
+    IValidator<ProductoRequestDto> productoValidator
 ) : IProductoService {
 
     /// <summary>
@@ -288,42 +291,30 @@ public class ProductoService(
     }
 
     /// <summary>
-    /// Valida los datos de un producto.
+    /// Valida los datos de un producto usando FluentValidation.
     /// Returns: UnitResult.Success | UnitResult.Failure(Validation/NotFound)
     /// </summary>
-    private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto) {
-        if (string.IsNullOrWhiteSpace(dto.Nombre)) {
-            return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El nombre del producto es requerido")
-            );
-        }
+    private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto)
+    {
+        var validationResult = await productoValidator.ValidateAsync(dto);
         
-        if (dto.Nombre.Length < 3) {
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El nombre debe tener al menos 3 caracteres")
-            );
-        }
-        
-        if (dto.Nombre.Length > 200) {
-            return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El nombre no puede exceder 200 caracteres")
-            );
-        }
-        
-        if (dto.Precio <= 0) {
-            return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El precio debe ser mayor que 0")
-            );
-        }
-        
-        if (dto.Stock < 0) {
-            return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El stock no puede ser negativo")
+                DomainError.Validation("Errores de validación", errors)
             );
         }
         
         var categoriaExists = await categoriaRepository.FindByIdAsync(dto.CategoriaId);
-        if (categoriaExists == null) {
+        if (categoriaExists == null)
+        {
             return UnitResult.Failure<DomainError>(
                 DomainError.NotFound($"Categoría con ID {dto.CategoriaId} no encontrada")
             );

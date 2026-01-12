@@ -1,9 +1,10 @@
-using System.ComponentModel.DataAnnotations;
 using CSharpFunctionalExtensions;
+using FluentValidation;
 using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Usuarios;
+using TiendaApi.Apis.Validators.Usuarios;
 
 namespace TiendaApi.Apis.Services.Auth;
 
@@ -14,7 +15,9 @@ namespace TiendaApi.Apis.Services.Auth;
 public class AuthService(
     IUserRepository userRepository,
     IJwtService jwtService,
-    ILogger<AuthService> logger
+    ILogger<AuthService> logger,
+    IValidator<RegisterDto> registerValidator,
+    IValidator<LoginDto> loginValidator
 ) : IAuthService {
 
     /// <summary>
@@ -25,7 +28,7 @@ public class AuthService(
         var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
         logger.LogInformation("SignUp request for username: {Username}", sanitizedUsername);
 
-        var validationResult = ValidateRegistration(dto);
+        var validationResult = await ValidateRegistrationAsync(dto);
         if (validationResult.IsFailure) {
             return Result.Failure<AuthResponseDto, DomainError>(validationResult.Error);
         }
@@ -63,7 +66,7 @@ public class AuthService(
         var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
         logger.LogInformation("SignIn request for username: {Username}", sanitizedUsername);
 
-        var validationResult = ValidateLogin(dto);
+        var validationResult = await ValidateLoginAsync(dto);
         if (validationResult.IsFailure) {
             return Result.Failure<AuthResponseDto, DomainError>(validationResult.Error);
         }
@@ -90,47 +93,53 @@ public class AuthService(
         return Result.Success<AuthResponseDto, DomainError>(authResponse);
     }
 
-    private UnitResult<DomainError> ValidateRegistration(RegisterDto dto) {
-        if (string.IsNullOrWhiteSpace(dto.Username)) {
-            return UnitResult.Failure(DomainError.Validation("El nombre de usuario es requerido"));
+    /// <summary>
+    /// Valida el registro usando FluentValidation.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// </summary>
+    private async Task<UnitResult<DomainError>> ValidateRegistrationAsync(RegisterDto dto)
+    {
+        var validationResult = await registerValidator.ValidateAsync(dto);
+        
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            
+            return UnitResult.Failure<DomainError>(
+                DomainError.Validation("Errores de validación", errors)
+            );
         }
-
-        if (dto.Username.Length < 3) {
-            return UnitResult.Failure(DomainError.Validation("El nombre de usuario debe tener al menos 3 caracteres"));
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Email)) {
-            return UnitResult.Failure(DomainError.Validation("El email es requerido"));
-        }
-
-        if (!new EmailAddressAttribute().IsValid(dto.Email)) {
-            return UnitResult.Failure(DomainError.Validation("El email no es válido"));
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Password)) {
-            return UnitResult.Failure(DomainError.Validation("La contraseña es requerida"));
-        }
-
-        if (dto.Password.Length < 6) {
-            return UnitResult.Failure(DomainError.Validation("La contraseña debe tener al menos 6 caracteres"));
-        }
-
+        
         return UnitResult.Success<DomainError>();
     }
 
     /// <summary>
-    /// Valida los datos de inicio de sesión.
+    /// Valida el login usando FluentValidation.
     /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
-    private UnitResult<DomainError> ValidateLogin(LoginDto dto) {
-        if (string.IsNullOrWhiteSpace(dto.Username)) {
-            return UnitResult.Failure(DomainError.Validation("El nombre de usuario es requerido"));
+    private async Task<UnitResult<DomainError>> ValidateLoginAsync(LoginDto dto)
+    {
+        var validationResult = await loginValidator.ValidateAsync(dto);
+        
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            
+            return UnitResult.Failure<DomainError>(
+                DomainError.Validation("Errores de validación", errors)
+            );
         }
-
-        if (string.IsNullOrWhiteSpace(dto.Password)) {
-            return UnitResult.Failure(DomainError.Validation("La contraseña es requerida"));
-        }
-
+        
         return UnitResult.Success<DomainError>();
     }
 

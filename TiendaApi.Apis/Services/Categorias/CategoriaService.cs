@@ -1,9 +1,11 @@
 using CSharpFunctionalExtensions;
+using FluentValidation;
 using TiendaApi.Apis.Dtos.Categorias;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
+using TiendaApi.Apis.Validators.Categorias;
 
 namespace TiendaApi.Apis.Services.Categorias;
 
@@ -13,7 +15,8 @@ namespace TiendaApi.Apis.Services.Categorias;
 /// </summary>
 public class CategoriaService(
     ICategoriaRepository repository,
-    ILogger<CategoriaService> logger
+    ILogger<CategoriaService> logger,
+    IValidator<CategoriaRequestDto> categoriaValidator
 ) : ICategoriaService {
 
     /// <summary>
@@ -54,7 +57,7 @@ public class CategoriaService(
     public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto) {
         logger.LogInformation("Creando categoría: {Nombre}", dto.Nombre);
         
-        var validationResult = ValidateNombre(dto.Nombre);
+        var validationResult = await ValidateCategoriaAsync(dto);
         if (validationResult.IsFailure) {
             return Result.Failure<CategoriaDto, DomainError>(validationResult.Error);
         }
@@ -79,7 +82,7 @@ public class CategoriaService(
     public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto) {
         logger.LogInformation("Actualizando categoría con id: {Id}", id);
         
-        var validationResult = ValidateNombre(dto.Nombre);
+        var validationResult = await ValidateCategoriaAsync(dto);
         if (validationResult.IsFailure) {
             return Result.Failure<CategoriaDto, DomainError>(validationResult.Error);
         }
@@ -127,29 +130,28 @@ public class CategoriaService(
     }
 
     /// <summary>
-    /// Valida el nombre de la categoría.
-    /// Returns: Result.Success(true) | Result.Failure(Validation)
+    /// Valida la categoría usando FluentValidation.
+    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
-    private Result<bool, DomainError> ValidateNombre(string nombre) {
-        if (string.IsNullOrWhiteSpace(nombre)) {
-            return Result.Failure<bool, DomainError>(
-                DomainError.Validation("El nombre de la categoría es requerido")
+    private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto)
+    {
+        var validationResult = await categoriaValidator.ValidateAsync(dto);
+        
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            
+            return UnitResult.Failure<DomainError>(
+                DomainError.Validation("Errores de validación", errors)
             );
         }
         
-        if (nombre.Length < 3) {
-            return Result.Failure<bool, DomainError>(
-                DomainError.Validation("El nombre debe tener al menos 3 caracteres")
-            );
-        }
-        
-        if (nombre.Length > 100) {
-            return Result.Failure<bool, DomainError>(
-                DomainError.Validation("El nombre no puede exceder 100 caracteres")
-            );
-        }
-        
-        return Result.Success<bool, DomainError>(true);
+        return UnitResult.Success<DomainError>();
     }
 
     /// <summary>

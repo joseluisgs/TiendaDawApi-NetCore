@@ -1,5 +1,6 @@
 using System.Text;
 using System.Threading.Channels;
+using FluentValidation;
 using GraphQL;
 using GraphQL.Types;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,6 +28,10 @@ using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Services.Productos;
 using TiendaApi.Apis.Services.Users;
+using TiendaApi.Apis.Validators.Categorias;
+using TiendaApi.Apis.Validators.Pedidos;
+using TiendaApi.Apis.Validators.Productos;
+using TiendaApi.Apis.Validators.Usuarios;
 using TiendaApi.Apis.WebSockets.Pedidos;
 using TiendaApi.Apis.WebSockets.Productos;
 
@@ -61,6 +66,10 @@ builder.Services.AddControllers(options =>
 })
 .AddXmlSerializerFormatters()
 .AddXmlDataContractSerializerFormatters();
+
+// FluentValidation
+Log.Information("✓ Configurando FluentValidation...");
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // API Versioning
 Log.Information("🔢 Configurando API Versioning...");
