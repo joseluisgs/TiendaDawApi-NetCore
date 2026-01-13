@@ -26,6 +26,7 @@ public class CategoriasController(
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<CategoriaDto>), StatusCodes.Status200OK)]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         logger.LogInformation("Obteniendo todas las categorías");
@@ -46,6 +47,7 @@ public class CategoriasController(
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(long id)
     {
         logger.LogInformation("Obteniendo categoría con ID: {Id}", id);

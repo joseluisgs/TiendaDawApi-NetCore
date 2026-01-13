@@ -20,6 +20,26 @@ public class PedidosController(
 {
 
     /// <summary>
+    /// Obtener todos los pedidos (solo administradores).
+    /// GET /api/pedidos
+    /// Returns: 200 OK | 401 Unauthorized | 403 Forbidden
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetAllPedidos()
+    {
+        var resultado = await service.FindAllAsync();
+
+        return resultado.Match(
+            onSuccess: pedidos => Ok(pedidos),
+            onFailure: error => StatusCode(500, new { message = error.Message })
+        );
+    }
+
+    /// <summary>
     /// Crear un nuevo pedido.
     /// POST /api/pedidos
     /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
