@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Categorias;
@@ -24,6 +26,48 @@ public class CategoriaRepository(
         return await context.Categorias
             .OrderBy(c => c.Nombre)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Obtiene categorías paginadas con filtros opcionales.
+    /// </summary>
+    public async Task<(IEnumerable<Categoria> Items, int TotalCount)> FindAllPagedAsync(CategoriaFilterDto filter)
+    {
+        logger.LogDebug("Buscando categorías paginadas con filtros");
+
+        var query = context.Categorias.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Nombre))
+            query = query.Where(c => c.Nombre.ToLower().Contains(filter.Nombre.ToLower()));
+
+        if (filter.IsDeleted.HasValue)
+            query = query.Where(c => c.IsDeleted == filter.IsDeleted.Value);
+
+        var totalCount = await query.CountAsync();
+
+        query = ApplySorting(query, filter.SortBy, filter.Direction);
+
+        var items = await query
+            .Skip(filter.Page * filter.Size)
+            .Take(filter.Size)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    private static IQueryable<Categoria> ApplySorting(IQueryable<Categoria> query, string sortBy, string direction)
+    {
+        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
+
+        Expression<Func<Categoria, object>> keySelector = sortBy.ToLower() switch
+        {
+            "nombre" => c => c.Nombre,
+            "createdat" => c => c.CreatedAt,
+            "updatedat" => c => c.UpdatedAt,
+            _ => c => c.Id
+        };
+
+        return isDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 
     /// <summary>

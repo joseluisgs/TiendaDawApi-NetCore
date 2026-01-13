@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Services.Productos;
@@ -20,18 +21,40 @@ public class ProductosController(
 {
 
     /// <summary>
-    /// Obtener todos los productos.
-    /// GET /api/productos
+    /// Obtener todos los productos paginados con filtros opcionales.
+    /// GET /api/productos?nombre=&amp;categoria=&amp;isDeleted=&amp;precioMax=&amp;stockMin=&amp;page=0&amp;size=10&amp;sortBy=id&amp;direction=asc
     /// Devuelve: 200 OK
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<ProductoDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? nombre = null,
+        [FromQuery] string? categoria = null,
+        [FromQuery] bool? isDeleted = null,
+        [FromQuery] decimal? precioMax = null,
+        [FromQuery] int? stockMin = null,
+        [FromQuery] int page = 0,
+        [FromQuery] int size = 10,
+        [FromQuery] string sortBy = "id",
+        [FromQuery] string direction = "asc")
     {
-        logger.LogInformation("Obteniendo todos los productos");
+        logger.LogInformation("Obteniendo productos paginados - Página: {Page}, Tamaño: {Size}", page, size);
 
-        var resultado = await service.FindAllAsync();
+        var filter = new ProductoFilterDto
+        {
+            Nombre = nombre,
+            Categoria = categoria,
+            IsDeleted = isDeleted,
+            PrecioMax = precioMax,
+            StockMin = stockMin,
+            Page = page,
+            Size = size,
+            SortBy = sortBy,
+            Direction = direction
+        };
+
+        var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
             onSuccess: productos => Ok(productos),

@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
@@ -72,6 +73,28 @@ public class PedidosService(
         await cacheService.SetAsync(cacheKey, dtos, cacheTTL);
 
         return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
+    }
+
+    /// <summary>
+    /// Obtiene los pedidos paginados de un usuario.
+    /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
+    /// </summary>
+    public async Task<Result<PagedResult<PedidoDto>, DomainError>> FindByUserIdPagedAsync(long userId, int page, int size)
+    {
+        logger.LogInformation("Obteniendo pedidos paginados del usuario: {UserId}, Página: {Page}, Tamaño: {Size}", userId, page, size);
+
+        var (pedidos, totalCount) = await pedidosRepository.FindByUserIdPagedAsync(userId, page, size);
+        var dtos = pedidos.ToDtoList();
+
+        var pagedResult = new PagedResult<PedidoDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            Page = page + 1,
+            PageSize = size
+        };
+
+        return Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult);
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 
@@ -11,6 +12,7 @@ namespace TiendaApi.Apis.Services.Productos;
 public interface IProductoService
 {
     Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync();
+    Task<Result<PagedResult<ProductoDto>, DomainError>> FindAllPagedAsync(ProductoFilterDto filter);
     Task<Result<ProductoDto, DomainError>> FindByIdAsync(long id);
     Task<Result<IEnumerable<ProductoDto>, DomainError>> FindByCategoriaIdAsync(long categoriaId);
     Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto);

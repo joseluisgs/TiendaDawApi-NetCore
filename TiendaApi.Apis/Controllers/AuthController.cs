@@ -22,7 +22,7 @@ public class AuthController(
     /// <summary>
     ///     Registrar un nuevo usuario.
     ///     POST /api/v1/auth/signup
-    ///     Returns: 201 Created | 400 Bad Request | 409 Conflict
+    ///     Devuelve: 201 Created | 400 Bad Request | 409 Conflict
     /// </summary>
     [HttpPost("signup")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
@@ -48,7 +48,7 @@ public class AuthController(
     /// <summary>
     ///     Iniciar sesión y obtener token JWT.
     ///     POST /api/v1/auth/signin
-    ///     Returns: 200 OK | 401 Unauthorized
+    ///     Devuelve: 200 OK | 401 Unauthorized
     /// </summary>
     [HttpPost("signin")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]

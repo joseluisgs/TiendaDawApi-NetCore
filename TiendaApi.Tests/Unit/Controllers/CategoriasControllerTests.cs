@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Controllers;
 using TiendaApi.Apis.Dtos.Categorias;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Services.Categorias;
 
@@ -26,8 +27,8 @@ public class CategoriasControllerTests
     #region GetAll Tests
 
     /// <summary>
-    /// Dado que existen categorías, cuando se obtienen todas, entonces retorna 200 OK con la lista.
-    /// Returns: 200 OK con lista de categorías
+    /// Dado que existen categorías, cuando se obtienen todas paginadas, entonces retorna 200 OK con la lista paginada.
+    /// Returns: 200 OK con lista de categorías paginada
     /// </summary>
     [Test]
     public async Task GetAll_ConCategoriasExistentes_RetornaOkConLista()
@@ -37,32 +38,76 @@ public class CategoriasControllerTests
             new CategoriaDto { Id = 1, Nombre = "Electrónica" },
             new CategoriaDto { Id = 2, Nombre = "Ropa" }
         };
+        var pagedResult = new PagedResult<CategoriaDto>
+        {
+            Items = categorias,
+            TotalCount = 2,
+            Page = 1,
+            PageSize = 10
+        };
 
-        _mockService.Setup(s => s.FindAllAsync())
-            .ReturnsAsync(Result.Success<IEnumerable<CategoriaDto>, DomainError>(categorias));
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<CategoriaDto>, DomainError>(pagedResult));
 
         var result = await _controller.GetAll();
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedCategorias = okResult.Value.Should().BeAssignableTo<IEnumerable<CategoriaDto>>().Subject;
-        returnedCategorias.Should().HaveCount(2);
+        var returnedCategorias = okResult.Value.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
+        returnedCategorias.Items.Should().HaveCount(2);
     }
 
     /// <summary>
-    /// Dado que no existen categorías, cuando se obtienen todas, entonces retorna 200 OK con lista vacía.
+    /// Dado que no existen categorías, cuando se obtienen todas paginadas, entonces retorna 200 OK con lista vacía.
     /// Returns: 200 OK con lista vacía
     /// </summary>
     [Test]
     public async Task GetAll_SinCategorias_RetornaOkConListaVacia()
     {
-        _mockService.Setup(s => s.FindAllAsync())
-            .ReturnsAsync(Result.Success<IEnumerable<CategoriaDto>, DomainError>(new List<CategoriaDto>()));
+        var pagedResult = new PagedResult<CategoriaDto>
+        {
+            Items = new List<CategoriaDto>(),
+            TotalCount = 0,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<CategoriaDto>, DomainError>(pagedResult));
 
         var result = await _controller.GetAll();
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedCategorias = okResult.Value.Should().BeAssignableTo<IEnumerable<CategoriaDto>>().Subject;
-        returnedCategorias.Should().BeEmpty();
+        var returnedCategorias = okResult.Value.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
+        returnedCategorias.Items.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Dado un filtro por nombre, cuando se obtienen categorías, entonces retorna solo las que coinciden.
+    /// Returns: 200 OK con lista filtrada
+    /// </summary>
+    [Test]
+    public async Task GetAll_ConFiltroNombre_RetornaListaFiltrada()
+    {
+        var categorias = new List<CategoriaDto>
+        {
+            new CategoriaDto { Id = 1, Nombre = "Electrónica" }
+        };
+        var pagedResult = new PagedResult<CategoriaDto>
+        {
+            Items = categorias,
+            TotalCount = 1,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<CategoriaDto>, DomainError>(pagedResult));
+
+        var result = await _controller.GetAll(nombre: "Electrónica");
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedCategorias = okResult.Value.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
+        returnedCategorias.Items.Should().HaveCount(1);
     }
 
     #endregion

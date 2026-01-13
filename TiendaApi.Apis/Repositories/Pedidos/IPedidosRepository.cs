@@ -21,6 +21,15 @@ public interface IPedidosRepository
     Task<IEnumerable<Pedido>> FindByUserIdAsync(long userId);
 
     /// <summary>
+    /// Obtiene pedidos paginados por identificador de usuario.
+    /// </summary>
+    /// <param name="userId">Identificador del usuario.</param>
+    /// <param name="page">Número de página (0-based).</param>
+    /// <param name="size">Tamaño de página.</param>
+    /// <returns>Tupla con los pedidos de la página y el total de registros.</returns>
+    Task<(IEnumerable<Pedido> Items, int TotalCount)> FindByUserIdPagedAsync(long userId, int page, int size);
+
+    /// <summary>
     /// Obtiene un pedido por su identificador.
     /// </summary>
     /// <param name="id">Identificador del pedido.</param>

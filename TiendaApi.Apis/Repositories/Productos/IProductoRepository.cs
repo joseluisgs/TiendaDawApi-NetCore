@@ -1,4 +1,5 @@
 using System.Data;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Productos;
@@ -13,6 +14,11 @@ public interface IProductoRepository
     /// </summary>
     /// <returns>Colección de productos.</returns>
     Task<IEnumerable<Producto>> FindAllAsync();
+
+    /// <summary>
+    /// Obtiene productos paginados con filtros opcionales.
+    /// </summary>
+    Task<(IEnumerable<Producto> Items, int TotalCount)> FindAllPagedAsync(ProductoFilterDto filter);
 
     /// <summary>
     /// Obtiene un producto por su identificador.

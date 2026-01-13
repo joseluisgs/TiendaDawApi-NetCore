@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using TiendaApi.Apis.Dtos.Categorias;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
@@ -30,6 +31,28 @@ public class CategoriaService(
         var categorias = await repository.FindAllAsync();
         var dtos = categorias.ToDtoList();
         return Result.Success<IEnumerable<CategoriaDto>, DomainError>(dtos);
+    }
+
+    /// <summary>
+    /// Obtiene categorías paginadas con filtros.
+    /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
+    /// </summary>
+    public async Task<Result<PagedResult<CategoriaDto>, DomainError>> FindAllPagedAsync(CategoriaFilterDto filter)
+    {
+        logger.LogInformation("Obteniendo categorías paginadas - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
+
+        var (categorias, totalCount) = await repository.FindAllPagedAsync(filter);
+        var dtos = categorias.ToDtoList();
+
+        var pagedResult = new PagedResult<CategoriaDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            Page = filter.Page + 1,
+            PageSize = filter.Size
+        };
+
+        return Result.Success<PagedResult<CategoriaDto>, DomainError>(pagedResult);
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 
@@ -21,6 +22,12 @@ public interface IPedidosService
     /// Devuelve: Result.Success(List) | Result.Failure nunca
     /// </summary>
     Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId);
+
+    /// <summary>
+    /// Obtiene los pedidos paginados de un usuario.
+    /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
+    /// </summary>
+    Task<Result<PagedResult<PedidoDto>, DomainError>> FindByUserIdPagedAsync(long userId, int page, int size);
 
     /// <summary>
     /// Obtiene un pedido por su ID.

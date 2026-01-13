@@ -1,3 +1,4 @@
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Usuarios;
@@ -33,6 +34,13 @@ public interface IUserRepository
     /// </summary>
     /// <returns>Colección de todos los usuarios.</returns>
     Task<IEnumerable<User>> FindAllAsync();
+
+    /// <summary>
+    /// Obtiene usuarios paginados con filtros opcionales.
+    /// </summary>
+    /// <param name="filter">Filtros de búsqueda y paginación.</param>
+    /// <returns>Tupla con los usuarios de la página y el total de registros.</returns>
+    Task<(IEnumerable<User> Items, int TotalCount)> FindAllPagedAsync(UserFilterDto filter);
 
     /// <summary>
     /// Guarda un nuevo usuario.

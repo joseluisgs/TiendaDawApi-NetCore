@@ -27,8 +27,8 @@ public class UsersController(
 {
 
     /// <summary>
-    /// Obtener todos los usuarios paginados (solo administradores).
-    /// GET /api/users?page=1&amp;pageSize=10
+    /// Obtener todos los usuarios paginados con filtros opcionales (solo administradores).
+    /// GET /api/users?username=&amp;email=&amp;isDeleted=&amp;page=0&amp;size=10&amp;sortBy=id&amp;direction=asc
     /// Devuelve: 200 OK | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpGet]
@@ -36,11 +36,29 @@ public class UsersController(
     [ProducesResponseType(typeof(PagedResult<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? username = null,
+        [FromQuery] string? email = null,
+        [FromQuery] bool? isDeleted = null,
+        [FromQuery] int page = 0,
+        [FromQuery] int size = 10,
+        [FromQuery] string sortBy = "id",
+        [FromQuery] string direction = "asc")
     {
-        logger.LogInformation("Obteniendo todos los usuarios - Página: {Page}, Tamaño: {PageSize}", page, pageSize);
+        logger.LogInformation("Obteniendo todos los usuarios - Página: {Page}, Tamaño: {Size}", page, size);
 
-        var resultado = await service.FindAllPagedAsync(page, pageSize);
+        var filter = new UserFilterDto
+        {
+            Username = username,
+            Email = email,
+            IsDeleted = isDeleted,
+            Page = page,
+            Size = size,
+            SortBy = sortBy,
+            Direction = direction
+        };
+
+        var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
             onSuccess: pagedResult => Ok(pagedResult),
@@ -292,27 +310,29 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Obtener los pedidos del usuario autenticado.
-    /// GET /api/users/me/pedidos
+    /// Obtener los pedidos del usuario autenticado paginados.
+    /// GET /api/users/me/pedidos?page=0&amp;size=10
     /// Devuelve: 200 OK | 401 Unauthorized
     /// </summary>
     [HttpGet("me/pedidos")]
     [Authorize]
-    [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetMyPedidos()
+    public async Task<IActionResult> GetMyPedidos(
+        [FromQuery] int page = 0,
+        [FromQuery] int size = 10)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
-        logger.LogInformation("Obteniendo pedidos del usuario: {UserId}", userId);
+        logger.LogInformation("Obteniendo pedidos del usuario: {UserId}, Página: {Page}, Tamaño: {Size}", userId, page, size);
 
-        var resultado = await pedidosService.FindByUserIdAsync(userId);
+        var resultado = await pedidosService.FindByUserIdPagedAsync(userId, page, size);
 
         return resultado.Match(
-            onSuccess: pedidos => Ok(pedidos),
+            onSuccess: pagedResult => Ok(pagedResult),
             onFailure: error => StatusCode(500, new { message = error.Message })
         );
     }

@@ -1,3 +1,4 @@
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Categorias;
@@ -12,6 +13,11 @@ public interface ICategoriaRepository
     /// </summary>
     /// <returns>Colección de categorías.</returns>
     Task<IEnumerable<Categoria>> FindAllAsync();
+
+    /// <summary>
+    /// Obtiene categorías paginadas con filtros opcionales.
+    /// </summary>
+    Task<(IEnumerable<Categoria> Items, int TotalCount)> FindAllPagedAsync(CategoriaFilterDto filter);
 
     /// <summary>
     /// Obtiene una categoría por su identificador.

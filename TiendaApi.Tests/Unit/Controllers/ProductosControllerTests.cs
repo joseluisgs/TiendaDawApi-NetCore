@@ -1,3 +1,4 @@
+using System.IO;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Controllers;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Services.Productos;
@@ -27,8 +29,8 @@ public class ProductosControllerTests
     #region GetAll Tests
 
     /// <summary>
-    /// Dado que existen productos, cuando se obtienen todos, entonces retorna 200 OK con la lista.
-    /// Returns: 200 OK con lista de productos
+    /// Dado que existen productos, cuando se obtienen todos paginados, entonces retorna 200 OK con la lista paginada.
+    /// Returns: 200 OK con lista de productos paginada
     /// </summary>
     [Test]
     public async Task GetAll_ConProductosExistentes_RetornaOkConLista()
@@ -38,32 +40,166 @@ public class ProductosControllerTests
             new ProductoDto { Id = 1, Nombre = "Laptop", Precio = 999.99m, Stock = 10 },
             new ProductoDto { Id = 2, Nombre = "Mouse", Precio = 29.99m, Stock = 50 }
         };
+        var pagedResult = new PagedResult<ProductoDto>
+        {
+            Items = productos,
+            TotalCount = 2,
+            Page = 1,
+            PageSize = 10
+        };
 
-        _mockService.Setup(s => s.FindAllAsync())
-            .ReturnsAsync(Result.Success<IEnumerable<ProductoDto>, DomainError>(productos));
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<ProductoDto>, DomainError>(pagedResult));
 
         var result = await _controller.GetAll();
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
-        returnedProductos.Should().HaveCount(2);
+        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        returnedProductos.Items.Should().HaveCount(2);
     }
 
     /// <summary>
-    /// Dado que no existen productos, cuando se obtienen todos, entonces retorna 200 OK con lista vacía.
+    /// Dado que no existen productos, cuando se obtienen todos paginados, entonces retorna 200 OK con lista vacía.
     /// Returns: 200 OK con lista vacía
     /// </summary>
     [Test]
     public async Task GetAll_SinProductos_RetornaOkConListaVacia()
     {
-        _mockService.Setup(s => s.FindAllAsync())
-            .ReturnsAsync(Result.Success<IEnumerable<ProductoDto>, DomainError>(new List<ProductoDto>()));
+        var pagedResult = new PagedResult<ProductoDto>
+        {
+            Items = new List<ProductoDto>(),
+            TotalCount = 0,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<ProductoDto>, DomainError>(pagedResult));
 
         var result = await _controller.GetAll();
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
-        returnedProductos.Should().BeEmpty();
+        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        returnedProductos.Items.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Dado un filtro por categoría, cuando se obtienen productos, entonces retorna solo los de esa categoría.
+    /// Returns: 200 OK con lista filtrada
+    /// </summary>
+    [Test]
+    public async Task GetAll_ConFiltroCategoria_RetornaListaFiltrada()
+    {
+        var productos = new List<ProductoDto>
+        {
+            new ProductoDto { Id = 1, Nombre = "Laptop", Precio = 999.99m, CategoriaId = 1 }
+        };
+        var pagedResult = new PagedResult<ProductoDto>
+        {
+            Items = productos,
+            TotalCount = 1,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<ProductoDto>, DomainError>(pagedResult));
+
+        var result = await _controller.GetAll(categoria: "Electrónica");
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        returnedProductos.Items.Should().HaveCount(1);
+    }
+
+    /// <summary>
+    /// Dado un filtro por precio máximo, cuando se obtienen productos, entonces retorna los que cumplen el filtro.
+    /// Returns: 200 OK con lista filtrada
+    /// </summary>
+    [Test]
+    public async Task GetAll_ConFiltroPrecioMax_RetornaListaFiltrada()
+    {
+        var productos = new List<ProductoDto>
+        {
+            new ProductoDto { Id = 1, Nombre = "Mouse", Precio = 29.99m, Stock = 50 }
+        };
+        var pagedResult = new PagedResult<ProductoDto>
+        {
+            Items = productos,
+            TotalCount = 1,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<ProductoDto>, DomainError>(pagedResult));
+
+        var result = await _controller.GetAll(precioMax: 100);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        returnedProductos.Items.Should().HaveCount(1);
+    }
+
+    /// <summary>
+    /// Dado un filtro por stock mínimo, cuando se obtienen productos, entonces retorna los que cumplen el filtro.
+    /// Returns: 200 OK con lista filtrada
+    /// </summary>
+    [Test]
+    public async Task GetAll_ConFiltroStockMin_RetornaListaFiltrada()
+    {
+        var productos = new List<ProductoDto>
+        {
+            new ProductoDto { Id = 1, Nombre = "Laptop", Precio = 999.99m, Stock = 10 }
+        };
+        var pagedResult = new PagedResult<ProductoDto>
+        {
+            Items = productos,
+            TotalCount = 1,
+            Page = 1,
+            PageSize = 10
+        };
+
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<ProductoDto>, DomainError>(pagedResult));
+
+        var result = await _controller.GetAll(stockMin: 5);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        returnedProductos.Items.Should().HaveCount(1);
+    }
+
+    /// <summary>
+    /// Dado parámetros de paginación, cuando se obtienen productos, entonces retorna la página correcta.
+    /// Returns: 200 OK con página específica
+    /// </summary>
+    [Test]
+    public async Task GetAll_ConPaginacion_RetornaPaginaCorrecta()
+    {
+        var productos = new List<ProductoDto>
+        {
+            new ProductoDto { Id = 3, Nombre = "Teclado", Precio = 49.99m, Stock = 30 }
+        };
+        var pagedResult = new PagedResult<ProductoDto>
+        {
+            Items = productos,
+            TotalCount = 15,
+            Page = 2,
+            PageSize = 5
+        };
+
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .ReturnsAsync(Result.Success<PagedResult<ProductoDto>, DomainError>(pagedResult));
+
+        var result = await _controller.GetAll(page: 1, size: 5);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        returnedProductos.Page.Should().Be(2);
+        returnedProductos.PageSize.Should().Be(5);
+        returnedProductos.TotalCount.Should().Be(15);
+        returnedProductos.TotalPages.Should().Be(3);
     }
 
     #endregion
@@ -516,6 +652,433 @@ public class ProductosControllerTests
 
         var objectResult = result.Should().BeAssignableTo<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(409);
+    }
+
+    #endregion
+
+    #region UpdateImage Tests
+
+    [Test]
+    public async Task UpdateImage_ConImagenValida_RetornaOkConProducto()
+    {
+        var id = 1L;
+        var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
+        var productoDto = new ProductoDto
+        {
+            Id = 1,
+            Nombre = "Producto",
+            Imagen = "uploads/test.jpg"
+        };
+
+        _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
+
+        var result = await _controller.UpdateImage(id, mockFile);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        returnedProducto.Imagen.Should().Contain("test.jpg");
+    }
+
+    [Test]
+    public async Task UpdateImage_SinArchivo_RetornaBadRequest()
+    {
+        var result = await _controller.UpdateImage(1, null!);
+
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequestResult.Value.Should().NotBeNull();
+    }
+
+    [Test]
+    public async Task UpdateImage_ConArchivoVacio_RetornaBadRequest()
+    {
+        var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 0);
+
+        var result = await _controller.UpdateImage(1, mockFile);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdateImage_ConTipoNoPermitido_RetornaBadRequest()
+    {
+        var mockFile = CreateMockFormFile("test.pdf", "application/pdf", 1024);
+
+        var result = await _controller.UpdateImage(1, mockFile);
+
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequestResult.Value.Should().NotBeNull();
+    }
+
+    [Test]
+    public async Task UpdateImage_ConProductoNoExistente_RetornaNotFound()
+    {
+        var id = 999L;
+        var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
+        var error = DomainError.NotFound("Producto no encontrado");
+
+        _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.UpdateImage(id, mockFile);
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdateImage_ConErrorInterno_Retorna500()
+    {
+        var id = 1L;
+        var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
+        var error = DomainError.Internal("Error al guardar imagen");
+
+        _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.UpdateImage(id, mockFile);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    [Test]
+    public async Task UpdateImage_ConImagenPng_RetornaOk()
+    {
+        var id = 1L;
+        var mockFile = CreateMockFormFile("test.png", "image/png", 2048);
+        var productoDto = new ProductoDto { Id = 1, Imagen = "uploads/test.png" };
+
+        _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
+
+        var result = await _controller.UpdateImage(id, mockFile);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdateImage_ConImagenGif_RetornaOk()
+    {
+        var id = 1L;
+        var mockFile = CreateMockFormFile("test.gif", "image/gif", 512);
+        var productoDto = new ProductoDto { Id = 1, Imagen = "uploads/test.gif" };
+
+        _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
+
+        var result = await _controller.UpdateImage(id, mockFile);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdateImage_ConImagenWebp_RetornaOk()
+    {
+        var id = 1L;
+        var mockFile = CreateMockFormFile("test.webp", "image/webp", 1024);
+        var productoDto = new ProductoDto { Id = 1, Imagen = "uploads/test.webp" };
+
+        _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
+
+        var result = await _controller.UpdateImage(id, mockFile);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    private static IFormFile CreateMockFormFile(string fileName, string contentType, long length)
+    {
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns(fileName);
+        mockFile.Setup(f => f.ContentType).Returns(contentType);
+        mockFile.Setup(f => f.Length).Returns(length);
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new MemoryStream(new byte[length]));
+        return mockFile.Object;
+    }
+
+    #endregion
+
+    #region UpdatePartial Tests
+
+    [Test]
+    public async Task UpdatePartial_ConCamposValidos_RetornaOkConProducto()
+    {
+        var id = 1L;
+        var patchDto = new ProductoPatchDto { Nombre = "Nombre Actualizado" };
+        var productoDto = new ProductoDto { Id = 1, Nombre = "Nombre Actualizado", Precio = 99.99m };
+
+        _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
+
+        var result = await _controller.UpdatePartial(id, patchDto);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        returnedProducto.Nombre.Should().Be("Nombre Actualizado");
+    }
+
+    [Test]
+    public async Task UpdatePartial_SoloPrecio_RetornaOk()
+    {
+        var id = 1L;
+        var patchDto = new ProductoPatchDto { Precio = 199.99m };
+        var productoDto = new ProductoDto { Id = 1, Nombre = "Producto", Precio = 199.99m };
+
+        _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
+
+        var result = await _controller.UpdatePartial(id, patchDto);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        returnedProducto.Precio.Should().Be(199.99m);
+    }
+
+    [Test]
+    public async Task UpdatePartial_SoloStock_RetornaOk()
+    {
+        var id = 1L;
+        var patchDto = new ProductoPatchDto { Stock = 50 };
+        var productoDto = new ProductoDto { Id = 1, Nombre = "Producto", Stock = 50 };
+
+        _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
+
+        var result = await _controller.UpdatePartial(id, patchDto);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        returnedProducto.Stock.Should().Be(50);
+    }
+
+    [Test]
+    public async Task UpdatePartial_ConProductoNoExistente_RetornaNotFound()
+    {
+        var id = 999L;
+        var patchDto = new ProductoPatchDto { Nombre = "Actualizado" };
+        var error = DomainError.NotFound("Producto no encontrado");
+
+        _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.UpdatePartial(id, patchDto);
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdatePartial_ConPrecioNegativo_RetornaBadRequest()
+    {
+        var id = 1L;
+        var patchDto = new ProductoPatchDto { Precio = -10m };
+        var error = DomainError.Validation("El precio debe ser mayor a 0");
+
+        _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.UpdatePartial(id, patchDto);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdatePartial_ConStockNegativo_RetornaBadRequest()
+    {
+        var id = 1L;
+        var patchDto = new ProductoPatchDto { Stock = -5 };
+        var error = DomainError.Validation("El stock no puede ser negativo");
+
+        _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.UpdatePartial(id, patchDto);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdatePartial_ConErrorInterno_Retorna500()
+    {
+        var id = 1L;
+        var patchDto = new ProductoPatchDto { Nombre = "Actualizado" };
+        var error = DomainError.Internal("Error en base de datos");
+
+        _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.UpdatePartial(id, patchDto);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    [Test]
+    public async Task UpdatePartial_ConMultiplesCampos_RetornaOk()
+    {
+        var id = 1L;
+        var patchDto = new ProductoPatchDto
+        {
+            Nombre = "Nuevo Nombre",
+            Descripcion = "Nueva Descripción",
+            Precio = 299.99m,
+            Stock = 100
+        };
+        var productoDto = new ProductoDto
+        {
+            Id = 1,
+            Nombre = "Nuevo Nombre",
+            Descripcion = "Nueva Descripción",
+            Precio = 299.99m,
+            Stock = 100
+        };
+
+        _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
+
+        var result = await _controller.UpdatePartial(id, patchDto);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        returnedProducto.Nombre.Should().Be("Nuevo Nombre");
+        returnedProducto.Precio.Should().Be(299.99m);
+    }
+
+    #endregion
+
+    #region Authorization Attribute Tests
+
+    [Test]
+    public void GetAll_TieneAtributoAllowAnonymous()
+    {
+        var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.GetAll));
+        var attribute = methodInfo!.GetCustomAttributes(typeof(AllowAnonymousAttribute), true);
+        attribute.Should().NotBeEmpty();
+    }
+
+    [Test]
+    public void GetById_TieneAtributoAllowAnonymous()
+    {
+        var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.GetById));
+        var attribute = methodInfo!.GetCustomAttributes(typeof(AllowAnonymousAttribute), true);
+        attribute.Should().NotBeEmpty();
+    }
+
+    [Test]
+    public void GetByCategoria_TieneAtributoAllowAnonymous()
+    {
+        var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.GetByCategoria));
+        var attribute = methodInfo!.GetCustomAttributes(typeof(AllowAnonymousAttribute), true);
+        attribute.Should().NotBeEmpty();
+    }
+
+    [Test]
+    public void Create_TieneAtributoAuthorizeAdmin()
+    {
+        var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.Create));
+        var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+            .Cast<AuthorizeAttribute>().FirstOrDefault();
+        attribute.Should().NotBeNull();
+        attribute!.Policy.Should().Be("RequireAdminRole");
+    }
+
+    [Test]
+    public void Update_TieneAtributoAuthorizeAdmin()
+    {
+        var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.Update));
+        var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+            .Cast<AuthorizeAttribute>().FirstOrDefault();
+        attribute.Should().NotBeNull();
+        attribute!.Policy.Should().Be("RequireAdminRole");
+    }
+
+    [Test]
+    public void Delete_TieneAtributoAuthorizeAdmin()
+    {
+        var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.Delete));
+        var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+            .Cast<AuthorizeAttribute>().FirstOrDefault();
+        attribute.Should().NotBeNull();
+        attribute!.Policy.Should().Be("RequireAdminRole");
+    }
+
+    [Test]
+    public void UpdateImage_TieneAtributoAuthorizeAdmin()
+    {
+        var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.UpdateImage));
+        var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+            .Cast<AuthorizeAttribute>().FirstOrDefault();
+        attribute.Should().NotBeNull();
+        attribute!.Policy.Should().Be("RequireAdminRole");
+    }
+
+    [Test]
+    public void UpdatePartial_TieneAtributoAuthorizeAdmin()
+    {
+        var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.UpdatePartial));
+        var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+            .Cast<AuthorizeAttribute>().FirstOrDefault();
+        attribute.Should().NotBeNull();
+        attribute!.Policy.Should().Be("RequireAdminRole");
+    }
+
+    #endregion
+
+    #region Error Handling Tests
+
+    [Test]
+    public async Task GetAll_ConErrorInterno_Retorna500()
+    {
+        var error = DomainError.Internal("Error de conexión a base de datos");
+
+        _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .ReturnsAsync(Result.Failure<PagedResult<ProductoDto>, DomainError>(error));
+
+        var result = await _controller.GetAll();
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    [Test]
+    public async Task GetById_ConErrorInterno_Retorna500()
+    {
+        var error = DomainError.Internal("Error inesperado");
+
+        _mockService.Setup(s => s.FindByIdAsync(1))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
+
+        var result = await _controller.GetById(1);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    [Test]
+    public async Task GetByCategoria_ConErrorInterno_Retorna500()
+    {
+        var error = DomainError.Internal("Error de base de datos");
+
+        _mockService.Setup(s => s.FindByCategoriaIdAsync(1))
+            .ReturnsAsync(Result.Failure<IEnumerable<ProductoDto>, DomainError>(error));
+
+        var result = await _controller.GetByCategoria(1);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
+    }
+
+    [Test]
+    public async Task Delete_ConErrorInterno_Retorna500()
+    {
+        var error = DomainError.Internal("Error al eliminar");
+
+        _mockService.Setup(s => s.DeleteAsync(1))
+            .ReturnsAsync(UnitResult.Failure<DomainError>(error));
+
+        var result = await _controller.Delete(1);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
     }
 
     #endregion

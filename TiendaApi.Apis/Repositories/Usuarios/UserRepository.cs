@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Usuarios;
@@ -52,6 +54,57 @@ public class UserRepository(
     public async Task<IEnumerable<User>> FindAllAsync()
     {
         return await context.Users.ToListAsync();
+    }
+
+    /// <summary>
+    /// Obtiene usuarios paginados con filtros opcionales.
+    /// </summary>
+    /// <param name="filter">Filtros de búsqueda y paginación.</param>
+    /// <returns>Tupla con los usuarios de la página y el total de registros.</returns>
+    public async Task<(IEnumerable<User> Items, int TotalCount)> FindAllPagedAsync(UserFilterDto filter)
+    {
+        logger.LogDebug("Buscando usuarios paginados con filtros");
+
+        var query = context.Users.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Username))
+            query = query.Where(u => u.Username.ToLower().Contains(filter.Username.ToLower()));
+
+        if (!string.IsNullOrWhiteSpace(filter.Email))
+            query = query.Where(u => u.Email.ToLower().Contains(filter.Email.ToLower()));
+
+        if (filter.IsDeleted.HasValue)
+            query = query.Where(u => u.IsDeleted == filter.IsDeleted.Value);
+
+        var totalCount = await query.CountAsync();
+
+        query = ApplySorting(query, filter.SortBy, filter.Direction);
+
+        var items = await query
+            .Skip(filter.Page * filter.Size)
+            .Take(filter.Size)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    /// <summary>
+    /// Aplica ordenación a la consulta.
+    /// </summary>
+    private static IQueryable<User> ApplySorting(IQueryable<User> query, string sortBy, string direction)
+    {
+        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
+
+        Expression<Func<User, object>> keySelector = sortBy.ToLower() switch
+        {
+            "username" => u => u.Username,
+            "email" => u => u.Email,
+            "createdat" => u => u.CreatedAt,
+            "updatedat" => u => u.UpdatedAt,
+            _ => u => u.Id
+        };
+
+        return isDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 
     /// <summary>

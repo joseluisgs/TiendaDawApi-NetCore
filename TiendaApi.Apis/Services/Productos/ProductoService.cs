@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
@@ -56,6 +57,28 @@ public class ProductoService(
         await cacheService.SetAsync(cacheKey, dtos, cacheTTL);
 
         return Result.Success<IEnumerable<ProductoDto>, DomainError>(dtos);
+    }
+
+    /// <summary>
+    /// Obtener productos paginados con filtros.
+    /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
+    /// </summary>
+    public async Task<Result<PagedResult<ProductoDto>, DomainError>> FindAllPagedAsync(ProductoFilterDto filter)
+    {
+        logger.LogInformation("Obteniendo productos paginados - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
+
+        var (productos, totalCount) = await productoRepository.FindAllPagedAsync(filter);
+        var dtos = productos.ToDtoList();
+
+        var pagedResult = new PagedResult<ProductoDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            Page = filter.Page + 1,
+            PageSize = filter.Size
+        };
+
+        return Result.Success<PagedResult<ProductoDto>, DomainError>(pagedResult);
     }
 
     /// <summary>

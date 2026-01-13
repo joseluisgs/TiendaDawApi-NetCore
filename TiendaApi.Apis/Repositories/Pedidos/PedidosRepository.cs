@@ -43,6 +43,31 @@ public class PedidosRepository(
     }
 
     /// <summary>
+    /// Obtiene pedidos paginados por identificador de usuario.
+    /// </summary>
+    /// <param name="userId">Identificador del usuario.</param>
+    /// <param name="page">Número de página (0-based).</param>
+    /// <param name="size">Tamaño de página.</param>
+    /// <returns>Tupla con los pedidos de la página y el total de registros.</returns>
+    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindByUserIdPagedAsync(long userId, int page, int size)
+    {
+        logger.LogDebug("Buscando pedidos paginados para el usuario: {UserId}, Página: {Page}, Tamaño: {Size}", userId, page, size);
+
+        var query = context.Pedidos
+            .Where(p => p.UserId == userId)
+            .OrderByDescending(p => p.CreatedAt);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .Skip(page * size)
+            .Take(size)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    /// <summary>
     /// Obtiene un pedido por su identificador.
     /// </summary>
     /// <param name="id">Identificador del pedido.</param>

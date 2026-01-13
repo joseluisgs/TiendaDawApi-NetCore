@@ -18,10 +18,10 @@ public interface IUserService
     Task<CFE.Result<IEnumerable<UserDto>, DomainError>> FindAllAsync();
 
     /// <summary>
-    /// Obtiene usuarios paginados (excluyendo eliminados).
+    /// Obtiene usuarios paginados con filtros opcionales.
     /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
     /// </summary>
-    Task<CFE.Result<PagedResult<UserDto>, DomainError>> FindAllPagedAsync(int page, int pageSize);
+    Task<CFE.Result<PagedResult<UserDto>, DomainError>> FindAllPagedAsync(UserFilterDto filter);
 
     /// <summary>
     /// Obtiene un usuario por su ID.

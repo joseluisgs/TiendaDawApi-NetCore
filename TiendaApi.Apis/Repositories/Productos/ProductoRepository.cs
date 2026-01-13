@@ -1,6 +1,8 @@
 using System.Data;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Productos;
@@ -26,6 +28,62 @@ public class ProductoRepository(
             .Include(p => p.Categoria)
             .OrderBy(p => p.Nombre)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Obtiene productos paginados con filtros opcionales.
+    /// </summary>
+    public async Task<(IEnumerable<Producto> Items, int TotalCount)> FindAllPagedAsync(ProductoFilterDto filter)
+    {
+        logger.LogDebug("Buscando productos paginados con filtros");
+
+        var query = context.Productos
+            .Include(p => p.Categoria)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Nombre))
+            query = query.Where(p => p.Nombre.ToLower().Contains(filter.Nombre.ToLower()));
+
+        if (!string.IsNullOrWhiteSpace(filter.Categoria))
+            query = query.Where(p => p.Categoria.Nombre.ToLower().Contains(filter.Categoria.ToLower()));
+
+        if (filter.IsDeleted.HasValue)
+            query = query.Where(p => p.IsDeleted == filter.IsDeleted.Value);
+
+        if (filter.PrecioMax.HasValue)
+            query = query.Where(p => p.Precio <= filter.PrecioMax.Value);
+
+        if (filter.StockMin.HasValue)
+            query = query.Where(p => p.Stock >= filter.StockMin.Value);
+
+        var totalCount = await query.CountAsync();
+
+        query = ApplySorting(query, filter.SortBy, filter.Direction);
+
+        var items = await query
+            .Skip(filter.Page * filter.Size)
+            .Take(filter.Size)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    private static IQueryable<Producto> ApplySorting(IQueryable<Producto> query, string sortBy, string direction)
+    {
+        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
+
+        Expression<Func<Producto, object>> keySelector = sortBy.ToLower() switch
+        {
+            "nombre" => p => p.Nombre,
+            "precio" => p => p.Precio,
+            "stock" => p => p.Stock,
+            "createdat" => p => p.CreatedAt,
+            "updatedat" => p => p.UpdatedAt,
+            "categoria" => p => p.Categoria.Nombre,
+            _ => p => p.Id
+        };
+
+        return isDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 
     /// <summary>

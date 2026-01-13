@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Apis.Dtos.Categorias;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Services.Categorias;
 
@@ -20,18 +21,34 @@ public class CategoriasController(
 {
 
     /// <summary>
-    /// Obtener todas las categorías.
-    /// GET /api/categorias
+    /// Obtener todas las categorías paginadas con filtros opcionales.
+    /// GET /api/categorias?nombre=&amp;isDeleted=&amp;page=0&amp;size=10&amp;sortBy=id&amp;direction=asc
     /// Devuelve: 200 OK
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<CategoriaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<CategoriaDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? nombre = null,
+        [FromQuery] bool? isDeleted = null,
+        [FromQuery] int page = 0,
+        [FromQuery] int size = 10,
+        [FromQuery] string sortBy = "id",
+        [FromQuery] string direction = "asc")
     {
-        logger.LogInformation("Obteniendo todas las categorías");
+        logger.LogInformation("Obteniendo categorías paginadas - Página: {Page}, Tamaño: {Size}", page, size);
 
-        var resultado = await service.FindAllAsync();
+        var filter = new CategoriaFilterDto
+        {
+            Nombre = nombre,
+            IsDeleted = isDeleted,
+            Page = page,
+            Size = size,
+            SortBy = sortBy,
+            Direction = direction
+        };
+
+        var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
             onSuccess: categorias => Ok(categorias),

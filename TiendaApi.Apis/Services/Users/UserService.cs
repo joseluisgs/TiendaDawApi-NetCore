@@ -37,38 +37,22 @@ public class UserService(
     }
 
     /// <summary>
-    /// Obtiene usuarios paginados (excluyendo eliminados).
+    /// Obtiene usuarios paginados con filtros opcionales.
     /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
     /// </summary>
-    public async Task<Result<PagedResult<UserDto>, DomainError>> FindAllPagedAsync(int page, int pageSize)
+    public async Task<Result<PagedResult<UserDto>, DomainError>> FindAllPagedAsync(UserFilterDto filter)
     {
-        logger.LogInformation("Obteniendo usuarios paginados - Página: {Page}, Tamaño: {PageSize}", page, pageSize);
+        logger.LogInformation("Obteniendo usuarios paginados - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
 
-        page = Math.Max(1, page);
-        pageSize = Math.Clamp(pageSize, 1, 100);
-
-        var allUsers = await userRepository.FindAllAsync();
-        var activeUsers = allUsers.Where(u => !u.IsDeleted).ToList();
-
-        var totalCount = activeUsers.Count;
-        var totalPages = pageSize > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 0;
-
-        if (page > totalPages && totalCount > 0)
-            page = totalPages;
-
-        var pagedUsers = activeUsers
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
-        var dtos = pagedUsers.ToDtoList();
+        var (users, totalCount) = await userRepository.FindAllPagedAsync(filter);
+        var dtos = users.ToDtoList();
 
         var pagedResult = new PagedResult<UserDto>
         {
             Items = dtos,
             TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
+            Page = filter.Page + 1,
+            PageSize = filter.Size
         };
 
         return Result.Success<PagedResult<UserDto>, DomainError>(pagedResult);
