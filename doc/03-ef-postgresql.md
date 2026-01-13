@@ -868,3 +868,248 @@ public class SerializationFailureException : Exception
 | Serializable | `BeginTransactionAsync(IsolationLevel.Serializable)` |
 | Serializable + Retry | Ver sección 7.5 - Enfoque Híbrido |
 | Error 40001 | `ex.InnerException.Message.Contains("40001")` |
+
+---
+
+## 9. Testing con Entity Framework Core
+
+### 9.1 Estrategia de Testing
+
+TiendaDawApi-NetCore implementa una estrategia de testing en tres niveles:
+
+```mermaid
+graph LR
+    subgraph "Unit Tests"
+        A["Mocks + InMemory<br/>456 tests · ~2s"]
+    end
+    
+    subgraph "Integration Tests"
+        B["TestContainers<br/>5 tests · ~2min"]
+    end
+    
+    subgraph "E2E Tests"
+        C["API Tests<br/>Opcional"]
+    end
+    
+    A -->|"Complemento"| B
+    B -->|"Validación real"| C
+```
+
+### 9.2 Unit Tests con In-Memory Database
+
+**¿Cuándo usarlos?**
+- Tests de repositorios y servicios que necesitan EF Core real
+- Tests de lógica de negocio que dependen del DbContext
+- Tests de consultas LINQ
+- Tests de operaciones CRUD
+
+**Ventajas:**
+- ✅ No requiere Docker ni base de datos externa
+- ✅ Ejecución muy rápida (<5ms por test)
+- ✅ Aislamiento completo entre tests
+- ✅ Configuración mínima
+
+**Limitaciones:**
+- ❌ No testa PostgreSQL real (SQL, funciones, migraciones)
+- ❌ No testa MongoDB real
+- ❌ No testa transacciones distribuidas
+- ❌ No testa características específicas de cada DB
+
+**Ejemplo de test con In-Memory:**
+
+```csharp
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Repositories.Categorias;
+
+public class CategoriaRepositoryInMemoryTests
+{
+    private TiendaDbContext CreateContext(string dbName)
+    {
+        var options = new DbContextOptionsBuilder<TiendaDbContext>()
+            .UseInMemoryDatabase(databaseName: dbName)
+            .Options;
+
+        return new TiendaDbContext(options);
+    }
+
+    [Test]
+    public async Task FindAllAsync_ConCategorias_RetornaListaOrdenada()
+    {
+        using var context = CreateContext(nameof(Guid.NewGuid().ToString()));
+
+        context.Categorias.AddRange(
+            new Categoria { Id = 2, Nombre = "Electrónica" },
+            new Categoria { Id = 1, Nombre = "Ropa" }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new CategoriaRepository(context, Mock.Of<ILogger<CategoriaRepository>>());
+        var result = (await repository.FindAllAsync()).ToList();
+
+        result.Should().HaveCount(2);
+        result[0].Nombre.Should().Be("Electrónica");
+    }
+}
+```
+
+**Estructura de tests:**
+
+```
+TiendaApi.Tests/
+├── Unit/
+│   ├── Repositories/           ← Tests con In-Memory
+│   │   ├── Categorias/
+│   │   ├── Productos/
+│   │   └── Usuarios/
+│   ├── Controllers/
+│   ├── Services/
+│   └── Validators/
+└── Integration/
+    └── TestContainers/         ← Tests con Docker
+        └── PedidosIntegrationTests.cs
+```
+
+### 9.3 Integration Tests con TestContainers
+
+**¿Cuándo usarlos?**
+- Tests que requieren PostgreSQL real
+- Tests que requieren MongoDB real
+- Tests de migraciones
+- Tests de transacciones serializables
+- Tests de características específicas de la base de datos
+- Tests de rendimiento real
+
+**Ventajas:**
+- ✅ PostgreSQL real (todas las características)
+- ✅ MongoDB real (todas las características)
+- ✅ Transacciones distribuidas
+- ✅ Validación completa del stack
+- ✅ Tests más realistas
+
+**Limitaciones:**
+- ❌ Requiere Docker instalado y corriendo
+- ❌ Ejecución lenta (~200ms+ por test)
+- ❌ Complejidad en CI/CD
+- ❌ Recursos del sistema
+
+**Ejemplo de test con TestContainers:**
+
+```csharp
+[TestFixture]
+public class PedidosIntegrationTests
+{
+    private MongoDbContainer? _mongoContainer;
+    private PostgreSqlContainer? _postgresContainer;
+
+    [OneTimeSetUp]
+    public async Task OneTimeSetup()
+    {
+        _mongoContainer = new MongoDbBuilder()
+            .WithImage("mongo:7.0")
+            .WithPortBinding(27017, true)
+            .Build();
+
+        await _mongoContainer.StartAsync();
+
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgres:16-alpine")
+            .WithDatabase("tienda_test")
+            .WithUsername("test")
+            .WithPassword("test")
+            .Build();
+
+        await _postgresContainer.StartAsync();
+    }
+
+    [Test]
+    public async Task CreatePedido_ConBasesDeDatosReales_DebePersistirEnMongoDB()
+    {
+        // Arrange
+        var connectionString = _postgresContainer!.GetConnectionString();
+        // ... configuración del servicio con conexión real
+
+        // Act & Assert
+        var result = await pedidosService.CreateAsync(1, pedidoRequest);
+        result.IsSuccess.Should().BeTrue();
+    }
+}
+```
+
+### 9.4 Comparativa: In-Memory vs TestContainers
+
+| Aspecto | In-Memory | TestContainers |
+|---------|-----------|----------------|
+| **Tiempo ejecución** | <5ms por test | 200ms+ por test |
+| **Recursos** | Mínimos | Docker + contenedores |
+| **Isolation** | Base de datos nueva por test | Contenedor compartido |
+| **PostgreSQL real** | ❌ No | ✅ Sí |
+| **MongoDB real** | ❌ No | ✅ Sí |
+| **Setup** | Instantáneo | ~10 segundos |
+| **CI/CD** | Sin configuración | Requiere Docker |
+
+### 9.5 ¿Cuándo usar cada uno?
+
+```mermaid
+flowchart TD
+    A["¿Necesitas test?"] --> B{¿DB real necesaria?}
+    B -->|No| C{¿Es unit test?}
+    B -->|Sí| D["Usa TestContainers"]
+    
+    C -->|Sí| E["Usa In-Memory<br/>si es repositorio/servicio"]
+    C -->|No| F["Usa Mocks"]
+    
+    D --> G["PostgreSQL + MongoDB<br/>en contenedores"]
+    E --> H["DbContext real<br/>sin Docker"]
+    F --> I["Sin base de datos<br/>100% mock"]
+```
+
+| Escenario | Recomendado | Razón |
+|-----------|-------------|-------|
+| Unit test de repository | **In-Memory** | Rápido, aislamiento total |
+| Unit test de controller | **Mocks** | No necesita DB |
+| Unit test de servicio | **In-Memory** | Lógica de negocio |
+| Test de migración | **TestContainers** | PostgreSQL real |
+| Test de concurrencia | **TestContainers** | Serializable isolation |
+| Test de MongoDB queries | **TestContainers** | MongoDB real |
+| Test de integración completa | **TestContainers** | Stack completo |
+
+### 9.6 Configuración de Tests en el Proyecto
+
+**Paquetes NuGet necesarios:**
+
+```xml
+<!-- Para In-Memory -->
+<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
+
+<!-- Para TestContainers -->
+<PackageReference Include="Testcontainers.MongoDb" Version="4.3.0" />
+<PackageReference Include="Testcontainers.PostgreSql" Version="4.3.0" />
+```
+
+**Filtrado de tests:**
+
+```bash
+# Solo tests sin Docker (rápidos)
+dotnet test --filter "FullyQualifiedName!~MongoDB & FullyQualifiedName!~PostgreSQL & FullyQualifiedName!~Container"
+
+# Solo tests de integración (requiere Docker)
+dotnet test --filter "FullyQualifiedName~TestContainers"
+```
+
+### 9.7 Best Practices
+
+1. **Unit tests primero**: Cubrir lógica de negocio con In-Memory y mocks
+2. **Integración selectiva**: Solo tests críticos con TestContainers
+3. **Aislamiento**: Cada test debe ser independiente
+4. **Coverage balance**: 100% coverage no es el objetivo, sino confianza
+5. **Tiempo de ejecución**: Unit tests deben correr en segundos
+
+**Regla general:**
+- **456 unit tests** con In-Memory + Mocks → ~2 segundos
+- **5 integration tests** con Docker → ~2 minutos
+
+ Ejecutar unit tests en cada commit, integration tests solo en CI o manualmente.
