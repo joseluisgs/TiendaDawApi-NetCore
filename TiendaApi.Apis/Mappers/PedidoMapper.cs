@@ -17,7 +17,7 @@ public static class PedidoMapper
     {
         return new Dtos.Pedidos.PedidoDto
         {
-            Id = pedido.Id ?? string.Empty,
+            Id = pedido.Id.ToString(),
             UserId = pedido.UserId,
             Items = pedido.Items?.Select(i => i.ToDto()).ToList() ?? new(),
             Total = pedido.Total,

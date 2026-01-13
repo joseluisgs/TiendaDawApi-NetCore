@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
 using TiendaApi.Apis.Data;
 using TiendaApi.Apis.Models;
 
@@ -51,7 +52,7 @@ public class PedidosRepository(
         logger.LogDebug("Buscando pedido por id: {Id}", id);
 
         return await context.Pedidos
-            .FirstOrDefaultAsync(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.Id == ObjectId.Parse(id));
     }
 
     /// <summary>

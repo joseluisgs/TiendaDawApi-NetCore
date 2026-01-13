@@ -265,7 +265,7 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDto_DebeMapearTodosLosCampos()
     {
         // Arrange
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoId = ObjectId.GenerateNewId();
         var pedido = new Pedido
         {
             Id = pedidoId,
@@ -284,7 +284,7 @@ public class MapperExtensionTests
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Id.Should().Be(pedidoId);
+        dto.Id.Should().Be(pedidoId.ToString());
         dto.UserId.Should().Be(1);
         dto.Total.Should().Be(150.00m);
         dto.Estado.Should().Be(PedidoEstado.PENDIENTE);
@@ -297,7 +297,7 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDto_DebeManejarItemsVacios()
     {
         // Arrange
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoId = ObjectId.GenerateNewId();
         var pedido = new Pedido
         {
             Id = pedidoId,
@@ -359,8 +359,8 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDtoList_DebeMapearMultiplesPedidos()
     {
         // Arrange
-        var pedidoId1 = ObjectId.GenerateNewId().ToString();
-        var pedidoId2 = ObjectId.GenerateNewId().ToString();
+        var pedidoId1 = ObjectId.GenerateNewId();
+        var pedidoId2 = ObjectId.GenerateNewId();
         var pedidos = new List<Pedido>
         {
             new() { Id = pedidoId1, Total = 100 },
@@ -372,8 +372,8 @@ public class MapperExtensionTests
 
         // Assert
         dtos.Should().HaveCount(2);
-        dtos[0].Id.Should().Be(pedidoId1);
-        dtos[1].Id.Should().Be(pedidoId2);
+        dtos[0].Id.Should().Be(pedidoId1.ToString());
+        dtos[1].Id.Should().Be(pedidoId2.ToString());
     }
 
     #endregion

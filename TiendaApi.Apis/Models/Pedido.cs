@@ -12,7 +12,7 @@ public class Pedido
     /// Identificador único del pedido.
     /// </summary>
     [Key]
-    public string Id { get; set; } = ObjectId.GenerateNewId().ToString();
+    public ObjectId Id { get; set; } = ObjectId.GenerateNewId();
 
     /// <summary>
     /// Identificador del usuario que realizó el pedido.
