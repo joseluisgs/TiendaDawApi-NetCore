@@ -67,6 +67,9 @@ services:
       - Jwt__Key=SuperSecretKeyForJWTAuthenticationThatShouldBeLongEnough
       - Jwt__Issuer=TiendaApi
       - Jwt__Audience=TiendaApi
+      - Storage__UploadPath=images/uploads
+    volumes:
+      - tienda-images:/app/images/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,3 +82,5 @@ volumes:
   postgres-data:
   mongodb-data:
   redis-data:
+  tienda-images:
+    driver: local
