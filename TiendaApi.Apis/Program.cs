@@ -27,6 +27,7 @@ using TiendaApi.Apis.Services.Categorias;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Services.Productos;
+using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Services.Users;
 using TiendaApi.Apis.Validators.Categorias;
 using TiendaApi.Apis.Validators.Pedidos;
@@ -202,6 +203,10 @@ Log.Information("📧 Configurando servicio de email...");
 builder.Services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 builder.Services.AddScoped<IEmailService, MailKitEmailService>();
 builder.Services.AddHostedService<EmailBackgroundService>();
+
+// Almacenamiento de archivos
+Log.Information("🖼️ Configurando servicio de almacenamiento...");
+builder.Services.AddScoped<IStorageService, FileSystemStorageService>();
 
 // WebSockets
 Log.Information("🔌 Registrando handlers de WebSocket...");

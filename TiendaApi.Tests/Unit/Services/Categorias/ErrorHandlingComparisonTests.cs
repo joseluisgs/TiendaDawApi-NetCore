@@ -11,6 +11,7 @@ using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Categorias;
 using TiendaApi.Apis.Services.Productos;
+using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Validators.Categorias;
 using TiendaApi.Apis.Validators.Productos;
 using TiendaApi.Apis.WebSockets.Productos;
@@ -65,6 +66,7 @@ public class ErrorHandlingComparisonTests
         var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
         var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+        var mockStorageService = new Mock<IStorageService>();
 
         _productoService = new ProductoService(
             _mockProductoRepo.Object,
@@ -74,7 +76,8 @@ public class ErrorHandlingComparisonTests
             mockWebSocketHandler.Object,
             mockEmailService.Object,
             mockConfiguration.Object,
-            _mockProductoValidator.Object
+            _mockProductoValidator.Object,
+            mockStorageService.Object
         );
     }
 
@@ -230,6 +233,7 @@ public class ErrorHandlingComparisonTests
         var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
         var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+        var mockStorageService = new Mock<TiendaApi.Apis.Services.Storage.IStorageService>();
 
         _productoService = new ProductoService(
             _mockProductoRepo.Object,
@@ -239,7 +243,8 @@ public class ErrorHandlingComparisonTests
             mockWebSocketHandler.Object,
             mockEmailService.Object,
             mockConfiguration.Object,
-            _mockProductoValidator.Object
+            _mockProductoValidator.Object,
+            mockStorageService.Object
         );
 
         // Act

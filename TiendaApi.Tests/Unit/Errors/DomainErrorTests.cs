@@ -1,19 +1,15 @@
 using FluentAssertions;
 using TiendaApi.Apis.Errors;
 
-namespace TiendaApi.Tests.Unit.Services;
+namespace TiendaApi.Tests.Unit.Errors;
 
 /// <summary>
-/// Tests unitarios para DomainError.
+/// Tests unitarios exhaustivos para DomainError y ErrorType.
 /// </summary>
 public class DomainErrorTests
 {
-    #region Tests NotFound
+    #region NotFound Error Tests
 
-    /// <summary>
-    /// Dado un mensaje de error, cuando se crea NotFound, entonces tiene tipo NotFound.
-    /// Returns: DomainError con Type = NotFound
-    /// </summary>
     [Test]
     public void NotFound_ConMensaje_CreaErrorCorrecto()
     {
@@ -24,10 +20,6 @@ public class DomainErrorTests
         error.Details.Should().BeNull();
     }
 
-    /// <summary>
-    /// Dado un mensaje y detalles, cuando se crea NotFound, entonces incluye los detalles.
-    /// Returns: DomainError con Details
-    /// </summary>
     [Test]
     public void NotFound_ConDetalles_CreaErrorConDetalles()
     {
@@ -40,12 +32,8 @@ public class DomainErrorTests
 
     #endregion
 
-    #region Tests Validation
+    #region Validation Error Tests
 
-    /// <summary>
-    /// Dado un mensaje de validación, cuando se crea Validation, entonces tiene tipo Validation.
-    /// Returns: DomainError con Type = Validation
-    /// </summary>
     [Test]
     public void Validation_ConMensaje_CreaErrorCorrecto()
     {
@@ -56,10 +44,6 @@ public class DomainErrorTests
         error.ValidationErrors.Should().BeNull();
     }
 
-    /// <summary>
-    /// Dado errores de validación específicos, cuando se crea Validation, entonces incluye errores.
-    /// Returns: DomainError con ValidationErrors
-    /// </summary>
     [Test]
     public void Validation_ConErrores_CreaErrorConValidationErrors()
     {
@@ -78,14 +62,50 @@ public class DomainErrorTests
         error.ValidationErrors.Should().ContainKey("Email");
     }
 
+    [Test]
+    public void ValidationErrors_PuedeSerNull()
+    {
+        var error = DomainError.Validation("Error");
+
+        error.ValidationErrors.Should().BeNull();
+    }
+
+    [Test]
+    public void ValidationErrors_ObtieneValor()
+    {
+        var validationErrors = new Dictionary<string, string[]>
+        {
+            { "Campo", new[] { "Error1", "Error2" } }
+        };
+
+        var error = DomainError.Validation("Error", validationErrors);
+
+        error.ValidationErrors.Should().NotBeNull();
+        error.ValidationErrors!.Should().ContainKey("Campo");
+        error.ValidationErrors!["Campo"].Should().HaveCount(2);
+    }
+
+    [Test]
+    public void ValidationErrors_MultiplesCampos()
+    {
+        var validationErrors = new Dictionary<string, string[]>
+        {
+            { "Nombre", new[] { "Requerido" } },
+            { "Email", new[] { "Formato inválido", "Ya existe" } },
+            { "Password", new[] { "Mínimo 8 caracteres" } }
+        };
+
+        var error = DomainError.Validation("Errores de validación", validationErrors);
+
+        error.ValidationErrors.Should().HaveCount(3);
+        error.ValidationErrors!["Nombre"].Should().Contain("Requerido");
+        error.ValidationErrors!["Email"].Should().HaveCount(2);
+    }
+
     #endregion
 
-    #region Tests BusinessRule
+    #region BusinessRule Error Tests
 
-    /// <summary>
-    /// Dado un mensaje de regla de negocio, cuando se crea BusinessRule, entonces tiene tipo BusinessRule.
-    /// Returns: DomainError con Type = BusinessRule
-    /// </summary>
     [Test]
     public void BusinessRule_ConMensaje_CreaErrorCorrecto()
     {
@@ -95,10 +115,6 @@ public class DomainErrorTests
         error.Message.Should().Be("Stock insuficiente");
     }
 
-    /// <summary>
-    /// Dado un mensaje y detalles, cuando se crea BusinessRule, entonces incluye los detalles.
-    /// Returns: DomainError con Details
-    /// </summary>
     [Test]
     public void BusinessRule_ConDetalles_CreaErrorConDetalles()
     {
@@ -110,12 +126,8 @@ public class DomainErrorTests
 
     #endregion
 
-    #region Tests Unauthorized
+    #region Unauthorized Error Tests
 
-    /// <summary>
-    /// Dado un mensaje personalizado, cuando se crea Unauthorized, entonces tiene tipo Unauthorized.
-    /// Returns: DomainError con Type = Unauthorized
-    /// </summary>
     [Test]
     public void Unauthorized_ConMensajePersonalizado_CreaErrorCorrecto()
     {
@@ -125,10 +137,6 @@ public class DomainErrorTests
         error.Message.Should().Be("Token expirado");
     }
 
-    /// <summary>
-    /// Dado ningún mensaje, cuando se crea Unauthorized, entonces usa mensaje por defecto.
-    /// Returns: DomainError con mensaje por defecto
-    /// </summary>
     [Test]
     public void Unauthorized_SinMensaje_UsaMensajePorDefecto()
     {
@@ -140,12 +148,8 @@ public class DomainErrorTests
 
     #endregion
 
-    #region Tests Forbidden
+    #region Forbidden Error Tests
 
-    /// <summary>
-    /// Dado un mensaje personalizado, cuando se crea Forbidden, entonces tiene tipo Forbidden.
-    /// Returns: DomainError con Type = Forbidden
-    /// </summary>
     [Test]
     public void Forbidden_ConMensajePersonalizado_CreaErrorCorrecto()
     {
@@ -155,10 +159,6 @@ public class DomainErrorTests
         error.Message.Should().Be("No tienes permisos");
     }
 
-    /// <summary>
-    /// Dado ningún mensaje, cuando se crea Forbidden, entonces usa mensaje por defecto.
-    /// Returns: DomainError con mensaje por defecto
-    /// </summary>
     [Test]
     public void Forbidden_SinMensaje_UsaMensajePorDefecto()
     {
@@ -170,12 +170,8 @@ public class DomainErrorTests
 
     #endregion
 
-    #region Tests Conflict
+    #region Conflict Error Tests
 
-    /// <summary>
-    /// Dado un mensaje de conflicto, cuando se crea Conflict, entonces tiene tipo Conflict.
-    /// Returns: DomainError con Type = Conflict
-    /// </summary>
     [Test]
     public void Conflict_ConMensaje_CreaErrorCorrecto()
     {
@@ -185,10 +181,6 @@ public class DomainErrorTests
         error.Message.Should().Be("El email ya está registrado");
     }
 
-    /// <summary>
-    /// Dado un mensaje y detalles, cuando se crea Conflict, entonces incluye los detalles.
-    /// Returns: DomainError con Details
-    /// </summary>
     [Test]
     public void Conflict_ConDetalles_CreaErrorConDetalles()
     {
@@ -200,12 +192,8 @@ public class DomainErrorTests
 
     #endregion
 
-    #region Tests Internal
+    #region Internal Error Tests
 
-    /// <summary>
-    /// Dado un mensaje personalizado, cuando se crea Internal, entonces tiene tipo Internal.
-    /// Returns: DomainError con Type = Internal
-    /// </summary>
     [Test]
     public void Internal_ConMensajePersonalizado_CreaErrorCorrecto()
     {
@@ -215,10 +203,6 @@ public class DomainErrorTests
         error.Message.Should().Be("Error en base de datos");
     }
 
-    /// <summary>
-    /// Dado ningún mensaje, cuando se crea Internal, entonces usa mensaje por defecto.
-    /// Returns: DomainError con mensaje por defecto
-    /// </summary>
     [Test]
     public void Internal_SinMensaje_UsaMensajePorDefecto()
     {
@@ -228,10 +212,6 @@ public class DomainErrorTests
         error.Message.Should().Be("Error interno del servidor");
     }
 
-    /// <summary>
-    /// Dado un mensaje y detalles, cuando se crea Internal, entonces incluye los detalles.
-    /// Returns: DomainError con Details
-    /// </summary>
     [Test]
     public void Internal_ConDetalles_CreaErrorConDetalles()
     {
@@ -243,12 +223,8 @@ public class DomainErrorTests
 
     #endregion
 
-    #region Tests ToString
+    #region ToString Tests
 
-    /// <summary>
-    /// Dado un error sin detalles, cuando se convierte a string, entonces solo incluye tipo y mensaje.
-    /// Returns: string formateado
-    /// </summary>
     [Test]
     public void ToString_SinDetalles_RetornaFormatoBasico()
     {
@@ -257,10 +233,6 @@ public class DomainErrorTests
         error.ToString().Should().Be("NotFound: No encontrado");
     }
 
-    /// <summary>
-    /// Dado un error con detalles, cuando se convierte a string, entonces incluye detalles.
-    /// Returns: string formateado con detalles
-    /// </summary>
     [Test]
     public void ToString_ConDetalles_RetornaFormatoCompleto()
     {
@@ -269,14 +241,35 @@ public class DomainErrorTests
         error.ToString().Should().Be("NotFound: No encontrado - ID: 123");
     }
 
+    [Test]
+    public void ToString_MensajeLargo_RetornaCompleto()
+    {
+        var mensajeLargo = new string('A', 1000);
+        var error = DomainError.NotFound(mensajeLargo);
+
+        error.ToString().Should().Contain(mensajeLargo);
+    }
+
+    [Test]
+    public void ToString_MensajeVacio_RetornaFormato()
+    {
+        var error = DomainError.NotFound("");
+
+        error.ToString().Should().Be("NotFound: ");
+    }
+
+    [Test]
+    public void ToString_DetailsConCaracteresEspeciales_RetornaCompleto()
+    {
+        var error = DomainError.NotFound("Error", "Detalle @#$%ñÑáéíóú");
+
+        error.ToString().Should().Contain("Detalle @#$%ñÑáéíóú");
+    }
+
     #endregion
 
-    #region Tests ErrorType Enum
+    #region ErrorType Enum Tests
 
-    /// <summary>
-    /// Dado el enum ErrorType, cuando se verifican los valores, entonces tienen valores correctos.
-    /// Returns: valores del enum
-    /// </summary>
     [Test]
     public void ErrorType_Enum_TieneValoresCorrectos()
     {
@@ -289,9 +282,21 @@ public class DomainErrorTests
         Enum.GetValues<ErrorType>().Should().Contain(ErrorType.Internal);
     }
 
+    [Test]
+    public void ErrorType_Comparacion_Int_ValoresCorrectos()
+    {
+        ((int)ErrorType.NotFound).Should().Be(0);
+        ((int)ErrorType.Validation).Should().Be(1);
+        ((int)ErrorType.BusinessRule).Should().Be(2);
+        ((int)ErrorType.Unauthorized).Should().Be(3);
+        ((int)ErrorType.Forbidden).Should().Be(4);
+        ((int)ErrorType.Conflict).Should().Be(5);
+        ((int)ErrorType.Internal).Should().Be(6);
+    }
+
     #endregion
 
-    #region Tests Equals y GetHashCode
+    #region Equality Tests
 
     [Test]
     public void Equals_MismosErrores_DeberianSerIguales()
@@ -346,9 +351,27 @@ public class DomainErrorTests
         error.Equals(obj).Should().BeFalse();
     }
 
+    [Test]
+    public void OperatorEquals_MismosErrores_RetornaTrue()
+    {
+        var error1 = DomainError.NotFound("Error");
+        var error2 = DomainError.NotFound("Error");
+
+        (error1 == error2).Should().BeTrue();
+    }
+
+    [Test]
+    public void OperatorNotEquals_DiferentesErrores_RetornaTrue()
+    {
+        var error1 = DomainError.NotFound("Error1");
+        var error2 = DomainError.NotFound("Error2");
+
+        (error1 != error2).Should().BeTrue();
+    }
+
     #endregion
 
-    #region Tests Propiedades Record
+    #region Record Properties Tests
 
     [Test]
     public void DomainError_Message_ObtieneValorCorrecto()
@@ -380,113 +403,6 @@ public class DomainErrorTests
         var error = new DomainError("Mensaje", ErrorType.NotFound, "Details here");
 
         error.Details.Should().Be("Details here");
-    }
-
-    #endregion
-
-    #region Tests ValidationErrors
-
-    [Test]
-    public void ValidationErrors_PuedeSerNull()
-    {
-        var error = DomainError.Validation("Error");
-
-        error.ValidationErrors.Should().BeNull();
-    }
-
-    [Test]
-    public void ValidationErrors_ObtieneValor()
-    {
-        var validationErrors = new Dictionary<string, string[]>
-        {
-            { "Campo", new[] { "Error1", "Error2" } }
-        };
-
-        var error = DomainError.Validation("Error", validationErrors);
-
-        error.ValidationErrors.Should().NotBeNull();
-        error.ValidationErrors!.Should().ContainKey("Campo");
-        error.ValidationErrors!["Campo"].Should().HaveCount(2);
-    }
-
-    [Test]
-    public void ValidationErrors_MultiplesCampos()
-    {
-        var validationErrors = new Dictionary<string, string[]>
-        {
-            { "Nombre", new[] { "Requerido" } },
-            { "Email", new[] { "Formato inválido", "Ya existe" } },
-            { "Password", new[] { "Mínimo 8 caracteres" } }
-        };
-
-        var error = DomainError.Validation("Errores de validación", validationErrors);
-
-        error.ValidationErrors.Should().HaveCount(3);
-        error.ValidationErrors!["Nombre"].Should().Contain("Requerido");
-        error.ValidationErrors!["Email"].Should().HaveCount(2);
-    }
-
-    #endregion
-
-    #region Tests Equality Operators
-
-    [Test]
-    public void OperatorEquals_MismosErrores_RetornaTrue()
-    {
-        var error1 = DomainError.NotFound("Error");
-        var error2 = DomainError.NotFound("Error");
-
-        (error1 == error2).Should().BeTrue();
-    }
-
-    [Test]
-    public void OperatorNotEquals_DiferentesErrores_RetornaTrue()
-    {
-        var error1 = DomainError.NotFound("Error1");
-        var error2 = DomainError.NotFound("Error2");
-
-        (error1 != error2).Should().BeTrue();
-    }
-
-    #endregion
-
-    #region Tests Edge Cases
-
-    [Test]
-    public void ToString_MensajeLargo_RetornaCompleto()
-    {
-        var mensajeLargo = new string('A', 1000);
-        var error = DomainError.NotFound(mensajeLargo);
-
-        error.ToString().Should().Contain(mensajeLargo);
-    }
-
-    [Test]
-    public void ToString_MensajeVacio_RetornaFormato()
-    {
-        var error = DomainError.NotFound("");
-
-        error.ToString().Should().Be("NotFound: ");
-    }
-
-    [Test]
-    public void ToString_DetailsConCaracteresEspeciales_RetornaCompleto()
-    {
-        var error = DomainError.NotFound("Error", "Detalle @#$%ñÑáéíóú");
-
-        error.ToString().Should().Contain("Detalle @#$%ñÑáéíóú");
-    }
-
-    [Test]
-    public void ErrorType_Comparacion_Int_ValoresCorrectos()
-    {
-        ((int)ErrorType.NotFound).Should().Be(0);
-        ((int)ErrorType.Validation).Should().Be(1);
-        ((int)ErrorType.BusinessRule).Should().Be(2);
-        ((int)ErrorType.Unauthorized).Should().Be(3);
-        ((int)ErrorType.Forbidden).Should().Be(4);
-        ((int)ErrorType.Conflict).Should().Be(5);
-        ((int)ErrorType.Internal).Should().Be(6);
     }
 
     #endregion

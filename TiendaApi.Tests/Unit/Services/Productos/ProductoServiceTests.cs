@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,6 +13,7 @@ using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Productos;
+using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Validators.Productos;
 using TiendaApi.Apis.WebSockets.Productos;
 
@@ -31,6 +33,7 @@ public class ProductoServiceTests
     private Mock<IEmailService> _mockEmailService = null!;
     private Mock<IConfiguration> _mockConfiguration = null!;
     private Mock<IValidator<ProductoRequestDto>> _mockValidator = null!;
+    private Mock<IStorageService> _mockStorageService = null!;
     private ProductoService _service = null!;
 
     [SetUp]
@@ -44,10 +47,10 @@ public class ProductoServiceTests
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockValidator = new Mock<IValidator<ProductoRequestDto>>();
+        _mockStorageService = new Mock<IStorageService>();
 
         _mockConfiguration.Setup(c => c["Cache:ProductoCacheTTLMinutes"]).Returns("10");
 
-        // Configurar validador para que pase por defecto
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
@@ -59,7 +62,8 @@ public class ProductoServiceTests
             _mockWebSocketHandler.Object,
             _mockEmailService.Object,
             _mockConfiguration.Object,
-            _mockValidator.Object
+            _mockValidator.Object,
+            _mockStorageService.Object
         );
     }
 
@@ -271,7 +275,8 @@ public class ProductoServiceTests
             _mockWebSocketHandler.Object,
             _mockEmailService.Object,
             _mockConfiguration.Object,
-            _mockValidator.Object
+            _mockValidator.Object,
+            _mockStorageService.Object
         );
 
         // Act
@@ -316,7 +321,8 @@ public class ProductoServiceTests
             _mockWebSocketHandler.Object,
             _mockEmailService.Object,
             _mockConfiguration.Object,
-            _mockValidator.Object
+            _mockValidator.Object,
+            _mockStorageService.Object
         );
 
         // Act
@@ -433,6 +439,135 @@ public class ProductoServiceTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Type.Should().Be(ErrorType.NotFound);
+    }
+
+    #endregion
+
+    #region UpdateImageAsync Tests
+
+    [Test]
+    public async Task UpdateImageAsync_ConIdNoExistente_RetornaNoEncontrado()
+    {
+        // Arrange
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
+            .ReturnsAsync((Producto?)null);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.Length).Returns(1000);
+
+        // Act
+        var result = await _service.UpdateImageAsync(999, mockFile.Object);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.NotFound);
+    }
+
+    [Test]
+    public async Task UpdateImageAsync_ConArchivoValido_RetornaExito()
+    {
+        // Arrange
+        var categoria = new Categoria { Id = 1, Nombre = "Test Category" };
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            CategoriaId = 1,
+            Categoria = categoria,
+            Imagen = "https://example.com/old.jpg"
+        };
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("test.png");
+        mockFile.Setup(f => f.Length).Returns(1000);
+        mockFile.Setup(f => f.ContentType).Returns("image/png");
+
+        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Apis.Errors.DomainError>("/images/productos/new.png");
+        _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
+            .ReturnsAsync(saveResult);
+
+        // Act
+        var result = await _service.UpdateImageAsync(1, mockFile.Object);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _mockStorageService.Verify(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"), Times.Once);
+    }
+
+    [Test]
+    public async Task UpdateImageAsync_ConImagenLocalAnterior_EliminaImagenAnterior()
+    {
+        // Arrange
+        var categoria = new Categoria { Id = 1, Nombre = "Test Category" };
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            CategoriaId = 1,
+            Categoria = categoria,
+            Imagen = "/storage/images/productos/old.png"
+        };
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("test.png");
+        mockFile.Setup(f => f.Length).Returns(1000);
+        mockFile.Setup(f => f.ContentType).Returns("image/png");
+
+        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Apis.Errors.DomainError>("/images/productos/new.png");
+        _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
+            .ReturnsAsync(saveResult);
+
+        var deleteResult = CSharpFunctionalExtensions.Result.Success<bool, TiendaApi.Apis.Errors.DomainError>(true);
+        _mockStorageService.Setup(s => s.DeleteFileAsync("/storage/images/productos/old.png"))
+            .ReturnsAsync(deleteResult);
+
+        // Act
+        var result = await _service.UpdateImageAsync(1, mockFile.Object);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _mockStorageService.Verify(s => s.DeleteFileAsync("/storage/images/productos/old.png"), Times.Once);
+    }
+
+    [Test]
+    public async Task UpdateImageAsync_ConErrorEnStorage_RetornaError()
+    {
+        // Arrange
+        var categoria = new Categoria { Id = 1, Nombre = "Test Category" };
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            CategoriaId = 1,
+            Categoria = categoria
+        };
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.Length).Returns(1000);
+
+        var errorResult = CSharpFunctionalExtensions.Result.Failure<string, TiendaApi.Apis.Errors.DomainError>(
+            TiendaApi.Apis.Errors.DomainError.Validation("Archivo no válido"));
+        _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
+            .ReturnsAsync(errorResult);
+
+        // Act
+        var result = await _service.UpdateImageAsync(1, mockFile.Object);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Validation);
     }
 
     #endregion

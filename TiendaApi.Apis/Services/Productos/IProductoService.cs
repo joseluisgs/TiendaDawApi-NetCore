@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.Http;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 
@@ -15,4 +16,5 @@ public interface IProductoService
     Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto);
     Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto);
     Task<UnitResult<DomainError>> DeleteAsync(long id);
+    Task<Result<ProductoDto, DomainError>> UpdateImageAsync(long id, IFormFile image);
 }

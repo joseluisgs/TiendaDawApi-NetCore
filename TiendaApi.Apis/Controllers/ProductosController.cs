@@ -172,4 +172,44 @@ public class ProductosController(
             _ => StatusCode(500, new { message = error.Message })
         };
     }
+
+    /// <summary>
+    /// Actualizar la imagen de un producto.
+    /// PATCH /api/productos/{id}/imagen
+    /// Returns: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized
+    /// </summary>
+    [HttpPatch("{id}/imagen")]
+    [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    [Authorize(Policy = "RequireUserRole")]
+    public async Task<IActionResult> UpdateImage(long id, IFormFile image)
+    {
+        logger.LogInformation("Actualizando imagen de producto con ID: {Id}", id);
+
+        if (image == null || image.Length == 0)
+        {
+            return BadRequest(new { message = "Debe proporcionar un archivo de imagen" });
+        }
+
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+        if (!allowedTypes.Contains(image.ContentType.ToLowerInvariant()))
+        {
+            return BadRequest(new { message = "Tipo de archivo no permitido. Solo se permiten: JPG, PNG, GIF, WEBP" });
+        }
+
+        var resultado = await service.UpdateImageAsync(id, image);
+
+        return resultado.Match(
+            onSuccess: producto => Ok(producto),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
+    }
 }

@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
@@ -8,6 +9,7 @@ using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
+using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Validators.Productos;
 using TiendaApi.Apis.WebSockets.Productos;
 
@@ -24,7 +26,8 @@ public class ProductoService(
     ProductoWebSocketHandler webSocketHandler,
     IEmailService emailService,
     IConfiguration configuration,
-    IValidator<ProductoRequestDto> productoValidator
+    IValidator<ProductoRequestDto> productoValidator,
+    IStorageService storageService
 ) : IProductoService
 {
 
@@ -254,6 +257,15 @@ public class ProductoService(
             );
         }
 
+        if (producto.IsLocalImage())
+        {
+            var deleteResult = await storageService.DeleteFileAsync(producto.Imagen!);
+            if (deleteResult.IsFailure)
+            {
+                logger.LogWarning("Error eliminando imagen local del producto {Id}: {Error}", id, deleteResult.Error.Message);
+            }
+        }
+
         await productoRepository.DeleteAsync(id);
         logger.LogInformation("Producto eliminado con ID: {Id}", id);
 
@@ -274,6 +286,64 @@ public class ProductoService(
         _ = Task.Run(async () => await NotificarWebSocketProductoEliminado(id));
 
         return UnitResult.Success<DomainError>();
+    }
+
+    /// <summary>
+    /// Actualizar la imagen de un producto.
+    /// Returns: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
+    /// </summary>
+    public async Task<Result<ProductoDto, DomainError>> UpdateImageAsync(long id, IFormFile image)
+    {
+        logger.LogInformation("Actualizando imagen de producto con ID: {Id}", id);
+
+        var producto = await productoRepository.FindByIdAsync(id);
+
+        if (producto == null)
+        {
+            logger.LogWarning("Producto con ID {Id} no encontrado para actualizar imagen", id);
+            return Result.Failure<ProductoDto, DomainError>(
+                DomainError.NotFound($"Producto con ID {id} no encontrado")
+            );
+        }
+
+        var saveResult = await storageService.SaveFileAsync(image, "productos");
+        if (saveResult.IsFailure)
+        {
+            logger.LogWarning("Error guardando imagen para producto {Id}: {Error}", id, saveResult.Error.Message);
+            return Result.Failure<ProductoDto, DomainError>(saveResult.Error);
+        }
+
+        if (producto.IsLocalImage())
+        {
+            await storageService.DeleteFileAsync(producto.Imagen!);
+        }
+
+        producto.Imagen = saveResult.Value;
+        producto.UpdatedAt = DateTime.UtcNow;
+
+        var updated = await productoRepository.UpdateAsync(producto);
+
+        logger.LogInformation("Imagen actualizada para producto con ID: {Id}", id);
+
+        var resultDto = updated.ToDto();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync($"productos:{id}");
+                await cacheService.RemoveAsync("productos:all");
+                logger.LogDebug("Caché invalidada tras actualizar imagen de producto");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error al invalidar caché tras actualizar imagen de producto");
+            }
+        });
+
+        _ = Task.Run(async () => await NotificarWebSocketProductoActualizado(resultDto));
+
+        return Result.Success<ProductoDto, DomainError>(resultDto);
     }
 
     /// <summary>
