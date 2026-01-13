@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Usuarios;
 
@@ -158,4 +159,217 @@ public class UserRepositoryInMemoryTests
         result.Should().HaveCount(1);
         result[0].Username.Should().Be("activo");
     }
+
+    #region FindAllPagedAsync Tests
+
+    [Test]
+    public async Task FindAllPagedAsync_Con20Usuarios_Pagina1_Size10_Retorna10()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        for (int i = 1; i <= 20; i++)
+        {
+            context.Users.Add(new User { Id = i, Username = $"user{i}", Email = $"user{i}@test.com" });
+        }
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.Should().HaveCount(10);
+        totalCount.Should().Be(20);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_Pagina2_Size5_RetornaSiguientes5()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        for (int i = 1; i <= 20; i++)
+        {
+            context.Users.Add(new User { Id = i, Username = $"user{i}", Email = $"user{i}@test.com" });
+        }
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto { Page = 1, Size = 5, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.Should().HaveCount(5);
+        items.First().Id.Should().Be(6);
+        items.Last().Id.Should().Be(10);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_ConFiltroUsername_RetornaSoloCoincidentes()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "admin", Email = "admin@test.com" },
+            new User { Id = 2, Username = "adminuser", Email = "adminuser@test.com" },
+            new User { Id = 3, Username = "guest", Email = "guest@test.com" },
+            new User { Id = 4, Username = "otheruser", Email = "other@test.com" }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto { Username = "admin", Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.Should().HaveCount(2);
+        totalCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_ConFiltroEmail_RetornaSoloCoincidentes()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "user1", Email = "admin@empresa.com" },
+            new User { Id = 2, Username = "user2", Email = "user@empresa.com" },
+            new User { Id = 3, Username = "user3", Email = "test@gmail.com" }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto { Email = "empresa.com", Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.Should().HaveCount(2);
+        totalCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "activo", Email = "activo@test.com", IsDeleted = false },
+            new User { Id = 2, Username = "eliminado1", Email = "del1@test.com", IsDeleted = true },
+            new User { Id = 3, Username = "eliminado2", Email = "del2@test.com", IsDeleted = true }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto { IsDeleted = true, Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.Should().HaveCount(2);
+        items.All(u => u.IsDeleted).Should().BeTrue();
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "aaa" },
+            new User { Id = 2, Username = "bbb" },
+            new User { Id = 3, Username = "ccc" }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "desc" };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.First().Id.Should().Be(3);
+        items.Last().Id.Should().Be(1);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_OrdenacionPorUsername_RetornaOrdenadoPorUsername()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "zebra" },
+            new User { Id = 2, Username = "alfa" },
+            new User { Id = 3, Username = "beta" }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "username", Direction = "asc" };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.First().Username.Should().Be("alfa");
+        items.Skip(1).First().Username.Should().Be("beta");
+        items.Last().Username.Should().Be("zebra");
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "user1" },
+            new User { Id = 2, Username = "user2" }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto { Page = 10, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.Should().BeEmpty();
+        totalCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "admin", Email = "admin@test.com", IsDeleted = false },
+            new User { Id = 2, Username = "admin2", Email = "admin2@test.com", IsDeleted = false },
+            new User { Id = 3, Username = "user", Email = "user@test.com", IsDeleted = false },
+            new User { Id = 4, Username = "adminold", Email = "old@test.com", IsDeleted = true }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+        var filter = new UserFilterDto
+        {
+            Username = "admin",
+            Email = "test.com",
+            IsDeleted = false,
+            Page = 0,
+            Size = 10,
+            SortBy = "id",
+            Direction = "asc"
+        };
+
+        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.Should().HaveCount(2);
+        items.All(u => u.Username.Contains("admin") && u.Email.Contains("test.com") && !u.IsDeleted).Should().BeTrue();
+        totalCount.Should().Be(2);
+    }
+
+    #endregion
 }

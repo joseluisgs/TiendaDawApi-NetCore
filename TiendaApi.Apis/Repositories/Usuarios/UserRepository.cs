@@ -65,7 +65,9 @@ public class UserRepository(
     {
         logger.LogDebug("Buscando usuarios paginados con filtros");
 
-        var query = context.Users.AsQueryable();
+        var query = filter.IsDeleted.HasValue
+            ? context.Users.IgnoreQueryFilters().AsQueryable()
+            : context.Users.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Username))
             query = query.Where(u => u.Username.ToLower().Contains(filter.Username.ToLower()));
