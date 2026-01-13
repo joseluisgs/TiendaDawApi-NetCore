@@ -22,7 +22,7 @@ public class PedidosController(
     /// <summary>
     /// Obtener todos los pedidos (solo administradores).
     /// GET /api/pedidos
-    /// Returns: 200 OK | 401 Unauthorized | 403 Forbidden
+    /// Devuelve: 200 OK | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "ADMIN")]
@@ -42,7 +42,7 @@ public class PedidosController(
     /// <summary>
     /// Crear un nuevo pedido.
     /// POST /api/pedidos
-    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
+    /// Devuelve: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
     /// </summary>
     [HttpPost]
     [Authorize]
@@ -84,7 +84,7 @@ public class PedidosController(
     /// <summary>
     /// Obtener pedidos del usuario autenticado.
     /// GET /api/pedidos/me
-    /// Returns: 200 OK | 401 Unauthorized
+    /// Devuelve: 200 OK | 401 Unauthorized
     /// </summary>
     [HttpGet("me")]
     [Authorize]
@@ -111,7 +111,7 @@ public class PedidosController(
     /// <summary>
     /// Obtener un pedido por ID.
     /// GET /api/pedidos/{id}
-    /// Returns: 200 OK | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 200 OK | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpGet("{id}")]
     [Authorize]
@@ -153,7 +153,7 @@ public class PedidosController(
     /// <summary>
     /// Actualizar estado de un pedido (solo administradores).
     /// PUT /api/pedidos/{id}/estado
-    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpPut("{id}/estado")]
     [Authorize(Roles = "ADMIN")]
@@ -183,7 +183,7 @@ public class PedidosController(
     /// <summary>
     /// Actualizar un pedido (el usuario puede actualizar sus propios pedidos).
     /// PUT /api/pedidos/{id}
-    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpPut("{id}")]
     [Authorize]
@@ -222,7 +222,7 @@ public class PedidosController(
     /// <summary>
     /// Eliminar un pedido (el usuario puede eliminar sus propios pedidos).
     /// DELETE /api/pedidos/{id}
-    /// Returns: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpDelete("{id}")]
     [Authorize]

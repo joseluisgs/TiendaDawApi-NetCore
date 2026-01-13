@@ -22,7 +22,7 @@ public class ProductosController(
     /// <summary>
     /// Obtener todos los productos.
     /// GET /api/productos
-    /// Returns: 200 OK
+    /// Devuelve: 200 OK
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
@@ -42,7 +42,7 @@ public class ProductosController(
     /// <summary>
     /// Obtener un producto por ID.
     /// GET /api/productos/{id}
-    /// Returns: 200 OK | 404 Not Found
+    /// Devuelve: 200 OK | 404 Not Found
     /// </summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
@@ -67,7 +67,7 @@ public class ProductosController(
     /// <summary>
     /// Obtener productos por categoría.
     /// GET /api/productos/categoria/{categoriaId}
-    /// Returns: 200 OK | 404 Not Found
+    /// Devuelve: 200 OK | 404 Not Found
     /// </summary>
     [HttpGet("categoria/{categoriaId}")]
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
@@ -92,7 +92,7 @@ public class ProductosController(
     /// <summary>
     /// Crear un nuevo producto.
     /// POST /api/productos
-    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status201Created)]
@@ -122,7 +122,7 @@ public class ProductosController(
     /// <summary>
     /// Actualizar un producto existente.
     /// PUT /api/productos/{id}
-    /// Returns: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized | 403 Forbidden
+    /// Devuelve: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
@@ -151,7 +151,7 @@ public class ProductosController(
     /// <summary>
     /// Eliminar un producto.
     /// DELETE /api/productos/{id}
-    /// Returns: 204 No Content | 404 Not Found | 401 Unauthorized | 403 Forbidden
+    /// Devuelve: 204 No Content | 404 Not Found | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -179,7 +179,7 @@ public class ProductosController(
     /// <summary>
     /// Actualizar la imagen de un producto.
     /// PATCH /api/productos/{id}/imagen
-    /// Returns: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized | 403 Forbidden
+    /// Devuelve: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpPatch("{id}/imagen")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
@@ -220,7 +220,7 @@ public class ProductosController(
     /// <summary>
     /// Actualizar parcialmente un producto (solo campos proporcionados).
     /// PATCH /api/productos/{id}
-    /// Returns: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized | 403 Forbidden
+    /// Devuelve: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpPatch("{id}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]

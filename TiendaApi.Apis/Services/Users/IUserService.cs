@@ -13,43 +13,43 @@ public interface IUserService
 {
     /// <summary>
     /// Obtiene todos los usuarios (excluyendo eliminados).
-    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// Devuelve: Result.Success(List) | Result.Failure nunca
     /// </summary>
     Task<CFE.Result<IEnumerable<UserDto>, DomainError>> FindAllAsync();
 
     /// <summary>
     /// Obtiene usuarios paginados (excluyendo eliminados).
-    /// Returns: Result.Success(PagedResult) | Result.Failure nunca
+    /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
     /// </summary>
     Task<CFE.Result<PagedResult<UserDto>, DomainError>> FindAllPagedAsync(int page, int pageSize);
 
     /// <summary>
     /// Obtiene un usuario por su ID.
-    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound)
+    /// Devuelve: Result.Success(UserDto) | Result.Failure(NotFound)
     /// </summary>
     Task<CFE.Result<UserDto, DomainError>> FindByIdAsync(long id);
 
     /// <summary>
     /// Crea un nuevo usuario.
-    /// Returns: Result.Success(UserDto) | Result.Failure(Validation/Conflict)
+    /// Devuelve: Result.Success(UserDto) | Result.Failure(Validation/Conflict)
     /// </summary>
     Task<CFE.Result<UserDto, DomainError>> CreateAsync(RegisterDto dto);
 
     /// <summary>
     /// Actualiza un usuario existente.
-    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound/Validation/Conflict)
+    /// Devuelve: Result.Success(UserDto) | Result.Failure(NotFound/Validation/Conflict)
     /// </summary>
     Task<CFE.Result<UserDto, DomainError>> UpdateAsync(long id, UserUpdateDto dto);
 
     /// <summary>
     /// Actualiza el avatar de un usuario.
-    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound/Validation)
+    /// Devuelve: Result.Success(UserDto) | Result.Failure(NotFound/Validation)
     /// </summary>
     Task<CFE.Result<UserDto, DomainError>> UpdateAvatarAsync(long id, string avatarUrl);
 
     /// <summary>
     /// Elimina un usuario (soft delete).
-    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>
     Task<CFE.UnitResult<DomainError>> DeleteAsync(long id);
 }

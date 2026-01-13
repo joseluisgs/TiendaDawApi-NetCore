@@ -22,7 +22,7 @@ public class CategoriaService(
 
     /// <summary>
     /// Obtiene todas las categorías.
-    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// Devuelve: Result.Success(List) | Result.Failure nunca
     /// </summary>
     public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync()
     {
@@ -34,7 +34,7 @@ public class CategoriaService(
 
     /// <summary>
     /// Obtiene una categoría por su ID.
-    /// Returns: Result.Success(CategoriaDto) | Result.Failure(NotFound)
+    /// Devuelve: Result.Success(CategoriaDto) | Result.Failure(NotFound)
     /// </summary>
     public async Task<Result<CategoriaDto, DomainError>> FindByIdAsync(long id)
     {
@@ -56,7 +56,7 @@ public class CategoriaService(
 
     /// <summary>
     /// Crea una nueva categoría.
-    /// Returns: Result.Success(CategoriaDto) | Result.Failure(Validation/Conflict)
+    /// Devuelve: Result.Success(CategoriaDto) | Result.Failure(Validation/Conflict)
     /// </summary>
     public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto)
     {
@@ -84,7 +84,7 @@ public class CategoriaService(
 
     /// <summary>
     /// Actualiza una categoría existente.
-    /// Returns: Result.Success(CategoriaDto) | Result.Failure(NotFound/Validation/Conflict)
+    /// Devuelve: Result.Success(CategoriaDto) | Result.Failure(NotFound/Validation/Conflict)
     /// </summary>
     public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto)
     {
@@ -121,7 +121,7 @@ public class CategoriaService(
 
     /// <summary>
     /// Elimina una categoría.
-    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
@@ -144,7 +144,7 @@ public class CategoriaService(
 
     /// <summary>
     /// Valida la categoría usando FluentValidation.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
     private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto)
     {
@@ -169,7 +169,7 @@ public class CategoriaService(
 
     /// <summary>
     /// Verifica si el nombre ya existe en otra categoría.
-    /// Returns: Result.Success(true) | Result.Failure(Conflict)
+    /// Devuelve: Result.Success(true) | Result.Failure(Conflict)
     /// </summary>
     private async Task<Result<bool, DomainError>> CheckNombreDuplicado(string nombre, long? excludeId = null)
     {

@@ -33,7 +33,7 @@ public class ProductoService(
 
     /// <summary>
     /// Obtener todos los productos con patrón cache-aside.
-    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// Devuelve: Result.Success(List) | Result.Failure nunca
     /// </summary>
     public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync()
     {
@@ -60,7 +60,7 @@ public class ProductoService(
 
     /// <summary>
     /// Obtener un producto por ID con patrón cache-aside.
-    /// Returns: Result.Success(ProductoDto) | Result.Failure(NotFound)
+    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound)
     /// </summary>
     public async Task<Result<ProductoDto, DomainError>> FindByIdAsync(long id)
     {
@@ -96,7 +96,7 @@ public class ProductoService(
 
     /// <summary>
     /// Obtener productos por categoría.
-    /// Returns: Result.Success(List) | Result.Failure(NotFound)
+    /// Devuelve: Result.Success(List) | Result.Failure(NotFound)
     /// </summary>
     public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindByCategoriaIdAsync(long categoriaId)
     {
@@ -118,7 +118,7 @@ public class ProductoService(
 
     /// <summary>
     /// Crear un nuevo producto.
-    /// Returns: Result.Success(ProductoDto) | Result.Failure(Validation/NotFound)
+    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(Validation/NotFound)
     /// </summary>
     public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
     {
@@ -185,7 +185,7 @@ public class ProductoService(
 
     /// <summary>
     /// Actualizar un producto existente.
-    /// Returns: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
+    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
     public async Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto)
     {
@@ -241,7 +241,7 @@ public class ProductoService(
 
     /// <summary>
     /// Eliminar un producto.
-    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
@@ -290,7 +290,7 @@ public class ProductoService(
 
     /// <summary>
     /// Actualizar la imagen de un producto.
-    /// Returns: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
+    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
     public async Task<Result<ProductoDto, DomainError>> UpdateImageAsync(long id, IFormFile image)
     {
@@ -396,7 +396,7 @@ public class ProductoService(
 
     /// <summary>
     /// Valida los datos de un producto usando FluentValidation.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation/NotFound)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation/NotFound)
     /// </summary>
     private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto)
     {
@@ -429,7 +429,7 @@ public class ProductoService(
 
     /// <summary>
     /// Actualizar parcialmente un producto (solo campos proporcionados).
-    /// Returns: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
+    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
     public async Task<Result<ProductoDto, DomainError>> UpdatePartialAsync(long id, ProductoPatchDto dto)
     {

@@ -11,7 +11,7 @@ public class ProductoType : ObjectGraphType<Producto>
     /// <summary>
     /// Constructor del tipo Producto.
     /// Define los campos disponibles para la consulta de productos.
-    /// Returns: void
+    /// Devuelve: void
     /// </summary>
     public ProductoType()
     {

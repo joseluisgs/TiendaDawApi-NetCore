@@ -11,7 +11,7 @@ public static class UserMapper
 {
     /// <summary>
     /// Convierte un usuario a DTO.
-    /// Returns: UserDto
+    /// Devuelve: UserDto
     /// </summary>
     public static UserDto ToDto(this User user)
     {
@@ -28,7 +28,7 @@ public static class UserMapper
 
     /// <summary>
     /// Convierte una lista de usuarios a lista de DTOs.
-    /// Returns: IEnumerable<UserDto>
+    /// Devuelve: IEnumerable<UserDto>
     /// </summary>
     public static IEnumerable<UserDto> ToDtoList(this IEnumerable<User> users)
     {
@@ -37,7 +37,7 @@ public static class UserMapper
 
     /// <summary>
     /// Convierte un DTO de registro a entidad usuario.
-    /// Returns: User
+    /// Devuelve: User
     /// </summary>
     public static User ToEntity(this RegisterDto dto, string passwordHash)
     {
@@ -55,7 +55,7 @@ public static class UserMapper
 
     /// <summary>
     /// Actualiza una entidad usuario con datos del DTO de actualización.
-    /// Returns: void
+    /// Devuelve: void
     /// </summary>
     public static void UpdateEntity(this UserUpdateDto dto, User user)
     {

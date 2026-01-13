@@ -36,7 +36,7 @@ public class PedidosService(
 
     /// <summary>
     /// Obtiene todos los pedidos.
-    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// Devuelve: Result.Success(List) | Result.Failure nunca
     /// </summary>
     public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync()
     {
@@ -50,7 +50,7 @@ public class PedidosService(
 
     /// <summary>
     /// Obtiene los pedidos de un usuario con caché.
-    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// Devuelve: Result.Success(List) | Result.Failure nunca
     /// </summary>
     public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId)
     {
@@ -76,7 +76,7 @@ public class PedidosService(
 
     /// <summary>
     /// Obtiene un pedido por su ID con caché.
-    /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound)
+    /// Devuelve: Result.Success(PedidoDto) | Result.Failure(NotFound)
     /// </summary>
     public async Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id)
     {
@@ -113,7 +113,7 @@ public class PedidosService(
     /// Crea un nuevo pedido con verificación de stock usando enfoque híbrido: Serializable + Retry.
     /// Este método implementa control de concurrencia optimista con reintentos automáticos
     /// en caso de errores de serialización de PostgreSQL (código 40001).
-    /// Returns: Result.Success(PedidoDto) | Result.Failure(Validation/NotFound/BusinessRule/Conflict/Internal)
+    /// Devuelve: Result.Success(PedidoDto) | Result.Failure(Validation/NotFound/BusinessRule/Conflict/Internal)
     /// </summary>
     public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto)
     {
@@ -302,7 +302,7 @@ public class PedidosService(
 
     /// <summary>
     /// Actualiza el estado de un pedido.
-    /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation)
+    /// Devuelve: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
     public async Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado)
     {
@@ -459,7 +459,7 @@ public class PedidosService(
 
     /// <summary>
     /// Valida el pedido usando FluentValidation.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
     private async Task<UnitResult<DomainError>> ValidatePedidoAsync(PedidoRequestDto dto)
     {
@@ -484,7 +484,7 @@ public class PedidosService(
 
     /// <summary>
     /// Valida un item de pedido usando FluentValidation.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
     private async Task<UnitResult<DomainError>> ValidatePedidoItemAsync(PedidoItemRequestDto dto)
     {
@@ -509,7 +509,7 @@ public class PedidosService(
 
     /// <summary>
     /// Actualiza un pedido (el usuario puede actualizar sus propios pedidos).
-    /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation/Forbidden)
+    /// Devuelve: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation/Forbidden)
     /// </summary>
     public async Task<Result<PedidoDto, DomainError>> UpdateAsync(string id, long userId, UpdatePedidoDto dto)
     {
@@ -568,7 +568,7 @@ public class PedidosService(
 
     /// <summary>
     /// Elimina un pedido (el usuario puede eliminar sus propios pedidos).
-    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound/Forbidden)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(NotFound/Forbidden)
     /// </summary>
     public async Task<UnitResult<DomainError>> DeleteAsync(string id, long userId)
     {

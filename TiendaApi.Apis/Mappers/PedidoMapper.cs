@@ -11,7 +11,7 @@ public static class PedidoMapper
 {
     /// <summary>
     /// Convierte un pedido a DTO.
-    /// Returns: Dtos.Pedidos.PedidoDto
+    /// Devuelve: Dtos.Pedidos.PedidoDto
     /// </summary>
     public static Dtos.Pedidos.PedidoDto ToDto(this Pedido pedido)
     {
@@ -29,7 +29,7 @@ public static class PedidoMapper
 
     /// <summary>
     /// Convierte una lista de pedidos a lista de DTOs.
-    /// Returns: IEnumerable<Dtos.Pedidos.PedidoDto>
+    /// Devuelve: IEnumerable<Dtos.Pedidos.PedidoDto>
     /// </summary>
     public static IEnumerable<Dtos.Pedidos.PedidoDto> ToDtoList(this IEnumerable<Pedido> pedidos)
     {
@@ -38,7 +38,7 @@ public static class PedidoMapper
 
     /// <summary>
     /// Convierte un ítem de pedido a DTO.
-    /// Returns: Dtos.Pedidos.PedidoItemDto
+    /// Devuelve: Dtos.Pedidos.PedidoItemDto
     /// </summary>
     public static Dtos.Pedidos.PedidoItemDto ToDto(this PedidoItem item)
     {
@@ -54,7 +54,7 @@ public static class PedidoMapper
 
     /// <summary>
     /// Convierte un DTO de solicitud de pedido a entidad pedido.
-    /// Returns: Pedido
+    /// Devuelve: Pedido
     /// </summary>
     public static Pedido ToEntity(this Dtos.Pedidos.PedidoRequestDto dto, long userId)
     {
@@ -70,7 +70,7 @@ public static class PedidoMapper
 
     /// <summary>
     /// Convierte un DTO de solicitud de ítem a entidad ítem de pedido.
-    /// Returns: PedidoItem
+    /// Devuelve: PedidoItem
     /// </summary>
     public static PedidoItem ToEntity(this Dtos.Pedidos.PedidoItemRequestDto dto, string? nombreProducto = null, decimal? precio = null)
     {

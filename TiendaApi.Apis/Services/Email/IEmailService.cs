@@ -18,13 +18,13 @@ public interface IEmailService
 {
     /// <summary>
     /// Envía un email de forma asíncrona.
-    /// Returns: Task completada
+    /// Devuelve: Task completada
     /// </summary>
     Task SendEmailAsync(EmailMessage message);
 
     /// <summary>
     /// Encola un email para procesamiento en segundo plano.
-    /// Returns: Task completada
+    /// Devuelve: Task completada
     /// </summary>
     Task EnqueueEmailAsync(EmailMessage message);
 }

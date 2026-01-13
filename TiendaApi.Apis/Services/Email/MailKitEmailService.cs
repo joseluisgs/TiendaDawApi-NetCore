@@ -26,7 +26,7 @@ public class MailKitEmailService : IEmailService
 
     /// <summary>
     /// Envía un email inmediatamente usando SMTP.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation/Internal)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation/Internal)
     /// </summary>
     public async Task SendEmailAsync(EmailMessage message)
     {
@@ -79,7 +79,7 @@ public class MailKitEmailService : IEmailService
     /// <summary>
     /// Encola un email para procesamiento en segundo plano.
     /// Operación no bloqueante que añade al canal.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Internal)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Internal)
     /// </summary>
     public async Task EnqueueEmailAsync(EmailMessage message)
     {

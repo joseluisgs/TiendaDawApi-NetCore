@@ -19,7 +19,7 @@ public class GraphQLController(
     /// <summary>
     /// Ejecutar una consulta GraphQL.
     /// POST /graphql
-    /// Returns: 200 OK | 400 Bad Request
+    /// Devuelve: 200 OK | 400 Bad Request
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
@@ -56,7 +56,7 @@ public class GraphQLController(
     /// <summary>
     /// Ejecutar una consulta GraphQL (GET).
     /// GET /graphql?query=...
-    /// Returns: 200 OK | 400 Bad Request
+    /// Devuelve: 200 OK | 400 Bad Request
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]

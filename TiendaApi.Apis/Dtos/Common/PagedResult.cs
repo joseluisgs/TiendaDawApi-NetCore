@@ -16,7 +16,7 @@ public record PagedResult<T>
     public int TotalCount { get; init; }
 
     /// <summary>
-    /// Número de página actual (1-indexed).
+    /// Número de página actual (basado en 1).
     /// </summary>
     public int Page { get; init; }
 

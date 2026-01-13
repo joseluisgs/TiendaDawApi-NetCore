@@ -21,7 +21,7 @@ public class UserService(
 
     /// <summary>
     /// Obtiene todos los usuarios (excluyendo eliminados).
-    /// Returns: Result.Success(List) | Result.Failure nunca
+    /// Devuelve: Result.Success(List) | Result.Failure nunca
     /// </summary>
     public async Task<Result<IEnumerable<UserDto>, DomainError>> FindAllAsync()
     {
@@ -38,7 +38,7 @@ public class UserService(
 
     /// <summary>
     /// Obtiene usuarios paginados (excluyendo eliminados).
-    /// Returns: Result.Success(PagedResult) | Result.Failure nunca
+    /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
     /// </summary>
     public async Task<Result<PagedResult<UserDto>, DomainError>> FindAllPagedAsync(int page, int pageSize)
     {
@@ -76,7 +76,7 @@ public class UserService(
 
     /// <summary>
     /// Obtiene un usuario por su ID.
-    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound)
+    /// Devuelve: Result.Success(UserDto) | Result.Failure(NotFound)
     /// </summary>
     public async Task<Result<UserDto, DomainError>> FindByIdAsync(long id)
     {
@@ -99,7 +99,7 @@ public class UserService(
 
     /// <summary>
     /// Crea un nuevo usuario.
-    /// Returns: Result.Success(UserDto) | Result.Failure(Validation/Conflict)
+    /// Devuelve: Result.Success(UserDto) | Result.Failure(Validation/Conflict)
     /// </summary>
     public async Task<Result<UserDto, DomainError>> CreateAsync(RegisterDto dto)
     {
@@ -141,7 +141,7 @@ public class UserService(
 
     /// <summary>
     /// Actualiza un usuario existente.
-    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound/Validation/Conflict)
+    /// Devuelve: Result.Success(UserDto) | Result.Failure(NotFound/Validation/Conflict)
     /// </summary>
     public async Task<Result<UserDto, DomainError>> UpdateAsync(long id, UserUpdateDto dto)
     {
@@ -192,7 +192,7 @@ public class UserService(
 
     /// <summary>
     /// Actualiza el avatar de un usuario.
-    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound/Validation)
+    /// Devuelve: Result.Success(UserDto) | Result.Failure(NotFound/Validation)
     /// </summary>
     public async Task<Result<UserDto, DomainError>> UpdateAvatarAsync(long id, string avatarUrl)
     {
@@ -230,7 +230,7 @@ public class UserService(
 
     /// <summary>
     /// Elimina un usuario (soft delete).
-    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
@@ -258,7 +258,7 @@ public class UserService(
 
     /// <summary>
     /// Valida los datos de registro de un usuario.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
     private UnitResult<DomainError> ValidateRegistration(RegisterDto dto)
     {
@@ -309,7 +309,7 @@ public class UserService(
 
     /// <summary>
     /// Valida los datos de actualización de un usuario.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
     private UnitResult<DomainError> ValidateUpdate(UserUpdateDto dto)
     {
@@ -338,7 +338,7 @@ public class UserService(
 
     /// <summary>
     /// Verifica duplicados de username y email.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Conflict)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Conflict)
     /// </summary>
     private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(
         string? username,

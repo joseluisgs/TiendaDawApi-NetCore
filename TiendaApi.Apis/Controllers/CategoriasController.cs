@@ -22,7 +22,7 @@ public class CategoriasController(
     /// <summary>
     /// Obtener todas las categorías.
     /// GET /api/categorias
-    /// Returns: 200 OK
+    /// Devuelve: 200 OK
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<CategoriaDto>), StatusCodes.Status200OK)]
@@ -42,7 +42,7 @@ public class CategoriasController(
     /// <summary>
     /// Obtener una categoría por ID.
     /// GET /api/categorias/{id}
-    /// Returns: 200 OK | 404 Not Found
+    /// Devuelve: 200 OK | 404 Not Found
     /// </summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
@@ -67,7 +67,7 @@ public class CategoriasController(
     /// <summary>
     /// Crear una nueva categoría (solo administradores).
     /// POST /api/categorias
-    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 409 Conflict
+    /// Devuelve: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 409 Conflict
     /// </summary>
     [HttpPost]
     [Authorize(Roles = "ADMIN")]
@@ -96,7 +96,7 @@ public class CategoriasController(
     /// <summary>
     /// Actualizar una categoría existente (solo administradores).
     /// PUT /api/categorias/{id}
-    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found | 409 Conflict
+    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found | 409 Conflict
     /// </summary>
     [HttpPut("{id}")]
     [Authorize(Roles = "ADMIN")]
@@ -127,7 +127,7 @@ public class CategoriasController(
     /// <summary>
     /// Eliminar una categoría (solo administradores).
     /// DELETE /api/categorias/{id}
-    /// Returns: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "ADMIN")]

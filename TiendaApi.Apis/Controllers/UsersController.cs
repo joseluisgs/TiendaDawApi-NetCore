@@ -29,7 +29,7 @@ public class UsersController(
     /// <summary>
     /// Obtener todos los usuarios paginados (solo administradores).
     /// GET /api/users?page=1&amp;pageSize=10
-    /// Returns: 200 OK | 401 Unauthorized | 403 Forbidden
+    /// Devuelve: 200 OK | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "ADMIN")]
@@ -51,7 +51,7 @@ public class UsersController(
     /// <summary>
     /// Obtener un usuario por ID (solo administradores).
     /// GET /api/users/{id}
-    /// Returns: 200 OK | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 200 OK | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpGet("{id}")]
     [Authorize(Roles = "ADMIN")]
@@ -78,7 +78,7 @@ public class UsersController(
     /// <summary>
     /// Crear un nuevo usuario (solo administradores).
     /// POST /api/users
-    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 409 Conflict
+    /// Devuelve: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 409 Conflict
     /// </summary>
     [HttpPost]
     [Authorize(Roles = "ADMIN")]
@@ -107,7 +107,7 @@ public class UsersController(
     /// <summary>
     /// Actualizar un usuario existente (solo administradores).
     /// PUT /api/users/{id}
-    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found | 409 Conflict
+    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found | 409 Conflict
     /// </summary>
     [HttpPut("{id}")]
     [Authorize(Roles = "ADMIN")]
@@ -138,7 +138,7 @@ public class UsersController(
     /// <summary>
     /// Actualizar avatar de un usuario (ADMIN o el propio usuario).
     /// PATCH /api/users/{id}/avatar
-    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpPatch("{id}/avatar")]
     [Authorize]
@@ -173,7 +173,7 @@ public class UsersController(
     /// <summary>
     /// Eliminar un usuario (solo administradores).
     /// DELETE /api/users/{id}
-    /// Returns: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "ADMIN")]
@@ -201,7 +201,7 @@ public class UsersController(
     /// <summary>
     /// Obtener el perfil del usuario autenticado.
     /// GET /api/users/me/profile
-    /// Returns: 200 OK | 401 Unauthorized
+    /// Devuelve: 200 OK | 401 Unauthorized
     /// </summary>
     [HttpGet("me/profile")]
     [Authorize]
@@ -229,7 +229,7 @@ public class UsersController(
     /// <summary>
     /// Actualizar el perfil del usuario autenticado.
     /// PUT /api/users/me/profile
-    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 404 Not Found
+    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 404 Not Found
     /// </summary>
     [HttpPut("me/profile")]
     [Authorize]
@@ -263,7 +263,7 @@ public class UsersController(
     /// <summary>
     /// Eliminar la cuenta del usuario autenticado.
     /// DELETE /api/users/me/profile
-    /// Returns: 204 No Content | 401 Unauthorized
+    /// Devuelve: 204 No Content | 401 Unauthorized
     /// </summary>
     [HttpDelete("me/profile")]
     [Authorize]
@@ -294,7 +294,7 @@ public class UsersController(
     /// <summary>
     /// Obtener los pedidos del usuario autenticado.
     /// GET /api/users/me/pedidos
-    /// Returns: 200 OK | 401 Unauthorized
+    /// Devuelve: 200 OK | 401 Unauthorized
     /// </summary>
     [HttpGet("me/pedidos")]
     [Authorize]
@@ -320,7 +320,7 @@ public class UsersController(
     /// <summary>
     /// Crear un nuevo pedido para el usuario autenticado.
     /// POST /api/users/me/pedidos
-    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
+    /// Devuelve: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
     /// </summary>
     [HttpPost("me/pedidos")]
     [Authorize]
@@ -361,7 +361,7 @@ public class UsersController(
     /// <summary>
     /// Actualizar un pedido del usuario autenticado.
     /// PUT /api/users/me/pedidos/{id}
-    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpPut("me/pedidos/{id}")]
     [Authorize]
@@ -398,7 +398,7 @@ public class UsersController(
     /// <summary>
     /// Eliminar un pedido del usuario autenticado.
     /// DELETE /api/users/me/pedidos/{id}
-    /// Returns: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Devuelve: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpDelete("me/pedidos/{id}")]
     [Authorize]

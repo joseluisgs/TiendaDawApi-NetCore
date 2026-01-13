@@ -23,7 +23,7 @@ public class AuthService(
 
     /// <summary>
     /// Registra un nuevo usuario.
-    /// Returns: Result.Success(AuthResponseDto) | Result.Failure(Validation/Conflict)
+    /// Devuelve: Result.Success(AuthResponseDto) | Result.Failure(Validation/Conflict)
     /// </summary>
     public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto)
     {
@@ -65,7 +65,7 @@ public class AuthService(
 
     /// <summary>
     /// Autentica un usuario existente.
-    /// Returns: Result.Success(AuthResponseDto) | Result.Failure(Validation/Unauthorized/NotFound)
+    /// Devuelve: Result.Success(AuthResponseDto) | Result.Failure(Validation/Unauthorized/NotFound)
     /// </summary>
     public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto)
     {
@@ -104,7 +104,7 @@ public class AuthService(
 
     /// <summary>
     /// Valida el registro usando FluentValidation.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
     private async Task<UnitResult<DomainError>> ValidateRegistrationAsync(RegisterDto dto)
     {
@@ -129,7 +129,7 @@ public class AuthService(
 
     /// <summary>
     /// Valida el login usando FluentValidation.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Validation)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
     private async Task<UnitResult<DomainError>> ValidateLoginAsync(LoginDto dto)
     {
@@ -154,7 +154,7 @@ public class AuthService(
 
     /// <summary>
     /// Verifica duplicados de username y email.
-    /// Returns: UnitResult.Success | UnitResult.Failure(Conflict)
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Conflict)
     /// </summary>
     private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(RegisterDto dto)
     {
@@ -180,7 +180,7 @@ public class AuthService(
 
     /// <summary>
     /// Genera la respuesta de autenticación con token JWT.
-    /// Returns: AuthResponseDto
+    /// Devuelve: AuthResponseDto
     /// </summary>
     private AuthResponseDto GenerateAuthResponse(User user)
     {
