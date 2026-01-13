@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Apis.Dtos.Categorias;
 using TiendaApi.Apis.Errors;
@@ -62,13 +63,16 @@ public class CategoriasController(
     }
 
     /// <summary>
-    /// Crear una nueva categoría.
+    /// Crear una nueva categoría (solo administradores).
     /// POST /api/categorias
-    /// Returns: 201 Created | 400 Bad Request | 409 Conflict
+    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 409 Conflict
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "ADMIN")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create([FromBody] CategoriaRequestDto dto)
     {
@@ -88,14 +92,17 @@ public class CategoriasController(
     }
 
     /// <summary>
-    /// Actualizar una categoría existente.
+    /// Actualizar una categoría existente (solo administradores).
     /// PUT /api/categorias/{id}
-    /// Returns: 200 OK | 404 Not Found | 400 Bad Request | 409 Conflict
+    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found | 409 Conflict
     /// </summary>
     [HttpPut("{id}")]
+    [Authorize(Roles = "ADMIN")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(long id, [FromBody] CategoriaRequestDto dto)
     {
@@ -116,12 +123,15 @@ public class CategoriasController(
     }
 
     /// <summary>
-    /// Eliminar una categoría.
+    /// Eliminar una categoría (solo administradores).
     /// DELETE /api/categorias/{id}
-    /// Returns: 204 No Content | 404 Not Found
+    /// Returns: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpDelete("{id}")]
+    [Authorize(Roles = "ADMIN")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(long id)
     {
