@@ -54,4 +54,9 @@ public interface ICategoriaRepository
     /// <param name="excludeId">Identificador a excluir de la búsqueda (para actualizaciones).</param>
     /// <returns>True si existe, False en caso contrario.</returns>
     Task<bool> ExistsByNombreAsync(string nombre, long? excludeId = null);
+
+    /// <summary>
+    /// Obtiene todas las categorías como IQueryable para uso con HotChocolate.
+    /// </summary>
+    IQueryable<Categoria> FindAllAsNoTracking();
 }

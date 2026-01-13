@@ -1,8 +1,9 @@
 using System.Text;
 using System.Threading.Channels;
 using FluentValidation;
-using GraphQL;
-using GraphQL.Types;
+using HotChocolate;
+using HotChocolate.AspNetCore;
+using HotChocolate.Types;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
@@ -13,7 +14,6 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using TiendaApi.Apis.Data;
-using TiendaApi.Apis.GraphQL;
 using TiendaApi.Apis.GraphQL.Types;
 using TiendaApi.Apis.Middleware;
 using TiendaApi.Apis.Mappers;
@@ -140,7 +140,7 @@ builder.Services.AddSwaggerGen(options =>
 
     // Incluir comentarios XML en Swagger
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
     {
         options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
@@ -214,12 +214,13 @@ builder.Services.AddSingleton<ProductoWebSocketHandler>();
 builder.Services.AddSingleton<PedidoWebSocketHandler>();
 
 // GraphQL
-Log.Information("🔍 Configurando GraphQL...");
-builder.Services.AddScoped<IDocumentExecuter, DocumentExecuter>();
-builder.Services.AddScoped<ISchema, TiendaSchema>();
-builder.Services.AddScoped<TiendaQuery>();
-builder.Services.AddScoped<ProductoType>();
-builder.Services.AddScoped<CategoriaType>();
+Log.Information("🔍 Configurando GraphQL con HotChocolate...");
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<TiendaQuery>()
+    .AddType<ProductoType>()
+    .AddType<CategoriaType>()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
 
 // AutoMapper
 Log.Information("🔄 Configurando AutoMapper...");
@@ -387,6 +388,10 @@ app.Map("/ws/v1/pedidos", async context =>
 Log.Information("🎯 Mapeando controladores...");
 app.MapControllers();
 
+// GraphQL Endpoint
+Log.Information("🔍 Configurando endpoint GraphQL: /graphql");
+app.MapGraphQL();
+
 // ============================================================================
 // 🗄️ INICIALIZACIÓN DE BASE DE DATOS
 // ============================================================================
@@ -429,7 +434,7 @@ using (var scope = app.Services.CreateScope())
 // 🖼️ INICIALIZACIÓN DE DIRECTORIO DE ALMACENAMIENTO
 // ============================================================================
 
-var storagePath = Path.Combine(app.Environment.ContentRootPath,
+var storagePath = System.IO.Path.Combine(app.Environment.ContentRootPath,
     builder.Configuration["Storage:UploadPath"] ?? "images/uploads");
 var storageDirectory = new DirectoryInfo(storagePath);
 

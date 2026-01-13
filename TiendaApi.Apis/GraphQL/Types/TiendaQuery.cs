@@ -1,5 +1,7 @@
-using GraphQL;
-using GraphQL.Types;
+using HotChocolate;
+using HotChocolate.Types;
+using HotChocolate.Data;
+using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Repositories.Categorias;
 
@@ -9,59 +11,67 @@ namespace TiendaApi.Apis.GraphQL.Types;
 /// Tipo de consulta raíz de GraphQL para la tienda.
 /// Expone las consultas de productos y categorías.
 /// </summary>
-public class TiendaQuery : ObjectGraphType
+public class TiendaQuery
 {
     /// <summary>
-    /// Constructor del tipo de consulta.
+    /// Consulta para obtener todos los productos.
     /// </summary>
-    /// <param name="productoRepository">Repositorio de productos.</param>
-    /// <param name="categoriaRepository">Repositorio de categorías.</param>
-    public TiendaQuery(IProductoRepository productoRepository, ICategoriaRepository categoriaRepository)
+    [UseFirstOrDefault]
+    [UseProjection]
+    public IQueryable<Producto> GetProductos([Service] IProductoRepository productoRepository)
     {
-        Name = "Query";
+        return productoRepository.FindAllAsNoTracking();
+    }
 
-        /// <summary>
-        /// Consulta para obtener todos los productos.
-        /// Returns: List<Producto>
-        /// </summary>
-        Field<ListGraphType<ProductoType>>("productos")
-            .ResolveAsync(async context =>
-            {
-                return await productoRepository.FindAllAsync();
-            });
+    /// <summary>
+    /// Consulta para obtener un producto por su ID.
+    /// </summary>
+    [UseFirstOrDefault]
+    public async Task<Producto?> GetProducto(
+        long id,
+        [Service] IProductoRepository productoRepository)
+    {
+        return await productoRepository.FindByIdAsync(id);
+    }
 
-        /// <summary>
-        /// Consulta para obtener un producto por su ID.
-        /// Returns: Producto
-        /// </summary>
-        Field<ProductoType>("productoById")
-            .Argument<NonNullGraphType<IdGraphType>>("id")
-            .ResolveAsync(async context =>
-            {
-                var id = context.GetArgument<long>("id");
-                return await productoRepository.FindByIdAsync(id);
-            });
+    /// <summary>
+    /// Consulta para obtener todos los productos paginados.
+    /// </summary>
+    [UsePaging(MaxPageSize = 100, DefaultPageSize = 10)]
+    public IQueryable<Producto> GetProductosPaged(
+        [Service] IProductoRepository productoRepository)
+    {
+        return productoRepository.FindAllAsNoTracking();
+    }
 
-        /// <summary>
-        /// Consulta para obtener todas las categorías.
-        /// Returns: List<Categoria>
-        /// </summary>
-        Field<ListGraphType<CategoriaType>>("categorias")
-            .ResolveAsync(async context =>
-            {
-                return await categoriaRepository.FindAllAsync();
-            });
+    /// <summary>
+    /// Consulta para obtener todas las categorías.
+    /// </summary>
+    [UseFirstOrDefault]
+    [UseProjection]
+    public IQueryable<Categoria> GetCategorias([Service] ICategoriaRepository categoriaRepository)
+    {
+        return categoriaRepository.FindAllAsNoTracking();
+    }
 
-        /// <summary>
-        /// Consulta para obtener una categoría por su ID.
-        /// Returns: Categoria
-        /// </summary>
-        Field<CategoriaType>("categoriaById")
-            .Argument<NonNullGraphType<IdGraphType>>("id")
-            .ResolveAsync(async context =>
-            {
-                var id = context.GetArgument<long>("id");
-                return await categoriaRepository.FindByIdAsync(id);
-            });
+    /// <summary>
+    /// Consulta para obtener una categoría por su ID.
+    /// </summary>
+    [UseFirstOrDefault]
+    public async Task<Categoria?> GetCategoria(
+        long id,
+        [Service] ICategoriaRepository categoriaRepository)
+    {
+        return await categoriaRepository.FindByIdAsync(id);
+    }
+
+    /// <summary>
+    /// Consulta para obtener todas las categorías paginadas.
+    /// </summary>
+    [UsePaging(MaxPageSize = 100, DefaultPageSize = 10)]
+    public IQueryable<Categoria> GetCategoriasPaged(
+        [Service] ICategoriaRepository categoriaRepository)
+    {
+        return categoriaRepository.FindAllAsNoTracking();
     }
 }

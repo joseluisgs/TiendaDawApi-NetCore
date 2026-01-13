@@ -1,4 +1,4 @@
-using GraphQL.Types;
+using HotChocolate.Types;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.GraphQL.Types;
@@ -6,29 +6,26 @@ namespace TiendaApi.Apis.GraphQL.Types;
 /// <summary>
 /// Tipo de GraphQL para la entidad Producto.
 /// </summary>
-public class ProductoType : ObjectGraphType<Producto>
+public class ProductoType : ObjectType<Producto>
 {
-    /// <summary>
-    /// Constructor del tipo Producto.
-    /// Define los campos disponibles para la consulta de productos.
-    /// Devuelve: void
-    /// </summary>
-    public ProductoType()
+    protected override void Configure(IObjectTypeDescriptor<Producto> descriptor)
     {
-        Name = "Producto";
-        Description = "Entidad Producto";
+        descriptor.Name("Producto");
+        descriptor.Description("Entidad Producto");
 
-        Field(p => p.Id, type: typeof(IdGraphType)).Description("El ID del producto");
-        Field(p => p.Nombre).Description("El nombre del producto");
-        Field(p => p.Descripcion, nullable: true).Description("La descripción del producto");
-        Field(p => p.Precio).Description("El precio del producto");
-        Field(p => p.Stock).Description("Cantidad en stock");
-        Field(p => p.Imagen, nullable: true).Description("URL de la imagen");
-        Field(p => p.CategoriaId).Description("El ID de la categoría");
-        Field(p => p.CreatedAt).Description("Fecha de creación");
-        Field(p => p.UpdatedAt).Description("Fecha de última actualización");
+        descriptor.Field(p => p.Id).Type<NonNullType<IdType>>().Description("El ID del producto");
+        descriptor.Field(p => p.Nombre).Type<NonNullType<StringType>>().Description("El nombre del producto");
+        descriptor.Field(p => p.Descripcion).Type<StringType>().Description("La descripción del producto");
+        descriptor.Field(p => p.Precio).Type<NonNullType<DecimalType>>().Description("El precio del producto");
+        descriptor.Field(p => p.Stock).Type<NonNullType<IntType>>().Description("Cantidad en stock");
+        descriptor.Field(p => p.Imagen).Type<StringType>().Description("URL de la imagen");
+        descriptor.Field(p => p.CategoriaId).Type<NonNullType<IntType>>().Description("El ID de la categoría");
+        descriptor.Field(p => p.CreatedAt).Type<NonNullType<DateTimeType>>().Description("Fecha de creación");
+        descriptor.Field(p => p.UpdatedAt).Type<NonNullType<DateTimeType>>().Description("Fecha de última actualización");
+        descriptor.Field(p => p.IsDeleted).Type<NonNullType<BooleanType>>().Description("Si el producto está eliminado");
 
-        Field<CategoriaType>("categoria")
-            .Resolve(context => context.Source.Categoria);
+        descriptor.Field(p => p.Categoria)
+            .Type<CategoriaType>()
+            .Description("La categoría del producto");
     }
 }

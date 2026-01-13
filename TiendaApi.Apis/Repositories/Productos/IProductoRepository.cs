@@ -79,4 +79,9 @@ public interface IProductoRepository
     /// <param name="isolationLevel">Nivel de aislamiento de la transacción.</param>
     /// <returns>La transacción iniciada.</returns>
     Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel);
+
+    /// <summary>
+    /// Obtiene todos los productos como IQueryable para uso con HotChocolate.
+    /// </summary>
+    IQueryable<Producto> FindAllAsNoTracking();
 }

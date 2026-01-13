@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.IO;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Services.Storage;
@@ -34,7 +35,7 @@ public class FileSystemStorageService : IStorageService
             ?? ["image/jpeg", "image/png", "image/gif"];
 
         // Ruta absoluta desde ContentRootPath
-        _rootPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "images");
+        _rootPath = System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "images");
 
         // Crear directorio si no existe
         if (!Directory.Exists(_rootPath))
@@ -50,10 +51,10 @@ public class FileSystemStorageService : IStorageService
     /// </summary>
     private static string GenerateUniqueFilename(string originalFilename)
     {
-        var extension = Path.GetExtension(originalFilename).ToLowerInvariant();
+        var extension = System.IO.Path.GetExtension(originalFilename).ToLowerInvariant();
         var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         var uniqueId = Guid.NewGuid().ToString("N")[..8];
-        var sanitizedName = Path.GetFileNameWithoutExtension(originalFilename)
+        var sanitizedName = System.IO.Path.GetFileNameWithoutExtension(originalFilename)
             .Replace(" ", "_")
             .Replace("-", "_");
         return $"{timestamp}_{uniqueId}_{sanitizedName}{extension}";
@@ -75,7 +76,7 @@ public class FileSystemStorageService : IStorageService
                 DomainError.Validation($"El archivo excede el tamaño máximo de {_maxFileSize / 1024 / 1024}MB"));
         }
 
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var extension = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!_allowedExtensions.Contains(extension))
         {
             return UnitResult.Failure<DomainError>(
@@ -89,7 +90,7 @@ public class FileSystemStorageService : IStorageService
                 DomainError.Validation($"Tipo de contenido no permitido: {contentType}"));
         }
 
-        var filename = Path.GetFileName(file.FileName);
+        var filename = System.IO.Path.GetFileName(file.FileName);
         if (filename.Contains("..") || filename.Contains('/') || filename.Contains('\\'))
         {
             return UnitResult.Failure<DomainError>(DomainError.Validation("Nombre de archivo inválido"));
@@ -112,11 +113,11 @@ public class FileSystemStorageService : IStorageService
             var filename = GenerateUniqueFilename(file.FileName);
 
             // Crear directorio destino
-            var folderPath = Path.Combine(_rootPath, folder);
+            var folderPath = System.IO.Path.Combine(_rootPath, folder);
             Directory.CreateDirectory(folderPath);
 
             // Guardar ficheiro
-            var filePath = Path.Combine(folderPath, filename);
+            var filePath = System.IO.Path.Combine(folderPath, filename);
             var relativePath = GetRelativePath(filename, folder);
 
             using var stream = new FileStream(filePath, FileMode.Create);
@@ -173,7 +174,7 @@ public class FileSystemStorageService : IStorageService
     public string GetFullPath(string filename)
     {
         // Si filename ya tiene la ruta completa, usarla directamente
-        if (Path.IsPathRooted(filename))
+        if (System.IO.Path.IsPathRooted(filename))
         {
             return filename;
         }
@@ -193,7 +194,7 @@ public class FileSystemStorageService : IStorageService
             cleanFilename = filename["/images/".Length..];
         }
 
-        return Path.Combine(_rootPath, cleanFilename);
+        return System.IO.Path.Combine(_rootPath, cleanFilename);
     }
 
     public string GetRelativePath(string filename, string folder = "productos")

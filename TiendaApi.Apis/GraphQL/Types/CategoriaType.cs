@@ -1,4 +1,4 @@
-using GraphQL.Types;
+using HotChocolate.Types;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.GraphQL.Types;
@@ -6,21 +6,17 @@ namespace TiendaApi.Apis.GraphQL.Types;
 /// <summary>
 /// Tipo de GraphQL para la entidad Categoria.
 /// </summary>
-public class CategoriaType : ObjectGraphType<Categoria>
+public class CategoriaType : ObjectType<Categoria>
 {
-    /// <summary>
-    /// Constructor del tipo Categoria.
-    /// Define los campos disponibles para la consulta de categorías.
-    /// Returns: void
-    /// </summary>
-    public CategoriaType()
+    protected override void Configure(IObjectTypeDescriptor<Categoria> descriptor)
     {
-        Name = "Categoria";
-        Description = "Entidad Categoria";
+        descriptor.Name("Categoria");
+        descriptor.Description("Entidad Categoria");
 
-        Field(c => c.Id, type: typeof(IdGraphType)).Description("El ID de la categoría");
-        Field(c => c.Nombre).Description("El nombre de la categoría");
-        Field(c => c.CreatedAt).Description("Fecha de creación");
-        Field(c => c.UpdatedAt).Description("Fecha de última actualización");
+        descriptor.Field(c => c.Id).Type<NonNullType<IdType>>().Description("El ID de la categoría");
+        descriptor.Field(c => c.Nombre).Type<NonNullType<StringType>>().Description("El nombre de la categoría");
+        descriptor.Field(c => c.CreatedAt).Type<NonNullType<DateTimeType>>().Description("Fecha de creación");
+        descriptor.Field(c => c.UpdatedAt).Type<NonNullType<DateTimeType>>().Description("Fecha de última actualización");
+        descriptor.Field(c => c.IsDeleted).Type<NonNullType<BooleanType>>().Description("Si la categoría está eliminada");
     }
 }

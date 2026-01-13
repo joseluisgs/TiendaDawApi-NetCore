@@ -31,6 +31,20 @@ public class ProductoRepository(
     }
 
     /// <summary>
+    /// Obtiene todos los productos como IQueryable para uso con HotChocolate.
+    /// </summary>
+    /// <returns>IQueryable de productos.</returns>
+    public IQueryable<Producto> FindAllAsNoTracking()
+    {
+        logger.LogDebug("Obteniendo productos como IQueryable para HotChocolate");
+
+        return context.Productos
+            .Include(p => p.Categoria)
+            .OrderBy(p => p.Nombre)
+            .AsNoTracking();
+    }
+
+    /// <summary>
     /// Obtiene productos paginados con filtros opcionales.
     /// </summary>
     public async Task<(IEnumerable<Producto> Items, int TotalCount)> FindAllPagedAsync(ProductoFilterDto filter)

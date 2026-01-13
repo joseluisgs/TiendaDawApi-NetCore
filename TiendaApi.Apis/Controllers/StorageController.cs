@@ -36,8 +36,8 @@ public class StorageController : ControllerBase
 
         try
         {
-            var basePath = Path.Combine(_environment.ContentRootPath, "images");
-            var fullPath = Path.Combine(basePath, path);
+            var basePath = System.IO.Path.Combine(_environment.ContentRootPath, "images");
+            var fullPath = System.IO.Path.Combine(basePath, path);
 
             if (!System.IO.File.Exists(fullPath))
             {

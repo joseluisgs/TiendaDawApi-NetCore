@@ -29,6 +29,19 @@ public class CategoriaRepository(
     }
 
     /// <summary>
+    /// Obtiene todas las categorías como IQueryable para uso con HotChocolate.
+    /// </summary>
+    /// <returns>IQueryable de categorías.</returns>
+    public IQueryable<Categoria> FindAllAsNoTracking()
+    {
+        logger.LogDebug("Obteniendo categorías como IQueryable para HotChocolate");
+
+        return context.Categorias
+            .OrderBy(c => c.Nombre)
+            .AsNoTracking();
+    }
+
+    /// <summary>
     /// Obtiene categorías paginadas con filtros opcionales.
     /// </summary>
     public async Task<(IEnumerable<Categoria> Items, int TotalCount)> FindAllPagedAsync(CategoriaFilterDto filter)
