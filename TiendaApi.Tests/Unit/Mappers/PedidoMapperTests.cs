@@ -20,7 +20,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            _id = ObjectId.GenerateNewId(),
+            Id = ObjectId.GenerateNewId().ToString(),
             UserId = 100,
             Total = 299.99m,
             Estado = PedidoEstado.PENDIENTE,
@@ -36,7 +36,7 @@ public class PedidoMapperTests
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Id.Should().Be(pedido._id.ToString());
+        dto.Id.Should().Be(pedido.Id);
         dto.UserId.Should().Be(100);
         dto.Total.Should().Be(299.99m);
         dto.Estado.Should().Be(PedidoEstado.PENDIENTE);
@@ -50,7 +50,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            _id = ObjectId.Empty,
+            Id = ObjectId.Empty.ToString(),
             UserId = 1,
             Total = 100
         };
@@ -66,7 +66,7 @@ public class PedidoMapperTests
     public void ToDto_ConEstadoPredeterminado_DebeSerPendiente()
     {
         // Arrange
-        var pedido = new Pedido { _id = ObjectId.GenerateNewId() };
+        var pedido = new Pedido { Id = ObjectId.GenerateNewId().ToString() };
 
         // Act
         var dto = pedido.ToDto();
@@ -81,7 +81,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            _id = ObjectId.GenerateNewId(),
+            Id = ObjectId.GenerateNewId().ToString(),
             Items = new List<PedidoItem>()
         };
 
@@ -99,7 +99,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            _id = ObjectId.GenerateNewId(),
+            Id = ObjectId.GenerateNewId().ToString(),
             Items = null!
         };
 
@@ -117,7 +117,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            _id = ObjectId.GenerateNewId(),
+            Id = ObjectId.GenerateNewId().ToString(),
             Items = new List<PedidoItem>
             {
                 new() { ProductoId = 1, NombreProducto = "Product 1", Cantidad = 3, Precio = 10, Subtotal = 30 },
@@ -139,7 +139,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            _id = ObjectId.GenerateNewId(),
+            Id = ObjectId.GenerateNewId().ToString(),
             Total = 0,
             Items = new List<PedidoItem>()
         };
@@ -157,7 +157,7 @@ public class PedidoMapperTests
         // Arrange
         var pedido = new Pedido
         {
-            _id = ObjectId.GenerateNewId(),
+            Id = ObjectId.GenerateNewId().ToString(),
             Total = 999999999.99m,
             Items = new List<PedidoItem>()
         };
@@ -186,7 +186,7 @@ public class PedidoMapperTests
         {
             var pedido = new Pedido
             {
-                _id = ObjectId.GenerateNewId(),
+                Id = ObjectId.GenerateNewId().ToString(),
                 Estado = estado
             };
 
@@ -215,7 +215,7 @@ public class PedidoMapperTests
 
         var pedido = new Pedido
         {
-            _id = ObjectId.GenerateNewId(),
+            Id = ObjectId.GenerateNewId().ToString(),
             Items = items
         };
 
@@ -240,9 +240,9 @@ public class PedidoMapperTests
         // Arrange
         var pedidos = new List<Pedido>
         {
-            new() { _id = ObjectId.GenerateNewId(), UserId = 1, Total = 100 },
-            new() { _id = ObjectId.GenerateNewId(), UserId = 2, Total = 200 },
-            new() { _id = ObjectId.GenerateNewId(), UserId = 3, Total = 300 }
+            new() { Id = ObjectId.GenerateNewId().ToString(), UserId = 1, Total = 100 },
+            new() { Id = ObjectId.GenerateNewId().ToString(), UserId = 2, Total = 200 },
+            new() { Id = ObjectId.GenerateNewId().ToString(), UserId = 3, Total = 300 }
         };
 
         // Act
@@ -261,9 +261,9 @@ public class PedidoMapperTests
         // Arrange
         var pedidos = new List<Pedido>
         {
-            new() { _id = ObjectId.Parse("507f1f77bcf86cd799439011"), UserId = 1, Total = 100 },
-            new() { _id = ObjectId.Parse("507f1f77bcf86cd799439012"), UserId = 2, Total = 200 },
-            new() { _id = ObjectId.Parse("507f1f77bcf86cd799439013"), UserId = 3, Total = 300 }
+            new() { Id = "507f1f77bcf86cd799439011", UserId = 1, Total = 100 },
+            new() { Id = "507f1f77bcf86cd799439012", UserId = 2, Total = 200 },
+            new() { Id = "507f1f77bcf86cd799439013", UserId = 3, Total = 300 }
         };
 
         // Act

@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.EntityFrameworkCore.Extensions;
 
 namespace TiendaApi.Apis.Models;
 
@@ -11,10 +9,10 @@ namespace TiendaApi.Apis.Models;
 public class Pedido
 {
     /// <summary>
-    /// Identificador único del pedido (ObjectId de MongoDB).
+    /// Identificador único del pedido.
     /// </summary>
-    [BsonId]
-    public ObjectId _id { get; set; }
+    [Key]
+    public string Id { get; set; } = ObjectId.GenerateNewId().ToString();
 
     /// <summary>
     /// Identificador del usuario que realizó el pedido.
@@ -46,12 +44,6 @@ public class Pedido
     /// Fecha de última actualización del pedido.
     /// </summary>
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// Obtiene el ID como string para compatibilidad con la API.
-    /// </summary>
-    [BsonIgnore]
-    public string Id => _id.ToString();
 }
 
 /// <summary>

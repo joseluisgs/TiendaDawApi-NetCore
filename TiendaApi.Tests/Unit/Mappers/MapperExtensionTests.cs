@@ -265,10 +265,10 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDto_DebeMapearTodosLosCampos()
     {
         // Arrange
-        var pedidoId = ObjectId.GenerateNewId();
+        var pedidoId = ObjectId.GenerateNewId().ToString();
         var pedido = new Pedido
         {
-            _id = pedidoId,
+            Id = pedidoId,
             UserId = 1,
             Total = 150.00m,
             Estado = PedidoEstado.PENDIENTE,
@@ -284,7 +284,7 @@ public class MapperExtensionTests
         var dto = pedido.ToDto();
 
         // Assert
-        dto.Id.Should().Be(pedidoId.ToString());
+        dto.Id.Should().Be(pedidoId);
         dto.UserId.Should().Be(1);
         dto.Total.Should().Be(150.00m);
         dto.Estado.Should().Be(PedidoEstado.PENDIENTE);
@@ -297,10 +297,10 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDto_DebeManejarItemsVacios()
     {
         // Arrange
-        var pedidoId = ObjectId.GenerateNewId();
+        var pedidoId = ObjectId.GenerateNewId().ToString();
         var pedido = new Pedido
         {
-            _id = pedidoId,
+            Id = pedidoId,
             Items = new List<PedidoItem>()
         };
 
@@ -359,12 +359,12 @@ public class MapperExtensionTests
     public void PedidoMapper_ToDtoList_DebeMapearMultiplesPedidos()
     {
         // Arrange
-        var pedidoId1 = ObjectId.GenerateNewId();
-        var pedidoId2 = ObjectId.GenerateNewId();
+        var pedidoId1 = ObjectId.GenerateNewId().ToString();
+        var pedidoId2 = ObjectId.GenerateNewId().ToString();
         var pedidos = new List<Pedido>
         {
-            new() { _id = pedidoId1, Total = 100 },
-            new() { _id = pedidoId2, Total = 200 }
+            new() { Id = pedidoId1, Total = 100 },
+            new() { Id = pedidoId2, Total = 200 }
         };
 
         // Act
@@ -372,8 +372,8 @@ public class MapperExtensionTests
 
         // Assert
         dtos.Should().HaveCount(2);
-        dtos[0].Id.Should().Be(pedidoId1.ToString());
-        dtos[1].Id.Should().Be(pedidoId2.ToString());
+        dtos[0].Id.Should().Be(pedidoId1);
+        dtos[1].Id.Should().Be(pedidoId2);
     }
 
     #endregion
