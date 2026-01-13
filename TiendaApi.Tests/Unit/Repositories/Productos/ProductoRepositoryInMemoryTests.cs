@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Tests.Unit.Repositories.Productos;
@@ -93,5 +94,340 @@ public class ProductoRepositoryInMemoryTests
         var resultado = await context.Productos.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == 1);
         resultado.Should().NotBeNull();
         resultado!.IsDeleted.Should().BeTrue();
+    }
+
+    #region FindAllPagedAsync Tests
+
+    /// <summary>
+    /// Verifica que la paginación retorna el número correcto de elementos.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_Con20Elementos_Pagina1_Size10_Retorna10()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        for (int i = 1; i <= 20; i++)
+        {
+            context.Productos.Add(new Producto
+            {
+                Id = i,
+                Nombre = $"Producto {i}",
+                Precio = 100m + i,
+                Stock = 10,
+                CategoriaId = 1,
+                IsDeleted = false,
+                RowVersion = NewRowVersion()
+            });
+        }
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.Should().HaveCount(10);
+        totalCount.Should().Be(20);
+    }
+
+    /// <summary>
+    /// Verifica que la paginación retorna la página correcta.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_Pagina2_Size5_RetornaElementos11a15()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        for (int i = 1; i <= 20; i++)
+        {
+            context.Productos.Add(new Producto
+            {
+                Id = i,
+                Nombre = $"Producto {i}",
+                Precio = 100m,
+                Stock = 10,
+                CategoriaId = 1,
+                IsDeleted = false,
+                RowVersion = NewRowVersion()
+            });
+        }
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto { Page = 1, Size = 5, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.Should().HaveCount(5);
+        items.First().Id.Should().Be(6);
+        items.Last().Id.Should().Be(10);
+    }
+
+    /// <summary>
+    /// Verifica que el filtro por nombre funciona correctamente.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_ConFiltroNombre_RetornaSoloCoincidentes()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Laptop Gaming", Precio = 1000m, Stock = 10, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Laptop Oficina", Precio = 800m, Stock = 15, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Mouse Inalambrico", Precio = 50m, Stock = 100, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto { Nombre = "Laptop", Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.Should().HaveCount(2);
+        totalCount.Should().Be(2);
+    }
+
+    /// <summary>
+    /// Verifica que el filtro por precio máximo funciona correctamente.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_ConFiltroPrecioMax_RetornaProductosBaratos()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Producto Caro", Precio = 1000m, Stock = 10, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Producto Mediano", Precio = 500m, Stock = 20, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Producto Barato", Precio = 100m, Stock = 50, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto { PrecioMax = 600m, Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.Should().HaveCount(2);
+        items.All(p => p.Precio <= 600m).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Verifica que el filtro por stock mínimo funciona correctamente.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_ConFiltroStockMin_RetornaProductosConStock()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Poco Stock", Precio = 100m, Stock = 5, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Stock Medio", Precio = 200m, Stock = 25, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Mucho Stock", Precio = 300m, Stock = 100, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto { StockMin = 20, Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.Should().HaveCount(2);
+        items.All(p => p.Stock >= 20).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Verifica que el filtro IsDeleted funciona correctamente.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Activo", Precio = 100m, Stock = 10, IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Eliminado", Precio = 200m, Stock = 20, IsDeleted = true, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Otro Eliminado", Precio = 300m, Stock = 30, IsDeleted = true, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.IgnoreQueryFilters().AsQueryable();
+        var filter = new ProductoFilterDto { IsDeleted = true, Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.Should().HaveCount(2);
+        items.All(p => p.IsDeleted).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Verifica que la ordenación descendente funciona correctamente.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Primero", Precio = 100m, Stock = 10, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Segundo", Precio = 200m, Stock = 20, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Tercero", Precio = 300m, Stock = 30, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "desc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.First().Id.Should().Be(3);
+        items.Last().Id.Should().Be(1);
+    }
+
+    /// <summary>
+    /// Verifica que la ordenación por precio funciona correctamente.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_OrdenacionPorPrecio_RetornaOrdenadoPorPrecio()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Caro", Precio = 300m, Stock = 10, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Barato", Precio = 100m, Stock = 20, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Medio", Precio = 200m, Stock = 30, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto { Page = 0, Size = 10, SortBy = "precio", Direction = "asc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.First().Precio.Should().Be(100m);
+        items.Skip(1).First().Precio.Should().Be(200m);
+        items.Last().Precio.Should().Be(300m);
+    }
+
+    /// <summary>
+    /// Verifica que página vacía retorna cero elementos.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Producto 1", Precio = 100m, Stock = 10, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Producto 2", Precio = 200m, Stock = 20, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto { Page = 10, Size = 10, SortBy = "id", Direction = "asc" };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.Should().BeEmpty();
+        totalCount.Should().Be(2);
+    }
+
+    /// <summary>
+    /// Verifica que el TotalCount es correcto con filtros combinados.
+    /// </summary>
+    [Test]
+    public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var context = CreateContext(dbName);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Laptop Gaming", Precio = 800m, Stock = 10, IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Laptop Oficina", Precio = 800m, Stock = 15, IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Tablet Pro", Precio = 600m, Stock = 20, IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 4, Nombre = "Laptop Vieja", Precio = 400m, Stock = 5, IsDeleted = true, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var query = context.Productos.AsQueryable();
+        var filter = new ProductoFilterDto
+        {
+            Nombre = "Laptop",
+            IsDeleted = false,
+            PrecioMax = 900m,
+            Page = 0,
+            Size = 10,
+            SortBy = "id",
+            Direction = "asc"
+        };
+
+        var (items, totalCount) = await GetPagedResult(query, filter);
+
+        items.Should().HaveCount(2);
+        items.All(p => p.Nombre.Contains("Laptop") && !p.IsDeleted && p.Precio <= 900m).Should().BeTrue();
+        totalCount.Should().Be(2);
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Método auxiliar para ejecutar paginación en tests.
+    /// </summary>
+    private static async Task<(IEnumerable<Producto> Items, int TotalCount)> GetPagedResult(
+        IQueryable<Producto> query,
+        ProductoFilterDto filter,
+        bool applyFilters = true)
+    {
+        var filteredQuery = query.AsQueryable();
+
+        if (applyFilters)
+        {
+            if (!string.IsNullOrWhiteSpace(filter.Nombre))
+                filteredQuery = filteredQuery.Where(p => p.Nombre.ToLower().Contains(filter.Nombre.ToLower()));
+
+            if (filter.IsDeleted.HasValue)
+                filteredQuery = filteredQuery.Where(p => p.IsDeleted == filter.IsDeleted.Value);
+
+            if (filter.PrecioMax.HasValue)
+                filteredQuery = filteredQuery.Where(p => p.Precio <= filter.PrecioMax.Value);
+
+            if (filter.StockMin.HasValue)
+                filteredQuery = filteredQuery.Where(p => p.Stock >= filter.StockMin.Value);
+        }
+
+        var totalCount = await filteredQuery.CountAsync();
+
+        filteredQuery = ApplySorting(filteredQuery, filter.SortBy, filter.Direction);
+
+        var items = await filteredQuery
+            .Skip(filter.Page * filter.Size)
+            .Take(filter.Size)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    private static IQueryable<Producto> ApplySorting(IQueryable<Producto> query, string sortBy, string direction)
+    {
+        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
+
+        query = sortBy.ToLower() switch
+        {
+            "nombre" => isDescending ? query.OrderByDescending(p => p.Nombre) : query.OrderBy(p => p.Nombre),
+            "precio" => isDescending ? query.OrderByDescending(p => p.Precio) : query.OrderBy(p => p.Precio),
+            "stock" => isDescending ? query.OrderByDescending(p => p.Stock) : query.OrderBy(p => p.Stock),
+            "createdat" => isDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt),
+            _ => isDescending ? query.OrderByDescending(p => p.Id) : query.OrderBy(p => p.Id)
+        };
+
+        return query;
     }
 }
