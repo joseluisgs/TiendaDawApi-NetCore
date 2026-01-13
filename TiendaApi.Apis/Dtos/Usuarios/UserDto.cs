@@ -23,6 +23,11 @@ public record UserDto
     public string Email { get; init; } = string.Empty;
 
     /// <summary>
+    /// URL del avatar del usuario.
+    /// </summary>
+    public string Avatar { get; init; } = string.Empty;
+
+    /// <summary>
     /// Rol del usuario en el sistema.
     /// </summary>
     public string Role { get; init; } = string.Empty;

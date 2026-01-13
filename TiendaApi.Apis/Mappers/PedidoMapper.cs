@@ -22,6 +22,7 @@ public static class PedidoMapper
             Items = pedido.Items?.Select(i => i.ToDto()).ToList() ?? new(),
             Total = pedido.Total,
             Estado = pedido.Estado ?? string.Empty,
+            DireccionEnvio = pedido.DireccionEnvio,
             CreatedAt = pedido.CreatedAt
         };
     }

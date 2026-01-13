@@ -506,4 +506,113 @@ public class PedidosService(
 
         return UnitResult.Success<DomainError>();
     }
+
+    /// <summary>
+    /// Actualiza un pedido (el usuario puede actualizar sus propios pedidos).
+    /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation/Forbidden)
+    /// </summary>
+    public async Task<Result<PedidoDto, DomainError>> UpdateAsync(string id, long userId, UpdatePedidoDto dto)
+    {
+        logger.LogInformation("Actualizando pedido con ID: {Id} por usuario: {UserId}", id, userId);
+
+        var pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido == null)
+        {
+            logger.LogWarning("Pedido con ID {Id} no encontrado para actualizar", id);
+            return Result.Failure<PedidoDto, DomainError>(
+                DomainError.NotFound($"Pedido con ID {id} no encontrado")
+            );
+        }
+
+        if (pedido.UserId != userId)
+        {
+            logger.LogWarning("Usuario {UserId} intentó actualizar pedido {Id} que no le pertenece", userId, id);
+            return Result.Failure<PedidoDto, DomainError>(
+                DomainError.Forbidden("No puedes modificar un pedido que no te pertenece")
+            );
+        }
+
+        if (dto.Estado != null && !string.IsNullOrWhiteSpace(dto.Estado))
+            pedido.Estado = dto.Estado;
+
+        if (dto.DireccionEnvio != null && !string.IsNullOrWhiteSpace(dto.DireccionEnvio))
+            pedido.DireccionEnvio = dto.DireccionEnvio;
+
+        pedido.UpdatedAt = DateTime.UtcNow;
+
+        var updated = await pedidosRepository.UpdateAsync(pedido);
+
+        logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
+
+        var resultDto = updated.ToDto();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync($"pedidos:{id}");
+                await cacheService.RemoveAsync($"pedidos:user:{userId}");
+                await cacheService.RemoveAsync("pedidos:all");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error al invalidar caché tras actualizar pedido");
+            }
+        });
+
+        _ = Task.Run(async () => await webSocketHandler.NotifyPedidoEstadoUpdatedAsync(id, userId, pedido.Estado ?? "", resultDto));
+
+        return Result.Success<PedidoDto, DomainError>(resultDto);
+    }
+
+    /// <summary>
+    /// Elimina un pedido (el usuario puede eliminar sus propios pedidos).
+    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound/Forbidden)
+    /// </summary>
+    public async Task<UnitResult<DomainError>> DeleteAsync(string id, long userId)
+    {
+        logger.LogInformation("Eliminando pedido con ID: {Id} por usuario: {UserId}", id, userId);
+
+        var pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido == null)
+        {
+            logger.LogWarning("Pedido con ID {Id} no encontrado para eliminar", id);
+            return UnitResult.Failure<DomainError>(
+                DomainError.NotFound($"Pedido con ID {id} no encontrado")
+            );
+        }
+
+        if (pedido.UserId != userId)
+        {
+            logger.LogWarning("Usuario {UserId} intentó eliminar pedido {Id} que no le pertenece", userId, id);
+            return UnitResult.Failure<DomainError>(
+                DomainError.Forbidden("No puedes eliminar un pedido que no te pertenece")
+            );
+        }
+
+        pedido.IsDeleted = true;
+        pedido.UpdatedAt = DateTime.UtcNow;
+
+        await pedidosRepository.UpdateAsync(pedido);
+
+        logger.LogInformation("Pedido {Id} eliminado lógicamente por usuario {UserId}", id, userId);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync($"pedidos:{id}");
+                await cacheService.RemoveAsync($"pedidos:user:{userId}");
+                await cacheService.RemoveAsync("pedidos:all");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error al invalidar caché tras eliminar pedido");
+            }
+        });
+
+        return UnitResult.Success<DomainError>();
+    }
 }

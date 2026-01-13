@@ -39,4 +39,16 @@ public interface IPedidosService
     /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
     Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado);
+
+    /// <summary>
+    /// Actualiza un pedido (el usuario puede actualizar sus propios pedidos).
+    /// Returns: Result.Success(PedidoDto) | Result.Failure(NotFound/Validation/Forbidden)
+    /// </summary>
+    Task<Result<PedidoDto, DomainError>> UpdateAsync(string id, long userId, UpdatePedidoDto dto);
+
+    /// <summary>
+    /// Elimina un pedido (el usuario puede eliminar sus propios pedidos).
+    /// Returns: UnitResult.Success | UnitResult.Failure(NotFound/Forbidden)
+    /// </summary>
+    Task<UnitResult<DomainError>> DeleteAsync(string id, long userId);
 }

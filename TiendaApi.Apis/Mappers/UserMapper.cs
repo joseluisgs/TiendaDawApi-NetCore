@@ -20,6 +20,7 @@ public static class UserMapper
             Id = user.Id,
             Username = user.Username,
             Email = user.Email,
+            Avatar = user.GetAvatarUrl(),
             Role = user.Role,
             CreatedAt = user.CreatedAt
         };

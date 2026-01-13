@@ -36,6 +36,17 @@ public class Pedido
     public string Estado { get; set; } = PedidoEstado.PENDIENTE;
 
     /// <summary>
+    /// Dirección de envío del pedido.
+    /// </summary>
+    [MaxLength(500)]
+    public string? DireccionEnvio { get; set; }
+
+    /// <summary>
+    /// Indica si el pedido está eliminado.
+    /// </summary>
+    public bool IsDeleted { get; set; }
+
+    /// <summary>
     /// Fecha de creación del pedido.
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -179,12 +179,79 @@ public class PedidosController(
             }
         );
     }
-}
 
-/// <summary>
-/// DTO para actualizar el estado de un pedido.
-/// </summary>
-public record UpdateEstadoDto
-{
-    public string Estado { get; init; } = string.Empty;
+    /// <summary>
+    /// Actualizar un pedido (el usuario puede actualizar sus propios pedidos).
+    /// PUT /api/pedidos/{id}
+    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// </summary>
+    [HttpPut("{id}")]
+    [Authorize]
+    [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdatePedido(string id, [FromBody] UpdatePedidoDto dto)
+    {
+        if (User?.Identity == null || !User.Identity.IsAuthenticated)
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        var resultado = await service.UpdateAsync(id, userId, dto);
+
+        return resultado.Match(
+            onSuccess: pedido => Ok(pedido),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                ErrorType.Validation => BadRequest(new { message = error.Message }),
+                ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
+                ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
+                ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
+    }
+
+    /// <summary>
+    /// Eliminar un pedido (el usuario puede eliminar sus propios pedidos).
+    /// DELETE /api/pedidos/{id}
+    /// Returns: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// </summary>
+    [HttpDelete("{id}")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeletePedido(string id)
+    {
+        if (User?.Identity == null || !User.Identity.IsAuthenticated)
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        var resultado = await service.DeleteAsync(id, userId);
+
+        if (resultado.IsSuccess)
+            return NoContent();
+
+        var error = resultado.Error;
+        return error.Type switch
+        {
+            ErrorType.NotFound => NotFound(new { message = error.Message }),
+            ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+            _ => StatusCode(500, new { message = error.Message })
+        };
+    }
 }

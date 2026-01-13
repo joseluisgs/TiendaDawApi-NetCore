@@ -35,6 +35,12 @@ public interface IUserService
     Task<CFE.Result<UserDto, DomainError>> UpdateAsync(long id, UserUpdateDto dto);
 
     /// <summary>
+    /// Actualiza el avatar de un usuario.
+    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound/Validation)
+    /// </summary>
+    Task<CFE.Result<UserDto, DomainError>> UpdateAvatarAsync(long id, string avatarUrl);
+
+    /// <summary>
     /// Elimina un usuario (soft delete).
     /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>

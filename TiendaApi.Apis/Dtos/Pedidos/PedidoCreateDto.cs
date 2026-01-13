@@ -34,3 +34,27 @@ public record PedidoItemRequestDto
     [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
     public int Cantidad { get; init; }
 }
+
+/// <summary>
+/// DTO para actualizar el estado de un pedido.
+/// </summary>
+public record UpdateEstadoDto
+{
+    public string Estado { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// DTO para actualizar un pedido.
+/// </summary>
+public record UpdatePedidoDto
+{
+    /// <summary>
+    /// Nuevo estado del pedido (opcional).
+    /// </summary>
+    public string? Estado { get; init; }
+
+    /// <summary>
+    /// Nueva dirección de envío (opcional).
+    /// </summary>
+    public string? DireccionEnvio { get; init; }
+}

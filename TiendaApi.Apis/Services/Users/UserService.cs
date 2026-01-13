@@ -152,6 +152,44 @@ public class UserService(
     }
 
     /// <summary>
+    /// Actualiza el avatar de un usuario.
+    /// Returns: Result.Success(UserDto) | Result.Failure(NotFound/Validation)
+    /// </summary>
+    public async Task<Result<UserDto, DomainError>> UpdateAvatarAsync(long id, string avatarUrl)
+    {
+        logger.LogInformation("Actualizando avatar de usuario con id: {Id}", id);
+
+        var user = await userRepository.FindByIdAsync(id);
+
+        if (user == null || user.IsDeleted)
+        {
+            logger.LogWarning("Usuario con id {Id} no encontrado para actualizar avatar", id);
+            return Result.Failure<UserDto, DomainError>(
+                DomainError.NotFound($"Usuario con ID {id} no encontrado")
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(avatarUrl))
+        {
+            user.Avatar = User.AVATAR_DEFAULT;
+        }
+        else
+        {
+            user.Avatar = avatarUrl;
+        }
+
+        user.UpdatedAt = DateTime.UtcNow;
+
+        var updated = await userRepository.UpdateAsync(user);
+
+        logger.LogInformation("Avatar actualizado para usuario con id: {Id}", id);
+
+        var resultDto = updated.ToDto();
+
+        return Result.Success<UserDto, DomainError>(resultDto);
+    }
+
+    /// <summary>
     /// Elimina un usuario (soft delete).
     /// Returns: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>

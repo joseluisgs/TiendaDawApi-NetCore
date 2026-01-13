@@ -31,6 +31,11 @@ public record PedidoDto
     public string Estado { get; init; } = string.Empty;
 
     /// <summary>
+    /// Dirección de envío del pedido.
+    /// </summary>
+    public string? DireccionEnvio { get; init; }
+
+    /// <summary>
     /// Fecha de creación del pedido.
     /// </summary>
     public DateTime CreatedAt { get; init; }

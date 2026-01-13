@@ -59,6 +59,7 @@ public class TiendaDbContext : DbContext
             entity.Property(u => u.PasswordHash).IsRequired();
             entity.Property(u => u.Role).IsRequired().HasMaxLength(20);
             entity.Property(u => u.IsDeleted).HasDefaultValue(false);
+            entity.Property(u => u.Avatar).HasMaxLength(500);
 
             entity.HasIndex(u => u.Username).IsUnique();
             entity.HasIndex(u => u.Email).IsUnique();

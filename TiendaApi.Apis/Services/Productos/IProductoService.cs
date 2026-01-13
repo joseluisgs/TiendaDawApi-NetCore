@@ -17,4 +17,5 @@ public interface IProductoService
     Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto);
     Task<UnitResult<DomainError>> DeleteAsync(long id);
     Task<Result<ProductoDto, DomainError>> UpdateImageAsync(long id, IFormFile image);
+    Task<Result<ProductoDto, DomainError>> UpdatePartialAsync(long id, ProductoPatchDto dto);
 }

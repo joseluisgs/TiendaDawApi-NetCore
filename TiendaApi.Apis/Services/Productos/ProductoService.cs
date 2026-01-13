@@ -426,4 +426,64 @@ public class ProductoService(
 
         return UnitResult.Success<DomainError>();
     }
+
+    /// <summary>
+    /// Actualizar parcialmente un producto (solo campos proporcionados).
+    /// Returns: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
+    /// </summary>
+    public async Task<Result<ProductoDto, DomainError>> UpdatePartialAsync(long id, ProductoPatchDto dto)
+    {
+        logger.LogInformation("Actualizando parcialmente producto con ID: {Id}", id);
+
+        var producto = await productoRepository.FindByIdAsync(id);
+
+        if (producto == null)
+        {
+            logger.LogWarning("Producto con ID {Id} no encontrado para actualizar parcialmente", id);
+            return Result.Failure<ProductoDto, DomainError>(
+                DomainError.NotFound($"Producto con ID {id} no encontrado")
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.Nombre))
+            producto.Nombre = dto.Nombre;
+
+        if (!string.IsNullOrWhiteSpace(dto.Descripcion))
+            producto.Descripcion = dto.Descripcion;
+
+        if (dto.Precio.HasValue && dto.Precio.Value > 0)
+            producto.Precio = dto.Precio.Value;
+
+        if (dto.Stock.HasValue)
+            producto.Stock = dto.Stock.Value;
+
+        if (!string.IsNullOrWhiteSpace(dto.Imagen))
+            producto.Imagen = dto.Imagen;
+
+        producto.UpdatedAt = DateTime.UtcNow;
+
+        var updated = await productoRepository.UpdateAsync(producto);
+
+        logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
+
+        var resultDto = updated.ToDto();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync($"productos:{id}");
+                await cacheService.RemoveAsync("productos:all");
+                logger.LogDebug("Caché invalidada tras actualizar parcialmente producto");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error al invalidar caché tras actualizar parcialmente producto");
+            }
+        });
+
+        _ = Task.Run(async () => await NotificarWebSocketProductoActualizado(resultDto));
+
+        return Result.Success<ProductoDto, DomainError>(resultDto);
+    }
 }

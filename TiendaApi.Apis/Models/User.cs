@@ -5,6 +5,9 @@ namespace TiendaApi.Apis.Models;
 /// </summary>
 public class User
 {
+    public const string AVATAR_DEFAULT = "https://via.placeholder.com/150";
+    public const string AVATAR_LOCAL_PREFIX = "/storage/images/usuarios/";
+
     /// <summary>
     /// Identificador único del usuario.
     /// </summary>
@@ -22,6 +25,10 @@ public class User
     /// </summary>
     public string PasswordHash { get; set; } = string.Empty;
     /// <summary>
+    /// URL del avatar del usuario.
+    /// </summary>
+    public string? Avatar { get; set; }
+    /// <summary>
     /// Rol del usuario (ADMIN o USER).
     /// </summary>
     public string Role { get; set; } = UserRoles.USER;
@@ -37,6 +44,37 @@ public class User
     /// Fecha de última actualización del usuario.
     /// </summary>
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Verifica si el avatar es local (almacenado en el servidor).
+    /// </summary>
+    public bool IsLocalAvatar() => !string.IsNullOrEmpty(Avatar) && Avatar.StartsWith("/storage", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Verifica si el avatar es el por defecto.
+    /// </summary>
+    public bool HasDefaultAvatar() => string.IsNullOrEmpty(Avatar) || Avatar == AVATAR_DEFAULT;
+
+    /// <summary>
+    /// Obtiene la URL completa del avatar para mostrar.
+    /// </summary>
+    public string GetAvatarUrl()
+    {
+        if (string.IsNullOrEmpty(Avatar))
+            return AVATAR_DEFAULT;
+
+        if (Avatar.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            Avatar.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return Avatar;
+
+        if (Avatar.StartsWith("/storage", StringComparison.OrdinalIgnoreCase))
+            return Avatar;
+
+        if (Avatar.StartsWith("/"))
+            return $"/storage{Avatar}";
+
+        return $"{AVATAR_LOCAL_PREFIX}{Avatar}";
+    }
 }
 
 /// <summary>

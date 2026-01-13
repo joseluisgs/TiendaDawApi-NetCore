@@ -216,4 +216,33 @@ public class ProductosController(
             }
         );
     }
+
+    /// <summary>
+    /// Actualizar parcialmente un producto (solo campos proporcionados).
+    /// PATCH /api/productos/{id}
+    /// Returns: 200 OK | 404 Not Found | 400 Bad Request | 401 Unauthorized | 403 Forbidden
+    /// </summary>
+    [HttpPatch("{id}")]
+    [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Authorize(Policy = "RequireAdminRole")]
+    public async Task<IActionResult> UpdatePartial(long id, [FromBody] ProductoPatchDto dto)
+    {
+        logger.LogInformation("Actualizando parcialmente producto con ID: {Id}", id);
+
+        var resultado = await service.UpdatePartialAsync(id, dto);
+
+        return resultado.Match(
+            onSuccess: producto => Ok(producto),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
+    }
 }
