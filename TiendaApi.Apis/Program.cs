@@ -391,22 +391,98 @@ app.MapControllers();
 // 🗄️ INICIALIZACIÓN DE BASE DE DATOS
 // ============================================================================
 
-Log.Information("🗄️ Inicializando base de datos...");
+var isDevelopment = builder.Environment.IsDevelopment();
+Log.Information("🗄️ Inicializando base de datos... (Modo: {Environment})", isDevelopment ? "Desarrollo" : "Producción");
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<TiendaDbContext>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
 
-        Log.Information("📋 Verificando/creando esquema de base de datos...");
-        context.Database.EnsureCreated();
-        Log.Information("✅ Base de datos inicializada correctamente");
+        if (isDevelopment)
+        {
+            // Desarrollo: Eliminar y recrear base de datos (siembra siempre)
+            logger.LogWarning("🗄️ [DESARROLLO] Eliminando y recreando base de datos...");
+            context.Database.EnsureDeleted();
+            context.Database.EnsureCreated();
+            logger.LogInformation("✅ [DESARROLLO] Base de datos recreada con datos semilla");
+        }
+        else
+        {
+            // Producción: Solo crear tablas si no existen (siembra solo si no hay datos)
+            logger.LogInformation("🗄️ [PRODUCCIÓN] Verificando esquema de base de datos...");
+            context.Database.EnsureCreated();
+            logger.LogInformation("✅ [PRODUCCIÓN] Base de datos verificada (tablas creadas si no existían)");
+        }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "❌ Error al inicializar la base de datos");
+    }
+}
+
+// ============================================================================
+// 🖼️ INICIALIZACIÓN DE DIRECTORIO DE ALMACENAMIENTO
+// ============================================================================
+
+var storagePath = Path.Combine(app.Environment.ContentRootPath,
+    builder.Configuration["Storage:UploadPath"] ?? "images/uploads");
+var storageDirectory = new DirectoryInfo(storagePath);
+
+if (isDevelopment)
+{
+    // Desarrollo: Borrar contenido si existe, luego crear directorio
+    Log.Information("🖼️ [DESARROLLO] Preparando directorio de almacenamiento: {Path}", storagePath);
+    try
+    {
+        if (storageDirectory.Exists)
+        {
+            Log.Warning("🗑️ [DESARROLLO] Borrando contenido del directorio de almacenamiento...");
+            foreach (var file in storageDirectory.GetFiles())
+            {
+                file.Delete();
+            }
+            foreach (var dir in storageDirectory.GetDirectories())
+            {
+                dir.Delete(true);
+            }
+            Log.Information("✅ [DESARROLLO] Contenido del directorio borrado");
+        }
+
+        if (!storageDirectory.Exists)
+        {
+            storageDirectory.Create();
+            Log.Information("✅ [DESARROLLO] Directorio de almacenamiento creado");
+        }
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "❌ Error al preparar directorio de almacenamiento");
+    }
+}
+else
+{
+    // Producción: Solo crear directorio si no existe (no borrar nunca)
+    Log.Information("🖼️ [PRODUCCIÓN] Verificando directorio de almacenamiento: {Path}", storagePath);
+    try
+    {
+        if (!storageDirectory.Exists)
+        {
+            storageDirectory.Create();
+            Log.Information("✅ [PRODUCCIÓN] Directorio de almacenamiento creado");
+        }
+        else
+        {
+            Log.Information("✅ [PRODUCCIÓN] Directorio de almacenamiento existente (sin modificar)");
+        }
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "❌ Error al verificar directorio de almacenamiento");
     }
 }
 
