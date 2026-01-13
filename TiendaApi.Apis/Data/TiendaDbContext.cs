@@ -1,29 +1,26 @@
 using Microsoft.EntityFrameworkCore;
-using MongoDB.EntityFrameworkCore.Extensions;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Data;
 
 /// <summary>
 /// DbContext de Entity Framework Core.
-/// Gestiona Categorías, Productos y Users (PostgreSQL) y Pedidos (MongoDB).
+/// Gestiona Categorías, Productos y Users (PostgreSQL).
 /// </summary>
 public class TiendaDbContext : DbContext
 {
-    public TiendaDbContext(DbContextOptions<TiendaDbContext> options) : base(options)
+    public TiendaDbContext(DbContextOptions options) : base(options)
     {
     }
 
     public DbSet<Categoria> Categorias { get; set; } = null!;
     public DbSet<Producto> Productos { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
-    public DbSet<Pedido> Pedidos { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure Categoria entity (PostgreSQL)
         modelBuilder.Entity<Categoria>(entity =>
         {
             entity.ToTable("categorias");
@@ -35,7 +32,6 @@ public class TiendaDbContext : DbContext
             entity.HasQueryFilter(c => !c.IsDeleted);
         });
 
-        // Configure Producto entity (PostgreSQL)
         modelBuilder.Entity<Producto>(entity =>
         {
             entity.ToTable("productos");
@@ -54,7 +50,6 @@ public class TiendaDbContext : DbContext
             entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
-        // Configure User entity (PostgreSQL)
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users");
@@ -69,15 +64,6 @@ public class TiendaDbContext : DbContext
             entity.HasIndex(u => u.Email).IsUnique();
 
             entity.HasQueryFilter(u => !u.IsDeleted);
-        });
-
-        // Configure Pedido entity (MongoDB)
-        modelBuilder.Entity<Pedido>(entity =>
-        {
-            entity.ToCollection("pedidos");
-            entity.HasKey(p => p.Id);
-            entity.Property(p => p.Estado).IsRequired().HasMaxLength(50);
-            entity.Property(p => p.Total).HasPrecision(10, 2);
         });
 
         SeedData(modelBuilder);

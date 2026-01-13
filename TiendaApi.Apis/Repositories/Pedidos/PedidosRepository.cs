@@ -9,7 +9,7 @@ namespace TiendaApi.Apis.Repositories.Pedidos;
 /// Implementación del repositorio de pedidos usando MongoDB EF Core.
 /// </summary>
 public class PedidosRepository(
-    TiendaDbContext context,
+    TiendaMongoContext context,
     ILogger<PedidosRepository> logger
 ) : IPedidosRepository
 {

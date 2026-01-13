@@ -159,6 +159,14 @@ Log.Debug("🔗 Cadena de conexión: {ConnectionString}", connectionString.Split
 builder.Services.AddDbContext<TiendaDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+Log.Information("🗄️ Configurando base de datos MongoDB...");
+var mongoConnectionString = builder.Configuration["MongoDbSettings:ConnectionString"]
+    ?? "mongodb://admin:admin123@localhost:27017/tienda?authSource=admin";
+var mongoDatabaseName = builder.Configuration["MongoDbSettings:DatabaseName"] ?? "tienda";
+
+builder.Services.AddDbContext<TiendaMongoContext>(options =>
+    options.UseMongoDB(mongoConnectionString, mongoDatabaseName));
+
 // ============================================================================
 // 📦 INYECCIÓN DE DEPENDENCIAS
 // ============================================================================
