@@ -37,9 +37,9 @@ public class ProductoRepository(
     {
         logger.LogDebug("Buscando productos paginados con filtros");
 
-        var query = context.Productos
-            .Include(p => p.Categoria)
-            .AsQueryable();
+        var query = filter.IsDeleted.HasValue
+            ? context.Productos.IgnoreQueryFilters().Include(p => p.Categoria).AsQueryable()
+            : context.Productos.Include(p => p.Categoria).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Nombre))
             query = query.Where(p => p.Nombre.ToLower().Contains(filter.Nombre.ToLower()));

@@ -35,7 +35,9 @@ public class CategoriaRepository(
     {
         logger.LogDebug("Buscando categorías paginadas con filtros");
 
-        var query = context.Categorias.AsQueryable();
+        var query = filter.IsDeleted.HasValue
+            ? context.Categorias.IgnoreQueryFilters().AsQueryable()
+            : context.Categorias.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Nombre))
             query = query.Where(c => c.Nombre.ToLower().Contains(filter.Nombre.ToLower()));
