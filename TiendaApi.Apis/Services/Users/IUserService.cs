@@ -1,4 +1,5 @@
 using CFE = CSharpFunctionalExtensions;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
 
@@ -15,6 +16,12 @@ public interface IUserService
     /// Returns: Result.Success(List) | Result.Failure nunca
     /// </summary>
     Task<CFE.Result<IEnumerable<UserDto>, DomainError>> FindAllAsync();
+
+    /// <summary>
+    /// Obtiene usuarios paginados (excluyendo eliminados).
+    /// Returns: Result.Success(PagedResult) | Result.Failure nunca
+    /// </summary>
+    Task<CFE.Result<PagedResult<UserDto>, DomainError>> FindAllPagedAsync(int page, int pageSize);
 
     /// <summary>
     /// Obtiene un usuario por su ID.

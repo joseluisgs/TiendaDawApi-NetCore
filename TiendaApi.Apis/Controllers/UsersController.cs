@@ -2,9 +2,12 @@ using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TiendaApi.Apis.Dtos.Common;
+using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Services.Users;
 
@@ -18,28 +21,29 @@ namespace TiendaApi.Apis.Controllers;
 [Produces("application/json")]
 public class UsersController(
     IUserService service,
+    IPedidosService pedidosService,
     ILogger<UsersController> logger
 ) : ControllerBase
 {
 
     /// <summary>
-    /// Obtener todos los usuarios (solo administradores).
-    /// GET /api/users
+    /// Obtener todos los usuarios paginados (solo administradores).
+    /// GET /api/users?page=1&amp;pageSize=10
     /// Returns: 200 OK | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "ADMIN")]
-    [ProducesResponseType(typeof(IEnumerable<UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        logger.LogInformation("Obteniendo todos los usuarios");
+        logger.LogInformation("Obteniendo todos los usuarios - Página: {Page}, Tamaño: {PageSize}", page, pageSize);
 
-        var resultado = await service.FindAllAsync();
+        var resultado = await service.FindAllPagedAsync(page, pageSize);
 
         return resultado.Match(
-            onSuccess: usuarios => Ok(usuarios),
+            onSuccess: pagedResult => Ok(pagedResult),
             onFailure: error => StatusCode(500, new { message = error.Message })
         );
     }
@@ -283,6 +287,144 @@ public class UsersController(
         return error.Type switch
         {
             ErrorType.NotFound => NotFound(new { message = error.Message }),
+            _ => StatusCode(500, new { message = error.Message })
+        };
+    }
+
+    /// <summary>
+    /// Obtener los pedidos del usuario autenticado.
+    /// GET /api/users/me/pedidos
+    /// Returns: 200 OK | 401 Unauthorized
+    /// </summary>
+    [HttpGet("me/pedidos")]
+    [Authorize]
+    [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetMyPedidos()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        logger.LogInformation("Obteniendo pedidos del usuario: {UserId}", userId);
+
+        var resultado = await pedidosService.FindByUserIdAsync(userId);
+
+        return resultado.Match(
+            onSuccess: pedidos => Ok(pedidos),
+            onFailure: error => StatusCode(500, new { message = error.Message })
+        );
+    }
+
+    /// <summary>
+    /// Crear un nuevo pedido para el usuario autenticado.
+    /// POST /api/users/me/pedidos
+    /// Returns: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
+    /// </summary>
+    [HttpPost("me/pedidos")]
+    [Authorize]
+    [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateMyPedido([FromBody] PedidoRequestDto dto)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        logger.LogInformation("Usuario {UserId} creando nuevo pedido", userId);
+
+        var resultado = await pedidosService.CreateAsync(userId, dto);
+
+        if (resultado.IsSuccess)
+        {
+            var pedido = resultado.Value;
+            return CreatedAtAction(nameof(PedidosController.GetPedidoById), "Pedidos", new { id = pedido.Id }, pedido);
+        }
+
+        var error = resultado.Error;
+        return error.Type switch
+        {
+            ErrorType.NotFound => NotFound(new { message = error.Message }),
+            ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
+            ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
+            ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
+            ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+            ErrorType.Conflict => Conflict(new { message = error.Message }),
+            _ => StatusCode(500, new { message = error.Message })
+        };
+    }
+
+    /// <summary>
+    /// Actualizar un pedido del usuario autenticado.
+    /// PUT /api/users/me/pedidos/{id}
+    /// Returns: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// </summary>
+    [HttpPut("me/pedidos/{id}")]
+    [Authorize]
+    [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateMyPedido(string id, [FromBody] UpdatePedidoDto dto)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        logger.LogInformation("Usuario {UserId} actualizando pedido: {Id}", userId, id);
+
+        var resultado = await pedidosService.UpdateAsync(id, userId, dto);
+
+        return resultado.Match(
+            onSuccess: pedido => Ok(pedido),
+            onFailure: error => error.Type switch
+            {
+                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                ErrorType.Validation => BadRequest(new { message = error.Message }),
+                ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
+                ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
+                ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
+    }
+
+    /// <summary>
+    /// Eliminar un pedido del usuario autenticado.
+    /// DELETE /api/users/me/pedidos/{id}
+    /// Returns: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// </summary>
+    [HttpDelete("me/pedidos/{id}")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteMyPedido(string id)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        logger.LogInformation("Usuario {UserId} eliminando pedido: {Id}", userId, id);
+
+        var resultado = await pedidosService.DeleteAsync(id, userId);
+
+        if (resultado.IsSuccess)
+            return NoContent();
+
+        var error = resultado.Error;
+        return error.Type switch
+        {
+            ErrorType.NotFound => NotFound(new { message = error.Message }),
+            ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }

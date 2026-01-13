@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using CSharpFunctionalExtensions;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Mappers;
@@ -33,6 +34,44 @@ public class UserService(
         var dtos = activeUsers.ToDtoList();
 
         return Result.Success<IEnumerable<UserDto>, DomainError>(dtos);
+    }
+
+    /// <summary>
+    /// Obtiene usuarios paginados (excluyendo eliminados).
+    /// Returns: Result.Success(PagedResult) | Result.Failure nunca
+    /// </summary>
+    public async Task<Result<PagedResult<UserDto>, DomainError>> FindAllPagedAsync(int page, int pageSize)
+    {
+        logger.LogInformation("Obteniendo usuarios paginados - Página: {Page}, Tamaño: {PageSize}", page, pageSize);
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var allUsers = await userRepository.FindAllAsync();
+        var activeUsers = allUsers.Where(u => !u.IsDeleted).ToList();
+
+        var totalCount = activeUsers.Count;
+        var totalPages = pageSize > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 0;
+
+        if (page > totalPages && totalCount > 0)
+            page = totalPages;
+
+        var pagedUsers = activeUsers
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var dtos = pagedUsers.ToDtoList();
+
+        var pagedResult = new PagedResult<UserDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        return Result.Success<PagedResult<UserDto>, DomainError>(pagedResult);
     }
 
     /// <summary>

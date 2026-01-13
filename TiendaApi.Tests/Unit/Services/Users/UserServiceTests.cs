@@ -92,6 +92,229 @@ public class UserServiceTests
 
     #endregion
 
+    #region FindAllPagedAsync Tests
+
+    [Test]
+    public async Task FindAllPagedAsync_ConUsuarios_RetornaPaginaCorrecta()
+    {
+        // Arrange
+        var users = Enumerable.Range(1, 25).Select(i => new User
+        {
+            Id = i,
+            Username = $"user{i}",
+            Email = $"user{i}@test.com",
+            IsDeleted = false
+        }).ToList();
+
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(users);
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(1, 10);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().HaveCount(10);
+        result.Value.TotalCount.Should().Be(25);
+        result.Value.Page.Should().Be(1);
+        result.Value.PageSize.Should().Be(10);
+        result.Value.TotalPages.Should().Be(3);
+        result.Value.HasNextPage.Should().BeTrue();
+        result.Value.HasPreviousPage.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_SegundaPagina_RetornaElementosCorrectos()
+    {
+        // Arrange
+        var users = Enumerable.Range(1, 25).Select(i => new User
+        {
+            Id = i,
+            Username = $"user{i}",
+            Email = $"user{i}@test.com",
+            IsDeleted = false
+        }).ToList();
+
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(users);
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(2, 10);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().HaveCount(10);
+        result.Value.Page.Should().Be(2);
+        result.Value.HasNextPage.Should().BeTrue();
+        result.Value.HasPreviousPage.Should().BeTrue();
+        result.Value.Items.First().Id.Should().Be(11);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_UltimaPagina_RetornaElementosRestantes()
+    {
+        // Arrange
+        var users = Enumerable.Range(1, 25).Select(i => new User
+        {
+            Id = i,
+            Username = $"user{i}",
+            Email = $"user{i}@test.com",
+            IsDeleted = false
+        }).ToList();
+
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(users);
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(3, 10);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().HaveCount(5);
+        result.Value.TotalPages.Should().Be(3);
+        result.Value.HasNextPage.Should().BeFalse();
+        result.Value.HasPreviousPage.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_SinUsuarios_RetornaListaVacia()
+    {
+        // Arrange
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(new List<User>());
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(1, 10);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().BeEmpty();
+        result.Value.TotalCount.Should().Be(0);
+        result.Value.TotalPages.Should().Be(0);
+        result.Value.HasNextPage.Should().BeFalse();
+        result.Value.HasPreviousPage.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_FiltraUsuariosEliminados()
+    {
+        // Arrange
+        var users = new List<User>
+        {
+            new User { Id = 1, Username = "user1", Email = "user1@test.com", IsDeleted = false },
+            new User { Id = 2, Username = "user2", Email = "user2@test.com", IsDeleted = true },
+            new User { Id = 3, Username = "user3", Email = "user3@test.com", IsDeleted = false },
+        };
+
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(users);
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(1, 10);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().HaveCount(2);
+        result.Value.TotalCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_PaginaMayorALasTotales_AjustaPagina()
+    {
+        // Arrange
+        var users = Enumerable.Range(1, 25).Select(i => new User
+        {
+            Id = i,
+            Username = $"user{i}",
+            Email = $"user{i}@test.com",
+            IsDeleted = false
+        }).ToList();
+
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(users);
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(10, 10);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Page.Should().Be(3);
+        result.Value.HasNextPage.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_PaginaMenorA1_AjustaA1()
+    {
+        // Arrange
+        var users = Enumerable.Range(1, 10).Select(i => new User
+        {
+            Id = i,
+            Username = $"user{i}",
+            Email = $"user{i}@test.com",
+            IsDeleted = false
+        }).ToList();
+
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(users);
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(0, 10);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Page.Should().Be(1);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_PageSizeMayorAlMaximo_LimitaA100()
+    {
+        // Arrange
+        var users = Enumerable.Range(1, 150).Select(i => new User
+        {
+            Id = i,
+            Username = $"user{i}",
+            Email = $"user{i}@test.com",
+            IsDeleted = false
+        }).ToList();
+
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(users);
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(1, 200);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.PageSize.Should().Be(100);
+        result.Value.Items.Should().HaveCount(100);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_PageSizeMenorA1_AjustaA1()
+    {
+        // Arrange
+        var users = Enumerable.Range(1, 10).Select(i => new User
+        {
+            Id = i,
+            Username = $"user{i}",
+            Email = $"user{i}@test.com",
+            IsDeleted = false
+        }).ToList();
+
+        _mockUserRepository.Setup(x => x.FindAllAsync())
+            .ReturnsAsync(users);
+
+        // Act
+        var result = await _userService.FindAllPagedAsync(1, 0);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.PageSize.Should().Be(1);
+        result.Value.Items.Should().HaveCount(1);
+    }
+
+    #endregion
+
     #region FindByIdAsync Tests
 
     [Test]
