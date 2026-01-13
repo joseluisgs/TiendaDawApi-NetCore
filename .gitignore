@@ -22,6 +22,9 @@ TestResults/
 # Coverage
 [Cc]overage/
 
+# Test artifacts
+images/
+
 # Visual Studio cache/options directory
 .vs/
 .vscode/
