@@ -205,7 +205,7 @@ public class ProductosController(
     {
         logger.LogInformation("Actualizando imagen de producto con ID: {Id}", id);
 
-        if (image == null || image.Length == 0)
+        if (image is null or { Length: 0 })
         {
             return BadRequest(new { message = "Debe proporcionar un archivo de imagen" });
         }

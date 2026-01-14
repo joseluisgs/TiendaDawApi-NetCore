@@ -65,7 +65,7 @@ public class FileSystemStorageService : IStorageService
     /// </summary>
     private UnitResult<DomainError> ValidateFile(IFormFile file)
     {
-        if (file == null || file.Length == 0)
+        if (file is null or { Length: 0 })
         {
             return UnitResult.Failure<DomainError>(StorageError.ArchivoVacio());
         }
