@@ -2,7 +2,7 @@ namespace TiendaApi.Apis.Errors;
 
 /// <summary>
 /// Clase base abstracta para errores del dominio.
-/// Implementa el patrón sealed class similar a Kotlin para type-safety.
+/// Implementa el patrón sealed class para type-safety.
 /// </summary>
 public abstract record DomainError(string Message)
 {

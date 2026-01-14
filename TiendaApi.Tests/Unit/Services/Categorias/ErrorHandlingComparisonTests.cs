@@ -143,11 +143,6 @@ public class ErrorHandlingComparisonTests
     /// <summary>
     /// TEST RESULT PATTERN: Probando fallos
     /// 
-    /// Equivalente en Java:
-    /// Either<AppError, ProductoDto> result = service.findById(999);
-    /// assertTrue(result.isLeft());
-    /// assertEquals(ErrorType.NOT_FOUND, result.getLeft().getType());
-    /// 
     /// Características:
     /// - No se necesitan excepciones
     /// - El tipo Result hace el fallo explícito
@@ -311,7 +306,6 @@ public class ErrorHandlingComparisonTests
 /// ║ try/catch en tests             ║ Sin manejo de excepciones        ║
 /// ║ Éxito implícito (no lanza)     ║ Éxito explícito IsSuccess        ║
 /// ║ Menos legible                 ║ Más legible                      ║
-/// ║ Familiar para devs Java       ║ Estilo funcional                 ║
 /// ╚════════════════════════════════╩═════════════════════════════════╝
 /// </summary>
 
