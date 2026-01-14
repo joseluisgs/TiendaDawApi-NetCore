@@ -63,4 +63,18 @@ public static class UserMapper
         if (!string.IsNullOrEmpty(dto.Password))
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
     }
+
+    /// <summary>
+    /// Actualiza una entidad usuario con datos del DTO de actualización parcial (PATCH).
+    /// Devuelve: void (no retorna valor, modifica el objeto directamente)
+    /// </summary>
+    public static void UpdateEntity(this UserPatchDto dto, User user)
+    {
+        if (!string.IsNullOrEmpty(dto.Email))
+            user.Email = dto.Email;
+        if (!string.IsNullOrEmpty(dto.Password))
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
+        if (dto.Avatar != null)
+            user.Avatar = dto.Avatar;
+    }
 }
