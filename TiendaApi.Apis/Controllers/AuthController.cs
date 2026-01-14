@@ -36,10 +36,10 @@ public class AuthController(
 
         return resultado.Match(
             response => CreatedAtAction(nameof(SignUp), response),
-            error => error.Type switch
+            error => error switch
             {
-                ErrorType.Validation => BadRequest(new { message = error.Message }),
-                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                ValidationError validationError => BadRequest(new { message = validationError.Message }),
+                ConflictError conflictError => Conflict(new { message = conflictError.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -61,10 +61,10 @@ public class AuthController(
 
         return resultado.Match(
             response => Ok(response),
-            error => error.Type switch
+            error => error switch
             {
-                ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new { message = error.Message }),
+                UnauthorizedError unauthorizedError => Unauthorized(new { message = unauthorizedError.Message }),
+                ValidationError validationError => BadRequest(new { message = validationError.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );

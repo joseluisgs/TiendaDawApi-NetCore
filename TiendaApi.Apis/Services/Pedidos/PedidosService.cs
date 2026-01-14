@@ -120,7 +120,7 @@ public class PedidosService(
         {
             logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
-                DomainError.NotFound($"Pedido con ID {id} no encontrado")
+                Errors.Pedidos.PedidoError.NotFound(id)
             );
         }
 
@@ -162,8 +162,8 @@ public class PedidosService(
                         "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
                         userId);
                     return Result.Failure<PedidoDto, DomainError>(
-                        DomainError.Conflict(
-                            "El producto fue adquirido por otro usuario. Por favor, reintente la operacion."));
+                        Errors.Pedidos.PedidoError.PedidoAdquirido(string.Empty)
+                    );
                 }
 
                 var delayMs = 50 * attempt;
@@ -181,8 +181,8 @@ public class PedidosService(
                         "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
                         userId);
                     return Result.Failure<PedidoDto, DomainError>(
-                        DomainError.Conflict(
-                            "El producto fue adquirido por otro usuario. Por favor, reintente la operacion."));
+                        Errors.Pedidos.PedidoError.PedidoAdquirido(string.Empty)
+                    );
                 }
 
                 var delayMs = 50 * attempt;
@@ -195,7 +195,8 @@ public class PedidosService(
         }
 
         return Result.Failure<PedidoDto, DomainError>(
-            DomainError.Internal("Error inesperado al procesar el pedido"));
+            Errors.Pedidos.PedidoError.ErrorProcesando()
+        );
     }
 
     /// <summary>
@@ -229,15 +230,16 @@ public class PedidosService(
                 {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
-                        DomainError.NotFound($"Producto con ID {itemDto.ProductoId} no encontrado"));
+                        Errors.Pedidos.PedidoError.ProductoNoEncontrado(itemDto.ProductoId)
+                    );
                 }
 
                 if (producto.Stock < itemDto.Cantidad)
                 {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
-                        DomainError.BusinessRule(
-                            $"Stock insuficiente para el producto {producto.Nombre}. Disponible: {producto.Stock}, Solicitado: {itemDto.Cantidad}"));
+                        Errors.Pedidos.PedidoError.StockInsuficiente(producto.Nombre, producto.Stock, itemDto.Cantidad)
+                    );
                 }
 
                 producto.Stock -= itemDto.Cantidad;
@@ -335,7 +337,7 @@ public class PedidosService(
         if (!validEstados.Contains(nuevoEstado))
         {
             return Result.Failure<PedidoDto, DomainError>(
-                DomainError.Validation($"Estado inválido. Valores permitidos: {string.Join(", ", validEstados)}")
+                Errors.Pedidos.PedidoError.EstadoInvalido(nuevoEstado, validEstados)
             );
         }
 
@@ -345,7 +347,7 @@ public class PedidosService(
         {
             logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
-                DomainError.NotFound($"Pedido con ID {id} no encontrado")
+                Errors.Pedidos.PedidoError.NotFound(id)
             );
         }
 
@@ -498,7 +500,7 @@ public class PedidosService(
                 );
 
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("Errores de validación", errors)
+                Errors.Pedidos.PedidoError.ValidacionConCampos(errors)
             );
         }
 
@@ -523,7 +525,7 @@ public class PedidosService(
                 );
 
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("Errores de validación", errors)
+                Errors.Pedidos.PedidoError.ValidacionConCampos(errors)
             );
         }
 
@@ -544,7 +546,7 @@ public class PedidosService(
         {
             logger.LogWarning("Pedido con ID {Id} no encontrado para actualizar", id);
             return Result.Failure<PedidoDto, DomainError>(
-                DomainError.NotFound($"Pedido con ID {id} no encontrado")
+                Errors.Pedidos.PedidoError.NotFound(id)
             );
         }
 
@@ -552,7 +554,7 @@ public class PedidosService(
         {
             logger.LogWarning("Usuario {UserId} intentó actualizar pedido {Id} que no le pertenece", userId, id);
             return Result.Failure<PedidoDto, DomainError>(
-                DomainError.Forbidden("No puedes modificar un pedido que no te pertenece")
+                Errors.Pedidos.PedidoError.NoPropietario(userId, id)
             );
         }
 
@@ -603,7 +605,7 @@ public class PedidosService(
         {
             logger.LogWarning("Pedido con ID {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
-                DomainError.NotFound($"Pedido con ID {id} no encontrado")
+                Errors.Pedidos.PedidoError.NotFound(id)
             );
         }
 
@@ -611,7 +613,7 @@ public class PedidosService(
         {
             logger.LogWarning("Usuario {UserId} intentó eliminar pedido {Id} que no le pertenece", userId, id);
             return UnitResult.Failure<DomainError>(
-                DomainError.Forbidden("No puedes eliminar un pedido que no te pertenece")
+                Errors.Pedidos.PedidoError.NoPropietario(userId, id)
             );
         }
 

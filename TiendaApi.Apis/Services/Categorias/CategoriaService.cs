@@ -3,6 +3,7 @@ using FluentValidation;
 using TiendaApi.Apis.Dtos.Categorias;
 using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Errors.Categorias;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
@@ -69,7 +70,7 @@ public class CategoriaService(
         {
             logger.LogWarning("Categoría con id {Id} no encontrada", id);
             return Result.Failure<CategoriaDto, DomainError>(
-                DomainError.NotFound($"Categoría con ID {id} no encontrada")
+                CategoriaError.NotFound(id)
             );
         }
 
@@ -124,7 +125,7 @@ public class CategoriaService(
         {
             logger.LogWarning("Categoría con id {Id} no encontrada para actualizar", id);
             return Result.Failure<CategoriaDto, DomainError>(
-                DomainError.NotFound($"Categoría con ID {id} no encontrada")
+                CategoriaError.NotFound(id)
             );
         }
 
@@ -155,7 +156,7 @@ public class CategoriaService(
         {
             logger.LogWarning("Categoría con id {Id} no encontrada para eliminar", id);
             return UnitResult.Failure<DomainError>(
-                DomainError.NotFound($"Categoría con ID {id} no encontrada")
+                CategoriaError.NotFound(id)
             );
         }
 
@@ -183,7 +184,7 @@ public class CategoriaService(
                 );
 
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("Errores de validación", errors)
+                CategoriaError.ValidacionConCampos(errors)
             );
         }
 
@@ -201,7 +202,7 @@ public class CategoriaService(
         if (exists)
         {
             return Result.Failure<bool, DomainError>(
-                DomainError.Conflict($"Ya existe una categoría con el nombre '{nombre}'")
+                CategoriaError.NombreDuplicado(nombre)
             );
         }
 

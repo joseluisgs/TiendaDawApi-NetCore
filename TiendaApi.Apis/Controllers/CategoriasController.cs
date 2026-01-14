@@ -73,9 +73,9 @@ public class CategoriasController(
 
         return resultado.Match(
             onSuccess: categoria => Ok(categoria),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -101,10 +101,10 @@ public class CategoriasController(
 
         return resultado.Match(
             onSuccess: categoria => CreatedAtAction(nameof(GetById), new { id = categoria.Id }, categoria),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.Validation => BadRequest(new { message = error.Message }),
-                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                ValidationError => BadRequest(new { message = error.Message }),
+                ConflictError => Conflict(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -131,11 +131,11 @@ public class CategoriasController(
 
         return resultado.Match(
             onSuccess: categoria => Ok(categoria),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new { message = error.Message }),
-                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError => BadRequest(new { message = error.Message }),
+                ConflictError => Conflict(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -162,9 +162,9 @@ public class CategoriasController(
             return NoContent();
 
         var error = resultado.Error;
-        return error.Type switch
+        return error switch
         {
-            ErrorType.NotFound => NotFound(new { message = error.Message }),
+            NotFoundError => NotFound(new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }

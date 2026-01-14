@@ -69,14 +69,14 @@ public class PedidosController(
         }
 
         var error = resultado.Error;
-        return error.Type switch
+        return error switch
         {
-            ErrorType.NotFound => NotFound(new { message = error.Message }),
-            ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
-            ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
-            ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
-            ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
-            ErrorType.Conflict => Conflict(new { message = error.Message }),
+            NotFoundError => NotFound(new { message = error.Message }),
+            ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
+            BusinessRuleError => BadRequest(new { message = error.Message }),
+            UnauthorizedError => Unauthorized(new { message = error.Message }),
+            ForbiddenError => StatusCode(403, new { message = error.Message }),
+            ConflictError => Conflict(new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }
@@ -129,9 +129,9 @@ public class PedidosController(
         if (resultado.IsFailure)
         {
             var error = resultado.Error;
-            return error.Type switch
+            return error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             };
         }
@@ -168,13 +168,13 @@ public class PedidosController(
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new { message = error.Message }),
-                ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
-                ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
-                ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError => BadRequest(new { message = error.Message }),
+                BusinessRuleError => BadRequest(new { message = error.Message }),
+                UnauthorizedError => Unauthorized(new { message = error.Message }),
+                ForbiddenError => StatusCode(403, new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -207,13 +207,13 @@ public class PedidosController(
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new { message = error.Message }),
-                ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
-                ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
-                ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError => BadRequest(new { message = error.Message }),
+                BusinessRuleError => BadRequest(new { message = error.Message }),
+                UnauthorizedError => Unauthorized(new { message = error.Message }),
+                ForbiddenError => StatusCode(403, new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -247,10 +247,10 @@ public class PedidosController(
             return NoContent();
 
         var error = resultado.Error;
-        return error.Type switch
+        return error switch
         {
-            ErrorType.NotFound => NotFound(new { message = error.Message }),
-            ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+            NotFoundError => NotFound(new { message = error.Message }),
+            ForbiddenError => StatusCode(403, new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }

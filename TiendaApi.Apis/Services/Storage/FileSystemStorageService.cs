@@ -4,8 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Errors.StorageErrors;
 using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Services.Storage;
 
 namespace TiendaApi.Apis.Services.Storage;
 
@@ -67,33 +67,33 @@ public class FileSystemStorageService : IStorageService
     {
         if (file == null || file.Length == 0)
         {
-            return UnitResult.Failure<DomainError>(DomainError.Validation("El archivo está vacío"));
+            return UnitResult.Failure<DomainError>(StorageError.ArchivoVacio());
         }
 
         if (file.Length > _maxFileSize)
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation($"El archivo excede el tamaño máximo de {_maxFileSize / 1024 / 1024}MB"));
+                StorageError.ArchivoMuyGrande());
         }
 
         var extension = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!_allowedExtensions.Contains(extension))
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation($"Extensión no permitida. Permitidas: {string.Join(", ", _allowedExtensions)}"));
+                StorageError.ExtensionNoPermitida());
         }
 
         var contentType = file.ContentType?.ToLowerInvariant();
         if (contentType == null || !_allowedContentTypes.Any(ct => contentType.Contains(ct.Split('/')[1])))
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation($"Tipo de contenido no permitido: {contentType}"));
+                StorageError.TipoContenidoNoPermitido());
         }
 
         var filename = System.IO.Path.GetFileName(file.FileName);
         if (filename.Contains("..") || filename.Contains('/') || filename.Contains('\\'))
         {
-            return UnitResult.Failure<DomainError>(DomainError.Validation("Nombre de archivo inválido"));
+            return UnitResult.Failure<DomainError>(StorageError.NombreArchivoInvalido());
         }
 
         return UnitResult.Success<DomainError>();
@@ -131,7 +131,7 @@ public class FileSystemStorageService : IStorageService
         {
             _logger.LogError(ex, "Error guardando archivo");
             return Task.FromResult(Result.Failure<string, DomainError>(
-                DomainError.Validation($"Error al guardar archivo: {ex.Message}")));
+                StorageError.ErrorGuardando()));
         }
     }
 
@@ -158,7 +158,7 @@ public class FileSystemStorageService : IStorageService
         {
             _logger.LogError(ex, "Error eliminando archivo {Filename}", filename);
             return Task.FromResult(Result.Failure<bool, DomainError>(
-                DomainError.Validation($"Error al eliminar archivo: {ex.Message}")));
+                StorageError.ErrorEliminando()));
         }
     }
 

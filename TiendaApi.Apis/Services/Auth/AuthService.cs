@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using FluentValidation;
 using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
+using AuthErrors = TiendaApi.Apis.Errors.Auth.AuthError;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Usuarios;
 using TiendaApi.Apis.Validators.Usuarios;
@@ -83,7 +84,7 @@ public class AuthService(
         {
             logger.LogWarning("SignIn fallido: Usuario no encontrado - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
-                DomainError.Unauthorized("Credenciales inválidas")
+                AuthErrors.CredencialesInvalidas()
             );
         }
 
@@ -92,7 +93,7 @@ public class AuthService(
         {
             logger.LogWarning("SignIn fallido: Password inválido - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
-                DomainError.Unauthorized("Credenciales inválidas")
+                AuthErrors.CredencialesInvalidas()
             );
         }
 
@@ -120,7 +121,7 @@ public class AuthService(
                 );
 
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("Errores de validación", errors)
+                AuthErrors.ValidacionConCampos(errors)
             );
         }
 
@@ -145,7 +146,7 @@ public class AuthService(
                 );
 
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("Errores de validación", errors)
+                AuthErrors.ValidacionConCampos(errors)
             );
         }
 
@@ -166,13 +167,13 @@ public class AuthService(
         var existingUser = await usernameCheckTask;
         if (existingUser != null)
         {
-            return UnitResult.Failure(DomainError.Conflict("El nombre de usuario ya existe"));
+            return UnitResult.Failure<DomainError>(AuthErrors.UsernameExistente(dto.Username!));
         }
 
         var existingEmail = await emailCheckTask;
         if (existingEmail != null)
         {
-            return UnitResult.Failure(DomainError.Conflict("El email ya existe"));
+            return UnitResult.Failure<DomainError>(AuthErrors.EmailExistente(dto.Email!));
         }
 
         return UnitResult.Success<DomainError>();

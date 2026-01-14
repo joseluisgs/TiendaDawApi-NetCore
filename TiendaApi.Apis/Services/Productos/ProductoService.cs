@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Errors.Productos;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
@@ -104,7 +105,7 @@ public class ProductoService(
         {
             logger.LogWarning("Producto con ID {Id} no encontrado", id);
             return Result.Failure<ProductoDto, DomainError>(
-                DomainError.NotFound($"Producto con ID {id} no encontrado")
+                ProductoError.NotFound(id)
             );
         }
 
@@ -129,7 +130,7 @@ public class ProductoService(
         if (categoria == null)
         {
             return Result.Failure<IEnumerable<ProductoDto>, DomainError>(
-                DomainError.NotFound($"Categoría con ID {categoriaId} no encontrada")
+                ProductoError.CategoriaNoEncontrada(categoriaId)
             );
         }
 
@@ -220,7 +221,7 @@ public class ProductoService(
         {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar", id);
             return Result.Failure<ProductoDto, DomainError>(
-                DomainError.NotFound($"Producto con ID {id} no encontrado")
+                ProductoError.NotFound(id)
             );
         }
 
@@ -276,7 +277,7 @@ public class ProductoService(
         {
             logger.LogWarning("Producto con ID {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
-                DomainError.NotFound($"Producto con ID {id} no encontrado")
+                ProductoError.NotFound(id)
             );
         }
 
@@ -325,7 +326,7 @@ public class ProductoService(
         {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar imagen", id);
             return Result.Failure<ProductoDto, DomainError>(
-                DomainError.NotFound($"Producto con ID {id} no encontrado")
+                ProductoError.NotFound(id)
             );
         }
 
@@ -435,7 +436,7 @@ public class ProductoService(
                 );
 
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("Errores de validación", errors)
+                ProductoError.ValidacionConCampos(errors)
             );
         }
 
@@ -443,7 +444,7 @@ public class ProductoService(
         if (categoriaExists == null)
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.NotFound($"Categoría con ID {dto.CategoriaId} no encontrada")
+                ProductoError.CategoriaNoEncontrada(dto.CategoriaId)
             );
         }
 
@@ -464,7 +465,7 @@ public class ProductoService(
         {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar parcialmente", id);
             return Result.Failure<ProductoDto, DomainError>(
-                DomainError.NotFound($"Producto con ID {id} no encontrado")
+                ProductoError.NotFound(id)
             );
         }
 

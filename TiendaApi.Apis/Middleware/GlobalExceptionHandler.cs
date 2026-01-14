@@ -1,8 +1,6 @@
-using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
-using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Exceptions;
 
 namespace TiendaApi.Apis.Middleware;
@@ -44,72 +42,70 @@ public class GlobalExceptionHandler
 
         var (statusCode, message, errors, errorType) = exception switch
         {
-            // Excepciones personalizadas
             NotFoundException notFound => (
-                HttpStatusCode.NotFound,
+                404,
                 notFound.Message,
                 (Dictionary<string, string[]>?)null,
-                ErrorType.NotFound
+                "NotFoundError"
             ),
 
             ValidationException validation => (
-                HttpStatusCode.BadRequest,
+                400,
                 validation.Message,
                 validation.Errors,
-                ErrorType.Validation
+                "ValidationError"
             ),
 
             BusinessException business => (
-                HttpStatusCode.BadRequest,
+                400,
                 business.Message,
                 (Dictionary<string, string[]>?)null,
-                ErrorType.BusinessRule
+                "BusinessRuleError"
             ),
 
             UnauthorizedAccessException => (
-                HttpStatusCode.Unauthorized,
+                401,
                 "No autorizado",
                 (Dictionary<string, string[]>?)null,
-                ErrorType.Unauthorized
+                "UnauthorizedError"
             ),
 
             ArgumentException argument => (
-                HttpStatusCode.BadRequest,
+                400,
                 argument.Message,
                 (Dictionary<string, string[]>?)null,
-                ErrorType.Validation
+                "ValidationError"
             ),
 
-            DbUpdateException dbUpdate => (
-                HttpStatusCode.Conflict,
+            DbUpdateException => (
+                409,
                 "Error al actualizar la base de datos",
                 (Dictionary<string, string[]>?)null,
-                ErrorType.Internal
+                "ConflictError"
             ),
 
             TimeoutException => (
-                HttpStatusCode.RequestTimeout,
+                408,
                 "Tiempo de espera agotado",
                 (Dictionary<string, string[]>?)null,
-                ErrorType.Internal
+                "InternalError"
             ),
 
-            // Default - Error interno no manejado
             _ => (
-                HttpStatusCode.InternalServerError,
+                500,
                 "Ha ocurrido un error interno",
                 (Dictionary<string, string[]>?)null,
-                ErrorType.Internal
+                "InternalError"
             )
         };
 
-        context.Response.StatusCode = (int)statusCode;
+        context.Response.StatusCode = statusCode;
 
         var response = new
         {
             errorId,
             message,
-            errorType = errorType.ToString(),
+            errorType,
             timestamp = DateTime.UtcNow.ToString("o"),
             path = context.Request.Path,
             method = context.Request.Method,

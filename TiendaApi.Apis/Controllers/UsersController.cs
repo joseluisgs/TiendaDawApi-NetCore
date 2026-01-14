@@ -85,9 +85,9 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -113,10 +113,10 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => CreatedAtAction(nameof(GetById), new { id = usuario.Id }, usuario),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
-                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
+                ConflictError => Conflict(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -143,11 +143,11 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
-                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
+                ConflictError => Conflict(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -179,10 +179,10 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError => BadRequest(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -209,9 +209,9 @@ public class UsersController(
             return NoContent();
 
         var error = resultado.Error;
-        return error.Type switch
+        return error switch
         {
-            ErrorType.NotFound => NotFound(new { message = error.Message }),
+            NotFoundError => NotFound(new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }
@@ -236,9 +236,9 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -268,11 +268,11 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
-                ErrorType.Conflict => Conflict(new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
+                ConflictError => Conflict(new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -302,9 +302,9 @@ public class UsersController(
             return NoContent();
 
         var error = resultado.Error;
-        return error.Type switch
+        return error switch
         {
-            ErrorType.NotFound => NotFound(new { message = error.Message }),
+            NotFoundError => NotFound(new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }
@@ -366,14 +366,14 @@ public class UsersController(
         }
 
         var error = resultado.Error;
-        return error.Type switch
+        return error switch
         {
-            ErrorType.NotFound => NotFound(new { message = error.Message }),
-            ErrorType.Validation => BadRequest(new { message = error.Message, errors = error.ValidationErrors }),
-            ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
-            ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
-            ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
-            ErrorType.Conflict => Conflict(new { message = error.Message }),
+            NotFoundError => NotFound(new { message = error.Message }),
+            ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
+            BusinessRuleError => BadRequest(new { message = error.Message }),
+            UnauthorizedError => Unauthorized(new { message = error.Message }),
+            ForbiddenError => StatusCode(403, new { message = error.Message }),
+            ConflictError => Conflict(new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }
@@ -403,13 +403,13 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error.Type switch
+            onFailure: error => error switch
             {
-                ErrorType.NotFound => NotFound(new { message = error.Message }),
-                ErrorType.Validation => BadRequest(new { message = error.Message }),
-                ErrorType.BusinessRule => BadRequest(new { message = error.Message }),
-                ErrorType.Unauthorized => Unauthorized(new { message = error.Message }),
-                ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError => BadRequest(new { message = error.Message }),
+                BusinessRuleError => BadRequest(new { message = error.Message }),
+                UnauthorizedError => Unauthorized(new { message = error.Message }),
+                ForbiddenError => StatusCode(403, new { message = error.Message }),
                 _ => StatusCode(500, new { message = error.Message })
             }
         );
@@ -441,10 +441,10 @@ public class UsersController(
             return NoContent();
 
         var error = resultado.Error;
-        return error.Type switch
+        return error switch
         {
-            ErrorType.NotFound => NotFound(new { message = error.Message }),
-            ErrorType.Forbidden => StatusCode(403, new { message = error.Message }),
+            NotFoundError => NotFound(new { message = error.Message }),
+            ForbiddenError => StatusCode(403, new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }

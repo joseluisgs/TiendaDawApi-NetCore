@@ -72,7 +72,7 @@ public class UserService(
         {
             logger.LogWarning("Usuario con id {Id} no encontrado", id);
             return Result.Failure<UserDto, DomainError>(
-                DomainError.NotFound($"Usuario con ID {id} no encontrado")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.NotFound(id)
             );
         }
 
@@ -137,7 +137,7 @@ public class UserService(
         {
             logger.LogWarning("Usuario con id {Id} no encontrado para actualizar", id);
             return Result.Failure<UserDto, DomainError>(
-                DomainError.NotFound($"Usuario con ID {id} no encontrado")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.NotFound(id)
             );
         }
 
@@ -188,7 +188,7 @@ public class UserService(
         {
             logger.LogWarning("Usuario con id {Id} no encontrado para actualizar avatar", id);
             return Result.Failure<UserDto, DomainError>(
-                DomainError.NotFound($"Usuario con ID {id} no encontrado")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.NotFound(id)
             );
         }
 
@@ -226,7 +226,7 @@ public class UserService(
         {
             logger.LogWarning("Usuario con id {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
-                DomainError.NotFound($"Usuario con ID {id} no encontrado")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.NotFound(id)
             );
         }
 
@@ -249,42 +249,42 @@ public class UserService(
         if (string.IsNullOrWhiteSpace(dto.Username))
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El nombre de usuario es requerido")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El nombre de usuario es requerido")
             );
         }
 
         if (dto.Username.Length < 3)
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El nombre de usuario debe tener al menos 3 caracteres")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El nombre de usuario debe tener al menos 3 caracteres")
             );
         }
 
         if (string.IsNullOrWhiteSpace(dto.Email))
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El email es requerido")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El email es requerido")
             );
         }
 
         if (!new EmailAddressAttribute().IsValid(dto.Email))
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("El email no es válido")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El email no es válido")
             );
         }
 
         if (string.IsNullOrWhiteSpace(dto.Password))
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("La contraseña es requerida")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("La contraseña es requerida")
             );
         }
 
         if (dto.Password.Length < 6)
         {
             return UnitResult.Failure<DomainError>(
-                DomainError.Validation("La contraseña debe tener al menos 6 caracteres")
+                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("La contraseña debe tener al menos 6 caracteres")
             );
         }
 
@@ -302,7 +302,7 @@ public class UserService(
             if (!new EmailAddressAttribute().IsValid(dto.Email))
             {
                 return UnitResult.Failure<DomainError>(
-                    DomainError.Validation("El email no es válido")
+                    TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El email no es válido")
                 );
             }
         }
@@ -312,7 +312,7 @@ public class UserService(
             if (dto.Password.Length < 6)
             {
                 return UnitResult.Failure<DomainError>(
-                    DomainError.Validation("La contraseña debe tener al menos 6 caracteres")
+                    TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("La contraseña debe tener al menos 6 caracteres")
                 );
             }
         }
@@ -335,7 +335,7 @@ public class UserService(
             if (existingUser != null && existingUser.Id != excludeUserId)
             {
                 return UnitResult.Failure<DomainError>(
-                    DomainError.Conflict("El nombre de usuario ya existe")
+                    TiendaApi.Apis.Errors.Usuarios.UsuarioError.UsernameExistente(username)
                 );
             }
         }
@@ -346,7 +346,7 @@ public class UserService(
             if (existingEmail != null && existingEmail.Id != excludeUserId)
             {
                 return UnitResult.Failure<DomainError>(
-                    DomainError.Conflict("El email ya existe")
+                    TiendaApi.Apis.Errors.Usuarios.UsuarioError.EmailExistente(email)
                 );
             }
         }
