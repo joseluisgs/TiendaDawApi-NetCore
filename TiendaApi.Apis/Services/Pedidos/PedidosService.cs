@@ -362,11 +362,10 @@ public class PedidosService(
             {
                 await cacheService.RemoveAsync($"pedidos:{id}");
                 await cacheService.RemoveAsync($"pedidos:user:{pedido.UserId}");
-                logger.LogDebug("Caché invalidada tras actualizar estado del pedido");
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al invalidar caché tras actualizar estado del pedido");
+                logger.LogWarning(ex, $"Cache invalidation error: Key=pedidos:{id}");
             }
         });
 
@@ -414,11 +413,10 @@ public class PedidosService(
         try
         {
             await cacheService.RemoveAsync($"pedidos:user:{userId}");
-            logger.LogDebug("Caché invalidada para pedidos del usuario: {UserId}", userId);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Error al invalidar caché tras crear pedido");
+            logger.LogWarning(ex, $"Cache invalidation error: Key=pedidos:user:{userId}");
         }
 
         try
@@ -583,7 +581,7 @@ public class PedidosService(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al invalidar caché tras actualizar pedido");
+                logger.LogWarning(ex, $"Cache invalidation error: Key=pedidos:{id},user:{userId}");
             }
         });
 
@@ -640,7 +638,7 @@ public class PedidosService(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al invalidar caché tras eliminar pedido");
+                logger.LogWarning(ex, $"Cache invalidation error: Key=pedidos:{id},user:{userId}");
             }
         });
 

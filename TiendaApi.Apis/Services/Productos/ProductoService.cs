@@ -166,11 +166,10 @@ public class ProductoService(
             try
             {
                 await cacheService.RemoveAsync("productos:all");
-                logger.LogDebug("Caché invalidada tras crear producto");
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al invalidar caché tras crear producto");
+                logger.LogWarning(ex, "Cache invalidation error: Key=productos:all");
             }
         });
 
@@ -250,11 +249,10 @@ public class ProductoService(
             {
                 await cacheService.RemoveAsync($"productos:{id}");
                 await cacheService.RemoveAsync("productos:all");
-                logger.LogDebug("Caché invalidada tras actualizar producto");
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al invalidar caché tras actualizar producto");
+                logger.LogWarning(ex, $"Cache invalidation error: Key=productos:{id}");
             }
         });
 
@@ -299,11 +297,10 @@ public class ProductoService(
             {
                 await cacheService.RemoveAsync($"productos:{id}");
                 await cacheService.RemoveAsync("productos:all");
-                logger.LogDebug("Caché invalidada tras eliminar producto");
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al invalidar caché tras eliminar producto");
+                logger.LogWarning(ex, $"Cache invalidation error: Key=productos:{id}");
             }
         });
 
@@ -356,11 +353,10 @@ public class ProductoService(
             {
                 await cacheService.RemoveAsync($"productos:{id}");
                 await cacheService.RemoveAsync("productos:all");
-                logger.LogDebug("Caché invalidada tras actualizar imagen de producto");
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al invalidar caché tras actualizar imagen de producto");
+                logger.LogWarning(ex, $"Cache invalidation error: Key=productos:{id}");
             }
         });
 
@@ -507,11 +503,10 @@ public class ProductoService(
             {
                 await cacheService.RemoveAsync($"productos:{id}");
                 await cacheService.RemoveAsync("productos:all");
-                logger.LogDebug("Caché invalidada tras actualizar parcialmente producto");
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al invalidar caché tras actualizar parcialmente producto");
+                logger.LogWarning(ex, $"Cache invalidation error: Key=productos:{id}");
             }
         });
 
