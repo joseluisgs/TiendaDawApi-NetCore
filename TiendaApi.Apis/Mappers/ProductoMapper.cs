@@ -15,19 +15,18 @@ public static class ProductoMapper
     /// </summary>
     public static ProductoDto ToDto(this Producto producto)
     {
-        return new ProductoDto
-        {
-            Id = producto.Id,
-            Nombre = producto.Nombre,
-            Descripcion = producto.Descripcion,
-            Precio = producto.Precio,
-            Stock = producto.Stock,
-            Imagen = producto.Imagen,
-            CategoriaId = producto.CategoriaId,
-            CategoriaNombre = producto.Categoria?.Nombre ?? string.Empty,
-            CreatedAt = producto.CreatedAt,
-            UpdatedAt = producto.UpdatedAt
-        };
+        return new ProductoDto(
+            producto.Id,
+            producto.Nombre,
+            producto.Descripcion,
+            producto.Precio,
+            producto.Stock,
+            producto.Imagen,
+            producto.CategoriaId,
+            producto.Categoria?.Nombre ?? string.Empty,
+            producto.CreatedAt,
+            producto.UpdatedAt
+        );
     }
 
     /// <summary>

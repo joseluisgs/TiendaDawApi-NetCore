@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.WebSockets.Pedidos;
 
@@ -102,7 +103,7 @@ public class PedidoWebSocketHandler
             Type = PedidoNotificationType.CREATED,
             PedidoId = pedidoId,
             UserId = userId,
-            Estado = "PENDIENTE",
+            Estado = PedidoEstado.PENDIENTE,
             Data = data,
             Timestamp = DateTime.UtcNow
         };

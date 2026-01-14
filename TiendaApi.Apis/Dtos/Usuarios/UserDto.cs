@@ -5,38 +5,14 @@ namespace TiendaApi.Apis.Dtos.Usuarios;
 /// <summary>
 /// DTO de usuario para respuestas de API (sin contraseña).
 /// </summary>
-public record UserDto
-{
-    /// <summary>
-    /// Identificador único del usuario.
-    /// </summary>
-    public long Id { get; init; }
-
-    /// <summary>
-    /// Nombre de usuario único.
-    /// </summary>
-    public string Username { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Correo electrónico del usuario.
-    /// </summary>
-    public string Email { get; init; } = string.Empty;
-
-    /// <summary>
-    /// URL del avatar del usuario.
-    /// </summary>
-    public string Avatar { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Rol del usuario en el sistema.
-    /// </summary>
-    public string Role { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Fecha de creación del registro.
-    /// </summary>
-    public DateTime CreatedAt { get; init; }
-}
+public record UserDto(
+    long Id,
+    string Username,
+    string Email,
+    string Avatar,
+    string Role,
+    DateTime CreatedAt
+);
 
 /// <summary>
 /// DTO para el registro de nuevos usuarios.
@@ -90,18 +66,7 @@ public record LoginDto
 /// <summary>
 /// DTO de respuesta de autenticación con JWT.
 /// </summary>
-public record AuthResponseDto
-{
-    /// <summary>
-    /// Token JWT de autenticación.
-    /// </summary>
-    public string Token { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Datos del usuario autenticado.
-    /// </summary>
-    public UserDto User { get; init; } = null!;
-}
+public record AuthResponseDto(string Token, UserDto User);
 
 /// <summary>
 /// DTO para actualizar datos de usuario.

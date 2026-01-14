@@ -15,16 +15,15 @@ public static class PedidoMapper
     /// </summary>
     public static Dtos.Pedidos.PedidoDto ToDto(this Pedido pedido)
     {
-        return new Dtos.Pedidos.PedidoDto
-        {
-            Id = pedido.Id.ToString(),
-            UserId = pedido.UserId,
-            Items = pedido.Items?.Select(i => i.ToDto()).ToList() ?? new(),
-            Total = pedido.Total,
-            Estado = pedido.Estado ?? string.Empty,
-            DireccionEnvio = pedido.DireccionEnvio,
-            CreatedAt = pedido.CreatedAt
-        };
+        return new Dtos.Pedidos.PedidoDto(
+            pedido.Id.ToString(),
+            pedido.UserId,
+            pedido.Items?.Select(i => i.ToDto()).ToList() ?? new(),
+            pedido.Total,
+            pedido.Estado ?? string.Empty,
+            pedido.DireccionEnvio,
+            pedido.CreatedAt
+        );
     }
 
     /// <summary>
@@ -42,14 +41,13 @@ public static class PedidoMapper
     /// </summary>
     public static Dtos.Pedidos.PedidoItemDto ToDto(this PedidoItem item)
     {
-        return new Dtos.Pedidos.PedidoItemDto
-        {
-            ProductoId = item.ProductoId,
-            NombreProducto = item.NombreProducto ?? string.Empty,
-            Cantidad = item.Cantidad,
-            Precio = item.Precio,
-            Subtotal = item.Precio * item.Cantidad
-        };
+        return new Dtos.Pedidos.PedidoItemDto(
+            item.ProductoId,
+            item.NombreProducto ?? string.Empty,
+            item.Cantidad,
+            item.Precio,
+            item.Precio * item.Cantidad
+        );
     }
 
     /// <summary>

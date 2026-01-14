@@ -122,7 +122,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new ProductoFilterDto(null, null, null, null, null, 0, 10, "id", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -155,7 +155,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto { Page = 1, Size = 5, SortBy = "id", Direction = "asc" };
+        var filter = new ProductoFilterDto(null, null, null, null, null, 1, 5, "id", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -181,7 +181,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto { Nombre = "Laptop", Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new ProductoFilterDto("Laptop", null, null, null, null, 0, 10, "id", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -206,7 +206,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto { PrecioMax = 600m, Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new ProductoFilterDto(null, null, null, 600m, null, 0, 10, "id", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -231,7 +231,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto { StockMin = 20, Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new ProductoFilterDto(null, null, null, null, 20, 0, 10, "id", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -256,7 +256,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.IgnoreQueryFilters().AsQueryable();
-        var filter = new ProductoFilterDto { IsDeleted = true, Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new ProductoFilterDto(null, null, true, null, null, 0, 10, "id", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -281,7 +281,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "desc" };
+        var filter = new ProductoFilterDto(null, null, null, null, null, 0, 10, "id", "desc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -306,7 +306,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto { Page = 0, Size = 10, SortBy = "precio", Direction = "asc" };
+        var filter = new ProductoFilterDto(null, null, null, null, null, 0, 10, "precio", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -331,7 +331,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto { Page = 10, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new ProductoFilterDto(null, null, null, null, null, 10, 10, "id", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 
@@ -357,16 +357,7 @@ public class ProductoRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var query = context.Productos.AsQueryable();
-        var filter = new ProductoFilterDto
-        {
-            Nombre = "Laptop",
-            IsDeleted = false,
-            PrecioMax = 900m,
-            Page = 0,
-            Size = 10,
-            SortBy = "id",
-            Direction = "asc"
-        };
+        var filter = new ProductoFilterDto("Laptop", null, false, 900m, null, 0, 10, "id", "asc");
 
         var (items, totalCount) = await GetPagedResult(query, filter);
 

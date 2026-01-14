@@ -15,12 +15,12 @@ public static class CategoriaMapper
     /// </summary>
     public static CategoriaDto ToDto(this Categoria categoria)
     {
-        return new CategoriaDto
-        {
-            Id = categoria.Id,
-            Nombre = categoria.Nombre,
-            CreatedAt = categoria.CreatedAt
-        };
+        return new CategoriaDto(
+            categoria.Id,
+            categoria.Nombre,
+            categoria.CreatedAt,
+            categoria.UpdatedAt
+        );
     }
 
     /// <summary>

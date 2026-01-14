@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Services.Pedidos;
 
 namespace TiendaApi.Apis.Controllers;
@@ -25,7 +26,7 @@ public class PedidosController(
     /// Devuelve: 200 OK | 401 Unauthorized | 403 Forbidden
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -144,7 +145,7 @@ public class PedidosController(
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
-        if (pedido.UserId != userId && userRole != "ADMIN")
+        if (pedido.UserId != userId && userRole != UserRoles.ADMIN)
             return Forbid();
 
         return Ok(pedido);
@@ -156,7 +157,7 @@ public class PedidosController(
     /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpPut("{id}/estado")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

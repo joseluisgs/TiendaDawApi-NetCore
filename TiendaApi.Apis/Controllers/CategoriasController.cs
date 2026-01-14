@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Apis.Dtos.Categorias;
 using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Services.Categorias;
 
 namespace TiendaApi.Apis.Controllers;
@@ -87,7 +88,7 @@ public class CategoriasController(
     /// Devuelve: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 409 Conflict
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -116,7 +117,7 @@ public class CategoriasController(
     /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found | 409 Conflict
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -147,7 +148,7 @@ public class CategoriasController(
     /// Devuelve: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

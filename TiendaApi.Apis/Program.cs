@@ -17,6 +17,7 @@ using TiendaApi.Apis.Data;
 using TiendaApi.Apis.GraphQL.Types;
 using TiendaApi.Apis.Middleware;
 using TiendaApi.Apis.Mappers;
+using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Repositories.Usuarios;
@@ -261,8 +262,8 @@ builder.Services.AddAuthentication(options =>
 
 Log.Information("🛡️ Configurando políticas de autorización...");
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("RequireAdminRole", policy => policy.RequireRole("ADMIN"))
-    .AddPolicy("RequireUserRole", policy => policy.RequireRole("USER", "ADMIN"));
+    .AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRoles.ADMIN))
+    .AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRoles.USER, UserRoles.ADMIN));
 
 // ============================================================================
 // 🌐 CONFIGURACIÓN CORS

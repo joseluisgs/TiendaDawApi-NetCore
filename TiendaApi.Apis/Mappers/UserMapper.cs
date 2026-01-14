@@ -15,15 +15,14 @@ public static class UserMapper
     /// </summary>
     public static UserDto ToDto(this User user)
     {
-        return new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            Avatar = user.GetAvatarUrl(),
-            Role = user.Role,
-            CreatedAt = user.CreatedAt
-        };
+        return new UserDto(
+            user.Id,
+            user.Username,
+            user.Email,
+            user.GetAvatarUrl(),
+            user.Role,
+            user.CreatedAt
+        );
     }
 
     /// <summary>
