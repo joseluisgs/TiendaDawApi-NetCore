@@ -49,7 +49,7 @@ public class GlobalExceptionHandler
                 "NotFoundError"
             ),
 
-            ValidationException validation => (
+            TiendaApi.Apis.Exceptions.ValidationException validation => (
                 400,
                 validation.Message,
                 validation.Errors,
