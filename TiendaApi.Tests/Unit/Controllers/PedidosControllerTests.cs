@@ -57,12 +57,7 @@ public class PedidosControllerTests
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
-        var pedidoDto = new PedidoDto
-        {
-            Id = "123",
-            UserId = 1,
-            Total = 100
-        };
+        var pedidoDto = new PedidoDto("123", 1, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
@@ -202,8 +197,8 @@ public class PedidosControllerTests
         SetupUserClaims(1);
         var pedidos = new List<PedidoDto>
         {
-            new() { Id = "1", UserId = 1, Total = 100 },
-            new() { Id = "2", UserId = 1, Total = 200 }
+            new PedidoDto("1", 1, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow),
+            new PedidoDto("2", 1, new List<PedidoItemDto>(), 200m, "PENDIENTE", null, DateTime.UtcNow)
         };
 
         _mockService.Setup(s => s.FindByUserIdAsync(1))
@@ -251,7 +246,7 @@ public class PedidosControllerTests
     public async Task GetPedidoById_ConIdExistente_RetornaOk()
     {
         SetupUserClaims(1);
-        var pedido = new PedidoDto { Id = "123", UserId = 1, Total = 100 };
+        var pedido = new PedidoDto("123", 1, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindByIdAsync("123"))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedido));
@@ -267,7 +262,7 @@ public class PedidosControllerTests
     public async Task GetPedidoById_PedidoDeOtroUsuario_RetornaForbid()
     {
         SetupUserClaims(2);
-        var pedido = new PedidoDto { Id = "123", UserId = 1, Total = 100 };
+        var pedido = new PedidoDto("123", 1, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindByIdAsync("123"))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedido));
@@ -281,7 +276,7 @@ public class PedidosControllerTests
     public async Task GetPedidoById_AdminPuedeVerCualquierPedido_RetornaOk()
     {
         SetupUserClaims(2, "ADMIN");
-        var pedido = new PedidoDto { Id = "123", UserId = 1, Total = 100 };
+        var pedido = new PedidoDto("123", 1, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindByIdAsync("123"))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedido));
@@ -327,7 +322,7 @@ public class PedidosControllerTests
     [Test]
     public async Task UpdatePedidoEstado_ConEstadoValido_RetornaOk()
     {
-        var pedidoDto = new PedidoDto { Id = "123", Estado = "ENVIADO" };
+        var pedidoDto = new PedidoDto("123", 0, new List<PedidoItemDto>(), 0m, "ENVIADO", null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateEstadoAsync("123", "ENVIADO"))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
@@ -416,12 +411,7 @@ public class PedidosControllerTests
                 new() { ProductoId = 2, Cantidad = 3 }
             }
         };
-        var pedidoDto = new PedidoDto
-        {
-            Id = "123",
-            UserId = 1,
-            Total = 175
-        };
+        var pedidoDto = new PedidoDto("123", 1, new List<PedidoItemDto>(), 175m, "PENDIENTE", null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
@@ -434,7 +424,7 @@ public class PedidosControllerTests
     [Test]
     public async Task UpdatePedidoEstado_TransicionesValidas_RetornaOk()
     {
-        var pedidoDto = new PedidoDto { Id = "123", Estado = "PROCESANDO" };
+        var pedidoDto = new PedidoDto("123", 0, new List<PedidoItemDto>(), 0m, "PROCESANDO", null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateEstadoAsync("123", "PROCESANDO"))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
@@ -447,7 +437,7 @@ public class PedidosControllerTests
     [Test]
     public async Task UpdatePedidoEstado_CancelarPedido_RetornaOk()
     {
-        var pedidoDto = new PedidoDto { Id = "123", Estado = "CANCELADO" };
+        var pedidoDto = new PedidoDto("123", 0, new List<PedidoItemDto>(), 0m, "CANCELADO", null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateEstadoAsync("123", "CANCELADO"))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));

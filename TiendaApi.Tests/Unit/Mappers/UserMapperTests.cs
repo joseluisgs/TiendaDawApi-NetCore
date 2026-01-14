@@ -351,6 +351,189 @@ public class UserMapperTests
 
     #endregion
 
+    #region UpdateEntity (UserPatchDto) Tests
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_ConEmail_ActualizaEmail()
+    {
+        // Arrange
+        var user = new User
+        {
+            Id = 1,
+            Username = "test",
+            Email = "old@test.com",
+            PasswordHash = "hash"
+        };
+        var dto = new UserPatchDto { Email = "new@test.com" };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.Email.Should().Be("new@test.com");
+    }
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_ConPassword_ActualizaPasswordHash()
+    {
+        // Arrange
+        var user = new User
+        {
+            Id = 1,
+            Username = "test",
+            PasswordHash = "old_hash"
+        };
+        var dto = new UserPatchDto { Password = "NewSecurePassword123!" };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.PasswordHash.Should().NotBe("old_hash");
+        user.PasswordHash.Should().StartWith("$2");
+    }
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_ConAvatar_ActualizaAvatar()
+    {
+        // Arrange
+        var user = new User
+        {
+            Id = 1,
+            Username = "test",
+            Avatar = "old_avatar.jpg"
+        };
+        var dto = new UserPatchDto { Avatar = "https://example.com/new_avatar.png" };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.Avatar.Should().Be("https://example.com/new_avatar.png");
+    }
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_ConTodosLosCampos_ActualizaTodos()
+    {
+        // Arrange
+        var user = new User
+        {
+            Id = 1,
+            Username = "test",
+            Email = "old@test.com",
+            PasswordHash = "old_hash",
+            Avatar = "old_avatar.jpg"
+        };
+        var dto = new UserPatchDto
+        {
+            Email = "new@test.com",
+            Password = "NewPassword123!",
+            Avatar = "https://example.com/new_avatar.png"
+        };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.Email.Should().Be("new@test.com");
+        user.PasswordHash.Should().StartWith("$2");
+        user.Avatar.Should().Be("https://example.com/new_avatar.png");
+    }
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_SoloAvatar_ActualizaSoloAvatar()
+    {
+        // Arrange
+        var originalEmail = "original@test.com";
+        var originalHash = "original_bcrypt_hash";
+        var user = new User
+        {
+            Id = 1,
+            Username = "test",
+            Email = originalEmail,
+            PasswordHash = originalHash,
+            Avatar = "old_avatar.jpg"
+        };
+        var dto = new UserPatchDto { Avatar = "https://example.com/new_avatar.png" };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.Avatar.Should().Be("https://example.com/new_avatar.png");
+        user.Email.Should().Be(originalEmail);
+        user.PasswordHash.Should().Be(originalHash);
+    }
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_NullAvatar_NoActualizaAvatar()
+    {
+        // Arrange
+        var originalAvatar = "https://example.com/original.png";
+        var user = new User
+        {
+            Id = 1,
+            Username = "test",
+            Avatar = originalAvatar
+        };
+        var dto = new UserPatchDto { Email = "new@test.com" };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.Avatar.Should().Be(originalAvatar);
+    }
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_ConEmailVacio_NoActualizaEmail()
+    {
+        // Arrange
+        var user = new User
+        {
+            Id = 1,
+            Username = "test",
+            Email = "original@test.com"
+        };
+        var dto = new UserPatchDto { Email = string.Empty };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.Email.Should().Be("original@test.com");
+    }
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_NoDebeModificarId()
+    {
+        // Arrange
+        var user = new User { Id = 999, Username = "test" };
+        var dto = new UserPatchDto { Email = "new@test.com", Avatar = "https://example.com/avatar.png" };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.Id.Should().Be(999);
+    }
+
+    [Test]
+    public void UpdateEntity_UserPatchDto_NoDebeModificarUsername()
+    {
+        // Arrange
+        var user = new User { Id = 1, Username = "original_username" };
+        var dto = new UserPatchDto { Email = "new@test.com" };
+
+        // Act
+        dto.UpdateEntity(user);
+
+        // Assert
+        user.Username.Should().Be("original_username");
+    }
+
+    #endregion
+
     #region ToDtoList Tests
 
     [Test]

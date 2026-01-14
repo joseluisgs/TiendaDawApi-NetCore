@@ -44,18 +44,8 @@ public class AuthControllerTests
             Password = "Password123"
         };
 
-        var authResponse = new AuthResponseDto
-        {
-            Token = "jwt-token-123",
-            User = new UserDto
-            {
-                Id = 1,
-                Username = "nuevousuario",
-                Email = "nuevo@test.com",
-                Role = "USER",
-                CreatedAt = DateTime.UtcNow
-            }
-        };
+        var authResponse = new AuthResponseDto("jwt-token-123",
+            new UserDto(1, "nuevousuario", "nuevo@test.com", "", "USER", DateTime.UtcNow));
 
         _mockAuthService.Setup(s => s.SignUpAsync(registerDto))
             .ReturnsAsync(Result.Success<AuthResponseDto, DomainError>(authResponse));
@@ -196,18 +186,8 @@ public class AuthControllerTests
             Password = "Password123"
         };
 
-        var authResponse = new AuthResponseDto
-        {
-            Token = "jwt-token-456",
-            User = new UserDto
-            {
-                Id = 2,
-                Username = "usuariovalido",
-                Email = "usuario@test.com",
-                Role = "USER",
-                CreatedAt = DateTime.UtcNow
-            }
-        };
+        var authResponse = new AuthResponseDto("jwt-token-456",
+            new UserDto(2, "usuariovalido", "usuario@test.com", "", "USER", DateTime.UtcNow));
 
         _mockAuthService.Setup(s => s.SignInAsync(loginDto))
             .ReturnsAsync(Result.Success<AuthResponseDto, DomainError>(authResponse));

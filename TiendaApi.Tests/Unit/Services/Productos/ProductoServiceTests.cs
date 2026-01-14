@@ -98,7 +98,7 @@ public class ProductoServiceTests
         // Arrange
         var cachedDtos = new List<ProductoDto>
         {
-            new() { Id = 1, Nombre = "Cached Product" }
+            new ProductoDto(1, "Cached Product", "", 0, 0, null, 0, "", DateTime.UtcNow, DateTime.UtcNow)
         };
 
         _mockCacheService.Setup(c => c.GetAsync<IEnumerable<ProductoDto>>("productos:all"))

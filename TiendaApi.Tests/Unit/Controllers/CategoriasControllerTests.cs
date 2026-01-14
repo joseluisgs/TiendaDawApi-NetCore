@@ -35,8 +35,8 @@ public class CategoriasControllerTests
     {
         var categorias = new List<CategoriaDto>
         {
-            new CategoriaDto { Id = 1, Nombre = "Electrónica" },
-            new CategoriaDto { Id = 2, Nombre = "Ropa" }
+            new CategoriaDto(1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow),
+            new CategoriaDto(2, "Ropa", DateTime.UtcNow, DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<CategoriaDto>
         {
@@ -90,7 +90,7 @@ public class CategoriasControllerTests
     {
         var categorias = new List<CategoriaDto>
         {
-            new CategoriaDto { Id = 1, Nombre = "Electrónica" }
+            new CategoriaDto(1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<CategoriaDto>
         {
@@ -121,7 +121,7 @@ public class CategoriasControllerTests
     [Test]
     public async Task GetById_ConIdExistente_RetornaOkConCategoria()
     {
-        var categoria = new CategoriaDto { Id = 1, Nombre = "Electrónica" };
+        var categoria = new CategoriaDto(1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindByIdAsync(1))
             .ReturnsAsync(Result.Success<CategoriaDto, DomainError>(categoria));
@@ -164,7 +164,7 @@ public class CategoriasControllerTests
     public async Task Create_ConDtoValido_RetornaCreatedConCategoria()
     {
         var requestDto = new CategoriaRequestDto { Nombre = "Nueva Categoría" };
-        var categoriaDto = new CategoriaDto { Id = 1, Nombre = "Nueva Categoría" };
+        var categoriaDto = new CategoriaDto(1, "Nueva Categoría", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Success<CategoriaDto, DomainError>(categoriaDto));
@@ -229,7 +229,7 @@ public class CategoriasControllerTests
     {
         var id = 1L;
         var requestDto = new CategoriaRequestDto { Nombre = "Actualizada" };
-        var categoriaDto = new CategoriaDto { Id = 1, Nombre = "Actualizada" };
+        var categoriaDto = new CategoriaDto(1, "Actualizada", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateAsync(id, requestDto))
             .ReturnsAsync(Result.Success<CategoriaDto, DomainError>(categoriaDto));
@@ -333,7 +333,7 @@ public class CategoriasControllerTests
     {
         var nombreLargo = new string('A', 100);
         var requestDto = new CategoriaRequestDto { Nombre = nombreLargo };
-        var categoriaDto = new CategoriaDto { Id = 1, Nombre = nombreLargo };
+        var categoriaDto = new CategoriaDto(1, nombreLargo, DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Success<CategoriaDto, DomainError>(categoriaDto));
@@ -348,7 +348,7 @@ public class CategoriasControllerTests
     public async Task Create_ConNombreConCaracteresEspeciales_RetornaCreated()
     {
         var requestDto = new CategoriaRequestDto { Nombre = "Categoría #1 - Test®" };
-        var categoriaDto = new CategoriaDto { Id = 1, Nombre = requestDto.Nombre };
+        var categoriaDto = new CategoriaDto(1, requestDto.Nombre, DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Success<CategoriaDto, DomainError>(categoriaDto));

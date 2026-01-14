@@ -45,8 +45,8 @@ public class UsersControllerTests
     {
         var usuarios = new List<UserDto>
         {
-            new UserDto { Id = 1, Username = "user1", Email = "user1@test.com" },
-            new UserDto { Id = 2, Username = "user2", Email = "user2@test.com" }
+            new UserDto(1, "user1", "user1@test.com", "", "USER", DateTime.UtcNow),
+            new UserDto(2, "user2", "user2@test.com", "", "USER", DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<UserDto>
         {
@@ -98,7 +98,7 @@ public class UsersControllerTests
     {
         var usuarios = new List<UserDto>
         {
-            new UserDto { Id = 1, Username = "admin", Email = "admin@test.com" }
+            new UserDto(1, "admin", "admin@test.com", "", "ADMIN", DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<UserDto>
         {
@@ -127,7 +127,7 @@ public class UsersControllerTests
     [Test]
     public async Task GetById_ConIdExistente_RetornaOkConUsuario()
     {
-        var usuario = new UserDto { Id = 1, Username = "testuser", Email = "test@test.com" };
+        var usuario = new UserDto(1, "testuser", "test@test.com", "", "USER", DateTime.UtcNow);
 
         _mockUserService.Setup(s => s.FindByIdAsync(1))
             .ReturnsAsync(Result.Success<UserDto, DomainError>(usuario));
@@ -167,7 +167,7 @@ public class UsersControllerTests
     public async Task Create_ConDtoValido_RetornaCreatedConUsuario()
     {
         var registerDto = new RegisterDto { Username = "nuevouser", Email = "nuevo@test.com", Password = "Password123" };
-        var usuarioDto = new UserDto { Id = 1, Username = "nuevouser", Email = "nuevo@test.com" };
+        var usuarioDto = new UserDto(1, "nuevouser", "nuevo@test.com", "", "USER", DateTime.UtcNow);
 
         _mockUserService.Setup(s => s.CreateAsync(registerDto))
             .ReturnsAsync(Result.Success<UserDto, DomainError>(usuarioDto));
@@ -230,7 +230,7 @@ public class UsersControllerTests
     {
         var id = 1L;
         var updateDto = new UserUpdateDto { Email = "nuevo@test.com" };
-        var usuarioDto = new UserDto { Id = 1, Username = "testuser", Email = "nuevo@test.com" };
+        var usuarioDto = new UserDto(1, "testuser", "nuevo@test.com", "", "USER", DateTime.UtcNow);
 
         _mockUserService.Setup(s => s.UpdateAsync(id, updateDto))
             .ReturnsAsync(Result.Success<UserDto, DomainError>(usuarioDto));
@@ -290,7 +290,7 @@ public class UsersControllerTests
     {
         var id = 1L;
         var avatarDto = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar.jpg" };
-        var usuarioDto = new UserDto { Id = 1, Username = "testuser", Avatar = "https://example.com/avatar.jpg" };
+        var usuarioDto = new UserDto(1, "testuser", "https://example.com/avatar.jpg", "https://example.com/avatar.jpg", "USER", DateTime.UtcNow);
 
         SetupUserClaims(id);
 
@@ -369,7 +369,7 @@ public class UsersControllerTests
     public async Task GetMyProfile_UsuarioAutenticado_RetornaOkConPerfil()
     {
         var userId = 1L;
-        var usuarioDto = new UserDto { Id = 1, Username = "testuser", Email = "test@test.com" };
+        var usuarioDto = new UserDto(1, "testuser", "test@test.com", "", "USER", DateTime.UtcNow);
 
         SetupUserClaims(userId);
 
@@ -408,7 +408,7 @@ public class UsersControllerTests
     {
         var userId = 1L;
         var updateDto = new UserUpdateDto { Email = "nuevo@test.com" };
-        var usuarioDto = new UserDto { Id = 1, Username = "testuser", Email = "nuevo@test.com" };
+        var usuarioDto = new UserDto(1, "testuser", "nuevo@test.com", "", "USER", DateTime.UtcNow);
 
         SetupUserClaims(userId);
 
@@ -495,8 +495,8 @@ public class UsersControllerTests
         var userId = 1L;
         var pedidos = new List<PedidoDto>
         {
-            new PedidoDto { Id = "ped1", UserId = 1, Total = 100 },
-            new PedidoDto { Id = "ped2", UserId = 1, Total = 200 }
+            new PedidoDto("ped1", 1, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow),
+            new PedidoDto("ped2", 1, new List<PedidoItemDto>(), 200m, "PENDIENTE", null, DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<PedidoDto>
         {
@@ -557,7 +557,7 @@ public class UsersControllerTests
     {
         var userId = 1L;
         var pedidoDto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-        var pedidoResult = new PedidoDto { Id = "new-pedido", UserId = userId, Total = 0 };
+        var pedidoResult = new PedidoDto("new-pedido", userId, new List<PedidoItemDto>(), 0m, "PENDIENTE", null, DateTime.UtcNow);
 
         SetupUserClaims(userId);
 
@@ -623,7 +623,7 @@ public class UsersControllerTests
         var userId = 1L;
         var pedidoId = "pedido-123";
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección" };
-        var pedidoDto = new PedidoDto { Id = pedidoId, UserId = userId, DireccionEnvio = "Nueva dirección" };
+        var pedidoDto = new PedidoDto(pedidoId, userId, new List<PedidoItemDto>(), 0m, "PENDIENTE", "Nueva dirección", DateTime.UtcNow);
 
         SetupUserClaims(userId);
 

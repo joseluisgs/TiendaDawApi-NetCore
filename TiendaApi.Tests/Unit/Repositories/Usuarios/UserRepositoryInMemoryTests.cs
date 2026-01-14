@@ -175,7 +175,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 0, 10, "id", "asc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 
@@ -196,7 +196,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto { Page = 1, Size = 5, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 1, 5, "id", "asc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 
@@ -220,7 +220,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto { Username = "admin", Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto("admin", null, null, 0, 10, "id", "asc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 
@@ -242,7 +242,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto { Email = "empresa.com", Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, "empresa.com", null, 0, 10, "id", "asc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 
@@ -264,7 +264,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto { IsDeleted = true, Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, true, 0, 10, "id", "asc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 
@@ -286,7 +286,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "desc" };
+        var filter = new UserFilterDto(null, null, null, 0, 10, "id", "desc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 
@@ -308,7 +308,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "username", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 0, 10, "username", "asc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 
@@ -330,7 +330,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto { Page = 10, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 10, 10, "id", "asc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 
@@ -353,16 +353,7 @@ public class UserRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto
-        {
-            Username = "admin",
-            Email = "test.com",
-            IsDeleted = false,
-            Page = 0,
-            Size = 10,
-            SortBy = "id",
-            Direction = "asc"
-        };
+        var filter = new UserFilterDto("admin", "test.com", false, 0, 10, "id", "asc");
 
         var (items, totalCount) = await repository.FindAllPagedAsync(filter);
 

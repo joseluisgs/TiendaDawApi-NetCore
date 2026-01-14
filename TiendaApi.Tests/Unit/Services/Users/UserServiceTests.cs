@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Dtos.Common;
@@ -18,6 +19,8 @@ public class UserServiceTests
 {
     private Mock<IUserRepository> _mockUserRepository = null!;
     private Mock<ILogger<UserService>> _mockLogger = null!;
+    private Mock<IValidator<RegisterDto>> _mockRegisterValidator = null!;
+    private Mock<IValidator<UserUpdateDto>> _mockUpdateValidator = null!;
     private IUserService _userService = null!;
 
     [SetUp]
@@ -25,10 +28,20 @@ public class UserServiceTests
     {
         _mockUserRepository = new Mock<IUserRepository>();
         _mockLogger = new Mock<ILogger<UserService>>();
+        _mockRegisterValidator = new Mock<IValidator<RegisterDto>>();
+        _mockUpdateValidator = new Mock<IValidator<UserUpdateDto>>();
+
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+
+        _mockUpdateValidator.Setup(v => v.ValidateAsync(It.IsAny<UserUpdateDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
         _userService = new UserService(
             _mockUserRepository.Object,
-            _mockLogger.Object
+            _mockLogger.Object,
+            _mockRegisterValidator.Object,
+            _mockUpdateValidator.Object
         );
     }
 
@@ -107,7 +120,7 @@ public class UserServiceTests
             IsDeleted = false
         }).ToList();
 
-        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 0, 10, "id", "asc");
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((users.Take(10).ToList(), 25));
@@ -138,7 +151,7 @@ public class UserServiceTests
             IsDeleted = false
         }).ToList();
 
-        var filter = new UserFilterDto { Page = 1, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 1, 10, "id", "asc");
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((users.Skip(10).Take(10).ToList(), 25));
@@ -167,7 +180,7 @@ public class UserServiceTests
             IsDeleted = false
         }).ToList();
 
-        var filter = new UserFilterDto { Page = 2, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 2, 10, "id", "asc");
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((users.Skip(20).Take(5).ToList(), 25));
@@ -187,7 +200,7 @@ public class UserServiceTests
     public async Task FindAllPagedAsync_SinUsuarios_RetornaListaVacia()
     {
         // Arrange
-        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 0, 10, "id", "asc");
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((new List<User>(), 0));
@@ -208,16 +221,7 @@ public class UserServiceTests
     public async Task FindAllPagedAsync_ConFiltros_RetornaResultadosFiltrados()
     {
         // Arrange
-        var filter = new UserFilterDto
-        {
-            Username = "test",
-            Email = "@test.com",
-            IsDeleted = false,
-            Page = 0,
-            Size = 10,
-            SortBy = "id",
-            Direction = "asc"
-        };
+        var filter = new UserFilterDto("test", "@test.com", false, 0, 10, "id", "asc");
 
         var users = new List<User>
         {
@@ -241,7 +245,7 @@ public class UserServiceTests
     public async Task FindAllPagedAsync_ConPaginacion_RetornaPaginaCorrecta()
     {
         // Arrange
-        var filter = new UserFilterDto { Page = 2, Size = 10, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 2, 10, "id", "asc");
 
         var users = Enumerable.Range(1, 25).Select(i => new User
         {
@@ -267,7 +271,7 @@ public class UserServiceTests
     public async Task FindAllPagedAsync_ConOrdenacionDescendente_RetornaOrdenado()
     {
         // Arrange
-        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "username", Direction = "desc" };
+        var filter = new UserFilterDto(null, null, null, 0, 10, "username", "desc");
 
         var users = Enumerable.Range(1, 10).Select(i => new User
         {
@@ -292,7 +296,7 @@ public class UserServiceTests
     public async Task FindAllPagedAsync_ConPageSize100_Retorna100Elementos()
     {
         // Arrange
-        var filter = new UserFilterDto { Page = 0, Size = 100, SortBy = "id", Direction = "asc" };
+        var filter = new UserFilterDto(null, null, null, 0, 100, "id", "asc");
 
         var users = Enumerable.Range(1, 100).Select(i => new User
         {
@@ -318,7 +322,7 @@ public class UserServiceTests
     public async Task FindAllPagedAsync_ConSortByCreatedAt_RetornaOrdenadoPorFecha()
     {
         // Arrange
-        var filter = new UserFilterDto { Page = 0, Size = 10, SortBy = "createdAt", Direction = "desc" };
+        var filter = new UserFilterDto(null, null, null, 0, 10, "createdAt", "desc");
 
         var users = Enumerable.Range(1, 10).Select(i => new User
         {
@@ -514,26 +518,6 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConPasswordInvalido_RetornaFalloValidacion()
-    {
-        // Arrange
-        var registerDto = new RegisterDto
-        {
-            Username = "newuser",
-            Email = "newuser@test.com",
-            Password = "12345" // Too short
-        };
-
-        // Act
-        var result = await _userService.CreateAsync(registerDto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        result.Error.Message.Should().Contain("6 caracteres");
-    }
-
-    [Test]
     public async Task CreateAsync_ConUsernameVacio_RetornaFalloValidacion()
     {
         // Arrange
@@ -544,13 +528,21 @@ public class UserServiceTests
             Password = "Password123!"
         };
 
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[]
+            {
+                new FluentValidation.Results.ValidationFailure("Username", "El nombre de usuario es obligatorio")
+            }));
+
         // Act
         var result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
-        result.Error.Message.Should().Contain("nombre de usuario");
+        var validationError = (ValidationError)result.Error;
+        validationError.ValidationErrors.Should().ContainKey("Username");
+        validationError.ValidationErrors["Username"].Should().Contain("El nombre de usuario es obligatorio");
     }
 
     [Test]
@@ -564,13 +556,21 @@ public class UserServiceTests
             Password = "Password123!"
         };
 
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[]
+            {
+                new FluentValidation.Results.ValidationFailure("Username", "El nombre de usuario debe tener al menos 3 caracteres")
+            }));
+
         // Act
         var result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
-        result.Error.Message.Should().Contain("3 caracteres");
+        var validationError = (ValidationError)result.Error;
+        validationError.ValidationErrors.Should().ContainKey("Username");
+        validationError.ValidationErrors["Username"].Should().ContainMatch("*al menos 3 caracteres*");
     }
 
     [Test]
@@ -584,13 +584,21 @@ public class UserServiceTests
             Password = "Password123!"
         };
 
+        _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[]
+            {
+                new FluentValidation.Results.ValidationFailure("Email", "Debe ser un correo electrónico válido")
+            }));
+
         // Act
         var result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
-        result.Error.Message.Should().Contain("email");
+        var validationError = (ValidationError)result.Error;
+        validationError.ValidationErrors.Should().ContainKey("Email");
+        validationError.ValidationErrors["Email"].Should().Contain("Debe ser un correo electrónico válido");
     }
 
     #endregion
@@ -720,13 +728,21 @@ public class UserServiceTests
         _mockUserRepository.Setup(x => x.FindByIdAsync(1))
             .ReturnsAsync(existingUser);
 
+        _mockUpdateValidator.Setup(v => v.ValidateAsync(It.IsAny<UserUpdateDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[]
+            {
+                new FluentValidation.Results.ValidationFailure("Email", "Debe ser un correo electrónico válido")
+            }));
+
         // Act
         var result = await _userService.UpdateAsync(1, updateDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
-        result.Error.Message.Should().Contain("email");
+        var validationError = (ValidationError)result.Error;
+        validationError.ValidationErrors.Should().ContainKey("Email");
+        validationError.ValidationErrors["Email"].Should().Contain("Debe ser un correo electrónico válido");
     }
 
     #endregion

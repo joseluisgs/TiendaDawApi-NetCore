@@ -37,8 +37,8 @@ public class ProductosControllerTests
     {
         var productos = new List<ProductoDto>
         {
-            new ProductoDto { Id = 1, Nombre = "Laptop", Precio = 999.99m, Stock = 10 },
-            new ProductoDto { Id = 2, Nombre = "Mouse", Precio = 29.99m, Stock = 50 }
+            new ProductoDto(1, "Laptop", "", 999.99m, 10, "", 1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow),
+            new ProductoDto(2, "Mouse", "", 29.99m, 50, "", 1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<ProductoDto>
         {
@@ -92,7 +92,7 @@ public class ProductosControllerTests
     {
         var productos = new List<ProductoDto>
         {
-            new ProductoDto { Id = 1, Nombre = "Laptop", Precio = 999.99m, CategoriaId = 1 }
+            new ProductoDto(1, "Laptop", "", 999.99m, 10, "", 1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<ProductoDto>
         {
@@ -121,7 +121,7 @@ public class ProductosControllerTests
     {
         var productos = new List<ProductoDto>
         {
-            new ProductoDto { Id = 1, Nombre = "Mouse", Precio = 29.99m, Stock = 50 }
+            new ProductoDto(1, "Mouse", "", 29.99m, 50, "", 1, "", DateTime.UtcNow, DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<ProductoDto>
         {
@@ -150,7 +150,7 @@ public class ProductosControllerTests
     {
         var productos = new List<ProductoDto>
         {
-            new ProductoDto { Id = 1, Nombre = "Laptop", Precio = 999.99m, Stock = 10 }
+            new ProductoDto(1, "Laptop", "", 999.99m, 10, "", 1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<ProductoDto>
         {
@@ -179,7 +179,7 @@ public class ProductosControllerTests
     {
         var productos = new List<ProductoDto>
         {
-            new ProductoDto { Id = 3, Nombre = "Teclado", Precio = 49.99m, Stock = 30 }
+            new ProductoDto(3, "Teclado", "", 49.99m, 30, "", 1, "", DateTime.UtcNow, DateTime.UtcNow)
         };
         var pagedResult = new PagedResult<ProductoDto>
         {
@@ -213,7 +213,7 @@ public class ProductosControllerTests
     [Test]
     public async Task GetById_ConIdExistente_RetornaOkConProducto()
     {
-        var producto = new ProductoDto { Id = 1, Nombre = "Laptop", Precio = 999.99m, Stock = 10 };
+        var producto = new ProductoDto(1, "Laptop", "", 999.99m, 10, "", 1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindByIdAsync(1))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(producto));
@@ -257,7 +257,7 @@ public class ProductosControllerTests
     {
         var productos = new List<ProductoDto>
         {
-            new ProductoDto { Id = 1, Nombre = "Laptop", Precio = 999.99m, CategoriaId = 1 }
+            new ProductoDto(1, "Laptop", "", 999.99m, 10, "", 1, "Electrónica", DateTime.UtcNow, DateTime.UtcNow)
         };
 
         _mockService.Setup(s => s.FindByCategoriaIdAsync(1))
@@ -307,15 +307,7 @@ public class ProductosControllerTests
             Stock = 10,
             CategoriaId = 1
         };
-        var productoDto = new ProductoDto
-        {
-            Id = 1,
-            Nombre = "Nuevo Producto",
-            Descripcion = "Descripción",
-            Precio = 99.99m,
-            Stock = 10,
-            CategoriaId = 1
-        };
+        var productoDto = new ProductoDto(1, "Nuevo Producto", "Descripción", 99.99m, 10, "", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -396,13 +388,7 @@ public class ProductosControllerTests
             Precio = 149.99m,
             Stock = 20
         };
-        var productoDto = new ProductoDto
-        {
-            Id = 1,
-            Nombre = "Producto Actualizado",
-            Precio = 149.99m,
-            Stock = 20
-        };
+        var productoDto = new ProductoDto(1, "Producto Actualizado", "", 149.99m, 20, "", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateAsync(id, requestDto))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -607,8 +593,8 @@ public class ProductosControllerTests
     {
         var productos = new List<ProductoDto>
         {
-            new() { Id = 1, Nombre = "Laptop", Precio = 999.99m, CategoriaId = 1 },
-            new() { Id = 2, Nombre = "Mouse", Precio = 29.99m, CategoriaId = 1 }
+            new(1, "Laptop", "", 999.99m, 10, "", 1, "", DateTime.UtcNow, DateTime.UtcNow),
+            new(2, "Mouse", "", 29.99m, 50, "", 1, "", DateTime.UtcNow, DateTime.UtcNow)
         };
 
         _mockService.Setup(s => s.FindByCategoriaIdAsync(1))
@@ -663,12 +649,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
-        var productoDto = new ProductoDto
-        {
-            Id = 1,
-            Nombre = "Producto",
-            Imagen = "uploads/test.jpg"
-        };
+        var productoDto = new ProductoDto(1, "Producto", "uploads/test.jpg", 0m, 0, "uploads/test.jpg", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -746,7 +727,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.png", "image/png", 2048);
-        var productoDto = new ProductoDto { Id = 1, Imagen = "uploads/test.png" };
+        var productoDto = new ProductoDto(1, "", "uploads/test.png", 0m, 0, "uploads/test.png", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -761,7 +742,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.gif", "image/gif", 512);
-        var productoDto = new ProductoDto { Id = 1, Imagen = "uploads/test.gif" };
+        var productoDto = new ProductoDto(1, "", "uploads/test.gif", 0m, 0, "uploads/test.gif", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -776,7 +757,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.webp", "image/webp", 1024);
-        var productoDto = new ProductoDto { Id = 1, Imagen = "uploads/test.webp" };
+        var productoDto = new ProductoDto(1, "", "uploads/test.webp", 0m, 0, "uploads/test.webp", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -805,7 +786,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Nombre = "Nombre Actualizado" };
-        var productoDto = new ProductoDto { Id = 1, Nombre = "Nombre Actualizado", Precio = 99.99m };
+        var productoDto = new ProductoDto(1, "Nombre Actualizado", "", 99.99m, 0, "", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -822,7 +803,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Precio = 199.99m };
-        var productoDto = new ProductoDto { Id = 1, Nombre = "Producto", Precio = 199.99m };
+        var productoDto = new ProductoDto(1, "Producto", "", 199.99m, 0, "", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -839,7 +820,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Stock = 50 };
-        var productoDto = new ProductoDto { Id = 1, Nombre = "Producto", Stock = 50 };
+        var productoDto = new ProductoDto(1, "Producto", "", 0m, 50, "", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
@@ -923,14 +904,7 @@ public class ProductosControllerTests
             Precio = 299.99m,
             Stock = 100
         };
-        var productoDto = new ProductoDto
-        {
-            Id = 1,
-            Nombre = "Nuevo Nombre",
-            Descripcion = "Nueva Descripción",
-            Precio = 299.99m,
-            Stock = 100
-        };
+        var productoDto = new ProductoDto(1, "Nuevo Nombre", "Nueva Descripción", 299.99m, 100, "", 1, "", DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoDto));
