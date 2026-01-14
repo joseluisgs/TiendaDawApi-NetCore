@@ -7,6 +7,25 @@ using TiendaApi.Apis.Dtos.Productos;
 namespace TiendaApi.Apis.WebSockets.Productos;
 
 /// <summary>
+/// Tipos de notificación para eventos de productos.
+/// </summary>
+public static class ProductoNotificationType
+{
+    public const string CREATED = "PRODUCTO_CREATED";
+    public const string UPDATED = "PRODUCTO_UPDATED";
+    public const string DELETED = "PRODUCTO_DELETED";
+}
+
+/// <summary>
+/// Datos de notificación para eventos de productos.
+/// </summary>
+public record ProductoNotificacion(
+    string Tipo,
+    long ProductoId,
+    ProductoDto? Producto
+);
+
+/// <summary>
 /// Handler de WebSocket para gestionar conexiones de notificaciones de productos.
 /// </summary>
 public class ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
@@ -62,58 +81,30 @@ public class ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
     }
 
     /// <summary>
-    /// Notifica a todos los clientes conectados la creación de un producto.
+    /// Notifica a todos los clientes conectados un evento de producto.
     /// </summary>
-    /// <param name="producto">Datos del producto creado.</param>
+    /// <param name="notificacion">Datos de la notificación.</param>
     /// <returns>Tarea asíncrona de la notificación.</returns>
-    public async Task NotifyProductoCreatedAsync(ProductoDto producto)
+    public async Task NotifyAsync(ProductoNotificacion notificacion)
     {
-        var notification = Notificacion<ProductoDto>.Create(
-            "productos",
-            Notificacion<ProductoDto>.Tipo.CREATE,
-            producto
-        );
-        await BroadcastNotificationAsync(notification);
-    }
+        var wrapper = new
+        {
+            entity = "productos",
+            type = notificacion.Tipo,
+            productoId = notificacion.ProductoId,
+            producto = notificacion.Producto,
+            timestamp = DateTime.UtcNow
+        };
 
-    /// <summary>
-    /// Notifica a todos los clientes conectados la actualización de un producto.
-    /// </summary>
-    /// <param name="producto">Datos del producto actualizado.</param>
-    /// <returns>Tarea asíncrona de la notificación.</returns>
-    public async Task NotifyProductoUpdatedAsync(ProductoDto producto)
-    {
-        var notification = Notificacion<ProductoDto>.Create(
-            "productos",
-            Notificacion<ProductoDto>.Tipo.UPDATE,
-            producto
-        );
-        await BroadcastNotificationAsync(notification);
-    }
-
-    /// <summary>
-    /// Notifica a todos los clientes conectados la eliminación de un producto.
-    /// </summary>
-    /// <param name="productoId">ID del producto eliminado.</param>
-    /// <returns>Tarea asíncrona de la notificación.</returns>
-    public async Task NotifyProductoDeletedAsync(long productoId)
-    {
-        var data = new { productoId };
-        var notification = Notificacion<object>.Create(
-            "productos",
-            Notificacion<object>.Tipo.DELETE,
-            data
-        );
-        await BroadcastNotificationAsync(notification);
+        await BroadcastNotificationAsync(wrapper);
     }
 
     /// <summary>
     /// Envía una notificación a todos los clientes WebSocket conectados.
     /// </summary>
-    /// <typeparam name="T">Tipo de datos de la notificación.</typeparam>
     /// <param name="notification">Notificación a broadcast.</param>
     /// <returns>Tarea asíncrona del broadcast.</returns>
-    private async Task BroadcastNotificationAsync<T>(Notificacion<T> notification)
+    private async Task BroadcastNotificationAsync<T>(T notification)
     {
         if (_connections.IsEmpty)
         {
@@ -126,9 +117,8 @@ public class ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
         var buffer = new ArraySegment<byte>(bytes);
 
         _logger.LogInformation(
-            "Broadcasting notificación de producto: {Type} para entidad {Entity}",
-            notification.Type,
-            notification.Entity);
+            "Broadcasting notificación de producto a {Count} clientes",
+            _connections.Count);
 
         var disconnectedConnections = new List<string>();
 

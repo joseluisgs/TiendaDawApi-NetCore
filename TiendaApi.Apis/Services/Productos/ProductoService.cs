@@ -376,7 +376,11 @@ public class ProductoService(
     {
         try
         {
-            await webSocketHandler.NotifyProductoCreatedAsync(producto);
+            await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                ProductoNotificationType.CREATED,
+                producto.Id,
+                producto
+            ));
             logger.LogDebug("Notificación WebSocket enviada tras crear producto: {ProductoId}", producto.Id);
         }
         catch (Exception ex)
@@ -392,7 +396,11 @@ public class ProductoService(
     {
         try
         {
-            await webSocketHandler.NotifyProductoUpdatedAsync(producto);
+            await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                ProductoNotificationType.UPDATED,
+                producto.Id,
+                producto
+            ));
             logger.LogDebug("Notificación WebSocket enviada tras actualizar producto: {ProductoId}", producto.Id);
         }
         catch (Exception ex)
@@ -408,7 +416,11 @@ public class ProductoService(
     {
         try
         {
-            await webSocketHandler.NotifyProductoDeletedAsync(productoId);
+            await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                ProductoNotificationType.DELETED,
+                productoId,
+                null
+            ));
             logger.LogDebug("Notificación WebSocket enviada tras eliminar producto: {ProductoId}", productoId);
         }
         catch (Exception ex)
