@@ -469,7 +469,13 @@ public class PedidosService(
         {
             try
             {
-                await webSocketHandler.NotifyPedidoCreatedAsync(resultDto.Id, userId, resultDto);
+                await webSocketHandler.NotifyAsync(new PedidoNotificacion(
+                    PedidoNotificationType.CREATED,
+                    resultDto.Id,
+                    userId,
+                    resultDto.Estado ?? "",
+                    resultDto
+                ));
                 logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", resultDto.Id);
             }
             catch (Exception ex)
@@ -581,7 +587,13 @@ public class PedidosService(
             }
         });
 
-        _ = Task.Run(async () => await webSocketHandler.NotifyPedidoEstadoUpdatedAsync(id, userId, pedido.Estado ?? "", resultDto));
+        _ = Task.Run(async () => await webSocketHandler.NotifyAsync(new PedidoNotificacion(
+            PedidoNotificationType.ESTADO_UPDATED,
+            id,
+            userId,
+            pedido.Estado ?? "",
+            resultDto
+        )));
 
         return Result.Success<PedidoDto, DomainError>(resultDto);
     }

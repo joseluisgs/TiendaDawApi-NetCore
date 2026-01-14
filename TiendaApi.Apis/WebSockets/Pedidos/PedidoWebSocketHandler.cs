@@ -11,16 +11,20 @@ namespace TiendaApi.Apis.WebSockets.Pedidos;
 /// </summary>
 public static class PedidoNotificationType
 {
-    /// <summary>
-    /// Notificación de pedido creado.
-    /// </summary>
     public const string CREATED = "PEDIDO_CREATED";
-
-    /// <summary>
-    /// Notificación de cambio de estado de pedido.
-    /// </summary>
     public const string ESTADO_UPDATED = "PEDIDO_ESTADO_UPDATED";
 }
+
+/// <summary>
+/// Datos de notificación para eventos de pedidos.
+/// </summary>
+public record PedidoNotificacion(
+    string Tipo,
+    string PedidoId,
+    long UserId,
+    string Estado,
+    object? Data
+);
 
 /// <summary>
 /// Handler de WebSocket para notificaciones de pedidos.
@@ -79,48 +83,24 @@ public class PedidoWebSocketHandler(ILogger<PedidoWebSocketHandler> logger)
     }
 
     /// <summary>
-    /// Notifica a todos los clientes conectados la creación de un pedido.
+    /// Notifica a todos los clientes conectados un evento de pedido.
     /// </summary>
-    /// <param name="pedidoId">ID del pedido creado.</param>
-    /// <param name="userId">ID del usuario.</param>
-    /// <param name="data">Datos adicionales opcionales.</param>
+    /// <param name="notificacion">Datos de la notificación.</param>
     /// <returns>Tarea asíncrona de la notificación.</returns>
-    public async Task NotifyPedidoCreatedAsync(string pedidoId, long userId, object? data = null)
+    public async Task NotifyAsync(PedidoNotificacion notificacion)
     {
-        var notification = new PedidoNotificationDto
+        var wrapper = new
         {
-            Type = PedidoNotificationType.CREATED,
-            PedidoId = pedidoId,
-            UserId = userId,
-            Estado = PedidoEstado.PENDIENTE,
-            Data = data,
-            Timestamp = DateTime.UtcNow
+            entity = "pedidos",
+            type = notificacion.Tipo,
+            pedidoId = notificacion.PedidoId,
+            userId = notificacion.UserId,
+            estado = notificacion.Estado,
+            data = notificacion.Data,
+            timestamp = DateTime.UtcNow
         };
 
-        await BroadcastAsync(notification);
-    }
-
-    /// <summary>
-    /// Notifica a todos los clientes conectados el cambio de estado de un pedido.
-    /// </summary>
-    /// <param name="pedidoId">ID del pedido.</param>
-    /// <param name="userId">ID del usuario.</param>
-    /// <param name="nuevoEstado">Nuevo estado del pedido.</param>
-    /// <param name="data">Datos adicionales opcionales.</param>
-    /// <returns>Tarea asíncrona de la notificación.</returns>
-    public async Task NotifyPedidoEstadoUpdatedAsync(string pedidoId, long userId, string nuevoEstado, object? data = null)
-    {
-        var notification = new PedidoNotificationDto
-        {
-            Type = PedidoNotificationType.ESTADO_UPDATED,
-            PedidoId = pedidoId,
-            UserId = userId,
-            Estado = nuevoEstado,
-            Data = data,
-            Timestamp = DateTime.UtcNow
-        };
-
-        await BroadcastAsync(notification);
+        await BroadcastNotificationAsync(wrapper);
     }
 
     /// <summary>
@@ -128,14 +108,21 @@ public class PedidoWebSocketHandler(ILogger<PedidoWebSocketHandler> logger)
     /// </summary>
     /// <param name="notification">Notificación a broadcast.</param>
     /// <returns>Tarea asíncrona del broadcast.</returns>
-    private async Task BroadcastAsync(PedidoNotificationDto notification)
+    private async Task BroadcastNotificationAsync<T>(T notification)
     {
+        if (_connections.IsEmpty)
+        {
+            _logger.LogDebug("No hay clientes WebSocket conectados para pedidos, omitiendo notificación");
+            return;
+        }
+
         var json = JsonSerializer.Serialize(notification, _jsonOptions);
         var bytes = Encoding.UTF8.GetBytes(json);
-        var arraySegment = new ArraySegment<byte>(bytes);
+        var buffer = new ArraySegment<byte>(bytes);
 
-        _logger.LogInformation("Broadcasting notificación de pedido: {Type}, PedidoId: {PedidoId} a {Count} clientes",
-            notification.Type, notification.PedidoId, _connections.Count);
+        _logger.LogInformation(
+            "Broadcasting notificación de pedido a {Count} clientes",
+            _connections.Count);
 
         var disconnectedConnections = new List<string>();
 
@@ -146,7 +133,7 @@ public class PedidoWebSocketHandler(ILogger<PedidoWebSocketHandler> logger)
                 try
                 {
                     await webSocket.SendAsync(
-                        arraySegment,
+                        buffer,
                         WebSocketMessageType.Text,
                         endOfMessage: true,
                         cancellationToken: CancellationToken.None);
