@@ -19,8 +19,8 @@ public class StorageControllerTests
     {
         _mockEnvironment = new Mock<IWebHostEnvironment>();
         _mockLogger = new Mock<ILogger<StorageController>>();
-        _testDirectory = Path.Combine(Path.GetTempPath(), $"TiendaApi_StorageTests_{Guid.NewGuid():N}");
-        Directory.CreateDirectory(_testDirectory);
+        _testDirectory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"TiendaApi_StorageTests_{Guid.NewGuid():N}");
+        System.IO.Directory.CreateDirectory(_testDirectory);
         _mockEnvironment.Setup(e => e.ContentRootPath).Returns(_testDirectory);
         _controller = new StorageController(_mockEnvironment.Object, _mockLogger.Object);
     }
@@ -30,9 +30,9 @@ public class StorageControllerTests
     {
         try
         {
-            if (Directory.Exists(_testDirectory))
+            if (System.IO.Directory.Exists(_testDirectory))
             {
-                Directory.Delete(_testDirectory, true);
+                System.IO.Directory.Delete(_testDirectory, true);
             }
         }
         catch
@@ -65,9 +65,9 @@ public class StorageControllerTests
     public void GetFile_ConArchivoExistente_RetornaFileStream()
     {
         // Arrange
-        var testFilePath = Path.Combine(_testDirectory, "images", "productos", "test.jpg");
-        Directory.CreateDirectory(Path.GetDirectoryName(testFilePath)!);
-        File.WriteAllBytes(testFilePath, new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
+        var testFilePath = System.IO.Path.Combine(_testDirectory, "images", "productos", "test.jpg");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(testFilePath)!);
+        System.IO.File.WriteAllBytes(testFilePath, new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
 
         // Act
         var result = _controller.GetFile("productos/test.jpg");
@@ -81,9 +81,9 @@ public class StorageControllerTests
     public void GetFile_ConPNG_RetornaContentTypeImagenPng()
     {
         // Arrange
-        var testFilePath = Path.Combine(_testDirectory, "images", "productos", "test.png");
-        Directory.CreateDirectory(Path.GetDirectoryName(testFilePath)!);
-        File.WriteAllBytes(testFilePath, new byte[] { 0x89, 0x50, 0x4E, 0x47 });
+        var testFilePath = System.IO.Path.Combine(_testDirectory, "images", "productos", "test.png");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(testFilePath)!);
+        System.IO.File.WriteAllBytes(testFilePath, new byte[] { 0x89, 0x50, 0x4E, 0x47 });
 
         // Act
         var result = _controller.GetFile("productos/test.png");
@@ -97,9 +97,9 @@ public class StorageControllerTests
     public void GetFile_ConGif_RetornaContentTypeImagenGif()
     {
         // Arrange
-        var testFilePath = Path.Combine(_testDirectory, "images", "productos", "test.gif");
-        Directory.CreateDirectory(Path.GetDirectoryName(testFilePath)!);
-        File.WriteAllBytes(testFilePath, new byte[] { 0x47, 0x49, 0x46, 0x38 });
+        var testFilePath = System.IO.Path.Combine(_testDirectory, "images", "productos", "test.gif");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(testFilePath)!);
+        System.IO.File.WriteAllBytes(testFilePath, new byte[] { 0x47, 0x49, 0x46, 0x38 });
 
         // Act
         var result = _controller.GetFile("productos/test.gif");
@@ -113,9 +113,9 @@ public class StorageControllerTests
     public void GetFile_ConSubdirectorio_RetornaArchivo()
     {
         // Arrange
-        var testFilePath = Path.Combine(_testDirectory, "images", "categorias", "electronics", "test.jpg");
-        Directory.CreateDirectory(Path.GetDirectoryName(testFilePath)!);
-        File.WriteAllBytes(testFilePath, new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
+        var testFilePath = System.IO.Path.Combine(_testDirectory, "images", "categorias", "electronics", "test.jpg");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(testFilePath)!);
+        System.IO.File.WriteAllBytes(testFilePath, new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
 
         // Act
         var result = _controller.GetFile("categorias/electronics/test.jpg");

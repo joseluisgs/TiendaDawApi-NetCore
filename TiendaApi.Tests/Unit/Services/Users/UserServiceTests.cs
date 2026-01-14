@@ -380,7 +380,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
         result.Error.Message.Should().Contain("999");
     }
 
@@ -403,7 +403,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion
@@ -476,7 +476,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
+        result.Error.Should().BeOfType<ConflictError>();
         result.Error.Message.Should().Contain("nombre de usuario");
     }
 
@@ -509,7 +509,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
+        result.Error.Should().BeOfType<ConflictError>();
         result.Error.Message.Should().Contain("email");
     }
 
@@ -529,7 +529,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
         result.Error.Message.Should().Contain("6 caracteres");
     }
 
@@ -549,7 +549,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
         result.Error.Message.Should().Contain("nombre de usuario");
     }
 
@@ -569,7 +569,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
         result.Error.Message.Should().Contain("3 caracteres");
     }
 
@@ -589,7 +589,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
         result.Error.Message.Should().Contain("email");
     }
 
@@ -658,7 +658,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     [Test]
@@ -696,7 +696,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
+        result.Error.Should().BeOfType<ConflictError>();
         result.Error.Message.Should().Contain("email");
     }
 
@@ -725,7 +725,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
         result.Error.Message.Should().Contain("email");
     }
 
@@ -771,7 +771,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     [Test]
@@ -793,7 +793,7 @@ public class UserServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion

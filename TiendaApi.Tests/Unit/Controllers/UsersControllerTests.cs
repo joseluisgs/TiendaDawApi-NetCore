@@ -146,7 +146,7 @@ public class UsersControllerTests
     [Test]
     public async Task GetById_ConIdNoExistente_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Usuario no encontrado");
+        var error = new NotFoundError("Usuario no encontrado");
 
         _mockUserService.Setup(s => s.FindByIdAsync(999))
             .ReturnsAsync(Result.Failure<UserDto, DomainError>(error));
@@ -187,7 +187,7 @@ public class UsersControllerTests
     public async Task Create_ConUsernameDuplicado_RetornaConflict()
     {
         var registerDto = new RegisterDto { Username = "existente", Email = "nuevo@test.com", Password = "Password123" };
-        var error = DomainError.Conflict("El nombre de usuario ya existe");
+        var error = new ConflictError("El nombre de usuario ya existe");
 
         _mockUserService.Setup(s => s.CreateAsync(registerDto))
             .ReturnsAsync(Result.Failure<UserDto, DomainError>(error));
@@ -204,7 +204,7 @@ public class UsersControllerTests
     public async Task Create_ConValidacionFallida_RetornaBadRequest()
     {
         var registerDto = new RegisterDto { Username = "ab", Email = "invalido", Password = "123" };
-        var error = DomainError.Validation("Errores de validación", new Dictionary<string, string[]>
+        var error = new ValidationError("Errores de validación", new Dictionary<string, string[]>
         {
             { "Username", new[] { "El nombre de usuario debe tener al menos 3 caracteres" } }
         });
@@ -250,7 +250,7 @@ public class UsersControllerTests
     {
         var id = 999L;
         var updateDto = new UserUpdateDto { Email = "nuevo@test.com" };
-        var error = DomainError.NotFound("Usuario no encontrado");
+        var error = new NotFoundError("Usuario no encontrado");
 
         _mockUserService.Setup(s => s.UpdateAsync(id, updateDto))
             .ReturnsAsync(Result.Failure<UserDto, DomainError>(error));
@@ -268,7 +268,7 @@ public class UsersControllerTests
     {
         var id = 1L;
         var updateDto = new UserUpdateDto { Email = "existente@test.com" };
-        var error = DomainError.Conflict("El email ya existe");
+        var error = new ConflictError("El email ya existe");
 
         _mockUserService.Setup(s => s.UpdateAsync(id, updateDto))
             .ReturnsAsync(Result.Failure<UserDto, DomainError>(error));
@@ -314,7 +314,7 @@ public class UsersControllerTests
 
         SetupUserClaims(id);
 
-        var error = DomainError.NotFound("Usuario no encontrado");
+        var error = new NotFoundError("Usuario no encontrado");
 
         _mockUserService.Setup(s => s.UpdateAvatarAsync(id, avatarDto.AvatarUrl))
             .ReturnsAsync(Result.Failure<UserDto, DomainError>(error));
@@ -348,7 +348,7 @@ public class UsersControllerTests
     [Test]
     public async Task Delete_ConIdNoExistente_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Usuario no encontrado");
+        var error = new NotFoundError("Usuario no encontrado");
 
         _mockUserService.Setup(s => s.DeleteAsync(999))
             .ReturnsAsync(UnitResult.Failure<DomainError>(error));
@@ -429,7 +429,7 @@ public class UsersControllerTests
     {
         var userId = 1L;
         var updateDto = new UserUpdateDto { Email = "email-invalido" };
-        var error = DomainError.Validation("El email no es válido");
+        var error = ValidationError.Create("El email no es válido");
 
         SetupUserClaims(userId);
 
@@ -470,7 +470,7 @@ public class UsersControllerTests
     public async Task DeleteMyProfile_UsuarioNoExistente_RetornaNotFound()
     {
         var userId = 999L;
-        var error = DomainError.NotFound("Usuario no encontrado");
+        var error = new NotFoundError("Usuario no encontrado");
 
         SetupUserClaims(userId);
 
@@ -578,7 +578,7 @@ public class UsersControllerTests
     {
         var userId = 1L;
         var pedidoDto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-        var error = DomainError.NotFound("Producto con ID 999 no encontrado");
+        var error = new NotFoundError("Producto con ID 999 no encontrado");
 
         SetupUserClaims(userId);
 
@@ -598,7 +598,7 @@ public class UsersControllerTests
     {
         var userId = 1L;
         var pedidoDto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-        var error = DomainError.Validation("El pedido debe tener al menos un producto");
+        var error = ValidationError.Create("El pedido debe tener al menos un producto");
 
         SetupUserClaims(userId);
 
@@ -645,7 +645,7 @@ public class UsersControllerTests
         var userId = 1L;
         var pedidoId = "pedido-123";
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección" };
-        var error = DomainError.Forbidden("No puedes actualizar un pedido que no es tuyo");
+        var error = new ForbiddenError("No puedes actualizar un pedido que no es tuyo");
 
         SetupUserClaims(userId);
 
@@ -689,7 +689,7 @@ public class UsersControllerTests
     {
         var userId = 1L;
         var pedidoId = "pedido-123";
-        var error = DomainError.Forbidden("No puedes eliminar un pedido que no es tuyo");
+        var error = new ForbiddenError("No puedes eliminar un pedido que no es tuyo");
 
         SetupUserClaims(userId);
 
@@ -710,7 +710,7 @@ public class UsersControllerTests
     {
         var userId = 1L;
         var pedidoId = "pedido-inexistente";
-        var error = DomainError.NotFound("Pedido no encontrado");
+        var error = new NotFoundError("Pedido no encontrado");
 
         SetupUserClaims(userId);
 
@@ -732,7 +732,7 @@ public class UsersControllerTests
     [Test]
     public async Task GetAll_ConErrorInterno_Retorna500()
     {
-        var error = DomainError.Internal("Error de base de datos");
+        var error = new InternalError("Error de base de datos");
 
         _mockUserService.Setup(s => s.FindAllPagedAsync(It.IsAny<UserFilterDto>()))
             .ReturnsAsync(Result.Failure<PagedResult<UserDto>, DomainError>(error));
@@ -749,7 +749,7 @@ public class UsersControllerTests
     [Test]
     public async Task GetById_ConErrorInterno_Retorna500()
     {
-        var error = DomainError.Internal("Error inesperado");
+        var error = new InternalError("Error inesperado");
 
         _mockUserService.Setup(s => s.FindByIdAsync(1))
             .ReturnsAsync(Result.Failure<UserDto, DomainError>(error));

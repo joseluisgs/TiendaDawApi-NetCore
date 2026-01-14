@@ -141,7 +141,7 @@ public class CategoriasControllerTests
     [Test]
     public async Task GetById_ConIdNoExistente_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Categoría no encontrada");
+        var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.FindByIdAsync(999))
             .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
@@ -186,7 +186,7 @@ public class CategoriasControllerTests
     public async Task Create_ConNombreVacio_RetornaBadRequest()
     {
         var requestDto = new CategoriaRequestDto { Nombre = "" };
-        var error = DomainError.Validation("Nombre no puede estar vacío");
+        var error = ValidationError.Create("Nombre no puede estar vacío");
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
@@ -205,7 +205,7 @@ public class CategoriasControllerTests
     public async Task Create_ConNombreDuplicado_RetornaConflict()
     {
         var requestDto = new CategoriaRequestDto { Nombre = "Existente" };
-        var error = DomainError.Conflict("Ya existe una categoría con ese nombre");
+        var error = new ConflictError("Ya existe una categoría con ese nombre");
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
@@ -250,7 +250,7 @@ public class CategoriasControllerTests
     {
         var id = 999L;
         var requestDto = new CategoriaRequestDto { Nombre = "Actualizada" };
-        var error = DomainError.NotFound("Categoría no encontrada");
+        var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.UpdateAsync(id, requestDto))
             .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
@@ -287,7 +287,7 @@ public class CategoriasControllerTests
     [Test]
     public async Task Delete_ConIdNoExistente_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Categoría no encontrada");
+        var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.DeleteAsync(999))
             .ReturnsAsync(UnitResult.Failure<DomainError>(error));
@@ -305,7 +305,7 @@ public class CategoriasControllerTests
     [Test]
     public async Task GetById_ConIdCero_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Categoría no encontrada");
+        var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.FindByIdAsync(0))
             .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
@@ -318,7 +318,7 @@ public class CategoriasControllerTests
     [Test]
     public async Task GetById_ConIdNegativo_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Categoría no encontrada");
+        var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.FindByIdAsync(-1))
             .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
@@ -363,7 +363,7 @@ public class CategoriasControllerTests
     {
         var id = 1L;
         var requestDto = new CategoriaRequestDto { Nombre = "Existente" };
-        var error = DomainError.Conflict("Ya existe una categoría con ese nombre");
+        var error = new ConflictError("Ya existe una categoría con ese nombre");
 
         _mockService.Setup(s => s.UpdateAsync(id, requestDto))
             .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
@@ -378,7 +378,7 @@ public class CategoriasControllerTests
     {
         var id = 1L;
         var requestDto = new CategoriaRequestDto { Nombre = "Actualizada" };
-        var error = DomainError.Internal("Error en base de datos");
+        var error = new InternalError("Error en base de datos");
 
         _mockService.Setup(s => s.UpdateAsync(id, requestDto))
             .ReturnsAsync(Result.Failure<CategoriaDto, DomainError>(error));
@@ -392,7 +392,7 @@ public class CategoriasControllerTests
     [Test]
     public async Task Delete_CategoriaConProductos_Retorna500()
     {
-        var error = DomainError.BusinessRule("No se puede eliminar una categoría con productos asociados");
+        var error = new BusinessRuleError("No se puede eliminar una categoría con productos asociados");
 
         _mockService.Setup(s => s.DeleteAsync(1))
             .ReturnsAsync(UnitResult.Failure<DomainError>(error));

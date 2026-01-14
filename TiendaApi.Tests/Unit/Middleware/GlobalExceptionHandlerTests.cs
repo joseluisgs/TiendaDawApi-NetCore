@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Npgsql;
+using System.Collections.Generic;
 using TiendaApi.Apis.Exceptions;
 using TiendaApi.Apis.Middleware;
 
@@ -403,14 +404,14 @@ public class GlobalExceptionHandlerTests
     public async Task InvokeAsync_ConKeyNotFoundException_DeberiaRetornar500()
     {
         // Arrange
-        var exception = new KeyNotFoundException("La clave no existe");
+        var exception = new System.Collections.Generic.KeyNotFoundException("La clave no existe");
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        var result = await ExecuteHandlerAsync(exception);
 
         // Assert
-        statusCode.Should().Be(500);
-        body.Should().Contain("Ha ocurrido un error interno");
+        result.StatusCode.Should().Be(500);
+        result.Body.Should().Contain("Ha ocurrido un error interno");
     }
 
     #endregion

@@ -157,7 +157,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion
@@ -199,7 +199,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion
@@ -284,8 +284,8 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Precio");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Precio");
     }
 
     [Test]
@@ -330,8 +330,8 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Stock");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Stock");
     }
 
     [Test]
@@ -354,7 +354,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion
@@ -404,7 +404,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion
@@ -438,7 +438,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion
@@ -460,7 +460,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     [Test]
@@ -557,8 +557,8 @@ public class ProductoServiceTests
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(1000);
 
-        var errorResult = CSharpFunctionalExtensions.Result.Failure<string, TiendaApi.Apis.Errors.DomainError>(
-            TiendaApi.Apis.Errors.DomainError.Validation("Archivo no válido"));
+        var errorResult = CSharpFunctionalExtensions.Result.Failure<string, DomainError>(
+            ValidationError.Create("Archivo no válido"));
         _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
             .ReturnsAsync(errorResult);
 
@@ -567,7 +567,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
     }
 
     #endregion

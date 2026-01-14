@@ -176,7 +176,7 @@ public class PedidosServiceTests
         var result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
     }
 
     [Test]
@@ -212,7 +212,7 @@ public class PedidosServiceTests
         var result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
     }
 
     [Test]
@@ -233,7 +233,7 @@ public class PedidosServiceTests
         var result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
         _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -263,7 +263,7 @@ public class PedidosServiceTests
         var result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.BusinessRule);
+        result.Error.Should().BeOfType<BusinessRuleError>();
         _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -301,7 +301,7 @@ public class PedidosServiceTests
         var result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
+        result.Error.Should().BeOfType<ConflictError>();
     }
 
     [Test]
@@ -449,7 +449,7 @@ public class PedidosServiceTests
         var result = await _service.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
+        result.Error.Should().BeOfType<ValidationError>();
     }
 
     [Test]
@@ -463,7 +463,7 @@ public class PedidosServiceTests
         var result = await _service.UpdateEstadoAsync(pedidoId, "ENVIADO");
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #region Tests de Deteccion de Errores 40001
@@ -873,7 +873,7 @@ public class PedidosServiceTests
         var result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.BusinessRule);
+        result.Error.Should().BeOfType<BusinessRuleError>();
         _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
         _mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -1036,7 +1036,7 @@ public class PedidosServiceTests
         var result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
+        result.Error.Should().BeOfType<ConflictError>();
     }
 
     [Test]
@@ -1073,7 +1073,7 @@ public class PedidosServiceTests
         var result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
+        result.Error.Should().BeOfType<ConflictError>();
 
         _mockLogger.Verify(
             l => l.Log(

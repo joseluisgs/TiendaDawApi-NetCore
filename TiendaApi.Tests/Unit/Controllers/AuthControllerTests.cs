@@ -85,7 +85,7 @@ public class AuthControllerTests
             Password = "123"
         };
 
-        var error = DomainError.Validation("El nombre de usuario es obligatorio");
+        var error = ValidationError.Create("El nombre de usuario es obligatorio");
 
         _mockAuthService.Setup(s => s.SignUpAsync(registerDto))
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
@@ -112,7 +112,7 @@ public class AuthControllerTests
             Password = "Password123"
         };
 
-        var error = DomainError.Conflict("El nombre de usuario ya existe");
+        var error = new ConflictError("El nombre de usuario ya existe");
 
         _mockAuthService.Setup(s => s.SignUpAsync(registerDto))
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
@@ -139,7 +139,7 @@ public class AuthControllerTests
             Password = "Password123"
         };
 
-        var error = DomainError.Conflict("El correo electrónico ya está registrado");
+        var error = new ConflictError("El correo electrónico ya está registrado");
 
         _mockAuthService.Setup(s => s.SignUpAsync(registerDto))
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
@@ -166,7 +166,7 @@ public class AuthControllerTests
             Password = "Password123"
         };
 
-        var error = DomainError.Internal("Error inesperado");
+        var error = new InternalError("Error inesperado");
 
         _mockAuthService.Setup(s => s.SignUpAsync(registerDto))
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
@@ -235,7 +235,7 @@ public class AuthControllerTests
             Password = "password-incorrecto"
         };
 
-        var error = DomainError.Unauthorized("Credenciales inválidas");
+        var error = new UnauthorizedError("Credenciales inválidas");
 
         _mockAuthService.Setup(s => s.SignInAsync(loginDto))
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
@@ -261,7 +261,7 @@ public class AuthControllerTests
             Password = "Password123"
         };
 
-        var error = DomainError.Unauthorized("Credenciales inválidas");
+        var error = new UnauthorizedError("Credenciales inválidas");
 
         _mockAuthService.Setup(s => s.SignInAsync(loginDto))
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
@@ -287,7 +287,7 @@ public class AuthControllerTests
             Password = "Password123"
         };
 
-        var error = DomainError.Validation("El nombre de usuario es obligatorio");
+        var error = ValidationError.Create("El nombre de usuario es obligatorio");
 
         _mockAuthService.Setup(s => s.SignInAsync(loginDto))
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
@@ -313,7 +313,7 @@ public class AuthControllerTests
             Password = "Password123"
         };
 
-        var error = DomainError.Internal("Error al procesar la solicitud");
+        var error = new InternalError("Error al procesar la solicitud");
 
         _mockAuthService.Setup(s => s.SignInAsync(loginDto))
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));

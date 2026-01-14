@@ -113,7 +113,7 @@ public class CategoriaServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion
@@ -161,8 +161,8 @@ public class CategoriaServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Nombre");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Nombre");
     }
 
     [Test]
@@ -179,7 +179,7 @@ public class CategoriaServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
+        result.Error.Should().BeOfType<ConflictError>();
     }
 
     #endregion
@@ -223,7 +223,7 @@ public class CategoriaServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion
@@ -259,7 +259,7 @@ public class CategoriaServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     #endregion

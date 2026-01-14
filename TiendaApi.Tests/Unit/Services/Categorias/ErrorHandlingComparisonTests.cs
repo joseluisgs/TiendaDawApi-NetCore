@@ -106,8 +106,8 @@ public class ErrorHandlingComparisonTests
 
         // Assert - Sin excepciones, verificación explícita
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.NotFound);
-        result.Error.Message.Should().Contain("no encontrada");
+        result.Error.Should().BeOfType<NotFoundError>();
+        result.Error.Message.Should().Contain("Recurso con ID");
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public class ErrorHandlingComparisonTests
         // Assert - Clean and explicit!
         resultado.IsFailure.Should().BeTrue();
         resultado.IsSuccess.Should().BeFalse();
-        resultado.Error.Type.Should().Be(ErrorType.NotFound);
+        resultado.Error.Should().BeOfType<NotFoundError>();
         resultado.Error.Message.Should().Contain("no encontrado");
     }
 
@@ -252,8 +252,8 @@ public class ErrorHandlingComparisonTests
 
         // Assert - Clean validation error handling!
         resultado.IsFailure.Should().BeTrue();
-        resultado.Error.Type.Should().Be(ErrorType.Validation);
-        resultado.Error.ValidationErrors.Should().ContainKey("Precio");
+        resultado.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)resultado.Error).ValidationErrors.Should().ContainKey("Precio");
     }
 
     #endregion
@@ -285,14 +285,14 @@ public class ErrorHandlingComparisonTests
         // - Explicit error information
         var resultadoCategoria = _categoriaService.FindByIdAsync(999).Result;
         resultadoCategoria.IsFailure.Should().BeTrue();
-        resultadoCategoria.Error.Type.Should().Be(ErrorType.NotFound);
+        resultadoCategoria.Error.Should().BeOfType<NotFoundError>();
 
         // PRODUCTOSERVICE (Result Pattern):
         // - Same pattern, same verification
         // - No exception handling needed
         var resultadoProducto = _productoService.FindByIdAsync(999).Result;
         resultadoProducto.IsFailure.Should().BeTrue();
-        resultadoProducto.Error.Type.Should().Be(ErrorType.NotFound);
+        resultadoProducto.Error.Should().BeOfType<NotFoundError>();
 
         // Ambos servicios ahora manejan errores de manera consistente
     }

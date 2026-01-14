@@ -78,7 +78,7 @@ public class PedidosControllerTests
     {
         SetupUserClaims(1);
         var requestDto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-        var error = DomainError.Validation("El pedido debe contener al menos un artículo");
+        var error = ValidationError.Create("El pedido debe contener al menos un artículo");
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -99,7 +99,7 @@ public class PedidosControllerTests
                 new() { ProductoId = 999, Cantidad = 2 }
             }
         };
-        var error = DomainError.NotFound("Producto con ID 999 no encontrado");
+        var error = new NotFoundError("Producto con ID 999 no encontrado");
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -120,7 +120,7 @@ public class PedidosControllerTests
                 new() { ProductoId = 1, Cantidad = 100 }
             }
         };
-        var error = DomainError.BusinessRule("Stock insuficiente");
+        var error = new BusinessRuleError("Stock insuficiente");
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -141,7 +141,7 @@ public class PedidosControllerTests
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
-        var error = DomainError.Conflict("El producto fue adquirido por otro usuario");
+        var error = new ConflictError("El producto fue adquirido por otro usuario");
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -181,7 +181,7 @@ public class PedidosControllerTests
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
-        var error = DomainError.Internal("Error en base de datos");
+        var error = new InternalError("Error en base de datos");
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -295,7 +295,7 @@ public class PedidosControllerTests
     public async Task GetPedidoById_PedidoNoExistente_RetornaNotFound()
     {
         SetupUserClaims(1);
-        var error = DomainError.NotFound("Pedido no encontrado");
+        var error = new NotFoundError("Pedido no encontrado");
 
         _mockService.Setup(s => s.FindByIdAsync("999"))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -309,7 +309,7 @@ public class PedidosControllerTests
     public async Task GetPedidoById_ErrorInterno_Retorna500()
     {
         SetupUserClaims(1);
-        var error = DomainError.Internal("Error inesperado");
+        var error = new InternalError("Error inesperado");
 
         _mockService.Setup(s => s.FindByIdAsync("123"))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -342,7 +342,7 @@ public class PedidosControllerTests
     [Test]
     public async Task UpdatePedidoEstado_ConEstadoInvalido_RetornaBadRequest()
     {
-        var error = DomainError.Validation("Estado inválido");
+        var error = ValidationError.Create("Estado inválido");
 
         _mockService.Setup(s => s.UpdateEstadoAsync("123", "INVALIDO"))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -355,7 +355,7 @@ public class PedidosControllerTests
     [Test]
     public async Task UpdatePedidoEstado_PedidoNoExistente_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Pedido no encontrado");
+        var error = new NotFoundError("Pedido no encontrado");
 
         _mockService.Setup(s => s.UpdateEstadoAsync("999", "ENVIADO"))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -368,7 +368,7 @@ public class PedidosControllerTests
     [Test]
     public async Task UpdatePedidoEstado_ErrorInterno_Retorna500()
     {
-        var error = DomainError.Internal("Error inesperado");
+        var error = new InternalError("Error inesperado");
 
         _mockService.Setup(s => s.UpdateEstadoAsync("123", "ENVIADO"))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -394,7 +394,7 @@ public class PedidosControllerTests
                 new() { ProductoId = 1, Cantidad = -1 }
             }
         };
-        var error = DomainError.Validation("La cantidad debe ser mayor a 0");
+        var error = ValidationError.Create("La cantidad debe ser mayor a 0");
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
@@ -461,7 +461,7 @@ public class PedidosControllerTests
     public async Task GetPedidoById_IdVacio_RetornaNotFound()
     {
         SetupUserClaims(1);
-        var error = DomainError.NotFound("Pedido no encontrado");
+        var error = new NotFoundError("Pedido no encontrado");
 
         _mockService.Setup(s => s.FindByIdAsync(""))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));

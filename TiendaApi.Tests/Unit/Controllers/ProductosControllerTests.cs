@@ -233,7 +233,7 @@ public class ProductosControllerTests
     [Test]
     public async Task GetById_ConIdNoExistente_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Producto no encontrado");
+        var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.FindByIdAsync(999))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -277,7 +277,7 @@ public class ProductosControllerTests
     [Test]
     public async Task GetByCategoria_ConCategoriaNoExistente_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Categoría no encontrada");
+        var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.FindByCategoriaIdAsync(999))
             .ReturnsAsync(Result.Failure<IEnumerable<ProductoDto>, DomainError>(error));
@@ -342,7 +342,7 @@ public class ProductosControllerTests
             Precio = -10m,
             Stock = 10
         };
-        var error = DomainError.Validation("El precio debe ser mayor a 0");
+        var error = ValidationError.Create("El precio debe ser mayor a 0");
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -367,7 +367,7 @@ public class ProductosControllerTests
             Stock = 10,
             CategoriaId = 999
         };
-        var error = DomainError.NotFound("La categoría especificada no existe");
+        var error = new NotFoundError("La categoría especificada no existe");
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -423,7 +423,7 @@ public class ProductosControllerTests
     {
         var id = 999L;
         var requestDto = new ProductoRequestDto { Nombre = "Actualizado", Precio = 99.99m, Stock = 10 };
-        var error = DomainError.NotFound("Producto no encontrado");
+        var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.UpdateAsync(id, requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -443,7 +443,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var requestDto = new ProductoRequestDto { Nombre = "Producto", Precio = 99.99m, Stock = -5 };
-        var error = DomainError.Validation("El stock no puede ser negativo");
+        var error = ValidationError.Create("El stock no puede ser negativo");
 
         _mockService.Setup(s => s.UpdateAsync(id, requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -480,7 +480,7 @@ public class ProductosControllerTests
     [Test]
     public async Task Delete_ConIdNoExistente_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Producto no encontrado");
+        var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.DeleteAsync(999))
             .ReturnsAsync(UnitResult.Failure<DomainError>(error));
@@ -498,7 +498,7 @@ public class ProductosControllerTests
     [Test]
     public async Task GetById_ConIdCero_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Producto no encontrado");
+        var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.FindByIdAsync(0))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -511,7 +511,7 @@ public class ProductosControllerTests
     [Test]
     public async Task GetById_ConIdNegativo_RetornaNotFound()
     {
-        var error = DomainError.NotFound("Producto no encontrado");
+        var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.FindByIdAsync(-1))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -530,7 +530,7 @@ public class ProductosControllerTests
             Precio = 99.99m,
             Stock = 10
         };
-        var error = DomainError.Validation("El nombre es obligatorio");
+        var error = ValidationError.Create("El nombre es obligatorio");
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -551,7 +551,7 @@ public class ProductosControllerTests
             Stock = 10,
             CategoriaId = 0
         };
-        var error = DomainError.Validation("Debe seleccionar una categoría válida");
+        var error = ValidationError.Create("Debe seleccionar una categoría válida");
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -571,7 +571,7 @@ public class ProductosControllerTests
             Precio = 99.99m,
             Stock = 1000
         };
-        var error = DomainError.BusinessRule("No hay suficiente stock");
+        var error = new BusinessRuleError("No hay suficiente stock");
 
         _mockService.Setup(s => s.UpdateAsync(id, requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -591,7 +591,7 @@ public class ProductosControllerTests
             Precio = 99.99m,
             Stock = 10
         };
-        var error = DomainError.Internal("Error en base de datos");
+        var error = new InternalError("Error en base de datos");
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -643,7 +643,7 @@ public class ProductosControllerTests
             Precio = 99.99m,
             Stock = 10
         };
-        var error = DomainError.Conflict("El producto ya existe");
+        var error = new ConflictError("El producto ya existe");
 
         _mockService.Setup(s => s.CreateAsync(requestDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -715,7 +715,7 @@ public class ProductosControllerTests
     {
         var id = 999L;
         var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
-        var error = DomainError.NotFound("Producto no encontrado");
+        var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -730,7 +730,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
-        var error = DomainError.Internal("Error al guardar imagen");
+        var error = new InternalError("Error al guardar imagen");
 
         _mockService.Setup(s => s.UpdateImageAsync(id, It.IsAny<IFormFile>()))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -856,7 +856,7 @@ public class ProductosControllerTests
     {
         var id = 999L;
         var patchDto = new ProductoPatchDto { Nombre = "Actualizado" };
-        var error = DomainError.NotFound("Producto no encontrado");
+        var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -871,7 +871,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Precio = -10m };
-        var error = DomainError.Validation("El precio debe ser mayor a 0");
+        var error = ValidationError.Create("El precio debe ser mayor a 0");
 
         _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -886,7 +886,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Stock = -5 };
-        var error = DomainError.Validation("El stock no puede ser negativo");
+        var error = ValidationError.Create("El stock no puede ser negativo");
 
         _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -901,7 +901,7 @@ public class ProductosControllerTests
     {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Nombre = "Actualizado" };
-        var error = DomainError.Internal("Error en base de datos");
+        var error = new InternalError("Error en base de datos");
 
         _mockService.Setup(s => s.UpdatePartialAsync(id, patchDto))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -1028,7 +1028,7 @@ public class ProductosControllerTests
     [Test]
     public async Task GetAll_ConErrorInterno_Retorna500()
     {
-        var error = DomainError.Internal("Error de conexión a base de datos");
+        var error = new InternalError("Error de conexión a base de datos");
 
         _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
             .ReturnsAsync(Result.Failure<PagedResult<ProductoDto>, DomainError>(error));
@@ -1042,7 +1042,7 @@ public class ProductosControllerTests
     [Test]
     public async Task GetById_ConErrorInterno_Retorna500()
     {
-        var error = DomainError.Internal("Error inesperado");
+        var error = new InternalError("Error inesperado");
 
         _mockService.Setup(s => s.FindByIdAsync(1))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(error));
@@ -1056,7 +1056,7 @@ public class ProductosControllerTests
     [Test]
     public async Task GetByCategoria_ConErrorInterno_Retorna500()
     {
-        var error = DomainError.Internal("Error de base de datos");
+        var error = new InternalError("Error de base de datos");
 
         _mockService.Setup(s => s.FindByCategoriaIdAsync(1))
             .ReturnsAsync(Result.Failure<IEnumerable<ProductoDto>, DomainError>(error));
@@ -1070,7 +1070,7 @@ public class ProductosControllerTests
     [Test]
     public async Task Delete_ConErrorInterno_Retorna500()
     {
-        var error = DomainError.Internal("Error al eliminar");
+        var error = new InternalError("Error al eliminar");
 
         _mockService.Setup(s => s.DeleteAsync(1))
             .ReturnsAsync(UnitResult.Failure<DomainError>(error));

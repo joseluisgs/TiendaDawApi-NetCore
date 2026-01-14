@@ -92,7 +92,7 @@ public class FileSystemStorageServiceTests
         var result = await _storageService.SaveFileAsync(file, "productos");
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Message.Should().Contain("Extensión no permitida");
+        result.Error.Message.Should().Contain("Extensión de archivo no permitida");
     }
 
     /// <summary>
