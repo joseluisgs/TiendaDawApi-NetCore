@@ -399,35 +399,33 @@ app.MapGraphQL();
 var isDevelopment = builder.Environment.IsDevelopment();
 Log.Information("🗄️ Inicializando base de datos... (Modo: {Environment})", isDevelopment ? "Desarrollo" : "Producción");
 
-using (var scope = app.Services.CreateScope())
+using var scope = app.Services.CreateScope();
+var services = scope.ServiceProvider;
+try
 {
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<TiendaDbContext>();
-        var logger = services.GetRequiredService<ILogger<Program>>();
+    var context = services.GetRequiredService<TiendaDbContext>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
 
-        if (isDevelopment)
-        {
-            // Desarrollo: Eliminar y recrear base de datos (siembra siempre)
-            logger.LogWarning("🗄️ [DESARROLLO] Eliminando y recreando base de datos...");
-            context.Database.EnsureDeleted();
-            context.Database.EnsureCreated();
-            logger.LogInformation("✅ [DESARROLLO] Base de datos recreada con datos semilla");
-        }
-        else
-        {
-            // Producción: Solo crear tablas si no existen (siembra solo si no hay datos)
-            logger.LogInformation("🗄️ [PRODUCCIÓN] Verificando esquema de base de datos...");
-            context.Database.EnsureCreated();
-            logger.LogInformation("✅ [PRODUCCIÓN] Base de datos verificada (tablas creadas si no existían)");
-        }
-    }
-    catch (Exception ex)
+    if (isDevelopment)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "❌ Error al inicializar la base de datos");
+        // Desarrollo: Eliminar y recrear base de datos (siembra siempre)
+        logger.LogWarning("🗄️ [DESARROLLO] Eliminando y recreando base de datos...");
+        context.Database.EnsureDeleted();
+        context.Database.EnsureCreated();
+        logger.LogInformation("✅ [DESARROLLO] Base de datos recreada con datos semilla");
     }
+    else
+    {
+        // Producción: Solo crear tablas si no existen (siembra solo si no hay datos)
+        logger.LogInformation("🗄️ [PRODUCCIÓN] Verificando esquema de base de datos...");
+        context.Database.EnsureCreated();
+        logger.LogInformation("✅ [PRODUCCIÓN] Base de datos verificada (tablas creadas si no existían)");
+    }
+}
+catch (Exception ex)
+{
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "❌ Error al inicializar la base de datos");
 }
 
 // ============================================================================

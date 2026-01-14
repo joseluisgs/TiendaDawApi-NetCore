@@ -70,10 +70,10 @@ public class UserRepository(
             : context.Users.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Username))
-            query = query.Where(u => u.Username.ToLower().Contains(filter.Username.ToLower()));
+            query = query.Where(u => EF.Functions.Like(u.Username, $"%{filter.Username}%"));
 
         if (!string.IsNullOrWhiteSpace(filter.Email))
-            query = query.Where(u => u.Email.ToLower().Contains(filter.Email.ToLower()));
+            query = query.Where(u => EF.Functions.Like(u.Email, $"%{filter.Email}%"));
 
         if (filter.IsDeleted.HasValue)
             query = query.Where(u => u.IsDeleted == filter.IsDeleted.Value);

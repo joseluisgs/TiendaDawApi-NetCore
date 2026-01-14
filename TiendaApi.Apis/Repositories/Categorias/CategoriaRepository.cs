@@ -53,7 +53,7 @@ public class CategoriaRepository(
             : context.Categorias.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Nombre))
-            query = query.Where(c => c.Nombre.ToLower().Contains(filter.Nombre.ToLower()));
+            query = query.Where(c => EF.Functions.Like(c.Nombre, $"%{filter.Nombre}%"));
 
         if (filter.IsDeleted.HasValue)
             query = query.Where(c => c.IsDeleted == filter.IsDeleted.Value);

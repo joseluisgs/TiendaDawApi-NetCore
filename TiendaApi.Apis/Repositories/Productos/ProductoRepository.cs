@@ -56,10 +56,10 @@ public class ProductoRepository(
             : context.Productos.Include(p => p.Categoria).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Nombre))
-            query = query.Where(p => p.Nombre.ToLower().Contains(filter.Nombre.ToLower()));
+            query = query.Where(p => EF.Functions.Like(p.Nombre, $"%{filter.Nombre}%"));
 
         if (!string.IsNullOrWhiteSpace(filter.Categoria))
-            query = query.Where(p => p.Categoria.Nombre.ToLower().Contains(filter.Categoria.ToLower()));
+            query = query.Where(p => EF.Functions.Like(p.Categoria.Nombre, $"%{filter.Categoria}%"));
 
         if (filter.IsDeleted.HasValue)
             query = query.Where(p => p.IsDeleted == filter.IsDeleted.Value);
