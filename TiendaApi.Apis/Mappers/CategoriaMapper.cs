@@ -6,8 +6,6 @@ namespace TiendaApi.Apis.Mappers;
 /// <summary>
 /// Métodos de extensión para mapeo de categorías.
 /// Alternativa a AutoMapper con fines educativos.
-///参考 (参考/jiànkǎo): En Kotlin se usaría extension functions,
-/// en Java se implementaría como métodos estáticos en una clase Util.
 /// </summary>
 public static class CategoriaMapper
 {
@@ -36,8 +34,6 @@ public static class CategoriaMapper
 
     /// <summary>
     /// Convierte un DTO de solicitud a entidad categoría.
-    ///参考 (参考/jiànkǎo): En Kotlin sería simple: dto.toEntity()
-    ///En Java se usaría: CategoriaMapper.toEntity(dto)
     /// Devuelve: Categoria
     /// </summary>
     public static Categoria ToEntity(this CategoriaRequestDto dto)
