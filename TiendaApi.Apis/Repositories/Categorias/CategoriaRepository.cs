@@ -139,7 +139,7 @@ public class CategoriaRepository(
     public async Task DeleteAsync(long id)
     {
         var categoria = await FindByIdAsync(id);
-        if (categoria != null)
+        if (categoria is not null)
         {
             categoria.IsDeleted = true;
             categoria.UpdatedAt = DateTime.UtcNow;

@@ -152,7 +152,7 @@ public class UserRepository(
     public async Task DeleteAsync(long id)
     {
         var user = await FindByIdAsync(id);
-        if (user != null)
+        if (user is not null)
         {
             user.IsDeleted = true;
             user.UpdatedAt = DateTime.UtcNow;

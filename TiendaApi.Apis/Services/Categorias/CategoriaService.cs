@@ -66,7 +66,7 @@ public class CategoriaService(
 
         var categoria = await repository.FindByIdAsync(id);
 
-        if (categoria == null)
+        if (categoria is null)
         {
             logger.LogWarning("Categoría con id {Id} no encontrada", id);
             return Result.Failure<CategoriaDto, DomainError>(
@@ -74,8 +74,7 @@ public class CategoriaService(
             );
         }
 
-        var dto = categoria.ToDto();
-        return Result.Success<CategoriaDto, DomainError>(dto);
+        return Result.Success<CategoriaDto, DomainError>(categoria.ToDto());
     }
 
     /// <summary>
@@ -121,7 +120,7 @@ public class CategoriaService(
         }
 
         var categoria = await repository.FindByIdAsync(id);
-        if (categoria == null)
+        if (categoria is null)
         {
             logger.LogWarning("Categoría con id {Id} no encontrada para actualizar", id);
             return Result.Failure<CategoriaDto, DomainError>(
@@ -152,7 +151,7 @@ public class CategoriaService(
         logger.LogInformation("Eliminando categoría con id: {Id}", id);
 
         var categoria = await repository.FindByIdAsync(id);
-        if (categoria == null)
+        if (categoria is null)
         {
             logger.LogWarning("Categoría con id {Id} no encontrada para eliminar", id);
             return UnitResult.Failure<DomainError>(

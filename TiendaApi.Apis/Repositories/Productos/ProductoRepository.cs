@@ -179,7 +179,7 @@ public class ProductoRepository(
     public async Task DeleteAsync(long id)
     {
         var producto = await FindByIdAsync(id);
-        if (producto != null)
+        if (producto is not null)
         {
             producto.IsDeleted = true;
             producto.UpdatedAt = DateTime.UtcNow;
@@ -213,7 +213,7 @@ public class ProductoRepository(
 
         var producto = await context.Productos.FindAsync(productoId);
 
-        if (producto == null)
+        if (producto is null)
         {
             logger.LogWarning("Producto no encontrado para decrementar stock: {ProductoId}", productoId);
             return false;

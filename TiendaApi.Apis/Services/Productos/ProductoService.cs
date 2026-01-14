@@ -44,7 +44,7 @@ public class ProductoService(
         const string cacheKey = "productos:all";
         var cachedProductos = await cacheService.GetAsync<IEnumerable<ProductoDto>>(cacheKey);
 
-        if (cachedProductos != null)
+        if (cachedProductos is not null)
         {
             logger.LogInformation("Devolviendo productos desde caché");
             return Result.Success<IEnumerable<ProductoDto>, DomainError>(cachedProductos);
@@ -93,7 +93,7 @@ public class ProductoService(
         var cacheKey = $"productos:{id}";
         var cachedProducto = await cacheService.GetAsync<ProductoDto>(cacheKey);
 
-        if (cachedProducto != null)
+        if (cachedProducto is not null)
         {
             logger.LogInformation("Devolviendo producto desde caché: {Id}", id);
             return Result.Success<ProductoDto, DomainError>(cachedProducto);
@@ -101,7 +101,7 @@ public class ProductoService(
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto == null)
+        if (producto is null)
         {
             logger.LogWarning("Producto con ID {Id} no encontrado", id);
             return Result.Failure<ProductoDto, DomainError>(
@@ -127,7 +127,7 @@ public class ProductoService(
         logger.LogInformation("Obteniendo productos para categoría: {CategoriaId}", categoriaId);
 
         var categoria = await categoriaRepository.FindByIdAsync(categoriaId);
-        if (categoria == null)
+        if (categoria is null)
         {
             return Result.Failure<IEnumerable<ProductoDto>, DomainError>(
                 ProductoError.CategoriaNoEncontrada(categoriaId)
@@ -217,7 +217,7 @@ public class ProductoService(
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto == null)
+        if (producto is null)
         {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar", id);
             return Result.Failure<ProductoDto, DomainError>(
@@ -273,7 +273,7 @@ public class ProductoService(
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto == null)
+        if (producto is null)
         {
             logger.LogWarning("Producto con ID {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
@@ -322,7 +322,7 @@ public class ProductoService(
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto == null)
+        if (producto is null)
         {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar imagen", id);
             return Result.Failure<ProductoDto, DomainError>(
@@ -441,7 +441,7 @@ public class ProductoService(
         }
 
         var categoriaExists = await categoriaRepository.FindByIdAsync(dto.CategoriaId);
-        if (categoriaExists == null)
+        if (categoriaExists is null)
         {
             return UnitResult.Failure<DomainError>(
                 ProductoError.CategoriaNoEncontrada(dto.CategoriaId)
@@ -461,7 +461,7 @@ public class ProductoService(
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto == null)
+        if (producto is null)
         {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar parcialmente", id);
             return Result.Failure<ProductoDto, DomainError>(

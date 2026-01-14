@@ -184,7 +184,7 @@ public class UserService(
 
         var user = await userRepository.FindByIdAsync(id);
 
-        if (user == null || user.IsDeleted)
+        if (user is null or { IsDeleted: true })
         {
             logger.LogWarning("Usuario con id {Id} no encontrado para actualizar avatar", id);
             return Result.Failure<UserDto, DomainError>(
@@ -222,7 +222,7 @@ public class UserService(
 
         var user = await userRepository.FindByIdAsync(id);
 
-        if (user == null || user.IsDeleted)
+        if (user is null or { IsDeleted: true })
         {
             logger.LogWarning("Usuario con id {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(

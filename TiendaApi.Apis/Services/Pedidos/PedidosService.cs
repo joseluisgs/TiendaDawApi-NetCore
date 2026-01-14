@@ -60,7 +60,7 @@ public class PedidosService(
         var cacheKey = $"pedidos:user:{userId}";
         var cachedPedidos = await cacheService.GetAsync<IEnumerable<PedidoDto>>(cacheKey);
 
-        if (cachedPedidos != null)
+        if (cachedPedidos is not null)
         {
             logger.LogInformation("Devolviendo pedidos desde caché para usuario: {UserId}", userId);
             return Result.Success<IEnumerable<PedidoDto>, DomainError>(cachedPedidos);
@@ -108,7 +108,7 @@ public class PedidosService(
         var cacheKey = $"pedidos:{id}";
         var cachedPedido = await cacheService.GetAsync<PedidoDto>(cacheKey);
 
-        if (cachedPedido != null)
+        if (cachedPedido is not null)
         {
             logger.LogInformation("Devolviendo pedido desde caché: {Id}", id);
             return Result.Success<PedidoDto, DomainError>(cachedPedido);
@@ -226,7 +226,7 @@ public class PedidosService(
 
                 var producto = await productoRepository.FindByIdAsync(itemDto.ProductoId);
 
-                if (producto == null)
+                if (producto is null)
                 {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
@@ -542,9 +542,9 @@ public class PedidosService(
 
         var pedido = await pedidosRepository.FindByIdAsync(id);
 
-        if (pedido == null)
+        if (pedido is null)
         {
-            logger.LogWarning("Pedido con ID {Id} no encontrado para actualizar", id);
+            logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
                 Errors.Pedidos.PedidoError.NotFound(id)
             );
@@ -601,7 +601,7 @@ public class PedidosService(
 
         var pedido = await pedidosRepository.FindByIdAsync(id);
 
-        if (pedido == null)
+        if (pedido is null)
         {
             logger.LogWarning("Pedido con ID {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(

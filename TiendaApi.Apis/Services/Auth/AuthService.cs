@@ -80,7 +80,7 @@ public class AuthService(
         }
 
         var user = await userRepository.FindByUsernameAsync(dto.Username!);
-        if (user == null)
+        if (user is null)
         {
             logger.LogWarning("SignIn fallido: Usuario no encontrado - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
@@ -165,13 +165,13 @@ public class AuthService(
         await Task.WhenAll(usernameCheckTask, emailCheckTask);
 
         var existingUser = await usernameCheckTask;
-        if (existingUser != null)
+        if (existingUser is not null)
         {
             return UnitResult.Failure<DomainError>(AuthErrors.UsernameExistente(dto.Username!));
         }
 
         var existingEmail = await emailCheckTask;
-        if (existingEmail != null)
+        if (existingEmail is not null)
         {
             return UnitResult.Failure<DomainError>(AuthErrors.EmailExistente(dto.Email!));
         }
