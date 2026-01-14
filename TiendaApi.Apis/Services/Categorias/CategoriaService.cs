@@ -7,6 +7,7 @@ using TiendaApi.Apis.Errors.Categorias;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
+using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Validators.Categorias;
 
 namespace TiendaApi.Apis.Services.Categorias;
@@ -18,7 +19,9 @@ namespace TiendaApi.Apis.Services.Categorias;
 public class CategoriaService(
     ICategoriaRepository repository,
     ILogger<CategoriaService> logger,
-    IValidator<CategoriaRequestDto> categoriaValidator
+    IValidator<CategoriaRequestDto> categoriaValidator,
+    ICacheService cacheService,
+    IConfiguration configuration
 ) : ICategoriaService
 {
 
@@ -29,8 +32,23 @@ public class CategoriaService(
     public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync()
     {
         logger.LogInformation("Buscando todas las categorías");
+
+        const string cacheKey = "categorias:all";
+        var cachedCategorias = await cacheService.GetAsync<IEnumerable<CategoriaDto>>(cacheKey);
+
+        if (cachedCategorias is not null)
+        {
+            logger.LogInformation("Devolviendo categorías desde caché");
+            return Result.Success<IEnumerable<CategoriaDto>, DomainError>(cachedCategorias);
+        }
+
         var categorias = await repository.FindAllAsync();
         var dtos = categorias.ToDtoList();
+
+        var cacheTTL = TimeSpan.FromMinutes(
+            int.Parse(configuration["Cache:CategoriaCacheTTLMinutes"] ?? "10"));
+        await cacheService.SetAsync(cacheKey, dtos, cacheTTL);
+
         return Result.Success<IEnumerable<CategoriaDto>, DomainError>(dtos);
     }
 
@@ -64,6 +82,15 @@ public class CategoriaService(
     {
         logger.LogInformation("Buscando categoría con id: {Id}", id);
 
+        var cacheKey = $"categorias:{id}";
+        var cachedCategoria = await cacheService.GetAsync<CategoriaDto>(cacheKey);
+
+        if (cachedCategoria is not null)
+        {
+            logger.LogInformation("Devolviendo categoría desde caché: {Id}", id);
+            return Result.Success<CategoriaDto, DomainError>(cachedCategoria);
+        }
+
         var categoria = await repository.FindByIdAsync(id);
 
         if (categoria is null)
@@ -74,7 +101,13 @@ public class CategoriaService(
             );
         }
 
-        return Result.Success<CategoriaDto, DomainError>(categoria.ToDto());
+        var dto = categoria.ToDto();
+
+        var cacheTTL = TimeSpan.FromMinutes(
+            int.Parse(configuration["Cache:CategoriaCacheTTLMinutes"] ?? "10"));
+        await cacheService.SetAsync(cacheKey, dto, cacheTTL);
+
+        return Result.Success<CategoriaDto, DomainError>(dto);
     }
 
     /// <summary>
@@ -102,6 +135,20 @@ public class CategoriaService(
 
         logger.LogInformation("Categoría creada con id: {Id}", saved.Id);
         var result = saved.ToDto();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync("categorias:all");
+                await cacheService.RemoveAsync($"categorias:{saved.Id}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, $"Cache invalidation error: Key=categorias:all,categorias:{saved.Id}");
+            }
+        });
+
         return Result.Success<CategoriaDto, DomainError>(result);
     }
 
@@ -139,6 +186,20 @@ public class CategoriaService(
 
         logger.LogInformation("Categoría actualizada con id: {Id}", id);
         var result = updated.ToDto();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync("categorias:all");
+                await cacheService.RemoveAsync($"categorias:{id}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, $"Cache invalidation error: Key=categorias:all,categorias:{id}");
+            }
+        });
+
         return Result.Success<CategoriaDto, DomainError>(result);
     }
 
@@ -161,6 +222,19 @@ public class CategoriaService(
 
         await repository.DeleteAsync(id);
         logger.LogInformation("Categoría eliminada con id: {Id}", id);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync("categorias:all");
+                await cacheService.RemoveAsync($"categorias:{id}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, $"Cache invalidation error: Key=categorias:all,categorias:{id}");
+            }
+        });
 
         return UnitResult.Success<DomainError>();
     }

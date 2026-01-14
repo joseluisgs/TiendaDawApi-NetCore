@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Dtos.Categorias;
@@ -9,6 +10,7 @@ using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
+using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Categorias;
 using TiendaApi.Apis.Services.Productos;
 using TiendaApi.Apis.Services.Storage;
@@ -56,10 +58,15 @@ public class ErrorHandlingComparisonTests
         _mockProductoValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
+        var mockCategoriaCacheService = new Mock<ICacheService>();
+        var mockCategoriaConfiguration = new Mock<IConfiguration>();
+
         _categoriaService = new CategoriaService(
             _mockCategoriaRepo.Object,
             _mockCategoriaLogger.Object,
-            _mockCategoriaValidator.Object
+            _mockCategoriaValidator.Object,
+            mockCategoriaCacheService.Object,
+            mockCategoriaConfiguration.Object
         );
 
         var mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductoWebSocketHandler>>());

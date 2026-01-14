@@ -1,5 +1,6 @@
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Dtos.Common;
@@ -7,6 +8,7 @@ using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Usuarios;
+using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Users;
 
 namespace TiendaApi.Tests.Unit.Services.Users;
@@ -21,6 +23,8 @@ public class UserServiceTests
     private Mock<ILogger<UserService>> _mockLogger = null!;
     private Mock<IValidator<RegisterDto>> _mockRegisterValidator = null!;
     private Mock<IValidator<UserUpdateDto>> _mockUpdateValidator = null!;
+    private Mock<ICacheService> _mockCacheService = null!;
+    private Mock<IConfiguration> _mockConfiguration = null!;
     private IUserService _userService = null!;
 
     [SetUp]
@@ -30,6 +34,8 @@ public class UserServiceTests
         _mockLogger = new Mock<ILogger<UserService>>();
         _mockRegisterValidator = new Mock<IValidator<RegisterDto>>();
         _mockUpdateValidator = new Mock<IValidator<UserUpdateDto>>();
+        _mockCacheService = new Mock<ICacheService>();
+        _mockConfiguration = new Mock<IConfiguration>();
 
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
@@ -37,11 +43,22 @@ public class UserServiceTests
         _mockUpdateValidator.Setup(v => v.ValidateAsync(It.IsAny<UserUpdateDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
+        _mockCacheService.Setup(x => x.GetAsync<IEnumerable<UserDto>>(It.IsAny<string>()))
+            .ReturnsAsync((IEnumerable<UserDto>?)null);
+
+        _mockCacheService.Setup(x => x.GetAsync<UserDto>(It.IsAny<string>()))
+            .ReturnsAsync((UserDto?)null);
+
+        _mockConfiguration.SetupGet(c => c["Cache:UsuarioCacheTTLMinutes"])
+            .Returns("10");
+
         _userService = new UserService(
             _mockUserRepository.Object,
             _mockLogger.Object,
             _mockRegisterValidator.Object,
-            _mockUpdateValidator.Object
+            _mockUpdateValidator.Object,
+            _mockCacheService.Object,
+            _mockConfiguration.Object
         );
     }
 

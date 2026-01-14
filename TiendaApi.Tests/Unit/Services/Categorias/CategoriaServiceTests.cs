@@ -1,12 +1,14 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Dtos.Categorias;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
+using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Categorias;
 using TiendaApi.Apis.Validators.Categorias;
 
@@ -21,11 +23,18 @@ public class CategoriaServiceTests
     private Mock<ICategoriaRepository> _mockRepository = null!;
     private Mock<ILogger<CategoriaService>> _mockLogger = null!;
     private Mock<IValidator<CategoriaRequestDto>> _mockValidator = null!;
+    private Mock<ICacheService> _mockCacheService = null!;
+    private Mock<IConfiguration> _mockConfiguration = null!;
     private CategoriaService _service = null!;
 
     private void CreateService()
     {
-        _service = new CategoriaService(_mockRepository.Object, _mockLogger.Object, _mockValidator.Object);
+        _service = new CategoriaService(
+            _mockRepository.Object,
+            _mockLogger.Object,
+            _mockValidator.Object,
+            _mockCacheService.Object,
+            _mockConfiguration.Object);
     }
 
     [SetUp]
@@ -34,10 +43,20 @@ public class CategoriaServiceTests
         _mockRepository = new Mock<ICategoriaRepository>();
         _mockLogger = new Mock<ILogger<CategoriaService>>();
         _mockValidator = new Mock<IValidator<CategoriaRequestDto>>();
+        _mockCacheService = new Mock<ICacheService>();
+        _mockConfiguration = new Mock<IConfiguration>();
 
-        // Configuración por defecto: validación pasa
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<CategoriaRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
+
+        _mockCacheService.Setup(x => x.GetAsync<IEnumerable<CategoriaDto>>(It.IsAny<string>()))
+            .ReturnsAsync((IEnumerable<CategoriaDto>?)null);
+
+        _mockCacheService.Setup(x => x.GetAsync<CategoriaDto>(It.IsAny<string>()))
+            .ReturnsAsync((CategoriaDto?)null);
+
+        _mockConfiguration.SetupGet(c => c["Cache:CategoriaCacheTTLMinutes"])
+            .Returns("10");
 
         CreateService();
     }
@@ -154,7 +173,12 @@ public class CategoriaServiceTests
             }));
 
         // Re-crear servicio con mock configurado
-        _service = new CategoriaService(_mockRepository.Object, _mockLogger.Object, _mockValidator.Object);
+        _service = new CategoriaService(
+            _mockRepository.Object,
+            _mockLogger.Object,
+            _mockValidator.Object,
+            _mockCacheService.Object,
+            _mockConfiguration.Object);
 
         // Act
         var result = await _service.CreateAsync(dto);

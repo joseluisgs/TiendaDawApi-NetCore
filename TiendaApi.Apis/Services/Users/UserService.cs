@@ -8,6 +8,7 @@ using TiendaApi.Apis.Errors.Usuarios;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Usuarios;
+using TiendaApi.Apis.Services.Cache;
 
 namespace TiendaApi.Apis.Services.Users;
 
@@ -19,7 +20,9 @@ public class UserService(
     IUserRepository userRepository,
     ILogger<UserService> logger,
     IValidator<RegisterDto> registerValidator,
-    IValidator<UserUpdateDto> userUpdateValidator
+    IValidator<UserUpdateDto> userUpdateValidator,
+    ICacheService cacheService,
+    IConfiguration configuration
 ) : IUserService
 {
 
@@ -31,11 +34,24 @@ public class UserService(
     {
         logger.LogInformation("Obteniendo todos los usuarios");
 
+        const string cacheKey = "usuarios:all";
+        var cachedUsuarios = await cacheService.GetAsync<IEnumerable<UserDto>>(cacheKey);
+
+        if (cachedUsuarios is not null)
+        {
+            logger.LogInformation("Devolviendo usuarios desde caché");
+            return Result.Success<IEnumerable<UserDto>, DomainError>(cachedUsuarios);
+        }
+
         var users = await userRepository.FindAllAsync();
 
         var activeUsers = users.Where(u => !u.IsDeleted);
 
         var dtos = activeUsers.ToDtoList();
+
+        var cacheTTL = TimeSpan.FromMinutes(
+            int.Parse(configuration["Cache:UsuarioCacheTTLMinutes"] ?? "10"));
+        await cacheService.SetAsync(cacheKey, dtos, cacheTTL);
 
         return Result.Success<IEnumerable<UserDto>, DomainError>(dtos);
     }
@@ -70,6 +86,15 @@ public class UserService(
     {
         logger.LogInformation("Buscando usuario con id: {Id}", id);
 
+        var cacheKey = $"usuarios:{id}";
+        var cachedUsuario = await cacheService.GetAsync<UserDto>(cacheKey);
+
+        if (cachedUsuario is not null)
+        {
+            logger.LogInformation("Devolviendo usuario desde caché: {Id}", id);
+            return Result.Success<UserDto, DomainError>(cachedUsuario);
+        }
+
         var user = await userRepository.FindByIdAsync(id);
 
         if (user is null or { IsDeleted: true })
@@ -81,6 +106,10 @@ public class UserService(
         }
 
         var dto = user.ToDto();
+
+        var cacheTTL = TimeSpan.FromMinutes(
+            int.Parse(configuration["Cache:UsuarioCacheTTLMinutes"] ?? "10"));
+        await cacheService.SetAsync(cacheKey, dto, cacheTTL);
 
         return Result.Success<UserDto, DomainError>(dto);
     }
@@ -129,6 +158,19 @@ public class UserService(
         logger.LogInformation("Usuario creado con id: {Id}", savedUser.Id);
 
         var resultDto = savedUser.ToDto();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync("usuarios:all");
+                await cacheService.RemoveAsync($"usuarios:{savedUser.Id}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, $"Cache invalidation error: Key=usuarios:all,usuarios:{savedUser.Id}");
+            }
+        });
 
         return Result.Success<UserDto, DomainError>(resultDto);
     }
@@ -187,6 +229,19 @@ public class UserService(
 
         var resultDto = updated.ToDto();
 
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync("usuarios:all");
+                await cacheService.RemoveAsync($"usuarios:{id}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, $"Cache invalidation error: Key=usuarios:all,usuarios:{id}");
+            }
+        });
+
         return Result.Success<UserDto, DomainError>(resultDto);
     }
 
@@ -223,6 +278,19 @@ public class UserService(
 
         var resultDto = updated.ToDto();
 
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync("usuarios:all");
+                await cacheService.RemoveAsync($"usuarios:{id}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, $"Cache invalidation error: Key=usuarios:all,usuarios:{id}");
+            }
+        });
+
         return Result.Success<UserDto, DomainError>(resultDto);
     }
 
@@ -249,6 +317,19 @@ public class UserService(
         await userRepository.UpdateAsync(user);
 
         logger.LogInformation("Usuario eliminado lógicamente con id: {Id}", id);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await cacheService.RemoveAsync("usuarios:all");
+                await cacheService.RemoveAsync($"usuarios:{id}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, $"Cache invalidation error: Key=usuarios:all,usuarios:{id}");
+            }
+        });
 
         return UnitResult.Success<DomainError>();
     }
