@@ -31,5 +31,5 @@ public class Categoria : ITimestamped
     /// <summary>
     /// Colección de productos asociados a esta categoría.
     /// </summary>
-    public ICollection<Producto> Productos { get; set; } = new List<Producto>();
+    public ICollection<Producto> Productos { get; set; } = [];
 }

@@ -6,12 +6,14 @@ namespace TiendaApi.Apis.Mappers;
 /// <summary>
 /// Métodos de extensión para mapeo de productos.
 /// Alternativa a AutoMapper con fines educativos.
+///参考 (参考/jiànkǎo): En Kotlin se usaría extension functions,
+/// en Java se implementarían como métodos estáticos en una clase Util.
 /// </summary>
 public static class ProductoMapper
 {
     /// <summary>
     /// Convierte un producto a DTO.
-    /// Returns: ProductoDto
+    /// Devuelve: ProductoDto
     /// </summary>
     public static ProductoDto ToDto(this Producto producto)
     {
@@ -32,7 +34,7 @@ public static class ProductoMapper
 
     /// <summary>
     /// Convierte una lista de productos a lista de DTOs.
-    /// Returns: IEnumerable<ProductoDto>
+    /// Devuelve: IEnumerable<ProductoDto>
     /// </summary>
     public static IEnumerable<ProductoDto> ToDtoList(this IEnumerable<Producto> productos)
     {
@@ -41,7 +43,8 @@ public static class ProductoMapper
 
     /// <summary>
     /// Convierte un DTO de solicitud a entidad producto.
-    /// Returns: Producto
+    ///参考 (参考/jiànkǎo): Similar al método .map() de Kotlin o Java streams
+    /// Devuelve: Producto
     /// </summary>
     public static Producto ToEntity(this ProductoRequestDto dto)
     {
@@ -60,7 +63,9 @@ public static class ProductoMapper
 
     /// <summary>
     /// Actualiza una entidad producto con datos del DTO de solicitud.
-    /// Returns: void
+    ///参考 (参考/jiànkǎo): En Kotlin se usaría apply {} o copy()
+    ///En Java se modificaría el objeto directamente
+    /// Devuelve: void (no retorna valor)
     /// </summary>
     public static void UpdateEntity(this ProductoRequestDto dto, Producto producto)
     {

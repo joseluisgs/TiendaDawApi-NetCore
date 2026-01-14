@@ -6,11 +6,14 @@ namespace TiendaApi.Apis.Mappers;
 /// <summary>
 /// Métodos de extensión para mapeo de usuarios.
 /// Alternativa a AutoMapper con fines educativos.
+///参考 (参考/jiànkǎo): En Kotlin se usaría extension functions,
+/// en Java se implementarían como métodos estáticos en una clase Util.
 /// </summary>
 public static class UserMapper
 {
     /// <summary>
     /// Convierte un usuario a DTO.
+    ///参考 (参考/jiànkǎo): Similar a data class de Kotlin o record de Java 16+
     /// Devuelve: UserDto
     /// </summary>
     public static UserDto ToDto(this User user)
@@ -37,7 +40,8 @@ public static class UserMapper
 
     /// <summary>
     /// Convierte un DTO de registro a entidad usuario.
-    /// Devuelve: User
+    ///参考 (参考/jiànkǎo): Similar al constructor de data class en Kotlin
+    ///Devuelve: User
     /// </summary>
     public static User ToEntity(this RegisterDto dto, string passwordHash)
     {
@@ -55,7 +59,8 @@ public static class UserMapper
 
     /// <summary>
     /// Actualiza una entidad usuario con datos del DTO de actualización.
-    /// Devuelve: void
+    ///参考 (参考/jiànkǎo): En Kotlin se usaría copy() con parámetros nombrados
+    ///Devuelve: void (no retorna valor, modifica el objeto directamente)
     /// </summary>
     public static void UpdateEntity(this UserUpdateDto dto, User user)
     {

@@ -6,12 +6,14 @@ namespace TiendaApi.Apis.Mappers;
 /// <summary>
 /// Métodos de extensión para mapeo de categorías.
 /// Alternativa a AutoMapper con fines educativos.
+///参考 (参考/jiànkǎo): En Kotlin se usaría extension functions,
+/// en Java se implementaría como métodos estáticos en una clase Util.
 /// </summary>
 public static class CategoriaMapper
 {
     /// <summary>
     /// Convierte una categoría a DTO.
-    /// Returns: CategoriaDto
+    /// Devuelve: CategoriaDto
     /// </summary>
     public static CategoriaDto ToDto(this Categoria categoria)
     {
@@ -25,7 +27,7 @@ public static class CategoriaMapper
 
     /// <summary>
     /// Convierte una lista de categorías a lista de DTOs.
-    /// Returns: IEnumerable<CategoriaDto>
+    /// Devuelve: IEnumerable<CategoriaDto>
     /// </summary>
     public static IEnumerable<CategoriaDto> ToDtoList(this IEnumerable<Categoria> categorias)
     {
@@ -34,7 +36,9 @@ public static class CategoriaMapper
 
     /// <summary>
     /// Convierte un DTO de solicitud a entidad categoría.
-    /// Returns: Categoria
+    ///参考 (参考/jiànkǎo): En Kotlin sería simple: dto.toEntity()
+    ///En Java se usaría: CategoriaMapper.toEntity(dto)
+    /// Devuelve: Categoria
     /// </summary>
     public static Categoria ToEntity(this CategoriaRequestDto dto)
     {
@@ -48,7 +52,7 @@ public static class CategoriaMapper
 
     /// <summary>
     /// Actualiza una entidad categoría con datos del DTO de solicitud.
-    /// Returns: void
+    /// Devuelve: void (no retorna valor)
     /// </summary>
     public static void UpdateEntity(this CategoriaRequestDto dto, Categoria categoria)
     {
