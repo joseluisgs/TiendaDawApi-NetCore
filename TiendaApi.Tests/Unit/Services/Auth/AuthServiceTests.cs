@@ -117,8 +117,8 @@ public class AuthServiceTests
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Username");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Username");
     }
 
     [Test]
@@ -140,8 +140,8 @@ public class AuthServiceTests
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Username");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Username");
     }
 
     [Test]
@@ -163,8 +163,8 @@ public class AuthServiceTests
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Email");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Email");
     }
 
     [Test]
@@ -186,8 +186,8 @@ public class AuthServiceTests
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Password");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Password");
     }
 
     [Test]
@@ -213,8 +213,8 @@ public class AuthServiceTests
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
-        result.Error.Message.Should().Contain("nombre de usuario ya existe");
+        result.Error.Should().BeOfType<ConflictError>();
+        result.Error.Message.Should().Contain("Ya existe un nombre de usuario con el valor");
     }
 
     [Test]
@@ -243,8 +243,8 @@ public class AuthServiceTests
         var result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Conflict);
-        result.Error.Message.Should().Contain("email ya existe");
+        result.Error.Should().BeOfType<ConflictError>();
+        result.Error.Message.Should().Contain("Ya existe un email con el valor");
     }
 
     #endregion
@@ -300,8 +300,8 @@ public class AuthServiceTests
         var result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Username");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Username");
     }
 
     [Test]
@@ -322,8 +322,8 @@ public class AuthServiceTests
         var result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Validation);
-        result.Error.ValidationErrors.Should().ContainKey("Password");
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Password");
     }
 
     [Test]
@@ -341,7 +341,7 @@ public class AuthServiceTests
         var result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Unauthorized);
+        result.Error.Should().BeOfType<UnauthorizedError>();
     }
 
     [Test]
@@ -370,7 +370,7 @@ public class AuthServiceTests
         var result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Type.Should().Be(ErrorType.Unauthorized);
+        result.Error.Should().BeOfType<UnauthorizedError>();
     }
 
     #endregion
