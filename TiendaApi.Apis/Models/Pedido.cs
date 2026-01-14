@@ -3,10 +3,12 @@ using MongoDB.Bson;
 
 namespace TiendaApi.Apis.Models;
 
+using TiendaApi.Apis.Data;
+
 /// <summary>
 /// Documento de pedido en MongoDB.
 /// </summary>
-public class Pedido
+public class Pedido : ITimestamped
 {
     /// <summary>
     /// Identificador único del pedido.
