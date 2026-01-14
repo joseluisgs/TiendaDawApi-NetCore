@@ -7,21 +7,17 @@ namespace TiendaApi.Apis.Services.Cache;
 /// Implementación de caché usando Redis.
 /// Implementa el patrón cache-aside.
 /// </summary>
-public class RedisCacheService : ICacheService
+public class RedisCacheService(
+    IDistributedCache cache,
+    ILogger<RedisCacheService> logger
+) : ICacheService
 {
-    private readonly IDistributedCache _cache;
-    private readonly ILogger<RedisCacheService> _logger;
-    private readonly JsonSerializerOptions _jsonOptions;
-
-    public RedisCacheService(IDistributedCache cache, ILogger<RedisCacheService> logger)
+    private readonly IDistributedCache _cache = cache;
+    private readonly ILogger<RedisCacheService> _logger = logger;
+    private readonly JsonSerializerOptions _jsonOptions = new()
     {
-        _cache = cache;
-        _logger = logger;
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-    }
+        PropertyNameCaseInsensitive = true
+    };
 
     /// <summary>
     /// Obtiene un valor de la caché, deserializando desde JSON.

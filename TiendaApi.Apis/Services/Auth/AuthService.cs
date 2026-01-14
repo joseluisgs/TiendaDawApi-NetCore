@@ -185,19 +185,15 @@ public class AuthService(
     {
         var token = jwtService.GenerateToken(user);
 
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role,
-            CreatedAt = user.CreatedAt
-        };
+        var userDto = new UserDto(
+            user.Id,
+            user.Username,
+            user.Email,
+            user.Avatar ?? string.Empty,
+            user.Role,
+            user.CreatedAt
+        );
 
-        return new AuthResponseDto
-        {
-            Token = token,
-            User = userDto
-        };
+        return new AuthResponseDto(token, userDto);
     }
 }

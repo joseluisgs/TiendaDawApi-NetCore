@@ -7,16 +7,13 @@ namespace TiendaApi.Apis.Controllers;
 /// </summary>
 [ApiController]
 [Route("storage")]
-public class StorageController : ControllerBase
+public class StorageController(
+    IWebHostEnvironment environment,
+    ILogger<StorageController> logger
+) : ControllerBase
 {
-    private readonly IWebHostEnvironment _environment;
-    private readonly ILogger<StorageController> _logger;
-
-    public StorageController(IWebHostEnvironment environment, ILogger<StorageController> logger)
-    {
-        _environment = environment;
-        _logger = logger;
-    }
+    private readonly IWebHostEnvironment _environment = environment;
+    private readonly ILogger<StorageController> _logger = logger;
 
     /// <summary>
     /// Obtiene un archivo del almacenamiento local.

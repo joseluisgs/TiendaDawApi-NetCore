@@ -10,16 +10,13 @@ namespace TiendaApi.Apis.Services.Auth;
 /// Implementación del servicio JWT.
 /// Usa clave simétrica configurada en appsettings.json.
 /// </summary>
-public class JwtService : IJwtService
+public class JwtService(
+    IConfiguration configuration,
+    ILogger<JwtService> logger
+) : IJwtService
 {
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<JwtService> _logger;
-
-    public JwtService(IConfiguration configuration, ILogger<JwtService> logger)
-    {
-        _configuration = configuration;
-        _logger = logger;
-    }
+    private readonly IConfiguration _configuration = configuration;
+    private readonly ILogger<JwtService> _logger = logger;
 
     /// <summary>
     /// Genera un token JWT con los claims del usuario.

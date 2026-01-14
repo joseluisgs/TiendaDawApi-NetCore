@@ -6,21 +6,15 @@ namespace TiendaApi.Apis.Services.Email;
 /// Servicio en segundo plano para procesar la cola de emails.
 /// Usa Channel para gestión thread-safe de la cola.
 /// </summary>
-public class EmailBackgroundService : BackgroundService
+public class EmailBackgroundService(
+    Channel<EmailMessage> emailChannel,
+    IServiceProvider serviceProvider,
+    ILogger<EmailBackgroundService> logger
+) : BackgroundService
 {
-    private readonly Channel<EmailMessage> _emailChannel;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<EmailBackgroundService> _logger;
-
-    public EmailBackgroundService(
-        Channel<EmailMessage> emailChannel,
-        IServiceProvider serviceProvider,
-        ILogger<EmailBackgroundService> logger)
-    {
-        _emailChannel = emailChannel;
-        _serviceProvider = serviceProvider;
-        _logger = logger;
-    }
+    private readonly Channel<EmailMessage> _emailChannel = emailChannel;
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
+    private readonly ILogger<EmailBackgroundService> _logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

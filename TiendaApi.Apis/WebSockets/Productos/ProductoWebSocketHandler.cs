@@ -9,25 +9,14 @@ namespace TiendaApi.Apis.WebSockets.Productos;
 /// <summary>
 /// Handler de WebSocket para gestionar conexiones de notificaciones de productos.
 /// </summary>
-public class ProductoWebSocketHandler
+public class ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
 {
-    private readonly ConcurrentDictionary<string, WebSocket> _connections;
-    private readonly ILogger<ProductoWebSocketHandler> _logger;
-    private readonly JsonSerializerOptions _jsonOptions;
-
-    /// <summary>
-    /// Inicializa una nueva instancia del handler de WebSocket para productos.
-    /// </summary>
-    /// <param name="logger">Instancia del logger.</param>
-    public ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
+    private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
+    private readonly ILogger<ProductoWebSocketHandler> _logger = logger;
+    private readonly JsonSerializerOptions _jsonOptions = new()
     {
-        _connections = new ConcurrentDictionary<string, WebSocket>();
-        _logger = logger;
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-    }
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     /// <summary>
     /// Maneja una nueva conexión WebSocket para productos.

@@ -8,21 +8,15 @@ namespace TiendaApi.Apis.Services.Email;
 /// Servicio de email usando MailKit.
 /// Envía emails a través de SMTP.
 /// </summary>
-public class MailKitEmailService : IEmailService
+public class MailKitEmailService(
+    IConfiguration configuration,
+    ILogger<MailKitEmailService> logger,
+    Channel<EmailMessage> emailChannel
+) : IEmailService
 {
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<MailKitEmailService> _logger;
-    private readonly Channel<EmailMessage> _emailChannel;
-
-    public MailKitEmailService(
-        IConfiguration configuration,
-        ILogger<MailKitEmailService> logger,
-        Channel<EmailMessage> emailChannel)
-    {
-        _configuration = configuration;
-        _logger = logger;
-        _emailChannel = emailChannel;
-    }
+    private readonly IConfiguration _configuration = configuration;
+    private readonly ILogger<MailKitEmailService> _logger = logger;
+    private readonly Channel<EmailMessage> _emailChannel = emailChannel;
 
     /// <summary>
     /// Envía un email inmediatamente usando SMTP.

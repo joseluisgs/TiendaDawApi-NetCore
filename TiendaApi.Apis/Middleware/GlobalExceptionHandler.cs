@@ -10,16 +10,13 @@ namespace TiendaApi.Apis.Middleware;
 /// Maneja excepciones y errores del dominio (Result Pattern).
 /// Genera respuestas HTTP consistentes y trazables.
 /// </summary>
-public class GlobalExceptionHandler
+public class GlobalExceptionHandler(
+    RequestDelegate next,
+    ILogger<GlobalExceptionHandler> logger
+)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<GlobalExceptionHandler> _logger;
-
-    public GlobalExceptionHandler(RequestDelegate next, ILogger<GlobalExceptionHandler> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
+    private readonly RequestDelegate _next = next;
+    private readonly ILogger<GlobalExceptionHandler> _logger = logger;
 
     public async Task InvokeAsync(HttpContext context)
     {

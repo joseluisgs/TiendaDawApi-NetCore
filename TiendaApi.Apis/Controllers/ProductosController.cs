@@ -41,18 +41,7 @@ public class ProductosController(
     {
         logger.LogInformation("Obteniendo productos paginados - Página: {Page}, Tamaño: {Size}", page, size);
 
-        var filter = new ProductoFilterDto
-        {
-            Nombre = nombre,
-            Categoria = categoria,
-            IsDeleted = isDeleted,
-            PrecioMax = precioMax,
-            StockMin = stockMin,
-            Page = page,
-            Size = size,
-            SortBy = sortBy,
-            Direction = direction
-        };
+        var filter = new ProductoFilterDto(nombre, categoria, isDeleted, precioMax, stockMin, page, size, sortBy, direction);
 
         var resultado = await service.FindAllPagedAsync(filter);
 

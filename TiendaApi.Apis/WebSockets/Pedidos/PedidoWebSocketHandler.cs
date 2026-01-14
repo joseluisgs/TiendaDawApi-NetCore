@@ -26,25 +26,14 @@ public static class PedidoNotificationType
 /// Handler de WebSocket para notificaciones de pedidos.
 /// Gestiona clientes conectados y emite eventos de pedidos.
 /// </summary>
-public class PedidoWebSocketHandler
+public class PedidoWebSocketHandler(ILogger<PedidoWebSocketHandler> logger)
 {
-    private readonly ConcurrentDictionary<string, WebSocket> _connections;
-    private readonly ILogger<PedidoWebSocketHandler> _logger;
-    private readonly JsonSerializerOptions _jsonOptions;
-
-    /// <summary>
-    /// Inicializa una nueva instancia del handler de WebSocket para pedidos.
-    /// </summary>
-    /// <param name="logger">Instancia del logger.</param>
-    public PedidoWebSocketHandler(ILogger<PedidoWebSocketHandler> logger)
+    private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
+    private readonly ILogger<PedidoWebSocketHandler> _logger = logger;
+    private readonly JsonSerializerOptions _jsonOptions = new()
     {
-        _connections = new ConcurrentDictionary<string, WebSocket>();
-        _logger = logger;
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-    }
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     /// <summary>
     /// Maneja una nueva conexión WebSocket para pedidos.
