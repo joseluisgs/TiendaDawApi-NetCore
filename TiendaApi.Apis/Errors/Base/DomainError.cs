@@ -30,7 +30,7 @@ public sealed record NotFoundError(string Message)
 /// <summary>
 /// Error de validación de datos.
 /// </summary>
-public sealed record ValidationError(string Message, Dictionary<string, string[]>? ValidationErrors = null)
+public sealed record ValidationError(string Message, Dictionary<string, string[]> ValidationErrors)
     : DomainError(Message)
 {
     /// <summary>
@@ -38,6 +38,14 @@ public sealed record ValidationError(string Message, Dictionary<string, string[]
     /// </summary>
     public static ValidationError WithFieldErrors(Dictionary<string, string[]> fieldErrors) =>
         new("Errores de validación", fieldErrors);
+
+    /// <summary>
+    /// Crea un error de validación simple sin errores por campo específicos.
+    /// NOTA: En C#, new Dictionary&lt;string, string[]&gt;() crea un diccionario vacío.
+    /// Equivale a usar {} en otros contextos.
+    /// </summary>
+    public static ValidationError Create(string message) =>
+        new(message, new Dictionary<string, string[]>());  // new Dictionary<string, string[]>() = diccionario vacío
 }
 
 /// <summary>

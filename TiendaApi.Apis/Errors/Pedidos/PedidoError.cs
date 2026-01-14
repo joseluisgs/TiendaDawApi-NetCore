@@ -21,7 +21,7 @@ public static class PedidoError
     /// Estado de pedido inválido.
     /// </summary>
     public static ValidationError EstadoInvalido(string estado, string[] estadosPermitidos) =>
-        new($"Estado inválido '{estado}'. Valores permitidos: {string.Join(", ", estadosPermitidos)}");
+        new($"Estado inválido '{estado}'. Valores permitidos: {string.Join(", ", estadosPermitidos)}", new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
 
     /// <summary>
     /// No tienes permisos sobre este pedido.
@@ -51,7 +51,7 @@ public static class PedidoError
     /// Error de validación al procesar pedido.
     /// </summary>
     public static ValidationError Validacion(string mensaje) =>
-        new(mensaje);
+        new(mensaje, new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
 
     /// <summary>
     /// Error de validación con errores por campo.

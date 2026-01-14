@@ -57,7 +57,7 @@ public static class UsuarioError
     /// Error de validación al procesar usuario.
     /// </summary>
     public static ValidationError Validacion(string mensaje) =>
-        new(mensaje);
+        new(mensaje, new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
 
     /// <summary>
     /// Error de validación con errores por campo.
