@@ -243,7 +243,6 @@ public class PedidosService(
                 }
 
                 producto.Stock -= itemDto.Cantidad;
-                producto.UpdatedAt = DateTime.UtcNow;
 
                 await productoRepository.UpdateAsync(producto);
 
@@ -268,9 +267,7 @@ public class PedidosService(
                 UserId = userId,
                 Items = pedidoItems,
                 Total = total,
-                Estado = PedidoEstado.PENDIENTE,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                Estado = PedidoEstado.PENDIENTE
             };
 
             var savedPedido = await pedidosRepository.SaveAsync(pedido);
@@ -564,8 +561,6 @@ public class PedidosService(
         if (dto.DireccionEnvio != null && !string.IsNullOrWhiteSpace(dto.DireccionEnvio))
             pedido.DireccionEnvio = dto.DireccionEnvio;
 
-        pedido.UpdatedAt = DateTime.UtcNow;
-
         var updated = await pedidosRepository.UpdateAsync(pedido);
 
         logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
@@ -618,7 +613,6 @@ public class PedidosService(
         }
 
         pedido.IsDeleted = true;
-        pedido.UpdatedAt = DateTime.UtcNow;
 
         await pedidosRepository.UpdateAsync(pedido);
 

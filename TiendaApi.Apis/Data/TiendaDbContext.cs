@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TiendaApi.Apis.Data.Interceptors;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Data;
@@ -9,6 +10,8 @@ namespace TiendaApi.Apis.Data;
 /// </summary>
 public class TiendaDbContext : DbContext
 {
+    private static readonly TimestampInterceptor _timestampInterceptor = new();
+
     public TiendaDbContext(DbContextOptions options) : base(options)
     {
     }
@@ -16,6 +19,13 @@ public class TiendaDbContext : DbContext
     public DbSet<Categoria> Categorias { get; set; } = null!;
     public DbSet<Producto> Productos { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+
+        optionsBuilder.AddInterceptors(_timestampInterceptor);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +38,7 @@ public class TiendaDbContext : DbContext
             entity.Property(c => c.Nombre).IsRequired().HasMaxLength(100);
             entity.HasIndex(c => c.Nombre).IsUnique();
             entity.Property(c => c.IsDeleted).HasDefaultValue(false);
+            entity.ConfigureTimestamps();
 
             entity.HasQueryFilter(c => !c.IsDeleted);
         });
@@ -41,6 +52,7 @@ public class TiendaDbContext : DbContext
             entity.Property(p => p.Precio).HasPrecision(10, 2);
             entity.Property(p => p.Stock).IsRequired();
             entity.Property(p => p.IsDeleted).HasDefaultValue(false);
+            entity.ConfigureTimestamps();
 
             entity.HasOne(p => p.Categoria)
                 .WithMany(c => c.Productos)
@@ -60,6 +72,7 @@ public class TiendaDbContext : DbContext
             entity.Property(u => u.Role).IsRequired().HasMaxLength(20);
             entity.Property(u => u.IsDeleted).HasDefaultValue(false);
             entity.Property(u => u.Avatar).HasMaxLength(500);
+            entity.ConfigureTimestamps();
 
             entity.HasIndex(u => u.Username).IsUnique();
             entity.HasIndex(u => u.Email).IsUnique();

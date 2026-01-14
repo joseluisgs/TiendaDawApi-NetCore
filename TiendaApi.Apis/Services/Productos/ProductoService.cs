@@ -343,7 +343,6 @@ public class ProductoService(
         }
 
         producto.Imagen = saveResult.Value;
-        producto.UpdatedAt = DateTime.UtcNow;
 
         var updated = await productoRepository.UpdateAsync(producto);
 
@@ -483,8 +482,6 @@ public class ProductoService(
 
         if (!string.IsNullOrWhiteSpace(dto.Imagen))
             producto.Imagen = dto.Imagen;
-
-        producto.UpdatedAt = DateTime.UtcNow;
 
         var updated = await productoRepository.UpdateAsync(producto);
 

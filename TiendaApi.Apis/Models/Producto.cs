@@ -2,10 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TiendaApi.Apis.Models;
 
+using TiendaApi.Apis.Data;
+
 /// <summary>
 /// Entidad de producto en la base de datos.
 /// </summary>
-public class Producto
+public class Producto : ITimestamped
 {
     /// <summary>
     /// URL de imagen por defecto para productos sin imagen.

@@ -109,9 +109,7 @@ public class UserService(
             Email = dto.Email,
             PasswordHash = passwordHash,
             Role = UserRoles.USER,
-            IsDeleted = false,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            IsDeleted = false
         };
 
         var savedUser = await userRepository.SaveAsync(user);
@@ -160,10 +158,8 @@ public class UserService(
 
         if (!string.IsNullOrWhiteSpace(dto.Password))
         {
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
         }
-
-        user.UpdatedAt = DateTime.UtcNow;
 
         var updated = await userRepository.UpdateAsync(user);
 
@@ -201,8 +197,6 @@ public class UserService(
             user.Avatar = avatarUrl;
         }
 
-        user.UpdatedAt = DateTime.UtcNow;
-
         var updated = await userRepository.UpdateAsync(user);
 
         logger.LogInformation("Avatar actualizado para usuario con id: {Id}", id);
@@ -231,7 +225,6 @@ public class UserService(
         }
 
         user.IsDeleted = true;
-        user.UpdatedAt = DateTime.UtcNow;
 
         await userRepository.UpdateAsync(user);
 

@@ -51,9 +51,7 @@ public class AuthService(
             Email = dto.Email!,
             PasswordHash = passwordHash,
             Role = UserRoles.USER,
-            IsDeleted = false,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            IsDeleted = false
         };
 
         var savedUser = await userRepository.SaveAsync(user);

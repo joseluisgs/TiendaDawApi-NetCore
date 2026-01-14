@@ -1,9 +1,11 @@
 namespace TiendaApi.Apis.Models;
 
+using TiendaApi.Apis.Data;
+
 /// <summary>
 /// Entidad de categoría en la base de datos.
 /// </summary>
-public class Categoria
+public class Categoria : ITimestamped
 {
     /// <summary>
     /// Identificador único de la categoría.

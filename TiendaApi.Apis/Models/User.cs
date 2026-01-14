@@ -1,9 +1,11 @@
 namespace TiendaApi.Apis.Models;
 
+using TiendaApi.Apis.Data;
+
 /// <summary>
 /// Entidad de usuario en la base de datos.
 /// </summary>
-public class User
+public class User : ITimestamped
 {
     public const string AVATAR_DEFAULT = "https://via.placeholder.com/150";
     public const string AVATAR_LOCAL_PREFIX = "/storage/images/usuarios/";
