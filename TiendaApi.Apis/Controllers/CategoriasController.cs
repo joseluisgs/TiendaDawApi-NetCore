@@ -53,7 +53,13 @@ public class CategoriasController(
 
         return resultado.Match(
             onSuccess: categorias => Ok(categorias),
-            onFailure: error => StatusCode(500, new { message = error.Message })
+            onFailure: error => error switch
+            {
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError => BadRequest(new { message = error.Message }),
+                ConflictError => Conflict(new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
         );
     }
 
@@ -166,6 +172,7 @@ public class CategoriasController(
         return error switch
         {
             NotFoundError => NotFound(new { message = error.Message }),
+            ValidationError => BadRequest(new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
     }
