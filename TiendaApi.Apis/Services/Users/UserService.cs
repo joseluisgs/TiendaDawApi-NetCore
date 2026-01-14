@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using CSharpFunctionalExtensions;
+using FluentValidation;
 using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Errors.Usuarios;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Usuarios;
@@ -15,7 +17,9 @@ namespace TiendaApi.Apis.Services.Users;
 /// </summary>
 public class UserService(
     IUserRepository userRepository,
-    ILogger<UserService> logger
+    ILogger<UserService> logger,
+    IValidator<RegisterDto> registerValidator,
+    IValidator<UserUpdateDto> userUpdateValidator
 ) : IUserService
 {
 
@@ -89,10 +93,18 @@ public class UserService(
     {
         logger.LogInformation("Creando usuario: {Username}", dto.Username);
 
-        var validationResult = ValidateRegistration(dto);
-        if (validationResult.IsFailure)
+        var validationResult = await registerValidator.ValidateAsync(dto);
+        if (!validationResult.IsValid)
         {
-            return CSharpFunctionalExtensions.Result.Failure<UserDto, DomainError>(validationResult.Error);
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            return Result.Failure<UserDto, DomainError>(
+                UsuarioError.ValidacionConCampos(errors)
+            );
         }
 
         var duplicateCheck = await CheckDuplicatesAsync(dto.Username, dto.Email, excludeUserId: null);
@@ -135,14 +147,22 @@ public class UserService(
         {
             logger.LogWarning("Usuario con id {Id} no encontrado para actualizar", id);
             return Result.Failure<UserDto, DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.NotFound(id)
+                UsuarioError.NotFound(id)
             );
         }
 
-        var validationResult = ValidateUpdate(dto);
-        if (validationResult.IsFailure)
+        var validationResult = await userUpdateValidator.ValidateAsync(dto);
+        if (!validationResult.IsValid)
         {
-            return CSharpFunctionalExtensions.Result.Failure<UserDto, DomainError>(validationResult.Error);
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            return Result.Failure<UserDto, DomainError>(
+                UsuarioError.ValidacionConCampos(errors)
+            );
         }
 
         if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != user.Email)
@@ -229,86 +249,6 @@ public class UserService(
         await userRepository.UpdateAsync(user);
 
         logger.LogInformation("Usuario eliminado lógicamente con id: {Id}", id);
-
-        return UnitResult.Success<DomainError>();
-    }
-
-    /// <summary>
-    /// Valida los datos de registro de un usuario.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
-    /// </summary>
-    private UnitResult<DomainError> ValidateRegistration(RegisterDto dto)
-    {
-        if (string.IsNullOrWhiteSpace(dto.Username))
-        {
-            return UnitResult.Failure<DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El nombre de usuario es requerido")
-            );
-        }
-
-        if (dto.Username.Length < 3)
-        {
-            return UnitResult.Failure<DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El nombre de usuario debe tener al menos 3 caracteres")
-            );
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Email))
-        {
-            return UnitResult.Failure<DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El email es requerido")
-            );
-        }
-
-        if (!new EmailAddressAttribute().IsValid(dto.Email))
-        {
-            return UnitResult.Failure<DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El email no es válido")
-            );
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Password))
-        {
-            return UnitResult.Failure<DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("La contraseña es requerida")
-            );
-        }
-
-        if (dto.Password.Length < 6)
-        {
-            return UnitResult.Failure<DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("La contraseña debe tener al menos 6 caracteres")
-            );
-        }
-
-        return UnitResult.Success<DomainError>();
-    }
-
-    /// <summary>
-    /// Valida los datos de actualización de un usuario.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
-    /// </summary>
-    private UnitResult<DomainError> ValidateUpdate(UserUpdateDto dto)
-    {
-        if (!string.IsNullOrWhiteSpace(dto.Email))
-        {
-            if (!new EmailAddressAttribute().IsValid(dto.Email))
-            {
-                return UnitResult.Failure<DomainError>(
-                    TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("El email no es válido")
-                );
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(dto.Password))
-        {
-            if (dto.Password.Length < 6)
-            {
-                return UnitResult.Failure<DomainError>(
-                    TiendaApi.Apis.Errors.Usuarios.UsuarioError.Validacion("La contraseña debe tener al menos 6 caracteres")
-                );
-            }
-        }
 
         return UnitResult.Success<DomainError>();
     }
