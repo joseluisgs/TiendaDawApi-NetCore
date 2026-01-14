@@ -103,9 +103,6 @@ public class CategoriaRepository(
     /// <returns>La categoría guardada con fecha de creación y modificación.</returns>
     public async Task<Categoria> SaveAsync(Categoria categoria)
     {
-        categoria.CreatedAt = DateTime.UtcNow;
-        categoria.UpdatedAt = DateTime.UtcNow;
-
         context.Categorias.Add(categoria);
         await context.SaveChangesAsync();
 
@@ -121,8 +118,6 @@ public class CategoriaRepository(
     /// <returns>La categoría actualizada.</returns>
     public async Task<Categoria> UpdateAsync(Categoria categoria)
     {
-        categoria.UpdatedAt = DateTime.UtcNow;
-
         context.Categorias.Update(categoria);
         await context.SaveChangesAsync();
 
@@ -142,7 +137,6 @@ public class CategoriaRepository(
         if (categoria is not null)
         {
             categoria.IsDeleted = true;
-            categoria.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
 
             logger.LogInformation("Categoría eliminada lógicamente con ID: {Id}", id);

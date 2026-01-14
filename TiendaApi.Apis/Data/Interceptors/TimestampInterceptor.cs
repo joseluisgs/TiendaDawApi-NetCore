@@ -48,12 +48,12 @@ public class TimestampInterceptor : SaveChangesInterceptor
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.CreatedAt = now;
-                    entry.Entity.UpdatedAt = now;
+                    entry.Property(e => e.CreatedAt).CurrentValue = now;
+                    entry.Property(e => e.UpdatedAt).CurrentValue = now;
                     break;
 
                 case EntityState.Modified:
-                    entry.Entity.UpdatedAt = now;
+                    entry.Property(e => e.UpdatedAt).CurrentValue = now;
                     break;
             }
         }

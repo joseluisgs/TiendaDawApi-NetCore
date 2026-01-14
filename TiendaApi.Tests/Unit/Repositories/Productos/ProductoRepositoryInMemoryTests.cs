@@ -86,7 +86,6 @@ public class ProductoRepositoryInMemoryTests
 
         var producto = await context.Productos.FindAsync(1L);
         producto!.IsDeleted = true;
-        producto.UpdatedAt = DateTime.UtcNow;
 
         context.Productos.Update(producto);
         await context.SaveChangesAsync();

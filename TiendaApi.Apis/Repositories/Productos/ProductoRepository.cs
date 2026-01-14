@@ -135,9 +135,6 @@ public class ProductoRepository(
     /// <returns>El producto guardado con fecha de creación y categoría cargada.</returns>
     public async Task<Producto> SaveAsync(Producto producto)
     {
-        producto.CreatedAt = DateTime.UtcNow;
-        producto.UpdatedAt = DateTime.UtcNow;
-
         context.Productos.Add(producto);
         await context.SaveChangesAsync();
 
@@ -157,8 +154,6 @@ public class ProductoRepository(
     /// <returns>El producto actualizado con categoría cargada.</returns>
     public async Task<Producto> UpdateAsync(Producto producto)
     {
-        producto.UpdatedAt = DateTime.UtcNow;
-
         context.Productos.Update(producto);
         await context.SaveChangesAsync();
 
@@ -182,7 +177,6 @@ public class ProductoRepository(
         if (producto is not null)
         {
             producto.IsDeleted = true;
-            producto.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
 
             logger.LogInformation("Producto eliminado lógicamente con ID: {Id}", id);
@@ -220,7 +214,6 @@ public class ProductoRepository(
         }
 
         producto.Stock -= cantidad;
-        producto.UpdatedAt = DateTime.UtcNow;
 
         try
         {

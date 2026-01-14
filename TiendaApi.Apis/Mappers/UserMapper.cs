@@ -63,6 +63,5 @@ public static class UserMapper
             user.Email = dto.Email;
         if (!string.IsNullOrEmpty(dto.Password))
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
-        user.UpdatedAt = DateTime.UtcNow;
     }
 }

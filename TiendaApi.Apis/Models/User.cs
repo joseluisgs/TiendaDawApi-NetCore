@@ -41,11 +41,11 @@ public class User : ITimestamped
     /// <summary>
     /// Fecha de creación del usuario.
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
     /// <summary>
     /// Fecha de última actualización del usuario.
     /// </summary>
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
 
     /// <summary>
     /// Verifica si el avatar es local (almacenado en el servidor).

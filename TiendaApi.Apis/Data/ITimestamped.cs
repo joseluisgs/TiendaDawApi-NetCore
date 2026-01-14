@@ -10,11 +10,11 @@ public interface ITimestamped
     /// Fecha de creación del registro.
     /// Se asigna automáticamente al crear.
     /// </summary>
-    DateTime CreatedAt { get; set; }
+    DateTime CreatedAt { get; init; }
 
     /// <summary>
     /// Fecha de última actualización del registro.
     /// Se asigna automáticamente al modificar.
     /// </summary>
-    DateTime UpdatedAt { get; set; }
+    DateTime UpdatedAt { get; init; }
 }

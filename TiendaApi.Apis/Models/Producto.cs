@@ -61,12 +61,12 @@ public class Producto : ITimestamped
     /// <summary>
     /// Fecha de creación del producto.
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 
     /// <summary>
     /// Fecha de última actualización del producto.
     /// </summary>
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
 
     /// <summary>
     /// Versión para control de concurrencia optimista.

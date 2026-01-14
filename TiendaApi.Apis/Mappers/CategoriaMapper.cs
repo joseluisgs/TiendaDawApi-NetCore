@@ -53,6 +53,5 @@ public static class CategoriaMapper
     public static void UpdateEntity(this CategoriaRequestDto dto, Categoria categoria)
     {
         categoria.Nombre = dto.Nombre;
-        categoria.UpdatedAt = DateTime.UtcNow;
     }
 }

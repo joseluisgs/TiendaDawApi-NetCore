@@ -199,26 +199,6 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void UpdateEntity_DebeActualizarUpdatedAt()
-    {
-        // Arrange
-        var categoria = new Categoria
-        {
-            Id = 1,
-            Nombre = "Original",
-            UpdatedAt = DateTime.UtcNow.AddHours(-1)
-        };
-        var dto = new CategoriaRequestDto { Nombre = "Updated" };
-        var beforeUpdate = DateTime.UtcNow;
-
-        // Act
-        dto.UpdateEntity(categoria);
-
-        // Assert
-        categoria.UpdatedAt.Should().BeOnOrAfter(beforeUpdate);
-    }
-
-    [Test]
     public void UpdateEntity_ConNombreVacio_ActualizaAVacio()
     {
         // Arrange

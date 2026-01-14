@@ -263,26 +263,6 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_DebeActualizarMarcaDeTiempo()
-    {
-        // Arrange
-        var oldUpdatedAt = DateTime.UtcNow.AddDays(-1);
-        var user = new User
-        {
-            Id = 1,
-            Username = "test",
-            UpdatedAt = oldUpdatedAt
-        };
-        var dto = new UserUpdateDto { Email = "updated@test.com" };
-
-        // Act
-        dto.UpdateEntity(user);
-
-        // Assert
-        user.UpdatedAt.Should().BeAfter(oldUpdatedAt);
-    }
-
-    [Test]
     public void UpdateEntity_ConEmailVacio_NoActualizaEmail()
     {
         // Arrange

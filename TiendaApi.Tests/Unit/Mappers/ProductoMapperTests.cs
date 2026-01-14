@@ -296,26 +296,6 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_DebeActualizarMarcaDeTiempo()
-    {
-        // Arrange
-        var oldUpdatedAt = DateTime.UtcNow.AddHours(-5);
-        var producto = new Producto
-        {
-            Id = 1,
-            Nombre = "Test",
-            UpdatedAt = oldUpdatedAt
-        };
-        var dto = new ProductoRequestDto { Nombre = "Updated" };
-
-        // Act
-        dto.UpdateEntity(producto);
-
-        // Assert
-        producto.UpdatedAt.Should().BeAfter(oldUpdatedAt);
-    }
-
-    [Test]
     public void UpdateEntity_NoDebeModificarId()
     {
         // Arrange

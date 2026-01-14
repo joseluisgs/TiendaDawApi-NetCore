@@ -116,9 +116,6 @@ public class UserRepository(
     /// <returns>El usuario guardado con fechas de creación y modificación.</returns>
     public async Task<User> SaveAsync(User user)
     {
-        user.CreatedAt = DateTime.UtcNow;
-        user.UpdatedAt = DateTime.UtcNow;
-
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
@@ -134,8 +131,6 @@ public class UserRepository(
     /// <returns>El usuario actualizado.</returns>
     public async Task<User> UpdateAsync(User user)
     {
-        user.UpdatedAt = DateTime.UtcNow;
-
         context.Users.Update(user);
         await context.SaveChangesAsync();
 
@@ -155,7 +150,6 @@ public class UserRepository(
         if (user is not null)
         {
             user.IsDeleted = true;
-            user.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
 
             logger.LogInformation("Usuario eliminado suavemente con id: {Id}", id);

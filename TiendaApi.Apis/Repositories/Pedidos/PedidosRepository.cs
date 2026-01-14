@@ -88,8 +88,6 @@ public class PedidosRepository(
     public async Task<Pedido> SaveAsync(Pedido pedido)
     {
         logger.LogDebug("Guardando nuevo pedido");
-        pedido.CreatedAt = DateTime.UtcNow;
-        pedido.UpdatedAt = DateTime.UtcNow;
 
         context.Pedidos.Add(pedido);
         await context.SaveChangesAsync();
@@ -107,7 +105,6 @@ public class PedidosRepository(
     public async Task<Pedido> UpdateAsync(Pedido pedido)
     {
         logger.LogDebug("Actualizando pedido: {Id}", pedido.Id);
-        pedido.UpdatedAt = DateTime.UtcNow;
 
         context.Pedidos.Update(pedido);
         await context.SaveChangesAsync();

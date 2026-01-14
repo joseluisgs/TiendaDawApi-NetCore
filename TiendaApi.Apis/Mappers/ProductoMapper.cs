@@ -71,6 +71,5 @@ public static class ProductoMapper
         producto.CategoriaId = dto.CategoriaId;
         if (!string.IsNullOrEmpty(dto.Imagen))
             producto.Imagen = dto.Imagen;
-        producto.UpdatedAt = DateTime.UtcNow;
     }
 }

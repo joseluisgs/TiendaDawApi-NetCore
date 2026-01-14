@@ -22,11 +22,11 @@ public class Categoria : ITimestamped
     /// <summary>
     /// Fecha de creación de la categoría.
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
     /// <summary>
     /// Fecha de última actualización de la categoría.
     /// </summary>
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
 
     /// <summary>
     /// Colección de productos asociados a esta categoría.
