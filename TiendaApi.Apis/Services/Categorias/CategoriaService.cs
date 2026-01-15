@@ -126,7 +126,7 @@ public class CategoriaService(
             return Result.Failure<CategoriaDto, DomainError>(validationResult.Error);
         }
 
-        var duplicateCheck = await CheckNombreDuplicado(dto.Nombre);
+        var duplicateCheck = await CheckNombreDuplicado(dto.Nombre, null);
         if (duplicateCheck.IsFailure)
         {
             return Result.Failure<CategoriaDto, DomainError>(duplicateCheck.Error);
