@@ -19,6 +19,12 @@ namespace TiendaApi.Apis.Services.Productos;
 
 /// <summary>
 /// Servicio de productos usando Patrón Result.
+/// Las operaciones de caché, WebSocket y email se ejecutan en Task.Run (fire & forget)
+/// para no bloquear el hilo principal. Esto es especialmente importante si:
+/// - La caché está en Redis (latencia de red)
+/// - WebSocket tarda en enviar la notificación
+/// - El email falla o tarda en encolarse
+/// Si cualquiera de estas operaciones falla, se registra un warning pero no afecta a la respuesta.
 /// </summary>
 public class ProductoService(
     IProductoRepository productoRepository,
@@ -32,6 +38,8 @@ public class ProductoService(
     IStorageService storageService
 ) : IProductoService
 {
+    private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
+        int.Parse(configuration["Cache:ProductoCacheTTLMinutes"] ?? "10"));
 
     /// <summary>
     /// Obtener todos los productos con patrón cache-aside.
@@ -53,9 +61,7 @@ public class ProductoService(
         var productos = await productoRepository.FindAllAsync();
         var dtos = productos.ToDtoList();
 
-        var cacheTTL = TimeSpan.FromMinutes(
-            int.Parse(configuration["Cache:ProductoCacheTTLMinutes"] ?? "10"));
-        await cacheService.SetAsync(cacheKey, dtos, cacheTTL);
+        _ = Task.Run(() => AñadirCacheProducto(cacheKey, dtos));
 
         return Result.Success<IEnumerable<ProductoDto>, DomainError>(dtos);
     }
@@ -111,9 +117,7 @@ public class ProductoService(
 
         var dto = producto.ToDto();
 
-        var cacheTTL = TimeSpan.FromMinutes(
-            int.Parse(configuration["Cache:ProductoCacheTTLMinutes"] ?? "10"));
-        await cacheService.SetAsync(cacheKey, dto, cacheTTL);
+        _ = Task.Run(() => AñadirCacheProducto(cacheKey, dto));
 
         return Result.Success<ProductoDto, DomainError>(dto);
     }
@@ -161,47 +165,9 @@ public class ProductoService(
 
         var resultDto = saved.ToDto();
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync("productos:all");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Cache invalidation error: Key=productos:all");
-            }
-        });
-
-        _ = Task.Run(async () => await NotificarWebSocketProductoCreado(resultDto));
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (!string.IsNullOrEmpty(adminEmail))
-                {
-                    var emailMessage = new EmailMessage
-                    {
-                        To = adminEmail,
-                        Subject = "Nuevo Producto Creado",
-                        Body = $@"<h2>Nuevo Producto Creado</h2>
-                            <p><strong>ID:</strong> {saved.Id}</p>
-                            <p><strong>Nombre:</strong> {saved.Nombre}</p>
-                            <p><strong>Precio:</strong> ${saved.Precio}</p>
-                            <p><strong>Stock:</strong> {saved.Stock}</p>",
-                        IsHtml = true
-                    };
-                    await emailService.EnqueueEmailAsync(emailMessage);
-                    logger.LogDebug("Email de notificación encolado tras crear producto");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error al encolar email de notificación");
-            }
-        });
+        _ = Task.Run(() => InvalidarCacheProducto("productos:all"));
+        _ = Task.Run(() => NotificarWebSocketProductoCreado(resultDto));
+        _ = Task.Run(() => EnviarEmailProductoCreado(saved));
 
         return Result.Success<ProductoDto, DomainError>(resultDto);
     }
@@ -243,20 +209,8 @@ public class ProductoService(
 
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync($"productos:{id}");
-                await cacheService.RemoveAsync("productos:all");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=productos:{id}");
-            }
-        });
-
-        _ = Task.Run(async () => await NotificarWebSocketProductoActualizado(resultDto));
+        _ = Task.Run(() => InvalidarCacheProducto($"productos:{id}", "productos:all"));
+        _ = Task.Run(() => NotificarWebSocketProductoActualizado(resultDto));
 
         return Result.Success<ProductoDto, DomainError>(resultDto);
     }
@@ -291,20 +245,8 @@ public class ProductoService(
         await productoRepository.DeleteAsync(id);
         logger.LogInformation("Producto eliminado con ID: {Id}", id);
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync($"productos:{id}");
-                await cacheService.RemoveAsync("productos:all");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=productos:{id}");
-            }
-        });
-
-        _ = Task.Run(async () => await NotificarWebSocketProductoEliminado(id));
+        _ = Task.Run(() => InvalidarCacheProducto($"productos:{id}", "productos:all"));
+        _ = Task.Run(() => NotificarWebSocketProductoEliminado(id));
 
         return UnitResult.Success<DomainError>();
     }
@@ -347,115 +289,10 @@ public class ProductoService(
 
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync($"productos:{id}");
-                await cacheService.RemoveAsync("productos:all");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=productos:{id}");
-            }
-        });
-
-        _ = Task.Run(async () => await NotificarWebSocketProductoActualizado(resultDto));
+        _ = Task.Run(() => InvalidarCacheProducto($"productos:{id}", "productos:all"));
+        _ = Task.Run(() => NotificarWebSocketProductoActualizado(resultDto));
 
         return Result.Success<ProductoDto, DomainError>(resultDto);
-    }
-
-    /// <summary>
-    /// Notifica vía WebSocket la creación de un producto.
-    /// </summary>
-    private async Task NotificarWebSocketProductoCreado(ProductoDto producto)
-    {
-        try
-        {
-            await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                ProductoNotificationType.CREATED,
-                producto.Id,
-                producto
-            ));
-            logger.LogDebug("Notificación WebSocket enviada tras crear producto: {ProductoId}", producto.Id);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error en notificación WebSocket al crear producto: {ProductoId}", producto.Id);
-        }
-    }
-
-    /// <summary>
-    /// Notifica vía WebSocket la actualización de un producto.
-    /// </summary>
-    private async Task NotificarWebSocketProductoActualizado(ProductoDto producto)
-    {
-        try
-        {
-            await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                ProductoNotificationType.UPDATED,
-                producto.Id,
-                producto
-            ));
-            logger.LogDebug("Notificación WebSocket enviada tras actualizar producto: {ProductoId}", producto.Id);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error en notificación WebSocket al actualizar producto: {ProductoId}", producto.Id);
-        }
-    }
-
-    /// <summary>
-    /// Notifica vía WebSocket la eliminación de un producto.
-    /// </summary>
-    private async Task NotificarWebSocketProductoEliminado(long productoId)
-    {
-        try
-        {
-            await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                ProductoNotificationType.DELETED,
-                productoId,
-                null
-            ));
-            logger.LogDebug("Notificación WebSocket enviada tras eliminar producto: {ProductoId}", productoId);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error en notificación WebSocket al eliminar producto: {ProductoId}", productoId);
-        }
-    }
-
-    /// <summary>
-    /// Valida los datos de un producto usando FluentValidation.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation/NotFound)
-    /// </summary>
-    private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto)
-    {
-        var validationResult = await productoValidator.ValidateAsync(dto);
-
-        if (!validationResult.IsValid)
-        {
-            var errors = validationResult.Errors
-                .GroupBy(e => e.PropertyName)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(e => e.ErrorMessage).ToArray()
-                );
-
-            return UnitResult.Failure<DomainError>(
-                ProductoError.ValidacionConCampos(errors)
-            );
-        }
-
-        var categoriaExists = await categoriaRepository.FindByIdAsync(dto.CategoriaId);
-        if (categoriaExists is null)
-        {
-            return UnitResult.Failure<DomainError>(
-                ProductoError.CategoriaNoEncontrada(dto.CategoriaId)
-            );
-        }
-
-        return UnitResult.Success<DomainError>();
     }
 
     /// <summary>
@@ -497,21 +334,190 @@ public class ProductoService(
 
         var resultDto = updated.ToDto();
 
+        _ = Task.Run(() => InvalidarCacheProducto($"productos:{id}", "productos:all"));
+        _ = Task.Run(() => NotificarWebSocketProductoActualizado(resultDto));
+
+        return Result.Success<ProductoDto, DomainError>(resultDto);
+    }
+
+    // ========== MÉTODOS PRIVADOS - CACHE ==========
+
+    /// <summary>
+    /// Añade un elemento a la caché de forma asíncrona (fire & forget).
+    /// </summary>
+    private void AñadirCacheProducto<T>(string key, T value)
+    {
         _ = Task.Run(async () =>
         {
             try
             {
-                await cacheService.RemoveAsync($"productos:{id}");
-                await cacheService.RemoveAsync("productos:all");
+                await cacheService.SetAsync(key, value, _cacheTTL);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=productos:{id}");
+                logger.LogWarning(ex, "Error adding to cache: Key={Key}", key);
             }
         });
+    }
 
-        _ = Task.Run(async () => await NotificarWebSocketProductoActualizado(resultDto));
+    /// <summary>
+    /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
+    /// </summary>
+    private void InvalidarCacheProducto(params string[] keys)
+    {
+        _ = Task.Run(async () =>
+        {
+            foreach (var key in keys)
+            {
+                try
+                {
+                    await cacheService.RemoveAsync(key);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
+                }
+            }
+        });
+    }
 
-        return Result.Success<ProductoDto, DomainError>(resultDto);
+    // ========== MÉTODOS PRIVADOS - WEBSOCKET ==========
+
+    /// <summary>
+    /// Notifica vía WebSocket la creación de un producto.
+    /// </summary>
+    private void NotificarWebSocketProductoCreado(ProductoDto producto)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                    ProductoNotificationType.CREATED,
+                    producto.Id,
+                    producto
+                ));
+                logger.LogDebug("Notificación WebSocket enviada tras crear producto: {ProductoId}", producto.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación WebSocket al crear producto: {ProductoId}", producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Notifica vía WebSocket la actualización de un producto.
+    /// </summary>
+    private void NotificarWebSocketProductoActualizado(ProductoDto producto)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                    ProductoNotificationType.UPDATED,
+                    producto.Id,
+                    producto
+                ));
+                logger.LogDebug("Notificación WebSocket enviada tras actualizar producto: {ProductoId}", producto.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación WebSocket al actualizar producto: {ProductoId}", producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Notifica vía WebSocket la eliminación de un producto.
+    /// </summary>
+    private void NotificarWebSocketProductoEliminado(long productoId)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                    ProductoNotificationType.DELETED,
+                    productoId,
+                    null
+                ));
+                logger.LogDebug("Notificación WebSocket enviada tras eliminar producto: {ProductoId}", productoId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación WebSocket al eliminar producto: {ProductoId}", productoId);
+            }
+        });
+    }
+
+    // ========== MÉTODOS PRIVADOS - EMAIL ==========
+
+    /// <summary>
+    /// Envía email de notificación cuando se crea un producto.
+    /// </summary>
+    private void EnviarEmailProductoCreado(Producto producto)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var adminEmail = configuration["Smtp:AdminEmail"];
+                if (string.IsNullOrEmpty(adminEmail)) return;
+
+                var content = EmailTemplates.ProductoCreado(producto.Nombre, producto.Precio, producto.Stock, producto.Id);
+                var body = EmailTemplates.CreateBase("Nuevo Producto Creado", content);
+
+                var emailMessage = new EmailMessage
+                {
+                    To = adminEmail,
+                    Subject = "🆕 Nuevo Producto en Tienda DAW",
+                    Body = body,
+                    IsHtml = true
+                };
+                await emailService.EnqueueEmailAsync(emailMessage);
+                logger.LogDebug("Email de notificación encolado tras crear producto");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error al encolar email de notificación tras crear producto");
+            }
+        });
+    }
+
+    // ========== VALIDACIÓN ==========
+
+    /// <summary>
+    /// Valida los datos de un producto usando FluentValidation.
+    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation/NotFound)
+    /// </summary>
+    private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto)
+    {
+        var validationResult = await productoValidator.ValidateAsync(dto);
+
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+
+            return UnitResult.Failure<DomainError>(
+                ProductoError.ValidacionConCampos(errors)
+            );
+        }
+
+        var categoriaExists = await categoriaRepository.FindByIdAsync(dto.CategoriaId);
+        if (categoriaExists is null)
+        {
+            return UnitResult.Failure<DomainError>(
+                ProductoError.CategoriaNoEncontrada(dto.CategoriaId)
+            );
+        }
+
+        return UnitResult.Success<DomainError>();
     }
 }

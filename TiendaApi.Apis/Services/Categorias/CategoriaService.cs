@@ -15,6 +15,10 @@ namespace TiendaApi.Apis.Services.Categorias;
 /// <summary>
 /// Servicio de categorías usando Patrón Result.
 /// Maneja la lógica de negocio: validaciones, verificación de duplicados.
+/// Las operaciones de caché se ejecutan en Task.Run (fire & forget)
+/// para no bloquear el hilo principal. Esto es especialmente importante si:
+/// - La caché está en Redis (latencia de red)
+/// Si la operación de caché falla, se registra un warning pero no afecta a la respuesta.
 /// </summary>
 public class CategoriaService(
     ICategoriaRepository repository,
@@ -24,6 +28,8 @@ public class CategoriaService(
     IConfiguration configuration
 ) : ICategoriaService
 {
+    private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
+        int.Parse(configuration["Cache:CategoriaCacheTTLMinutes"] ?? "10"));
 
     /// <summary>
     /// Obtiene todas las categorías.
@@ -45,9 +51,7 @@ public class CategoriaService(
         var categorias = await repository.FindAllAsync();
         var dtos = categorias.ToDtoList();
 
-        var cacheTTL = TimeSpan.FromMinutes(
-            int.Parse(configuration["Cache:CategoriaCacheTTLMinutes"] ?? "10"));
-        await cacheService.SetAsync(cacheKey, dtos, cacheTTL);
+        _ = Task.Run(() => AñadirCacheCategoria(cacheKey, dtos));
 
         return Result.Success<IEnumerable<CategoriaDto>, DomainError>(dtos);
     }
@@ -103,9 +107,7 @@ public class CategoriaService(
 
         var dto = categoria.ToDto();
 
-        var cacheTTL = TimeSpan.FromMinutes(
-            int.Parse(configuration["Cache:CategoriaCacheTTLMinutes"] ?? "10"));
-        await cacheService.SetAsync(cacheKey, dto, cacheTTL);
+        _ = Task.Run(() => AñadirCacheCategoria(cacheKey, dto));
 
         return Result.Success<CategoriaDto, DomainError>(dto);
     }
@@ -136,18 +138,7 @@ public class CategoriaService(
         logger.LogInformation("Categoría creada con id: {Id}", saved.Id);
         var result = saved.ToDto();
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync("categorias:all");
-                await cacheService.RemoveAsync($"categorias:{saved.Id}");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=categorias:all,categorias:{saved.Id}");
-            }
-        });
+        _ = Task.Run(() => InvalidarCacheCategoria("categorias:all", $"categorias:{saved.Id}"));
 
         return Result.Success<CategoriaDto, DomainError>(result);
     }
@@ -187,18 +178,7 @@ public class CategoriaService(
         logger.LogInformation("Categoría actualizada con id: {Id}", id);
         var result = updated.ToDto();
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync("categorias:all");
-                await cacheService.RemoveAsync($"categorias:{id}");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=categorias:all,categorias:{id}");
-            }
-        });
+        _ = Task.Run(() => InvalidarCacheCategoria("categorias:all", $"categorias:{id}"));
 
         return Result.Success<CategoriaDto, DomainError>(result);
     }
@@ -223,21 +203,53 @@ public class CategoriaService(
         await repository.DeleteAsync(id);
         logger.LogInformation("Categoría eliminada con id: {Id}", id);
 
+        _ = Task.Run(() => InvalidarCacheCategoria("categorias:all", $"categorias:{id}"));
+
+        return UnitResult.Success<DomainError>();
+    }
+
+    // ========== MÉTODOS PRIVADOS - CACHE ==========
+
+    /// <summary>
+    /// Añade un elemento a la caché de forma asíncrona (fire & forget).
+    /// </summary>
+    private void AñadirCacheCategoria<T>(string key, T value)
+    {
         _ = Task.Run(async () =>
         {
             try
             {
-                await cacheService.RemoveAsync("categorias:all");
-                await cacheService.RemoveAsync($"categorias:{id}");
+                await cacheService.SetAsync(key, value, _cacheTTL);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=categorias:all,categorias:{id}");
+                logger.LogWarning(ex, "Error adding to cache: Key={Key}", key);
             }
         });
-
-        return UnitResult.Success<DomainError>();
     }
+
+    /// <summary>
+    /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
+    /// </summary>
+    private void InvalidarCacheCategoria(params string[] keys)
+    {
+        _ = Task.Run(async () =>
+        {
+            foreach (var key in keys)
+            {
+                try
+                {
+                    await cacheService.RemoveAsync(key);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
+                }
+            }
+        });
+    }
+
+    // ========== VALIDACIÓN ==========
 
     /// <summary>
     /// Valida la categoría usando FluentValidation.

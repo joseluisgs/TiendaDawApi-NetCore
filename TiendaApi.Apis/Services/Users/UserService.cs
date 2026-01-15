@@ -15,6 +15,10 @@ namespace TiendaApi.Apis.Services.Users;
 /// <summary>
 /// Servicio de usuarios usando Patrón Result.
 /// Maneja las operaciones CRUD de usuarios con Programación Orientada al Resultado.
+/// Las operaciones de caché se ejecutan en Task.Run (fire & forget)
+/// para no bloquear el hilo principal. Esto es especialmente importante si:
+/// - La caché está en Redis (latencia de red)
+/// Si la operación de caché falla, se registra un warning pero no afecta a la respuesta.
 /// </summary>
 public class UserService(
     IUserRepository userRepository,
@@ -25,6 +29,8 @@ public class UserService(
     IConfiguration configuration
 ) : IUserService
 {
+    private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
+        int.Parse(configuration["Cache:UsuarioCacheTTLMinutes"] ?? "10"));
 
     /// <summary>
     /// Obtiene todos los usuarios (excluyendo eliminados).
@@ -49,9 +55,7 @@ public class UserService(
 
         var dtos = activeUsers.ToDtoList();
 
-        var cacheTTL = TimeSpan.FromMinutes(
-            int.Parse(configuration["Cache:UsuarioCacheTTLMinutes"] ?? "10"));
-        await cacheService.SetAsync(cacheKey, dtos, cacheTTL);
+        _ = Task.Run(() => AñadirCacheUsuario(cacheKey, dtos));
 
         return Result.Success<IEnumerable<UserDto>, DomainError>(dtos);
     }
@@ -107,9 +111,7 @@ public class UserService(
 
         var dto = user.ToDto();
 
-        var cacheTTL = TimeSpan.FromMinutes(
-            int.Parse(configuration["Cache:UsuarioCacheTTLMinutes"] ?? "10"));
-        await cacheService.SetAsync(cacheKey, dto, cacheTTL);
+        _ = Task.Run(() => AñadirCacheUsuario(cacheKey, dto));
 
         return Result.Success<UserDto, DomainError>(dto);
     }
@@ -159,18 +161,7 @@ public class UserService(
 
         var resultDto = savedUser.ToDto();
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync("usuarios:all");
-                await cacheService.RemoveAsync($"usuarios:{savedUser.Id}");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=usuarios:all,usuarios:{savedUser.Id}");
-            }
-        });
+        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{savedUser.Id}"));
 
         return Result.Success<UserDto, DomainError>(resultDto);
     }
@@ -229,18 +220,7 @@ public class UserService(
 
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync("usuarios:all");
-                await cacheService.RemoveAsync($"usuarios:{id}");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=usuarios:all,usuarios:{id}");
-            }
-        });
+        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"));
 
         return Result.Success<UserDto, DomainError>(resultDto);
     }
@@ -278,18 +258,7 @@ public class UserService(
 
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await cacheService.RemoveAsync("usuarios:all");
-                await cacheService.RemoveAsync($"usuarios:{id}");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=usuarios:all,usuarios:{id}");
-            }
-        });
+        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"));
 
         return Result.Success<UserDto, DomainError>(resultDto);
     }
@@ -318,21 +287,53 @@ public class UserService(
 
         logger.LogInformation("Usuario eliminado lógicamente con id: {Id}", id);
 
+        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"));
+
+        return UnitResult.Success<DomainError>();
+    }
+
+    // ========== MÉTODOS PRIVADOS - CACHE ==========
+
+    /// <summary>
+    /// Añade un elemento a la caché de forma asíncrona (fire & forget).
+    /// </summary>
+    private void AñadirCacheUsuario<T>(string key, T value)
+    {
         _ = Task.Run(async () =>
         {
             try
             {
-                await cacheService.RemoveAsync("usuarios:all");
-                await cacheService.RemoveAsync($"usuarios:{id}");
+                await cacheService.SetAsync(key, value, _cacheTTL);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, $"Cache invalidation error: Key=usuarios:all,usuarios:{id}");
+                logger.LogWarning(ex, "Error adding to cache: Key={Key}", key);
             }
         });
-
-        return UnitResult.Success<DomainError>();
     }
+
+    /// <summary>
+    /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
+    /// </summary>
+    private void InvalidarCacheUsuario(params string[] keys)
+    {
+        _ = Task.Run(async () =>
+        {
+            foreach (var key in keys)
+            {
+                try
+                {
+                    await cacheService.RemoveAsync(key);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
+                }
+            }
+        });
+    }
+
+    // ========== VALIDACIÓN ==========
 
     /// <summary>
     /// Verifica duplicados de username y email.
