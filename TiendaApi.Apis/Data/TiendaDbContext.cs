@@ -12,7 +12,7 @@ public class TiendaDbContext : DbContext
 {
     private static readonly TimestampInterceptor _timestampInterceptor = new();
 
-    public TiendaDbContext(DbContextOptions options) : base(options)
+    public TiendaDbContext(DbContextOptions<TiendaDbContext> options) : base(options)
     {
     }
 
