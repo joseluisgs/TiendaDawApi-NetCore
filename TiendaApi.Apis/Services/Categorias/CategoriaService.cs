@@ -51,9 +51,8 @@ public class CategoriaService(
         var categorias = await repository.FindAllAsync();
         var dtos = categorias.ToDtoList();
 
-        _ = Task.Run(() => AñadirCacheCategoria(cacheKey, dtos));
-
-        return Result.Success<IEnumerable<CategoriaDto>, DomainError>(dtos);
+        return Result.Success<IEnumerable<CategoriaDto>, DomainError>(dtos)
+            .Tap(_ => AñadirCacheCategoria(cacheKey, dtos));
     }
 
     /// <summary>
@@ -107,9 +106,8 @@ public class CategoriaService(
 
         var dto = categoria.ToDto();
 
-        _ = Task.Run(() => AñadirCacheCategoria(cacheKey, dto));
-
-        return Result.Success<CategoriaDto, DomainError>(dto);
+        return Result.Success<CategoriaDto, DomainError>(dto)
+            .Tap(_ => AñadirCacheCategoria(cacheKey, dto));
     }
 
     /// <summary>
@@ -122,25 +120,21 @@ public class CategoriaService(
 
         var validationResult = await ValidateCategoriaAsync(dto);
         if (validationResult.IsFailure)
-        {
             return Result.Failure<CategoriaDto, DomainError>(validationResult.Error);
-        }
 
         var duplicateCheck = await CheckNombreDuplicado(dto.Nombre, null);
         if (duplicateCheck.IsFailure)
-        {
             return Result.Failure<CategoriaDto, DomainError>(duplicateCheck.Error);
-        }
 
-        var categoria = dto.ToEntity();
-        var saved = await repository.SaveAsync(categoria);
-
-        logger.LogInformation("Categoría creada con id: {Id}", saved.Id);
+        var saved = await repository.SaveAsync(dto.ToEntity());
         var result = saved.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheCategoria("categorias:all", $"categorias:{saved.Id}"));
-
-        return Result.Success<CategoriaDto, DomainError>(result);
+        return Result.Success<CategoriaDto, DomainError>(result)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Categoría creada con id: {Id}", saved.Id);
+                InvalidarCacheCategoria("categorias:all", $"categorias:{result.Id}");
+            });
     }
 
     /// <summary>
@@ -153,34 +147,26 @@ public class CategoriaService(
 
         var validationResult = await ValidateCategoriaAsync(dto);
         if (validationResult.IsFailure)
-        {
             return Result.Failure<CategoriaDto, DomainError>(validationResult.Error);
-        }
 
         var categoria = await repository.FindByIdAsync(id);
         if (categoria is null)
-        {
-            logger.LogWarning("Categoría con id {Id} no encontrada para actualizar", id);
-            return Result.Failure<CategoriaDto, DomainError>(
-                CategoriaError.NotFound(id)
-            );
-        }
+            return Result.Failure<CategoriaDto, DomainError>(CategoriaError.NotFound(id));
 
         var duplicateCheck = await CheckNombreDuplicado(dto.Nombre, id);
         if (duplicateCheck.IsFailure)
-        {
             return Result.Failure<CategoriaDto, DomainError>(duplicateCheck.Error);
-        }
 
         categoria.Nombre = dto.Nombre;
         var updated = await repository.UpdateAsync(categoria);
-
-        logger.LogInformation("Categoría actualizada con id: {Id}", id);
         var result = updated.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheCategoria("categorias:all", $"categorias:{id}"));
-
-        return Result.Success<CategoriaDto, DomainError>(result);
+        return Result.Success<CategoriaDto, DomainError>(result)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Categoría actualizada con id: {Id}", id);
+                InvalidarCacheCategoria("categorias:all", $"categorias:{id}");
+            });
     }
 
     /// <summary>
@@ -193,17 +179,12 @@ public class CategoriaService(
 
         var categoria = await repository.FindByIdAsync(id);
         if (categoria is null)
-        {
-            logger.LogWarning("Categoría con id {Id} no encontrada para eliminar", id);
-            return UnitResult.Failure<DomainError>(
-                CategoriaError.NotFound(id)
-            );
-        }
+            return UnitResult.Failure<DomainError>(CategoriaError.NotFound(id));
 
         await repository.DeleteAsync(id);
         logger.LogInformation("Categoría eliminada con id: {Id}", id);
 
-        _ = Task.Run(() => InvalidarCacheCategoria("categorias:all", $"categorias:{id}"));
+        InvalidarCacheCategoria("categorias:all", $"categorias:{id}");
 
         return UnitResult.Success<DomainError>();
     }

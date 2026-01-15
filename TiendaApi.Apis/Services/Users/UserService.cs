@@ -55,9 +55,8 @@ public class UserService(
 
         var dtos = activeUsers.ToDtoList();
 
-        _ = Task.Run(() => AñadirCacheUsuario(cacheKey, dtos));
-
-        return Result.Success<IEnumerable<UserDto>, DomainError>(dtos);
+        return Result.Success<IEnumerable<UserDto>, DomainError>(dtos)
+            .Tap(_ => AñadirCacheUsuario(cacheKey, dtos));
     }
 
     /// <summary>
@@ -105,15 +104,14 @@ public class UserService(
         {
             logger.LogWarning("Usuario con id {Id} no encontrado", id);
             return Result.Failure<UserDto, DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.NotFound(id)
+                UsuarioError.NotFound(id)
             );
         }
 
         var dto = user.ToDto();
 
-        _ = Task.Run(() => AñadirCacheUsuario(cacheKey, dto));
-
-        return Result.Success<UserDto, DomainError>(dto);
+        return Result.Success<UserDto, DomainError>(dto)
+            .Tap(_ => AñadirCacheUsuario(cacheKey, dto));
     }
 
     /// <summary>
@@ -156,14 +154,14 @@ public class UserService(
         };
 
         var savedUser = await userRepository.SaveAsync(user);
-
-        logger.LogInformation("Usuario creado con id: {Id}", savedUser.Id);
-
         var resultDto = savedUser.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{savedUser.Id}"));
-
-        return Result.Success<UserDto, DomainError>(resultDto);
+        return Result.Success<UserDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Usuario creado con id: {Id}", savedUser.Id);
+                InvalidarCacheUsuario("usuarios:all", $"usuarios:{savedUser.Id}");
+            });
     }
 
     /// <summary>
@@ -211,18 +209,18 @@ public class UserService(
 
         if (!string.IsNullOrWhiteSpace(dto.Password))
         {
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
         }
 
         var updated = await userRepository.UpdateAsync(user);
-
-        logger.LogInformation("Usuario actualizado con id: {Id}", id);
-
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"));
-
-        return Result.Success<UserDto, DomainError>(resultDto);
+        return Result.Success<UserDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Usuario actualizado con id: {Id}", id);
+                InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}");
+            });
     }
 
     /// <summary>
@@ -253,14 +251,14 @@ public class UserService(
         }
 
         var updated = await userRepository.UpdateAsync(user);
-
-        logger.LogInformation("Avatar actualizado para usuario con id: {Id}", id);
-
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"));
-
-        return Result.Success<UserDto, DomainError>(resultDto);
+        return Result.Success<UserDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Avatar actualizado para usuario con id: {Id}", id);
+                InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}");
+            });
     }
 
     /// <summary>
@@ -350,7 +348,7 @@ public class UserService(
             if (existingUser != null && existingUser.Id != excludeUserId)
             {
                 return UnitResult.Failure<DomainError>(
-                    TiendaApi.Apis.Errors.Usuarios.UsuarioError.UsernameExistente(username)
+                    UsuarioError.UsernameExistente(username)
                 );
             }
         }
@@ -361,7 +359,7 @@ public class UserService(
             if (existingEmail != null && existingEmail.Id != excludeUserId)
             {
                 return UnitResult.Failure<DomainError>(
-                    TiendaApi.Apis.Errors.Usuarios.UsuarioError.EmailExistente(email)
+                    UsuarioError.EmailExistente(email)
                 );
             }
         }

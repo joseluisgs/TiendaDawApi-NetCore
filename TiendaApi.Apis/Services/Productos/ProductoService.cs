@@ -61,9 +61,8 @@ public class ProductoService(
         var productos = await productoRepository.FindAllAsync();
         var dtos = productos.ToDtoList();
 
-        _ = Task.Run(() => AñadirCacheProducto(cacheKey, dtos));
-
-        return Result.Success<IEnumerable<ProductoDto>, DomainError>(dtos);
+        return Result.Success<IEnumerable<ProductoDto>, DomainError>(dtos)
+            .Tap(_ => AñadirCacheProducto(cacheKey, dtos));
     }
 
     /// <summary>
@@ -117,9 +116,8 @@ public class ProductoService(
 
         var dto = producto.ToDto();
 
-        _ = Task.Run(() => AñadirCacheProducto(cacheKey, dto));
-
-        return Result.Success<ProductoDto, DomainError>(dto);
+        return Result.Success<ProductoDto, DomainError>(dto)
+            .Tap(_ => AñadirCacheProducto(cacheKey, dto));
     }
 
     /// <summary>
@@ -158,18 +156,18 @@ public class ProductoService(
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
 
-        var producto = dto.ToEntity();
-        var saved = await productoRepository.SaveAsync(producto);
-
-        logger.LogInformation("Producto creado con ID: {Id}", saved.Id);
-
+        // ROP: Guardar -> Mapear -> Efectos (log, cache, websocket, email)
+        var saved = await productoRepository.SaveAsync(dto.ToEntity());
         var resultDto = saved.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheProducto("productos:all"));
-        _ = Task.Run(() => NotificarWebSocketProductoCreado(resultDto));
-        _ = Task.Run(() => EnviarEmailProductoCreado(saved));
-
-        return Result.Success<ProductoDto, DomainError>(resultDto);
+        return Result.Success<ProductoDto, DomainError>(resultDto)
+            .Tap(dto =>
+            {
+                logger.LogInformation("Producto creado con ID: {Id}", dto.Id);
+                InvalidarCacheProducto("productos:all");
+                NotificarWebSocketProductoCreado(dto);
+                EnviarEmailProductoCreado(saved);
+            });
     }
 
     /// <summary>
@@ -204,15 +202,15 @@ public class ProductoService(
         producto.CategoriaId = dto.CategoriaId;
 
         var updated = await productoRepository.UpdateAsync(producto);
-
-        logger.LogInformation("Producto actualizado con ID: {Id}", id);
-
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheProducto($"productos:{id}", "productos:all"));
-        _ = Task.Run(() => NotificarWebSocketProductoActualizado(resultDto));
-
-        return Result.Success<ProductoDto, DomainError>(resultDto);
+        return Result.Success<ProductoDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Producto actualizado con ID: {Id}", id);
+                InvalidarCacheProducto($"productos:{id}", "productos:all");
+                NotificarWebSocketProductoActualizado(resultDto);
+            });
     }
 
     /// <summary>
@@ -245,8 +243,8 @@ public class ProductoService(
         await productoRepository.DeleteAsync(id);
         logger.LogInformation("Producto eliminado con ID: {Id}", id);
 
-        _ = Task.Run(() => InvalidarCacheProducto($"productos:{id}", "productos:all"));
-        _ = Task.Run(() => NotificarWebSocketProductoEliminado(id));
+        InvalidarCacheProducto($"productos:{id}", "productos:all");
+        NotificarWebSocketProductoEliminado(id);
 
         return UnitResult.Success<DomainError>();
     }
@@ -284,15 +282,15 @@ public class ProductoService(
         producto.Imagen = saveResult.Value;
 
         var updated = await productoRepository.UpdateAsync(producto);
-
-        logger.LogInformation("Imagen actualizada para producto con ID: {Id}", id);
-
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheProducto($"productos:{id}", "productos:all"));
-        _ = Task.Run(() => NotificarWebSocketProductoActualizado(resultDto));
-
-        return Result.Success<ProductoDto, DomainError>(resultDto);
+        return Result.Success<ProductoDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Imagen actualizada para producto con ID: {Id}", id);
+                InvalidarCacheProducto($"productos:{id}", "productos:all");
+                NotificarWebSocketProductoActualizado(resultDto);
+            });
     }
 
     /// <summary>
@@ -329,15 +327,15 @@ public class ProductoService(
             producto.Imagen = dto.Imagen;
 
         var updated = await productoRepository.UpdateAsync(producto);
-
-        logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
-
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(() => InvalidarCacheProducto($"productos:{id}", "productos:all"));
-        _ = Task.Run(() => NotificarWebSocketProductoActualizado(resultDto));
-
-        return Result.Success<ProductoDto, DomainError>(resultDto);
+        return Result.Success<ProductoDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
+                InvalidarCacheProducto($"productos:{id}", "productos:all");
+                NotificarWebSocketProductoActualizado(resultDto);
+            });
     }
 
     // ========== MÉTODOS PRIVADOS - CACHE ==========

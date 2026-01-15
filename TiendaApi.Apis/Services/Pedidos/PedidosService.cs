@@ -75,9 +75,8 @@ public class PedidosService(
         var pedidos = await pedidosRepository.FindByUserIdAsync(userId);
         var dtos = pedidos.ToDtoList();
 
-        _ = Task.Run(() => AñadirCachePedido(cacheKey, dtos));
-
-        return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
+        return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos)
+            .Tap(_ => AñadirCachePedido(cacheKey, dtos));
     }
 
     /// <summary>
@@ -131,9 +130,8 @@ public class PedidosService(
 
         var dto = pedido.ToDto();
 
-        _ = Task.Run(() => AñadirCachePedido(cacheKey, dto));
-
-        return Result.Success<PedidoDto, DomainError>(dto);
+        return Result.Success<PedidoDto, DomainError>(dto)
+            .Tap(_ => AñadirCachePedido(cacheKey, dto));
     }
 
     /// <summary>
@@ -306,15 +304,17 @@ public class PedidosService(
             // Commit confirma todos los cambios atomicamente
             await transaction.CommitAsync();
 
-            logger.LogInformation("Pedido creado: {Id} para usuario: {UserId}, total: {Total}",
-                savedPedido.Id, userId, total);
-
             var resultDto = savedPedido.ToDto();
 
-            // Notificaciones asíncronas (no bloquean la respuesta)
-            _ = Task.Run(() => NotificarPedidoCreado(userId, resultDto, pedidoItems, total));
-
-            return Result.Success<PedidoDto, DomainError>(resultDto);
+            return Result.Success<PedidoDto, DomainError>(resultDto)
+                .Tap(_ =>
+                {
+                    logger.LogInformation("Pedido creado: {Id} para usuario: {UserId}, total: {Total}",
+                        savedPedido.Id, userId, total);
+                    InvalidarCachePedido($"pedidos:{savedPedido.Id}", $"pedidos:user:{userId}");
+                    NotificarWebSocketPedidoCreado(savedPedido.Id.ToString(), userId, savedPedido.Estado ?? "");
+                    EnviarEmailPedidoCreado(savedPedido.Id.ToString(), total, pedidoItems.Count, userId);
+                });
         }
         catch (DbUpdateException ex) when (IsSerializationFailure(ex))
         {
@@ -371,14 +371,15 @@ public class PedidosService(
         pedido.Estado = nuevoEstado;
 
         var updated = await pedidosRepository.UpdateAsync(pedido);
-        logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
-
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(() => InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}"));
-        _ = Task.Run(() => EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId));
-
-        return Result.Success<PedidoDto, DomainError>(resultDto);
+        return Result.Success<PedidoDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
+                InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}");
+                EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId);
+            });
     }
 
     /// <summary>
@@ -414,15 +415,15 @@ public class PedidosService(
             pedido.DireccionEnvio = dto.DireccionEnvio;
 
         var updated = await pedidosRepository.UpdateAsync(pedido);
-
-        logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
-
         var resultDto = updated.ToDto();
 
-        _ = Task.Run(() => InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{userId}", "pedidos:all"));
-        _ = Task.Run(() => NotificarWebSocketPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto));
-
-        return Result.Success<PedidoDto, DomainError>(resultDto);
+        return Result.Success<PedidoDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
+                InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{userId}", "pedidos:all");
+                NotificarWebSocketPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
+            });
     }
 
     /// <summary>
@@ -454,10 +455,9 @@ public class PedidosService(
         pedido.IsDeleted = true;
 
         await pedidosRepository.UpdateAsync(pedido);
-
         logger.LogInformation("Pedido {Id} eliminado lógicamente por usuario {UserId}", id, userId);
 
-        _ = Task.Run(() => InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{userId}", "pedidos:all"));
+        InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{userId}", "pedidos:all");
 
         return UnitResult.Success<DomainError>();
     }
@@ -617,51 +617,6 @@ public class PedidosService(
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Error al encolar email de notificación tras cambio de estado");
-            }
-        });
-    }
-
-    // ========== NOTIFICACIONES COMPUESTAS ==========
-
-    /// <summary>
-    /// Notifica la creación del pedido (cache + email + WebSocket).
-    /// </summary>
-    private void NotificarPedidoCreado(long userId, PedidoDto pedido, List<PedidoItem> pedidoItems, decimal total)
-    {
-        _ = Task.Run(async () =>
-        {
-            // Cache
-            try
-            {
-                await cacheService.RemoveAsync($"pedidos:user:{userId}");
-            }
-            catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key=pedidos:user:{UserId}", userId); }
-
-            // Añadir a caché
-            try
-            {
-                await cacheService.SetAsync($"pedidos:{pedido.Id}", pedido, _cacheTTL);
-            }
-            catch (Exception ex) { logger.LogWarning(ex, "Error caching new pedido: {PedidoId}", pedido.Id); }
-
-            // Email
-            EnviarEmailPedidoCreado(pedido.Id, total, pedidoItems.Count, userId);
-
-            // WebSocket
-            if (!string.IsNullOrEmpty(pedido.Id))
-            {
-                try
-                {
-                    await webSocketHandler.NotifyAsync(new PedidoNotificacion(
-                        PedidoNotificationType.CREATED,
-                        pedido.Id,
-                        userId,
-                        pedido.Estado ?? "",
-                        pedido
-                    ));
-                    logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", pedido.Id);
-                }
-                catch (Exception ex) { logger.LogWarning(ex, "Error WebSocket notification for pedido: {PedidoId}", pedido.Id); }
             }
         });
     }
