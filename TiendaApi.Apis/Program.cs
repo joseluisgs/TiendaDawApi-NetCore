@@ -92,15 +92,36 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "TiendaApi - API REST Educativa",
         Version = "v1",
-        Description = @"API REST educativa con dos enfoques de manejo de errores:
+        Description = @"## Acerca de esta API
 
-**Categorías**: Enfoque Tradicional con Excepciones
-**Productos**: Patrón Result Moderno (Programación Funcional)
+Esta es una **API REST educativa** desarrollada en .NET 10 que demuestra diferentes patrones de arquitectura de software.
 
-🔐 Autenticación JWT:
-1. POST /v1/auth/signup → Registrar usuario
-2. POST /v1/auth/signin → Obtener token JWT
-3. Usar token en header Authorization: Bearer <token>",
+### 🎓 Enfoques de Manejo de Errores
+
+| Módulo | Enfoque | Descripción |
+|--------|---------|-------------|
+| **Categorías** | Tradicional | Usa excepciones para flujos de error |
+| **Productos** | Funcional | Usa el patrón Result (CSharpFunctionalExtensions) |
+| **Pedidos** | Funcional | Patrón Result con validaciones avanzadas |
+| **Usuarios** | Funcional | Patrón Result + JWT |
+
+### 🔐 Autenticación JWT
+
+1. **Registro**: `POST /v1/auth/signup` - Crear nueva cuenta
+2. **Login**: `POST /v1/auth/signin` - Obtener token JWT
+3. **Usar token**: Agregar header `Authorization: Bearer <token>`
+
+### 📚 Recursos
+
+- **Categorías**: Gestión de categorías de productos
+- **Productos**: Catálogo completo con filtros y paginación
+- **Pedidos**: Gestión de pedidos con WebSocket
+- **Usuarios**: Perfiles y gestión de cuentas
+
+### 🛠️ Tecnologías
+
+- .NET 10, Entity Framework Core, PostgreSQL, MongoDB
+- JWT, FluentValidation, AutoMapper, Serilog",
         Contact = new OpenApiContact
         {
             Name = "José Luis González Sánchez",
@@ -122,7 +143,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Introduce solo el token JWT (sin 'Bearer')"
+        Description = "JWT Authorization header usando el esquema Bearer. Ejemplo: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
