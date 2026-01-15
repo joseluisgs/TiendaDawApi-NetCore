@@ -22,6 +22,7 @@ using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Repositories.Usuarios;
 using TiendaApi.Apis.Repositories.Pedidos;
+using TiendaApi.Apis.Services;
 using TiendaApi.Apis.Services.Auth;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Categorias;
@@ -169,6 +170,9 @@ var mongoDatabaseName = builder.Configuration["MongoDbSettings:DatabaseName"] ??
 builder.Services.AddDbContext<TiendaMongoContext>(options =>
     options.UseMongoDB(mongoConnectionString, mongoDatabaseName));
 
+// Servicio de seed para MongoDB
+builder.Services.AddScoped<MongoDbSeedService>();
+
 // ============================================================================
 // 📦 INYECCIÓN DE DEPENDENCIAS
 // ============================================================================
@@ -189,21 +193,39 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Caché Redis
-Log.Information("💾 Configurando caché Redis...");
-builder.Services.AddStackExchangeRedisCache(options =>
+// Caché - Memory en desarrollo, Redis en producción
+if (builder.Environment.IsDevelopment())
 {
-    var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
-    options.Configuration = redisConnection;
-    options.InstanceName = "TiendaApi:";
-});
-builder.Services.AddScoped<ICacheService, RedisCacheService>();
+    Log.Information("💾 Configurando caché en memoria (desarrollo local)...");
+    builder.Services.AddMemoryCache();
+    builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+}
+else
+{
+    Log.Information("💾 Configurando caché Redis (producción)...");
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+        options.Configuration = redisConnection;
+        options.InstanceName = "TiendaApi:";
+    });
+    builder.Services.AddScoped<ICacheService, RedisCacheService>();
+}
 
-// Email asíncrono
-Log.Information("📧 Configurando servicio de email...");
-builder.Services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
-builder.Services.AddScoped<IEmailService, MailKitEmailService>();
-builder.Services.AddHostedService<EmailBackgroundService>();
+// Email asíncrono - Memory en desarrollo, MailKit en producción
+if (builder.Environment.IsDevelopment())
+{
+    Log.Information("📧 Configurando servicio de email en memoria (desarrollo local)...");
+    builder.Services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
+    builder.Services.AddScoped<IEmailService, MemoryEmailService>();
+}
+else
+{
+    Log.Information("📧 Configurando servicio de email con MailKit (producción)...");
+    builder.Services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
+    builder.Services.AddScoped<IEmailService, MailKitEmailService>();
+    builder.Services.AddHostedService<EmailBackgroundService>();
+}
 
 // Almacenamiento de archivos
 Log.Information("🖼️ Configurando servicio de almacenamiento...");
@@ -518,6 +540,20 @@ Log.Information("===============================================================
 
 try
 {
+    using var seedScope = app.Services.CreateScope();
+    var mongoSeeder = seedScope.ServiceProvider.GetService<MongoDbSeedService>();
+
+    if (mongoSeeder != null && isDevelopment)
+    {
+        Log.Information("🗄️ [DESARROLLO] Sembrando datos de pedidos en MongoDB...");
+        await mongoSeeder.SeedAsync();
+        Log.Information("✅ [DESARROLLO] Datos de pedidos sembrados");
+    }
+    else if (mongoSeeder != null)
+    {
+        Log.Information("🗄️ [PRODUCCIÓN] Omitiendo sembrado de pedidos (ya existen datos)");
+    }
+
     Log.Information("🚀 Aplicación iniciada correctamente");
     app.Run();
 }
