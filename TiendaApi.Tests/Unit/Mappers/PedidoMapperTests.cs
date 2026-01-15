@@ -304,4 +304,112 @@ public class PedidoMapperTests
     }
 
     #endregion
+
+    #region ToEntity Tests
+
+    [Test]
+    public void ToEntity_PedidoRequestDto_MapeaCorrectamente()
+    {
+        // Arrange
+        var dto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 },
+                new() { ProductoId = 2, Cantidad = 3 }
+            }
+        };
+        var userId = 100L;
+
+        // Act
+        var pedido = dto.ToEntity(userId);
+
+        // Assert
+        pedido.UserId.Should().Be(userId);
+        pedido.Items.Should().HaveCount(2);
+        pedido.Estado.Should().Be(PedidoEstado.PENDIENTE);
+        pedido.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Test]
+    public void ToEntity_PedidoRequestDtoConItemsVacios_CreaListaVacia()
+    {
+        // Arrange
+        var dto = new PedidoRequestDto
+        {
+            Items = new List<PedidoItemRequestDto>()
+        };
+        var userId = 1L;
+
+        // Act
+        var pedido = dto.ToEntity(userId);
+
+        // Assert
+        pedido.Items.Should().NotBeNull();
+        pedido.Items.Should().BeEmpty();
+    }
+
+    [Test]
+    public void ToEntity_PedidoItemRequestDto_SinInfoExtra_MapeaConValoresPorDefecto()
+    {
+        // Arrange
+        var dto = new PedidoItemRequestDto
+        {
+            ProductoId = 5,
+            Cantidad = 10
+        };
+
+        // Act
+        var item = dto.ToEntity();
+
+        // Assert
+        item.ProductoId.Should().Be(5);
+        item.Cantidad.Should().Be(10);
+        item.NombreProducto.Should().BeEmpty();
+        item.Precio.Should().Be(0);
+        item.Subtotal.Should().Be(0);
+    }
+
+    [Test]
+    public void ToEntity_PedidoItemRequestDto_ConInfoExtra_MapeaConValores()
+    {
+        // Arrange
+        var dto = new PedidoItemRequestDto
+        {
+            ProductoId = 5,
+            Cantidad = 10
+        };
+        var nombreProducto = "Test Product";
+        var precio = 25.50m;
+
+        // Act
+        var item = dto.ToEntity(nombreProducto, precio);
+
+        // Assert
+        item.ProductoId.Should().Be(5);
+        item.Cantidad.Should().Be(10);
+        item.NombreProducto.Should().Be(nombreProducto);
+        item.Precio.Should().Be(precio);
+        item.Subtotal.Should().Be(precio * dto.Cantidad);
+    }
+
+    [Test]
+    public void ToEntity_PedidoItemRequestDto_CalculaSubtotalCorrectamente()
+    {
+        // Arrange
+        var dto = new PedidoItemRequestDto
+        {
+            ProductoId = 1,
+            Cantidad = 5
+        };
+        var precio = 19.99m;
+
+        // Act
+        var item = dto.ToEntity("Product", precio);
+
+        // Assert
+        item.Subtotal.Should().Be(99.95m);
+    }
+
+    #endregion
 }

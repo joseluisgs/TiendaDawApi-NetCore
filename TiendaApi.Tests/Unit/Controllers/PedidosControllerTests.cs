@@ -462,4 +462,249 @@ public class PedidosControllerTests
     }
 
     #endregion
+
+    #region GetAllPedidos Tests (Admin Only)
+
+    [Test]
+    public async Task GetAllPedidos_AdminAutenticado_RetornaOk()
+    {
+        SetupUserClaims(1, "ADMIN");
+        var pedidos = new List<PedidoDto>
+        {
+            new("123", 1, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow),
+            new("456", 2, new List<PedidoItemDto>(), 200m, "ENTREGADO", null, DateTime.UtcNow)
+        };
+
+        _mockService.Setup(s => s.FindAllAsync())
+            .ReturnsAsync(Result.Success<IEnumerable<PedidoDto>, DomainError>(pedidos));
+
+        var result = await _controller.GetAllPedidos();
+
+        result.Should().BeOfType<OkObjectResult>();
+        var okResult = result as OkObjectResult;
+        okResult!.Value.Should().BeEquivalentTo(pedidos);
+    }
+
+    [Test]
+    public async Task GetAllPedidos_SinPedidos_RetornaOkConListaVacia()
+    {
+        SetupUserClaims(1, "ADMIN");
+
+        _mockService.Setup(s => s.FindAllAsync())
+            .ReturnsAsync(Result.Success<IEnumerable<PedidoDto>, DomainError>(new List<PedidoDto>()));
+
+        var result = await _controller.GetAllPedidos();
+
+        result.Should().BeOfType<OkObjectResult>();
+        var okResult = result as OkObjectResult;
+        (okResult!.Value as IEnumerable<PedidoDto>).Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task GetAllPedidos_UsuarioNoAdmin_RetornaOkConError()
+    {
+        SetupUserClaims(1, "USER");
+
+        var result = await _controller.GetAllPedidos();
+
+        result.Should().BeOfType<OkObjectResult>();
+        var okResult = result as OkObjectResult;
+        okResult!.Value.Should().NotBeNull();
+    }
+
+    [Test]
+    public async Task GetAllPedidos_ErrorInterno_Retorna500()
+    {
+        SetupUserClaims(1, "ADMIN");
+
+        _mockService.Setup(s => s.FindAllAsync())
+            .ReturnsAsync(Result.Failure<IEnumerable<PedidoDto>, DomainError>(
+                new InternalError("Error interno")));
+
+        var result = await _controller.GetAllPedidos();
+
+        result.Should().BeOfType<ObjectResult>();
+        var objectResult = result as ObjectResult;
+        objectResult!.StatusCode.Should().Be(500);
+    }
+
+    #endregion
+
+    #region UpdatePedido Tests
+
+    [Test]
+    public async Task UpdatePedido_UsuarioPropietario_RetornaOk()
+    {
+        SetupUserClaims(1, "USER");
+        var updateDto = new UpdatePedidoDto { Estado = "PROCESANDO" };
+        var pedidoDto = new PedidoDto("123", 1, new List<PedidoItemDto>(), 100m, "PROCESANDO", null, DateTime.UtcNow);
+
+        _mockService.Setup(s => s.UpdateAsync("123", 1, updateDto))
+            .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
+
+        var result = await _controller.UpdatePedido("123", updateDto);
+
+        result.Should().BeOfType<OkObjectResult>();
+        var okResult = result as OkObjectResult;
+        okResult!.Value.Should().BeEquivalentTo(pedidoDto);
+    }
+
+    [Test]
+    public async Task UpdatePedido_PedidoNoExistente_RetornaNotFound()
+    {
+        SetupUserClaims(1, "USER");
+        var updateDto = new UpdatePedidoDto();
+
+        _mockService.Setup(s => s.UpdateAsync("999", 1, updateDto))
+            .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(
+                new NotFoundError("Pedido no encontrado")));
+
+        var result = await _controller.UpdatePedido("999", updateDto);
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdatePedido_SinAutenticacion_RetornaUnauthorized()
+    {
+        var identity = new ClaimsIdentity();
+        _controller = new PedidosController(_mockService.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+            }
+        };
+
+        var result = await _controller.UpdatePedido("123", new UpdatePedidoDto());
+
+        result.Should().BeOfType<UnauthorizedObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdatePedido_Conflicto_RetornaBadRequest()
+    {
+        SetupUserClaims(1, "USER");
+        var updateDto = new UpdatePedidoDto();
+
+        _mockService.Setup(s => s.UpdateAsync("123", 1, updateDto))
+            .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(
+                new BusinessRuleError("No se puede actualizar un pedido ENTREGADO")));
+
+        var result = await _controller.UpdatePedido("123", updateDto);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Test]
+    public async Task UpdatePedido_ErrorInterno_Retorna500()
+    {
+        SetupUserClaims(1, "USER");
+        var updateDto = new UpdatePedidoDto();
+
+        _mockService.Setup(s => s.UpdateAsync("123", 1, updateDto))
+            .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(
+                new InternalError("Error inesperado")));
+
+        var result = await _controller.UpdatePedido("123", updateDto);
+
+        result.Should().BeOfType<ObjectResult>();
+        var objectResult = result as ObjectResult;
+        objectResult!.StatusCode.Should().Be(500);
+    }
+
+    #endregion
+
+    #region DeletePedido Tests
+
+    [Test]
+    public async Task DeletePedido_UsuarioPropietario_RetornaNoContent()
+    {
+        SetupUserClaims(1, "USER");
+
+        _mockService.Setup(s => s.DeleteAsync("123", 1))
+            .ReturnsAsync(UnitResult.Success<DomainError>());
+
+        var result = await _controller.DeletePedido("123");
+
+        result.Should().BeOfType<NoContentResult>();
+    }
+
+    [Test]
+    public async Task DeletePedido_Admin_RetornaNoContent()
+    {
+        SetupUserClaims(1, "ADMIN");
+
+        _mockService.Setup(s => s.DeleteAsync("123", 1))
+            .ReturnsAsync(UnitResult.Success<DomainError>());
+
+        var result = await _controller.DeletePedido("123");
+
+        result.Should().BeOfType<NoContentResult>();
+    }
+
+    [Test]
+    public async Task DeletePedido_PedidoDeOtroUsuario_Retorna403()
+    {
+        SetupUserClaims(1, "USER");
+
+        _mockService.Setup(s => s.DeleteAsync("123", 1))
+            .ReturnsAsync(UnitResult.Failure<DomainError>(
+                new ForbiddenError("No eres propietario de este pedido")));
+
+        var result = await _controller.DeletePedido("123");
+
+        result.Should().BeOfType<ObjectResult>();
+        var objectResult = result as ObjectResult;
+        objectResult!.StatusCode.Should().Be(403);
+    }
+
+    [Test]
+    public async Task DeletePedido_PedidoNoExistente_RetornaNotFound()
+    {
+        SetupUserClaims(1, "USER");
+
+        _mockService.Setup(s => s.DeleteAsync("999", 1))
+            .ReturnsAsync(UnitResult.Failure<DomainError>(
+                new NotFoundError("Pedido no encontrado")));
+
+        var result = await _controller.DeletePedido("999");
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Test]
+    public async Task DeletePedido_SinAutenticacion_RetornaUnauthorized()
+    {
+        var identity = new ClaimsIdentity();
+        _controller = new PedidosController(_mockService.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+            }
+        };
+
+        var result = await _controller.DeletePedido("123");
+
+        result.Should().BeOfType<UnauthorizedObjectResult>();
+    }
+
+    [Test]
+    public async Task DeletePedido_ErrorInterno_Retorna500()
+    {
+        SetupUserClaims(1, "USER");
+
+        _mockService.Setup(s => s.DeleteAsync("123", 1))
+            .ReturnsAsync(UnitResult.Failure<DomainError>(
+                new InternalError("Error al eliminar pedido")));
+
+        var result = await _controller.DeletePedido("123");
+
+        result.Should().BeOfType<ObjectResult>();
+        var objectResult = result as ObjectResult;
+        objectResult!.StatusCode.Should().Be(500);
+    }
+
+    #endregion
 }
