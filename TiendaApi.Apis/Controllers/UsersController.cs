@@ -14,8 +14,76 @@ using TiendaApi.Apis.Services.Users;
 namespace TiendaApi.Apis.Controllers;
 
 /// <summary>
-/// Controlador de usuarios para administradores.
+/// Controlador REST para la gestión de usuarios y sus pedidos.
+/// Implementa el patrón de diseño Result para el manejo de operaciones y errores.
 /// </summary>
+/// <remarks>
+/// <para><b>API REST:</b> Este controlador expone endpoints que siguen los principios de RESTful.</para>
+/// <para><b>Métodos HTTP:</b></para>
+/// <list type="table">
+/// <item>
+/// <term>GET</term>
+/// <description>Recuperar recursos (usuarios, perfiles, pedidos)</description>
+/// </item>
+/// <item>
+/// <term>POST</term>
+/// <description>Crear nuevos recursos (usuarios, pedidos)</description>
+/// </item>
+/// <item>
+/// <term>PUT</term>
+/// <description>Actualizar recursos existentes completamente</description>
+/// </item>
+/// <item>
+/// <term>PATCH</term>
+/// <description>Actualizar parcialmente recursos</description>
+/// </item>
+/// <item>
+/// <term>DELETE</term>
+/// <description>Eliminar recursos</description>
+/// </item>
+/// </list>
+/// <para><b>Códigos de estado HTTP:</b></para>
+/// <list type="table">
+/// <item>
+/// <term>200 OK</term>
+/// <description>Petición exitosa, retorna datos</description>
+/// </item>
+/// <item>
+/// <term>201 Created</term>
+/// <description>Recurso creado exitosamente</description>
+/// </item>
+/// <item>
+/// <term>204 No Content</term>
+/// <description>Petición exitosa sin contenido que retornar</description>
+/// </item>
+/// <item>
+/// <term>400 Bad Request</term>
+/// <description>Error en los datos enviados por el cliente</description>
+/// </item>
+/// <item>
+/// <term>401 Unauthorized</term>
+/// <description>Usuario no autenticado</description>
+/// </item>
+/// <item>
+/// <term>403 Forbidden</term>
+/// <description>Usuario autenticado sin permisos suficientes</description>
+/// </item>
+/// <item>
+/// <term>404 Not Found</term>
+/// <description>Recurso no encontrado</description>
+/// </item>
+/// <item>
+/// <term>409 Conflict</term>
+/// <description>Conflicto con el estado actual del recurso</description>
+/// </item>
+/// <item>
+/// <term>500 Internal Server Error</term>
+/// <description>Error interno del servidor</description>
+/// </item>
+/// </list>
+/// <para><b>Autorización:</b></para>
+/// <para>Los endpoints bajo la ruta "me" son accesibles por cualquier usuario autenticado para gestionar su propia información. Los endpoints de administración requieren rol de Administrador.</para>
+/// </remarks>
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
@@ -27,10 +95,55 @@ public class UsersController(
 {
 
     /// <summary>
-    /// Obtener todos los usuarios paginados con filtros opcionales (solo administradores).
-    /// GET /api/users?username=&amp;email=&amp;isDeleted=&amp;page=0&amp;size=10&amp;sortBy=id&amp;direction=asc
-    /// Devuelve: 200 OK | 401 Unauthorized | 403 Forbidden
+    /// Obtiene todos los usuarios de forma paginada con filtros opcionales.
     /// </summary>
+    /// <param name="username">Filtrar por nombre de usuario (búsqueda parcial, opcional).</param>
+    /// <param name="email">Filtrar por email (búsqueda exacta, opcional).</param>
+    /// <param name="isDeleted">Filtrar por estado de eliminación (opcional): true para eliminados, false para activos, null para todos.</param>
+    /// <param name="page">Número de página (base 0). Por defecto: 0.</param>
+    /// <param name="size">Cantidad de elementos por página. Por defecto: 10.</param>
+    /// <param name="sortBy">Campo por el cual ordenar. Por defecto: "id".</param>
+    /// <param name="direction">Dirección de ordenamiento: "asc" o "desc". Por defecto: "asc".</param>
+    /// <returns>Resultado paginado con la lista de usuarios.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> GET /api/users</para>
+    /// <para><b>Descripción:</b> Retorna una lista paginada de todos los usuarios del sistema. Solo accesible por administradores.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token con rol de Administrador.</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>200 OK</term><description>Lista de usuarios retornada exitosamente.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>403 Forbidden</term><description>Usuario autenticado sin permisos de administrador.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de respuesta exitosa:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "items": [
+    ///     {
+    ///       "id": 1,
+    ///       "username": "juanperez",
+    ///       "email": "juan@example.com",
+    ///       "role": "USER",
+    ///       "isDeleted": false,
+    ///       "createdAt": "2024-01-01T00:00:00Z"
+    ///     }
+    ///   ],
+    ///   "page": 0,
+    ///   "size": 10,
+    ///   "totalItems": 50,
+    ///   "totalPages": 5
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X GET "http://localhost:5000/api/users?username=juan&page=0&size=10" \
+    ///   -H "Authorization: Bearer {admin_token}"
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpGet]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(PagedResult<UserDto>), StatusCodes.Status200OK)]
@@ -66,10 +179,44 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Obtener un usuario por ID (solo administradores).
-    /// GET /api/users/{id}
-    /// Devuelve: 200 OK | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Obtiene un usuario específico por su identificador único.
     /// </summary>
+    /// <param name="id">Identificador único del usuario.</param>
+    /// <returns>Los datos del usuario encontrado.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> GET /api/users/{id}</para>
+    /// <para><b>Descripción:</b> Busca y retorna un usuario específico usando su ID. Solo accesible por administradores.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token con rol de Administrador.</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>200 OK</term><description>Usuario encontrado exitosamente.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>403 Forbidden</term><description>Usuario autenticado sin permisos de administrador.</description></item>
+    /// <item><term>404 Not Found</term><description>No existe usuario con el ID especificado.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de respuesta exitosa:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "id": 1,
+    ///   "username": "juanperez",
+    ///   "email": "juan@example.com",
+    ///   "firstName": "Juan",
+    ///   "lastName": "Pérez",
+    ///   "role": "USER",
+    ///   "isDeleted": false,
+    ///   "createdAt": "2024-01-01T00:00:00Z"
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X GET "http://localhost:5000/api/users/1" \
+    ///   -H "Authorization: Bearer {admin_token}"
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpGet("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -93,10 +240,45 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Crear un nuevo usuario (solo administradores).
-    /// POST /api/users
-    /// Devuelve: 201 Created | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 409 Conflict
+    /// Crea un nuevo usuario en el sistema.
     /// </summary>
+    /// <param name="dto">Datos del usuario a crear.</param>
+    /// <returns>Los datos del usuario creado.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> POST /api/users</para>
+    /// <para><b>Descripción:</b> Registra un nuevo usuario en el sistema. Solo accesible por administradores.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token con rol de Administrador.</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>201 Created</term><description>Usuario creado exitosamente. Incluye Location header.</description></item>
+    /// <item><term>400 Bad Request</term><description>Datos inválidos o errores de validación.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>403 Forbidden</term><description>Usuario autenticado sin permisos de administrador.</description></item>
+    /// <item><term>409 Conflict</term><description>Ya existe un usuario con el mismo username o email.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de cuerpo de solicitud:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "username": "mariagarcia",
+    ///   "email": "maria@example.com",
+    ///   "password": "Contraseña123!",
+    ///   "firstName": "María",
+    ///   "lastName": "García",
+    ///   "role": "USER"
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X POST "http://localhost:5000/api/users" \
+    ///   -H "Content-Type: application/json" \
+    ///   -H "Authorization: Bearer {admin_token}" \
+    ///   -d '{"username": "mariagarcia", "email": "maria@example.com", "password": "Contraseña123!", "firstName": "María", "lastName": "García"}'
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpPost]
     [Authorize(Roles = "ADMIN")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
@@ -122,10 +304,46 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Actualizar un usuario existente (solo administradores).
-    /// PUT /api/users/{id}
-    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found | 409 Conflict
+    /// Actualiza un usuario existente completamente.
     /// </summary>
+    /// <param name="id">Identificador único del usuario a actualizar.</param>
+    /// <param name="dto">Nuevos datos para el usuario.</param>
+    /// <returns>Los datos del usuario actualizado.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> PUT /api/users/{id}</para>
+    /// <para><b>Descripción:</b> Actualiza todos los campos de un usuario existente. Solo accesible por administradores.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token con rol de Administrador.</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>200 OK</term><description>Usuario actualizado exitosamente.</description></item>
+    /// <item><term>400 Bad Request</term><description>Datos inválidos o errores de validación.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>403 Forbidden</term><description>Usuario autenticado sin permisos de administrador.</description></item>
+    /// <item><term>404 Not Found</term><description>No existe usuario con el ID especificado.</description></item>
+    /// <item><term>409 Conflict</term><description>Conflicto con datos existentes (ej: email duplicado).</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de cuerpo de solicitud:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "username": "mariagarcia_updated",
+    ///   "email": "maria.nueva@example.com",
+    ///   "firstName": "María José",
+    ///   "lastName": "García López",
+    ///   "role": "USER"
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X PUT "http://localhost:5000/api/users/2" \
+    ///   -H "Content-Type: application/json" \
+    ///   -H "Authorization: Bearer {admin_token}" \
+    ///   -d '{"username": "mariagarcia_updated", "email": "maria.nueva@example.com", "firstName": "María José"}'
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpPut("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -153,10 +371,41 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Actualizar avatar de un usuario (ADMIN o el propio usuario).
-    /// PATCH /api/users/{id}/avatar
-    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Actualiza el avatar de un usuario.
     /// </summary>
+    /// <param name="id">Identificador único del usuario.</param>
+    /// <param name="dto">URL del nuevo avatar.</param>
+    /// <returns>Los datos del usuario con el avatar actualizado.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> PATCH /api/users/{id}/avatar</para>
+    /// <para><b>Descripción:</b> Actualiza únicamente el avatar de un usuario. El usuario puede actualizar su propio avatar o un administrador puede actualizar cualquier avatar.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token (el usuario debe ser propietario del perfil o administrador).</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>200 OK</term><description>Avatar actualizado exitosamente.</description></item>
+    /// <item><term>400 Bad Request</term><description>URL de avatar inválida.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>403 Forbidden</term><description>Usuario no tiene permiso para actualizar este avatar.</description></item>
+    /// <item><term>404 Not Found</term><description>No existe usuario con el ID especificado.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de cuerpo de solicitud:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "avatarUrl": "https://ejemplo.com/avatars/maria.jpg"
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X PATCH "http://localhost:5000/api/users/2/avatar" \
+    ///   -H "Content-Type: application/json" \
+    ///   -H "Authorization: Bearer {token}" \
+    ///   -d '{"avatarUrl": "https://ejemplo.com/avatars/maria.jpg"}'
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpPatch("{id}/avatar")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -188,10 +437,29 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Eliminar un usuario (solo administradores).
-    /// DELETE /api/users/{id}
-    /// Devuelve: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Elimina un usuario del sistema.
     /// </summary>
+    /// <param name="id">Identificador único del usuario a eliminar.</param>
+    /// <returns>Sin contenido en caso de éxito.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> DELETE /api/users/{id}</para>
+    /// <para><b>Descripción:</b> Elimina un usuario del sistema (eliminación lógica). Solo accesible por administradores.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token con rol de Administrador.</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>204 No Content</term><description>Usuario eliminado exitosamente.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>403 Forbidden</term><description>Usuario autenticado sin permisos de administrador.</description></item>
+    /// <item><term>404 Not Found</term><description>No existe usuario con el ID especificado.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X DELETE "http://localhost:5000/api/users/2" \
+    ///   -H "Authorization: Bearer {admin_token}"
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpDelete("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -216,10 +484,41 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Obtener el perfil del usuario autenticado.
-    /// GET /api/users/me/profile
-    /// Devuelve: 200 OK | 401 Unauthorized
+    /// Obtiene el perfil del usuario autenticado.
     /// </summary>
+    /// <returns>Los datos del perfil del usuario autenticado.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> GET /api/users/me/profile</para>
+    /// <para><b>Descripción:</b> Retorna los datos del perfil del usuario actualmente autenticado.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token (cualquier usuario autenticado).</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>200 OK</term><description>Perfil del usuario retornado exitosamente.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de respuesta exitosa:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "id": 1,
+    ///   "username": "juanperez",
+    ///   "email": "juan@example.com",
+    ///   "firstName": "Juan",
+    ///   "lastName": "Pérez",
+    ///   "avatarUrl": "https://ejemplo.com/avatars/juan.jpg",
+    ///   "role": "USER",
+    ///   "createdAt": "2024-01-01T00:00:00Z"
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X GET "http://localhost:5000/api/users/me/profile" \
+    ///   -H "Authorization: Bearer {token}"
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpGet("me/profile")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -244,10 +543,41 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Actualizar el perfil del usuario autenticado.
-    /// PUT /api/users/me/profile
-    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 404 Not Found
+    /// Actualiza el perfil del usuario autenticado.
     /// </summary>
+    /// <param name="dto">Nuevos datos para el perfil.</param>
+    /// <returns>Los datos del perfil actualizado.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> PUT /api/users/me/profile</para>
+    /// <para><b>Descripción:</b> Actualiza los datos del perfil del usuario actualmente autenticado.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token (cualquier usuario autenticado).</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>200 OK</term><description>Perfil actualizado exitosamente.</description></item>
+    /// <item><term>400 Bad Request</term><description>Datos inválidos o errores de validación.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>404 Not Found</term><description>Usuario no encontrado (cuenta eliminada).</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de cuerpo de solicitud:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "firstName": "Juan Carlos",
+    ///   "lastName": "Pérez García",
+    ///   "email": "juan.carlos@example.com"
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X PUT "http://localhost:5000/api/users/me/profile" \
+    ///   -H "Content-Type: application/json" \
+    ///   -H "Authorization: Bearer {token}" \
+    ///   -d '{"firstName": "Juan Carlos", "lastName": "Pérez García"}'
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpPut("me/profile")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -278,10 +608,27 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Eliminar la cuenta del usuario autenticado.
-    /// DELETE /api/users/me/profile
-    /// Devuelve: 204 No Content | 401 Unauthorized
+    /// Elimina la cuenta del usuario autenticado.
     /// </summary>
+    /// <returns>Sin contenido en caso de éxito.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> DELETE /api/users/me/profile</para>
+    /// <para><b>Descripción:</b> Elimina la cuenta del usuario actualmente autenticado (eliminación lógica).</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token (cualquier usuario autenticado).</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>204 No Content</term><description>Cuenta eliminada exitosamente.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// </list>
+    /// <para><b>Nota:</b> Esta acción elimina lógicamente al usuario. Los datos asociados (como pedidos) se conservan.</para>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X DELETE "http://localhost:5000/api/users/me/profile" \
+    ///   -H "Authorization: Bearer {token}"
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpDelete("me/profile")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -309,10 +656,47 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Obtener los pedidos del usuario autenticado paginados.
-    /// GET /api/users/me/pedidos?page=0&amp;size=10
-    /// Devuelve: 200 OK | 401 Unauthorized
+    /// Obtiene los pedidos del usuario autenticado de forma paginada.
     /// </summary>
+    /// <param name="page">Número de página (base 0). Por defecto: 0.</param>
+    /// <param name="size">Cantidad de elementos por página. Por defecto: 10.</param>
+    /// <returns>Resultado paginado con los pedidos del usuario.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> GET /api/users/me/pedidos</para>
+    /// <para><b>Descripción:</b> Retorna una lista paginada de los pedidos del usuario actualmente autenticado.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token (cualquier usuario autenticado).</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>200 OK</term><description>Lista de pedidos retornada exitosamente.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de respuesta exitosa:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "items": [
+    ///     {
+    ///       "id": "PED-001",
+    ///       "estado": "Pendiente",
+    ///       "total": 299.99,
+    ///       "fechaCreacion": "2024-01-15T10:30:00Z"
+    ///     }
+    ///   ],
+    ///   "page": 0,
+    ///   "size": 10,
+    ///   "totalItems": 5,
+    ///   "totalPages": 1
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X GET "http://localhost:5000/api/users/me/pedidos?page=0&size=10" \
+    ///   -H "Authorization: Bearer {token}"
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpGet("me/pedidos")]
     [Authorize]
     [ProducesResponseType(typeof(PagedResult<PedidoDto>), StatusCodes.Status200OK)]
@@ -337,10 +721,46 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Crear un nuevo pedido para el usuario autenticado.
-    /// POST /api/users/me/pedidos
-    /// Devuelve: 201 Created | 400 Bad Request | 401 Unauthorized | 404 Not Found
+    /// Crea un nuevo pedido para el usuario autenticado.
     /// </summary>
+    /// <param name="dto">Datos del pedido a crear.</param>
+    /// <returns>Los datos del pedido creado.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> POST /api/users/me/pedidos</para>
+    /// <para><b>Descripción:</b> Registra un nuevo pedido asociado al usuario actualmente autenticado.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token (cualquier usuario autenticado).</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>201 Created</term><description>Pedido creado exitosamente.</description></item>
+    /// <item><term>400 Bad Request</term><description>Datos inválidos o errores de validación.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>404 Not Found</term><description>Uno o más productos del pedido no existen.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de cuerpo de solicitud:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "detalles": [
+    ///     {
+    ///       "productoId": 1,
+    ///       "cantidad": 2
+    ///     }
+    ///   ],
+    ///   "direccionEnvio": "Calle Nueva 789, Ciudad",
+    ///   "observaciones": "Entregar después de las 14:00"
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X POST "http://localhost:5000/api/users/me/pedidos" \
+    ///   -H "Content-Type: application/json" \
+    ///   -H "Authorization: Bearer {token}" \
+    ///   -d '{"detalles": [{"productoId": 1, "cantidad": 2}], "direccionEnvio": "Calle Nueva 789"}'
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpPost("me/pedidos")]
     [Authorize]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status201Created)]
@@ -378,10 +798,42 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Actualizar un pedido del usuario autenticado.
-    /// PUT /api/users/me/pedidos/{id}
-    /// Devuelve: 200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Actualiza un pedido del usuario autenticado.
     /// </summary>
+    /// <param name="id">Identificador único del pedido.</param>
+    /// <param name="dto">Nuevos datos para el pedido.</param>
+    /// <returns>Los datos del pedido actualizado.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> PUT /api/users/me/pedidos/{id}</para>
+    /// <para><b>Descripción:</b> Actualiza los datos de un pedido existente del usuario autenticado.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token (el usuario debe ser propietario del pedido).</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>200 OK</term><description>Pedido actualizado exitosamente.</description></item>
+    /// <item><term>400 Bad Request</term><description>Datos inválidos o errores de validación.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>403 Forbidden</term><description>Usuario no tiene permiso para actualizar este pedido.</description></item>
+    /// <item><term>404 Not Found</term><description>No existe pedido con el ID especificado.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de cuerpo de solicitud:</b></para>
+    /// <example>
+    /// ```json
+    /// {
+    ///   "direccionEnvio": "Calle Actualizada 123",
+    ///   "observaciones": "Nueva dirección de entrega"
+    /// }
+    /// ```
+    /// </example>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X PUT "http://localhost:5000/api/users/me/pedidos/PED-001" \
+    ///   -H "Content-Type: application/json" \
+    ///   -H "Authorization: Bearer {token}" \
+    ///   -d '{"direccionEnvio": "Calle Actualizada 123"}'
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpPut("me/pedidos/{id}")]
     [Authorize]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
@@ -415,10 +867,29 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Eliminar un pedido del usuario autenticado.
-    /// DELETE /api/users/me/pedidos/{id}
-    /// Devuelve: 204 No Content | 401 Unauthorized | 403 Forbidden | 404 Not Found
+    /// Elimina un pedido del usuario autenticado.
     /// </summary>
+    /// <param name="id">Identificador único del pedido.</param>
+    /// <returns>Sin contenido en caso de éxito.</returns>
+    /// <remarks>
+    /// <para><b>Endpoint:</b> DELETE /api/users/me/pedidos/{id}</para>
+    /// <para><b>Descripción:</b> Elimina un pedido del usuario actualmente autenticado.</para>
+    /// <para><b>Autenticación:</b> Requiere JWT token (el usuario debe ser propietario del pedido).</para>
+    /// <para><b>Códigos de respuesta:</b></para>
+    /// <list type="table">
+    /// <item><term>204 No Content</term><description>Pedido eliminado exitosamente.</description></item>
+    /// <item><term>401 Unauthorized</term><description>Token de autenticación inválido o expirado.</description></item>
+    /// <item><term>403 Forbidden</term><description>Usuario no tiene permiso para eliminar este pedido.</description></item>
+    /// <item><term>404 Not Found</term><description>No existe pedido con el ID especificado.</description></item>
+    /// </list>
+    /// <para><b>Ejemplo de solicitud cURL:</b></para>
+    /// <example>
+    /// ```bash
+    /// curl -X DELETE "http://localhost:5000/api/users/me/pedidos/PED-001" \
+    ///   -H "Authorization: Bearer {token}"
+    /// ```
+    /// </example>
+    /// </remarks>
     [HttpDelete("me/pedidos/{id}")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -455,7 +926,8 @@ public class UsersController(
 public record AvatarUpdateDto
 {
     /// <summary>
-    /// URL del nuevo avatar.
+    /// URL del nuevo avatar del usuario.
     /// </summary>
+    /// <example>https://ejemplo.com/avatars/nuevo-avatar.jpg</example>
     public string AvatarUrl { get; init; } = string.Empty;
 }
