@@ -165,10 +165,9 @@ public class Producto : ITimestamped
     /// el segundo recibe un error de concurrencia.
     /// </para>
     /// <remarks>
-    /// Implementado como columna TIMESTAMP en PostgreSQL (rowversion).
+    /// Implementado como columna bytea en PostgreSQL para control de concurrencia.
     /// </remarks>
-    [Timestamp]
-    public byte[] RowVersion { get; set; } = null!;
+    public byte[] RowVersion { get; set; } = new byte[8];
 
     /// <summary>
     /// Identificador de la categoría a la que pertenece el producto.

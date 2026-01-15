@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
@@ -23,6 +24,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Services;
 /// Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
 [TestFixture]
+[NonParallelizable]
 public class UserServiceIntegrationTests
 {
     private MongoDbContainer? _mongoContainer;
@@ -86,8 +88,17 @@ public class UserServiceIntegrationTests
         services.AddMemoryCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
+        services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Information);
+        });
+
         services.AddDbContext<TiendaDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<ILogger<UserRepository>, Logger<UserRepository>>();
+        services.AddScoped<ILogger<UserService>, Logger<UserService>>();
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserService, UserService>();
@@ -95,15 +106,22 @@ public class UserServiceIntegrationTests
         services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
         services.AddScoped<ICacheService, MemoryCacheService>();
 
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        services.AddSingleton(loggerFactory);
-
         _serviceProvider = services.BuildServiceProvider();
 
         _dbContext = _serviceProvider.GetRequiredService<TiendaDbContext>();
         await _dbContext.Database.EnsureCreatedAsync();
 
         _userService = _serviceProvider.GetRequiredService<IUserService>();
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _dbContext?.Dispose();
+        if (_serviceProvider is IDisposable sp)
+        {
+            sp.Dispose();
+        }
     }
 
     [Test]
@@ -118,10 +136,11 @@ public class UserServiceIntegrationTests
     [Test]
     public async Task CreateAsync_ConDatosValidos_RetornaUsuarioCreado()
     {
+        var uniqueId = Guid.NewGuid().ToString("N")[..8];
         var dto = new RegisterDto
         {
-            Username = "testuser",
-            Email = "test@example.com",
+            Username = $"testuser_{uniqueId}",
+            Email = $"test_{uniqueId}@example.com",
             Password = "Test1234"
         };
 
@@ -129,7 +148,7 @@ public class UserServiceIntegrationTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Username.Should().Be("testuser");
+        result.Value.Username.Should().Be(dto.Username);
         result.Value.Id.Should().BeGreaterThan(0);
     }
 

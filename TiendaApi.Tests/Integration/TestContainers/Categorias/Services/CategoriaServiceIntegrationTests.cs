@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
@@ -12,6 +13,7 @@ using TiendaApi.Apis.Dtos.Categorias;
 using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
+using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Categorias;
 using TiendaApi.Apis.Validators.Categorias;
 using TiendaApi.Apis.Services.Email;
@@ -23,6 +25,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Services;
 /// Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
 [TestFixture]
+[NonParallelizable]
 public class CategoriaServiceIntegrationTests
 {
     private MongoDbContainer? _mongoContainer;
@@ -86,15 +89,22 @@ public class CategoriaServiceIntegrationTests
         services.AddMemoryCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
+        services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Information);
+        });
+
         services.AddDbContext<TiendaDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<ILogger<CategoriaRepository>, Logger<CategoriaRepository>>();
+        services.AddScoped<ILogger<CategoriaService>, Logger<CategoriaService>>();
 
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<ICategoriaService, CategoriaService>();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
-
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        services.AddSingleton(loggerFactory);
+        services.AddScoped<ICacheService, MemoryCacheService>();
 
         _serviceProvider = services.BuildServiceProvider();
 
@@ -102,6 +112,16 @@ public class CategoriaServiceIntegrationTests
         await _dbContext.Database.EnsureCreatedAsync();
 
         _categoriaService = _serviceProvider.GetRequiredService<ICategoriaService>();
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _dbContext?.Dispose();
+        if (_serviceProvider is IDisposable sp)
+        {
+            sp.Dispose();
+        }
     }
 
     [Test]

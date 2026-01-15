@@ -81,7 +81,7 @@ public class CategoriasContainersIntegrationTests
         _mongoContainer.Should().NotBeNull();
         var connectionString = _mongoContainer!.GetConnectionString();
         connectionString.Should().NotBeNullOrEmpty();
-        connectionString.Should().Contain("Host=");
+        connectionString.Should().Contain("mongodb://");
 
         await Task.CompletedTask;
     }
@@ -90,8 +90,8 @@ public class CategoriasContainersIntegrationTests
     public async Task MongoDBContainer_ConnectionString_IsValid()
     {
         var connectionString = _mongoContainer!.GetConnectionString();
-        connectionString.Should().Contain("Host=");
-        connectionString.Should().Contain("Port=");
+        connectionString.Should().Contain("mongodb://");
+        connectionString.Should().Contain("127.0.0.1");
 
         await Task.CompletedTask;
     }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
@@ -17,6 +18,7 @@ using TiendaApi.Apis.Validators.Productos;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Storage;
+using TiendaApi.Apis.WebSockets.Productos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Productos.Services;
 
@@ -25,6 +27,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Productos.Services;
 /// Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
 [TestFixture]
+[NonParallelizable]
 public class ProductoServiceIntegrationTests
 {
     private MongoDbContainer? _mongoContainer;
@@ -89,8 +92,18 @@ public class ProductoServiceIntegrationTests
         services.AddMemoryCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
+        services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Information);
+        });
+
         services.AddDbContext<TiendaDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<ILogger<ProductoRepository>, Logger<ProductoRepository>>();
+        services.AddScoped<ILogger<CategoriaRepository>, Logger<CategoriaRepository>>();
+        services.AddScoped<ILogger<ProductoService>, Logger<ProductoService>>();
 
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
@@ -98,9 +111,8 @@ public class ProductoServiceIntegrationTests
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
         services.AddScoped<ICacheService, MemoryCacheService>();
         services.AddScoped<IStorageService, FileSystemStorageService>();
-
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        services.AddSingleton(loggerFactory);
+        services.AddScoped<IEmailService, MemoryEmailService>();
+        services.AddScoped<ProductoWebSocketHandler>();
 
         _serviceProvider = services.BuildServiceProvider();
 
@@ -108,11 +120,24 @@ public class ProductoServiceIntegrationTests
         await _dbContext.Database.EnsureCreatedAsync();
 
         var categoriaRepo = _serviceProvider.GetRequiredService<ICategoriaRepository>();
-        var categoria = new Categoria { Nombre = "Electronica Test" };
+        var processId = System.Diagnostics.Process.GetCurrentProcess().Id;
+        var threadId = Environment.CurrentManagedThreadId;
+        var uniqueName = $"Cat_{processId}_{threadId}_{Guid.NewGuid():N}".Substring(0, 40);
+        var categoria = new Categoria { Nombre = uniqueName };
         await categoriaRepo.SaveAsync(categoria);
         _categoriaId = categoria.Id;
 
         _productoService = _serviceProvider.GetRequiredService<IProductoService>();
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _dbContext?.Dispose();
+        if (_serviceProvider is IDisposable sp)
+        {
+            sp.Dispose();
+        }
     }
 
     [Test]

@@ -52,6 +52,7 @@ public class TiendaDbContext : DbContext
             entity.Property(p => p.Precio).HasPrecision(10, 2);
             entity.Property(p => p.Stock).IsRequired();
             entity.Property(p => p.IsDeleted).HasDefaultValue(false);
+            entity.Property(p => p.RowVersion).IsRequired();
             entity.ConfigureTimestamps();
 
             entity.HasOne(p => p.Categoria)
@@ -148,7 +149,8 @@ public class TiendaDbContext : DbContext
                 CategoriaId = 1,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                RowVersion = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }
             },
             new Producto
             {
@@ -160,7 +162,8 @@ public class TiendaDbContext : DbContext
                 CategoriaId = 2,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                RowVersion = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9 }
             },
             new Producto
             {
@@ -172,7 +175,8 @@ public class TiendaDbContext : DbContext
                 CategoriaId = 3,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                RowVersion = new byte[] { 3, 4, 5, 6, 7, 8, 9, 10 }
             }
         );
     }

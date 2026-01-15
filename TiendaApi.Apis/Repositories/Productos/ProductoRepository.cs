@@ -200,7 +200,7 @@ public class ProductoRepository(
     /// <param name="productoId">Identificador del producto.</param>
     /// <param name="cantidad">Cantidad a decrementar del stock.</param>
     /// <param name="expectedRowVersion">Versión esperada del registro (para control de concurrencia).</param>
-    /// <returns>True si el stock fue decrementado, False si el producto no existe.</returns>
+    /// <returns>True si el stock fue decrementado, False si el producto no existe o no hay suficiente stock.</returns>
     public async Task<bool> DecrementStockAsync(long productoId, int cantidad, byte[] expectedRowVersion)
     {
         logger.LogDebug("Intentando decrementar stock para producto: {ProductoId}, cantidad: {Cantidad}", productoId, cantidad);
@@ -210,6 +210,13 @@ public class ProductoRepository(
         if (producto is null)
         {
             logger.LogWarning("Producto no encontrado para decrementar stock: {ProductoId}", productoId);
+            return false;
+        }
+
+        if (producto.Stock < cantidad)
+        {
+            logger.LogWarning("Stock insuficiente para producto: {ProductoId}. Stock actual: {Stock}, cantidad solicitada: {Cantidad}",
+                productoId, producto.Stock, cantidad);
             return false;
         }
 
