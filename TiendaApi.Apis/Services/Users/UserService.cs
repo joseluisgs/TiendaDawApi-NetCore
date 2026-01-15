@@ -237,7 +237,7 @@ public class UserService(
         {
             logger.LogWarning("Usuario con id {Id} no encontrado para actualizar avatar", id);
             return Result.Failure<UserDto, DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.NotFound(id)
+                UsuarioError.NotFound(id)
             );
         }
 
@@ -275,7 +275,7 @@ public class UserService(
         {
             logger.LogWarning("Usuario con id {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
-                TiendaApi.Apis.Errors.Usuarios.UsuarioError.NotFound(id)
+                UsuarioError.NotFound(id)
             );
         }
 

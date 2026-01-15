@@ -5,6 +5,7 @@ using Npgsql;
 using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Errors.Pedidos;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Pedidos;
@@ -124,7 +125,7 @@ public class PedidosService(
         {
             logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
-                Errors.Pedidos.PedidoError.NotFound(id)
+                PedidoError.NotFound(id)
             );
         }
 
@@ -164,7 +165,7 @@ public class PedidosService(
                         "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
                         userId);
                     return Result.Failure<PedidoDto, DomainError>(
-                        Errors.Pedidos.PedidoError.PedidoAdquirido(string.Empty)
+                        PedidoError.PedidoAdquirido(string.Empty)
                     );
                 }
 
@@ -183,7 +184,7 @@ public class PedidosService(
                         "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
                         userId);
                     return Result.Failure<PedidoDto, DomainError>(
-                        Errors.Pedidos.PedidoError.PedidoAdquirido(string.Empty)
+                        PedidoError.PedidoAdquirido(string.Empty)
                     );
                 }
 
@@ -197,7 +198,7 @@ public class PedidosService(
         }
 
         return Result.Failure<PedidoDto, DomainError>(
-            Errors.Pedidos.PedidoError.ErrorProcesando()
+            PedidoError.ErrorProcesando()
         );
     }
 
@@ -256,7 +257,7 @@ public class PedidosService(
                 {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
-                        Errors.Pedidos.PedidoError.ProductoNoEncontrado(itemDto.ProductoId)
+                        PedidoError.ProductoNoEncontrado(itemDto.ProductoId)
                     );
                 }
 
@@ -264,7 +265,7 @@ public class PedidosService(
                 {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
-                        Errors.Pedidos.PedidoError.StockInsuficiente(producto.Nombre, producto.Stock, itemDto.Cantidad)
+                        PedidoError.StockInsuficiente(producto.Nombre, producto.Stock, itemDto.Cantidad)
                     );
                 }
 
@@ -322,7 +323,7 @@ public class PedidosService(
             // Rollback automático y retry desde CreateAsync()
             await transaction.RollbackAsync();
             logger.LogWarning(ex, "Error de serialización PostgreSQL (40001) al crear pedido para usuario {UserId}. Se reintentará automáticamente.", userId);
-            return Result.Failure<PedidoDto, DomainError>(Errors.Pedidos.PedidoError.ErrorProcesando());
+            return Result.Failure<PedidoDto, DomainError>(PedidoError.ErrorProcesando());
         }
         catch (NpgsqlException ex) when (IsSerializationFailureMessage(ex.Message))
         {
@@ -330,7 +331,7 @@ public class PedidosService(
             // Rollback automático y retry desde CreateAsync()
             await transaction.RollbackAsync();
             logger.LogWarning(ex, "Error de serialización PostgreSQL (40001) al crear pedido para usuario {UserId}. Se reintentará automáticamente.", userId);
-            return Result.Failure<PedidoDto, DomainError>(Errors.Pedidos.PedidoError.ErrorProcesando());
+            return Result.Failure<PedidoDto, DomainError>(PedidoError.ErrorProcesando());
         }
         catch (Exception ex)
         {
@@ -353,7 +354,7 @@ public class PedidosService(
         if (!validEstados.Contains(nuevoEstado))
         {
             return Result.Failure<PedidoDto, DomainError>(
-                Errors.Pedidos.PedidoError.EstadoInvalido(nuevoEstado, validEstados)
+                PedidoError.EstadoInvalido(nuevoEstado, validEstados)
             );
         }
 
@@ -363,7 +364,7 @@ public class PedidosService(
         {
             logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
-                Errors.Pedidos.PedidoError.NotFound(id)
+                PedidoError.NotFound(id)
             );
         }
 
@@ -396,7 +397,7 @@ public class PedidosService(
         {
             logger.LogWarning("Pedido no encontrado: {Id}", id);
             return Result.Failure<PedidoDto, DomainError>(
-                Errors.Pedidos.PedidoError.NotFound(id)
+                PedidoError.NotFound(id)
             );
         }
 
@@ -404,7 +405,7 @@ public class PedidosService(
         {
             logger.LogWarning("Usuario {UserId} intentó actualizar pedido {Id} que no le pertenece", userId, id);
             return Result.Failure<PedidoDto, DomainError>(
-                Errors.Pedidos.PedidoError.NoPropietario(userId, id)
+                PedidoError.NoPropietario(userId, id)
             );
         }
 
@@ -440,7 +441,7 @@ public class PedidosService(
         {
             logger.LogWarning("Pedido con ID {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
-                Errors.Pedidos.PedidoError.NotFound(id)
+                PedidoError.NotFound(id)
             );
         }
 
@@ -448,7 +449,7 @@ public class PedidosService(
         {
             logger.LogWarning("Usuario {UserId} intentó eliminar pedido {Id} que no le pertenece", userId, id);
             return UnitResult.Failure<DomainError>(
-                Errors.Pedidos.PedidoError.NoPropietario(userId, id)
+                PedidoError.NoPropietario(userId, id)
             );
         }
 
@@ -662,7 +663,7 @@ public class PedidosService(
                 );
 
             return UnitResult.Failure<DomainError>(
-                Errors.Pedidos.PedidoError.ValidacionConCampos(errors)
+                PedidoError.ValidacionConCampos(errors)
             );
         }
 
@@ -687,7 +688,7 @@ public class PedidosService(
                 );
 
             return UnitResult.Failure<DomainError>(
-                Errors.Pedidos.PedidoError.ValidacionConCampos(errors)
+                PedidoError.ValidacionConCampos(errors)
             );
         }
 
