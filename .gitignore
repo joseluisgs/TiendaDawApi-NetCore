@@ -61,3 +61,6 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Windows null device issue
+nul
