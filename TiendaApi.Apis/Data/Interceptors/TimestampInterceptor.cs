@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Data.Abstractions;
 
 namespace TiendaApi.Apis.Data.Interceptors;
 

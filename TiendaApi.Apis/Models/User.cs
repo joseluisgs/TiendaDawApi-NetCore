@@ -1,6 +1,6 @@
 namespace TiendaApi.Apis.Models;
 
-using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Data.Abstractions;
 
 /// <summary>
 /// Entidad de dominio que representa un usuario en el sistema de la tienda.

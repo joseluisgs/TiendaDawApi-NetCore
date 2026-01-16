@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TiendaApi.Apis.Models;
 
-using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Data.Abstractions;
 
 /// <summary>
 /// Entidad de dominio que representa un producto en el catálogo de la tienda.

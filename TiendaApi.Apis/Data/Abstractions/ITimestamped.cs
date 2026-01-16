@@ -1,4 +1,4 @@
-namespace TiendaApi.Apis.Data;
+namespace TiendaApi.Apis.Data.Abstractions;
 
 /// <summary>
 /// Interfaz de auditoría para entidades que requieren tracking de tiempo.

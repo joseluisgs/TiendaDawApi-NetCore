@@ -1,6 +1,6 @@
 namespace TiendaApi.Apis.Models;
 
-using TiendaApi.Apis.Data;
+using TiendaApi.Apis.Data.Abstractions;
 
 /// <summary>
 /// Entidad de dominio que representa una categoría de productos en el sistema.

@@ -3,26 +3,26 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
+using TiendaApi.Apis.Data.Seed.Mongo;
 using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Services;
 
 namespace TiendaApi.Tests.Unit.Services;
 
 /// <summary>
-/// Tests unitarios para MongoDbSeedService.
+/// Tests unitarios para MongoDbSeeder.
 /// </summary>
-public class MongoDbSeedServiceTests
+public class MongoDbSeederTests
 {
     private Mock<IMongoCollection<Pedido>> _mockPedidosCollection = null!;
-    private Mock<ILogger<MongoDbSeedService>> _mockLogger = null!;
-    private MongoDbSeedService _seedService = null!;
+    private Mock<ILogger<MongoDbSeeder>> _mockLogger = null!;
+    private MongoDbSeeder _seedService = null!;
 
     [SetUp]
     public void Setup()
     {
         _mockPedidosCollection = new Mock<IMongoCollection<Pedido>>();
-        _mockLogger = new Mock<ILogger<MongoDbSeedService>>();
-        _seedService = new MongoDbSeedService(_mockPedidosCollection.Object, _mockLogger.Object);
+        _mockLogger = new Mock<ILogger<MongoDbSeeder>>();
+        _seedService = new MongoDbSeeder(_mockPedidosCollection.Object, _mockLogger.Object);
     }
 
     [Test]

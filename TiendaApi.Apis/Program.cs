@@ -191,8 +191,9 @@ var mongoDatabaseName = builder.Configuration["MongoDbSettings:DatabaseName"] ??
 builder.Services.AddDbContext<TiendaMongoContext>(options =>
     options.UseMongoDB(mongoConnectionString, mongoDatabaseName));
 
-// Servicio de seed para MongoDB
-builder.Services.AddScoped<MongoDbSeedService>();
+// Seeders para datos iniciales
+builder.Services.AddScoped<TiendaApi.Apis.Data.Seed.Mongo.MongoDbSeeder>();
+builder.Services.AddScoped<TiendaApi.Apis.Data.Seed.Sql.SqlSeeder>();
 
 // ============================================================================
 // 📦 INYECCIÓN DE DEPENDENCIAS
@@ -567,7 +568,7 @@ Log.Information("===============================================================
 try
 {
     using var seedScope = app.Services.CreateScope();
-    var mongoSeeder = seedScope.ServiceProvider.GetService<MongoDbSeedService>();
+    var mongoSeeder = seedScope.ServiceProvider.GetService<TiendaApi.Apis.Data.Seed.Mongo.MongoDbSeeder>();
 
     if (mongoSeeder != null && isDevelopment)
     {
