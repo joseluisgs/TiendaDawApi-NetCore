@@ -7,7 +7,7 @@ using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Services.Pedidos;
-using TiendaApi.Apis.Utils.Pagination;
+using TiendaApi.Apis.Utils.Helpers.Pagination;
 
 namespace TiendaApi.Apis.Controllers;
 

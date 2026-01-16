@@ -9,7 +9,7 @@ using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Services.Users;
-using TiendaApi.Apis.Utils.Pagination;
+using TiendaApi.Apis.Utils.Helpers.Pagination;
 
 namespace TiendaApi.Apis.Controllers;
 
