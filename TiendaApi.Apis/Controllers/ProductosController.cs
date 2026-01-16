@@ -5,6 +5,7 @@ using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Services.Productos;
+using TiendaApi.Apis.Utils.Pagination;
 
 namespace TiendaApi.Apis.Controllers;
 
@@ -158,7 +159,13 @@ public class ProductosController(
         var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: productos => Ok(productos),
+            onSuccess: productos =>
+            {
+                var linkHeader = PaginationLinksHelper.CreateLinkHeader(productos, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader))
+                    Response.Headers.Append("Link", linkHeader);
+                return Ok(productos);
+            },
             onFailure: error => StatusCode(500, new { message = error.Message })
         );
     }

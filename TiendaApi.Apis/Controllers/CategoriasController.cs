@@ -6,6 +6,7 @@ using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Services.Categorias;
+using TiendaApi.Apis.Utils.Pagination;
 
 namespace TiendaApi.Apis.Controllers;
 
@@ -152,7 +153,13 @@ public class CategoriasController(
         var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: categorias => Ok(categorias),
+            onSuccess: categorias =>
+            {
+                var linkHeader = PaginationLinksHelper.CreateLinkHeader(categorias, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader))
+                    Response.Headers.Append("Link", linkHeader);
+                return Ok(categorias);
+            },
             onFailure: error => error switch
             {
                 NotFoundError => NotFound(new { message = error.Message }),

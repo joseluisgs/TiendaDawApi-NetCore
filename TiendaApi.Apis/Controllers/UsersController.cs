@@ -3,13 +3,13 @@ using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Apis.Dtos.Common;
-using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Services.Users;
+using TiendaApi.Apis.Utils.Pagination;
 
 namespace TiendaApi.Apis.Controllers;
 
@@ -172,7 +172,13 @@ public class UsersController(
         var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: pagedResult => Ok(pagedResult),
+            onSuccess: pagedResult =>
+            {
+                var linkHeader = PaginationLinksHelper.CreateLinkHeader(pagedResult, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader))
+                    Response.Headers.Append("Link", linkHeader);
+                return Ok(pagedResult);
+            },
             onFailure: error => StatusCode(500, new { message = error.Message })
         );
     }

@@ -7,6 +7,7 @@ using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Services.Pedidos;
+using TiendaApi.Apis.Utils.Pagination;
 
 namespace TiendaApi.Apis.Controllers;
 
@@ -47,12 +48,22 @@ public class PedidosController(IPedidosService service) : ControllerBase
     [ProducesResponseType(typeof(PagedResult<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetAllPedidosPaged([FromQuery] int page = 1, [FromQuery] int size = 10)
+    public async Task<IActionResult> GetAllPedidosPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 10,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? direction = null)
     {
         var resultado = await service.FindAllPagedAsync(page - 1, size);
 
         return resultado.Match(
-            onSuccess: pedidos => Ok(pedidos),
+            onSuccess: pedidos =>
+            {
+                var linkHeader = PaginationLinksHelper.CreateLinkHeader(pedidos, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader))
+                    Response.Headers.Append("Link", linkHeader);
+                return Ok(pedidos);
+            },
             onFailure: error => StatusCode(500, new { message = error.Message })
         );
     }
@@ -195,7 +206,11 @@ public class PedidosController(IPedidosService service) : ControllerBase
     [Authorize]
     [ProducesResponseType(typeof(PagedResult<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetMyPedidosPaged([FromQuery] int page = 1, [FromQuery] int size = 10)
+    public async Task<IActionResult> GetMyPedidosPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 10,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? direction = null)
     {
         if (User?.Identity == null || !User.Identity.IsAuthenticated)
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
@@ -208,7 +223,13 @@ public class PedidosController(IPedidosService service) : ControllerBase
         var resultado = await service.FindMyPedidosAsync(userId, page - 1, size);
 
         return resultado.Match(
-            onSuccess: pedidos => Ok(pedidos),
+            onSuccess: pedidos =>
+            {
+                var linkHeader = PaginationLinksHelper.CreateLinkHeader(pedidos, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader))
+                    Response.Headers.Append("Link", linkHeader);
+                return Ok(pedidos);
+            },
             onFailure: error => StatusCode(500, new { message = error.Message })
         );
     }
