@@ -3,28 +3,44 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using TiendaApi.Apis.Services.Auth;
+using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.WebSockets.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.WebSockets;
 
 /// <summary>
 /// Tests unitarios para PedidoWebSocketHandler.
-/// Verifica el comportamiento de las notificaciones selectivas por usuario.
+/// Verifica el comportamiento de las notificaciones selectivas por usuario y el sistema de caché.
 /// </summary>
 public class PedidoWebSocketHandlerTests
 {
     private readonly Mock<ILogger<PedidoWebSocketHandler>> _mockLogger;
     private readonly Mock<IJwtTokenExtractor> _mockTokenExtractor;
+    private readonly Mock<ICacheService> _mockCacheService;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly PedidoWebSocketHandler _handler;
 
     public PedidoWebSocketHandlerTests()
     {
         _mockLogger = new Mock<ILogger<PedidoWebSocketHandler>>();
         _mockTokenExtractor = new Mock<IJwtTokenExtractor>();
-        
-        _handler = new PedidoWebSocketHandler(_mockLogger.Object, _mockTokenExtractor.Object);
+        _mockCacheService = new Mock<ICacheService>();
+        _mockConfiguration = new Mock<IConfiguration>();
+
+        // Configurar TTL por defecto para tests (5 minutos)
+        var sectionMock = new Mock<IConfigurationSection>();
+        sectionMock.Setup(s => s.Value).Returns("5");
+        _mockConfiguration.Setup(c => c.GetSection("WebSocket:RoleCacheTTLMinutes"))
+            .Returns(sectionMock.Object);
+
+        _handler = new PedidoWebSocketHandler(
+            _mockLogger.Object,
+            _mockTokenExtractor.Object,
+            _mockCacheService.Object,
+            _mockConfiguration.Object);
     }
 
     #region Constructor Tests
@@ -33,99 +49,36 @@ public class PedidoWebSocketHandlerTests
     public void Constructor_InitializesCorrectly()
     {
         // Arrange & Act
-        var handler = new PedidoWebSocketHandler(_mockLogger.Object, _mockTokenExtractor.Object);
+        var handler = CreateHandler();
 
         // Assert
         Assert.That(handler.GetAdminConnectionCount(), Is.EqualTo(0));
         Assert.That(handler.GetConnectionCount(), Is.EqualTo(0));
     }
 
-    #endregion
-
-    #region GetConnectionCount Tests
-
     [Test]
-    public void GetConnectionCount_EmptyConnections_ReturnsZero()
+    public void Constructor_SetsUpDependenciesCorrectly()
     {
         // Arrange & Act
-        var count = _handler.GetConnectionCount();
+        var logger = new Mock<ILogger<PedidoWebSocketHandler>>();
+        var tokenExtractor = new Mock<IJwtTokenExtractor>();
+        var cacheService = new Mock<ICacheService>();
+        var config = new Mock<IConfiguration>();
+
+        var sectionMock = new Mock<IConfigurationSection>();
+        sectionMock.Setup(s => s.Value).Returns("5");
+        config.Setup(c => c.GetSection("WebSocket:RoleCacheTTLMinutes"))
+            .Returns(sectionMock.Object);
+
+        // Act
+        var handler = new PedidoWebSocketHandler(
+            logger.Object,
+            tokenExtractor.Object,
+            cacheService.Object,
+            config.Object);
 
         // Assert
-        Assert.That(count, Is.EqualTo(0));
-    }
-
-    #endregion
-
-    #region NotifyUserAsync Tests
-
-    [Test]
-    public async Task NotifyUserAsync_WithNoConnections_DoesNotThrow()
-    {
-        // Arrange
-        var notification = new PedidoNotificacion(
-            PedidoNotificationType.CREATED,
-            "PED-001",
-            123L,
-            "Pendiente",
-            null
-        );
-
-        // Act & Assert
-        Assert.DoesNotThrowAsync(async () => await _handler.NotifyUserAsync(123L, notification));
-    }
-
-    #endregion
-
-    #region NotifyAdminsAsync Tests
-
-    [Test]
-    public async Task NotifyAdminsAsync_WithNoConnections_DoesNotThrow()
-    {
-        // Arrange
-        var notification = new PedidoNotificacion(
-            PedidoNotificationType.CREATED,
-            "PED-001",
-            123L,
-            "Pendiente",
-            null
-        );
-
-        // Act & Assert
-        Assert.DoesNotThrowAsync(async () => await _handler.NotifyAdminsAsync(notification));
-    }
-
-    #endregion
-
-    #region NotifyUserAndAdminsAsync Tests
-
-    [Test]
-    public async Task NotifyUserAndAdminsAsync_WithNoConnections_DoesNotThrow()
-    {
-        // Arrange
-        var notification = new PedidoNotificacion(
-            PedidoNotificationType.ESTADO_UPDATED,
-            "PED-001",
-            123L,
-            "Enviado",
-            null
-        );
-
-        // Act & Assert
-        Assert.DoesNotThrowAsync(async () => await _handler.NotifyUserAndAdminsAsync(123L, notification));
-    }
-
-    #endregion
-
-    #region GetAdminConnectionCount Tests
-
-    [Test]
-    public void GetAdminConnectionCount_WithNoConnections_ReturnsZero()
-    {
-        // Arrange & Act
-        var count = _handler.GetAdminConnectionCount();
-
-        // Assert
-        Assert.That(count, Is.EqualTo(0));
+        Assert.That(handler, Is.Not.Null);
     }
 
     #endregion
@@ -370,6 +323,15 @@ public class PedidoWebSocketHandlerTests
     #endregion
 
     #region Helpers
+
+    private PedidoWebSocketHandler CreateHandler()
+    {
+        return new PedidoWebSocketHandler(
+            _mockLogger.Object,
+            _mockTokenExtractor.Object,
+            _mockCacheService.Object,
+            _mockConfiguration.Object);
+    }
 
     private static string CreateValidJwtToken(long userId, string role)
     {

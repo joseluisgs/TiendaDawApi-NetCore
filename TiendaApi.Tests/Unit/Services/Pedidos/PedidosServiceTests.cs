@@ -74,7 +74,20 @@ public class PedidosServiceTests
 
         _mockConfiguration.Setup(c => c["Smtp:AdminEmail"]).Returns("admin@test.com");
 
+        var wsSectionMock = new Mock<IConfigurationSection>();
+        wsSectionMock.Setup(s => s.Value).Returns("5");
+        _mockConfiguration.Setup(c => c.GetSection("WebSocket:RoleCacheTTLMinutes"))
+            .Returns(wsSectionMock.Object);
+
+        _mockWebSocketHandler = new Mock<PedidoWebSocketHandler>(
+            Mock.Of<ILogger<PedidoWebSocketHandler>>(),
+            Mock.Of<IJwtTokenExtractor>(),
+            _mockCacheService.Object,
+            _mockConfiguration.Object);
+
         _mockPedidoValidator.Setup(v => v.ValidateAsync(It.IsAny<PedidoRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+        _mockItemValidator.Setup(v => v.ValidateAsync(It.IsAny<PedidoItemRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
         _mockItemValidator.Setup(v => v.ValidateAsync(It.IsAny<PedidoItemRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
