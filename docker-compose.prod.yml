@@ -1,0 +1,191 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: tienda-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tienda}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin123}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-tienda}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tienda-network
+    deploy:
+      resources:
+        limits:
+          cpus: '${POSTGRES_CPUS:-1}'
+          memory: "${POSTGRES_MEMORY:-512M}"
+        reservations:
+          cpus: '${POSTGRES_CPUS_RESERVED:-0.5}'
+          memory: "${POSTGRES_MEMORY_RESERVED:-256M}"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongodb:
+    image: mongo:7
+    container_name: tienda-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-admin123}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-tienda}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/${MONGO_DB:-tienda} --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tienda-network
+    deploy:
+      resources:
+        limits:
+          cpus: '${MONGO_CPUS:-1}'
+          memory: "${MONGO_MEMORY:-512M}"
+        reservations:
+          cpus: '${MONGO_CPUS_RESERVED:-0.5}'
+          memory: "${MONGO_MEMORY_RESERVED:-256M}"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: tienda-redis
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory "${REDIS_MAXMEMORY:-256mb}"
+      --maxmemory-policy allkeys-lru
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tienda-network
+    deploy:
+      resources:
+        limits:
+          cpus: '${REDIS_CPUS:-0.5}'
+          memory: "${REDIS_MEMORY:-256M}"
+        reservations:
+          cpus: '${REDIS_CPUS_RESERVED:-0.25}'
+          memory: "${REDIS_MEMORY_RESERVED:-128M}"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api:
+    build:
+      context: ./TiendaApi.Apis
+      dockerfile: Dockerfile
+      args:
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
+    container_name: tienda-api
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-tienda};Username=${POSTGRES_USER:-admin};Password=${POSTGRES_PASSWORD:-admin123}
+      - ConnectionStrings__MongoDB=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Key=${JWT_KEY:-ChangeThisToASecureKeyAtLeast32CharactersLong}
+      - Jwt__Issuer=${JWT_ISSUER:-TiendaApi}
+      - Jwt__Audience=${JWT_AUDIENCE:-TiendaApi}
+      - Jwt__ExpireMinutes=${JWT_EXPIRE_MINUTES:-30}
+      - MongoDbSettings__ConnectionString=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin
+      - MongoDbSettings__DatabaseName=${MONGO_DB:-tienda}
+      - MongoDbSettings__PedidosCollection=${MONGO_PEDIDOS_COLLECTION:-pedidos}
+      - Smtp__Host=${SMTP_HOST:-smtp.gmail.com}
+      - Smtp__Port=${SMTP_PORT:-587}
+      - Smtp__Username=${SMTP_USERNAME:-}
+      - Smtp__Password=${SMTP_PASSWORD:-}
+      - Smtp__FromEmail=${SMTP_FROM_EMAIL:-noreply@tienda.com}
+      - Smtp__FromName=${SMTP_FROM_NAME:-TiendaApi Notifications}
+      - Smtp__AdminEmail=${SMTP_ADMIN_EMAIL:-admin@tienda.com}
+      - Smtp__EnableSsl=${SMTP_ENABLE_SSL:-true}
+      - Cache__DefaultExpirationMinutes=${CACHE_DEFAULT_EXPIRATION_MINUTES:-5}
+      - Cache__ProductoCacheTTLMinutes=${CACHE_PRODUCTO_TTL_MINUTES:-10}
+      - WebSocket__RoleCacheTTLMinutes=${WEBSOCKET_ROLE_CACHE_TTL_MINUTES:-3}
+      - Storage__UploadPath=${STORAGE_UPLOAD_PATH:-uploads}
+      - Storage__MaxFileSize=${STORAGE_MAX_FILE_SIZE:-5242880}
+    ports:
+      - "${API_PORT:-5000}:8080"
+    volumes:
+      - tienda-images:/app/wwwroot/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tienda-network
+    deploy:
+      resources:
+        limits:
+          cpus: '${API_CPUS:-1}'
+          memory: "${API_MEMORY:-512M}"
+        reservations:
+          cpus: '${API_CPUS_RESERVED:-0.5}'
+          memory: "${API_MEMORY_RESERVED:-256M}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tienda-api.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.tienda-api.tls.certresolver=letsencrypt"
+
+networks:
+  tienda-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  postgres-data:
+    driver: local
+  mongodb-data:
+    driver: local
+  redis-data:
+    driver: local
+  tienda-images:
+    driver: local

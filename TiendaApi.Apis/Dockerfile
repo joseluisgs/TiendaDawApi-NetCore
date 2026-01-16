@@ -2,6 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+# Build argument
+ARG BUILD_CONFIGURATION=Release
+
 # Copy solution file first (works with both .sln and .slnx)
 COPY *.slnx ./
 COPY TiendaApi.Apis/*.csproj ./TiendaApi.Apis/
@@ -15,7 +18,7 @@ COPY TiendaApi.Apis/ ./TiendaApi.Apis/
 COPY TiendaApi.Tests/ ./TiendaApi.Tests/
 
 # Build the application
-RUN dotnet publish TiendaApi.Apis/TiendaApi.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish TiendaApi.Apis/TiendaApi.csproj -c $BUILD_CONFIGURATION -o /app/publish --no-restore
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
