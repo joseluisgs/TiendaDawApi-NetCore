@@ -1,15 +1,19 @@
 using FluentAssertions;
+using CSharpFunctionalExtensions;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 using TiendaApi.Apis.Data;
 using TiendaApi.Apis.Dtos.Productos;
+using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
@@ -110,7 +114,17 @@ public class ProductoServiceIntegrationTests
         services.AddScoped<IProductoService, ProductoService>();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
         services.AddScoped<ICacheService, MemoryCacheService>();
-        services.AddScoped<IStorageService, FileSystemStorageService>();
+        services.AddScoped<IStorageService>(sp =>
+        {
+            var mockStorage = new Mock<IStorageService>();
+            mockStorage.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
+                .ReturnsAsync(Result.Success<string, DomainError>(System.IO.Path.Combine("images", "productos", "test.jpg")));
+            mockStorage.Setup(s => s.DeleteFileAsync(It.IsAny<string>()))
+                .ReturnsAsync(Result.Success<bool, DomainError>(true));
+            mockStorage.Setup(s => s.FileExists(It.IsAny<string>()))
+                .Returns(true);
+            return mockStorage.Object;
+        });
         services.AddScoped<IEmailService, MemoryEmailService>();
         services.AddScoped<ProductoWebSocketHandler>();
 

@@ -428,6 +428,10 @@ app.Map("/ws/v1/pedidos", async context =>
     }
 });
 
+// Archivos estáticos (wwwroot)
+Log.Information("🖼️ Habilitando archivos estáticos desde wwwroot...");
+app.UseStaticFiles();
+
 // Controladores
 Log.Information("🎯 Mapeando controladores...");
 app.MapControllers();
@@ -477,7 +481,7 @@ catch (Exception ex)
 // ============================================================================
 
 var storagePath = System.IO.Path.Combine(app.Environment.ContentRootPath,
-    builder.Configuration["Storage:UploadPath"] ?? "images/uploads");
+    "wwwroot", builder.Configuration["Storage:UploadPath"] ?? "images/uploads");
 var storageDirectory = new DirectoryInfo(storagePath);
 
 if (isDevelopment)

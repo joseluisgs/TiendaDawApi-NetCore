@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -16,12 +17,15 @@ namespace TiendaApi.Tests.Unit.Services.Storage;
 public class FileSystemStorageServiceTests
 {
     private readonly Mock<ILogger<FileSystemStorageService>> _mockLogger;
+    private readonly Mock<IWebHostEnvironment> _mockEnv;
     private readonly IConfiguration _configuration;
     private readonly FileSystemStorageService _storageService;
 
     public FileSystemStorageServiceTests()
     {
         _mockLogger = new Mock<ILogger<FileSystemStorageService>>();
+        _mockEnv = new Mock<IWebHostEnvironment>();
+        _mockEnv.Setup(e => e.ContentRootPath).Returns(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tienda-tests"));
 
         var inMemorySettings = new Dictionary<string, string>
         {
@@ -35,7 +39,7 @@ public class FileSystemStorageServiceTests
             .AddInMemoryCollection(inMemorySettings!)
             .Build();
 
-        _storageService = new FileSystemStorageService(_configuration, _mockLogger.Object);
+        _storageService = new FileSystemStorageService(_configuration, _mockLogger.Object, _mockEnv.Object);
     }
 
     #region SaveFileAsync Tests

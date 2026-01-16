@@ -22,7 +22,7 @@ public class FileSystemStorageService : IStorageService
     private readonly string[] _allowedContentTypes;
     private readonly ILogger<FileSystemStorageService> _logger;
 
-    public FileSystemStorageService(IConfiguration configuration, ILogger<FileSystemStorageService> logger)
+    public FileSystemStorageService(IConfiguration configuration, ILogger<FileSystemStorageService> logger, IWebHostEnvironment env)
     {
         _logger = logger;
 
@@ -34,8 +34,9 @@ public class FileSystemStorageService : IStorageService
         _allowedContentTypes = configuration.GetSection("Storage:AllowedContentTypes").Get<string[]>()
             ?? ["image/jpeg", "image/png", "image/gif"];
 
-        // Ruta absoluta desde ContentRootPath
-        _rootPath = System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "images");
+        // Ruta absoluta: usar WebHostEnvironment.ContentRootPath + wwwroot/images
+        // Esto funciona tanto en desarrollo como en Docker
+        _rootPath = System.IO.Path.Combine(env.ContentRootPath, "wwwroot", "images");
 
         // Crear directorio si no existe
         if (!Directory.Exists(_rootPath))
