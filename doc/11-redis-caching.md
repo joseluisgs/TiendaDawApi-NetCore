@@ -1,4 +1,6 @@
-# 11. Redis Caching
+# 11. Cache y Redis
+
+La gestión eficiente de datos en aplicaciones web es crucial para el rendimiento y la escalabilidad. El uso de un sistema de cache. Una Cache es una capa intermedia de almacenamiento que guarda datos temporalmente para acelerar el acceso a ellos. Como solución de cache distribuido, tenemos a Redis.
 
 Redis es un almacen de datos en memoria de alta velocidad (in-memory data store) usado como cache distribuido. En arquitecturas de alta disponibilidad, Redis es esencial para reducir la latencia y la carga en la base de datos principal.
 
