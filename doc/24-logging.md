@@ -1,10 +1,10 @@
-# 17. Logging y Monitoreo
+# 24. Logging y Monitoreo
 
 Este documento explica cómo implementar logging estructurado, monitoreo y telemetría en una API .NET usando Serilog, Application Insights y OpenTelemetry.
 
 ---
 
-## 17.1. ¿Por qué Logging y Monitoreo?
+## 24.1. ¿Por qué Logging y Monitoreo?
 
 El **logging** registra eventos de la aplicación para debugging y auditoría. El **monitoreo** supervisa la salud y rendimiento de la aplicación en producción.
 
@@ -47,7 +47,7 @@ flowchart LR
 
 ---
 
-## 17.2. Logging Estructurado con Serilog
+## 24.2. Logging Estructurado con Serilog
 
 ### ¿Qué es Logging Estructurado?
 
@@ -160,7 +160,7 @@ app.Run();
 
 ---
 
-## 17.2.1. Configuración desde appsettings.json
+## 24.2.1. Configuración desde appsettings.json
 
 En lugar de configurar Serilog directamente en código, es recomendable usar `appsettings.json` para mayor flexibilidad y возможность de cambiar configuraciones sin recompilar.
 
@@ -375,7 +375,7 @@ builder.Services.AddLogging(loggingBuilder =>
 
 ---
 
-## 17.3. Logs en Servicios
+## 24.3. Logs en Servicios
 
 ```csharp
 using Microsoft.Extensions.Logging;
@@ -488,7 +488,7 @@ public class ProductoService
 
 ---
 
-## 17.4. Correlation ID (Trazabilidad de Requests)
+## 24.4. Correlation ID (Trazabilidad de Requests)
 
 ```csharp
 // CorrelationIdMiddleware.cs
@@ -550,7 +550,7 @@ public class ProductoService
 
 ---
 
-## 17.5. Métricas con Application Insights
+## 24.5. Métricas con Application Insights
 
 ### Instalación
 
@@ -641,7 +641,7 @@ public class MetricsService
 
 ---
 
-## 17.6. OpenTelemetry (Alternativa Moderna)
+## 24.6. OpenTelemetry (Alternativa Moderna)
 
 ### Instalación
 
@@ -688,7 +688,7 @@ builder.Services.AddOpenTelemetryTracing(options =>
 
 ---
 
-## 17.7. Health Checks
+## 24.7. Health Checks
 
 ### Health Checks Básicos
 
@@ -760,7 +760,7 @@ public class CustomHealthCheck : IHealthCheck
 
 ---
 
-## 17.8. Resumen y Buenas Prácticas
+## 24.8. Resumen y Buenas Prácticas
 
 ### Estructura de Logging
 

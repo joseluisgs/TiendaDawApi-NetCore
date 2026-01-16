@@ -1,10 +1,10 @@
-# 14. Docker y CI/CD con GitHub Actions
+# 23. Docker y CI/CD con GitHub Actions
 
 Este documento explica cómo containerizar la aplicación con Docker y automatizar el proceso de build, test y deployment con GitHub Actions.
 
 ---
 
-## 14.1. Conceptos Fundamentales
+## 23.1. Conceptos Fundamentales
 
 ### ¿Qué es un Contenedor?
 
@@ -39,7 +39,7 @@ flowchart TB
 
 ---
 
-## 14.2. ¿Qué es CI/CD?
+## 23.2. ¿Qué es CI/CD?
 
 **CI/CD** son las siglas de **Continuous Integration** (Integración Continua) y **Continuous Deployment/Delivery** (Despliegue Continuo). Es una práctica moderna de desarrollo de software que automatiza la construcción, prueba y entrega de aplicaciones.
 
@@ -84,7 +84,7 @@ flowchart LR
 
 ---
 
-## 14.3. ¿Qué es GitHub Actions?
+## 23.3. ¿Qué es GitHub Actions?
 
 **GitHub Actions** es una plataforma de automatización de CI/CD integrada en GitHub que permite automatizar flujos de trabajo directamente desde el repositorio.
 
@@ -133,7 +133,7 @@ flowchart TD
 
 ---
 
-## 14.4. Archivo Dockerfile
+## 23.4. Archivo Dockerfile
 
 El **Dockerfile** es un archivo de texto que contiene instrucciones para construir una imagen Docker. Cada instrucción crea una capa en la imagen.
 
@@ -293,7 +293,7 @@ docker-compose*
 
 ---
 
-## 14.5. Docker Compose
+## 23.5. Docker Compose
 
 **Docker Compose** es una herramienta para definir y ejecutar aplicaciones Docker multi-contenedor. Se usa un archivo YAML para configurar todos los servicios.
 
@@ -410,7 +410,7 @@ volumes:
 
 ---
 
-## 14.6. GitHub Actions Workflow Completo
+## 23.6. GitHub Actions Workflow Completo
 
 El workflow de CI/CD define qué sucede automáticamente cuando se hace push o se crea un pull request.
 
@@ -613,7 +613,7 @@ Los **secrets** son variables encriptadas para datos sensibles como claves SSH, 
 
 ---
 
-## 14.7. Resumen y Buenas Prácticas
+## 23.7. Resumen y Buenas Prácticas
 
 ### Flujo Completo de CI/CD
 

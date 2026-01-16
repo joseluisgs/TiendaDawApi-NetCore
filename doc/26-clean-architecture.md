@@ -1,10 +1,10 @@
-# 20. Clean Architecture y CQRS
+# 26. Clean Architecture y CQRS
 
 Este documento explica cómo estructurar una API .NET usando principios de Clean Architecture y el patrón CQRS para código mantenible y escalable.
 
 ---
 
-## 20.1. ¿Qué es Clean Architecture?
+## 26.1. ¿Qué es Clean Architecture?
 
 **Clean Architecture** es un patrón de diseño que separa las preocupaciones en capas, manteniendo el núcleo de negocio independiente de detalles de implementación como frameworks, bases de datos o UI.
 
@@ -52,7 +52,7 @@ flowchart BT
 
 ---
 
-## 20.2. Estructura del Proyecto
+## 26.2. Estructura del Proyecto
 
 ```
 TiendaApi/
@@ -108,7 +108,7 @@ TiendaApi/
 
 ---
 
-## 20.3. Entities (Domain Layer)
+## 26.3. Entities (Domain Layer)
 
 ```csharp
 namespace TiendaApi.Core.Domain.Entities;
@@ -207,7 +207,7 @@ public class Categoria : Entity
 
 ---
 
-## 20.4. CQRS - Command Query Responsibility Segregation
+## 26.4. CQRS - Command Query Responsibility Segregation
 
 **CQRS** separa las operaciones de lectura (Query) de las operaciones de escritura (Command), permitiendo optimizaciones independientes.
 
@@ -410,7 +410,7 @@ public class ValidationBehavior<TRequest, TResponse>
 
 ---
 
-## 20.5. Repository con Especificaciones
+## 26.5. Repository con Especificaciones
 
 ```csharp
 namespace TiendaApi.Core.Domain.Interfaces;
@@ -481,7 +481,7 @@ public interface IProductoReadRepository
 
 ---
 
-## 20.6. Resumen y Buenas Prácticas
+## 26.6. Resumen y Buenas Prácticas
 
 ### Principios de Clean Architecture
 

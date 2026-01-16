@@ -1,10 +1,10 @@
-# 15. Testing con NUnit
+# 21. Testing con NUnit
 
 Este documento explica cómo implementar tests unitarios y de integración en una API .NET usando NUnit, FluentAssertions, Moq y TestContainers.
 
 ---
 
-## 15.1. ¿Qué es Testing?
+## 21.1. ¿Qué es Testing?
 
 **Testing** es el proceso de verificar que el código funciona correctamente. En lugar de esperar a que los usuarios encuentren errores, los tests automatizados detectan problemas antes de llegar a producción.
 
@@ -35,7 +35,7 @@ flowchart LR
 
 ---
 
-## 15.2. Tipos de Tests
+## 21.2. Tipos de Tests
 
 No todos los tests son iguales. Cada tipo tiene un propósito diferente:
 
@@ -83,7 +83,7 @@ Un test unitario verifica que una **única unidad** de código funciona correcta
 
 ---
 
-## 15.3. Frameworks de Testing en .NET
+## 21.3. Frameworks de Testing en .NET
 
 .NET tiene tres frameworks principales de testing:
 
@@ -107,7 +107,7 @@ En este proyecto usamos **NUnit** por su sintaxis clara y atributos descriptivos
 
 ---
 
-## 15.4. Estructura del Proyecto de Tests
+## 21.4. Estructura del Proyecto de Tests
 
 ```
 TiendaApi.Tests/
@@ -176,7 +176,7 @@ TiendaApi.Tests/
 
 ---
 
-## 15.5. Tests en Paralelo vs Secuenciales
+## 21.5. Tests en Paralelo vs Secuenciales
 
 NUnit puede ejecutar tests en paralelo para acelerar el tiempo de ejecución.
 
@@ -313,7 +313,7 @@ public class SequentialIntegrationTests
 
 ---
 
-## 15.6. TestContainers
+## 21.6. TestContainers
 
 **TestContainers** es una librería que permite crear contenedores Docker durante los tests de integración. Esto proporciona bases de datos reales y otros servicios en entornos aislados.
 
@@ -632,7 +632,7 @@ public class GlobalTestFixture
 
 ---
 
-## 15.7. Anatomy de un Test Unitario
+## 21.7. Anatomy de un Test Unitario
 
 Un test unitario sigue el patrón **Arrange-Act-Assert**:
 
@@ -715,7 +715,7 @@ flowchart TD
 
 ---
 
-## 15.8. NUnit Basics
+## 21.8. NUnit Basics
 
 ### Atributos Principales
 
@@ -822,7 +822,7 @@ public class ProductoServiceTests
 
 ---
 
-## 15.9. FluentAssertions
+## 21.9. FluentAssertions
 
 **FluentAssertions** permite escribir assertions de forma más legible y con mensajes de error claros.
 
@@ -914,7 +914,7 @@ public class FluentAssertionsExamples
 
 ---
 
-## 15.10. Moq - Creando Mocks
+## 21.10. Moq - Creando Mocks
 
 **Moq** es una librería que permite crear objetos falsos (mocks) para aislar el código bajo test.
 
@@ -1060,7 +1060,7 @@ public class MoqExamples
 
 ---
 
-## 15.11. Tests de Controladores
+## 21.11. Tests de Controladores
 
 Los tests de controladores verifican que los endpoints de la API funcionan correctamente usando `HttpClient` para simular requests.
 
@@ -1531,7 +1531,7 @@ public class ProductosControllerTests
 
 ---
 
-## 15.12. Resumen y Buenas Prácticas
+## 21.12. Resumen y Buenas Prácticas
 
 ### Estructura de un Buen Test
 

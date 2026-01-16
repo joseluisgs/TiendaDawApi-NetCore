@@ -1,10 +1,10 @@
-# 18. Documentación y Versionado de APIs
+# 19. Documentación y Versionado de APIs
 
 Este documento explica cómo documentar APIs con Swagger/OpenAPI y gestionar versiones de API para mantener compatibilidad.
 
 ---
 
-## 18.1. ¿Por qué Documentar y Versionar APIs?
+## 19.1. ¿Por qué Documentar y Versionar APIs?
 
 ### Importancia de la Documentación
 
@@ -34,7 +34,7 @@ flowchart LR
 
 ---
 
-## 18.2. Swagger/OpenAPI
+## 19.2. Swagger/OpenAPI
 
 ### Instalación
 
@@ -127,7 +127,7 @@ app.Run();
 
 ---
 
-## 18.3. Anotaciones Swagger
+## 19.3. Anotaciones Swagger
 
 ### Documentación de Endpoints
 
@@ -360,7 +360,7 @@ public class PagedResponse<T>
 
 ---
 
-## 18.4. Versionado de APIs
+## 19.4. Versionado de APIs
 
 ### Estrategias de Versionado
 
@@ -513,7 +513,7 @@ app.UseSwaggerUI(options =>
 
 ---
 
-## 18.5. OpenAPI Avanzado
+## 19.5. OpenAPI Avanzado
 
 ### Schemas Personalizados
 
@@ -611,7 +611,7 @@ public class ErrorDetail
 
 ---
 
-## 18.6. Resumen y Buenas Prácticas
+## 19.6. Resumen y Buenas Prácticas
 
 ### Documentación
 

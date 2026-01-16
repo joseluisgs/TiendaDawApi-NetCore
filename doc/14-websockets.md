@@ -1,10 +1,10 @@
-# 16. WebSockets y Comunicación en Tiempo Real
+# 14. WebSockets y Comunicación en Tiempo Real
 
 Este documento explica cómo implementar comunicación bidireccional en tiempo real usando WebSockets nativamente en ASP.NET Core, comparando con SignalR como alternativa.
 
 ---
 
-## 16.1. ¿Qué es la Comunicación en Tiempo Real?
+## 14.1. ¿Qué es la Comunicación en Tiempo Real?
 
 La comunicación en tiempo real permite que el servidor envíe datos a los clientes sin que estos lo soliciten, eliminando el patrón tradicional de request-response.
 
@@ -37,7 +37,7 @@ flowchart LR
 
 ---
 
-## 16.2. WebSocket vs SignalR - Comparación
+## 14.2. WebSocket vs SignalR - Comparación
 
 ### Diferencias Fundamentales
 
@@ -116,7 +116,7 @@ flowchart TD
 
 ---
 
-## 16.3. WebSocket Nativo en ASP.NET Core
+## 14.3. WebSocket Nativo en ASP.NET Core
 
 ### Configuración de WebSockets
 
@@ -165,7 +165,7 @@ app.Run();
 
 ---
 
-## 16.4. Connection Manager
+## 14.4. Connection Manager
 
 ```csharp
 using System.Collections.Concurrent;
@@ -256,7 +256,7 @@ public class WebSocketMessage
 
 ---
 
-## 16.5. WebSocket Handler
+## 14.5. WebSocket Handler
 
 ```csharp
 public class WebSocketHandler
@@ -403,7 +403,7 @@ public class WebSocketHandler
 
 ---
 
-## 16.6. Servicio de Notificaciones WebSocket
+## 14.6. Servicio de Notificaciones WebSocket
 
 ```csharp
 namespace TiendaApi.Core.Services;
@@ -475,7 +475,7 @@ public class WebSocketNotificationService : IWebSocketNotificationService
 
 ---
 
-## 16.7. Integración con Servicios de Negocio
+## 14.7. Integración con Servicios de Negocio
 
 ```csharp
 public class PedidoService(
@@ -541,7 +541,7 @@ public class PedidoService(
 
 ---
 
-## 16.8. Cliente JavaScript WebSocket
+## 14.8. Cliente JavaScript WebSocket
 
 ```html
 <script>
@@ -668,7 +668,7 @@ wsClient.connect();
 
 ---
 
-## 16.9. SignalR como Alternativa
+## 14.9. SignalR como Alternativa
 
 SignalR proporciona una abstracción con características adicionales:
 
@@ -716,7 +716,7 @@ flowchart TD
 
 ---
 
-## 16.9.1. SignalR: Hub Equivalente al Connection Manager
+## 14.9.1. SignalR: Hub Equivalente al Connection Manager
 
 SignalR incluye gestión de conexiones automáticamente, eliminando la necesidad de un Connection Manager manual.
 
@@ -825,7 +825,7 @@ app.Run();
 
 ---
 
-## 16.9.2. SignalR: Servicio de Notificaciones Equivalente
+## 14.9.2. SignalR: Servicio de Notificaciones Equivalente
 
 ```csharp
 namespace TiendaApi.Core.Services;
@@ -925,7 +925,7 @@ builder.Services.AddSingleton<ISignalRNotificationService, SignalRNotificationSe
 
 ---
 
-## 16.9.3. SignalR: Integración con Servicios de Negocio
+## 14.9.3. SignalR: Integración con Servicios de Negocio
 
 ```csharp
 public class PedidoService(
@@ -998,7 +998,7 @@ public class PedidoService(
 
 ---
 
-## 16.9.4. SignalR: Cliente JavaScript
+## 14.9.4. SignalR: Cliente JavaScript
 
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
@@ -1124,7 +1124,7 @@ client.connect();
 
 ---
 
-## 16.9.5. SignalR: Persistencia y Escalabilidad
+## 14.9.5. SignalR: Persistencia y Escalabilidad
 
 Para escalar SignalR en múltiples instancias, usar Redis Backplane:
 
@@ -1191,7 +1191,7 @@ flowchart TD
 
 ---
 
-## 16.10. Resumen y Buenas Prácticas
+## 14.10. Resumen y Buenas Prácticas
 
 ### Cuándo Usar Qué
 
