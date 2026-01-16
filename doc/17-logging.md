@@ -38,12 +38,12 @@ flowchart LR
 
 ### Problemas sin Logging/Monitoreo
 
-| Problema | Impacto |
-|----------|---------|
-| Errores no detectados | Tiempo de inactividad |
-| Sin trazabilidad | Dificultad para debuggear |
-| Sin métricas | Decisiones sin datos |
-| Sin alertas | Respuesta lenta a incidentes |
+| Problema              | Impacto                      |
+| --------------------- | ---------------------------- |
+| Errores no detectados | Tiempo de inactividad        |
+| Sin trazabilidad      | Dificultad para debuggear    |
+| Sin métricas          | Decisiones sin datos         |
+| Sin alertas           | Respuesta lenta a incidentes |
 
 ---
 
@@ -156,6 +156,221 @@ app.UseSerilogRequestLogging(options =>
 app.UseSerilogLogContext();  // Restaurar contexto de logging
 
 app.Run();
+```
+
+---
+
+## 17.2.1. Configuración desde appsettings.json
+
+En lugar de configurar Serilog directamente en código, es recomendable usar `appsettings.json` para mayor flexibilidad y возможность de cambiar configuraciones sin recompilar.
+
+### appsettings.json
+
+```json
+{
+  "Serilog": {
+    "Using": [
+      "Serilog.Sinks.Console",
+      "Serilog.Sinks.File",
+      "Serilog.Sinks.PostgreSQL",
+      "Serilog.Exceptions"
+    ],
+    "MinimumLevel": {
+      "Default": "Debug",
+      "Override": {
+        "Microsoft": "Information",
+        "Microsoft.AspNetCore": "Warning",
+        "System": "Warning"
+      }
+    },
+    "Enrich": [
+      "FromLogContext",
+      "WithExceptionDetails",
+      {
+        "Name": "WithProperty",
+        "Args": { "Name": "Application", "Value": "TiendaApi" }
+      },
+      {
+        "Name": "WithProperty",
+        "Args": { "Name": "Environment", "Value": "${Environment}" }
+      }
+    ],
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/api-.log",
+          "rollingInterval": "Day",
+          "rollOnFileSizeLimit": true,
+          "fileSizeLimitBytes": "10000000",
+          "retainedFileCountLimit": "30",
+          "outputTemplate": "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/api-json-.log",
+          "rollingInterval": "Hour",
+          "formatter": "Serilog.Formatting.Json.JsonFormatter, Serilog"
+        }
+      },
+      {
+        "Name": "Seq",
+        "Args": {
+          "serverUrl": "http://localhost:5341"
+        }
+      }
+    ],
+    "Properties": {
+      "Application": "TiendaApi",
+      "Environment": "Development"
+    }
+  }
+}
+```
+
+### Configuración en Program.cs
+
+```csharp
+using Serilog;
+using Serilog.Events;
+using Serilog.Exceptions;
+using Serilog.Settings.Configuration;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Configurar Serilog desde appsettings.json
+var serilogConfig = builder.Configuration.GetSection("Serilog");
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(serilogConfig)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+// El resto de la configuración...
+var app = builder.Build();
+app.Run();
+```
+
+### Sobrescribir el Logger por Defecto de .NET
+
+Para que todos los servicios que usan `ILogger<T>` usen Serilog en lugar del logger por defecto:
+
+```csharp
+using Serilog;
+using Serilog.Events;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Configurar Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .Enrich.WithExceptionDetails()
+    .Enrich.WithProperty("Application", "TiendaApi")
+    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        path: "logs/api-.log",
+        rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+// Sobrescribir el logger por defecto de .NET
+builder.Host.UseSerilog(Log.Logger);
+
+// Configurar todos los loggers para usar Serilog
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.ClearProviders();  // Eliminar proveedores por defecto
+    loggingBuilder.AddSerilog(dispose: true);
+});
+
+var app = builder.Build();
+app.Run();
+```
+
+### Diferencia entre ClearProviders() y Sin Él
+
+| Opción                        | Comportamiento                         | Cuándo Usar                      |
+| ----------------------------- | -------------------------------------- | -------------------------------- |
+| **Sin ClearProviders()**      | Logger de consola + Serilog duplicados | Desarrollo, quiere ambos outputs |
+| **Con ClearProviders()**      | Solo Serilog                           | Producción, quiere control total |
+| **AddSerilog(dispose: true)** | Serilog dispose con la app             | Evita leaks de recursos          |
+
+### Configuración por Entorno
+
+```json
+// appsettings.Development.json
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Debug"
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "theme": "Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code"
+        }
+      }
+    ]
+  }
+}
+
+// appsettings.Production.json
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information"
+    },
+    "WriteTo": [
+      {
+        "Name": "File",
+        "Args": {
+          "path": "/var/log/tiendaapi/api-.log",
+          "rollingInterval": "Day"
+        }
+      },
+      {
+        "Name": "ApplicationInsights",
+        "Args": {
+          "connectionString": "${ApplicationInsights:ConnectionString}",
+          "telemetryConverter": "Serilog.Sinks.ApplicationInsights.TelemetryConverters.TraceTelemetryConverter, Serilog.Sinks.ApplicationInsights"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Proveedores de Logging en .NET
+
+.NET tiene varios proveedores de logging que pueden coexistir con Serilog:
+
+```csharp
+builder.Services.AddLogging(loggingBuilder =>
+{
+    // Eliminar proveedores por defecto
+    loggingBuilder.ClearProviders();
+
+    // Añadir Serilog
+    loggingBuilder.AddSerilog(dispose: true);
+
+    // Opcional: Añadir providers específicos
+    loggingBuilder.AddDebug();           // Output debug
+    loggingBuilder.AddEventSourceLogger(); // Event tracing
+});
 ```
 
 ---

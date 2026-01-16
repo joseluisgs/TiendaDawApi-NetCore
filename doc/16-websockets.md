@@ -26,14 +26,14 @@ flowchart LR
 
 ### ¿Cuándo Usar WebSockets?
 
-| Caso de uso | Ejemplo | مناسب |
-|-------------|---------|--------|
-| **Notificaciones push** | "Tu pedido ha sido enviado" | ✅ WebSocket |
-| **Chat en tiempo real** | Chat de soporte al cliente | ✅ WebSocket |
-| **Live updates** | Dashboard de métricas | ✅ WebSocket |
-| **Colaboración** | Editores colaborativos | ✅ WebSocket |
-| **Gaming** | Multiplayer en tiempo real | ✅ WebSocket (RAW) |
-| **API simple** | Consultas esporádicas | ❌ REST |
+| Caso de uso             | Ejemplo                     | Descripción       |
+| ----------------------- | --------------------------- | ----------------- |
+| **Notificaciones push** | "Tu pedido ha sido enviado" | ✅ WebSocket       |
+| **Chat en tiempo real** | Chat de soporte al cliente  | ✅ WebSocket       |
+| **Live updates**        | Dashboard de métricas       | ✅ WebSocket       |
+| **Colaboración**        | Editores colaborativos      | ✅ WebSocket       |
+| **Gaming**              | Multiplayer en tiempo real  | ✅ WebSocket (RAW) |
+| **API simple**          | Consultas esporádicas       | ❌ REST            |
 
 ---
 
@@ -64,17 +64,17 @@ flowchart TB
 
 ### Tabla Comparativa
 
-| Aspecto | WebSocket Nativo | SignalR |
-|---------|-----------------|---------|
-| **Protocolo** | Solo WebSocket | WebSocket + fallback |
-| **Conexión persistente** | Manual | Automática |
-| **Grupos** | Implementar tú | Integrado |
-| **Reconexión** | Manual | Automática |
-| **Serialización** | JSON manual | Automática |
-| **Rendimiento** | ✅ Mejor | ⚪ Buena |
-| **Simplicidad** | ⚠️ Más código | ✅ Más fácil |
-| **Escalabilidad** | Redis Pub/Sub manual | Redis backplane |
-| **Debugging** | Más difícil | Más fácil |
+| Aspecto                  | WebSocket Nativo     | SignalR              |
+| ------------------------ | -------------------- | -------------------- |
+| **Protocolo**            | Solo WebSocket       | WebSocket + fallback |
+| **Conexión persistente** | Manual               | Automática           |
+| **Grupos**               | Implementar tú       | Integrado            |
+| **Reconexión**           | Manual               | Automática           |
+| **Serialización**        | JSON manual          | Automática           |
+| **Rendimiento**          | ✅ Mejor              | ⚪ Buena              |
+| **Simplicidad**          | ⚠️ Más código         | ✅ Más fácil          |
+| **Escalabilidad**        | Redis Pub/Sub manual | Redis backplane      |
+| **Debugging**            | Más difícil          | Más fácil            |
 
 ### Pros y Contras
 
@@ -716,17 +716,492 @@ flowchart TD
 
 ---
 
+## 16.9.1. SignalR: Hub Equivalente al Connection Manager
+
+SignalR incluye gestión de conexiones automáticamente, eliminando la necesidad de un Connection Manager manual.
+
+```csharp
+using Microsoft.AspNetCore.SignalR;
+
+namespace TiendaApi.Core.Hubs;
+
+public class NotificacionesHub : Hub
+{
+    private readonly IHubContext<NotificacionesHub> _hubContext;
+    private readonly ILogger<NotificacionesHub> _logger;
+
+    public NotificacionesHub(
+        IHubContext<NotificacionesHub> hubContext,
+        ILogger<NotificacionesHub> logger)
+    {
+        _hubContext = hubContext;
+        _logger = logger;
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        var httpContext = Context.GetHttpContext();
+        var userId = httpContext?.Request.Query["userId"].FirstOrDefault();
+        
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
+            _logger.LogInformation("Usuario {UserId} conectado al hub", userId);
+        }
+
+        await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var httpContext = Context.GetHttpContext();
+        var userId = httpContext?.Request.Query["userId"].FirstOrDefault();
+        
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user_{userId}");
+        }
+
+        _logger.LogInformation(
+            "Conexión cerrada: {ConnectionId}, Error: {Error}",
+            Context.ConnectionId, exception?.Message);
+
+        await base.OnDisconnectedAsync(exception);
+    }
+
+    public async Task SubscribeToPedido(long pedidoId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"pedido_{pedidoId}");
+        await Clients.Caller.SendAsync("Subscribed", new
+        {
+            topic = $"pedido_{pedidoId}",
+            timestamp = DateTime.UtcNow
+        });
+    }
+
+    public async Task UnsubscribeFromPedido(long pedidoId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"pedido_{pedidoId}");
+    }
+
+    public async Task SubscribeToProducto(long productoId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"producto_{productoId}");
+    }
+
+    public async Task SubscribeToCategoria(long categoriaId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"categoria_{categoriaId}");
+    }
+}
+```
+
+### Configuración del Hub
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSignalR();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSignalR", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+var app = builder.Build();
+
+app.UseCors("AllowSignalR");
+
+app.MapHub<NotificacionesHub>("/hubs/notificaciones");
+
+app.Run();
+```
+
+---
+
+## 16.9.2. SignalR: Servicio de Notificaciones Equivalente
+
+```csharp
+namespace TiendaApi.Core.Services;
+
+public interface ISignalRNotificationService
+{
+    Task NotifyPedidoUpdateAsync(long pedidoId, PedidoUpdateDto update);
+    Task NotifyProductoStockChangeAsync(long productoId, int nuevoStock);
+    Task NotifyUserAsync(long userId, NotificacionDto notificacion);
+    Task BroadcastAsync(string message, string type);
+}
+
+public class SignalRNotificationService : ISignalRNotificationService
+{
+    private readonly IHubContext<NotificacionesHub> _hubContext;
+    private readonly ILogger<SignalRNotificationService> _logger;
+
+    public SignalRNotificationService(
+        IHubContext<NotificacionesHub> hubContext,
+        ILogger<SignalRNotificationService> logger)
+    {
+        _hubContext = hubContext;
+        _logger = logger;
+    }
+
+    public async Task NotifyPedidoUpdateAsync(long pedidoId, PedidoUpdateDto update)
+    {
+        var message = new
+        {
+            type = "pedido_update",
+            data = update,
+            timestamp = DateTime.UtcNow
+        };
+
+        // Notificar a los clientes suscritos al pedido
+        await _hubContext.Clients
+            .Group($"pedido_{pedidoId}")
+            .SendAsync("PedidoUpdate", message);
+
+        // Notificar al usuario owner del pedido
+        await _hubContext.Clients
+            .Group($"user_{update.UsuarioId}")
+            .SendAsync("PedidoUpdate", message);
+
+        _logger.LogInformation(
+            "Notificación de pedido {PedidoId} enviada",
+            pedidoId);
+    }
+
+    public async Task NotifyProductoStockChangeAsync(long productoId, int nuevoStock)
+    {
+        var message = new
+        {
+            type = "producto_stock",
+            data = new { productoId, stock = nuevoStock },
+            timestamp = DateTime.UtcNow
+        };
+
+        await _hubContext.Clients
+            .Group($"producto_{productoId}")
+            .SendAsync("ProductoStockChange", message);
+    }
+
+    public async Task NotifyUserAsync(long userId, NotificacionDto notificacion)
+    {
+        var message = new
+        {
+            type = "notificacion",
+            data = notificacion,
+            timestamp = DateTime.UtcNow
+        };
+
+        await _hubContext.Clients
+            .Group($"user_{userId}")
+            .SendAsync("Notificacion", message);
+    }
+
+    public async Task BroadcastAsync(string message, string type)
+    {
+        var payload = new
+        {
+            type = type,
+            data = message,
+            timestamp = DateTime.UtcNow
+        };
+
+        await _hubContext.Clients.All.SendAsync("Broadcast", payload);
+    }
+}
+```
+
+### Inyección de Dependencias
+
+```csharp
+builder.Services.AddSingleton<ISignalRNotificationService, SignalRNotificationService>();
+```
+
+---
+
+## 16.9.3. SignalR: Integración con Servicios de Negocio
+
+```csharp
+public class PedidoService(
+    IPedidoRepository pedidoRepository,
+    ISignalRNotificationService notificationService,
+    IValidator<CreatePedidoRequest> validator)
+{
+    public async Task<Result<Pedido, Error>> CreateAsync(CreatePedidoRequest request)
+    {
+        var validationResult = await validator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            return Result.Failure<Pedido, Error>(
+                Errors.Pedidos.DatosInvalidos(validationResult.Errors));
+        }
+
+        var pedido = new Pedido
+        {
+            UsuarioId = request.UsuarioId,
+            Estado = PedidoEstado.Pendiente,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await pedidoRepository.AddAsync(pedido);
+
+        if (result.IsSuccess)
+        {
+            // Notificar por SignalR
+            await notificationService.NotifyUserAsync(
+                request.UsuarioId,
+                new NotificacionDto
+                {
+                    Titulo = "Pedido creado",
+                    Mensaje = $"Tu pedido #{pedido.Id} ha sido creado",
+                    Tipo = "pedido",
+                    Fecha = DateTime.UtcNow
+                });
+        }
+
+        return result;
+    }
+
+    public async Task<Result<Pedido, Error>> UpdateEstadoAsync(long pedidoId, string nuevoEstado)
+    {
+        var pedidoResult = await pedidoRepository.GetByIdAsync(pedidoId);
+        if (pedidoResult.IsFailure)
+        {
+            return pedidoResult;
+        }
+
+        var result = await pedidoRepository.UpdateEstadoAsync(pedidoId, nuevoEstado);
+
+        if (result.IsSuccess)
+        {
+            await notificationService.NotifyPedidoUpdateAsync(
+                pedidoId,
+                new PedidoUpdateDto
+                {
+                    PedidoId = pedidoId,
+                    Estado = nuevoEstado,
+                    UsuarioId = pedidoResult.Value.UsuarioId,
+                    FechaActualizacion = DateTime.UtcNow
+                });
+        }
+
+        return result;
+    }
+}
+```
+
+---
+
+## 16.9.4. SignalR: Cliente JavaScript
+
+```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+class SignalRClient {
+    constructor(url, userId) {
+        this.url = url;
+        this.userId = userId;
+        this.connection = null;
+        this.handlers = new Map();
+    }
+
+    async connect() {
+        this.connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${this.url}?userId=${this.userId}`, {
+                accessTokenFactory: () => this.getAuthToken(),
+                transport: signalR.HttpTransportType.WebSockets,
+                skipNegotiation: false
+            })
+            .withAutomaticReconnect([0, 1000, 5000, 10000, 30000])
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        this.connection.onclose((error) => {
+            console.log('SignalR desconectado:', error);
+            this.emit('disconnected', error);
+        });
+
+        this.connection.onreconnecting((error) => {
+            console.log('SignalR reconectando...');
+            this.emit('reconnecting', error);
+        });
+
+        this.connection.onreconnected((connectionId) => {
+            console.log('SignalR reconectado:', connectionId);
+            this.emit('reconnected', connectionId);
+        });
+
+        await this.connection.start();
+        console.log('SignalR conectado');
+
+        this.emit('connected');
+    }
+
+    getAuthToken() {
+        // Obtener JWT token
+        return localStorage.getItem('authToken');
+    }
+
+    on(event, handler) {
+        this.connection.on(event, (data) => {
+            handler(data);
+            this.emit(event, data);
+        });
+    }
+
+    off(event, handler) {
+        if (handler) {
+            this.connection.off(event, handler);
+        } else {
+            this.connection.off(event);
+        }
+    }
+
+    async subscribeToPedido(pedidoId) {
+        await this.connection.invoke("SubscribeToPedido", pedidoId);
+    }
+
+    async unsubscribeFromPedido(pedidoId) {
+        await this.connection.invoke("UnsubscribeFromPedido", pedidoId);
+    }
+
+    async subscribeToProducto(productoId) {
+        await this.connection.invoke("SubscribeToProducto", productoId);
+    }
+
+    async subscribeToCategoria(categoriaId) {
+        await this.connection.invoke("SubscribeToCategoria", categoriaId);
+    }
+
+    emit(event, data) {
+        const handlers = this.handlers.get(event);
+        if (handlers) {
+            handlers.forEach(handler => handler(data));
+        }
+    }
+
+    onEvent(event, handler) {
+        if (!this.handlers.has(event)) {
+            this.handlers.set(event, []);
+        }
+        this.handlers.get(event).push(handler);
+    }
+
+    async disconnect() {
+        await this.connection.stop();
+    }
+}
+
+// Uso
+const client = new SignalRClient(
+    'http://localhost:5000/hubs/notificaciones',
+    '123'
+);
+
+client.onEvent('connected', () => {
+    console.log('Conectado!');
+    client.subscribeToPedido(1);
+    client.subscribeToUser('123');
+});
+
+client.onEvent('pedido_update', (message) => {
+    console.log('Pedido actualizado:', message);
+});
+
+client.onEvent('notificacion', (message) => {
+    console.log('Nueva notificación:', message);
+});
+
+client.connect();
+</script>
+```
+
+---
+
+## 16.9.5. SignalR: Persistencia y Escalabilidad
+
+Para escalar SignalR en múltiples instancias, usar Redis Backplane:
+
+```csharp
+// Instalación
+dotnet add package Microsoft.AspNetCore.SignalR.StackExchangeRedis
+
+// Configuración
+builder.Services.AddSignalR()
+    .AddStackExchangeRedis(options =>
+    {
+        options.ConnectionFactory = async writer =>
+        {
+            var config = new ConfigurationOptions
+            {
+                EndPoints = { { "localhost", 6379 } },
+                AbortOnConnectFail = false
+            };
+
+            var connection = await ConnectionMultiplexer.ConnectAsync(config);
+            return connection;
+        };
+    });
+```
+
+### Comparación WebSocket Nativo vs SignalR
+
+```mermaid
+flowchart TD
+    subgraph "WebSocket Nativo - Ejemplo Completo"
+        A1["Connection Manager<br/>(50+ líneas)"]
+        A2["JSON Manual<br/>Serialize/Deserialize"]
+        A3["Reconexión Manual<br/>setTimeout + retry"]
+        A4["Grupos Manual<br/>HashSet&lt;string&gt;"]
+        A5["~200+ líneas código"]
+    end
+    
+    subgraph "SignalR - Ejemplo Equivalente"
+        B1["Hub base<br/>(20 líneas)"]
+        B2["Serialización Auto<br/>[FromArgs], typed"]
+        B3["Auto-reconexión<br/>(configurable)"]
+        B4["Groups.AddToGroupAsync<br/>(1 línea)"]
+        B5["~80 líneas código"]
+    end
+    
+    A1 --> A2 --> A3 --> A4 --> A5
+    B1 --> B2 --> B3 --> B4 --> B5
+```
+
+### Cuándo Usar WebSocket Nativo vs SignalR
+
+| Funcionalidad | WebSocket Nativo | SignalR |
+|---------------|------------------|---------|
+| **Gestión de conexiones** | Manual (~50 líneas) | Automática (0 líneas) |
+| **Grupos** | Dictionary manual | Groups.AddToGroupAsync() |
+| **Serialización** | JsonSerializer manual | Automático con tipos |
+| **Reconexión** | setTimeout + retry | AutoReconnect (configurable) |
+| **Typed messages** | String + switch case | Generic SendAsync<T>() |
+| **Autenticación** | JWT header manual | accessTokenFactory |
+| **Escalabilidad** | Redis Pub/Sub manual | Redis Backplane integrado |
+| **Fallback** | No disponible | SSE/LongPolling automático |
+| **Debugging** | Más difícil | Logging integrado |
+| **Líneas de código** | ~200-300 | ~80-100 |
+
+---
+
 ## 16.10. Resumen y Buenas Prácticas
 
 ### Cuándo Usar Qué
 
-| Escenario | Recomendación | Razón |
-|-----------|---------------|-------|
-| Chat simple | WebSocket nativo | Menos overhead |
-| Chat complejo | SignalR | Groups, history |
-| Notificaciones | SignalR | Auto-reconexión |
-| Gaming | WebSocket nativo | Máximo rendimiento |
-| Dashboard | SignalR | Facilidad |
+| Escenario      | Recomendación    | Razón              |
+| -------------- | ---------------- | ------------------ |
+| Chat simple    | WebSocket nativo | Menos overhead     |
+| Chat complejo  | SignalR          | Groups, history    |
+| Notificaciones | SignalR          | Auto-reconexión    |
+| Gaming         | WebSocket nativo | Máximo rendimiento |
+| Dashboard      | SignalR          | Facilidad          |
 
 ### Buenas Prácticas
 

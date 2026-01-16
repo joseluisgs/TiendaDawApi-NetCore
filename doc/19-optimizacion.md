@@ -10,17 +10,17 @@ El rendimiento de una API afecta directamente la experiencia del usuario y los c
 
 ```mermaid
 flowchart LR
-    subgraph "Sin optimización"
+    subgraph "Sin optimizacion"
         A1["Request"] --> A2["200ms"]
         A2 --> A3[" usuario frustrado"]
     end
     
-    subgraph "Con optimización"
+    subgraph "Con optimizacion"
         B1["Request"] --> B2["50ms"]
         B2 --> B3[" usuario satisfecho"]
     end
     
-    subgraph "Impacto"]
+    subgraph "Impacto"
         C1["Menor latencia"]
         C2["Mejor UX"]
         C3["Menores costos"]
