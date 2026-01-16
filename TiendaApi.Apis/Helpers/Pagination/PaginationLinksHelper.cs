@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using TiendaApi.Apis.Dtos.Common;
 
-namespace TiendaApi.Apis.Utils.Helpers.Pagination;
+namespace TiendaApi.Apis.Helpers.Pagination;
 
 /// <summary>
 /// Clase utilitaria para generar headers de enlace RFC 5988 para paginación.

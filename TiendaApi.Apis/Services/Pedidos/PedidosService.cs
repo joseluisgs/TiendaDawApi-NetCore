@@ -589,13 +589,20 @@ public class PedidosService(
 
     #region ========== MÉTODOS PRIVADOS - WEBSOCKET ==========
 
+    /// <summary>
+    /// Notifica vía WebSocket la creación de un pedido.
+    /// Envía notificación al usuario que creó el pedido y a todos los administradores.
+    /// </summary>
+    /// <param name="pedidoId">Identificador del pedido creado.</param>
+    /// <param name="userId">ID del usuario que creó el pedido.</param>
+    /// <param name="estado">Estado inicial del pedido.</param>
     private void NotificarWebSocketPedidoCreado(string pedidoId, long userId, string estado)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                await webSocketHandler.NotifyAsync(new PedidoNotificacion(
+                await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
                     PedidoNotificationType.CREATED,
                     pedidoId,
                     userId,
@@ -611,13 +618,21 @@ public class PedidosService(
         });
     }
 
+    /// <summary>
+    /// Notifica vía WebSocket la actualización del estado de un pedido.
+    /// Envía notificación al usuario afectado y a todos los administradores.
+    /// </summary>
+    /// <param name="pedidoId">Identificador del pedido.</param>
+    /// <param name="userId">ID del usuario que realizó el pedido.</param>
+    /// <param name="estado">Nuevo estado del pedido.</param>
+    /// <param name="pedido">Datos actualizados del pedido.</param>
     private void NotificarWebSocketPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                await webSocketHandler.NotifyAsync(new PedidoNotificacion(
+                await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
                     PedidoNotificationType.ESTADO_UPDATED,
                     pedidoId,
                     userId,
