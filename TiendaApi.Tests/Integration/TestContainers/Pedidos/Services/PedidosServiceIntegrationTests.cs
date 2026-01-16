@@ -204,6 +204,17 @@ public class PedidosServiceIntegrationTests
     {
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test Destinatario",
+                Email = "test@email.com",
+                Direccion = new DireccionDto
+                {
+                    Calle = "Calle Test",
+                    Ciudad = "Madrid",
+                    Pais = "España"
+                }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = _productoId, Cantidad = 2 }
@@ -221,7 +232,16 @@ public class PedidosServiceIntegrationTests
     [Test]
     public async Task CreateAsync_ConItemsVacios_RetornaError()
     {
-        var dto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
+        var dto = new PedidoRequestDto
+        {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test",
+                Email = "test@email.com",
+                Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
+            },
+            Items = new List<PedidoItemRequestDto>()
+        };
         var result = await _pedidosService!.CreateAsync(_userId, dto);
         result.IsFailure.Should().BeTrue();
     }
@@ -231,6 +251,12 @@ public class PedidosServiceIntegrationTests
     {
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test",
+                Email = "test@email.com",
+                Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = 999999, Cantidad = 1 }
@@ -247,6 +273,12 @@ public class PedidosServiceIntegrationTests
 
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test",
+                Email = "test@email.com",
+                Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = _productoId, Cantidad = 1 }
@@ -264,6 +296,12 @@ public class PedidosServiceIntegrationTests
 
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test",
+                Email = "test@email.com",
+                Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = _productoId, Cantidad = 10 }
@@ -283,6 +321,12 @@ public class PedidosServiceIntegrationTests
 
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test Destinatario",
+                Email = "test@email.com",
+                Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = _productoId, Cantidad = 5 }
@@ -305,6 +349,12 @@ public class PedidosServiceIntegrationTests
 
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test",
+                Email = "test@email.com",
+                Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = _productoId, Cantidad = stockInicial }
@@ -327,6 +377,12 @@ public class PedidosServiceIntegrationTests
 
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test",
+                Email = "test@email.com",
+                Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = _productoId, Cantidad = stockInicial + 1 }
