@@ -65,8 +65,7 @@ public class PedidosServiceTests
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockWebSocketHandler = new Mock<PedidoWebSocketHandler>(
-            Mock.Of<ILogger<PedidoWebSocketHandler>>(),
-            _mockConfiguration.Object);
+            Mock.Of<ILogger<PedidoWebSocketHandler>>());
         _mockPedidoValidator = new Mock<IValidator<PedidoRequestDto>>();
         _mockItemValidator = new Mock<IValidator<PedidoItemRequestDto>>();
         _mockTransaction = new Mock<IDbContextTransaction>();

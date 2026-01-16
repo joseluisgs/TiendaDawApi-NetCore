@@ -1,7 +1,7 @@
-using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Security.Claims;
-using Microsoft.Extensions.Configuration;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.WebSockets.Pedidos;
@@ -15,26 +15,21 @@ namespace TiendaApi.Tests.Unit.Services.WebSockets;
 public class PedidoWebSocketHandlerTests
 {
     private readonly Mock<ILogger<PedidoWebSocketHandler>> _mockLogger;
-    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly PedidoWebSocketHandler _handler;
 
     public PedidoWebSocketHandlerTests()
     {
         _mockLogger = new Mock<ILogger<PedidoWebSocketHandler>>();
-        _mockConfiguration = new Mock<IConfiguration>();
-        
-        _mockConfiguration.Setup(c => c["WebSocket:AdminUserIds"]).Returns("1,2");
-        
-        _handler = new PedidoWebSocketHandler(_mockLogger.Object, _mockConfiguration.Object);
+        _handler = new PedidoWebSocketHandler(_mockLogger.Object);
     }
 
     #region Constructor Tests
 
     [Test]
-    public void Constructor_WithAdminUserIds_InitializesCorrectly()
+    public void Constructor_InitializesCorrectly()
     {
         // Arrange & Act
-        var handler = new PedidoWebSocketHandler(_mockLogger.Object, _mockConfiguration.Object);
+        var handler = new PedidoWebSocketHandler(_mockLogger.Object);
 
         // Assert
         Assert.That(handler.GetAdminConnectionCount(), Is.EqualTo(0));
@@ -131,45 +126,104 @@ public class PedidoWebSocketHandlerTests
 
     #endregion
 
-    #region ExtractUserIdFromToken Tests
+    #region ExtractUserInfoFromToken Tests
 
     [Test]
-    public void ExtractUserIdFromToken_WithInvalidToken_ReturnsNull()
+    public void ExtractUserInfoFromToken_WithValidToken_ReturnsUserIdAndRole()
+    {
+        // Arrange - Create token con rol de cliente
+        var (token, userId) = CreateValidJwtToken(123L, "cliente");
+
+        // Act
+        var (extractedUserId, isAdmin) = ExtractUserInfo(token);
+
+        // Assert
+        Assert.That(extractedUserId, Is.EqualTo(userId));
+        Assert.That(isAdmin, Is.False);
+    }
+
+    [Test]
+    public void ExtractUserInfoFromToken_WithAdminRole_ReturnsIsAdminTrue()
+    {
+        // Arrange - Create token con rol de admin
+        var (token, userId) = CreateValidJwtToken(1L, "admin");
+
+        // Act
+        var (extractedUserId, isAdmin) = ExtractUserInfo(token);
+
+        // Assert
+        Assert.That(extractedUserId, Is.EqualTo(userId));
+        Assert.That(isAdmin, Is.True);
+    }
+
+    [Test]
+    public void ExtractUserInfoFromToken_WithAdminRoleUppercase_ReturnsIsAdminTrue()
+    {
+        // Arrange - Create token con rol de ADMIN (mayúsculas)
+        var (token, userId) = CreateValidJwtToken(1L, "ADMIN");
+
+        // Act
+        var (extractedUserId, isAdmin) = ExtractUserInfo(token);
+
+        // Assert
+        Assert.That(extractedUserId, Is.EqualTo(userId));
+        Assert.That(isAdmin, Is.True);
+    }
+
+    [Test]
+    public void ExtractUserInfoFromToken_WithInvalidToken_ReturnsNull()
     {
         // Arrange
         var token = "invalid.token.here";
 
         // Act
-        var userId = ExtractUserId(token);
+        var (userId, isAdmin) = ExtractUserInfo(token);
 
         // Assert
         Assert.That(userId, Is.Null);
+        Assert.That(isAdmin, Is.False);
     }
 
     [Test]
-    public void ExtractUserIdFromToken_WithEmptyToken_ReturnsNull()
+    public void ExtractUserInfoFromToken_WithEmptyToken_ReturnsNull()
     {
         // Arrange
         var token = "";
 
         // Act
-        var userId = ExtractUserId(token);
+        var (userId, isAdmin) = ExtractUserInfo(token);
 
         // Assert
         Assert.That(userId, Is.Null);
+        Assert.That(isAdmin, Is.False);
     }
 
     [Test]
-    public void ExtractUserIdFromToken_WithMalformedToken_ReturnsNull()
+    public void ExtractUserInfoFromToken_WithMalformedToken_ReturnsNull()
     {
         // Arrange
         var token = "not-a-jwt";
 
         // Act
-        var userId = ExtractUserId(token);
+        var (userId, isAdmin) = ExtractUserInfo(token);
 
         // Assert
         Assert.That(userId, Is.Null);
+        Assert.That(isAdmin, Is.False);
+    }
+
+    [Test]
+    public void ExtractUserInfoFromToken_WithMissingRoleClaim_ReturnsIsAdminFalse()
+    {
+        // Arrange - Token sin rol
+        var token = CreateTokenWithoutRole(123L);
+
+        // Act
+        var (userId, isAdmin) = ExtractUserInfo(token);
+
+        // Assert
+        Assert.That(userId, Is.EqualTo(123L));
+        Assert.That(isAdmin, Is.False);
     }
 
     #endregion
@@ -228,12 +282,47 @@ public class PedidoWebSocketHandlerTests
 
     #region Helpers
 
-    private long? ExtractUserId(string token)
+    private static (string Token, long UserId) CreateValidJwtToken(long userId, string role)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Role, role)
+            }),
+            Expires = DateTime.UtcNow.AddHours(1)
+        };
+        
+        var token = handler.CreateToken(tokenDescriptor);
+        return (handler.WriteToken(token), userId);
+    }
+
+    private static string CreateTokenWithoutRole(long userId)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+            }),
+            Expires = DateTime.UtcNow.AddHours(1)
+        };
+        
+        var token = handler.CreateToken(tokenDescriptor);
+        return handler.WriteToken(token);
+    }
+
+    private (long? UserId, bool IsAdmin) ExtractUserInfo(string token)
     {
         var method = typeof(PedidoWebSocketHandler)
-            .GetMethod("ExtractUserIdFromToken", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            .GetMethod("ExtractUserInfoFromToken", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         
-        return (long?)method!.Invoke(_handler, new[] { token });
+        var result = method!.Invoke(_handler, new[] { token });
+        var tuple = (System.ValueTuple<long?, bool>)result!;
+        return (tuple.Item1, tuple.Item2);
     }
 
     #endregion

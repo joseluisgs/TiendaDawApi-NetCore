@@ -4,7 +4,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.IdentityModel.Tokens.Jwt;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace TiendaApi.Apis.WebSockets.Pedidos;
@@ -65,15 +64,15 @@ public record PedidoNotificacion(
 /// ws://localhost:5000/ws/v1/pedidos?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 /// </code>
 /// 
-/// <para><b>Roles y permisos:</b></para>
+/// <para><b>Roles y permisos (extraídos del claim 'role' del JWT):</b></para>
 /// <list type="table">
 ///   <item>
 ///     <term>Usuario Normal</term>
-///     <description>Solicita ?token=JWT_USUARIO. Recibe solo sus pedidos.</description>
+///     <description>Solicita ?token=JWT_USUARIO (role=cliente). Recibe solo sus pedidos.</description>
 ///   </item>
 ///   <item>
 ///     <term>Administrador</term>
-///     <description>Solicita ?token=JWT_ADMIN. Recibe TODOS los pedidos del sistema.</description>
+///     <description>Solicita ?token=JWT_ADMIN (role=admin). Recibe TODOS los pedidos del sistema.</description>
 ///   </item>
 /// </list>
 /// 
@@ -92,28 +91,22 @@ public record PedidoNotificacion(
 /// </remarks>
 public class PedidoWebSocketHandler
 {
-    private readonly ConcurrentDictionary<string, (WebSocket WebSocket, long? UserId)> _connections = new();
+    /// <summary>
+    /// Estructura de conexión que incluye el WebSocket, userId y rol del usuario.
+    /// </summary>
+    private record struct ConnectionInfo(WebSocket WebSocket, long UserId, bool IsAdmin);
+
+    private readonly ConcurrentDictionary<string, ConnectionInfo> _connections = new();
     private readonly ILogger<PedidoWebSocketHandler> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
-    private readonly IConfiguration _configuration;
-    private readonly HashSet<long> _adminUserIds;
 
-    public PedidoWebSocketHandler(
-        ILogger<PedidoWebSocketHandler> logger,
-        IConfiguration configuration)
+    public PedidoWebSocketHandler(ILogger<PedidoWebSocketHandler> logger)
     {
         _logger = logger;
-        _configuration = configuration;
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
-        
-        var adminIdsStr = _configuration["WebSocket:AdminUserIds"] ?? "1";
-        _adminUserIds = adminIdsStr.Split(',')
-            .Select(id => long.TryParse(id.Trim(), out var parsed) ? parsed : 0)
-            .Where(id => id > 0)
-            .ToHashSet();
     }
 
     /// <summary>
@@ -126,15 +119,21 @@ public class PedidoWebSocketHandler
     /// <para><b>Proceso de autenticación:</b></para>
     /// <list type="number">
     ///   <item><description>Extrae el token JWT del query string 'token'.</description></item>
-    ///   <item><description>Valida el token y extrae el userId del claim NameIdentifier.</description></item>
-    ///   <item><description>Almacena la conexión junto con el userId.</description></item>
+    ///   <item><description>Valida el token y extrae userId y rol del claim JWT.</description></item>
+    ///   <item><description>Almacena la conexión junto con userId y si es admin.</description></item>
     ///   <item><description>Si no hay token o es inválido, cierra la conexión.</description></item>
+    /// </list>
+    /// 
+    /// <para><b>Claims extraídos del JWT:</b></para>
+    /// <list type="bullet">
+    ///   <item><description>ClaimTypes.NameIdentifier → userId</description></item>
+    ///   <item><description>ClaimTypes.Role → rol del usuario (admin/cliente)</description></item>
     /// </list>
     /// 
     /// <para><b>Ejemplo de conexión exitosa:</b></para>
     /// <code>
     /// // El cliente envía: ws://localhost:5000/ws/v1/pedidos?token=JWT
-    /// // El servidor extrae userId del JWT y almacena la conexión
+    /// // El servidor extrae userId y rol del JWT y almacena la conexión
     /// </code>
     /// 
     /// <para><b>Códigos de cierre de WebSocket:</b></para>
@@ -153,7 +152,7 @@ public class PedidoWebSocketHandler
             return;
         }
 
-        var userId = ExtractUserIdFromToken(token);
+        var (userId, isAdmin) = ExtractUserInfoFromToken(token);
         
         if (userId == null)
         {
@@ -163,9 +162,8 @@ public class PedidoWebSocketHandler
         }
 
         var connectionId = Guid.NewGuid().ToString();
-        _connections.TryAdd(connectionId, (webSocket, userId));
+        _connections.TryAdd(connectionId, new ConnectionInfo(webSocket, userId.Value, isAdmin));
 
-        var isAdmin = _adminUserIds.Contains(userId.Value);
         _logger.LogInformation(
             "Conexión WebSocket establecida para pedidos: {ConnectionId}, UserId: {UserId}, IsAdmin: {IsAdmin}",
             connectionId, userId, isAdmin);
@@ -208,14 +206,13 @@ public class PedidoWebSocketHandler
 
         foreach (var connection in _connections)
         {
-            var (ws, connUserId) = connection.Value;
-            if (connUserId != userId) continue;
+            if (connection.Value.UserId != userId) continue;
             
             try
             {
-                if (ws.State == WebSocketState.Open)
+                if (connection.Value.WebSocket.State == WebSocketState.Open)
                 {
-                    await SendToSocketAsync(ws, wrapper);
+                    await SendToSocketAsync(connection.Value.WebSocket, wrapper);
                     sentCount++;
                 }
                 else
@@ -271,14 +268,13 @@ public class PedidoWebSocketHandler
 
         foreach (var connection in _connections)
         {
-            var (ws, connUserId) = connection.Value;
-            if (connUserId == null || !_adminUserIds.Contains(connUserId.Value)) continue;
+            if (!connection.Value.IsAdmin) continue;
             
             try
             {
-                if (ws.State == WebSocketState.Open)
+                if (connection.Value.WebSocket.State == WebSocketState.Open)
                 {
-                    await SendToSocketAsync(ws, wrapper);
+                    await SendToSocketAsync(connection.Value.WebSocket, wrapper);
                     sentCount++;
                 }
                 else
@@ -341,7 +337,7 @@ public class PedidoWebSocketHandler
     /// <returns>Número de administradores conectados.</returns>
     public int GetAdminConnectionCount()
     {
-        return _connections.Count(c => c.Value.UserId.HasValue && _adminUserIds.Contains(c.Value.UserId.Value));
+        return _connections.Count(c => c.Value.IsAdmin);
     }
 
     #region Métodos Privados
@@ -371,7 +367,12 @@ public class PedidoWebSocketHandler
         }
     }
 
-    private long? ExtractUserIdFromToken(string token)
+    /// <summary>
+    /// Extrae userId y rol del token JWT.
+    /// </summary>
+    /// <param name="token">Token JWT a procesar.</param>
+    /// <returns>Tupla con (userId, isAdmin). userId es null si no se puede extraer.</returns>
+    private (long? UserId, bool IsAdmin) ExtractUserInfoFromToken(string token)
     {
         try
         {
@@ -383,17 +384,23 @@ public class PedidoWebSocketHandler
                 c.Type == "sub" ||
                 c.Type == "nameid");
             
-            if (userIdClaim != null && long.TryParse(userIdClaim.Value, out var userId))
+            if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out var userId))
             {
-                return userId;
+                return (null, false);
             }
             
-            return null;
+            var roleClaim = jwtToken.Claims.FirstOrDefault(c => 
+                c.Type == ClaimTypes.Role || 
+                c.Type == "role");
+            
+            var isAdmin = roleClaim?.Value?.Equals("admin", StringComparison.OrdinalIgnoreCase) ?? false;
+            
+            return (userId, isAdmin);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error extrayendo userId del token");
-            return null;
+            _logger.LogWarning(ex, "Error extrayendo información del token");
+            return (null, false);
         }
     }
 
