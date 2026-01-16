@@ -481,7 +481,7 @@ catch (Exception ex)
 // ============================================================================
 
 var storagePath = System.IO.Path.Combine(app.Environment.ContentRootPath,
-    "wwwroot", builder.Configuration["Storage:UploadPath"] ?? "images/uploads");
+    "wwwroot", builder.Configuration["Storage:UploadPath"] ?? "wwwroot/images/uploads");
 var storageDirectory = new DirectoryInfo(storagePath);
 
 if (isDevelopment)

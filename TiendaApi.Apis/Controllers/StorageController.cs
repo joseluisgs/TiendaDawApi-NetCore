@@ -33,7 +33,7 @@ public class StorageController(
 
         try
         {
-            var basePath = System.IO.Path.Combine(_environment.ContentRootPath, "images");
+            var basePath = System.IO.Path.Combine(_environment.ContentRootPath, "wwwroot");
             var fullPath = System.IO.Path.Combine(basePath, path);
 
             if (!System.IO.File.Exists(fullPath))
