@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Validators.Pedidos;
 
@@ -25,6 +26,17 @@ public class PedidoValidatorsIntegrationTests
 
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test User",
+                Email = "test@email.com",
+                Direccion = new DireccionDto
+                {
+                    Calle = "Calle Test",
+                    Ciudad = "Madrid",
+                    Pais = "España"
+                }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = 1, Cantidad = 2 }
@@ -141,6 +153,12 @@ public class PedidoValidatorsIntegrationTests
             var dto = new PedidoDto(
                 Id: "PED-2024-0001",
                 UserId: 1,
+                Destinatario: new DestinatarioDto
+                {
+                    NombreCompleto = "Test",
+                    Email = "test@test.com",
+                    Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
+                },
                 Items: new List<PedidoItemDto>(),
                 Total: 100m,
                 Estado: estado,

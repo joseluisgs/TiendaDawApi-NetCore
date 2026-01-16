@@ -8,9 +8,6 @@ public static class EmailTemplates
     /// <summary>
     /// Crea el HTML base para un email de la tienda.
     /// </summary>
-    /// <param name="title">Título del email</param>
-    /// <param name="content">Contenido HTML personalizado</param>
-    /// <returns>HTML completo listo para enviar</returns>
     public static string CreateBase(string title, string content)
     {
         return $@"<!DOCTYPE html>
@@ -78,13 +75,18 @@ public static class EmailTemplates
     }
 
     /// <summary>
-    /// Genera el contenido para email de nuevo pedido.
+    /// Genera el contenido para email de nuevo pedido (incluye datos del cliente).
     /// </summary>
-    public static string PedidoCreado(string pedidoId, decimal total, int itemCount)
+    public static string PedidoCreado(string pedidoId, decimal total, int itemCount, long userId)
     {
         return $@"
             <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
-                <table style='width: 100%; border-collapse: collapse;'>
+                <h3 style='margin-top: 0; color: #1a1a2e;'>📋 Datos del Cliente</h3>
+                <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>ID Cliente:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600;'>{userId}</td>
+                    </tr>
                     <tr>
                         <td style='padding: 8px 0; color: #6c757d;'>Número de pedido:</td>
                         <td style='padding: 8px 0; text-align: right; font-weight: 600; color: #1a1a2e;'>#{pedidoId}</td>
@@ -105,9 +107,9 @@ public static class EmailTemplates
     }
 
     /// <summary>
-    /// Genera el contenido para email de cambio de estado de pedido.
+    /// Genera el contenido para email de cambio de estado de pedido (incluye datos del cliente).
     /// </summary>
-    public static string PedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total)
+    public static string PedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, long userId)
     {
         var estadoColor = nuevoEstado.ToUpper() switch
         {
@@ -120,7 +122,12 @@ public static class EmailTemplates
 
         return $@"
             <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
-                <table style='width: 100%; border-collapse: collapse;'>
+                <h3 style='margin-top: 0; color: #1a1a2e;'>📋 Datos del Cliente</h3>
+                <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>ID Cliente:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600;'>{userId}</td>
+                    </tr>
                     <tr>
                         <td style='padding: 8px 0; color: #6c757d;'>Pedido:</td>
                         <td style='padding: 8px 0; text-align: right; font-weight: 600;'>#{pedidoId}</td>
@@ -141,6 +148,81 @@ public static class EmailTemplates
             </div>
             <p style='padding: 15px; background-color: #e7f3ff; border-left: 4px solid #667eea; border-radius: 4px;'>
                 📦 Te mantendremos informado sobre el estado de tu envío.
+            </p>";
+    }
+
+    /// <summary>
+    /// Genera el contenido para email de pedido actualizado por administrador (incluye datos del cliente).
+    /// </summary>
+    public static string PedidoActualizadoAdmin(string pedidoId, string estado, decimal total, long userId)
+    {
+        var estadoColor = estado.ToUpper() switch
+        {
+            "ENTREGADO" => "#28a745",
+            "ENVIADO" => "#17a2b8",
+            "PROCESANDO" => "#ffc107",
+            "CANCELADO" => "#dc3545",
+            _ => "#6c757d"
+        };
+
+        return $@"
+            <div style='background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffc107;'>
+                <h3 style='margin-top: 0; color: #856404;'>⚠️ Actualización por Administrador</h3>
+            </div>
+            <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                <h3 style='margin-top: 0; color: #1a1a2e;'>📋 Datos del Cliente</h3>
+                <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>ID Cliente:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600;'>{userId}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>Pedido:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600;'>#{pedidoId}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>Estado actual:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600; color: {estadoColor};'>{estado}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>Total:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600;'>{total:N2}€</td>
+                    </tr>
+                </table>
+            </div>
+            <p style='padding: 15px; background-color: #e7f3ff; border-left: 4px solid #667eea; border-radius: 4px;'>
+                ℹ️ Este pedido ha sido modificado por un administrador del sistema.
+            </p>";
+    }
+
+    /// <summary>
+    /// Genera el contenido para email de pedido eliminado por administrador (incluye datos del cliente).
+    /// </summary>
+    public static string PedidoEliminadoAdmin(string pedidoId, decimal total, long userId)
+    {
+        return $@"
+            <div style='background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #f5c6cb;'>
+                <h3 style='margin-top: 0; color: #721c24;'>🗑️ Pedido Eliminado</h3>
+            </div>
+            <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                <h3 style='margin-top: 0; color: #1a1a2e;'>📋 Datos del Cliente</h3>
+                <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>ID Cliente:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600;'>{userId}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>Pedido eliminado:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600;'>#{pedidoId}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>Total del pedido:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600;'>{total:N2}€</td>
+                    </tr>
+                </table>
+            </div>
+            <p style='padding: 15px; background-color: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px; color: #721c24;'>
+                ⚠️ Este pedido ha sido eliminado del sistema. El stock de los productos ha sido restaurado.
             </p>";
     }
 }

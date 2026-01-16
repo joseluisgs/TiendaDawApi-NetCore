@@ -118,10 +118,10 @@ public static ValidationError EstadoInvalido(string estado, string[] estadosPerm
 /// <returns>ForbiddenError indicando que no es propietario.</returns>
 /// <example>
 /// return PedidoError.NoPropietario(42, "PED-12345");
-/// // Genera: "No tienes permisos para acceder a este pedido (ID: 12345)"
+/// // Genera: "No tienes permisos para acceder a este pedido (ID: PED-12345)"
 /// </example>
 public static ForbiddenError NoPropietario(long usuarioId, string pedidoId) =>
-    ForbiddenError.NotOwner("pedido", long.Parse(pedidoId));
+    ForbiddenError.NotOwner("pedido", pedidoId);
 
 /// <summary>
 /// Crea un error de conflicto cuando el pedido ya fue adquirido por otro usuario.

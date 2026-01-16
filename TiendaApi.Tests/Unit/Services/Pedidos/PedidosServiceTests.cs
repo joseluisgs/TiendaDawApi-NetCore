@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using Moq;
 using Npgsql;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Models;
@@ -1083,6 +1085,512 @@ public class PedidosServiceTests
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
+    }
+
+    #endregion
+
+    #region Tests de FindAllPagedAsync (Admin)
+
+    [Test]
+    public async Task FindAllPagedAsync_ConParametrosValidos_RetornaPedidosPaginados()
+    {
+        var pedidos = new List<Pedido>
+        {
+            new() { UserId = 1, Total = 100 },
+            new() { UserId = 2, Total = 200 },
+            new() { UserId = 3, Total = 300 }
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindAllAsync())
+            .ReturnsAsync(pedidos);
+
+        var result = await _service.FindAllPagedAsync(0, 2);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().HaveCount(2);
+        result.Value.TotalCount.Should().Be(3);
+        result.Value.Page.Should().Be(1);
+        result.Value.PageSize.Should().Be(2);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_Pagina2_RetornaItemsCorrectos()
+    {
+        var pedidos = new List<Pedido>
+        {
+            new() { UserId = 1, Total = 100 },
+            new() { UserId = 2, Total = 200 },
+            new() { UserId = 3, Total = 300 }
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindAllAsync())
+            .ReturnsAsync(pedidos);
+
+        var result = await _service.FindAllPagedAsync(1, 2);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().HaveCount(1);
+        result.Value.Page.Should().Be(2);
+    }
+
+    [Test]
+    public async Task FindAllPagedAsync_SinPedidos_RetornaListaVacia()
+    {
+        _mockPedidosRepo.Setup(r => r.FindAllAsync())
+            .ReturnsAsync(new List<Pedido>());
+
+        var result = await _service.FindAllPagedAsync(0, 10);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().BeEmpty();
+        result.Value.TotalCount.Should().Be(0);
+    }
+
+    #endregion
+
+    #region Tests de FindByUserIdAsync (User - Sin paginación)
+
+    [Test]
+    public async Task FindByUserIdAsync_ConPedidos_RetornaLista()
+    {
+        var pedidos = new List<Pedido>
+        {
+            new() { UserId = 1, Total = 100 },
+            new() { UserId = 1, Total = 200 }
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByUserIdAsync(1))
+            .ReturnsAsync(pedidos);
+
+        var result = await _service.FindByUserIdAsync(1);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().HaveCount(2);
+    }
+
+    [Test]
+    public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia()
+    {
+        _mockPedidosRepo.Setup(r => r.FindByUserIdAsync(1))
+            .ReturnsAsync(new List<Pedido>());
+
+        var result = await _service.FindByUserIdAsync(1);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region Tests de FindMyPedidosAsync (User - Paginado)
+
+    [Test]
+    public async Task FindMyPedidosAsync_ConParametros_RetornaPagedResult()
+    {
+        var pedidos = new List<Pedido>
+        {
+            new() { UserId = 1, Total = 100 },
+            new() { UserId = 1, Total = 200 }
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByUserIdPagedAsync(1, 1, 10))
+            .ReturnsAsync((pedidos, 2));
+
+        var result = await _service.FindMyPedidosAsync(1, 1, 10);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().HaveCount(2);
+        result.Value.TotalCount.Should().Be(2);
+        result.Value.Page.Should().Be(2);
+        result.Value.PageSize.Should().Be(10);
+    }
+
+    #endregion
+
+    #region Tests de FindMyPedidoAsync (User)
+
+    [Test]
+    public async Task FindMyPedidoAsync_Propietario_RetornaPedido()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedido = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedido);
+
+        var result = await _service.FindMyPedidoAsync(pedidoId, 1);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Id.Should().Be(pedidoId);
+    }
+
+    [Test]
+    public async Task FindMyPedidoAsync_NoPropietario_RetornaForbidden()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedido = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedido);
+
+        var result = await _service.FindMyPedidoAsync(pedidoId, 2);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ForbiddenError>();
+    }
+
+    [Test]
+    public async Task FindMyPedidoAsync_PedidoNoExistente_RetornaNotFound()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync((Pedido?)null);
+
+        var result = await _service.FindMyPedidoAsync(pedidoId, 1);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>();
+    }
+
+    #endregion
+
+    #region Tests de UpdateAdminAsync (Admin)
+
+    [Test]
+    public async Task UpdateAdminAsync_PedidoExistente_RetornaOk()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección", Estado = "PROCESANDO" };
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
+        _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync((Pedido p) => p);
+
+        var result = await _service.UpdateAdminAsync(pedidoId, updateDto);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Estado.Should().Be("PROCESANDO");
+    }
+
+    [Test]
+    public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var updateDto = new UpdatePedidoDto();
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync((Pedido?)null);
+
+        var result = await _service.UpdateAdminAsync(pedidoId, updateDto);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>();
+    }
+
+    #endregion
+
+    #region Tests de UpdateMyPedidoAsync (User)
+
+    [Test]
+    public async Task UpdateMyPedidoAsync_PropietarioYPendiente_RetornaOk()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección" };
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
+        _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync((Pedido p) => p);
+
+        var result = await _service.UpdateMyPedidoAsync(pedidoId, 1, updateDto);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task UpdateMyPedidoAsync_NoPropietario_RetornaForbidden()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        var updateDto = new UpdatePedidoDto();
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
+
+        var result = await _service.UpdateMyPedidoAsync(pedidoId, 2, updateDto);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ForbiddenError>();
+    }
+
+    [Test]
+    public async Task UpdateMyPedidoAsync_PedidoNoPendiente_RetornaValidationError()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.ENVIADO
+        };
+
+        var updateDto = new UpdatePedidoDto();
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
+
+        var result = await _service.UpdateMyPedidoAsync(pedidoId, 1, updateDto);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+    }
+
+    #endregion
+
+    #region Tests de DeleteAdminAsync (Admin)
+
+    [Test]
+    public async Task DeleteAdminAsync_PedidoExistente_RetornaOk()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
+        _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync((Pedido p) => p);
+
+        var result = await _service.DeleteAdminAsync(pedidoId);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync((Pedido?)null);
+
+        var result = await _service.DeleteAdminAsync(pedidoId);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>();
+    }
+
+    #endregion
+
+    #region Tests de DeleteMyPedidoAsync (User)
+
+    [Test]
+    public async Task DeleteMyPedidoAsync_PropietarioYPendiente_RetornaOk()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
+        _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
+            .ReturnsAsync((Pedido p) => p);
+
+        var result = await _service.DeleteMyPedidoAsync(pedidoId, 1);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task DeleteMyPedidoAsync_NoPropietario_RetornaForbidden()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.PENDIENTE
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
+
+        var result = await _service.DeleteMyPedidoAsync(pedidoId, 2);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ForbiddenError>();
+    }
+
+    [Test]
+    public async Task DeleteMyPedidoAsync_PedidoNoPendiente_RetornaValidationError()
+    {
+        var pedidoId = ObjectId.GenerateNewId().ToString();
+        var pedidoExistente = new Pedido
+        {
+            Id = ObjectId.Parse(pedidoId),
+            UserId = 1,
+            Total = 100,
+            Estado = PedidoEstado.ENVIADO
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
+            .ReturnsAsync(pedidoExistente);
+
+        var result = await _service.DeleteMyPedidoAsync(pedidoId, 1);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+    }
+
+    #endregion
+
+    #region Tests de Create con Destinatario
+
+    [Test]
+    public async Task CreateAsync_ConDestinatario_DebeGuardarDestinatario()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "María García",
+                Email = "maria@email.com",
+                Telefono = "+34612345678",
+                Direccion = new DireccionDto
+                {
+                    Calle = "Gran Vía",
+                    Numero = "42",
+                    Ciudad = "Madrid",
+                    CodigoPostal = "28013"
+                }
+            },
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        Pedido? pedidoGuardado = null;
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .Callback<Pedido>(p => pedidoGuardado = p)
+            .ReturnsAsync((Pedido p) => p);
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+        pedidoGuardado.Should().NotBeNull();
+        pedidoGuardado!.Destinatario.Should().NotBeNull();
+        pedidoGuardado.Destinatario!.NombreCompleto.Should().Be("María García");
+        pedidoGuardado.Destinatario.Direccion.Should().NotBeNull();
+        pedidoGuardado.Destinatario.Direccion!.Calle.Should().Be("Gran Vía");
+    }
+
+    [Test]
+    public async Task CreateAsync_ConDestinatario_DebeTenerDestinatario()
+    {
+        long userId = 1;
+        var pedidoDto = new PedidoRequestDto
+        {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test Destinatario",
+                Email = "test@test.com",
+                Direccion = new DireccionDto { Calle = "Calle Test", Ciudad = "Madrid", Pais = "España" }
+            },
+            Items = new List<PedidoItemRequestDto>
+            {
+                new() { ProductoId = 1, Cantidad = 2 }
+            }
+        };
+
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Test Product",
+            Precio = 50,
+            Stock = 10
+        };
+
+        Pedido? pedidoGuardado = null;
+        _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
+            .Callback<Pedido>(p => pedidoGuardado = p)
+            .ReturnsAsync((Pedido p) => p);
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync(producto);
+
+        var result = await _service.CreateAsync(userId, pedidoDto);
+
+        result.IsSuccess.Should().BeTrue();
+        pedidoGuardado.Should().NotBeNull();
+        pedidoGuardado!.Destinatario.Should().NotBeNull();
+        pedidoGuardado.Destinatario!.NombreCompleto.Should().Be("Test Destinatario");
+        pedidoGuardado.Destinatario.Email.Should().Be("test@test.com");
+        pedidoGuardado.Destinatario.Direccion.Should().NotBeNull();
+        pedidoGuardado.Destinatario.Direccion!.Calle.Should().Be("Calle Test");
     }
 
     #endregion

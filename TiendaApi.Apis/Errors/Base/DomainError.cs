@@ -232,6 +232,19 @@ public sealed record ForbiddenError(string Message = "Acceso denegado")
     /// Factory method para crear un error cuando el usuario no es propietario.
     /// </summary>
     /// <param name="resourceType">Nombre del tipo de recurso (ej: "pedido", "producto").</param>
+    /// <param name="resourceId">ID del recurso como string (para IDs no numéricos como ObjectId).</param>
+    /// <returns>ForbiddenError con mensaje personalizado.</returns>
+    /// <example>
+    /// return ForbiddenError.NotOwner("pedido", "PED-12345");
+    /// // Genera: "No tienes permisos para acceder a este pedido (ID: PED-12345)"
+    /// </example>
+    public static ForbiddenError NotOwner(string resourceType, string resourceId) =>
+        new($"No tienes permisos para acceder a este {resourceType} (ID: {resourceId})");
+
+    /// <summary>
+    /// Factory method para crear un error cuando el usuario no es propietario.
+    /// </summary>
+    /// <param name="resourceType">Nombre del tipo de recurso (ej: "pedido", "producto").</param>
     /// <param name="resourceId">ID del recurso (opcional, para mensaje más específico).</param>
     /// <returns>ForbiddenError con mensaje personalizado.</returns>
     /// <example>

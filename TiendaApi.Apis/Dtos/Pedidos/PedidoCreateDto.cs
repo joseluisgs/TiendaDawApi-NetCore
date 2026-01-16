@@ -8,15 +8,42 @@ namespace TiendaApi.Apis.Dtos.Pedidos;
 ///
 /// <remarks>
 /// Flujo de creación de pedido:
-/// 1. Cliente envía lista de productos y cantidades
+/// 1. Cliente envía lista de productos, cantidades y datos del destinatario
 /// 2. Servidor valida disponibilidad de stock
 /// 3. Se calculan precios y totales
 /// 4. Se crea el pedido con estado "Pendiente"
 /// 5. Se decrementa el stock de productos
+///
+/// <para>
+/// El campo <c>Destinatario</c> es obligatorio y define los datos de la persona
+/// que recibirá el pedido (puede ser diferente al comprador, ej: regalo).
+/// </para>
 /// </remarks>
 /// </summary>
 public record PedidoRequestDto
 {
+    /// <summary>
+    /// Información del destinatario del pedido.
+    /// Este campo es obligatorio y define quién recibirá el paquete.
+    /// </summary>
+    /// <example>
+    /// {
+    ///   "nombreCompleto": "María García",
+    ///   "email": "maria@email.com",
+    ///   "telefono": "+34612345678",
+    ///   "direccion": {
+    ///     "calle": "Gran Vía",
+    ///     "numero": "42",
+    ///     "ciudad": "Madrid",
+    ///     "provincia": "Madrid",
+    ///     "pais": "España",
+    ///     "codigoPostal": "28013"
+    ///   }
+    /// }
+    /// </example>
+    [Required(ErrorMessage = "El destinatario es obligatorio.")]
+    public DestinatarioDto Destinatario { get; init; } = new();
+
     /// <summary>
     /// Lista de artículos a incluir en el pedido.
     /// Cada ítem especifica un producto y la cantidad deseada.

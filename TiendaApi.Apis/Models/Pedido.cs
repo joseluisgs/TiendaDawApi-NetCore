@@ -80,7 +80,7 @@ public class Pedido : ITimestamped
 
     /// <summary>
     /// Identificador del usuario que realizó el pedido.
-    /// 
+    ///
     /// <para>
     /// Clave foránea que referencia al usuario en PostgreSQL.
     /// Permite recuperar la información del cliente asociada al pedido.
@@ -89,6 +89,21 @@ public class Pedido : ITimestamped
     /// Valor ejemplo: 1, 2, 3, ... (long positivo)
     /// </remarks>
     public long UserId { get; set; }
+
+    /// <summary>
+    /// Información del destinatario del pedido.
+    ///
+    /// <para>
+    /// Datos de la persona que recibirá el pedido. Puede ser diferente
+    /// al usuario que realiza la compra (ej: regalo, envío a trabajo).
+    /// </para>
+    /// <remarks>
+    /// <list type="bullet">
+    ///   <item><description>Si es null, el destinatario es el mismo usuario.</description></item>
+    ///   <item><description>Incluye nombre, email, teléfono y dirección estructurada.</description></item>
+    /// </list>
+    /// </remarks>
+    public Destinatario? Destinatario { get; set; }
 
     /// <summary>
     /// Lista de elementos incluidos en el pedido.

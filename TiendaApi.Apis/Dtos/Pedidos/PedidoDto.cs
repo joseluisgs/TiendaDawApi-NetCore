@@ -2,7 +2,7 @@ namespace TiendaApi.Apis.Dtos.Pedidos;
 
 /// <summary>
 /// DTO de pedido para respuestas de API.
-/// Representa un pedido completo incluyendo identificación, usuario, items, totals y estado.
+/// Representa un pedido completo incluyendo identificación, usuario, destinatario, items, totals y estado.
 ///
 /// <remarks>
 /// Estados posibles del pedido:
@@ -11,6 +11,11 @@ namespace TiendaApi.Apis.Dtos.Pedidos;
 /// - "Enviado": Pedido en tránsito al cliente
 /// - "Entregado": Pedido entregado exitosamente
 /// - "Cancelado": Pedido cancelado por el usuario o administrador
+///
+/// <para>
+/// El campo <c>Destinatario</c> siempre está presente y define la persona
+/// que recibirá el pedido (puede ser diferente al comprador).
+/// </para>
 /// </remarks>
 /// </summary>
 /// <example>
@@ -19,6 +24,19 @@ namespace TiendaApi.Apis.Dtos.Pedidos;
 /// {
 ///   "id": "PED-2024-0001",
 ///   "userId": 1,
+///   "destinatario": {
+///     "nombreCompleto": "María García",
+///     "email": "maria@email.com",
+///     "telefono": "+34612345678",
+///     "direccion": {
+///       "calle": "Gran Vía",
+///       "numero": "42",
+///       "ciudad": "Madrid",
+///       "provincia": "Madrid",
+///       "pais": "España",
+///       "codigoPostal": "28013"
+///     }
+///   },
 ///   "items": [
 ///     { "productoId": 101, "nombreProducto": "Laptop", "cantidad": 1, "precio": 999.99, "subtotal": 999.99 }
 ///   ],
@@ -45,6 +63,12 @@ public record PedidoDto(
     long UserId,
 
     /// <summary>
+    /// Información del destinatario del pedido.
+    /// Siempre está presente y define quién recibirá el paquete.
+    /// </summary>
+    DestinatarioDto Destinatario,
+
+    /// <summary>
     /// Lista de artículos incluidos en el pedido.
     /// Cada ítem representa un producto con su cantidad y precio.
     /// </summary>
@@ -64,8 +88,8 @@ public record PedidoDto(
     string Estado,
 
     /// <summary>
-    /// Dirección de entrega del pedido.
-    /// Opcional, valor null para pedidos con entrega en tienda.
+    /// Dirección de entrega del pedido (deprecated, usar Destinatario.Direccion).
+    /// Se mantiene por compatibilidad con versiones anteriores.
     /// </summary>
     /// <example>Calle Principal 123, Ciudad</example>
     string? DireccionEnvio,

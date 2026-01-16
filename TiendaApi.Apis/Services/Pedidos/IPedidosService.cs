@@ -27,315 +27,152 @@ namespace TiendaApi.Apis.Services.Pedidos;
 ///
 /// <para><b>Estados de Pedido:</b></para>
 /// <list type="bullet">
-///   <item><description><c>Pending</c>: Pedido creado, esperando pago</description></item>
-///   <item><description><c>Confirmed</c>: Pago confirmado</description></item>
-///   <item><description><c>Processing</c>: Preparando para envío</description></item>
-///   <item><description><c>Shipped</c>: Enviado al cliente</description></item>
-///   <item><description><c>Delivered</c>: Entregado</description></item>
-///   <item><description><c>Cancelled</c>: Cancelado por usuario o sistema</description></item>
+///   <item><description><c>PENDIENTE</c>: Pedido creado, esperando procesamiento</description></item>
+///   <item><description><c>PROCESANDO</c>: Preparando para envío</description></item>
+///   <item><description><c>ENVIADO</c>: En camino al cliente</description></item>
+///   <item><description><c>ENTREGADO</c>: Entregado exitosamente</description></item>
+///   <item><description><c>CANCELADO</c>: Cancelado</description></item>
 /// </list>
 /// </summary>
 /// <remarks>
-/// <para><b>Manejo de Errores de Negocio:</b></para>
+/// <para><b>Manejo de Errores:</b></para>
 /// <list type="bullet">
-///   <item><description><c>OutOfStock</c>: Producto sin stock suficiente</description></item>
-///   <item><description><c>InvalidStateTransition</c>: Cambio de estado no permitido</description></item>
-///   <item><description><c>OrderNotOwned</c>: Usuario no es propietario del pedido</description></item>
-///   <item><description><c>ExpiredReservation</c>: Reserva de stock expirada</description></item>
+///   <item><description><c>NotFoundError</c>: Pedido no encontrado</description></item>
+///   <item><description><c>ForbiddenError</c>: No tiene permiso para la operación</description></item>
+///   <item><description><c>ValidationError</c>: Datos inválidos</description></item>
+///   <item><description><c>BusinessRuleError</c>: Regla de negocio violada (ej: stock)</description></item>
 /// </list>
-/// <para><b>Transacciones:</b></para>
+/// <para><b>Gestión de Stock:</b></para>
 /// <list type="bullet">
-///   <item><description>Las reservas de stock son temporales (15 minutos por defecto)</description></item>
-///   <item><description>Si el pago no se confirma, el stock se libera automáticamente</description></item>
-///   <item><description>Cada pedido se almacena como documento en MongoDB</description></item>
+///   <item><description>Create: Decrementa stock de productos</description></item>
+///   <item><description>Update: Restaura stock anterior y decrementa nuevo si cambian items</description></item>
+///   <item><description>Delete/Cancel: Restaura stock de todos los items</description></item>
+/// </list>
+/// <para><b>Notificaciones:</b></para>
+/// <list type="bullet">
+///   <item><description>Create: WebSocket + Email al admin</description></item>
+///   <item><description>Update (Admin): WebSocket al cliente + Email al admin</description></item>
+///   <item><description>Update (Usuario): WebSocket al cliente</description></item>
+///   <item><description>Delete (Admin): Email al admin</description></item>
+///   <item><description>Delete (Usuario): Email al admin</description></item>
 /// </list>
 /// </remarks>
-/// <example>
-/// <code>
-/// // Crear pedido con manejo de errores
-/// [HttpPost]
-/// public async Task&lt;ActionResult&gt; CreateOrder(PedidoRequestDto dto)
-/// {
-///     var userId = GetCurrentUserId();
-///     var resultado = await _pedidosService.CreateAsync(userId, dto);
-///
-///     return resultado.Match(
-///         pedido =&gt; CreatedAtAction(nameof(GetOrder), new { id = pedido.Id }, pedido),
-///         error =&gt; {
-///             return error.Code switch
-///             {
-///                 "OUT_OF_STOCK" =&gt; BadRequest(new {
-///                     message = "Productos sin stock",
-///                     details = error.Details
-///                 }),
-///                 "INVALID_PRODUCT" =&gt; BadRequest("Producto no válido"),
-///                 _ =&gt; Problem(error.Message)
-///             };
-///         }
-///     );
-/// }
-///
-/// // Consultar pedidos propios
-/// [HttpGet("my-orders")]
-/// public async Task&lt;ActionResult&lt;PagedResult&lt;PedidoDto&gt;&gt;&gt; GetMyOrders(int page = 1, int size = 10)
-/// {
-///     var userId = GetCurrentUserId();
-///     var resultado = await _pedidosService.FindByUserIdPagedAsync(userId, page, size);
-///     return Ok(resultado.Value);
-/// }
-///
-/// // Cambiar estado (solo administradores o lógica automática)
-/// [HttpPut("{id}/estado")]
-/// public async Task&lt;ActionResult&gt; UpdateEstado(string id, [FromBody] string nuevoEstado)
-/// {
-///     var resultado = await _pedidosService.UpdateEstadoAsync(id, nuevoEstado);
-///     return resultado.Match(Ok, error =&gt; BadRequest(error.Message));
-/// }
-/// </code>
 public interface IPedidosService
 {
+    #region ========== MÉTODOS PARA ADMINISTRADORES ==========
+
     /// <summary>
     /// Recupera todos los pedidos del sistema (solo administradores).
     /// </summary>
-    /// <returns>
-    /// <list type="bullet">
-    ///   <item><term><c>Result.Success</c></term><description>Enumerable con todos los pedidos</description></item>
-    ///   <item><term><c>Result.Failure</c></term><description>Nunca ocurre</description></item>
-    /// </list>
-    /// </returns>
-    /// <remarks>
-    /// Para grandes volúmenes, implementar paginación o usar filtros por fecha/estado.
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// var resultado = await _pedidosService.FindAllAsync();
-    /// return Ok(resultado.Value);
-    /// </code>
-    /// </example>
+    /// <returns>Enumerable con todos los pedidos.</returns>
     Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync();
 
     /// <summary>
-    /// Obtiene todos los pedidos de un usuario específico.
+    /// Recupera los pedidos del sistema de forma paginada (solo administradores).
+    /// </summary>
+    /// <param name="page">Número de página (0-based).</param>
+    /// <param name="size">Cantidad de pedidos por página.</param>
+    /// <returns>Lista paginada de pedidos.</returns>
+    Task<Result<PagedResult<PedidoDto>, DomainError>> FindAllPagedAsync(int page, int size);
+
+    /// <summary>
+    /// Busca un pedido por su ID (solo administradores pueden ver cualquier pedido).
+    /// </summary>
+    /// <param name="id">ID del pedido</param>
+    /// <returns>Pedido encontrado o error NotFound.</returns>
+    Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id);
+
+    /// <summary>
+    /// Actualiza un pedido (solo administradores).
+    /// Los administradores pueden actualizar cualquier pedido sin restricciones de propiedad.
+    /// Envía WebSocket al cliente y Email al admin.
+    /// </summary>
+    /// <param name="id">ID del pedido</param>
+    /// <param name="dto">Campos a actualizar</param>
+    /// <returns>Pedido actualizado o error.</returns>
+    Task<Result<PedidoDto, DomainError>> UpdateAdminAsync(string id, UpdatePedidoDto dto);
+
+    /// <summary>
+    /// Elimina un pedido (solo administradores).
+    /// Los administradores pueden eliminar cualquier pedido.
+    /// Envía Email al admin.
+    /// </summary>
+    /// <param name="id">ID del pedido</param>
+    /// <returns>Éxito o error.</returns>
+    Task<UnitResult<DomainError>> DeleteAdminAsync(string id);
+
+    /// <summary>
+    /// Actualiza el estado de un pedido (solo administradores).
+    /// </summary>
+    /// <param name="id">ID del pedido</param>
+    /// <param name="nuevoEstado">Nuevo estado</param>
+    /// <returns>Pedido con estado actualizado o error.</returns>
+    Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado);
+
+    #endregion
+
+    #region ========== MÉTODOS PARA USUARIOS (MIS PEDIDOS) ==========
+
+    /// <summary>
+    /// Obtiene todos los pedidos del usuario autenticado (sin paginación).
     /// </summary>
     /// <param name="userId">ID del usuario</param>
-    /// <returns>
-    /// <list type="bullet">
-    ///   <item><term><c>Result.Success</c></term><description>Lista de pedidos del usuario</description></item>
-    ///   <item><term><c>Result.Failure</c></term><description>Nunca ocurre</description></item>
-    /// </list>
-    /// </returns>
-    /// <example>
-    /// <code>
-    /// var resultado = await _pedidosService.FindByUserIdAsync(userId);
-    /// return Ok(resultado.Value);
-    /// </code>
-    /// </example>
+    /// <returns>Enumerable con todos los pedidos del usuario.</returns>
     Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId);
 
     /// <summary>
-    /// Obtiene los pedidos de un usuario de forma paginada.
+    /// Obtiene los pedidos del usuario autenticado de forma paginada.
     /// </summary>
     /// <param name="userId">ID del usuario</param>
     /// <param name="page">Número de página (1-indexed)</param>
     /// <param name="size">Cantidad de pedidos por página</param>
-    /// <returns>
-    /// <list type="bullet">
-    ///   <item><term><c>Result.Success</c></term><description><c>PagedResult</c> con pedidos del usuario</description></item>
-    ///   <item><term><c>Result.Failure</c></term><description>Nunca con parámetros válidos</description></item>
-    /// </list>
-    /// </returns>
-    /// <example>
-    /// <code>
-    /// var resultado = await _pedidosService.FindByUserIdPagedAsync(userId, 1, 10);
-    /// return Ok(resultado.Value);
-    /// </code>
-    /// </example>
-    Task<Result<PagedResult<PedidoDto>, DomainError>> FindByUserIdPagedAsync(long userId, int page, int size);
+    /// <returns>Lista paginada de pedidos del usuario.</returns>
+    Task<Result<PagedResult<PedidoDto>, DomainError>> FindMyPedidosAsync(long userId, int page, int size);
 
     /// <summary>
-    /// Busca un pedido por su identificador único (ObjectId de MongoDB).
+    /// Busca un pedido propio por su ID.
+    /// Valida que el pedido pertenezca al usuario solicitante.
     /// </summary>
-    /// <param name="id">ID del pedido en formato MongoDB ObjectId</param>
-    /// <returns>
-    /// <list type="bullet">
-    ///   <item><term><c>Result.Success</c></term><description>Datos completos del pedido</description></item>
-    ///   <item><term><c>Result.Failure</c></term><description>NotFound si no existe</description></item>
-    /// </list>
-    /// </returns>
-    /// <remarks>
-    /// El ID es el ObjectId de MongoDB, no un ID numérico.
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// var resultado = await _pedidosService.FindByIdAsync("507f1f77bcf86cd799439011");
-    /// return resultado.Match(Ok, error =&gt; NotFound());
-    /// </code>
-    /// </example>
-    Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id);
+    /// <param name="id">ID del pedido</param>
+    /// <param name="userId">ID del usuario propietario</param>
+    /// <returns>Pedido encontrado o error NotFound/Forbidden.</returns>
+    Task<Result<PedidoDto, DomainError>> FindMyPedidoAsync(string id, long userId);
 
     /// <summary>
-    /// Crea un nuevo pedido verificando stock y reservando productos.
-    /// Orquesta la creación del pedido con validación de negocio completa.
+    /// Crea un nuevo pedido para el usuario autenticado.
     /// </summary>
     /// <param name="userId">ID del usuario que realiza el pedido</param>
-    /// <param name="dto">Datos del pedido (productos, cantidades, dirección)</param>
-    /// <returns>
-    /// <list type="bullet">
-    ///   <item><term><c>Result.Success</c></term><description>Pedido creado con estado Pending y productos reservados</description></item>
-    ///   <item><term><c>Result.Failure</c></term><description>OutOfStock, InvalidProduct, UserNotFound, Validation</description></item>
-    /// </list>
-    /// </returns>
-    /// <remarks>
-    /// <para><b>Flujo de creación:</b></para>
-    /// <list type="bullet">
-    ///   <item><description>1. Validar usuario existe y está activo</description></item>
-    ///   <item><description>2. Validar cada producto existe y está activo</description></item>
-    ///   <item><description>3. Verificar stock suficiente</description></item>
-    ///   <item><description>4. Reservar stock (temporal, con timeout)</description></item>
-    ///   <item><description>5. Calcular totales</description></item>
-    ///   <item><description>6. Guardar pedido en MongoDB</description></item>
-    ///   <item><description>7. Generar número de pedido</description></item>
-    /// </list>
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// var pedidoRequest = new PedidoRequestDto
-    /// {
-    ///     Items = new List&lt;PedidoItemDto&gt;
-    ///     {
-    ///         new() { ProductoId = 1, Cantidad = 2 },
-    ///         new() { ProductoId = 5, Cantidad = 1 }
-    ///     },
-    ///     DireccionEnvio = "Calle Principal 123, Madrid",
-    ///     Notas = "Entregar por la tarde"
-    /// };
-    ///
-    /// var resultado = await _pedidosService.CreateAsync(userId, pedidoRequest);
-    ///
-    /// return resultado.Match(
-    ///     pedido =&gt; {
-    ///         // El stock está reservado, pendiente de pago
-    ///         _notificationService.EnviarConfirmacion(userId, pedido.Numero);
-    ///         return CreatedAtAction(nameof(GetOrder), new { id = pedido.Id }, pedido);
-    ///     },
-    ///     error =&gt; {
-    ///         if (error.Code == "OUT_OF_STOCK")
-    ///         {
-    ///             var detalles = error.Details?.ToObject&lt;OutOfStockDetails&gt;();
-    ///             return BadRequest(new {
-    ///                 message = "No hay suficiente stock",
-    ///                 productosSinStock = detalles?.Productos
-    ///             });
-    ///         }
-    ///         return BadRequest(error.Message);
-    ///     }
-    /// );
-    /// </code>
-    /// </example>
+    /// <param name="dto">Datos del pedido</param>
+    /// <returns>Pedido creado o error.</returns>
     Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto);
 
     /// <summary>
-    /// Actualiza el estado de un pedido (solo administradores o sistema).
-    /// Valida que la transición de estado sea válida.
+    /// Actualiza un pedido propio.
+    /// Solo permite modificar pedidos en estado PENDIENTE.
+    /// Envía WebSocket al cliente.
     /// </summary>
     /// <param name="id">ID del pedido</param>
-    /// <param name="nuevoEstado">Nuevo estado a aplicar</param>
-    /// <returns>
-    /// <list type="bullet">
-    ///   <item><term><c>Result.Success</c></term><description>Pedido con estado actualizado</description></item>
-    ///   <item><term><c>Result.Failure</c></term><description>NotFound o InvalidStateTransition</description></item>
-    /// </list>
-    /// </returns>
-    /// <remarks>
-    /// <para><b>Transiciones válidas:</b></para>
-    /// <list type="bullet">
-    ///   <item><description>Pending → Confirmed, Cancelled</description></item>
-    ///   <item><description>Confirmed → Processing, Cancelled</description></item>
-    ///   <item><description>Processing → Shipped</description></item>
-    ///   <item><description>Shipped → Delivered</description></item>
-    /// </list>
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// var resultado = await _pedidosService.UpdateEstadoAsync(pedidoId, "Confirmed");
-    ///
-    /// return resultado.Match(
-    ///     pedido =&gt; {
-    ///         if (nuevoEstado == "Shipped")
-    ///             _emailService.EnviarNotificacionEnvio(pedido.UsuarioEmail, pedido.Numero);
-    ///         return Ok(pedido);
-    ///     },
-    ///     error =&gt; BadRequest(error.Message)
-    /// );
-    /// </code>
-    /// </example>
-    Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado);
-
-    /// <summary>
-    /// Actualiza un pedido (solo el propietario puede actualizar sus pedidos).
-    /// Permite modificar dirección de envío, notas y estados permitidos.
-    /// </summary>
-    /// <param name="id">ID del pedido</param>
-    /// <param name="userId">ID del usuario que realiza la modificación</param>
+    /// <param name="userId">ID del usuario propietario</param>
     /// <param name="dto">Campos a actualizar</param>
-    /// <returns>
-    /// <list type="bullet">
-    ///   <item><term><c>Result.Success</c></term><description>Pedido actualizado</description></item>
-    ///   <item><term><c>Result.Failure</c></term><description>NotFound, Forbidden (no es propietario), InvalidStateTransition</description></item>
-    /// </list>
-    /// </returns>
+    /// <returns>Pedido actualizado o error (NotFound, Forbidden, Validation).</returns>
     /// <remarks>
-    /// Solo se pueden modificar pedidos en estado Pending.
+    /// Si se modifican los items, se restaura el stock de los items anteriores
+    /// y se decrementa el stock de los nuevos items.
     /// </remarks>
-    /// <example>
-    /// <code>
-    /// var updateDto = new UpdatePedidoDto
-    /// {
-    ///     DireccionEnvio = "Nueva Dirección 456",
-    ///     Notas = "Cambiado a la tarde"
-    /// };
-    ///
-    /// var resultado = await _pedidosService.UpdateAsync(pedidoId, userId, updateDto);
-    /// return resultado.Match(Ok, error =&gt; {
-    ///     if (error.Code == ErrorCodes.Forbidden)
-    ///         return Forbid();
-    ///     return BadRequest(error.Message);
-    /// });
-    /// </code>
-    /// </example>
-    Task<Result<PedidoDto, DomainError>> UpdateAsync(string id, long userId, UpdatePedidoDto dto);
+    Task<Result<PedidoDto, DomainError>> UpdateMyPedidoAsync(string id, long userId, UpdatePedidoDto dto);
 
     /// <summary>
-    /// Elimina un pedido (solo el propietario o administradores).
+    /// Cancela y elimina un pedido propio.
+    /// Solo permite eliminar pedidos en estado PENDIENTE.
+    /// Envía Email al admin.
     /// </summary>
     /// <param name="id">ID del pedido</param>
-    /// <param name="userId">ID del usuario que solicita la eliminación</param>
-    /// <returns>
-    /// <list type="bullet">
-    ///   <item><term><c>UnitResult.Success</c></term><description>Pedido eliminado correctamente</description></item>
-    ///   <item><term><c>UnitResult.Failure</c></term><description>NotFound, Forbidden, o InvalidState (pedido ya avanzado)</description></item>
-    /// </list>
-    /// </returns>
+    /// <param name="userId">ID del usuario propietario</param>
+    /// <returns>Éxito o error (NotFound, Forbidden, InvalidState).</returns>
     /// <remarks>
-    /// Solo se pueden eliminar pedidos en estado Pending o Cancelled.
-    /// La liberación de stock ocurre automáticamente al cancelar.
+    /// Al eliminar, se restaura el stock de todos los productos del pedido.
     /// </remarks>
-    /// <example>
-    /// <code>
-    /// var resultado = await _pedidosService.DeleteAsync(pedidoId, userId);
-    ///
-    /// if (resultado.IsFailure)
-    /// {
-    ///     var error = resultado.Error;
-    ///     if (error.Code == ErrorCodes.Forbidden)
-    ///         return Forbid();
-    ///     if (error.Code == "CANNOT_DELETE_ORDER")
-    ///         return BadRequest("No se puede eliminar un pedido confirmado o enviado");
-    ///     return NotFound();
-    /// }
-    ///
-    /// return NoContent();
-    /// </code>
-    /// </example>
-    Task<UnitResult<DomainError>> DeleteAsync(string id, long userId);
+    Task<UnitResult<DomainError>> DeleteMyPedidoAsync(string id, long userId);
+
+    #endregion
 }

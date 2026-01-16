@@ -11,35 +11,25 @@ using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Dtos.Usuarios;
 using TiendaApi.Apis.Errors;
-using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Services.Users;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 
-/// <summary>
-/// Tests unitarios para UsersController.
-/// Prueba operaciones CRUD de usuarios y gestión de pedidos del usuario autenticado.
-/// </summary>
 public class UsersControllerTests
 {
     private readonly Mock<IUserService> _mockUserService;
-    private readonly Mock<IPedidosService> _mockPedidosService;
     private readonly Mock<ILogger<UsersController>> _mockLogger;
     private readonly UsersController _controller;
 
     public UsersControllerTests()
     {
         _mockUserService = new Mock<IUserService>();
-        _mockPedidosService = new Mock<IPedidosService>();
         _mockLogger = new Mock<ILogger<UsersController>>();
-        _controller = new UsersController(_mockUserService.Object, _mockPedidosService.Object, _mockLogger.Object);
+        _controller = new UsersController(_mockUserService.Object, _mockLogger.Object);
     }
 
     #region GetAll Tests
 
-    /// <summary>
-    /// Dado que existen usuarios, cuando se obtienen todos paginados, entonces retorna 200 OK con lista paginada.
-    /// </summary>
     [Test]
     public async Task GetAll_ConUsuariosExistentes_RetornaOkConListaPaginada()
     {
@@ -66,9 +56,6 @@ public class UsersControllerTests
         returnedUsers.Items.Should().HaveCount(2);
     }
 
-    /// <summary>
-    /// Dado que no existen usuarios, cuando se obtienen todos, entonces retorna 200 OK con lista vacía.
-    /// </summary>
     [Test]
     public async Task GetAll_SinUsuarios_RetornaOkConListaVacia()
     {
@@ -90,9 +77,6 @@ public class UsersControllerTests
         returnedUsers.Items.Should().BeEmpty();
     }
 
-    /// <summary>
-    /// Dado un filtro por username, cuando se obtienen usuarios, entonces retorna solo los que coinciden.
-    /// </summary>
     [Test]
     public async Task GetAll_ConFiltroUsername_RetornaListaFiltrada()
     {
@@ -121,9 +105,6 @@ public class UsersControllerTests
 
     #region GetById Tests
 
-    /// <summary>
-    /// Dado que existe un usuario, cuando se obtiene por ID, entonces retorna 200 OK con el usuario.
-    /// </summary>
     [Test]
     public async Task GetById_ConIdExistente_RetornaOkConUsuario()
     {
@@ -140,9 +121,6 @@ public class UsersControllerTests
         returnedUsuario.Username.Should().Be("testuser");
     }
 
-    /// <summary>
-    /// Dado que no existe un usuario, cuando se obtiene por ID, entonces retorna 404 Not Found.
-    /// </summary>
     [Test]
     public async Task GetById_ConIdNoExistente_RetornaNotFound()
     {
@@ -160,9 +138,6 @@ public class UsersControllerTests
 
     #region Create Tests
 
-    /// <summary>
-    /// Dado un DTO válido, cuando se crea un usuario, entonces retorna 201 Created con el usuario.
-    /// </summary>
     [Test]
     public async Task Create_ConDtoValido_RetornaCreatedConUsuario()
     {
@@ -180,9 +155,6 @@ public class UsersControllerTests
         returnedUsuario.Username.Should().Be("nuevouser");
     }
 
-    /// <summary>
-    /// Dado un DTO con username duplicado, cuando se crea un usuario, entonces retorna 409 Conflict.
-    /// </summary>
     [Test]
     public async Task Create_ConUsernameDuplicado_RetornaConflict()
     {
@@ -197,9 +169,6 @@ public class UsersControllerTests
         result.Should().BeOfType<ConflictObjectResult>();
     }
 
-    /// <summary>
-    /// Dado un DTO con validación fallida, cuando se crea un usuario, entonces retorna 400 Bad Request.
-    /// </summary>
     [Test]
     public async Task Create_ConValidacionFallida_RetornaBadRequest()
     {
@@ -222,9 +191,6 @@ public class UsersControllerTests
 
     #region Update Tests
 
-    /// <summary>
-    /// Dado un ID válido y DTO válido, cuando se actualiza, entonces retorna 200 OK con el usuario actualizado.
-    /// </summary>
     [Test]
     public async Task Update_ConIdValido_RetornaOkConUsuarioActualizado()
     {
@@ -242,9 +208,6 @@ public class UsersControllerTests
         returnedUsuario.Email.Should().Be("nuevo@test.com");
     }
 
-    /// <summary>
-    /// Dado un ID no existente, cuando se actualiza, entonces retorna 404 Not Found.
-    /// </summary>
     [Test]
     public async Task Update_ConIdNoExistente_RetornaNotFound()
     {
@@ -260,9 +223,6 @@ public class UsersControllerTests
         result.Should().BeOfType<NotFoundObjectResult>();
     }
 
-    /// <summary>
-    /// Dado un DTO con email duplicado, cuando se actualiza, entonces retorna 409 Conflict.
-    /// </summary>
     [Test]
     public async Task Update_ConEmailDuplicado_RetornaConflict()
     {
@@ -282,9 +242,6 @@ public class UsersControllerTests
 
     #region UpdateAvatar Tests
 
-    /// <summary>
-    /// Dado un ID válido y URL de avatar, cuando se actualiza el avatar, entonces retorna 200 OK.
-    /// </summary>
     [Test]
     public async Task UpdateAvatar_ConUrlValida_RetornaOk()
     {
@@ -303,9 +260,6 @@ public class UsersControllerTests
         okResult.Value.Should().NotBeNull();
     }
 
-    /// <summary>
-    /// Dado un ID no existente, cuando se actualiza el avatar, entonces retorna 404 Not Found.
-    /// </summary>
     [Test]
     public async Task UpdateAvatar_ConIdNoExistente_RetornaNotFound()
     {
@@ -328,9 +282,6 @@ public class UsersControllerTests
 
     #region Delete Tests
 
-    /// <summary>
-    /// Dado un ID existente, cuando se elimina, entonces retorna 204 No Content.
-    /// </summary>
     [Test]
     public async Task Delete_ConIdExistente_RetornaNoContent()
     {
@@ -342,9 +293,6 @@ public class UsersControllerTests
         result.Should().BeOfType<NoContentResult>();
     }
 
-    /// <summary>
-    /// Dado un ID no existente, cuando se elimina, entonces retorna 404 Not Found.
-    /// </summary>
     [Test]
     public async Task Delete_ConIdNoExistente_RetornaNotFound()
     {
@@ -362,9 +310,6 @@ public class UsersControllerTests
 
     #region GetMyProfile Tests
 
-    /// <summary>
-    /// Dado un usuario autenticado, cuando obtiene su perfil, entonces retorna 200 OK con el perfil.
-    /// </summary>
     [Test]
     public async Task GetMyProfile_UsuarioAutenticado_RetornaOkConPerfil()
     {
@@ -383,9 +328,6 @@ public class UsersControllerTests
         returnedUsuario.Id.Should().Be(1);
     }
 
-    /// <summary>
-    /// Dado un token sin claim de usuario, cuando obtiene su perfil, entonces retorna 401 Unauthorized.
-    /// </summary>
     [Test]
     public async Task GetMyProfile_SinClaim_RetornaUnauthorized()
     {
@@ -400,9 +342,6 @@ public class UsersControllerTests
 
     #region UpdateMyProfile Tests
 
-    /// <summary>
-    /// Dado un usuario autenticado con DTO válido, cuando actualiza su perfil, entonces retorna 200 OK.
-    /// </summary>
     [Test]
     public async Task UpdateMyProfile_ConDtoValido_RetornaOk()
     {
@@ -421,9 +360,6 @@ public class UsersControllerTests
         okResult.Value.Should().NotBeNull();
     }
 
-    /// <summary>
-    /// Dado un usuario autenticado con validación fallida, cuando actualiza su perfil, entonces retorna 400 Bad Request.
-    /// </summary>
     [Test]
     public async Task UpdateMyProfile_ConValidacionFallida_RetornaBadRequest()
     {
@@ -445,9 +381,6 @@ public class UsersControllerTests
 
     #region DeleteMyProfile Tests
 
-    /// <summary>
-    /// Dado un usuario autenticado, cuando elimina su cuenta, entonces retorna 204 No Content.
-    /// </summary>
     [Test]
     public async Task DeleteMyProfile_UsuarioAutenticado_RetornaNoContent()
     {
@@ -463,9 +396,6 @@ public class UsersControllerTests
         result.Should().BeOfType<NoContentResult>();
     }
 
-    /// <summary>
-    /// Dado un usuario autenticado que no existe, cuando elimina su cuenta, entonces retorna 404 Not Found.
-    /// </summary>
     [Test]
     public async Task DeleteMyProfile_UsuarioNoExistente_RetornaNotFound()
     {
@@ -484,251 +414,8 @@ public class UsersControllerTests
 
     #endregion
 
-    #region GetMyPedidos Tests
-
-    /// <summary>
-    /// Dado un usuario autenticado, cuando obtiene sus pedidos paginados, entonces retorna 200 OK.
-    /// </summary>
-    [Test]
-    public async Task GetMyPedidos_UsuarioAutenticado_RetornaOkConPedidos()
-    {
-        var userId = 1L;
-        var pedidos = new List<PedidoDto>
-        {
-            new PedidoDto("ped1", 1, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow),
-            new PedidoDto("ped2", 1, new List<PedidoItemDto>(), 200m, "PENDIENTE", null, DateTime.UtcNow)
-        };
-        var pagedResult = new PagedResult<PedidoDto>
-        {
-            Items = pedidos,
-            TotalCount = 2,
-            Page = 1,
-            PageSize = 10
-        };
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.FindByUserIdPagedAsync(userId, 0, 10))
-            .ReturnsAsync(Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult));
-
-        var result = await _controller.GetMyPedidos();
-
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedPedidos = okResult.Value.Should().BeAssignableTo<PagedResult<PedidoDto>>().Subject;
-        returnedPedidos.Items.Should().HaveCount(2);
-    }
-
-    /// <summary>
-    /// Dado un usuario autenticado sin pedidos, cuando obtiene sus pedidos, entonces retorna lista vacía.
-    /// </summary>
-    [Test]
-    public async Task GetMyPedidos_SinPedidos_RetornaOkConListaVacia()
-    {
-        var userId = 1L;
-        var pagedResult = new PagedResult<PedidoDto>
-        {
-            Items = new List<PedidoDto>(),
-            TotalCount = 0,
-            Page = 1,
-            PageSize = 10
-        };
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.FindByUserIdPagedAsync(userId, 0, 10))
-            .ReturnsAsync(Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult));
-
-        var result = await _controller.GetMyPedidos();
-
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedPedidos = okResult.Value.Should().BeAssignableTo<PagedResult<PedidoDto>>().Subject;
-        returnedPedidos.Items.Should().BeEmpty();
-    }
-
-    #endregion
-
-    #region CreateMyPedido Tests
-
-    /// <summary>
-    /// Dado un usuario autenticado con DTO válido, cuando crea un pedido, entonces retorna 201 Created.
-    /// </summary>
-    [Test]
-    public async Task CreateMyPedido_ConDtoValido_RetornaCreated()
-    {
-        var userId = 1L;
-        var pedidoDto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-        var pedidoResult = new PedidoDto("new-pedido", userId, new List<PedidoItemDto>(), 0m, "PENDIENTE", null, DateTime.UtcNow);
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.CreateAsync(userId, pedidoDto))
-            .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoResult));
-
-        var result = await _controller.CreateMyPedido(pedidoDto);
-
-        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
-        createdResult.ControllerName.Should().Be("Pedidos");
-    }
-
-    /// <summary>
-    /// Dado un usuario autenticado con producto no encontrado, cuando crea un pedido, entonces retorna 404 Not Found.
-    /// </summary>
-    [Test]
-    public async Task CreateMyPedido_ProductoNoExistente_RetornaNotFound()
-    {
-        var userId = 1L;
-        var pedidoDto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-        var error = new NotFoundError("Producto con ID 999 no encontrado");
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.CreateAsync(userId, pedidoDto))
-            .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
-
-        var result = await _controller.CreateMyPedido(pedidoDto);
-
-        result.Should().BeOfType<NotFoundObjectResult>();
-    }
-
-    /// <summary>
-    /// Dado un usuario autenticado con validación fallida, cuando crea un pedido, entonces retorna 400 Bad Request.
-    /// </summary>
-    [Test]
-    public async Task CreateMyPedido_ValidacionFallida_RetornaBadRequest()
-    {
-        var userId = 1L;
-        var pedidoDto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
-        var error = ValidationError.Create("El pedido debe tener al menos un producto");
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.CreateAsync(userId, pedidoDto))
-            .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
-
-        var result = await _controller.CreateMyPedido(pedidoDto);
-
-        result.Should().BeOfType<BadRequestObjectResult>();
-    }
-
-    #endregion
-
-    #region UpdateMyPedido Tests
-
-    /// <summary>
-    /// Dado un usuario autenticado con DTO válido, cuando actualiza un pedido, entonces retorna 200 OK.
-    /// </summary>
-    [Test]
-    public async Task UpdateMyPedido_ConDtoValido_RetornaOk()
-    {
-        var userId = 1L;
-        var pedidoId = "pedido-123";
-        var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección" };
-        var pedidoDto = new PedidoDto(pedidoId, userId, new List<PedidoItemDto>(), 0m, "PENDIENTE", "Nueva dirección", DateTime.UtcNow);
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.UpdateAsync(pedidoId, userId, updateDto))
-            .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
-
-        var result = await _controller.UpdateMyPedido(pedidoId, updateDto);
-
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.Value.Should().NotBeNull();
-    }
-
-    /// <summary>
-    /// Dado un usuario que intenta actualizar pedido de otro usuario, entonces retorna 403 Forbidden.
-    /// </summary>
-    [Test]
-    public async Task UpdateMyPedido_PedidoDeOtroUsuario_RetornaForbidden()
-    {
-        var userId = 1L;
-        var pedidoId = "pedido-123";
-        var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección" };
-        var error = new ForbiddenError("No puedes actualizar un pedido que no es tuyo");
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.UpdateAsync(pedidoId, userId, updateDto))
-            .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
-
-        var result = await _controller.UpdateMyPedido(pedidoId, updateDto);
-
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
-        objectResult.StatusCode.Should().Be(403);
-    }
-
-    #endregion
-
-    #region DeleteMyPedido Tests
-
-    /// <summary>
-    /// Dado un usuario autenticado, cuando elimina su pedido, entonces retorna 204 No Content.
-    /// </summary>
-    [Test]
-    public async Task DeleteMyPedido_PedidoExistente_RetornaNoContent()
-    {
-        var userId = 1L;
-        var pedidoId = "pedido-123";
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.DeleteAsync(pedidoId, userId))
-            .ReturnsAsync(UnitResult.Success<DomainError>());
-
-        var result = await _controller.DeleteMyPedido(pedidoId);
-
-        result.Should().BeOfType<NoContentResult>();
-    }
-
-    /// <summary>
-    /// Dado un usuario que intenta eliminar pedido de otro usuario, entonces retorna 403 Forbidden.
-    /// </summary>
-    [Test]
-    public async Task DeleteMyPedido_PedidoDeOtroUsuario_RetornaForbidden()
-    {
-        var userId = 1L;
-        var pedidoId = "pedido-123";
-        var error = new ForbiddenError("No puedes eliminar un pedido que no es tuyo");
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.DeleteAsync(pedidoId, userId))
-            .ReturnsAsync(UnitResult.Failure<DomainError>(error));
-
-        var result = await _controller.DeleteMyPedido(pedidoId);
-
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
-        objectResult.StatusCode.Should().Be(403);
-    }
-
-    /// <summary>
-    /// Dado un pedido no existente, cuando elimina, entonces retorna 404 Not Found.
-    /// </summary>
-    [Test]
-    public async Task DeleteMyPedido_PedidoNoExistente_RetornaNotFound()
-    {
-        var userId = 1L;
-        var pedidoId = "pedido-inexistente";
-        var error = new NotFoundError("Pedido no encontrado");
-
-        SetupUserClaims(userId);
-
-        _mockPedidosService.Setup(s => s.DeleteAsync(pedidoId, userId))
-            .ReturnsAsync(UnitResult.Failure<DomainError>(error));
-
-        var result = await _controller.DeleteMyPedido(pedidoId);
-
-        result.Should().BeOfType<NotFoundObjectResult>();
-    }
-
-    #endregion
-
     #region Error Handling Tests
 
-    /// <summary>
-    /// Dado un error interno en GetAll, cuando se obtienen usuarios, entonces retorna 500.
-    /// </summary>
     [Test]
     public async Task GetAll_ConErrorInterno_Retorna500()
     {
@@ -743,9 +430,6 @@ public class UsersControllerTests
         objectResult.StatusCode.Should().Be(500);
     }
 
-    /// <summary>
-    /// Dado un error interno en GetById, cuando se obtiene usuario, entonces retorna 500.
-    /// </summary>
     [Test]
     public async Task GetById_ConErrorInterno_Retorna500()
     {
@@ -764,9 +448,6 @@ public class UsersControllerTests
 
     #region Authorization Attribute Tests
 
-    /// <summary>
-    /// Verifica que GetAll tenga el atributo Authorize con rol ADMIN.
-    /// </summary>
     [Test]
     public void GetAll_TieneAtributoAuthorizeAdmin()
     {
@@ -777,9 +458,6 @@ public class UsersControllerTests
         attribute!.Roles.Should().Contain("ADMIN");
     }
 
-    /// <summary>
-    /// Verifica que GetById tenga el atributo Authorize con rol ADMIN.
-    /// </summary>
     [Test]
     public void GetById_TieneAtributoAuthorizeAdmin()
     {
@@ -790,9 +468,6 @@ public class UsersControllerTests
         attribute!.Roles.Should().Contain("ADMIN");
     }
 
-    /// <summary>
-    /// Verifica que GetMyProfile tenga el atributo Authorize.
-    /// </summary>
     [Test]
     public void GetMyProfile_TieneAtributoAuthorize()
     {
@@ -801,24 +476,10 @@ public class UsersControllerTests
         attribute.Should().NotBeEmpty();
     }
 
-    /// <summary>
-    /// Verifica que GetMyPedidos tenga el atributo Authorize.
-    /// </summary>
-    [Test]
-    public void GetMyPedidos_TieneAtributoAuthorize()
-    {
-        var methodInfo = typeof(UsersController).GetMethod(nameof(UsersController.GetMyPedidos));
-        var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true);
-        attribute.Should().NotBeEmpty();
-    }
-
     #endregion
 
     #region Helper Methods
 
-    /// <summary>
-    /// Configura los claims del usuario para simular autenticación.
-    /// </summary>
     private void SetupUserClaims(long userId)
     {
         var claims = new List<Claim>
@@ -835,9 +496,6 @@ public class UsersControllerTests
         };
     }
 
-    /// <summary>
-    /// Configura claims vacíos para simular usuario no autenticado.
-    /// </summary>
     private void SetupEmptyClaims()
     {
         var identity = new ClaimsIdentity();

@@ -1,4 +1,5 @@
 using FluentValidation.TestHelper;
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Validators.Pedidos;
 
@@ -88,6 +89,17 @@ public class PedidoRequestValidatorTests
     {
         var dto = new PedidoRequestDto
         {
+            Destinatario = new DestinatarioDto
+            {
+                NombreCompleto = "Test User",
+                Email = "test@email.com",
+                Direccion = new DireccionDto
+                {
+                    Calle = "Calle Test",
+                    Ciudad = "Madrid",
+                    Pais = "España"
+                }
+            },
             Items = new List<PedidoItemRequestDto>
             {
                 new() { ProductoId = 1, Cantidad = 2 }

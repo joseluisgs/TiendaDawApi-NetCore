@@ -1,3 +1,4 @@
+using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Models;
 
@@ -77,10 +78,11 @@ public static class PedidoMapper
     /// <param name="pedido">La entidad de pedido a convertir.</param>
     /// <returns>Un nuevo objeto <see cref="PedidoDto"/> con los datos del pedido y sus ítems.</returns>
     /// <remarks>
-    /// Este método mapea la entidad compuesta incluyendo todos los ítems del pedido.
+    /// Este método mapea la entidad compuesta incluyendo todos los ítems del pedido y el destinatario.
     /// Convierte el Guid del ID a string para serialización JSON más amigable.
     /// Maneja gracefully el caso donde Items es null usando el operador null-coalescing.
     /// El estado del pedido se retorna como cadena, usando string.Empty si es null.
+    /// El destinatario se mapea incluyendo su dirección (crea uno vacío si es null).
     /// </remarks>
     /// <example>
     /// <code>
@@ -99,12 +101,88 @@ public static class PedidoMapper
         return new PedidoDto(
             pedido.Id.ToString(),
             pedido.UserId,
+            pedido.Destinatario?.ToDto() ?? new DestinatarioDto(),
             pedido.Items?.Select(i => i.ToDto()).ToList() ?? new(),
             pedido.Total,
             pedido.Estado ?? string.Empty,
             pedido.DireccionEnvio,
             pedido.CreatedAt
         );
+    }
+
+    /// <summary>
+    /// Convierte una entidad de dominio <see cref="Destinatario"/> a un DTO <see cref="DestinatarioDto"/>
+    /// para ser retornado en las respuestas de la API.
+    /// </summary>
+    /// <param name="destinatario">La entidad de destinatario a convertir.</param>
+    /// <returns>Un nuevo objeto <see cref="DestinatarioDto"/> con los datos del destinatario.</returns>
+    public static DestinatarioDto ToDto(this Destinatario? destinatario)
+    {
+        return new DestinatarioDto
+        {
+            NombreCompleto = destinatario?.NombreCompleto ?? string.Empty,
+            Email = destinatario?.Email ?? string.Empty,
+            Telefono = destinatario?.Telefono,
+            Direccion = destinatario?.Direccion?.ToDto() ?? new DireccionDto()
+        };
+    }
+
+    /// <summary>
+    /// Convierte una entidad de dominio <see cref="Direccion"/> a un DTO <see cref="DireccionDto"/>
+    /// para ser retornado en las respuestas de la API.
+    /// </summary>
+    /// <param name="direccion">La entidad de dirección a convertir.</param>
+    /// <returns>Un nuevo objeto <see cref="DireccionDto"/> con los datos de la dirección.</returns>
+    public static DireccionDto ToDto(this Direccion? direccion)
+    {
+        return new DireccionDto
+        {
+            Calle = direccion?.Calle ?? string.Empty,
+            Numero = direccion?.Numero,
+            Ciudad = direccion?.Ciudad ?? string.Empty,
+            Provincia = direccion?.Provincia,
+            Pais = direccion?.Pais ?? string.Empty,
+            CodigoPostal = direccion?.CodigoPostal
+        };
+    }
+
+    /// <summary>
+    /// Convierte un DTO <see cref="DestinatarioDto"/> a una entidad de dominio <see cref="Destinatario"/>
+    /// para ser persistida en la base de datos.
+    /// </summary>
+    /// <param name="dto">El DTO de destinatario a convertir.</param>
+    /// <returns>Una nueva entidad <see cref="Destinatario"/> con los datos del DTO.</returns>
+    public static Destinatario ToEntity(this DestinatarioDto dto)
+    {
+        return new Destinatario
+        {
+            NombreCompleto = dto.NombreCompleto,
+            Email = dto.Email,
+            Telefono = dto.Telefono,
+            Direccion = dto.Direccion?.ToEntity()
+        };
+    }
+
+    /// <summary>
+    /// Convierte un DTO <see cref="DireccionDto"/> a una entidad de dominio <see cref="Direccion"/>
+    /// para ser persistida en la base de datos.
+    /// </summary>
+    /// <param name="dto">El DTO de dirección a convertir.</param>
+    /// <returns>Una nueva entidad <see cref="Direccion"/> con los datos del DTO.</returns>
+    public static Direccion? ToEntity(this DireccionDto? dto)
+    {
+        if (dto == null)
+            return null;
+
+        return new Direccion
+        {
+            Calle = dto.Calle,
+            Numero = dto.Numero,
+            Ciudad = dto.Ciudad,
+            Provincia = dto.Provincia,
+            Pais = dto.Pais,
+            CodigoPostal = dto.CodigoPostal
+        };
     }
 
     /// <summary>
@@ -181,6 +259,7 @@ public static class PedidoMapper
     /// El ID del pedido se genera como Guid (UUID) automáticamente.
     /// El estado se establece como PENDIENTE por defecto (enum PedidoEstado).
     /// Los ítems del pedido se mapean usando el método ToEntity sobrecargado para PedidoItemRequestDto.
+    /// El destinatario se mapea si está presente en el DTO.
     /// El total del pedido debe calcularse en el servicio o validarse contra los precios actuales.
     /// </remarks>
     /// <example>
@@ -191,13 +270,13 @@ public static class PedidoMapper
     /// {
     ///     var userId = GetCurrentUserId(); // Del contexto de autenticación
     ///     var pedido = dto.ToEntity(userId);
-    ///     
+    ///
     ///     // Validar disponibilidad de stock y calcular totales
     ///     _validator.ValidateAndCalculate(pedido);
-    ///     
+    ///
     ///     _repo.Add(pedido);
     ///     _repo.SaveChanges();
-    ///     
+    ///
     ///     return CreatedAtAction(nameof(GetPedido), new { id = pedido.Id }, pedido.ToDto());
     /// }
     /// </code>
@@ -207,6 +286,7 @@ public static class PedidoMapper
         return new Pedido
         {
             UserId = userId,
+            Destinatario = dto.Destinatario?.ToEntity(),
             Items = dto.Items.Select(i => i.ToEntity()).ToList(),
             Estado = PedidoEstado.PENDIENTE,
             CreatedAt = DateTime.UtcNow,
