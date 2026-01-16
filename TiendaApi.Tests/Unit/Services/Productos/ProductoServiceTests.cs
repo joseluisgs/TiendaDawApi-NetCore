@@ -487,7 +487,7 @@ public class ProductoServiceTests
         mockFile.Setup(f => f.Length).Returns(1000);
         mockFile.Setup(f => f.ContentType).Returns("image/png");
 
-        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Apis.Errors.DomainError>("/images/productos/new.png");
+        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Apis.Errors.DomainError>("/uploads/productos/new.png");
         _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
             .ReturnsAsync(saveResult);
 
@@ -510,7 +510,7 @@ public class ProductoServiceTests
             Nombre = "Test Product",
             CategoriaId = 1,
             Categoria = categoria,
-            Imagen = "/storage/images/productos/old.png"
+            Imagen = "/storage/uploads/productos/old.png"
         };
         _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(producto);
@@ -523,12 +523,12 @@ public class ProductoServiceTests
         mockFile.Setup(f => f.Length).Returns(1000);
         mockFile.Setup(f => f.ContentType).Returns("image/png");
 
-        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Apis.Errors.DomainError>("/images/productos/new.png");
+        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Apis.Errors.DomainError>("/uploads/productos/new.png");
         _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
             .ReturnsAsync(saveResult);
 
         var deleteResult = CSharpFunctionalExtensions.Result.Success<bool, TiendaApi.Apis.Errors.DomainError>(true);
-        _mockStorageService.Setup(s => s.DeleteFileAsync("/storage/images/productos/old.png"))
+        _mockStorageService.Setup(s => s.DeleteFileAsync("/storage/uploads/productos/old.png"))
             .ReturnsAsync(deleteResult);
 
         // Act
@@ -536,7 +536,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        _mockStorageService.Verify(s => s.DeleteFileAsync("/storage/images/productos/old.png"), Times.Once);
+        _mockStorageService.Verify(s => s.DeleteFileAsync("/storage/uploads/productos/old.png"), Times.Once);
     }
 
     [Test]

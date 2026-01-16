@@ -480,8 +480,8 @@ catch (Exception ex)
 // 🖼️ INICIALIZACIÓN DE DIRECTORIO DE ALMACENAMIENTO
 // ============================================================================
 
-var storagePath = System.IO.Path.Combine(app.Environment.ContentRootPath,
-    "wwwroot", builder.Configuration["Storage:UploadPath"] ?? "wwwroot/images/uploads");
+var storagePath = System.IO.Path.Combine(app.Environment.WebRootPath,
+    builder.Configuration["Storage:UploadPath"] ?? "uploads");
 var storageDirectory = new DirectoryInfo(storagePath);
 
 if (isDevelopment)

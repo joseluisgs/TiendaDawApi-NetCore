@@ -40,10 +40,10 @@ public class Producto : ITimestamped
     /// 
     /// <para>
     /// Las imágenes cargadas por usuarios se almacenan en la carpeta
-    /// /storage/images/productos/ y se referencian con este prefijo.
+    /// /storage/uploads/productos/ y se referencian con este prefijo.
     /// </para>
     /// </summary>
-    public const string IMAGE_LOCAL_PREFIX = "/storage/images/productos/";
+    public const string IMAGE_LOCAL_PREFIX = "/storage/uploads/productos/";
 
     /// <summary>
     /// Identificador único del producto (clave primaria).

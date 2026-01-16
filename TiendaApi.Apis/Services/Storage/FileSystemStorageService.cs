@@ -11,7 +11,8 @@ namespace TiendaApi.Apis.Services.Storage;
 
 /// <summary>
 /// Implementación de IStorageService que almacena ficheiros en el sistema de archivos local.
-/// Los ficheiros se guardan en wwwroot/images/{folder} para acceso web directo.
+/// Los ficheiros se guardan en wwwroot/{Storage:UploadPath}/{folder} para acceso web directo.
+/// Por defecto: wwwroot/uploads/{folder} (configurable).
 /// </summary>
 public class FileSystemStorageService : IStorageService
 {
@@ -26,17 +27,16 @@ public class FileSystemStorageService : IStorageService
     {
         _logger = logger;
 
-        // Configuración desde appsettings.json
-        _uploadPath = configuration["Storage:UploadPath"] ?? "images/uploads";
-        _maxFileSize = configuration.GetValue<long>("Storage:MaxFileSize", 5 * 1024 * 1024); // 5MB por defecto
+        // Configuración desde appsettings.json (ruta relativa a wwwroot)
+        _uploadPath = configuration["Storage:UploadPath"] ?? "uploads";
+        _maxFileSize = configuration.GetValue<long>("Storage:MaxFileSize", 5 * 1024 * 1024);
         _allowedExtensions = configuration.GetSection("Storage:AllowedExtensions").Get<string[]>()
             ?? [".jpg", ".jpeg", ".png", ".gif"];
         _allowedContentTypes = configuration.GetSection("Storage:AllowedContentTypes").Get<string[]>()
             ?? ["image/jpeg", "image/png", "image/gif"];
 
-        // Ruta absoluta: usar WebHostEnvironment.ContentRootPath + wwwroot/images
-        // Esto funciona tanto en desarrollo como en Docker
-        _rootPath = System.IO.Path.Combine(env.ContentRootPath, "wwwroot", "images");
+        // Ruta absoluta: usar WebHostEnvironment.WebRootPath (apunta a wwwroot)
+        _rootPath = System.IO.Path.Combine(env.WebRootPath, _uploadPath);
 
         // Crear directorio si no existe
         if (!Directory.Exists(_rootPath))
@@ -174,32 +174,24 @@ public class FileSystemStorageService : IStorageService
 
     public string GetFullPath(string filename)
     {
-        // Si filename ya tiene la ruta completa, usarla directamente
         if (System.IO.Path.IsPathRooted(filename))
-        {
             return filename;
-        }
 
-        // Eliminar el prefijo /storage/ si existe
         var cleanFilename = filename;
+        var prefix = $"/{_uploadPath}/";
+
         if (filename.StartsWith("/storage/", StringComparison.OrdinalIgnoreCase))
-        {
             cleanFilename = filename["/storage/".Length..];
-        }
         else if (filename.StartsWith("/storage", StringComparison.OrdinalIgnoreCase))
-        {
             cleanFilename = filename["/storage".Length..].TrimStart('/');
-        }
-        else if (filename.StartsWith("/images/", StringComparison.OrdinalIgnoreCase))
-        {
-            cleanFilename = filename["/images/".Length..];
-        }
+        else if (filename.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            cleanFilename = filename[prefix.Length..];
 
         return System.IO.Path.Combine(_rootPath, cleanFilename);
     }
 
     public string GetRelativePath(string filename, string folder = "productos")
     {
-        return $"/images/{folder}/{filename}";
+        return $"/{_uploadPath}/{folder}/{filename}";
     }
 }

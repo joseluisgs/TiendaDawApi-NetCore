@@ -11,7 +11,7 @@ public class ProductoImageTests
         // Arrange
         var producto = new Producto
         {
-            Imagen = "/storage/images/productos/test.jpg"
+            Imagen = "/storage/uploads/productos/test.jpg"
         };
 
         // Act
@@ -27,7 +27,7 @@ public class ProductoImageTests
         // Arrange
         var producto = new Producto
         {
-            Imagen = "/STORAGE/IMAGES/PRODUCTOS/test.jpg"
+            Imagen = "/STORAGE/UPLOADS/PRODUCTOS/test.jpg"
         };
 
         // Act
@@ -155,7 +155,7 @@ public class ProductoImageTests
         // Arrange
         var producto = new Producto
         {
-            Imagen = "/storage/images/productos/test.jpg"
+            Imagen = "/storage/uploads/productos/test.jpg"
         };
 
         // Act
@@ -219,14 +219,14 @@ public class ProductoImageTests
         // Arrange
         var producto = new Producto
         {
-            Imagen = "/images/productos/test.jpg"
+            Imagen = "/uploads/productos/test.jpg"
         };
 
         // Act
         var result = producto.GetImagenUrl();
 
         // Assert
-        result.Should().Be("/storage/images/productos/test.jpg");
+        result.Should().Be("/storage/uploads/productos/test.jpg");
     }
 
     [Test]
@@ -235,14 +235,14 @@ public class ProductoImageTests
         // Arrange
         var producto = new Producto
         {
-            Imagen = "/storage/images/productos/test.jpg"
+            Imagen = "/storage/uploads/productos/test.jpg"
         };
 
         // Act
         var result = producto.GetImagenUrl();
 
         // Assert
-        result.Should().Be("/storage/images/productos/test.jpg");
+        result.Should().Be("/storage/uploads/productos/test.jpg");
     }
 
     [Test]
@@ -272,6 +272,6 @@ public class ProductoImageTests
     public void ImageLocalPrefix_ConstanteCorrecta()
     {
         // Assert
-        Producto.IMAGE_LOCAL_PREFIX.Should().Be("/storage/images/productos/");
+        Producto.IMAGE_LOCAL_PREFIX.Should().Be("/storage/uploads/productos/");
     }
 }

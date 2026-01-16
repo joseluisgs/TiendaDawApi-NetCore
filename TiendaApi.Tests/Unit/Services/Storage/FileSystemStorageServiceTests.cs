@@ -26,10 +26,11 @@ public class FileSystemStorageServiceTests
         _mockLogger = new Mock<ILogger<FileSystemStorageService>>();
         _mockEnv = new Mock<IWebHostEnvironment>();
         _mockEnv.Setup(e => e.ContentRootPath).Returns(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tienda-tests"));
+        _mockEnv.Setup(e => e.WebRootPath).Returns(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tienda-tests", "wwwroot"));
 
         var inMemorySettings = new Dictionary<string, string>
         {
-            { "Storage:UploadPath", "images/uploads" },
+            { "Storage:UploadPath", "uploads" },
             { "Storage:MaxFileSize", "5242880" },
             { "Storage:AllowedExtensions", ".jpg,.jpeg,.png,.gif" },
             { "Storage:AllowedContentTypes", "image/jpeg,image/png,image/gif" }
@@ -55,7 +56,7 @@ public class FileSystemStorageServiceTests
         var result = await _storageService.SaveFileAsync(file, "productos");
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Contain("/images/productos/");
+        result.Value.Should().Contain("/uploads/productos/");
         result.Value.Should().Contain(".jpg");
     }
 
@@ -178,7 +179,7 @@ public class FileSystemStorageServiceTests
         var result = await _storageService.SaveFileAsync(file, "categorias");
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Contain("/images/categorias/");
+        result.Value.Should().Contain("/uploads/categorias/");
         result.Value.Should().EndWith(".gif");
     }
 
@@ -233,7 +234,7 @@ public class FileSystemStorageServiceTests
     [Test]
     public async Task DeleteFileAsync_ArchivoNoExistente_RetornaTrue()
     {
-        var result = await _storageService.DeleteFileAsync("/images/productos/noexiste.jpg");
+        var result = await _storageService.DeleteFileAsync("/uploads/productos/noexiste.jpg");
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeTrue();
@@ -287,7 +288,7 @@ public class FileSystemStorageServiceTests
     [Test]
     public void FileExists_ArchivoNoExistente_RetornaFalse()
     {
-        var result = _storageService.FileExists("/images/productos/noexiste.jpg");
+        var result = _storageService.FileExists("/uploads/productos/noexiste.jpg");
 
         result.Should().BeFalse();
     }
@@ -302,9 +303,9 @@ public class FileSystemStorageServiceTests
     [Test]
     public void GetFullPath_ConPathRelativo_RetornaRutaCompleta()
     {
-        var path = _storageService.GetFullPath("/images/productos/test.jpg");
+        var path = _storageService.GetFullPath("/uploads/productos/test.jpg");
 
-        path.Should().Contain("images");
+        path.Should().Contain("uploads");
         path.Should().Contain("productos");
         path.Should().Contain("test.jpg");
     }
@@ -315,9 +316,9 @@ public class FileSystemStorageServiceTests
     [Test]
     public void GetFullPath_ConPrefijoStorage_RetornaPathLimpio()
     {
-        var path = _storageService.GetFullPath("/storage/images/productos/test.jpg");
+        var path = _storageService.GetFullPath("/storage/uploads/productos/test.jpg");
 
-        path.Should().Contain("images");
+        path.Should().Contain("uploads");
         path.Should().Contain("productos");
     }
 
@@ -327,7 +328,7 @@ public class FileSystemStorageServiceTests
     [Test]
     public void GetFullPath_ConRutaAbsoluta_RetornaMismaRuta()
     {
-        var absolutePath = "C:\\temp\\images\\productos\\test.jpg";
+        var absolutePath = "C:\\temp\\uploads\\productos\\test.jpg";
 
         var path = _storageService.GetFullPath(absolutePath);
 
@@ -346,7 +347,7 @@ public class FileSystemStorageServiceTests
     {
         var path = _storageService.GetRelativePath("test.jpg", "productos");
 
-        path.Should().Be("/images/productos/test.jpg");
+        path.Should().Be("/uploads/productos/test.jpg");
     }
 
     /// <summary>
@@ -357,7 +358,7 @@ public class FileSystemStorageServiceTests
     {
         var path = _storageService.GetRelativePath("test.jpg");
 
-        path.Should().Be("/images/productos/test.jpg");
+        path.Should().Be("/uploads/productos/test.jpg");
     }
 
     /// <summary>
@@ -368,7 +369,7 @@ public class FileSystemStorageServiceTests
     {
         var path = _storageService.GetRelativePath("categoria.jpg", "categorias");
 
-        path.Should().Be("/images/categorias/categoria.jpg");
+        path.Should().Be("/uploads/categorias/categoria.jpg");
     }
 
     #endregion
