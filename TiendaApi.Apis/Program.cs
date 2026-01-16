@@ -211,6 +211,7 @@ builder.Services.AddScoped<IPedidosService, PedidosService>();
 
 Log.Information("🔐 Registrando servicios de autenticación...");
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IJwtTokenExtractor, JwtTokenExtractor>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 

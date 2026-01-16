@@ -17,6 +17,7 @@ using TiendaApi.Apis.Repositories.Pedidos;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
+using TiendaApi.Apis.Services.Auth;
 using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Validators.Pedidos;
 using TiendaApi.Apis.WebSockets.Pedidos;
@@ -65,7 +66,8 @@ public class PedidosServiceTests
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockWebSocketHandler = new Mock<PedidoWebSocketHandler>(
-            Mock.Of<ILogger<PedidoWebSocketHandler>>());
+            Mock.Of<ILogger<PedidoWebSocketHandler>>(),
+            Mock.Of<IJwtTokenExtractor>());
         _mockPedidoValidator = new Mock<IValidator<PedidoRequestDto>>();
         _mockItemValidator = new Mock<IValidator<PedidoItemRequestDto>>();
         _mockTransaction = new Mock<IDbContextTransaction>();

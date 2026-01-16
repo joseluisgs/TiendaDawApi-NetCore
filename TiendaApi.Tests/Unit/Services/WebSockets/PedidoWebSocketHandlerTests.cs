@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using Moq;
+using TiendaApi.Apis.Services.Auth;
 using TiendaApi.Apis.WebSockets.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.WebSockets;
@@ -15,12 +16,15 @@ namespace TiendaApi.Tests.Unit.Services.WebSockets;
 public class PedidoWebSocketHandlerTests
 {
     private readonly Mock<ILogger<PedidoWebSocketHandler>> _mockLogger;
+    private readonly Mock<IJwtTokenExtractor> _mockTokenExtractor;
     private readonly PedidoWebSocketHandler _handler;
 
     public PedidoWebSocketHandlerTests()
     {
         _mockLogger = new Mock<ILogger<PedidoWebSocketHandler>>();
-        _handler = new PedidoWebSocketHandler(_mockLogger.Object);
+        _mockTokenExtractor = new Mock<IJwtTokenExtractor>();
+        
+        _handler = new PedidoWebSocketHandler(_mockLogger.Object, _mockTokenExtractor.Object);
     }
 
     #region Constructor Tests
@@ -29,7 +33,7 @@ public class PedidoWebSocketHandlerTests
     public void Constructor_InitializesCorrectly()
     {
         // Arrange & Act
-        var handler = new PedidoWebSocketHandler(_mockLogger.Object);
+        var handler = new PedidoWebSocketHandler(_mockLogger.Object, _mockTokenExtractor.Object);
 
         // Assert
         Assert.That(handler.GetAdminConnectionCount(), Is.EqualTo(0));
@@ -126,104 +130,189 @@ public class PedidoWebSocketHandlerTests
 
     #endregion
 
-    #region ExtractUserInfoFromToken Tests
+    #region JwtTokenExtractor Integration Tests
 
     [Test]
-    public void ExtractUserInfoFromToken_WithValidToken_ReturnsUserIdAndRole()
+    public void JwtTokenExtractor_ExtractUserInfo_WithValidToken_ReturnsUserIdAndRole()
     {
-        // Arrange - Create token con rol de cliente
-        var (token, userId) = CreateValidJwtToken(123L, "cliente");
+        // Arrange - Create real JWT token
+        var token = CreateValidJwtToken(123L, "cliente");
 
         // Act
-        var (extractedUserId, isAdmin) = ExtractUserInfo(token);
+        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
 
         // Assert
-        Assert.That(extractedUserId, Is.EqualTo(userId));
+        Assert.That(userId, Is.EqualTo(123L));
         Assert.That(isAdmin, Is.False);
+        Assert.That(role, Is.EqualTo("cliente"));
     }
 
     [Test]
-    public void ExtractUserInfoFromToken_WithAdminRole_ReturnsIsAdminTrue()
+    public void JwtTokenExtractor_ExtractUserInfo_WithAdminRole_ReturnsIsAdminTrue()
     {
-        // Arrange - Create token con rol de admin
-        var (token, userId) = CreateValidJwtToken(1L, "admin");
+        // Arrange
+        var token = CreateValidJwtToken(1L, "admin");
 
         // Act
-        var (extractedUserId, isAdmin) = ExtractUserInfo(token);
+        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
 
         // Assert
-        Assert.That(extractedUserId, Is.EqualTo(userId));
+        Assert.That(userId, Is.EqualTo(1L));
         Assert.That(isAdmin, Is.True);
+        Assert.That(role, Is.EqualTo("admin"));
     }
 
     [Test]
-    public void ExtractUserInfoFromToken_WithAdminRoleUppercase_ReturnsIsAdminTrue()
+    public void JwtTokenExtractor_ExtractUserInfo_WithAdminRoleUppercase_ReturnsIsAdminTrue()
     {
-        // Arrange - Create token con rol de ADMIN (mayúsculas)
-        var (token, userId) = CreateValidJwtToken(1L, "ADMIN");
+        // Arrange
+        var token = CreateValidJwtToken(1L, "ADMIN");
 
         // Act
-        var (extractedUserId, isAdmin) = ExtractUserInfo(token);
+        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
 
         // Assert
-        Assert.That(extractedUserId, Is.EqualTo(userId));
+        Assert.That(userId, Is.EqualTo(1L));
         Assert.That(isAdmin, Is.True);
+        Assert.That(role, Is.EqualTo("ADMIN"));
     }
 
     [Test]
-    public void ExtractUserInfoFromToken_WithInvalidToken_ReturnsNull()
+    public void JwtTokenExtractor_ExtractUserInfo_WithInvalidToken_ReturnsNullUserId()
     {
         // Arrange
         var token = "invalid.token.here";
 
         // Act
-        var (userId, isAdmin) = ExtractUserInfo(token);
+        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.Null);
         Assert.That(isAdmin, Is.False);
+        Assert.That(role, Is.Null);
     }
 
     [Test]
-    public void ExtractUserInfoFromToken_WithEmptyToken_ReturnsNull()
+    public void JwtTokenExtractor_ExtractUserInfo_WithEmptyToken_ReturnsNull()
     {
         // Arrange
         var token = "";
 
         // Act
-        var (userId, isAdmin) = ExtractUserInfo(token);
+        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.Null);
         Assert.That(isAdmin, Is.False);
+        Assert.That(role, Is.Null);
     }
 
     [Test]
-    public void ExtractUserInfoFromToken_WithMalformedToken_ReturnsNull()
+    public void JwtTokenExtractor_ExtractUserInfo_WithMalformedToken_ReturnsNull()
     {
         // Arrange
         var token = "not-a-jwt";
 
         // Act
-        var (userId, isAdmin) = ExtractUserInfo(token);
+        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.Null);
         Assert.That(isAdmin, Is.False);
+        Assert.That(role, Is.Null);
     }
 
     [Test]
-    public void ExtractUserInfoFromToken_WithMissingRoleClaim_ReturnsIsAdminFalse()
+    public void JwtTokenExtractor_ExtractUserInfo_WithMissingRoleClaim_ReturnsIsAdminFalse()
     {
         // Arrange - Token sin rol
         var token = CreateTokenWithoutRole(123L);
 
         // Act
-        var (userId, isAdmin) = ExtractUserInfo(token);
+        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(123L));
         Assert.That(isAdmin, Is.False);
+        Assert.That(role, Is.Null);
+    }
+
+    [Test]
+    public void JwtTokenExtractor_ExtractEmail_WithValidToken_ReturnsEmail()
+    {
+        // Arrange
+        var token = CreateTokenWithEmail(123L, "test@example.com");
+
+        // Act
+        var email = ExtractEmailFromToken(token);
+
+        // Assert
+        Assert.That(email, Is.EqualTo("test@example.com"));
+    }
+
+    [Test]
+    public void JwtTokenExtractor_IsValidTokenFormat_WithValidToken_ReturnsTrue()
+    {
+        // Arrange
+        var token = CreateValidJwtToken(123L, "cliente");
+
+        // Act
+        var isValid = IsValidTokenFormat(token);
+
+        // Assert
+        Assert.That(isValid, Is.True);
+    }
+
+    [Test]
+    public void JwtTokenExtractor_IsValidTokenFormat_WithInvalidToken_ReturnsFalse()
+    {
+        // Arrange
+        var token = "invalid.token";
+
+        // Act
+        var isValid = IsValidTokenFormat(token);
+
+        // Assert
+        Assert.That(isValid, Is.False);
+    }
+
+    [Test]
+    public void JwtTokenExtractor_IsValidTokenFormat_WithEmptyToken_ReturnsFalse()
+    {
+        // Arrange
+        var token = "";
+
+        // Act
+        var isValid = IsValidTokenFormat(token);
+
+        // Assert
+        Assert.That(isValid, Is.False);
+    }
+
+    [Test]
+    public void JwtTokenExtractor_ExtractUserId_WithValidToken_ReturnsUserId()
+    {
+        // Arrange
+        var token = CreateValidJwtToken(456L, "cliente");
+
+        // Act
+        var userId = ExtractUserIdFromToken(token);
+
+        // Assert
+        Assert.That(userId, Is.EqualTo(456L));
+    }
+
+    [Test]
+    public void JwtTokenExtractor_ExtractRole_WithValidToken_ReturnsRole()
+    {
+        // Arrange
+        var token = CreateValidJwtToken(123L, "admin");
+
+        // Act
+        var role = ExtractRoleFromToken(token);
+
+        // Assert
+        Assert.That(role, Is.EqualTo("admin"));
     }
 
     #endregion
@@ -282,7 +371,7 @@ public class PedidoWebSocketHandlerTests
 
     #region Helpers
 
-    private static (string Token, long UserId) CreateValidJwtToken(long userId, string role)
+    private static string CreateValidJwtToken(long userId, string role)
     {
         var handler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -296,7 +385,7 @@ public class PedidoWebSocketHandlerTests
         };
         
         var token = handler.CreateToken(tokenDescriptor);
-        return (handler.WriteToken(token), userId);
+        return handler.WriteToken(token);
     }
 
     private static string CreateTokenWithoutRole(long userId)
@@ -315,14 +404,57 @@ public class PedidoWebSocketHandlerTests
         return handler.WriteToken(token);
     }
 
-    private (long? UserId, bool IsAdmin) ExtractUserInfo(string token)
+    private static string CreateTokenWithEmail(long userId, string email)
     {
-        var method = typeof(PedidoWebSocketHandler)
-            .GetMethod("ExtractUserInfoFromToken", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var handler = new JwtSecurityTokenHandler();
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, email)
+            }),
+            Expires = DateTime.UtcNow.AddHours(1)
+        };
         
-        var result = method!.Invoke(_handler, new[] { token });
-        var tuple = (System.ValueTuple<long?, bool>)result!;
-        return (tuple.Item1, tuple.Item2);
+        var token = handler.CreateToken(tokenDescriptor);
+        return handler.WriteToken(token);
+    }
+
+    private static (long? UserId, bool IsAdmin, string? Role) ExtractUserInfoFromToken(string token)
+    {
+        var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
+        return extractor.ExtractUserInfo(token);
+    }
+
+    private static string? ExtractEmailFromToken(string token)
+    {
+        var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
+        return extractor.ExtractEmail(token);
+    }
+
+    private static bool IsValidTokenFormat(string token)
+    {
+        var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
+        return extractor.IsValidTokenFormat(token);
+    }
+
+    private static long? ExtractUserIdFromToken(string token)
+    {
+        var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
+        return extractor.ExtractUserId(token);
+    }
+
+    private static string? ExtractRoleFromToken(string token)
+    {
+        var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
+        return extractor.ExtractRole(token);
+    }
+
+    private static bool IsAdminFromToken(string token)
+    {
+        var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
+        return extractor.IsAdmin(token);
     }
 
     #endregion

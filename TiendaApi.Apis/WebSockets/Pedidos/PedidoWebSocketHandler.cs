@@ -1,10 +1,9 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Logging;
+using TiendaApi.Apis.Services.Auth;
 
 namespace TiendaApi.Apis.WebSockets.Pedidos;
 
@@ -99,10 +98,14 @@ public class PedidoWebSocketHandler
     private readonly ConcurrentDictionary<string, ConnectionInfo> _connections = new();
     private readonly ILogger<PedidoWebSocketHandler> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly IJwtTokenExtractor _tokenExtractor;
 
-    public PedidoWebSocketHandler(ILogger<PedidoWebSocketHandler> logger)
+    public PedidoWebSocketHandler(
+        ILogger<PedidoWebSocketHandler> logger,
+        IJwtTokenExtractor tokenExtractor)
     {
         _logger = logger;
+        _tokenExtractor = tokenExtractor;
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -130,6 +133,33 @@ public class PedidoWebSocketHandler
     ///   <item><description>ClaimTypes.Role → rol del usuario (admin/cliente)</description></item>
     /// </list>
     /// 
+    /// <para><b>Por qué usamos IJwtTokenExtractor en lugar de consultar la base de datos:</b></para>
+    /// <list type="bullet">
+    ///   <item><description>
+    ///     <b>Rendimiento en conexiones WebSocket:</b> Las conexiones WebSocket son persistentes y de larga duración.
+    ///     Cada nueva conexión requiere autenticación inmediata. Consultar la base de datos para obtener el usuario
+    ///     y sus roles añade latencia significativa (típicamente 10-100ms por query) y sobrecarga a la BD.
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>El JWT ya contiene la información necesaria:</b> El token JWT incluye los claims esenciales
+    ///     (userId y rol) firmados digitalmente. Esta información es suficiente para determinar los permisos
+    ///     de notificación sin necesidad de consultar datos adicionales.
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>Escalabilidad:</b> En escenarios con muchas conexiones WebSocket simultáneas, evitar consultas a BD
+    ///     por conexión reduce drásticamente la carga en la base de datos y mejora el tiempo de conexión.
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>Seguridad por diseño:</b> Los tokens JWT están firmados y su validez puede verificarse
+    ///     criptográficamente sin depender de un origen externo. Esto es ideal para sistemas distribuidos.
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>Trade-off:</b> Esta aproximación asume que los roles no cambian frecuentemente durante la sesión.
+    ///     Si un rol se revoca mientras el usuario está conectado, el cambio no se reflejará hasta que
+    ///     el usuario se reconecte con un nuevo token. Este comportamiento es aceptable para notificaciones.
+    ///   </description></item>
+    /// </list>
+    /// 
     /// <para><b>Ejemplo de conexión exitosa:</b></para>
     /// <code>
     /// // El cliente envía: ws://localhost:5000/ws/v1/pedidos?token=JWT
@@ -152,7 +182,7 @@ public class PedidoWebSocketHandler
             return;
         }
 
-        var (userId, isAdmin) = ExtractUserInfoFromToken(token);
+        var (userId, isAdmin, _) = _tokenExtractor.ExtractUserInfo(token);
         
         if (userId == null)
         {
@@ -364,43 +394,6 @@ public class PedidoWebSocketHandler
         {
             _connections.TryRemove(connectionId, out _);
             _logger.LogInformation("Conexión WebSocket cerrada para pedidos: {ConnectionId}", connectionId);
-        }
-    }
-
-    /// <summary>
-    /// Extrae userId y rol del token JWT.
-    /// </summary>
-    /// <param name="token">Token JWT a procesar.</param>
-    /// <returns>Tupla con (userId, isAdmin). userId es null si no se puede extraer.</returns>
-    private (long? UserId, bool IsAdmin) ExtractUserInfoFromToken(string token)
-    {
-        try
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-            
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => 
-                c.Type == ClaimTypes.NameIdentifier || 
-                c.Type == "sub" ||
-                c.Type == "nameid");
-            
-            if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out var userId))
-            {
-                return (null, false);
-            }
-            
-            var roleClaim = jwtToken.Claims.FirstOrDefault(c => 
-                c.Type == ClaimTypes.Role || 
-                c.Type == "role");
-            
-            var isAdmin = roleClaim?.Value?.Equals("admin", StringComparison.OrdinalIgnoreCase) ?? false;
-            
-            return (userId, isAdmin);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error extrayendo información del token");
-            return (null, false);
         }
     }
 
