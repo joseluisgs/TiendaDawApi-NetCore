@@ -313,9 +313,9 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | 25  | [Optimización](doc/25-optimizacion.md) | Rendimiento             |
 
 ### Arquitectura
-| #   | Documento                                          | Descripción       |
-| --- | -------------------------------------------------- | ----------------- |
-| 26  | [Clean Architecture](doc/26-clean-architecture.md) | Capas, estructura |
+| #   | Documento                                                 | Descripción                       |
+| --- | --------------------------------------------------------- | --------------------------------- |
+| 26  | [Clean Architecture](doc/26-clean-architecture.md)        | Capas, estructura                 |
 | 27  | [Organización Program.cs](doc/27-organizacion-program.md) | Extension Methods, modularización |
 
 ## ⚒️ Diagrama de Clases del Dominio
@@ -568,18 +568,18 @@ TiendaDawApi-NetCore/
 
 ### Descripción de Carpetas Principales
 
-| Carpeta           | Propósito              | Contenido                                                                                     |
-| ----------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
-| **Controllers**   | Entry points HTTP      | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
-| **Services**      | Lógica de negocio      | AuthService, CategoriaService, ProductoService, UserService                                   |
-| **Repositories**  | Abstracción de datos   | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
-| **Models**        | Modelos de dominio     | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
-| **Dtos**          | Transferencia de datos | Request/Response para API                                                                     |
-| **Mappers**       | Modelos <-> DTO        | AutoMapper y Funciones de Extensión                                                           |
-| **Validators**    | Validación de entrada  | FluentValidation rules                                                                        |
-| **Middleware**    | Manejo de errores      | GlobalExceptionHandler                                                                        |
-| **GraphQL**       | Queries y Mutations    | Schema HotChocolate                                                                           |
-| **WebSockets**    | Tiempo real            | Notificaciones por rol                                                                        |
+| Carpeta             | Propósito              | Contenido                                                                                     |
+| ------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| **Controllers**     | Entry points HTTP      | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
+| **Services**        | Lógica de negocio      | AuthService, CategoriaService, ProductoService, UserService                                   |
+| **Repositories**    | Abstracción de datos   | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
+| **Models**          | Modelos de dominio     | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
+| **Dtos**            | Transferencia de datos | Request/Response para API                                                                     |
+| **Mappers**         | Modelos <-> DTO        | AutoMapper y Funciones de Extensión                                                           |
+| **Validators**      | Validación de entrada  | FluentValidation rules                                                                        |
+| **Middleware**      | Manejo de errores      | GlobalExceptionHandler                                                                        |
+| **GraphQL**         | Queries y Mutations    | Schema HotChocolate                                                                           |
+| **WebSockets**      | Tiempo real            | Notificaciones por rol                                                                        |
 | **Infrastructures** | Configuración modular  | Extension Methods para DI, Pipeline, Middlewares (Serilog, Auth, Database, Cache, etc.)       |
 
 ## 🏗️ Arquitectura Híbrida Onion-Like
@@ -1169,7 +1169,7 @@ mutation CrearCategoria($input: CreateCategoriaInput!) {
 }
 ```
 
-**Respuesta:**
+**Ejemplo de Respuesta:**
 
 ```json
 {
@@ -1182,13 +1182,116 @@ mutation CrearCategoria($input: CreateCategoriaInput!) {
 }
 ```
 
-**Errores:**
+**Ejemplo de Errores:**
 
 ```json
 {
   "errors": [
     {
       "message": "Ya existe categoría con ese nombre",
+      "extensions": {
+        "code": "CONFLICT"
+      }
+    }
+  ]
+}
+```
+
+**Mutations de Productos (requieren ADMIN):**
+
+```graphql
+# Productos (requiere ADMIN)
+createProducto(input: CreateProductoInput!): Producto
+updateProducto(id: Long!, input: UpdateProductoInput!): Producto
+deleteProducto(id: Long!): Boolean
+```
+
+**Input Types:**
+
+```graphql
+input CreateProductoInput {
+  nombre: String!
+  descripcion: String
+  precio: Float!
+  stock: Int!
+  imagen: String
+  categoriaId: Long!
+}
+
+input UpdateProductoInput {
+  nombre: String
+  descripcion: String
+  precio: Float
+  stock: Int
+  imagen: String
+  categoriaId: Long
+}
+```
+
+**Ejemplo: Crear producto**
+
+```graphql
+mutation CrearProducto($input: CreateProductoInput!) {
+  createProducto(input: $input) {
+    id
+    nombre
+    precio
+    stock
+    categoria {
+      nombre
+    }
+  }
+}
+```
+
+**Headers:**
+
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIs...",
+  "Content-Type": "application/json"
+}
+```
+
+**Variables:**
+
+```json
+{
+  "input": {
+    "nombre": "Laptop Dell XPS 15",
+    "descripcion": "Portátil de alta gama",
+    "precio": 1299.99,
+    "stock": 10,
+    "categoriaId": 1
+  }
+}
+```
+
+**Ejemplo de Respuesta:**
+
+```json
+{
+  "data": {
+    "createProducto": {
+      "id": 1,
+      "nombre": "Laptop Dell XPS 15",
+      "precio": 1299.99,
+      "stock": 10,
+      "categoria": {
+        "nombre": "Electrónica"
+      }
+    }
+  }
+}
+```
+
+**Ejemplo de Errores:**
+
+```json
+{
+  "errors": [
+    {
+      "message": "El precio no puede ser negativo",
       "extensions": {
         "code": "CONFLICT"
       }

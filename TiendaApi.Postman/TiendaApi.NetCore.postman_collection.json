@@ -3616,7 +3616,431 @@
 			]
 		},
 		{
-			"name": "9 - TEARDOWN",
+			"name": "11 - GRAPHQL PRODUCTOS",
+			"item": [
+				{
+					"name": "QUERY - Obtener todos los productos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL Productos - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL Productos - Has data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('object');",
+									"    pm.expect(jsonData.data.productos).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"GraphQL Productos - No errors\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"query { productos { id nombre precio stock } }\"}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Obtiene todos los productos (público)"
+					},
+					"response": []
+				},
+				{
+					"name": "QUERY - Obtener producto por ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL ProductoById - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL ProductoById - Returns producto\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.producto).to.be.an('object');",
+									"    pm.expect(jsonData.data.producto.id).to.be.a('number');",
+									"    pm.expect(jsonData.data.producto.nombre).to.be.a('string');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { nombre } } }\", \"variables\": {\"id\": 1}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Obtiene producto por ID (público)"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Crear producto (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CreateProducto - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL CreateProducto - Returns created producto\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.createProducto.id).to.be.a('number');",
+									"    pm.expect(jsonData.data.createProducto.nombre).to.equal('GraphQL Test Producto');",
+									"    pm.expect(jsonData.data.createProducto.precio).to.equal(99.99);",
+									"    pm.expect(jsonData.data.createProducto.stock).to.equal(10);",
+									"});",
+									"",
+									"// Guardar ID para siguientes tests",
+									"if (pm.response.code === 200 && !jsonData.errors) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"graphqlProductoId\", jsonData.data.createProducto.id.toString());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre precio stock } }\", \"variables\": {\"input\": {\"nombre\": \"GraphQL Test Producto\", \"descripcion\": \"Producto de prueba desde GraphQL\", \"precio\": 99.99, \"stock\": 10, \"categoriaId\": 1}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Crea producto (requiere token ADMIN)"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Crear producto (sin auth)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CreateProducto NoAuth - Returns error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.be.an('array');",
+									"    pm.expect(jsonData.errors[0].message).to.include('Unauthorized');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"Test\", \"precio\": 99, \"stock\": 10, \"categoriaId\": 1}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Crear producto sin token debe fallar"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Crear producto (rol USER)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CreateProducto Forbidden - Returns error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.be.an('array');",
+									"    pm.expect(jsonData.errors[0].message).to.include('forbidden');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{userToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"Test User\", \"precio\": 99, \"stock\": 10, \"categoriaId\": 1}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Crear producto con rol USER debe fallar"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Crear producto (categoría no existe)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CreateProducto NotFound - Returns error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.be.an('array');",
+									"    pm.expect(jsonData.errors[0].message).to.include('NOT_FOUND');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"Test\", \"precio\": 99, \"stock\": 10, \"categoriaId\": 999999}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Crear producto con categoría inexistente debe fallar"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Actualizar producto (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL UpdateProducto - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL UpdateProducto - Returns updated producto\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.updateProducto.precio).to.equal(149.99);",
+									"    pm.expect(jsonData.data.updateProducto.stock).to.equal(20);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($id: Long!, $input: UpdateProductoInput!) { updateProducto(id: $id, input: $input) { id nombre precio stock } }\", \"variables\": {\"id\": {{graphqlProductoId}}, \"input\": {\"precio\": 149.99, \"stock\": 20}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Actualiza producto (requiere token ADMIN)"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Eliminar producto (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL DeleteProducto - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL DeleteProducto - Returns true\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.deleteProducto).to.equal(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($id: Long!) { deleteProducto(id: $id) }\", \"variables\": {\"id\": {{graphqlProductoId}}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Elimina producto (requiere token ADMIN)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "12 - TEARDOWN",
 			"item": [
 				{
 					"name": "Limpiar variables",
