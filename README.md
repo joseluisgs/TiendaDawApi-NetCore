@@ -316,6 +316,7 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | #   | Documento                                          | Descripción       |
 | --- | -------------------------------------------------- | ----------------- |
 | 26  | [Clean Architecture](doc/26-clean-architecture.md) | Capas, estructura |
+| 27  | [Organización Program.cs](doc/27-organizacion-program.md) | Extension Methods, modularización |
 
 ## ⚒️ Diagrama de Clases del Dominio
 
@@ -543,6 +544,7 @@ TiendaDawApi-NetCore/
 │   ├── Helpers/                      # Utilidades y extensiones
 │   ├── Errors/                       # Errores personalizados de dominio
 │   ├── Exceptions/                   # Excepciones personalizadas
+│   ├── Infrastructures/              # Extension Methods para configuración (DI, Pipeline, Middlewares)
 │   ├── Properties/                   # Configuración de lanzamiento
 │   ├── wwwroot/                      # Archivos estáticos (uploads, imágenes)
 │   ├── appsettings.json              # Configuración general
@@ -566,18 +568,19 @@ TiendaDawApi-NetCore/
 
 ### Descripción de Carpetas Principales
 
-| Carpeta          | Propósito              | Contenido                                                                                     |
-| ---------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
-| **Controllers**  | Entry points HTTP      | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
-| **Services**     | Lógica de negocio      | AuthService, CategoriaService, ProductoService, UserService                                   |
-| **Repositories** | Abstracción de datos   | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
-| **Models**       | Modelos de dominio     | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
-| **Dtos**         | Transferencia de datos | Request/Response para API                                                                     |
-| **Mappers**      | Modelos <-> DTO        | AutoMapper y Funciones de Extensión                                                           |
-| **Validators**   | Validación de entrada  | FluentValidation rules                                                                        |
-| **Middleware**   | Manejo de errores      | GlobalExceptionHandler                                                                        |
-| **GraphQL**      | Queries y Mutations    | Schema HotChocolate                                                                           |
-| **WebSockets**   | Tiempo real            | Notificaciones por rol                                                                        |
+| Carpeta           | Propósito              | Contenido                                                                                     |
+| ----------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| **Controllers**   | Entry points HTTP      | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
+| **Services**      | Lógica de negocio      | AuthService, CategoriaService, ProductoService, UserService                                   |
+| **Repositories**  | Abstracción de datos   | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
+| **Models**        | Modelos de dominio     | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
+| **Dtos**          | Transferencia de datos | Request/Response para API                                                                     |
+| **Mappers**       | Modelos <-> DTO        | AutoMapper y Funciones de Extensión                                                           |
+| **Validators**    | Validación de entrada  | FluentValidation rules                                                                        |
+| **Middleware**    | Manejo de errores      | GlobalExceptionHandler                                                                        |
+| **GraphQL**       | Queries y Mutations    | Schema HotChocolate                                                                           |
+| **WebSockets**    | Tiempo real            | Notificaciones por rol                                                                        |
+| **Infrastructures** | Configuración modular  | Extension Methods para DI, Pipeline, Middlewares (Serilog, Auth, Database, Cache, etc.)       |
 
 ## 🏗️ Arquitectura Híbrida Onion-Like
 
@@ -1072,6 +1075,52 @@ productos(first: Int, after: String) # Productos paginados
 categorias                   # Todas las categorías
 categoria(id: Long!)         # Categoría por ID
 categorias(first: Int, after: String) # Categorías paginadas
+```
+
+**Ejemplo de Query: Obtener producto con solo nombre de categoría**
+
+```graphql
+query ObtenerProductoConCategoria($id: Long!) {
+  producto(id: $id) {
+    id
+    nombre
+    descripcion
+    precio
+    stock
+    imagen
+    categoria {
+      nombre
+    }
+  }
+}
+```
+
+**Variables:**
+
+```json
+{
+  "id": 1
+}
+```
+
+**Respuesta:**
+
+```json
+{
+  "data": {
+    "producto": {
+      "id": 1,
+      "nombre": "Laptop Dell XPS 15",
+      "descripcion": "Portátil de alta gama con procesador Intel Core i7",
+      "precio": 1299.99,
+      "stock": 10,
+      "imagen": "https://localhost:5000/storage/productos/laptop-dell-xps-15.jpg",
+      "categoria": {
+        "nombre": "Electrónica"
+      }
+    }
+  }
+}
 ```
 
 **Mutations disponibles:**
