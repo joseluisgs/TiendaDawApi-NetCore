@@ -899,6 +899,230 @@ Dado que GraphQL solo tiene queries implementadas, usa la API REST para operacio
 
 ---
 
+## 20.12. Endpoints: ¿Hay Solape con WebSockets?
+
+Una pregunta frecuente es si GraphQL entra en conflicto con los WebSockets existentes del proyecto (`/ws/v1/productos`, `/ws/v1/pedidos`). La respuesta es **no**: los endpoints son completamente independientes.
+
+### Endpoints del Proyecto
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     ENDPOINTS DEL PROYECTO                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  🌐 REST (HTTP)                                                      │
+│  ├── POST /api/v1/auth/signup    → Autenticación                     │
+│  ├── POST /api/v1/auth/signin    → Login JWT                         │
+│  ├── GET  /api/productos         → Listar productos                  │
+│  ├── POST /api/productos         → Crear producto                    │
+│  └── ... (más endpoints REST)                                     │
+│                                                                      │
+│  🔌 WebSockets Existentes (tiempo real)                              │
+│  ├── WS /ws/v1/productos         → Broadcast a todos                 │
+│  └── WS /ws/v1/pedidos?token=JWT → Notificaciones por usuario        │
+│                                                                      │
+│  📊 GraphQL                                                          │
+│  ├── POST /graphql               → Queries y Mutations (HTTP)        │
+│  └── WS   /graphql               → Subscriptions (WebSocket) ⬅️     │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Comparación de Endpoints
+
+| Endpoint | Protocolo | Uso | Estado |
+|----------|-----------|-----|--------|
+| `/api/productos` | HTTP | REST CRUD | ✅ Implementado |
+| `/ws/v1/productos` | WebSocket | Notificaciones broadcast | ✅ Implementado |
+| `/graphql` (HTTP) | HTTP | Queries + Mutations | ✅ Implementado |
+| `/graphql` (WS) | WebSocket | Subscriptions | ❌ No implementado |
+
+### ¿Por qué no hay solape?
+
+Los endpoints usan **rutas diferentes** y **protocolos diferentes**, por lo que cada request va a su propio handler:
+
+```mermaid
+flowchart TD
+    subgraph "Clientes"
+        A["Cliente REST"]
+        B["Cliente WebSocket API"]
+        C["Cliente GraphQL"]
+    end
+    
+    subgraph "Endpoints diferentes"
+        A -->|"POST /api/productos"| R[REST Handler]
+        B -->|"WS /ws/v1/productos"| W[WebSocket Handler]
+        C -->|"POST /graphql"| G[GraphQL HTTP]
+        C -->|"WS /graphql"| S[GraphQL Subscr.]
+    end
+    
+    subgraph "Handlers independientes"
+        R -->|"CRUD"| DB[(PostgreSQL)]
+        W -->|"Broadcast"| Wclients["Clientes WS"]
+        G -->|"Queries"| DB
+        S -->|"Events"| E[EventBus]
+    end
+```
+
+### Cómo Funciona GraphQL con WebSocket
+
+El endpoint `/graphql` puede operar de dos formas:
+
+**1. Query/Mutation (HTTP):**
+```http
+POST /graphql HTTP/1.1
+Content-Type: application/json
+
+{"query": "{ productos { id nombre } }"}
+```
+Respuesta inmediata con JSON.
+
+**2. Subscription (WebSocket Upgrade):**
+```
+WS /graphql
+Authorization: Bearer <JWT_TOKEN>
+
+# El cliente envía:
+{"type": "subscribe", "payload": {"query": "subscription { onProductoCreado { id nombre } }"}}
+
+# El servidor responde cuando ocurre el evento:
+{"type": "next", "payload": {"data": {"onProductoCreado": {"id": 1, "nombre": "Producto"}}}}
+```
+
+### Diferencias Clave con WebSockets Actuales
+
+| Aspecto | WebSockets API (`/ws/v1/...`) | GraphQL Subscriptions (`/graphql`) |
+|---------|------------------------------|-----------------------------------|
+| **Ruta** | `/ws/v1/productos` | `/graphql` (misma ruta, diferente protocolo) |
+| **Mensajes** | JSON personalizado `{type, data}` | Formato GraphQL `{data: {...}}` |
+| **Tipado** | Por convención | Schema define tipos exactos |
+| **Herramientas** | Ninguna (manual) | GraphiQL playground |
+| **Autenticación** | JWT en query string | JWT en header o connection params |
+| **Filtrado** | Por código | Por tipo de subscription |
+
+### Resumen: No Hay Conflicto
+
+- **Rutas diferentes**: `/ws/v1/productos` ≠ `/graphql`
+- **Protocolos diferentes**: WebSocket raw vs GraphQL over WebSocket
+- **Handlers diferentes**: Cada endpoint tiene su propio processor
+- **Pueden coexistir**: La API REST usa HTTP, GraphQL usa HTTP/WS
+
+Si decides implementar GraphQL Subscriptions en el futuro, simplemente añadirás soporte WebSocket al endpoint `/graphql` sin afectar los WebSockets existentes en `/ws/v1/...`.
+
+---
+
+## 20.12. Endpoints: ¿Hay Solape con WebSockets?
+
+Una pregunta frecuente es si GraphQL entra en conflicto con los WebSockets existentes del proyecto (`/ws/v1/productos`, `/ws/v1/pedidos`). La respuesta es **no**: los endpoints son completamente independientes.
+
+### Endpoints del Proyecto
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     ENDPOINTS DEL PROYECTO                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  🌐 REST (HTTP)                                                      │
+│  ├── POST /api/v1/auth/signup    → Autenticación                     │
+│  ├── POST /api/v1/auth/signin    → Login JWT                         │
+│  ├── GET  /api/productos         → Listar productos                  │
+│  ├── POST /api/productos         → Crear producto                    │
+│  └── ... (más endpoints REST)                                     │
+│                                                                      │
+│  🔌 WebSockets Existentes (tiempo real)                              │
+│  ├── WS /ws/v1/productos         → Broadcast a todos                 │
+│  └── WS /ws/v1/pedidos?token=JWT → Notificaciones por usuario        │
+│                                                                      │
+│  📊 GraphQL                                                          │
+│  ├── POST /graphql               → Queries y Mutations (HTTP)        │
+│  └── WS   /graphql               → Subscriptions (WebSocket) ⬅️     │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Comparación de Endpoints
+
+| Endpoint | Protocolo | Uso | Estado |
+|----------|-----------|-----|--------|
+| `/api/productos` | HTTP | REST CRUD | ✅ Implementado |
+| `/ws/v1/productos` | WebSocket | Notificaciones broadcast | ✅ Implementado |
+| `/graphql` (HTTP) | HTTP | Queries + Mutations | ✅ Implementado |
+| `/graphql` (WS) | WebSocket | Subscriptions | ❌ No implementado |
+
+### ¿Por qué no hay solape?
+
+Los endpoints usan **rutas diferentes** y **protocolos diferentes**, por lo que cada request va a su propio handler:
+
+```mermaid
+flowchart TD
+    subgraph "Clientes"
+        A["Cliente REST"]
+        B["Cliente WebSocket API"]
+        C["Cliente GraphQL"]
+    end
+    
+    subgraph "Endpoints diferentes"
+        A -->|"POST /api/productos"| R[REST Handler]
+        B -->|"WS /ws/v1/productos"| W[WebSocket Handler]
+        C -->|"POST /graphql"| G[GraphQL HTTP]
+        C -->|"WS /graphql"| S[GraphQL Subscr.]
+    end
+    
+    subgraph "Handlers independientes"
+        R -->|"CRUD"| DB[(PostgreSQL)]
+        W -->|"Broadcast"| Wclients["Clientes WS"]
+        G -->|"Queries"| DB
+        S -->|"Events"| E[EventBus]
+    end
+```
+
+### Cómo Funciona GraphQL con WebSocket
+
+El endpoint `/graphql` puede operar de dos formas:
+
+**1. Query/Mutation (HTTP):**
+```http
+POST /graphql HTTP/1.1
+Content-Type: application/json
+
+{"query": "{ productos { id nombre } }"}
+```
+Respuesta inmediata con JSON.
+
+**2. Subscription (WebSocket Upgrade):**
+```
+WS /graphql
+Authorization: Bearer <JWT_TOKEN>
+
+# El cliente envía:
+{"type": "subscribe", "payload": {"query": "subscription { onProductoCreado { id nombre } }"}}
+
+# El servidor responde cuando ocurre el evento:
+{"type": "next", "payload": {"data": {"onProductoCreado": {"id": 1, "nombre": "Producto"}}}}
+```
+
+### Diferencias Clave con WebSockets Actuales
+
+| Aspecto | WebSockets API (`/ws/v1/...`) | GraphQL Subscriptions (`/graphql`) |
+|---------|------------------------------|-----------------------------------|
+| **Ruta** | `/ws/v1/productos` | `/graphql` (misma ruta, diferente protocolo) |
+| **Mensajes** | JSON personalizado `{type, data}` | Formato GraphQL `{data: {...}}` |
+| **Tipado** | Por convención | Schema define tipos exactos |
+| **Herramientas** | Ninguna (manual) | GraphiQL playground |
+| **Autenticación** | JWT en query string | JWT en header o connection params |
+| **Filtrado** | Por código | Por tipo de subscription |
+
+### Resumen: No Hay Conflicto
+
+- **Rutas diferentes**: `/ws/v1/productos` ≠ `/graphql`
+- **Protocolos diferentes**: WebSocket raw vs GraphQL over WebSocket
+- **Handlers diferentes**: Cada endpoint tiene su propio processor
+- **Pueden coexistir**: La API REST usa HTTP, GraphQL usa HTTP/WS
+
+Si decides implementar GraphQL Subscriptions en el futuro, simplemente añadirás soporte WebSocket al endpoint `/graphql` sin afectar los WebSockets existentes en `/ws/v1/...`.
+
+---
+
 ## 20.13. Resumen
 
 ### Arquitectura GraphQL del Proyecto
