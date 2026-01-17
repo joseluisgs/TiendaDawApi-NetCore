@@ -127,7 +127,152 @@ builder.Services
 
 ---
 
-## 20.4. TiendaQuery: Consultas del Proyecto
+## 20.4. Conceptos de Queries
+
+Las **Queries** (consultas) son el mecanismo principal para **leer datos** en GraphQL. Son el equivalente a las operaciones GET en REST, pero con una diferencia fundamental: el cliente define exactamente qué campos quiere recibir.
+
+### Concepto de Query
+
+A diferencia de REST donde el servidor define la estructura de la respuesta, en GraphQL el cliente decide qué datos necesita. Esto elimina el over-fetching (recibir datos innecesarios) y under-fetching (necesitar múltiples llamadas).
+
+```mermaid
+flowchart LR
+    subgraph "Query como función"
+        Q["Query GetProducto(id)"]
+    end
+    
+    subgraph "Respuesta personalizada"
+        R["{ id, nombre, precio }"]
+    end
+    
+    Q -->|"Parámetros"| R
+    R -->|"Solo datos solicitados"| Cliente
+```
+
+### Anatomía de una Query
+
+```graphql
+# Estructura básica
+query NombreQuery($id: Long!) {
+  producto(id: $id) {
+    id          # Campo solicitado
+    nombre      # Campo solicitado
+    precio      # Campo solicitado
+    # descripcion no se incluye → no se envía
+  }
+}
+```
+
+### Componentes de una Query
+
+| Componente | Descripción | Ejemplo |
+|------------|-------------|---------|
+| `query` | Tipo de operación (también puede ser `subscription`) | `query { ... }` |
+| `nombre` | Identificador opcional de la query | `query GetProducto { ... }` |
+| `parámetros` | Variables de entrada | `$id: Long!` |
+| `campos` | Datos que se solicitan | `id, nombre, precio` |
+
+### Queries vs Mutations
+
+| Aspecto | Query | Mutation |
+|---------|-------|----------|
+| **Propósito** | Leer datos | Modificar datos |
+| **Efecto** | Sin cambios en el servidor | Puede crear/actualizar/eliminar |
+| **Orden** | Se pueden ejecutar en paralelo | Se ejecutan en orden secuencial |
+| **Ejemplo REST** | GET /productos/1 | POST /productos |
+
+### Patrones de Queries
+
+**1. Query simple - Un recurso:**
+```graphql
+query {
+  producto(id: 1) {
+    id
+    nombre
+    precio
+  }
+}
+```
+
+**2. Query con múltiples campos:**
+```graphql
+query {
+  productos {
+    id
+    nombre
+    precio
+    stock
+  }
+}
+```
+
+**3. Query anidada - Relaciones:**
+```graphql
+query {
+  productos {
+    id
+    nombre
+    categoria {
+      id
+      nombre
+    }
+  }
+}
+```
+
+**4. Query con filtros:**
+```graphql
+query {
+  productos(where: { precio: { gt: 100 } }) {
+    id
+    nombre
+    precio
+  }
+}
+```
+
+**5. Query paginada:**
+```graphql
+query {
+  productos(first: 10, offset: 0) {
+    nodes {
+      id
+      nombre
+    }
+    pageInfo {
+      hasNextPage
+    }
+  }
+}
+```
+
+### Tipos de Query en GraphQL
+
+```mermaid
+flowchart TD
+    subgraph "Query Types"
+        Q1[Query Raíz<br/>Tipo obligatorio]
+        Q2[Consultas simples]
+        Q3[Consultas con parámetros]
+        Q4[Consultas anidadas]
+    end
+    
+    Q1 --> Q2
+    Q1 --> Q3
+    Q3 --> Q4
+```
+
+### Ventajas de las Queries en GraphQL
+
+1. **Flexibilidad**: El cliente elige qué campos necesita
+2. **Eficiencia**: Una sola request para datos relacionados
+3. **Tipado**: El esquema define exactamente qué está disponible
+4. **Documentación automática**: Introspection muestra todas las queries disponibles
+5. **Versionado innecesario**: Se añaden campos, no se rompen queries existentes
+
+---
+
+## 20.5. TiendaQuery: Consultas del Proyecto
 
 Del archivo `TiendaQuery.cs`:
 
@@ -199,11 +344,12 @@ public class TiendaQuery
 | `[UsePaging]` | Añade paginación automática |
 | `[UseFiltering]` | Añade filtrado automático |
 | `[UseSorting]` | Añade ordenamiento automático |
+| `[UseFiltering]` | Añade filtrado automático |
 | `[Service]` | Inyecta dependencias |
 
 ---
 
-## 20.5. Tipos de GraphQL
+## 20.6. Tipos de GraphQL
 
 ### ProductoType
 
@@ -313,7 +459,7 @@ public class CategoriaType : ObjectType<Categoria>
 
 ---
 
-## 20.6. Tipos de Datos en GraphQL
+## 20.7. Tipos de Datos en GraphQL
 
 ### Escalares
 
@@ -341,7 +487,7 @@ descriptor.Field(p => p.Descripcion)
 
 ---
 
-## 20.7. GraphiQL: Herramienta de Desarrollo
+## 20.8. GraphiQL: Herramienta de Desarrollo
 
 El proyecto incluye una interfaz GraphiQL para probar las consultas:
 
@@ -382,7 +528,7 @@ Producción: http://tu-dominio/graphiql
 
 ---
 
-## 20.8. Consultas de Ejemplo
+## 20.9. Consultas de Ejemplo
 
 ### Obtener Todos los Productos
 
@@ -458,7 +604,7 @@ query {
 
 ---
 
-## 20.9. Mutations (Crear, Actualizar, Eliminar)
+## 20.10. Mutations (Crear, Actualizar, Eliminar)
 
 Las mutations son operaciones que modifican datos en el servidor. Son el equivalente a los métodos POST, PUT, PATCH y DELETE en REST. En GraphQL, las mutations se definen en una clase separada llamada `Mutation` y se registran en el esquema.
 
@@ -665,7 +811,7 @@ mutation DeleteProducto($id: Long!) {
 
 ---
 
-## 20.10. Subscriptions (Tiempo Real)
+## 20.11. Subscriptions (Tiempo Real)
 
 Las subscriptions permiten recibir actualizaciones en tiempo real cuando ocurren eventos en el servidor. Son ideales para notificaciones, dashboards en vivo, y aplicaciones que requieren datos actualizados instantáneamente. HotChocolate usa WebSockets para implementar subscriptions.
 
@@ -802,7 +948,7 @@ subscription OnPedidoUpdate($userId: Long!) {
 
 ---
 
-## 20.11. Comparación REST vs GraphQL
+## 20.12. Comparación REST vs GraphQL
 
 ```mermaid
 flowchart TD
@@ -840,7 +986,7 @@ flowchart TD
 
 ---
 
-## 20.12. Input Types: Estructuras de Entrada
+## 20.13. Input Types: Estructuras de Entrada
 
 Los **Input Types** son objetos que agrupan los parámetros de entrada para mutations. Son equivalentes a los DTOs en REST y permiten mantener las mutations organizadas y evolutivas.
 
@@ -914,7 +1060,7 @@ input UpdateProductoInput {
 
 ---
 
-## 20.13. Events: Payloads de Eventos
+## 20.14. Events: Payloads de Eventos
 
 Los **Events** son los payloads que se publican cuando ocurre algo en el sistema. Son necesarios para las subscriptions y permiten que los clientes reciban datos estructurados.
 
@@ -999,7 +1145,7 @@ public record ProductoStockBajoEvent
 
 ---
 
-## 20.14. Publishers: Sistema Pub/Sub
+## 20.15. Publishers: Sistema Pub/Sub
 
 Los **Publishers** son el mecanismo que conecta los eventos con las subscriptions. HotChocolate incluye un sistema de Pub/Sub integrado.
 
@@ -1101,7 +1247,7 @@ builder.Services
 
 ---
 
-## 20.15. Estructura de Carpetas GraphQL
+## 20.16. Estructura de Carpetas GraphQL
 
 ```
 GraphQL/
@@ -1144,7 +1290,7 @@ GraphQL/
 
 ---
 
-## 20.16. Patrones Utilizados
+## 20.17. Patrones Utilizados
 
 ### 1. Result Pattern
 
@@ -1203,7 +1349,7 @@ public async Task<Producto?> GetProducto(
 
 ---
 
-## 20.17. Estado Actual del Proyecto ✅
+## 20.18. Estado Actual del Proyecto ✅
 
 ### Queries Implementadas ✅
 
@@ -1276,7 +1422,7 @@ flowchart TD
 
 ---
 
-## 20.18. Resumen Completo
+## 20.19. Resumen Completo
 
 ### Arquitectura GraphQL
 
