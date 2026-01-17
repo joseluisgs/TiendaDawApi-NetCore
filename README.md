@@ -1123,16 +1123,7 @@ query ObtenerProductoConCategoria($id: Long!) {
 }
 ```
 
-**Mutations disponibles:**
-
-```graphql
-# Productos (requiere autenticación ADMIN)
-createProducto(input: ProductoInput!): Producto
-updateProducto(id: Long!, input: ProductoInput!): Producto
-deleteProducto(id: Long!): Boolean
-
-# Categorías (requiere autenticación ADMIN)
-createCategoria(input: CategoriaInput!): Categoria
+> **Nota:** GraphQL está configurado únicamente con **Queries** (lectura). Las **Mutations** (escritura) aún no están implementadas. Usa la API REST para operaciones de creación, actualización y eliminación.
 updateCategoria(id: Long!, input: CategoriaInput!): Categoria
 deleteCategoria(id: Long!): Boolean
 ```
