@@ -1642,3 +1642,655 @@ Con testing dominado, tienes todas las herramientas para crear APIs robustas en 
 - FluentAssertions: https://fluentassertions.com/
 - Moq Documentation: https://github.com/moq/moq
 - TestContainers: https://dotnet.testcontainers.org/
+
+---
+
+## 21.13. Testing E2E con Postman y Newman
+
+Los tests **End-to-End (E2E)** verifican que la API completa funciona correctamente desde la perspectiva del cliente, incluyendo autenticación, validación y flujos de negocio completos.
+
+### ¿Qué es Postman?
+
+**Postman** es una herramienta gráfica para probar APIs que permite crear colecciones de requests, organizarlos en carpetas, añadir scripts de pre-request y assertions.
+
+### ¿Qué es Newman?
+
+**Newman** es el CLI de Postman que permite ejecutar colecciones de tests desde la línea de comandos, ideal para integración continua (CI/CD).
+
+```mermaid
+flowchart LR
+    subgraph "Desarrollo"
+        A1["Postman App"]
+        A2["Crear requests"]
+        A3["Probar manualmente"]
+    end
+    
+    subgraph "Automatización"
+        B1["Exportar colección"]
+        B2["Newman CLI"]
+        B3["CI/CD Pipeline"]
+    end
+    
+    subgraph "Validación"
+        C1["Tests automatizados"]
+        C2["Reportes"]
+        C3["Integración continua"]
+    end
+    
+    A1 --> A2 --> A3
+    A2 --> B1
+    B1 --> B2
+    B2 --> B3
+    B3 --> C1
+    C1 --> C2
+    C2 --> C3
+```
+
+### Instalación de Newman
+
+```bash
+# Instalar Node.js (requerido)
+# Descargar de https://nodejs.org/
+
+# Instalar Newman globalmente
+npm install -g newman
+
+# Instalar reporter HTML (opcional)
+npm install -g newman-reporter-htmlextra
+```
+
+### Estructura de Colección Postman
+
+```
+TiendaApi Collection/
+├── Auth/
+│   ├── Signup POST /v1/auth/signup
+│   ├── Signin POST /v1/auth/signin
+│   └── Refresh Token POST /v1/auth/refresh
+├── Categorias/
+│   ├── GET All GET /api/categorias
+│   ├── GET by ID GET /api/categorias/{id}
+│   ├── POST Create POST /api/categorias
+│   ├── PUT Update PUT /api/categorias/{id}
+│   └── DELETE Delete DELETE /api/categorias/{id}
+├── Productos/
+│   ├── GET All GET /api/productos
+│   ├── GET by ID GET /api/productos/{id}
+│   ├── POST Create POST /api/productos
+│   ├── PUT Update PUT /api/productos/{id}
+│   ├── DELETE Delete DELETE /api/productos/{id}
+│   └── GET by Categoria GET /api/productos/categoria/{id}
+├── Pedidos/
+│   ├── GET All GET /api/pedidos
+│   ├── GET by ID GET /api/pedidos/{id}
+│   ├── POST Create POST /api/pedidos
+│   └── PUT Estado PUT /api/pedidos/{id}/estado
+└── Health/
+    └── GET Health GET /health
+```
+
+### Variables de Entorno en Postman
+
+```json
+{
+    "dev": {
+        "baseUrl": "http://localhost:5000",
+        "apiVersion": "v1",
+        "email": "admin@tienda.com",
+        "password": "Admin123"
+    },
+    "prod": {
+        "baseUrl": "https://api.tienda.com",
+        "apiVersion": "v1",
+        "email": "admin@tienda.com",
+        "password": "{{PROD_PASSWORD}}"
+    }
+}
+```
+
+### Configuración de Auth con Variables
+
+```javascript
+// Pre-request Script para Signin
+pm.test("Generar token de acceso", function () {
+    // La request de signin debe ejecutarse primero
+    // y guardar el token en una variable
+});
+
+// Tests para Signin
+pm.test("Signin exitoso - Status 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Signin - Token recibido", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.token).to.not.be.empty;
+    pm.expect(jsonData.refreshToken).to.not.be.empty;
+    
+    // Guardar token para requests siguientes
+    pm.collectionVariables.set("accessToken", jsonData.token);
+    pm.collectionVariables.set("refreshToken", jsonData.refreshToken);
+});
+```
+
+### Colección Completa de Ejemplo
+
+```json
+{
+    "info": {
+        "name": "TiendaApi - Tests E2E",
+        "description": "Colección completa de tests end-to-end para TiendaApi",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        { "key": "baseUrl", "value": "http://localhost:5000" },
+        { "key": "accessToken", "value": "" },
+        { "key": "refreshToken", "value": "" },
+        { "key": "productoId", "value": "" },
+        { "key": "categoriaId", "value": "" },
+        { "key": "pedidoId", "value": "" }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            { "key": "token", "value": "{{accessToken}}" }
+        ]
+    },
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Signup",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Signup exitoso', function() {",
+                                    "    pm.response.to.have.status(201);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.email).to.equal('test' + Date.now() + '@test.com');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"test{{$timestamp}}@test.com\",\n    \"password\": \"Test1234\",\n    \"nombre\": \"Usuario Test\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/auth/signup",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["v1", "auth", "signup"]
+                        }
+                    }
+                },
+                {
+                    "name": "Signin",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Signin - Guardar tokens', function() {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set('accessToken', jsonData.token);",
+                                    "    pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"admin@tienda.com\",\n    \"password\": \"Admin123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/auth/signin",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["v1", "auth", "signin"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Categorias",
+            "item": [
+                {
+                    "name": "Get All Categorias",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/categorias",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "categorias"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Categorias - Status 200', function() {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Categorias - Es array', function() {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Categorias - Guardar ID primera', function() {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.length > 0) {",
+                                    "        pm.collectionVariables.set('categoriaId', jsonData[0].id);",
+                                    "    }",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Create Categoria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nombre\": \"Electrónica {{$timestamp}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/categorias",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "categorias"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Productos",
+            "item": [
+                {
+                    "name": "Create Producto",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nombre\": \"Laptop Gaming {{$timestamp}}\",\n    \"descripcion\": \"Potente laptop para gaming\",\n    \"precio\": 1499.99,\n    \"stock\": 10,\n    \"categoriaId\": {{categoriaId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/productos",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "productos"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Producto creado - Guardar ID', function() {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set('productoId', jsonData.id);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Producto by ID",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/productos/{{productoId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "productos", "{{productoId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Producto",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nombre\": \"Laptop Gaming Actualizada\",\n    \"precio\": 1299.99\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/productos/{{productoId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "productos", "{{productoId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Pedidos",
+            "item": [
+                {
+                    "name": "Create Pedido",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"usuarioId\": 1,\n    \"items\": [\n        {\n            \"productoId\": {{productoId}},\n            \"cantidad\": 2\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pedidos",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "pedidos"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Pedido creado - Guardar ID', function() {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set('pedidoId', jsonData.id);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+```
+
+### Ejecutar Colección con Newman
+
+```bash
+# Ejecutar colección básica
+newman run TiendaApi-Postman-Collection.json
+
+# Con variables de entorno
+newman run TiendaApi-Postman-Collection.json \
+    --environment TiendaApi-Development.postman_environment.json
+
+# Con reporter HTML
+newman run TiendaApi-Postman-Collection.json \
+    --environment TiendaApi-Development.postman_environment.json \
+    --reporters cli,htmlextra \
+    --reporter-htmlextra-export report.html
+
+# Con iterations (ejecutar N veces)
+newman run TiendaApi-Postman-Collection.json \
+    --iteration-count 3
+
+# Con delay entre requests
+newman run TiendaApi-Postman-Collection.json \
+    --delay-request 1000
+
+# Verbose output
+newman run TiendaApi-Postman-Collection.json \
+    -v
+```
+
+### Pre-request Scripts Avanzados
+
+```javascript
+// Generar timestamp único
+const timestamp = Date.now();
+pm.collectionVariables.set("uniqueSuffix", timestamp);
+
+// Generar email único
+const uniqueEmail = `test${timestamp}@test.com`;
+pm.collectionVariables.set("uniqueEmail", uniqueEmail);
+
+// Calcular hash MD5 (para autenticación si es needed)
+const crypto = require('crypto-js');
+const hash = crypto.MD5(pm.variables.get("password")).toString();
+pm.collectionVariables.set("passwordHash", hash);
+
+// Generar JWT (si se tiene la clave)
+function base64UrlEncode(str) {
+    return btoa(str)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+}
+
+// Generar authorization header para AWS o similar
+const authHeader = `AWS4-HMAC-SHA256 Credential=${accessKey}/${date}/${region}/service/aws4_request`;
+```
+
+### Test Scripts Avanzados
+
+```javascript
+// Validar schema con tv4
+pm.test("Response matches schema", function () {
+    var schema = {
+        "type": "object",
+        "properties": {
+            "id": { "type": "integer" },
+            "nombre": { "type": "string" },
+            "precio": { "type": "number" }
+        },
+        "required": ["id", "nombre", "precio"]
+    };
+    
+    var jsonData = pm.response.json();
+    tv4.validateResult(jsonData, schema);
+    
+    if (tv4.error) {
+        console.error("Schema validation failed:", tv4.error);
+    }
+    pm.expect(tv4.error).to.be.undefined;
+});
+
+// Test de performance
+pm.test("Response time < 500ms", function () {
+    pm.expect(pm.response.responseTime).to.be.below(500);
+});
+
+// Test de headers
+pm.test("Content-Type is JSON", function () {
+    pm.response.to.have.header("Content-Type");
+    pm.expect(pm.response.headers.get("Content-Type")).to.include("application/json");
+});
+
+// Test de paginación
+pm.test("Pagination structure valid", function () {
+    var jsonData = pm.response.json();
+    if (jsonData.items) {
+        pm.expect(jsonData.items).to.be.an('array');
+        pm.expect(jsonData.page).to.be.a('number');
+        pm.expect(jsonData.pageSize).to.be.a('number');
+    }
+});
+
+// Capturar y validar error
+pm.test("Error response has correct structure", function () {
+    var jsonData = pm.response.json();
+    if (pm.response.code >= 400) {
+        pm.expect(jsonData.code).to.be.a('string');
+        pm.expect(jsonData.message).to.be.a('string');
+    }
+});
+```
+
+### Integración en CI/CD con GitHub Actions
+
+```yaml
+name: E2E Tests with Newman
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: tienda
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd redis-cli ping
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      
+      - name: Build API
+        run: |
+          cd TiendaApi.Apis
+          dotnet build --configuration Release
+      
+      - name: Run API
+        run: |
+          cd TiendaApi.Apis
+          dotnet run &
+          sleep 10  # Wait for API to start
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Newman
+        run: npm install -g newman newman-reporter-htmlextra
+      
+      - name: Run E2E Tests
+        run: |
+          newman run TiendaApi-Postman-Collection.json \
+            --environment TiendaApi-Development.postman_environment.json \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export test-results/report.html \
+            --timeout-request 30000
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: test-results/
+      
+      - name: Check Results
+        if: failure()
+        run: |
+          echo "❌ E2E Tests failed!"
+          echo "Check the test results artifact for details."
+          exit 1
+```
+
+### Comparación Postman/Newman vs Tests Unitarios
+
+| Aspecto | Postman/Newman | Tests Unitarios (NUnit) |
+|---------|----------------|-------------------------|
+| **Velocidad** | Lento (requiere API activa) | Rápido (milisegundos) |
+| **Entorno** | API completa | Componentes aislados |
+| **Setup** | Postman + Newman | Visual Studio + NUnit |
+| **Integración CI/CD** | Newman CLI | dotnet test |
+| **Debugging** | Logs de Postman | IDE debugger |
+| **Coverage** | End-to-end | Unitario |
+| **Datos** | Reales (BD) | Mocks |
+
+### Cuándo Usar Cada Enfoque
+
+| Escenario | Herramienta Recomendada |
+|-----------|------------------------|
+| **Verificar flujo completo** | Postman/Newman (E2E) |
+| **Test de integración** | Ambos (TestContainers + Newman) |
+| **Test de regresión rápida** | NUnit (unit tests) |
+| **Validar documentación API** | Postman (collection como especificación) |
+| **CI/CD pipeline** | dotnet test + Newman |
+| **Test antes del deploy** | Newman en staging |
+
+### Exportar e Importar Colecciones
+
+```bash
+# Desde Postman App:
+# 1. Seleccionar colección
+# 2. Click en "..."
+# 3. Export -> JSON file
+
+# Desde línea de comandos (Linux/Mac)
+newman run collection.json \
+    --environment environment.json \
+    --export-environment exported-env.json \
+    --export-collection exported-collection.json
+```
+
+### Recursos Adicionales
+
+- Postman Learning Center: https://learning.postman.com/
+- Newman Documentation: https://github.com/postmanlabs/newman
+- Postman Tests: https://learning.postman.com/docs/writing-scripts/test-scripts/
+- Newman HTML Reporter: https://github.com/DannyDainton/newman-reporter-htmlextra
+
+### Siguientes Pasos
+
+Con testing E2E dominado, tienes un arsenal completo de herramientas para asegurar la calidad de tu API.
+
+### Resumen Final del Módulo de Testing
+
+| Tipo de Test | Herramienta | Propósito |
+|--------------|-------------|-----------|
+| **Unit Tests** | NUnit + Moq | Probar unidades de código aisladas |
+| **Integration Tests** | TestContainers | Probar componentes con BD real |
+| **Controller Tests** | WebApplicationFactory | Probar endpoints HTTP |
+| **E2E Tests** | Postman + Newman | Probar flujos completos de usuario |
