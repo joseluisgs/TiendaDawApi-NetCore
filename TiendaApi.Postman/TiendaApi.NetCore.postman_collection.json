@@ -3195,6 +3195,427 @@
 			]
 		},
 		{
+			"name": "10 - GRAPHQL CATEGORÍAS",
+			"item": [
+				{
+					"name": "QUERY - Obtener todas las categorías",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL Categorias - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL Categorias - Has data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('object');",
+									"    pm.expect(jsonData.data.categorias).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"GraphQL Categorias - No errors\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"query { categorias { id nombre } }\"}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Obtiene todas las categorías (público)"
+					},
+					"response": []
+				},
+				{
+					"name": "QUERY - Obtener categoría por ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CategoriaById - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL CategoriaById - Returns categoria\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.categoria).to.be.an('object');",
+									"    pm.expect(jsonData.data.categoria.id).to.be.a('number');",
+									"    pm.expect(jsonData.data.categoria.nombre).to.be.a('string');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"query($id: Long!) { categoria(id: $id) { id nombre } }\", \"variables\": {\"id\": 1}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Obtiene categoría por ID (público)"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Crear categoría (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CreateCategoria - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL CreateCategoria - Returns created categoria\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.createCategoria.id).to.be.a('number');",
+									"    pm.expect(jsonData.data.createCategoria.nombre).to.equal('GraphQL Test Category');",
+									"});",
+									"",
+									"// Guardar ID para siguientes tests",
+									"if (pm.response.code === 200 && !jsonData.errors) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"graphqlCategoriaId\", jsonData.data.createCategoria.id.toString());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($input: CreateCategoriaInput!) { createCategoria(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"GraphQL Test Category\"}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Crea categoría (requiere token ADMIN)"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Crear categoría (sin auth)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CreateCategoria NoAuth - Returns error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.be.an('array');",
+									"    pm.expect(jsonData.errors[0].message).to.include('Unauthorized');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($input: CreateCategoriaInput!) { createCategoria(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"Test\"}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Crear categoría sin token debe fallar"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Crear categoría (rol USER)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CreateCategoria Forbidden - Returns error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.be.an('array');",
+									"    pm.expect(jsonData.errors[0].message).to.include('forbidden');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{userToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($input: CreateCategoriaInput!) { createCategoria(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"Test User\"}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Crear categoría con rol USER debe fallar"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Crear categoría (nombre duplicado)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL CreateCategoria Duplicate - Returns error\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.errors).to.be.an('array');",
+									"    pm.expect(jsonData.errors[0].message).to.include('CONFLICT');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($input: CreateCategoriaInput!) { createCategoria(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"GraphQL Test Category\"}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Crear categoría con nombre duplicado debe fallar"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Actualizar categoría (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL UpdateCategoria - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL UpdateCategoria - Returns updated categoria\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.updateCategoria.nombre).to.equal('GraphQL Test Updated');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($id: Long!, $input: UpdateCategoriaInput!) { updateCategoria(id: $id, input: $input) { id nombre } }\", \"variables\": {\"id\": {{graphqlCategoriaId}}, \"input\": {\"nombre\": \"GraphQL Test Updated\"}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Actualiza categoría (requiere token ADMIN)"
+					},
+					"response": []
+				},
+				{
+					"name": "MUTATION - Eliminar categoría (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL DeleteCategoria - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL DeleteCategoria - Returns true\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.deleteCategoria).to.equal(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"mutation($id: Long!) { deleteCategoria(id: $id) }\", \"variables\": {\"id\": {{graphqlCategoriaId}}}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Elimina categoría (requiere token ADMIN)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "9 - TEARDOWN",
 			"item": [
 				{

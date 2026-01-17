@@ -20,6 +20,7 @@ public static class GraphQLConfig
         return services
             .AddGraphQLServer()
             .AddQueryType<TiendaQuery>()
+            .AddMutationType<CategoriaMutation>()
             .AddType<ProductoType>()
             .AddType<CategoriaType>()
             .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = environment.IsDevelopment());

@@ -1123,9 +1123,78 @@ query ObtenerProductoConCategoria($id: Long!) {
 }
 ```
 
-> **Nota:** GraphQL está configurado únicamente con **Queries** (lectura). Las **Mutations** (escritura) aún no están implementadas. Usa la API REST para operaciones de creación, actualización y eliminación.
-updateCategoria(id: Long!, input: CategoriaInput!): Categoria
+> **Nota:** GraphQL soporta tanto **Queries** como **Mutations**.
+
+**Mutations disponibles (requieren token JWT con rol ADMIN):**
+
+```graphql
+# Categorías (requiere ADMIN)
+createCategoria(input: CreateCategoriaInput!): Categoria
+updateCategoria(id: Long!, input: UpdateCategoriaInput!): Categoria
 deleteCategoria(id: Long!): Boolean
+```
+
+**Authorization:** Todas las mutations requieren header:
+```
+Authorization: Bearer <token_admin>
+```
+
+**Ejemplo: Crear categoría**
+
+```graphql
+mutation CrearCategoria($input: CreateCategoriaInput!) {
+  createCategoria(input: $input) {
+    id
+    nombre
+  }
+}
+```
+
+**Variables:**
+
+```json
+{
+  "input": {
+    "nombre": "Nueva Categoría"
+  }
+}
+```
+
+**Headers:**
+
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIs...",
+  "Content-Type": "application/json"
+}
+```
+
+**Respuesta:**
+
+```json
+{
+  "data": {
+    "createCategoria": {
+      "id": 4,
+      "nombre": "Nueva Categoría"
+    }
+  }
+}
+```
+
+**Errores:**
+
+```json
+{
+  "errors": [
+    {
+      "message": "Ya existe categoría con ese nombre",
+      "extensions": {
+        "code": "CONFLICT"
+      }
+    }
+  ]
+}
 ```
 
 ## 👥 Usuarios Demo
