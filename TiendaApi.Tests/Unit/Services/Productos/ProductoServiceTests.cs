@@ -290,8 +290,9 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(ProductoError.ValidacionConCampos(
-            It.IsAny<Dictionary<string, string[]>>()));
+        result.Error.Should().BeOfType<ValidationError>();
+        var validationError = (ValidationError)result.Error;
+        validationError.ValidationErrors.Should().ContainKey("Precio");
     }
 
     [Test]
@@ -331,8 +332,7 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Precio");
+        result.Error.Should().BeOfType<NotFoundError>();
     }
 
     [Test]

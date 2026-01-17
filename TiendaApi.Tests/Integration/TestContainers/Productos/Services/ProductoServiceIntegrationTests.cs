@@ -14,6 +14,7 @@ using Testcontainers.PostgreSql;
 using TiendaApi.Apis.Data;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.GraphQL.Publishers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
@@ -127,6 +128,15 @@ public class ProductoServiceIntegrationTests
         });
         services.AddScoped<IEmailService, MemoryEmailService>();
         services.AddScoped<ProductoWebSocketHandler>();
+
+        // Mock IEventPublisher for GraphQL subscriptions
+        services.AddScoped<IEventPublisher>(sp =>
+        {
+            var mockPublisher = new Mock<IEventPublisher>();
+            mockPublisher.Setup(p => p.PublishAsync(It.IsAny<string>(), It.IsAny<object>()))
+                .Returns(Task.CompletedTask);
+            return mockPublisher.Object;
+        });
 
         _serviceProvider = services.BuildServiceProvider();
 
