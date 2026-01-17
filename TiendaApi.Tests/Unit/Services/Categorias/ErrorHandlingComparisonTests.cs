@@ -7,6 +7,7 @@ using Moq;
 using TiendaApi.Apis.Dtos.Categorias;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.GraphQL.Publishers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
@@ -74,6 +75,7 @@ public class ErrorHandlingComparisonTests
         var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
         var mockStorageService = new Mock<IStorageService>();
+        var mockEventPublisher = new Mock<IEventPublisher>();
 
         _productoService = new ProductoService(
             _mockProductoRepo.Object,
@@ -84,7 +86,8 @@ public class ErrorHandlingComparisonTests
             mockEmailService.Object,
             mockConfiguration.Object,
             _mockProductoValidator.Object,
-            mockStorageService.Object
+            mockStorageService.Object,
+            mockEventPublisher.Object
         );
     }
 
@@ -236,6 +239,7 @@ public class ErrorHandlingComparisonTests
         var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
         var mockStorageService = new Mock<TiendaApi.Apis.Services.Storage.IStorageService>();
+        var mockEventPublisher = new Mock<IEventPublisher>();
 
         _productoService = new ProductoService(
             _mockProductoRepo.Object,
@@ -246,7 +250,8 @@ public class ErrorHandlingComparisonTests
             mockEmailService.Object,
             mockConfiguration.Object,
             _mockProductoValidator.Object,
-            mockStorageService.Object
+            mockStorageService.Object,
+            mockEventPublisher.Object
         );
 
         // Act

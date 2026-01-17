@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Errors.Productos;
+using TiendaApi.Apis.GraphQL.Publishers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
@@ -34,6 +36,7 @@ public class ProductoServiceTests
     private Mock<IConfiguration> _mockConfiguration = null!;
     private Mock<IValidator<ProductoRequestDto>> _mockValidator = null!;
     private Mock<IStorageService> _mockStorageService = null!;
+    private Mock<IEventPublisher> _mockEventPublisher = null!;
     private ProductoService _service = null!;
 
     [SetUp]
@@ -48,6 +51,7 @@ public class ProductoServiceTests
         _mockConfiguration = new Mock<IConfiguration>();
         _mockValidator = new Mock<IValidator<ProductoRequestDto>>();
         _mockStorageService = new Mock<IStorageService>();
+        _mockEventPublisher = new Mock<IEventPublisher>();
 
         _mockConfiguration.Setup(c => c["Cache:ProductoCacheTTLMinutes"]).Returns("10");
 
@@ -63,7 +67,8 @@ public class ProductoServiceTests
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
-            _mockStorageService.Object
+            _mockStorageService.Object,
+            _mockEventPublisher.Object
         );
     }
 
@@ -276,7 +281,49 @@ public class ProductoServiceTests
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
-            _mockStorageService.Object
+            _mockStorageService.Object,
+            _mockEventPublisher.Object
+        );
+
+        // Act
+        var result = await _service.CreateAsync(dto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(ProductoError.ValidacionConCampos(
+            It.IsAny<Dictionary<string, string[]>>()));
+    }
+
+    [Test]
+    public async Task CreateAsync_CategoriaNoExiste_RetornaFailure()
+    {
+        // Arrange
+        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
+            .ReturnsAsync((Categoria?)null);
+
+        var dto = new ProductoRequestDto
+        {
+            Nombre = "Test",
+            Precio = 99,
+            Stock = 10,
+            CategoriaId = 999
+        };
+
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+
+        // Re-crear servicio con mocks configurados
+        _service = new ProductoService(
+            _mockProductoRepo.Object,
+            _mockCategoriaRepo.Object,
+            _mockLogger.Object,
+            _mockCacheService.Object,
+            _mockWebSocketHandler.Object,
+            _mockEmailService.Object,
+            _mockConfiguration.Object,
+            _mockValidator.Object,
+            _mockStorageService.Object,
+            _mockEventPublisher.Object
         );
 
         // Act
@@ -322,7 +369,8 @@ public class ProductoServiceTests
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
-            _mockStorageService.Object
+            _mockStorageService.Object,
+            _mockEventPublisher.Object
         );
 
         // Act

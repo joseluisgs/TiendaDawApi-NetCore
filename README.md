@@ -1123,78 +1123,18 @@ query ObtenerProductoConCategoria($id: Long!) {
 }
 ```
 
-> **Nota:** GraphQL soporta tanto **Queries** como **Mutations**.
+> **Nota:** GraphQL soporta tanto **Queries**, **Mutations** y **Subscriptions** para notificaciones en tiempo real sobre Productos.
 
 **Mutations disponibles (requieren token JWT con rol ADMIN):**
 
 ```graphql
-# Categorías (requiere ADMIN)
-createCategoria(input: CreateCategoriaInput!): Categoria
-updateCategoria(id: Long!, input: UpdateCategoriaInput!): Categoria
-deleteCategoria(id: Long!): Boolean
+# Productos (requiere ADMIN)
+
 ```
 
 **Authorization:** Todas las mutations requieren header:
 ```
 Authorization: Bearer <token_admin>
-```
-
-**Ejemplo: Crear categoría**
-
-```graphql
-mutation CrearCategoria($input: CreateCategoriaInput!) {
-  createCategoria(input: $input) {
-    id
-    nombre
-  }
-}
-```
-
-**Variables:**
-
-```json
-{
-  "input": {
-    "nombre": "Nueva Categoría"
-  }
-}
-```
-
-**Headers:**
-
-```json
-{
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIs...",
-  "Content-Type": "application/json"
-}
-```
-
-**Ejemplo de Respuesta:**
-
-```json
-{
-  "data": {
-    "createCategoria": {
-      "id": 4,
-      "nombre": "Nueva Categoría"
-    }
-  }
-}
-```
-
-**Ejemplo de Errores:**
-
-```json
-{
-  "errors": [
-    {
-      "message": "Ya existe categoría con ese nombre",
-      "extensions": {
-        "code": "CONFLICT"
-      }
-    }
-  ]
-}
 ```
 
 **Mutations de Productos (requieren ADMIN):**
@@ -1299,6 +1239,57 @@ mutation CrearProducto($input: CreateProductoInput!) {
   ]
 }
 ```
+
+**Subscriptions (GraphQL en tiempo real):**
+
+```graphql
+# Productos
+subscription {
+  onProductoCreado { productoId nombre precio stock }
+  onProductoActualizado { productoId nombre precio stock }
+  onProductoEliminado { productoId }
+  onStockBajo { productoId nombre stockActual umbralStock }
+}
+```
+
+**Conexión WebSocket:**
+```
+WS ws://localhost:5000/graphql
+
+# Enviar:
+{"type": "subscribe", "payload": {"query": "subscription { onProductoCreado { productoId nombre } }"}}
+```
+
+**Ejemplo de respuesta en tiempo real:**
+
+```json
+{
+  "data": {
+    "onProductoCreado": {
+      "productoId": 10,
+      "nombre": "Nuevo Producto",
+      "precio": 99.99,
+      "stock": 5,
+      "createdAt": "2026-01-17T10:30:00Z"
+    }
+  }
+}
+```
+
+**Estructura del proyecto GraphQL:**
+
+```
+GraphQL/
+├── Queries/           → TiendaQuery (productos, categorias)
+├── Mutations/         → ProductoMutation (create/update/delete producto)
+├── Subscriptions/     → ProductoSubscription (onProductoCreado, etc.)
+├── Events/            → ProductoEvent (payloads de eventos)
+├── Inputs/            → ProductoInput (CreateProductoInput, UpdateProductoInput)
+├── Publishers/        → IEventPublisher, EventPublisher
+└── Types/             → ProductoType, CategoriaType
+```
+
+---
 
 ## 👥 Usuarios Demo
 

@@ -5,6 +5,8 @@ using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Errors.Productos;
+using TiendaApi.Apis.GraphQL.Events;
+using TiendaApi.Apis.GraphQL.Publishers;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
@@ -35,7 +37,8 @@ public class ProductoService(
     IEmailService emailService,
     IConfiguration configuration,
     IValidator<ProductoRequestDto> productoValidator,
-    IStorageService storageService
+    IStorageService storageService,
+    IEventPublisher eventPublisher
 ) : IProductoService
 {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
@@ -167,6 +170,7 @@ public class ProductoService(
                 InvalidarCacheProducto("productos:all");
                 NotificarWebSocketProductoCreado(dto);
                 EnviarEmailProductoCreado(saved);
+                EventoSuscripcionProductoCreado(dto);
             });
     }
 
@@ -210,6 +214,8 @@ public class ProductoService(
                 logger.LogInformation("Producto actualizado con ID: {Id}", id);
                 InvalidarCacheProducto($"productos:{id}", "productos:all");
                 NotificarWebSocketProductoActualizado(resultDto);
+                EventoSuscripcionProductoActualizado(resultDto);
+                EventoSuscripcionStockBajo(resultDto, 10); // Umbral de stock bajo = 10
             });
     }
 
@@ -245,6 +251,7 @@ public class ProductoService(
 
         InvalidarCacheProducto($"productos:{id}", "productos:all");
         NotificarWebSocketProductoEliminado(id);
+        EventoSuscripcionProductoEliminado(id);
 
         return UnitResult.Success<DomainError>();
     }
@@ -290,6 +297,7 @@ public class ProductoService(
                 logger.LogInformation("Imagen actualizada para producto con ID: {Id}", id);
                 InvalidarCacheProducto($"productos:{id}", "productos:all");
                 NotificarWebSocketProductoActualizado(resultDto);
+                EventoSuscripcionProductoActualizado(resultDto);
             });
     }
 
@@ -335,6 +343,9 @@ public class ProductoService(
                 logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
                 InvalidarCacheProducto($"productos:{id}", "productos:all");
                 NotificarWebSocketProductoActualizado(resultDto);
+                EventoSuscripcionProductoActualizado(resultDto);
+                if (dto.Stock.HasValue)
+                    EventoSuscripcionStockBajo(resultDto, 10);
             });
     }
 
@@ -517,5 +528,110 @@ public class ProductoService(
         }
 
         return UnitResult.Success<DomainError>();
+    }
+
+    // ========== EVENTOS DE GRAPHQL SUBSCRIPTIONS ==========
+
+    /// <summary>
+    /// Publica evento de GraphQL Subscription cuando se crea un producto.
+    /// </summary>
+    private void EventoSuscripcionProductoCreado(ProductoDto producto)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent
+                {
+                    ProductoId = producto.Id,
+                    Nombre = producto.Nombre,
+                    Precio = producto.Precio,
+                    Stock = producto.Stock,
+                    CreatedAt = DateTime.UtcNow
+                });
+                logger.LogDebug("Evento GraphQL Subscription enviado tras crear producto: {ProductoId}", producto.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al crear producto: {ProductoId}", producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Publica evento de GraphQL Subscription cuando se actualiza un producto.
+    /// </summary>
+    private void EventoSuscripcionProductoActualizado(ProductoDto producto)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await eventPublisher.PublishAsync("onProductoActualizado", new ProductoActualizadoEvent
+                {
+                    ProductoId = producto.Id,
+                    Nombre = producto.Nombre,
+                    Precio = producto.Precio,
+                    Stock = producto.Stock,
+                    UpdatedAt = DateTime.UtcNow
+                });
+                logger.LogDebug("Evento GraphQL Subscription enviado tras actualizar producto: {ProductoId}", producto.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al actualizar producto: {ProductoId}", producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Publica evento de GraphQL Subscription cuando se elimina un producto.
+    /// </summary>
+    private void EventoSuscripcionProductoEliminado(long productoId)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await eventPublisher.PublishAsync("onProductoEliminado", new ProductoEliminadoEvent
+                {
+                    ProductoId = productoId,
+                    DeletedAt = DateTime.UtcNow
+                });
+                logger.LogDebug("Evento GraphQL Subscription enviado tras eliminar producto: {ProductoId}", productoId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al eliminar producto: {ProductoId}", productoId);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Publica evento de GraphQL Subscription cuando el stock está bajo.
+    /// </summary>
+    private void EventoSuscripcionStockBajo(ProductoDto producto, int umbralStock)
+    {
+        if (producto.Stock > umbralStock) return;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await eventPublisher.PublishAsync("onStockBajo", new ProductoStockBajoEvent
+                {
+                    ProductoId = producto.Id,
+                    Nombre = producto.Nombre,
+                    StockActual = producto.Stock,
+                    UmbralStock = umbralStock,
+                    DetectedAt = DateTime.UtcNow
+                });
+                logger.LogDebug("Evento GraphQL Subscription enviado por stock bajo: {ProductoId}, Stock: {Stock}", producto.Id, producto.Stock);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription de stock bajo: {ProductoId}", producto.Id);
+            }
+        });
     }
 }

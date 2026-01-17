@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using TiendaApi.Apis.GraphQL.Mutations;
 using TiendaApi.Apis.GraphQL.Queries;
+using TiendaApi.Apis.GraphQL.Subscriptions;
 using TiendaApi.Apis.GraphQL.Types;
 
 namespace TiendaApi.Apis.Infrastructures;
@@ -22,8 +23,9 @@ public static class GraphQLConfig
         return services
             .AddGraphQLServer()
             .AddQueryType<TiendaQuery>()
-            .AddMutationType<CategoriaMutation>()
             .AddMutationType<ProductoMutation>()
+            .AddSubscriptionType<ProductoSubscription>()
+            .AddInMemorySubscriptions()
             .AddType<ProductoType>()
             .AddType<CategoriaType>()
             .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = environment.IsDevelopment());

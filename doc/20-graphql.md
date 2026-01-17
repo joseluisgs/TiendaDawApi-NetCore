@@ -840,355 +840,547 @@ flowchart TD
 
 ---
 
-## 20.12. Estado Actual del Proyecto
+## 20.12. Input Types: Estructuras de Entrada
 
-### Queries Implementadas ✅
+Los **Input Types** son objetos que agrupan los parámetros de entrada para mutations. Son equivalentes a los DTOs en REST y permiten mantener las mutations organizadas y evolutivas.
 
-El proyecto actualmente soporta las siguientes queries de solo lectura:
+### Concepto
 
-```graphql
-# Productos
-productos                    # Todos los productos con proyección
-producto(id: Long!)          # Producto por ID
-productos(first: Int)        # Productos paginados
+A diferencia de pasar parámetros sueltos, los input types permiten:
+- Agrupar campos relacionados
+- Añadir campos sin romper queries existentes
+- Validación centralizada
+- Documentación automática
 
-# Categorías
-categorias                   # Todas las categorías
-categoria(id: Long!)         # Categoría por ID
-categorias(first: Int)       # Categorías paginadas
+### Input Types del Proyecto
+
+**CreateProductoInput:**
+```csharp
+namespace TiendaApi.Apis.GraphQL.Inputs;
+
+public record CreateProductoInput
+{
+    public string Nombre { get; init; } = string.Empty;
+    public string? Descripcion { get; init; }
+    public decimal Precio { get; init; }
+    public int Stock { get; init; }
+    public string? Imagen { get; init; }
+    public long CategoriaId { get; init; }
+}
 ```
 
-### Mutations NO Implementadas ❌
-
-Las siguientes mutations están documentadas como ejemplo pero NO están implementadas en el proyecto:
-
-```graphql
-# Productos (usa API REST: POST/PUT/DELETE /api/productos)
-createProducto(input: ProductoInput!): Producto
-updateProducto(id: Long!, input: ProductoInput!): Producto
-deleteProducto(id: Long!): Boolean
-
-# Categorías (usa API REST: POST/PUT/DELETE /api/categorias)
-createCategoria(input: CategoriaInput!): Categoria
-updateCategoria(id: Long!, input: CategoriaInput!): Categoria
-deleteCategoria(id: Long!): Boolean
+**UpdateProductoInput:**
+```csharp
+public record UpdateProductoInput
+{
+    public string? Nombre { get; init; }
+    public string? Descripcion { get; init; }
+    public decimal? Precio { get; init; }
+    public int? Stock { get; init; }
+    public string? Imagen { get; init; }
+    public long? CategoriaId { get; init; }
+}
 ```
 
-### Subscriptions NO Implementadas ❌
-
-Las subscriptions requieren configuración adicional de WebSockets y no están implementadas:
+### GraphQL Schema Generado
 
 ```graphql
-# Tiempo real (usa WebSockets en /ws/v1/productos)
-subscription OnProductoCreado { ... }
-subscription OnPedidoUpdate { ... }
+input CreateProductoInput {
+  nombre: String!
+  descripcion: String
+  precio: Float!
+  stock: Int!
+  imagen: String
+  categoriaId: Long!
+}
+
+input UpdateProductoInput {
+  nombre: String
+  descripcion: String
+  precio: Float
+  stock: Int
+  imagen: String
+  categoriaId: Long
+}
 ```
 
-### Cómo Usar la API REST para Mutations
+### Diferencia con Output Types
 
-Dado que GraphQL solo tiene queries implementadas, usa la API REST para operaciones de escritura:
-
-| Operación | Método | Endpoint | Ejemplo |
-|-----------|--------|----------|---------|
-| Crear producto | POST | `/api/productos` | `{"nombre": "Nuevo", "precio": 99.99, ...}` |
-| Actualizar producto | PUT | `/api/productos/{id}` | `{"nombre": "Actualizado", ...}` |
-| Eliminar producto | DELETE | `/api/productos/{id}` | - |
-| Crear categoría | POST | `/api/categorias` | `{"nombre": "Nueva"}` |
-| Actualizar categoría | PUT | `/api/categorias/{id}` | `{"nombre": "Actualizada"}` |
-| Eliminar categoría | DELETE | `/api/categorias/{id}` | - |
+| Aspecto | Input Type | Output Type (Type) |
+|---------|------------|---------------------|
+| Uso | Mutations (entrada) | Queries/Mutations (salida) |
+| Campos | Pueden ser opcionales | Siempre no-nulos en responses |
+| Ejemplo | `CreateProductoInput` | `Producto` |
 
 ---
 
-## 20.12. Endpoints: ¿Hay Solape con WebSockets?
+## 20.13. Events: Payloads de Eventos
 
-Una pregunta frecuente es si GraphQL entra en conflicto con los WebSockets existentes del proyecto (`/ws/v1/productos`, `/ws/v1/pedidos`). La respuesta es **no**: los endpoints son completamente independientes.
+Los **Events** son los payloads que se publican cuando ocurre algo en el sistema. Son necesarios para las subscriptions y permiten que los clientes reciban datos estructurados.
 
-### Endpoints del Proyecto
+### Concepto de Evento
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     ENDPOINTS DEL PROYECTO                           │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  🌐 REST (HTTP)                                                      │
-│  ├── POST /api/v1/auth/signup    → Autenticación                     │
-│  ├── POST /api/v1/auth/signin    → Login JWT                         │
-│  ├── GET  /api/productos         → Listar productos                  │
-│  ├── POST /api/productos         → Crear producto                    │
-│  └── ... (más endpoints REST)                                     │
-│                                                                      │
-│  🔌 WebSockets Existentes (tiempo real)                              │
-│  ├── WS /ws/v1/productos         → Broadcast a todos                 │
-│  └── WS /ws/v1/pedidos?token=JWT → Notificaciones por usuario        │
-│                                                                      │
-│  📊 GraphQL                                                          │
-│  ├── POST /graphql               → Queries y Mutations (HTTP)        │
-│  └── WS   /graphql               → Subscriptions (WebSocket) ⬅️     │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Comparación de Endpoints
-
-| Endpoint | Protocolo | Uso | Estado |
-|----------|-----------|-----|--------|
-| `/api/productos` | HTTP | REST CRUD | ✅ Implementado |
-| `/ws/v1/productos` | WebSocket | Notificaciones broadcast | ✅ Implementado |
-| `/graphql` (HTTP) | HTTP | Queries + Mutations | ✅ Implementado |
-| `/graphql` (WS) | WebSocket | Subscriptions | ❌ No implementado |
-
-### ¿Por qué no hay solape?
-
-Los endpoints usan **rutas diferentes** y **protocolos diferentes**, por lo que cada request va a su propio handler:
+Un evento representa "algo que pasó" en el sistema. Los eventos son publicados por los servicios y consumidos por las subscriptions.
 
 ```mermaid
-flowchart TD
-    subgraph "Clientes"
-        A["Cliente REST"]
-        B["Cliente WebSocket API"]
-        C["Cliente GraphQL"]
+flowchart LR
+    subgraph "Servicio"
+        S["ProductoService\n.CreateAsync()"]
     end
     
-    subgraph "Endpoints diferentes"
-        A -->|"POST /api/productos"| R[REST Handler]
-        B -->|"WS /ws/v1/productos"| W[WebSocket Handler]
-        C -->|"POST /graphql"| G[GraphQL HTTP]
-        C -->|"WS /graphql"| S[GraphQL Subscr.]
+    subgraph "Publicador"
+        P["IEventPublisher\n.PublishAsync()"]
     end
     
-    subgraph "Handlers independientes"
-        R -->|"CRUD"| DB[(PostgreSQL)]
-        W -->|"Broadcast"| Wclients["Clientes WS"]
-        G -->|"Queries"| DB
-        S -->|"Events"| E[EventBus]
+    subgraph "EventBus"
+        E["EventBus"]
     end
+    
+    subgraph "Subscription"
+        Sub["ProductoSubscription\n.OnProductoCreado()"]
+    end
+    
+    subgraph "Cliente"
+        C["Cliente WS"]
+    end
+    
+    S -->|"1. Operación completada"| P
+    P -->|"2. Publish(event)"| E
+    E -->|"3. Notificar subscribers"| Sub
+    Sub -->|"4. Push WebSocket"| C
 ```
 
-### Cómo Funciona GraphQL con WebSocket
+### Eventos del Proyecto
 
-El endpoint `/graphql` puede operar de dos formas:
-
-**1. Query/Mutation (HTTP):**
-```http
-POST /graphql HTTP/1.1
-Content-Type: application/json
-
-{"query": "{ productos { id nombre } }"}
-```
-Respuesta inmediata con JSON.
-
-**2. Subscription (WebSocket Upgrade):**
-```
-WS /graphql
-Authorization: Bearer <JWT_TOKEN>
-
-# El cliente envía:
-{"type": "subscribe", "payload": {"query": "subscription { onProductoCreado { id nombre } }"}}
-
-# El servidor responde cuando ocurre el evento:
-{"type": "next", "payload": {"data": {"onProductoCreado": {"id": 1, "nombre": "Producto"}}}}
+**ProductoCreadoEvent:**
+```csharp
+public record ProductoCreadoEvent
+{
+    public long ProductoId { get; init; }
+    public string Nombre { get; init; } = string.Empty;
+    public decimal Precio { get; init; }
+    public int Stock { get; init; }
+    public DateTime CreatedAt { get; init; }
+}
 ```
 
-### Diferencias Clave con WebSockets Actuales
+**ProductoActualizadoEvent:**
+```csharp
+public record ProductoActualizadoEvent
+{
+    public long ProductoId { get; init; }
+    public string? Nombre { get; init; }
+    public decimal? Precio { get; init; }
+    public int? Stock { get; init; }
+    public DateTime UpdatedAt { get; init; }
+}
+```
 
-| Aspecto | WebSockets API (`/ws/v1/...`) | GraphQL Subscriptions (`/graphql`) |
-|---------|------------------------------|-----------------------------------|
-| **Ruta** | `/ws/v1/productos` | `/graphql` (misma ruta, diferente protocolo) |
-| **Mensajes** | JSON personalizado `{type, data}` | Formato GraphQL `{data: {...}}` |
-| **Tipado** | Por convención | Schema define tipos exactos |
-| **Herramientas** | Ninguna (manual) | GraphiQL playground |
-| **Autenticación** | JWT en query string | JWT en header o connection params |
-| **Filtrado** | Por código | Por tipo de subscription |
+**ProductoEliminadoEvent:**
+```csharp
+public record ProductoEliminadoEvent
+{
+    public long ProductoId { get; init; }
+    public DateTime DeletedAt { get; init; }
+}
+```
 
-### Resumen: No Hay Conflicto
-
-- **Rutas diferentes**: `/ws/v1/productos` ≠ `/graphql`
-- **Protocolos diferentes**: WebSocket raw vs GraphQL over WebSocket
-- **Handlers diferentes**: Cada endpoint tiene su propio processor
-- **Pueden coexistir**: La API REST usa HTTP, GraphQL usa HTTP/WS
-
-Si decides implementar GraphQL Subscriptions en el futuro, simplemente añadirás soporte WebSocket al endpoint `/graphql` sin afectar los WebSockets existentes en `/ws/v1/...`.
+**ProductoStockBajoEvent:**
+```csharp
+public record ProductoStockBajoEvent
+{
+    public long ProductoId { get; init; }
+    public string Nombre { get; init; } = string.Empty;
+    public int StockActual { get; init; }
+    public int UmbralStock { get; init; }
+    public DateTime DetectedAt { get; init; }
+}
+```
 
 ---
 
-## 20.12. Endpoints: ¿Hay Solape con WebSockets?
+## 20.14. Publishers: Sistema Pub/Sub
 
-Una pregunta frecuente es si GraphQL entra en conflicto con los WebSockets existentes del proyecto (`/ws/v1/productos`, `/ws/v1/pedidos`). La respuesta es **no**: los endpoints son completamente independientes.
+Los **Publishers** son el mecanismo que conecta los eventos con las subscriptions. HotChocolate incluye un sistema de Pub/Sub integrado.
 
-### Endpoints del Proyecto
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     ENDPOINTS DEL PROYECTO                           │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  🌐 REST (HTTP)                                                      │
-│  ├── POST /api/v1/auth/signup    → Autenticación                     │
-│  ├── POST /api/v1/auth/signin    → Login JWT                         │
-│  ├── GET  /api/productos         → Listar productos                  │
-│  ├── POST /api/productos         → Crear producto                    │
-│  └── ... (más endpoints REST)                                     │
-│                                                                      │
-│  🔌 WebSockets Existentes (tiempo real)                              │
-│  ├── WS /ws/v1/productos         → Broadcast a todos                 │
-│  └── WS /ws/v1/pedidos?token=JWT → Notificaciones por usuario        │
-│                                                                      │
-│  📊 GraphQL                                                          │
-│  ├── POST /graphql               → Queries y Mutations (HTTP)        │
-│  └── WS   /graphql               → Subscriptions (WebSocket) ⬅️     │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Comparación de Endpoints
-
-| Endpoint | Protocolo | Uso | Estado |
-|----------|-----------|-----|--------|
-| `/api/productos` | HTTP | REST CRUD | ✅ Implementado |
-| `/ws/v1/productos` | WebSocket | Notificaciones broadcast | ✅ Implementado |
-| `/graphql` (HTTP) | HTTP | Queries + Mutations | ✅ Implementado |
-| `/graphql` (WS) | WebSocket | Subscriptions | ❌ No implementado |
-
-### ¿Por qué no hay solape?
-
-Los endpoints usan **rutas diferentes** y **protocolos diferentes**, por lo que cada request va a su propio handler:
-
-```mermaid
-flowchart TD
-    subgraph "Clientes"
-        A["Cliente REST"]
-        B["Cliente WebSocket API"]
-        C["Cliente GraphQL"]
-    end
-    
-    subgraph "Endpoints diferentes"
-        A -->|"POST /api/productos"| R[REST Handler]
-        B -->|"WS /ws/v1/productos"| W[WebSocket Handler]
-        C -->|"POST /graphql"| G[GraphQL HTTP]
-        C -->|"WS /graphql"| S[GraphQL Subscr.]
-    end
-    
-    subgraph "Handlers independientes"
-        R -->|"CRUD"| DB[(PostgreSQL)]
-        W -->|"Broadcast"| Wclients["Clientes WS"]
-        G -->|"Queries"| DB
-        S -->|"Events"| E[EventBus]
-    end
-```
-
-### Cómo Funciona GraphQL con WebSocket
-
-El endpoint `/graphql` puede operar de dos formas:
-
-**1. Query/Mutation (HTTP):**
-```http
-POST /graphql HTTP/1.1
-Content-Type: application/json
-
-{"query": "{ productos { id nombre } }"}
-```
-Respuesta inmediata con JSON.
-
-**2. Subscription (WebSocket Upgrade):**
-```
-WS /graphql
-Authorization: Bearer <JWT_TOKEN>
-
-# El cliente envía:
-{"type": "subscribe", "payload": {"query": "subscription { onProductoCreado { id nombre } }"}}
-
-# El servidor responde cuando ocurre el evento:
-{"type": "next", "payload": {"data": {"onProductoCreado": {"id": 1, "nombre": "Producto"}}}}
-```
-
-### Diferencias Clave con WebSockets Actuales
-
-| Aspecto | WebSockets API (`/ws/v1/...`) | GraphQL Subscriptions (`/graphql`) |
-|---------|------------------------------|-----------------------------------|
-| **Ruta** | `/ws/v1/productos` | `/graphql` (misma ruta, diferente protocolo) |
-| **Mensajes** | JSON personalizado `{type, data}` | Formato GraphQL `{data: {...}}` |
-| **Tipado** | Por convención | Schema define tipos exactos |
-| **Herramientas** | Ninguna (manual) | GraphiQL playground |
-| **Autenticación** | JWT en query string | JWT en header o connection params |
-| **Filtrado** | Por código | Por tipo de subscription |
-
-### Resumen: No Hay Conflicto
-
-- **Rutas diferentes**: `/ws/v1/productos` ≠ `/graphql`
-- **Protocolos diferentes**: WebSocket raw vs GraphQL over WebSocket
-- **Handlers diferentes**: Cada endpoint tiene su propio processor
-- **Pueden coexistir**: La API REST usa HTTP, GraphQL usa HTTP/WS
-
-Si decides implementar GraphQL Subscriptions en el futuro, simplemente añadirás soporte WebSocket al endpoint `/graphql` sin afectar los WebSockets existentes en `/ws/v1/...`.
-
----
-
-## 20.13. Resumen
-
-### Arquitectura GraphQL del Proyecto
-
-```mermaid
-flowchart TD
-    subgraph "Configuración"
-        A1["AddGraphQLServer()"]
-        A2["AddQueryType<TiendaQuery>"]
-        A3["AddType<ProductoType>"]
-    end
-    
-    subgraph "Tipos"
-        B1["ProductoType"]
-        B2["CategoriaType"]
-        B3["Query personalizada"]
-    end
-    
-    subgraph "Atributos"
-        C1["[UseProjection]"]
-        C2["[UsePaging]"]
-        C3["[UseFirstOrDefault]"]
-    end
-    
-    subgraph "Acceso"
-        D1["POST /graphql"]
-        D2["GET /graphiql"]
-    end
-    
-    A1 --> A2 --> A3
-    A3 --> B1 --> B2 --> B3
-    B3 --> C1 --> C2 --> C3
-    C3 --> D1 --> D2
-```
-
-### Operaciones GraphQL
-
-| Operación | Tipo | Implementada | Endpoint |
-|-----------|------|--------------|----------|
-| **Queries** | Lectura | ✅ Sí | `/graphql` |
-| **Mutations** | Escritura | ❌ No | Usa REST |
-| **Subscriptions** | Tiempo real | ❌ No | Usa WebSockets |
-
-### Registro en DI (Program.cs)
+### IEventPublisher
 
 ```csharp
-// Configuración actual (solo queries)
+namespace TiendaApi.Apis.GraphQL.Publishers;
+
+public interface IEventPublisher
+{
+    Task PublishAsync<T>(string topic, T payload);
+}
+```
+
+### Implementación
+
+```csharp
+using HotChocolate.Subscriptions;
+
+namespace TiendaApi.Apis.GraphQL.Publishers;
+
+public class EventPublisher : IEventPublisher
+{
+    private readonly ITopicEventSender _eventSender;
+
+    public EventPublisher(ITopicEventSender eventSender)
+    {
+        _eventSender = eventSender;
+    }
+
+    public async Task PublishAsync<T>(string topic, T payload)
+    {
+        await _eventSender.SendAsync(topic, payload);
+    }
+}
+```
+
+### Integración en el Servicio
+
+```csharp
+public class ProductoService(
+    // ... otros parámetros
+    IEventPublisher eventPublisher
+) : IProductoService
+{
+    public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
+    {
+        // ... lógica de creación
+        
+        return Result.Success<ProductoDto, DomainError>(resultDto)
+            .Tap( dto =>
+            {
+                // Efectos secundarios
+                InvalidarCacheProducto("productos:all");
+                NotificarWebSocketProductoCreado(dto);
+                EnviarEmailProductoCreado(saved);
+                
+                // 🚀 Publicar evento para GraphQL Subscription
+                EventoSuscripcionProductoCreado(dto);
+            });
+    }
+    
+    private void EventoSuscripcionProductoCreado(ProductoDto producto)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent
+                {
+                    ProductoId = producto.Id,
+                    Nombre = producto.Nombre,
+                    Precio = producto.Precio,
+                    Stock = producto.Stock,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription");
+            }
+        });
+    }
+}
+```
+
+### Configuración en GraphQLConfig
+
+```csharp
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<TiendaQuery>()
+    .AddMutationType<ProductoMutation>()
+    .AddSubscriptionType<ProductoSubscription>()
+    .AddInMemorySubscriptions()  // ← Necesario para Pub/Sub
     .AddType<ProductoType>()
-    .AddType<CategoriaType>()
-    .ModifyRequestOptions(opt => 
-        opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
-
-// Endpoint
-app.MapGraphQL();
+    .AddType<CategoriaType>();
 ```
 
-### Siguientes Pasos
+---
 
-Con GraphQL dominado, el siguiente paso es aprender sobre mapeadores y transformación de datos en el documento de Mapeadores.
+## 20.15. Estructura de Carpetas GraphQL
+
+```
+GraphQL/
+├── Queries/
+│   └── TiendaQuery.cs              # Queries de productos y categorías
+│
+├── Mutations/
+│   └── ProductoMutation.cs          # Mutations de productos
+│
+├── Subscriptions/
+│   └── ProductoSubscription.cs      # Suscripciones en tiempo real
+│
+├── Events/
+│   └── ProductoEvent.cs            # Payloads de eventos
+│
+├── Inputs/
+│   ├── CategoriaInput.cs           # Input types de categorías
+│   └── ProductoInput.cs            # Input types de productos
+│
+├── Publishers/
+│   ├── IEventPublisher.cs          # Interfaz del publisher
+│   └── EventPublisher.cs           # Implementación Pub/Sub
+│
+└── Types/
+    ├── CategoriaType.cs            # Tipo GraphQL de categoría
+    └── ProductoType.cs              # Tipo GraphQL de producto
+```
+
+### Responsabilidades por Carpeta
+
+| Carpeta | Responsabilidad | Ejemplo |
+|---------|-----------------|---------|
+| **Queries** | Lectura de datos | `productos { id nombre }` |
+| **Mutations** | Escritura de datos | `createProducto(...)` |
+| **Subscriptions** | Tiempo real | `onProductoCreado { ... }` |
+| **Events** | Formato de eventos | `ProductoCreadoEvent` |
+| **Inputs** | Estructuras de entrada | `CreateProductoInput` |
+| **Publishers** | Pub/Sub mechanism | `IEventPublisher` |
+| **Types** | Tipos GraphQL | `ProductoType` |
+
+---
+
+## 20.16. Patrones Utilizados
+
+### 1. Result Pattern
+
+Todas las operaciones devuelven `Result<T, DomainError>` para manejo tipado de errores.
+
+```csharp
+public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
+{
+    var validation = await ValidateAsync(dto);
+    if (validation.IsFailure)
+        return Result.Failure<ProductoDto, DomainError>(validation.Error);
+    
+    var saved = await repository.SaveAsync(dto.ToEntity());
+    return Result.Success<ProductoDto, DomainError>(saved.ToDto());
+}
+```
+
+### 2. Tap Pattern (Functional Extensions)
+
+Los efectos secundarios se ejecutan con `.Tap()`:
+
+```csharp
+return Result.Success<ProductoDto, DomainError>(resultDto)
+    .Tap(dto =>
+    {
+        InvalidarCacheProducto("productos:all");
+        EventoSuscripcionProductoCreado(dto);
+    });
+```
+
+### 3. Pub/Sub Pattern
+
+Publicación de eventos para tiempo real:
+
+```csharp
+await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent
+{
+    ProductoId = producto.Id,
+    Nombre = producto.Nombre,
+    CreatedAt = DateTime.UtcNow
+});
+```
+
+### 4. Dependency Injection con HotChocolate
+
+HotChocolate resuelve automáticamente dependencias con `[Service]`:
+
+```csharp
+public async Task<Producto?> GetProducto(
+    long id,
+    [Service] IProductoRepository repository)  // ← Inyectado automáticamente
+{
+    return await repository.FindByIdAsync(id);
+}
+```
+
+---
+
+## 20.17. Estado Actual del Proyecto ✅
+
+### Queries Implementadas ✅
+
+| Query | Descripción | Auth |
+|-------|-------------|------|
+| `productos` | Todos los productos | No |
+| `producto(id: Long!)` | Producto por ID | No |
+| `productos(first: Int)` | Productos paginados | No |
+| `categorias` | Todas las categorías | No |
+| `categoria(id: Long!)` | Categoría por ID | No |
+| `categorias(first: Int)` | Categorías paginadas | No |
+
+### Mutations Implementadas ✅
+
+| Mutation | Descripción | Auth |
+|----------|-------------|------|
+| `createProducto(input: CreateProductoInput!)` | Crear producto | ADMIN |
+| `updateProducto(id: Long!, input: UpdateProductoInput!)` | Actualizar producto | ADMIN |
+| `deleteProducto(id: Long!)` | Eliminar producto | ADMIN |
+
+### Subscriptions Implementadas ✅
+
+| Subscription | Descripción | Auth |
+|--------------|-------------|------|
+| `onProductoCreado` | Notificación cuando se crea un producto | JWT |
+| `onProductoActualizado` | Notificación cuando se actualiza | JWT |
+| `onProductoEliminado` | Notificación cuando se elimina | JWT |
+| `onStockBajo` | Notificación de stock bajo umbral | JWT |
+
+### Arquitectura Actual
+
+```mermaid
+flowchart TD
+    subgraph "GraphQL API"
+        Q[Queries<br/>TiendaQuery]
+        M[Mutations<br/>ProductoMutation]
+        S[Subscriptions<br/>ProductoSubscription]
+    end
+    
+    subgraph "Tipos GraphQL"
+        PT[ProductoType]
+        CT[CategoriaType]
+    end
+    
+    subgraph "Event System"
+        E[Events<br/>ProductoEvent]
+        P[Publisher<br/>IEventPublisher]
+    end
+    
+    subgraph "Servicios"
+        PS[ProductoService<br/>(IProductoService)]
+    end
+    
+    Q --> PT
+    Q --> CT
+    M --> PT
+    S --> E
+    E --> P
+    PS --> P
+    PS -->|"Create/Update/Delete"| Repository[(PostgreSQL)]
+    PS -->|"Notify"| WebSockets[WebSocket API]
+    P -->|"Pub/Sub"| S
+    
+    style Q fill:#4CAF50
+    style M fill:#4CAF50
+    style S fill:#4CAF50
+    style PS fill:#2196F3
+    style P fill:#FF9800
+```
+
+---
+
+## 20.18. Resumen Completo
+
+### Arquitectura GraphQL
+
+```mermaid
+flowchart TD
+    subgraph "Cliente GraphQL"
+        HTTP[HTTP Client<br/>POST /graphql]
+        WS[WebSocket Client<br/>WS /graphql]
+    end
+    
+    subgraph "HotChocolate Server"
+        Parser[Parser]
+        Validator[Validator]
+        Executor[Executor]
+    end
+    
+    subgraph "Operations"
+        Q[Queries]
+        M[Mutations]
+        S[Subscriptions]
+    end
+    
+    subgraph "Services Layer"
+        PS[ProductoService]
+        CS[CategoriaService]
+    end
+    
+    subgraph "Data Layer"
+        Repo[Repositories]
+        DB[(PostgreSQL)]
+        Cache[(Redis)]
+    end
+    
+    subgraph "Event System"
+        Pub[Publisher]
+        Bus[EventBus]
+    end
+    
+    HTTP --> Parser
+    WS --> Parser
+    Parser --> Validator
+    Validator --> Executor
+    Executor --> Q
+    Executor --> M
+    Executor --> S
+    Q --> PS
+    M --> PS
+    S --> Pub
+    PS --> Repo
+    Repo --> DB
+    Pub --> Bus
+    Bus --> S
+    
+    style HTTP fill:#4CAF50
+    style WS fill:#FF9800
+    style Q fill:#4CAF50
+    style M fill:#4CAF50
+    style S fill:#FF9800
+```
+
+### Operaciones por Tipo
+
+| Tipo | HTTP | WebSocket | Descripción |
+|------|------|-----------|-------------|
+| **Query** | ✅ POST /graphql | ❌ | Request-Response |
+| **Mutation** | ✅ POST /graphql | ❌ | Request-Response |
+| **Subscription** | ❌ | ✅ WS /graphql | Push en tiempo real |
+
+### Códigos de Error
+
+| Código | Significado | Ejemplo |
+|--------|-------------|---------|
+| `NOT_FOUND` | Recurso no existe | Producto con ID 999 |
+| `VALIDATION` | Datos inválidos | Precio negativo |
+| `CONFLICT` | Conflicto de negocio | Nombre duplicado |
+| `BUSINESS_RULE_VIOLATION` | Regla violada | Categoría con productos |
+
+### Conexión de Suscripciones
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant WS as WebSocket
+    participant HS as HotChocolate
+    participant EB as EventBus
+    participant S as Servicio
+
+    C->>WS: WS /graphql<br/>Authorization: Bearer token
+    WS->>HS: Upgrade connection
+    
+    C->>WS: {"type":"subscribe", "payload":{"query":"..."}}
+    WS->>HS: Register subscription
+    
+    Note over HS,EB: Esperando eventos...
+    
+    S->>EB: Publish("onProductoCreado", event)
+    EB->>HS: Notify subscribers
+    HS->>WS: {"type":"next", "data":{"onProductoCreado":{...}}}
+    WS->>C: Push data
+```
 
 ### Recursos Adicionales
 
-- HotChocolate: https://chillicream.com/docs/hotchocolate
+- HotChocolate Docs: https://chillicream.com/docs/hotchocolate
 - GraphQL.org: https://graphql.org
-- GraphQL SDL: https://www.apollographql.com/docs/graphql-tools/schema-definitions
-- HotChocolate Subscriptions: https://chillicream.com/docs/hotchocolate/v13/server/subscriptions
+- GraphQL Subscriptions: https://www.apollographql.com/docs/react/data/subscriptions
+- CSharpFunctionalExtensions: https://github.com/vkohade/CSharpFunctionalExtensions
