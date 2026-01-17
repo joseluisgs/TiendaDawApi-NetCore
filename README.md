@@ -1,36 +1,29 @@
 # TiendaDawApi 🛒
 
-![banner](./images/banner.png)
+![banner](./banner.png)
 
 [![.NET](https://img.shields.io/badge/.NET-10-blue)](https://dotnet.microsoft.com/)
 [![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-10-blue)](https://dotnet.microsoft.com/en-us/apps/aspnet)
 [![C#](https://img.shields.io/badge/C%23-14-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![EF Core](https://img.shields.io/badge/EF%20Core-10-blue)](https://docs.microsoft.com/en-us/ef/core/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-7.0-green)](https://www.mongodb.com/)
-[![Redis](https://img.shields.io/badge/Redis-red)](https://redis.io/)
-[![JWT](https://img.shields.io/badge/JWT-Auth-black)](https://jwt.io/)
-[![GraphQL](https://img.shields.io/badge/GraphQL-pink)](https://graphql.org/)
-[![SignalR](https://img.shields.io/badge/SignalR-orange)](https://dotnet.microsoft.com/en-us/apps/aspnet/signalr)
-[![Docker](https://img.shields.io/badge/Docker-blue)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**API REST empresarial desarrollada con .NET 10, ASP.NET Core y C# 14.**
 
-Una API de comercio electrónico con arquitectura profesional, múltiples bases de datos, cacheo con Redis, GraphQL, WebSockets y versionado de API.
+**Ejemplo educativo de uso de APIS para el desarrollo de servicios backend en .NET 10 ASP.NET Core y C# 14.**
+
+Una API de comercio electrónico con arquitectura profesional, múltiples bases de datos, cacheo con Redis, GraphQL, WebSockets para notificaciones y versionado de API.
 
 ## 🎯 Descripción
 
-TiendaDawApi es una API REST completa desarrollada con las mejores prácticas de .NET 10:
+TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET Core y C# 14 que implementa una API RESTful completa para una tienda en línea, además usa GraphQL y WebSockets. El proyecto está diseñado con una arquitectura en capas utilizando múltiples bases de datos (PostgreSQL, MongoDB y Redis) para diferentes propósitos educativos para la formación de Desarrollo Web en Entornos Servidor (DAW).
 
 - 🏪 **Gestión de Productos y Categorías**: CRUD completo con validaciones
 - 🛒 **Sistema de Pedidos**: Documentos embebidos con MongoDB
 - 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER)
 - 💾 **Multi-Base de Datos**: PostgreSQL (relacional), MongoDB (documentos), Redis (caché)
 - 🔐 **Seguridad**: JWT, validaciones FluentValidation, manejo global de excepciones
-- 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets con SignalR
-- 📊 **Versionado de API**: Control de versiones por URL
-- 🧪 **Testing**: 262 tests con NUnit, Moq y 50% coverage
+- 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets para notificaciones.
+- 📊 **Versionado de API**: Control de versiones por URL.
+- 🧪 **Testing**: Tests con NUnit, Moq, Tescontainers y Newman.
 
 ## 📑 Tabla de Contenidos
 
@@ -41,27 +34,58 @@ TiendaDawApi es una API REST completa desarrollada con las mejores prácticas de
   - [🚀 Tecnologías](#-tecnologías)
   - [🏃‍♂️ Inicio Rápido](#️-inicio-rápido)
     - [Desarrollo Local](#desarrollo-local)
-    - [Docker](#docker)
+    - [Desarrollo en Producción con Docker](#desarrollo-en-producción-con-docker)
   - [🧪 Estrategia de Testing](#-estrategia-de-testing)
+    - [Ejecución de Tests](#ejecución-de-tests)
+    - [Tests E2E con Newman (Postman)](#tests-e2e-con-newman-postman)
   - [📚 Documentación](#-documentación)
-  - [⚒️ Diagrama de Entidades](#️-diagrama-de-entidades)
+    - [Fundamentos y Configuración](#fundamentos-y-configuración)
+    - [API y Controllers](#api-y-controllers)
+    - [Persistencia de Datos](#persistencia-de-datos)
+    - [Lógica de Negocio](#lógica-de-negocio)
+    - [Seguridad](#seguridad)
+    - [APIs Avanzadas](#apis-avanzadas)
+    - [Documentación](#documentación)
+    - [Servicios Externos](#servicios-externos)
+    - [Testing y Calidad](#testing-y-calidad)
+    - [DevOps y Producción](#devops-y-producción)
+    - [Arquitectura](#arquitectura)
+  - [⚒️ Diagrama de Clases del Dominio](#️-diagrama-de-clases-del-dominio)
+  - [🗄️ Entidades por Base de Datos](#️-entidades-por-base-de-datos)
+    - [🐘 PostgreSQL (Datos Maestros)](#-postgresql-datos-maestros)
+    - [🍃 MongoDB (Pedidos - Documentos Embebidos)](#-mongodb-pedidos---documentos-embebidos)
   - [📂 Estructura del Proyecto](#-estructura-del-proyecto)
-  - [🏗️ Arquitectura](#️-arquitectura)
-    - [Railway Oriented Programming (ROP)](#railway-oriented-programming-rop)
-    - [Multi-Database Strategy](#multi-database-strategy)
+    - [Descripción de Carpetas Principales](#descripción-de-carpetas-principales)
+  - [🏗️ Arquitectura Híbrida Onion-Like](#️-arquitectura-híbrida-onion-like)
+    - [Principios Fundamentales](#principios-fundamentales)
+    - [Capas de la Arquitectura](#capas-de-la-arquitectura)
+    - [Estructura de Dependencias](#estructura-de-dependencias)
+      - [Ventajas de Esta Arquitectura](#ventajas-de-esta-arquitectura)
+    - [🛤️ Railway Oriented Programming (ROP)](#️-railway-oriented-programming-rop)
+      - [Conceptos Fundamentales](#conceptos-fundamentales)
+      - [Anatomía del Patrón (Two-Track Model)](#anatomía-del-patrón-two-track-model)
+      - [Beneficios de ROP](#beneficios-de-rop)
+      - [Ejemplos de Uso](#ejemplos-de-uso)
+      - [Comparación: ROP vs Try-Catch](#comparación-rop-vs-try-catch)
+  - [🗄️ Estrategia Multi-Base de Datos](#️-estrategia-multi-base-de-datos)
   - [🔐 Seguridad](#-seguridad)
   - [📡 Endpoints](#-endpoints)
-    - [Auth](#auth)
+    - [Auth (versionado)](#auth-versionado)
     - [Categorías](#categorías)
     - [Productos](#productos)
-    - [Pedidos](#pedidos)
-    - [Users](#users)
+    - [Pedidos (Administrador)](#pedidos-administrador)
+    - [Pedidos (Usuario - Mis Pedidos)](#pedidos-usuario---mis-pedidos)
+    - [Usuarios (Administrador)](#usuarios-administrador)
+    - [Usuarios (Perfil Propio)](#usuarios-perfil-propio)
+    - [Storage (Archivos)](#storage-archivos)
+    - [WebSockets (Tiempo Real)](#websockets-tiempo-real)
     - [GraphQL](#graphql)
   - [👥 Usuarios Demo](#-usuarios-demo)
   - [📝 Licencia](#-licencia)
   - [👨‍💻 Autor](#-autor)
     - [Contacto](#contacto)
   - [Licencia de uso](#licencia-de-uso)
+
 
 ## ✨ Características
 
@@ -70,7 +94,7 @@ TiendaDawApi es una API REST completa desarrollada con las mejores prácticas de
 - 📧 **Notificaciones por Email**: Envío asíncrono con MailKit
 - 📊 **Cacheo con Redis**: Patrón Cache-Aside para mejorar rendimiento
 - 📡 **GraphQL**: Consultas flexibles con HotChocolate
-- 🔌 **WebSockets**: Notificaciones en tiempo real con SignalR
+- 🔌 **WebSockets**: Notificaciones en tiempo real personalizadas por roles
 - 🗄️ **Multi-Database**: PostgreSQL + MongoDB + Redis
 - 📈 **Versionado de API**: Control de versiones por URL
 - ✅ **Validaciones**: FluentValidation declarativo
@@ -90,11 +114,15 @@ TiendaDawApi es una API REST completa desarrollada con las mejores prácticas de
 - **JWT** - Autenticación basada en tokens
 - **FluentValidation** - Validaciones declarativas
 - **AutoMapper** - Mapeo de objetos
-- **SignalR** - WebSockets en tiempo real
+- **Websockets/SignalR** - WebSockets en tiempo real
 - **HotChocolate** - GraphQL server
 - **NUnit + Moq** - Testing unitario
+- **CSharpFunctionalExtensions** - Railway Oriented Programming
+- **Testcontainers** - Tests con bases de datos reales
+- **Swashbuckle/Swagger** - Documentación automática de API
 - **Coverlet** - Métricas de coverage
 - **Docker** - Containerización
+- **Newman** - Pruebas de API
 
 ## 🏃‍♂️ Inicio Rápido
 
@@ -108,31 +136,70 @@ cd TiendaDawApi-NetCore
 # Restaurar dependencias
 dotnet restore
 
-# Iniciar servicios (PostgreSQL, Redis, MongoDB)
-docker-compose up -d
+# Iniciar servicios (PostgreSQL y MongoDB, la cache con Redis es opcional, usa en memoria si no está)
+docker-compose -f docker-compose.local.yml up -d
 
-# Ejecutar aplicación
+# Ejecutar aplicación en modo desarrollo
 dotnet run --project TiendaApi.Apis
 
 # O con Hot Reload
 dotnet watch run --project TiendaApi.Apis
+
+# Acceso a la API
+open http://localhost:5000
+
+# Acceso a Swagger UI
+open http://localhost:5000/swagger
 ```
 
-### Docker
+### Desarrollo en Producción con Docker
+
+Para desplegar en producción, usa `docker-compose.prod.yml` que incluye todos los servicios con configuración optimizada:
 
 ```bash
-# Construir imagen
-docker-compose build
+# Crear archivo .env con tus variables de producción
+cp .env.example .env
+# Edita .env con tus contraseñas y configuración segura
 
-# Ejecutar todos los servicios
-docker-compose up -d
+# Construir y ejecutar todos los servicios
+docker-compose -f docker-compose.prod.yml up -d --build
 
-# Ver logs
-docker-compose logs -f api
+# Ver logs de la API
+docker-compose -f docker-compose.prod.yml logs -f api
+
+# Ver logs de todos los servicios
+docker-compose -f docker-compose.prod.yml logs -f
 
 # Detener servicios
-docker-compose down
+docker-compose -f docker-compose.prod.yml down
+
+# Detener y eliminar volúmenes
+docker-compose -f docker-compose.prod.yml down -v
 ```
+
+**Servicios incluidos:**
+- **PostgreSQL** (puerto 5432): Base de datos relacional
+- **MongoDB** (puerto 27017): Base de datos de documentos
+- **Redis** (puerto 6379): Cache distribuido
+- **API** (puerto 5000): Tu aplicación containerizada
+
+**Variables de entorno requeridas en `.env`:**
+```env
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=tu_contraseña_segura
+POSTGRES_DB=tienda
+MONGO_ROOT_USER=admin
+MONGO_ROOT_PASSWORD=tu_contraseña_segura
+MONGO_DB=tienda
+JWT_KEY=TuClaveJWTMuyLargaYSegura123456789
+JWT_ISSUER=TiendaApi
+JWT_AUDIENCE=TiendaApi
+SMTP_USERNAME=tu@email.com
+SMTP_PASSWORD=tu_contraseña_app
+API_PORT=5000
+```
+
+
 
 ## 🧪 Estrategia de Testing
 
@@ -140,12 +207,13 @@ TiendaDawApi implementa una pirámide de pruebas profesional:
 
 - **Unit Tests**: Validación de servicios, repositorios y lógica de negocio
 - **Integration Tests**: Tests con bases de datos reales
-- **Coverage**: 50% de cobertura de código con Coverlet
+- **Coverage**: Indicadores de cobertura con Coverlet
+- **Newman**: Pruebas de API automatizadas
 
 ### Ejecución de Tests
 
 ```bash
-# Ejecutar todos los tests
+# Ejecutar todos los tests unitarios
 dotnet test
 
 # Con coverage
@@ -155,44 +223,101 @@ dotnet test --collect:"XPlat Code Coverage"
 open coverage/index.html
 ```
 
+### Tests E2E con Newman (Postman)
+
+Pruebas end-to-end de la API usando Newman:
+
+```bash
+# Instalar Newman globalmente
+npm install -g newman
+
+# Ejecutar colección con entorno
+newman run TiendaApi.Postman/TiendaApi.NetCore.postman_collection.json \
+  -e TiendaApi.Postman/TiendaApi.NetCore.postman_environment.json
+
+# Con reporte HTML
+newman run TiendaApi.Postman/TiendaApi.NetCore.postman_collection.json \
+  -e TiendaApi.Postman/TiendaApi.NetCore.postman_environment.json \
+  -r html --reporter-html-export newman-report.html
+```
+
+**Colección disponible en:** `TiendaApi.Postman/TiendaApi.NetCore.postman_collection.json`
+
 ## 📚 Documentación
 
 Para una comprensión profunda de la arquitectura y las tecnologías utilizadas, consulta los documentos en la carpeta [`doc/`](doc/):
 
-### Fundamentos y Arquitectura
-| # | Documento | Descripción |
-|---|-----------|-------------|
-| 01 | [Arquitectura y Pipeline DI](doc/01-arquitectura-pipeline-di.md) | Patrón pipeline de middlewares e inyección de dependencias |
-| 02 | [Constructores Primarios C# 14](doc/02-constructores-primarios.md) | Nueva sintaxis de constructores en C# 14 |
-| 03 | [Entity Framework Core con PostgreSQL](doc/03-ef-postgresql.md) | Configuración y uso de EF Core con PostgreSQL |
-| 04 | [MongoDB EF Core Provider](doc/04-mongodb-ef-core.md) | Integración de MongoDB con EF Core 8.3 |
+### Fundamentos y Configuración
+| #   | Documento                                                          | Descripción                    |
+| --- | ------------------------------------------------------------------ | ------------------------------ |
+| 01  | [Configuración proyectos .NET](doc/01-configuracion-proyectos.md)  | IDEs, estructura, herramientas |
+| 02  | [Arquitectura Pipeline HTTP](doc/02-arquitectura-pipeline-http.md) | Middlewares, Request/Response  |
+| 03  | [Inyección Dependencias](doc/03-inyeccion-dependencias.md)         | DI Containers, Scopes          |
 
-### Técnicas y Patrones
-| # | Documento | Descripción |
-|---|-----------|-------------|
-| 05 | [Redis Caching](doc/05-redis-caching.md) | Patrón Cache-Aside con Redis |
-| 06 | [Patrón Result](doc/06-patron-result.md) | Railway Oriented Programming con CSharpFunctionalExtensions |
-| 07 | [AutoMapper](doc/07-automapper.md) | Mapping entre entidades y DTOs |
-| 08 | [FluentValidation](doc/08-fluent-validation.md) | Validación de modelos declarativa |
+### API y Controllers
+| #   | Documento                                             | Descripción                     |
+| --- | ----------------------------------------------------- | ------------------------------- |
+| 04  | [Controladores REST](doc/04-controladores-rest.md)    | Routing, Model Binding, Actions |
+| 05  | [Validación en Cascada](doc/05-validacion-cascada.md) | Data Annotations, validaciones  |
+| 18  | [REST Best Practices](doc/18-rest-best-practices.md)  | Convenciones REST               |
 
-### Seguridad y APIs
-| # | Documento | Descripción |
-|---|-----------|-------------|
-| 09 | [JWT Authentication](doc/09-jwt-authentication.md) | Autenticación y autorización con JWT |
-| 10 | [Global Exception Handling](doc/10-global-exception-handling.md) | Manejo centralizado de excepciones |
-| 11 | [GraphQL](doc/11-graphql.md) | Endpoint GraphQL con HotChocolate |
-| 12 | [WebSockets y SignalR](doc/12-websockets-signalr.md) | Comunicaciones en tiempo real |
-| 13 | [API Versioning](doc/13-api-versioning.md) | Versionado de API |
+### Persistencia de Datos
+| #   | Documento                                          | Descripción          |
+| --- | -------------------------------------------------- | -------------------- |
+| 07  | [Repository Pattern](doc/07-repository-pattern.md) | Abstracción de datos |
+| 09  | [EF Core PostgreSQL](doc/09-ef-core-postgresql.md) | ORM relacional       |
+| 10  | [MongoDB](doc/10-mongodb.md)                       | Base de documentos   |
+| 11  | [Redis Caching](doc/11-redis-caching.md)           | Cache-Aside pattern  |
 
-### Testing y DevOps
-| # | Documento | Descripción |
-|---|-----------|-------------|
-| 14 | [Unit Testing con NUnit y Moq](doc/14-unit-testing-nunit-mock.md) | Pruebas unitarias y mocking |
-| 15 | [Code Coverage con Coverlet](doc/15-code-coverage-coverlet.md) | Métricas de cobertura de código |
-| 16 | [Docker Operations](doc/16-docker-operations.md) | Contenedores y Docker Compose |
-| 17 | [Formato .slnx](doc/17-slnx-solution-format.md) | Migración al nuevo formato de solución |
+### Lógica de Negocio
+| #   | Documento                                                  | Descripción                       |
+| --- | ---------------------------------------------------------- | --------------------------------- |
+| 06  | [Patrón Result](doc/06-patron-result.md)                   | Railway Oriented Programming      |
+| 08  | [Servicios de Negocio](doc/08-servicios-negocio.md)        | Capa de servicios                 |
+| 15  | [Pedidos y Transacciones](doc/15-pedidos-transacciones.md) | Transacciones optimista/pesimista |
+| 22  | [Mapeadores](doc/22-mapeadores.md)                         | AutoMapper vs extensiones         |
 
-## ⚒️ Diagrama de Entidades
+### Seguridad
+| #   | Documento                                          | Descripción     |
+| --- | -------------------------------------------------- | --------------- |
+| 12  | [JWT Authentication](doc/12-jwt-authentication.md) | Tokens, Claims  |
+| 13  | [Autorización Roles](doc/13-autorizacion-roles.md) | Policies, Roles |
+
+### APIs Avanzadas
+| #   | Documento                          | Descripción  |
+| --- | ---------------------------------- | ------------ |
+| 14  | [WebSockets](doc/14-websockets.md) | Tiempo real  |
+| 20  | [GraphQL](doc/20-graphql.md)       | HotChocolate |
+
+### Documentación
+| #   | Documento                                        | Descripción         |
+| --- | ------------------------------------------------ | ------------------- |
+| 19  | [Documentación API](doc/19-documentacion-api.md) | Swagger, Versionado |
+
+### Servicios Externos
+| #   | Documento                                  | Descripción          |
+| --- | ------------------------------------------ | -------------------- |
+| 16  | [File Storage](doc/16-file-storage.md)     | Almacenamiento local |
+| 17  | [Email Services](doc/17-email-services.md) | MailKit              |
+
+### Testing y Calidad
+| #   | Documento                    | Descripción            |
+| --- | ---------------------------- | ---------------------- |
+| 21  | [Testing](doc/21-testing.md) | Unit, Integración, E2E |
+
+### DevOps y Producción
+| #   | Documento                              | Descripción             |
+| --- | -------------------------------------- | ----------------------- |
+| 23  | [Docker CI/CD](doc/23-docker-ci-cd.md) | Contenedores, pipelines |
+| 24  | [Logging](doc/24-logging.md)           | Serilog, trazabilidad   |
+| 25  | [Optimización](doc/25-optimizacion.md) | Rendimiento             |
+
+### Arquitectura
+| #   | Documento                                          | Descripción       |
+| --- | -------------------------------------------------- | ----------------- |
+| 26  | [Clean Architecture](doc/26-clean-architecture.md) | Capas, estructura |
+
+## ⚒️ Diagrama de Clases del Dominio
 
 ```mermaid
 classDiagram
@@ -201,16 +326,17 @@ classDiagram
   %% ENUMS
   class UserRole {
     <<enumeration>>
-    ADMIN
-    USER
+    +ADMIN = "ADMIN"
+    +USER = "USER"
   }
 
-  class OrderStatus {
+  class PedidoEstado {
     <<enumeration>>
-    PENDIENTE
-    ENVIADO
-    ENTREGADO
-    CANCELADO
+    +PENDIENTE = "PENDIENTE"
+    +PROCESANDO = "PROCESANDO"
+    +ENVIADO = "ENVIADO"
+    +ENTREGADO = "ENTREGADO"
+    +CANCELADO = "CANCELADO"
   }
 
   %% CLASES PRINCIPALES - PostgreSQL
@@ -219,19 +345,23 @@ classDiagram
     +string Username
     +string Email
     +string PasswordHash
+    +string? Avatar
     +string Role
+    +bool IsDeleted
     +DateTime CreatedAt
     +DateTime UpdatedAt
-    +bool IsDeleted
+    +IsLocalAvatar()
+    +HasDefaultAvatar()
+    +GetAvatarUrl()
   }
 
   class Categoria {
     +long Id
     +string Nombre
+    +bool IsDeleted
     +DateTime CreatedAt
     +DateTime UpdatedAt
-    +bool IsDeleted
-    +List~Producto~ Productos
+    +ICollection~Producto~ Productos
   }
 
   class Producto {
@@ -242,19 +372,26 @@ classDiagram
     +int Stock
     +string? Imagen
     +long CategoriaId
+    +bool IsDeleted
     +DateTime CreatedAt
     +DateTime UpdatedAt
-    +bool IsDeleted
+    +byte[] RowVersion
     +Categoria Categoria
+    +IsLocalImage()
+    +HasDefaultImage()
+    +GetImagenUrl()
   }
 
-  %% CLASES PRINCIPALES - MongoDB
+  %% CLASES EMBEBIDAS - MongoDB
   class Pedido {
     +ObjectId Id
     +long UserId
+    +Destinatario Destinatario
     +List~PedidoItem~ Items
     +decimal Total
-    +string Estado
+    +PedidoEstado Estado
+    +string DireccionEnvio
+    +bool IsDeleted
     +DateTime CreatedAt
     +DateTime UpdatedAt
   }
@@ -267,232 +404,698 @@ classDiagram
     +decimal Subtotal
   }
 
-  %% RELACIONES - PostgreSQL
-  User "1" --> "*" Pedido : realiza
-  Categoria "1" --> "*" Producto : tiene
-  Producto --> Categoria : pertenece
+  class Destinatario {
+    +string NombreCompleto
+    +string Email
+    +string Telefono
+    +Direccion Direccion
+  }
 
-  %% RELACIONES - MongoDB (Embebido)
-  Pedido "1" --> "*" PedidoItem : items embebidos
-  PedidoItem --> Producto : referencia
+  class Direccion {
+    +string Calle
+    +string Numero
+    +string Ciudad
+    +string Provincia
+    +string Pais
+    +string CodigoPostal
+  }
+
+  %% RELACIONES - Enums y Composiciones
+  User ..> UserRole : "usa rol"
+  Pedido ..> PedidoEstado : "usa estado"
+  User "1" --> "*" Pedido : "referencia"
+  Categoria "1" --> "*" Producto : "tiene"
+  Producto "*" --> "1" Categoria : "pertenece"
+  Pedido "1" *-- "1" Destinatario : "compone"
+  Pedido "1" *-- "*" PedidoItem : "compone items"
+  Destinatario "1" *-- "1" Direccion : "compone"
+  PedidoItem "*" --> "1" Producto : "referencia"
 ```
+
+## 🗄️ Entidades por Base de Datos
+
+### 🐘 PostgreSQL (Datos Maestros)
+```mermaid
+erDiagram
+    USER ||--o{ PEDIDO : "referencia"
+    CATEGORIA ||--o{ PRODUCTO : "tiene"
+    
+    USER {
+        bigint Id PK
+        string Username
+        string Email
+        string PasswordHash
+        string Avatar
+        string Role
+        bool IsDeleted
+    }
+    
+    CATEGORIA {
+        bigint Id PK
+        string Nombre
+        bool IsDeleted
+    }
+    
+    PRODUCTO {
+        bigint Id PK
+        string Nombre
+        string Descripcion
+        decimal Precio
+        int Stock
+        bigint CategoriaId FK
+        bool IsDeleted
+    }
+```
+
+### 🍃 MongoDB (Pedidos - Documentos Embebidos)
+```mermaid
+erDiagram
+    USER ||--o{ PEDIDO : "referencia"
+    PEDIDO }o--o{ PEDIDO_ITEM : "items"
+    PEDIDO }o--|| DESTINATARIO : "destinatario"
+    DESTINATARIO }o--|| DIRECCION : "direccion"
+    PEDIDO_ITEM }o--|| PRODUCTO : "referencia"
+    
+    PEDIDO {
+        objectId Id PK
+        long UserId FK
+        object Destinatario
+        array Items
+        decimal Total
+        string Estado
+    }
+    
+    PEDIDO_ITEM {
+        long ProductoId FK
+        string NombreProducto
+        int Cantidad
+        decimal Precio
+        decimal Subtotal
+    }
+    
+    DESTINATARIO {
+        string NombreCompleto
+        string Email
+        string Telefono
+        object Direccion
+    }
+    
+    DIRECCION {
+        string Calle
+        string Ciudad
+        string Provincia
+        string Pais
+        string CodigoPostal
+    }
+```
+
+**Resumen:**
+| Base de Datos    | Entidades                                   | Tipo                 |
+| ---------------- | ------------------------------------------- | -------------------- |
+| **🐘 PostgreSQL** | User, Categoria, Producto                   | Relacional (FK)      |
+| **🍃 MongoDB**    | Pedido, PedidoItem, Destinatario, Direccion | Documentos embebidos |
+
+
 
 ## 📂 Estructura del Proyecto
 
 ```
 TiendaDawApi-NetCore/
-├── TiendaApi.slnx                # Solución global de .NET (formato moderno)
+├── TiendaApi.slnx                    # Solución global de .NET (formato moderno)
+├── docker-compose.yml                # Orquestación por defecto
+├── docker-compose.local.yml          # Desarrollo local (PostgreSQL, MongoDB)
+├── docker-compose.prod.yml           # Producción (con API containerizada)
+├── .env.example                      # Variables de entorno de ejemplo
 │
-├── TiendaApi.Apis/               # Proyecto Principal (ASP.NET Core 10)
-│   ├── Program.cs                # Configuración de Pipeline, DI y Middlewares
-│   ├── Controllers/              # Controladores REST
-│   │   ├── AuthController.cs     # Autenticación JWT
-│   │   ├── CategoriasController.cs
-│   │   ├── ProductosController.cs
-│   │   ├── PedidosController.cs
-│   │   ├── UsersController.cs
-│   │   └── GraphQLController.cs
-│   ├── Services/                 # Lógica de negocio
-│   │   ├── Auth/
-│   │   ├── Categorias/
-│   │   ├── Productos/
-│   │   └── Users/
-│   ├── Repositories/             # Acceso a datos
-│   │   ├── CategoriaRepository.cs
-│   │   ├── ProductoRepository.cs
-│   │   ├── UserRepository.cs
-│   │   └── PedidosRepository.cs
-│   ├── Models/                   # Entidades de dominio
-│   │   ├── Entities/
-│   │   └── DTOs/
-│   ├── Data/                     # Configuración de bases de datos
-│   │   └── TiendaDbContext.cs
-│   ├── Common/                   # Tipos compartidos
-│   │   ├── Result.cs
-│   │   └── AppError.cs
-│   ├── Middleware/               # Middlewares personalizados
-│   │   └── GlobalExceptionHandler.cs
-│   ├── Mappings/                 # Perfiles AutoMapper
-│   ├── Validators/               # Validadores FluentValidation
-│   ├── WebSockets/               # Handlers SignalR
-│   ├── GraphQL/                  # Schema y tipos GraphQL
-│   └── Dockerfile                # Multi-stage build
+├── TiendaApi.Apis/                   # Proyecto Principal (ASP.NET Core 10)
+│   ├── Program.cs                    # Configuración de Pipeline, DI y Middlewares
+│   ├── Controllers/                  # Controladores REST (Auth, Categorias, Productos, Pedidos, Users)
+│   ├── Services/                     # Lógica de negocio (Auth, Categorias, Productos, Users)
+│   ├── Repositories/                 # Acceso a datos (Categoria, Producto, User, Pedidos)
+│   ├── Models/                       # Modelos de dominio (User, Producto, Categoria, Pedido)
+│   ├── Dtos/                         # Data Transfer Objects (Request/Response)
+│   ├── Data/                         # DbContext y configuración de bases de datos
+│   ├── Mappers/                      # Mapeadores (Modelos <-> DTO)
+│   ├── Validators/                   # Validadores FluentValidation
+│   ├── Middleware/                   # Manejo global de excepciones
+│   ├── GraphQL/                      # Schema y tipos HotChocolate
+│   ├── WebSockets/                   # Handlers para notificaciones en tiempo real
+│   ├── Helpers/                      # Utilidades y extensiones
+│   ├── Errors/                       # Errores personalizados de dominio
+│   ├── Exceptions/                   # Excepciones personalizadas
+│   ├── Properties/                   # Configuración de lanzamiento
+│   ├── wwwroot/                      # Archivos estáticos (uploads, imágenes)
+│   ├── appsettings.json              # Configuración general
+│   ├── appsettings.Development.json  # Desarrollo (conexiones locales)
+│   ├── appsettings.Production.json   # Producción (variables sensibles)
+│   └── Dockerfile                    # Multi-stage build para producción
 │
-├── TiendaApi.Tests/              # Pruebas Unitarias
-│   ├── Controllers/
-│   ├── Services/
-│   └── Repositories/
+├── TiendaApi.Tests/                  # Pruebas Unitarias y de Integración
+│   ├── Unit/                         # Tests unitarios (Services, Controllers, Repositories)
+│   ├── Integration/                  # Tests de integración con bases de datos reales
+│   └── coverage/                     # Reporte de cobertura de código
 │
-├── docker-compose.yml            # Orquestación de servicios
-├── doc/                          # Documentación técnica (17 archivos)
-└── README.md                     # Este archivo
+├── TiendaApi.Postman/                # Colección Postman para tests E2E
+│   ├── TiendaApi.NetCore.postman_collection.json
+│   ├── TiendaApi.NetCore.postman_environment.json
+│   └── README.md
+│
+├── doc/                              # Documentación técnica (26 documentos)
+└── README.md                         # Este archivo
 ```
 
-## 🏗️ Arquitectura
+### Descripción de Carpetas Principales
 
-El proyecto sigue una arquitectura en capas profesional con soporte multi-base de datos:
+| Carpeta          | Propósito              | Contenido                                                                                     |
+| ---------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| **Controllers**  | Entry points HTTP      | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
+| **Services**     | Lógica de negocio      | AuthService, CategoriaService, ProductoService, UserService                                   |
+| **Repositories** | Abstracción de datos   | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
+| **Models**       | Modelos de dominio     | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
+| **Dtos**         | Transferencia de datos | Request/Response para API                                                                     |
+| **Mappers**      | Modelos <-> DTO        | AutoMapper y Funciones de Extensión                                                           |
+| **Validators**   | Validación de entrada  | FluentValidation rules                                                                        |
+| **Middleware**   | Manejo de errores      | GlobalExceptionHandler                                                                        |
+| **GraphQL**      | Queries y Mutations    | Schema HotChocolate                                                                           |
+| **WebSockets**   | Tiempo real            | Notificaciones por rol                                                                        |
+
+## 🏗️ Arquitectura Híbrida Onion-Like
+
+El proyecto implementa una **arquitectura híbrida inspirada en Onion Architecture**, combinando los mejores principios de arquitectura limpia con las ventajas de ASP.NET Core. Esta hibridación sitúa los **modelos de dominio en el centro** (core), permitiendo un diseño desacoplado, testeable y mantenible.
+
+### Principios Fundamentales
+
+| Principio                           | Implementación                                                        |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| **Core en el centro**               | Modelos (User, Producto, Categoria, Pedido) sin dependencias externas |
+| **Inversión de dependencias**       | Interfaces en core, implementaciones en infraestructura               |
+| **Separación de responsabilidades** | Controllers → Services → Repositories → Data                          |
+| **Cross-cutting concerns**          | AutoMapper, FluentValidation, Result Pattern como utilidades          |
+| **Multi-Database**                  | PostgreSQL (datos maestros), MongoDB (documentos), Redis (cache)      |
+
+### Capas de la Arquitectura
 
 ```mermaid
-graph TD
-    subgraph Cliente["Clientes"]
-        REST["REST API"]
-        GQL["GraphQL"]
-        WS["WebSocket"]
+graph TB
+    subgraph "🌍 External Layer - Entry Points"
+        REST[REST API<br/>HTTP Controllers]
+        GQL[GraphQL<br/>HotChocolate]
+        WS[WebSocket<br/>SignalR]
+        SMTP[SMTP<br/>MailKit]
+        FS[File System<br/>wwwroot/uploads]
     end
 
-    subgraph CapaPresentacion["Capa de Presentación (ASP.NET Core 10)"]
-        CTRL["Controllers"]
-        MID["Middleware Pipeline"]
-        AUTH["JWT Auth"]
-        EXC["Exception Handler"]
+    subgraph "🎯 Application Layer - API"
+        subgraph "Controllers & Filters"
+            CTRL[Controllers<br/>Auth, Categorias,<br/>Productos, Pedidos, Users]
+            FILT[Filters<br/>Auth, Validation,<br/>Exception]
+        end
+        subgraph "Middleware Pipeline"
+            MID[Middleware<br/>Pipeline]
+            AUTH[JWT Auth<br/>Bearer Token]
+            EXC[Exception<br/>Handler]
+            CORS[CORS]
+            LOG[Logging]
+        end
     end
 
-    subgraph CapaNegocio["Capa de Negocio (Servicios)"]
-        SVC["Business Services"]
-        ROP["Railway Oriented Programming (Result)"]
-        VAL["FluentValidation"]
-        MAP["AutoMapper"]
+    subgraph "🔷 Core Layer - Domain & Application"
+        subgraph "Application Services"
+            SVC[Services<br/>Auth, Categoria,<br/>Producto, User]
+        end
+        subgraph "Cross-Cutting Concerns"
+            ROP[Result~T,E&gt;<br/>Railway Oriented<br/>Programming]
+            VAL[FluentValidation<br/>Declarative Rules]
+            MAP[AutoMapper<br/>Entity ↔ DTO]
+            ERR[Domain Errors<br/>Custom Errors]
+        end
+        subgraph "Domain Entities"
+            DOM[Entities<br/>User, Producto,<br/>Categoria, Pedido]
+            DTO[DTOs<br/>Request/Response]
+            ENU[Enums<br/>UserRole, PedidoEstado]
+        end
     end
 
-    subgraph CapaAccesoDatos["Capa de Datos (Persistencia)"]
-        EF["EF Core"]
-        REP["Repositories"]
+    subgraph "🔴 Infrastructure Layer - Data & External"
+        subgraph "Data Access"
+            REPO[Repositories<br/>Abstraction Layer]
+            EF[EF Core<br/>PostgreSQL Provider]
+            MONGO[MongoDB<br/>Driver]
+            REDIS[Redis<br/>Cache Client]
+        end
+        subgraph "Security"
+            JWT[JWT Tokens<br/>Generation & Validation]
+            BCRYPT[BCrypt<br/>Password Hashing]
+            CLAIMS[Claims & Roles<br/>Authorization]
+        end
+        subgraph "External Services"
+            SMTP_EXT[SMTP Service<br/>MailKit]
+            FS_EXT[File Storage<br/>Static Files]
+        end
     end
 
-    subgraph BasesDatos["Bases de Datos"]
-        PG[(PostgreSQL)]
-        MONGO[(MongoDB)]
-        REDIS[(Redis)]
+    subgraph "💾 Data Stores"
+        PG[(🐘 PostgreSQL<br/>Users, Categorias,<br/>Productos)]
+        MONGO_DB[(🍃 MongoDB<br/>Pedidos, Items<br/>Embebidos)]
+        REDIS_DB[(🔴 Redis<br/>Cache, Sessions)]
     end
 
+    %% Flujo de datos
     REST --> CTRL
     GQL --> CTRL
     WS --> CTRL
-
-    CTRL --> MID
+    
+    CTRL --> FILT
+    FILT --> MID
     MID --> AUTH
     MID --> EXC
-
+    MID --> CORS
+    MID --> LOG
+    
     CTRL --> SVC
     SVC --> ROP
     SVC --> VAL
     SVC --> MAP
-
-    SVC --> REP
-    REP --> EF
-
+    
+    SVC --> DTO
+    SVC --> DOM
+    
+    DTO --> MAP
+    MAP --> DOM
+    
+    SVC --> REPO
+    REPO --> EF
+    REPO --> MONGO
+    REPO --> REDIS
+    
     EF --> PG
-    EF --> MONGO
-    SVC --> REDIS
+    MONGO --> MONGO_DB
+    REDIS --> REDIS_DB
+    
+    CTRL --> JWT
+    CTRL --> BCRYPT
+    CTRL --> CLAIMS
+    
+    SVC --> SMTP_EXT
+    SVC --> FS_EXT
 
     %% Estilos
-    style ROP fill:#f9f,stroke:#333,stroke-width:2px
+    style REST fill:#3498db,color:#fff
+    style GQL fill:#e74c3c,color:#fff
+    style WS fill:#9b59b6,color:#fff
+    style CTRL fill:#2980b9,color:#fff
+    style SVC fill:#27ae60,color:#fff
+    style DOM fill:#f39c12,color:#000
+    style REPO fill:#16a085,color:#fff
     style PG fill:#3366cc,color:#fff
-    style MONGO fill:#47a248,color:#fff
-    style REDIS fill:#dc382d,color:#fff
+    style MONGO_DB fill:#47a248,color:#fff
+    style REDIS_DB fill:#dc382d,color:#fff
+    style ROP fill:#e91e63,color:#fff
+    style VAL fill:#00bcd4,color:#fff
+    style MAP fill:#ff9800,color:#000
 ```
 
-### Railway Oriented Programming (ROP)
+### Estructura de Dependencias
 
-El proyecto implementa ROP usando `CSharpFunctionalExtensions`:
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                         🌍 EXTERNAL LAYER                              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │   REST   │  │  GraphQL │  │ WebSocket│  │   SMTP   │  │  Files   │  │
+│  │  (HTTP)  │  │ (HotChoc)│  │ (SignalR)│  │ (MailKit)│  │ (Static) │  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
+└───────┼─────────────┼─────────────┼─────────────┼─────────────┼────────┘
+        │             │             │             │             │
+        ▼             ▼             ▼             ▼             ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     🎯 APPLICATION LAYER (API)                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                     CONTROLLERS                                 │    │
+│  │  AuthController │ CategoriasController │ ProductosController    │    │
+│  │  PedidosController │ UsersController │ GraphQLController        │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│        │                    │                    │                      │
+│        ▼                    ▼                    ▼                      │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                     FILTERS & MIDDLEWARE                        │    │
+│  │  [Authorization] │ [Model Validation] │ [Exception Handler]     │    │
+│  │  [JWT Bearer] │ [CORS] │ [Rate Limiting] │ [Global Error]       │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                           │ Depende de: Core                            │
+└───────────────────────────┼─────────────────────────────────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    🔷 CORE LAYER (DOMAIN + APPLICATION)                 │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                   🏢 APPLICATION SERVICES                       │    │
+│  │  AuthService │ CategoriaService │ ProductoService │ UserService │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│         │                    │                    │                     │
+│         ▼                    ▼                    ▼                     │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │              🛠️ CROSS-CUTTING CONCERNS                          │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │    │
+│  │  │AutoMapper   │  │FluentValid. │  │ Result~T,E> │              │    │
+│  │  │(Mapping)    │  │(Validation) │  │  (ROP)      │              │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘              │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                           │ No depende de infraestructura               │
+│                           │ Depende de: Abstractions                    │
+└───────────────────────────┼─────────────────────────────────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                   🟡 ABSTRACTIONS LAYER (CONTRACTS)                     │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                    💾 REPOSITORY INTERFACES                     │    │
+│  │   IUserRepository │ IProductoRepository │ ICategoriaRepository  │    │
+│  │                   │ IPedidosRepository                          │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+│                           │ Sin implementación                          │
+└───────────────────────────┼─────────────────────────────────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    🔴 INFRASTRUCTURE LAYER                              │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                    💾 DATA ACCESS (IMPLEMENTATIONS)             │    │
+│  │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐     │    │
+│  │  │ REPOSITORIES   │  │    EF CORE     │  │   MONGODB      │     │    │
+│  │  │  (Impl)        │  │   (PostgreSQL) │  │   DRIVER       │     │    │
+│  │  └────────────────┘  └────────────────┘  └────────────────┘     │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│         │                    │                    │                     │
+│         ▼                    ▼                    ▼                     │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                 🗄️ DATA STORES (EXTERNAL)                       │    │
+│  │   🐘 PostgreSQL    │    🍃 MongoDB    │    🔴 Redis Cache      │    │
+│  │   (Users, Cats,    │    (Pedidos,     │    (Sessions,           │    │
+│  │    Products)       │     Items)       │     Cache)              │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                 🔐 SECURITY & IDENTITY                          │    │
+│  │  JWT Tokens │ BCrypt Hash │ Claims │ Roles │ Policies           │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                 📧 EXTERNAL SERVICES                            │    │
+│  │  SMTP (MailKit) │ File System (wwwroot) │ HTTP Clients          │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+│                           │ Implementa abstracciones                    │
+└───────────────────────────┴─────────────────────────────────────────────┘
+```
 
+**Flujo de Dependencias:**
+```
+External → Application → Core → Abstractions → Infrastructure → External
+                           ↓
+                      (No depende de capas externas)
+```
+
+#### Ventajas de Esta Arquitectura
+
+| Ventaja            | Descripción                                |
+| ------------------ | ------------------------------------------ |
+| **Testabilidad**   | Core sin dependencias → fácil mocking      |
+| **Mantenibilidad** | Cambios en infraestructura no afectan core |
+| **Flexibilidad**   | Multi-database strategy implementado       |
+| **Escalabilidad**  | Separación clara de responsabilidades      |
+| **Seguridad**      | JWT, BCrypt, Claims bien encapsulados      |
+
+### 🛤️ Railway Oriented Programming (ROP)
+
+El proyecto implementa **Railway Oriented Programming (ROP)** usando la librería `CSharpFunctionalExtensions`, un patrón funcional que permite encadenar operaciones de forma segura, manejando errores sin necesidad de exceptions ni try-catch.
+
+#### Conceptos Fundamentales
+
+| Concepto    | Descripción                                         | Ejemplo                              |
+| ----------- | --------------------------------------------------- | ------------------------------------ |
+| **Result**  | Wrapper que encapsula éxito o fallo                 | `Result<T, TError>`                  |
+| **Success** | Camino happy path con valor                         | `Result.Success(value)`              |
+| **Failure** | Camino de error con mensaje                         | `Result.Failure(error)`              |
+| **Bind**    | Encadena operaciones que retornan Result            | `result.Bind()`                      |
+| **Map**     | Transforma el valor en éxito                        | `result.Map(value => newValue)`      |
+| **Match**   | Maneja ambos casos (éxito y fallo)                  | `result.Match(onSuccess, onFailure)` |
+| **Ensure**  | Valida condiciones, retorna Failure si no se cumple | `result.Ensure(condition, error)`    |
+
+#### Anatomía del Patrón (Two-Track Model)
+
+```mermaid
+flowchart TB
+    subgraph ROP["RAILWAY ORIENTED PROGRAMMING"]
+        INP["INPUT<br/>(Happy Path)"]
+        R1["RAIL 1<br/>(SUCCESS)"]
+        OUT_H["OUTPUT<br/>(Happy)"]
+        R2["RAIL 2<br/>(FAILURE)"]
+        OUT_E["OUTPUT<br/>(Error)"]
+        
+        INP --> R1
+        R1 --> OUT_H
+        R1 -.->|"SWITCH (error)"| R2
+        R2 --> OUT_E
+    end
+
+    style INP fill:#27ae60,color:#fff
+    style R1 fill:#27ae60,color:#fff
+    style OUT_H fill:#27ae60,color:#fff
+    style R2 fill:#e74c3c,color:#fff
+    style OUT_E fill:#e74c3c,color:#fff
+```
+
+#### Beneficios de ROP
+
+| Beneficio          | Descripción                                  |
+| ------------------ | -------------------------------------------- |
+| **Sin Exceptions** | Los errores son valores, no excepciones      |
+| **Composabilidad** | Encadenar operaciones de forma segura        |
+| **Tipado Seguro**  | El tipo de error está en la firma del método |
+| **Legibilidad**    | Flujo lineal en lugar de if-else anidados    |
+| **Testeabilidad**  | Facilidad para testear casos de error        |
+
+#### Ejemplos de Uso
+**Encadenamiento con Bind:**
 ```csharp
-public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
+public async Task<Result<PedidoDto, DomainError>> CreatePedidoAsync(PedidoRequestDto dto)
 {
-    var validation = Validate(dto);
-    if (validation.IsFailure)
-        return Result.Failure<ProductoDto, DomainError>(validation.Error);
-
-    var producto = await _repository.SaveAsync(mapped);
-    return Result.Success<ProductoDto, DomainError>(_mapper.Map<ProductoDto>(producto));
+    return await Validate(dto)
+        .Bind(ValidateStockAsync)      // Si falla, retorna inmediatamente
+        .Bind(CreatePedidoAsync)       // Continúa si todo ok
+        .Map(p => _mapper.Map<PedidoDto>(p));  // Transforma resultado
 }
 ```
 
-### Multi-Database Strategy
+**Manejo de Errores Personalizados:**
+```csharp
+public static class DomainErrors
+{
+    public static readonly DomainError NotFound = 
+        new("ENTITY_NOT_FOUND", "Entidad no encontrada");
+    
+    public static readonly DomainError InvalidState = 
+        new("INVALID_STATE", "Estado inválido para la operación");
+    
+    public static readonly DomainError ConcurrencyConflict = 
+        new("CONCURRENCY_CONFLICT", "Conflicto de concurrencia");
+}
 
-| Base de Datos | Uso | Tecnologías |
-|---------------|-----|-------------|
-| **PostgreSQL** | Usuarios, Categorías, Productos | EF Core, SQLite-like syntax |
-| **MongoDB** | Pedidos con items embebidos | EF Core MongoDB Provider |
-| **Redis** | Cacheo de consultas | StackExchange.Redis |
+// Uso
+return Result.Failure<ProductoDto, DomainError>(DomainErrors.NotFound);
+```
+
+**Patrón en Controllers:**
+```csharp
+[HttpPost]
+public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
+{
+    var result = await _productoService.CreateAsync(dto);
+    
+    return result.Match(
+        onSuccess: producto => CreatedAtAction(
+            nameof(GetById), 
+            new { id = producto.Id }, 
+            producto),
+        onFailure: error => BadRequest(new { error.Code, error.Message })
+    );
+}
+```
+
+#### Comparación: ROP vs Try-Catch
+
+| Aspecto         | Try-Catch tradicional     | ROP                     |
+| --------------- | ------------------------- | ----------------------- |
+| **Errores**     | Exceptions                | Valores                 |
+| **Flujo**       | Saltos inesperados        | Lineal                  |
+| **Tipado**      | Exception genérica        | Error tipado específico |
+| **Composición** | Difícil                   | natural con Bind/Map    |
+| **Performance** | Costoso (stack unwinding) | Barato (simple wrapper) |
+
+## 🗄️ Estrategia Multi-Base de Datos
+
+
+| Base de Datos    | Uso                                  | Entidades                                   | Tecnologías                                         |
+| ---------------- | ------------------------------------ | ------------------------------------------- | --------------------------------------------------- |
+| **🐘 PostgreSQL** | Datos maestros relacionales          | User, Categoria, Producto                   | EF Core SQL (System.ComponentModel.DataAnnotations) |
+| **🍃 MongoDB**    | Documentos transaccionales embebidos | Pedido, PedidoItem, Destinatario, Direccion | EF Core MongoDB (Con documentos anidados)           |
+| **🔴 Redis**      | Cache distribuido                    | Sessions, consultas frecuentes              | StackExchange.Redis (Cache-Aside)                   |
+
+**Patrón de datos:**
+- PostgreSQL: Entidades normalizadas con Foreign Keys
+- MongoDB: Documentos embebidos para mantener historial de precios (los items del pedido no cambian si el producto cambia)
 
 ## 🔐 Seguridad
 
-- ✅ **JWT Authentication**: Tokens Bearer con expiración
-- ✅ **Role-Based Authorization**: ADMIN y USER roles
+- ✅ **JWT Authentication**: Tokens Bearer con expiración configurable
+- ✅ **Role-Based Authorization**: ADMIN y USER roles con políticas granulares
 - ✅ **FluentValidation**: Validaciones declarativas en DTOs
-- ✅ **Global Exception Handler**: Respuestas de error consistentes
-- ✅ **Password Hashing**: BCrypt con Identity
-- ✅ **Soft Delete**: Eliminación lógica en entidades
-- ✅ **Input Sanitization**: Protección contra inyecciones
+- ✅ **Global Exception Handler**: Respuestas de error consistentes y centralizadas
+- ✅ **Password Hashing**: BCrypt con salt aleatorio y work factor configurable
+- ✅ **Soft Delete**: Eliminación lógica en entidades (IsDeleted)
+- ✅ **JWT Claims**: Información de usuario (sub, email, role, jti) en tokens
+- ✅ **CORS Policy**: Configuración de orígenes permitidos
+- ✅ **WebSocket Security**: Autenticación mediante query string token
+- ✅ **Concurrency Control**: RowVersion para control de concurrencia optimista
+- ✅ **EF Core Parameterization**: Protección contra SQL Injection via LINQ
 
 ## 📡 Endpoints
 
 ### Auth (versionado)
 
-| Endpoint | Método | Auth | Descripción |
-|----------|--------|------|-------------|
-| `/api/v1/auth/signup` | POST | No | Registrar usuario |
-| `/api/v1/auth/signin` | POST | No | Iniciar sesión |
+| Endpoint              | Método | Auth | Descripción                  |
+| --------------------- | ------ | ---- | ---------------------------- |
+| `/api/v1/auth/signup` | POST   | No   | Registrar nuevo usuario      |
+| `/api/v1/auth/signin` | POST   | No   | Iniciar sesión y obtener JWT |
 
 ### Categorías
 
-| Endpoint | Método | Auth | Descripción |
-|----------|--------|------|-------------|
-| `/api/categorias` | GET | Yes | Obtener todas |
-| `/api/categorias/{id}` | GET | Yes | Obtener por ID |
-| `/api/categorias` | POST | ADMIN | Crear categoría |
-| `/api/categorias/{id}` | PUT | ADMIN | Actualizar categoría |
-| `/api/categorias/{id}` | DELETE | ADMIN | Eliminar categoría |
+| Endpoint               | Método | Auth  | Descripción                       |
+| ---------------------- | ------ | ----- | --------------------------------- |
+| `/api/categorias`      | GET    | No    | Obtener todas (paginado, filtros) |
+| `/api/categorias/{id}` | GET    | No    | Obtener por ID                    |
+| `/api/categorias`      | POST   | ADMIN | Crear categoría                   |
+| `/api/categorias/{id}` | PUT    | ADMIN | Actualizar categoría              |
+| `/api/categorias/{id}` | DELETE | ADMIN | Eliminar categoría                |
 
 ### Productos
 
-| Endpoint | Método | Auth | Descripción |
-|----------|--------|------|-------------|
-| `/api/productos` | GET | No | Obtener todos |
-| `/api/productos/{id}` | GET | No | Obtener por ID |
-| `/api/productos/categoria/{categoriaId}` | GET | No | Por categoría |
-| `/api/productos` | POST | USER | Crear producto |
-| `/api/productos/{id}` | PUT | USER | Actualizar producto |
-| `/api/productos/{id}` | DELETE | USER | Eliminar producto |
+| Endpoint                                 | Método | Auth  | Descripción                       |
+| ---------------------------------------- | ------ | ----- | --------------------------------- |
+| `/api/productos`                         | GET    | No    | Obtener todos (paginado, filtros) |
+| `/api/productos/{id}`                    | GET    | No    | Obtener por ID                    |
+| `/api/productos/categoria/{categoriaId}` | GET    | No    | Productos por categoría           |
+| `/api/productos`                         | POST   | ADMIN | Crear producto                    |
+| `/api/productos/{id}`                    | PUT    | ADMIN | Actualizar producto               |
+| `/api/productos/{id}`                    | DELETE | ADMIN | Eliminar producto                 |
+| `/api/productos/{id}/imagen`             | PATCH  | ADMIN | Actualizar imagen                 |
+| `/api/productos/{id}`                    | PATCH  | ADMIN | Actualizar parcialmente           |
 
-### Pedidos
+### Pedidos (Administrador)
 
-| Endpoint | Método | Auth | Descripción |
-|----------|--------|------|-------------|
-| `/api/pedidos/me` | GET | Yes | Mis pedidos |
-| `/api/pedidos/{id}` | GET | Yes | Obtener por ID |
-| `/api/pedidos` | POST | Yes | Crear pedido |
-| `/api/pedidos/{id}/estado` | PUT | ADMIN | Actualizar estado |
+| Endpoint                   | Método | Auth  | Descripción              |
+| -------------------------- | ------ | ----- | ------------------------ |
+| `/api/pedidos`             | GET    | ADMIN | Obtener todos            |
+| `/api/pedidos/paged`       | GET    | ADMIN | Obtener todos (paginado) |
+| `/api/pedidos/{id}`        | GET    | ADMIN | Obtener por ID           |
+| `/api/pedidos`             | PUT    | ADMIN | Actualizar pedido        |
+| `/api/pedidos/{id}`        | DELETE | ADMIN | Eliminar pedido          |
+| `/api/pedidos/{id}/estado` | PUT    | ADMIN | Actualizar estado        |
+
+### Pedidos (Usuario - Mis Pedidos)
+
+| Endpoint                | Método | Auth | Descripción                  |
+| ----------------------- | ------ | ---- | ---------------------------- |
+| `/api/pedidos/me`       | GET    | USER | Mis pedidos                  |
+| `/api/pedidos/me/paged` | GET    | USER | Mis pedidos (paginado)       |
+| `/api/pedidos/me/{id}`  | GET    | USER | Obtener pedido propio por ID |
+| `/api/pedidos/me`       | POST   | USER | Crear nuevo pedido           |
+| `/api/pedidos/me/{id}`  | PUT    | USER | Actualizar pedido propio     |
+| `/api/pedidos/me/{id}`  | DELETE | USER | Cancelar pedido propio       |
+
+### Usuarios (Administrador)
+
+| Endpoint                 | Método | Auth  | Descripción                       |
+| ------------------------ | ------ | ----- | --------------------------------- |
+| `/api/users`             | GET    | ADMIN | Obtener todos (paginado, filtros) |
+| `/api/users/{id}`        | GET    | ADMIN | Obtener por ID                    |
+| `/api/users`             | POST   | ADMIN | Crear usuario                     |
+| `/api/users/{id}`        | PUT    | ADMIN | Actualizar usuario                |
+| `/api/users/{id}`        | DELETE | ADMIN | Eliminar usuario                  |
+| `/api/users/{id}/avatar` | PATCH  | USER* | Actualizar avatar                 |
+
+### Usuarios (Perfil Propio)
+
+| Endpoint                | Método | Auth | Descripción          |
+| ----------------------- | ------ | ---- | -------------------- |
+| `/api/users/me/profile` | GET    | USER | Obtener mi perfil    |
+| `/api/users/me/profile` | PUT    | USER | Actualizar mi perfil |
+| `/api/users/me/profile` | DELETE | USER | Eliminar mi cuenta   |
+
+### Storage (Archivos)
+
+| Endpoint            | Método | Auth | Descripción                |
+| ------------------- | ------ | ---- | -------------------------- |
+| `/storage/{**path}` | GET    | No   | Obtener archivo (imágenes) |
+
+### WebSockets (Tiempo Real)
+
+| Endpoint                            | Auth | Descripción                             | Eventos                                              |
+| ----------------------------------- | ---- | --------------------------------------- | ---------------------------------------------------- |
+| `ws://host/ws/v1/productos`         | No   | Notificaciones de productos (broadcast) | PRODUCTO_CREATED, PRODUCTO_UPDATED, PRODUCTO_DELETED |
+| `ws://host/ws/v1/pedidos?token=JWT` | JWT  | Notificaciones de pedidos (por rol)     | PEDIDO_CREATED, PEDIDO_ESTADO_UPDATED                |
+
+**WebSocket Productos:** Broadcast a todos los clientes conectados (sin autenticación).
+
+**WebSocket Pedidos:** 
+- USER: Solo recibe notificaciones de SUS pedidos
+- ADMIN: Recibe notificaciones de TODOS los pedidos
+- Requiere JWT token como query string: `?token=JWT_TOKEN`
 
 ### GraphQL
 
-| Endpoint | Método | Descripción |
-|----------|--------|-------------|
-| `/graphql` | POST | Endpoint GraphQL |
-| `/graphiql` | GET | Playground GraphQL |
+| Endpoint    | Método | Descripción        |
+| ----------- | ------ | ------------------ |
+| `/graphql`  | POST   | Endpoint GraphQL   |
+| `/graphiql` | GET    | Playground GraphQL |
+
+**Queries disponibles:**
 
 ```graphql
-query {
-  productos {
-    id
-    nombre
-    precio
-    categoriaNombre
-  }
-  categorias {
-    id
-    nombre
-  }
-}
+# Productos
+productos                    # Todos los productos
+producto(id: Long!)          # Producto por ID
+productos(first: Int, after: String) # Productos paginados
+
+# Categorías
+categorias                   # Todas las categorías
+categoria(id: Long!)         # Categoría por ID
+categorias(first: Int, after: String) # Categorías paginadas
+```
+
+**Mutations disponibles:**
+
+```graphql
+# Productos (requiere autenticación ADMIN)
+createProducto(input: ProductoInput!): Producto
+updateProducto(id: Long!, input: ProductoInput!): Producto
+deleteProducto(id: Long!): Boolean
+
+# Categorías (requiere autenticación ADMIN)
+createCategoria(input: CategoriaInput!): Categoria
+updateCategoria(id: Long!, input: CategoriaInput!): Categoria
+deleteCategoria(id: Long!): Boolean
 ```
 
 ## 👥 Usuarios Demo
 
-| Usuario | Email | Password | Rol |
-|---------|-------|----------|-----|
-| Admin | admin@tienda.com | Admin123 | ADMIN |
-| User | user@tienda.com | User123 | USER |
+| Usuario | Email              | Password | Rol   |
+| ------- | ------------------ | -------- | ----- |
+| admin   | admin@tienda.com   | admin    | ADMIN |
+| userdaw | userdaw@tienda.com | userdaw  | USER  |
+
+**Nota:** Las contraseñas son las mismas que los usernames para facilitar las pruebas.
 
 ## 📝 Licencia
 
