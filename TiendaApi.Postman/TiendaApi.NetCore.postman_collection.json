@@ -3294,324 +3294,6 @@
 						"description": "GraphQL: Obtiene categoría por ID (público)"
 					},
 					"response": []
-				},
-				{
-					"name": "MUTATION - Crear categoría (Admin)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"GraphQL CreateCategoria - Status 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"GraphQL CreateCategoria - Returns created categoria\", function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data.createCategoria.id).to.be.a('number');",
-									"    pm.expect(jsonData.data.createCategoria.nombre).to.equal('GraphQL Test Category');",
-									"});",
-									"",
-									"// Guardar ID para siguientes tests",
-									"if (pm.response.code === 200 && !jsonData.errors) {",
-									"    const jsonData = pm.response.json();",
-									"    pm.collectionVariables.set(\"graphqlCategoriaId\", jsonData.data.createCategoria.id.toString());",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"query\": \"mutation($input: CreateCategoriaInput!) { createCategoria(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"GraphQL Test Category\"}}}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/graphql",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"graphql"
-							]
-						},
-						"description": "GraphQL: Crea categoría (requiere token ADMIN)"
-					},
-					"response": []
-				},
-				{
-					"name": "MUTATION - Crear categoría (sin auth)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"GraphQL CreateCategoria NoAuth - Returns error\", function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.errors).to.be.an('array');",
-									"    pm.expect(jsonData.errors[0].message).to.include('Unauthorized');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"query\": \"mutation($input: CreateCategoriaInput!) { createCategoria(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"Test\"}}}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/graphql",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"graphql"
-							]
-						},
-						"description": "GraphQL: Crear categoría sin token debe fallar"
-					},
-					"response": []
-				},
-				{
-					"name": "MUTATION - Crear categoría (rol USER)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"GraphQL CreateCategoria Forbidden - Returns error\", function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.errors).to.be.an('array');",
-									"    pm.expect(jsonData.errors[0].message).to.include('forbidden');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{userToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"query\": \"mutation($input: CreateCategoriaInput!) { createCategoria(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"Test User\"}}}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/graphql",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"graphql"
-							]
-						},
-						"description": "GraphQL: Crear categoría con rol USER debe fallar"
-					},
-					"response": []
-				},
-				{
-					"name": "MUTATION - Crear categoría (nombre duplicado)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"GraphQL CreateCategoria Duplicate - Returns error\", function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.errors).to.be.an('array');",
-									"    pm.expect(jsonData.errors[0].message).to.include('CONFLICT');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"query\": \"mutation($input: CreateCategoriaInput!) { createCategoria(input: $input) { id nombre } }\", \"variables\": {\"input\": {\"nombre\": \"GraphQL Test Category\"}}}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/graphql",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"graphql"
-							]
-						},
-						"description": "GraphQL: Crear categoría con nombre duplicado debe fallar"
-					},
-					"response": []
-				},
-				{
-					"name": "MUTATION - Actualizar categoría (Admin)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"GraphQL UpdateCategoria - Status 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"GraphQL UpdateCategoria - Returns updated categoria\", function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data.updateCategoria.nombre).to.equal('GraphQL Test Updated');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"query\": \"mutation($id: Long!, $input: UpdateCategoriaInput!) { updateCategoria(id: $id, input: $input) { id nombre } }\", \"variables\": {\"id\": {{graphqlCategoriaId}}, \"input\": {\"nombre\": \"GraphQL Test Updated\"}}}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/graphql",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"graphql"
-							]
-						},
-						"description": "GraphQL: Actualiza categoría (requiere token ADMIN)"
-					},
-					"response": []
-				},
-				{
-					"name": "MUTATION - Eliminar categoría (Admin)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"GraphQL DeleteCategoria - Status 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"GraphQL DeleteCategoria - Returns true\", function () {",
-									"    const jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data.deleteCategoria).to.equal(true);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\"query\": \"mutation($id: Long!) { deleteCategoria(id: $id) }\", \"variables\": {\"id\": {{graphqlCategoriaId}}}}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/graphql",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"graphql"
-							]
-						},
-						"description": "GraphQL: Elimina categoría (requiere token ADMIN)"
-					},
-					"response": []
 				}
 			]
 		},
@@ -4040,7 +3722,236 @@
 			]
 		},
 		{
-			"name": "12 - TEARDOWN",
+			"name": "12 - GRAPHQL SUSCRIPCIONES",
+			"item": [
+				{
+					"name": "SUBSCRIPTION - onProductoCreado",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL Subscription ProductoCreado - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL Subscription ProductoCreado - Has data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('object');",
+									"    pm.expect(jsonData.data.onProductoCreado).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"subscription { onProductoCreado { productoId nombre precio stock createdAt } }\"}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Suscripción a productos creados (requiere token JWT)"
+					},
+					"response": []
+				},
+				{
+					"name": "SUBSCRIPTION - onProductoActualizado",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL Subscription ProductoActualizado - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL Subscription ProductoActualizado - Has data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('object');",
+									"    pm.expect(jsonData.data.onProductoActualizado).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"subscription { onProductoActualizado { productoId nombre precio stock updatedAt } }\"}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Suscripción a productos actualizados (requiere token JWT)"
+					},
+					"response": []
+				},
+				{
+					"name": "SUBSCRIPTION - onProductoEliminado",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL Subscription ProductoEliminado - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL Subscription ProductoEliminado - Has data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('object');",
+									"    pm.expect(jsonData.data.onProductoEliminado).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"subscription { onProductoEliminado { productoId nombre deletedAt } }\"}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Suscripción a productos eliminados (requiere token JWT)"
+					},
+					"response": []
+				},
+				{
+					"name": "SUBSCRIPTION - onStockBajo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GraphQL Subscription StockBajo - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"GraphQL Subscription StockBajo - Has data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('object');",
+									"    pm.expect(jsonData.data.onStockBajo).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"query\": \"subscription { onStockBajo { productoId nombre stockMinimo umbral } }\"}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						},
+						"description": "GraphQL: Suscripción a alertas de stock bajo (requiere token JWT)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "13 - TEARDOWN",
 			"item": [
 				{
 					"name": "Limpiar variables",
