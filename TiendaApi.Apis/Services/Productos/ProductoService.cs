@@ -523,7 +523,10 @@ public class ProductoService(
         if (categoriaExists is null)
         {
             return UnitResult.Failure<DomainError>(
-                ProductoError.CategoriaNoEncontrada(dto.CategoriaId)
+                ProductoError.ValidacionConCampos(new Dictionary<string, string[]>
+                {
+                    { "CategoriaId", new[] { $"La categoría con ID {dto.CategoriaId} no fue encontrada" } }
+                })
             );
         }
 

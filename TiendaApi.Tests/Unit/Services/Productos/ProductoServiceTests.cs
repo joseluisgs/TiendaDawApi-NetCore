@@ -332,7 +332,9 @@ public class ProductoServiceTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<NotFoundError>();
+        result.Error.Should().BeOfType<ValidationError>();
+        var validationError = (ValidationError)result.Error;
+        validationError.ValidationErrors.Should().ContainKey("CategoriaId");
     }
 
     [Test]

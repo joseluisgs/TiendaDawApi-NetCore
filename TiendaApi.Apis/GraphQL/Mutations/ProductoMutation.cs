@@ -26,6 +26,17 @@ namespace TiendaApi.Apis.GraphQL.Mutations;
 /// </remarks>
 public class ProductoMutation
 {
+    private readonly IProductoService _productoService;
+
+    /// <summary>
+    /// Constructor para inyección de dependencias.
+    /// </summary>
+    /// <param name="productoService">Servicio de productos</param>
+    public ProductoMutation(IProductoService productoService)
+    {
+        _productoService = productoService;
+    }
+
     /// <summary>
     /// Crea un nuevo producto en el sistema.
     /// </summary>
