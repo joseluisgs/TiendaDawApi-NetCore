@@ -460,6 +460,12 @@ query {
 
 ## 20.9. Mutations (Crear, Actualizar, Eliminar)
 
+Las mutations son operaciones que modifican datos en el servidor. Son el equivalente a los métodos POST, PUT, PATCH y DELETE en REST. En GraphQL, las mutations se definen en una clase separada llamada `Mutation` y se registran en el esquema.
+
+### Estructura de una Mutation
+
+Una mutation típica sigue el patrón de entrada-salida: recibe un input, procesa la operación, y devuelve un resultado. Esto permite al cliente saber si la operación fue exitosa y obtener los datos actualizados.
+
 ```csharp
 public class Mutation
 {
@@ -479,6 +485,22 @@ public class Mutation
         return await repository.AddAsync(producto);
     }
 
+    public async Task<Producto?> UpdateProducto(
+        long id,
+        UpdateProductoInput input,
+        [Service] IProductoRepository repository)
+    {
+        var producto = await repository.FindByIdAsync(id);
+        if (producto == null) return null;
+
+        producto.Nombre = input.Nombre ?? producto.Nombre;
+        producto.Descripcion = input.Descripcion ?? producto.Descripcion;
+        producto.Precio = input.Precio ?? producto.Precio;
+        producto.Stock = input.Stock ?? producto.Stock;
+
+        return await repository.UpdateAsync(producto);
+    }
+
     public async Task<bool> DeleteProducto(
         long id,
         [Service] IProductoRepository repository)
@@ -486,7 +508,14 @@ public class Mutation
         return await repository.DeleteAsync(id);
     }
 }
+```
 
+### Input Types para Mutations
+
+Los input types son objetos que agrupan los parámetros de una mutation. Usar input types es preferible a pasar muchos parámetros sueltos porque facilita la evolución del esquema sin romper consultas existentes.
+
+```csharp
+// Input para crear producto
 public record CreateProductoInput(
     string Nombre,
     string? Descripcion,
@@ -494,20 +523,286 @@ public record CreateProductoInput(
     int Stock,
     long CategoriaId
 );
+
+// Input para actualizar producto (todos los campos son opcionales)
+public record UpdateProductoInput(
+    string? Nombre,
+    string? Descripcion,
+    decimal? Precio,
+    int? Stock
+);
 ```
 
-### Registrar Mutations
+### Mutation Completa con Validación
+
+Esta implementación muestra cómo integrar validación y manejo de errores en las mutations, siguiendo el patrón de Result que usa el proyecto.
+
+```csharp
+public class ProductoMutation
+{
+    public async Task<Result<Producto, DomainError>> CreateProducto(
+        CreateProductoInput input,
+        [Service] IProductoService productoService)
+    {
+        var dto = new ProductoCreateDto
+        {
+            Nombre = input.Nombre,
+            Descripcion = input.Descripcion,
+            Precio = input.Precio,
+            Stock = input.Stock,
+            CategoriaId = input.CategoriaId
+        };
+
+        return await productoService.CreateAsync(dto);
+    }
+
+    public async Task<Result<bool, DomainError>> DeleteProducto(
+        long id,
+        [Service] IProductoService productoService)
+    {
+        return await productoService.DeleteAsync(id);
+    }
+}
+```
+
+### Registrar Mutations en el Servidor
 
 ```csharp
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<Query>()
-    .AddMutationType<Mutation>()  // Añadir mutations
+    .AddMutationType<ProductoMutation>()  // Añadir mutations
+    .AddType<ProductoType>()
+    .AddType<CategoriaType>();
+```
+
+### Ejemplos de Mutations en GraphQL
+
+**Crear producto:**
+
+```graphql
+mutation CreateProducto($input: CreateProductoInput!) {
+  createProducto(input: $input) {
+    id
+    nombre
+    precio
+    stock
+  }
+}
+```
+
+**Variables:**
+
+```json
+{
+  "input": {
+    "nombre": "Nuevo Producto",
+    "descripcion": "Descripción del producto",
+    "precio": 99.99,
+    "stock": 50,
+    "categoriaId": 1
+  }
+}
+```
+
+**Respuesta:**
+
+```json
+{
+  "data": {
+    "createProducto": {
+      "id": 10,
+      "nombre": "Nuevo Producto",
+      "precio": 99.99,
+      "stock": 50
+    }
+  }
+}
+```
+
+**Actualizar producto:**
+
+```graphql
+mutation UpdateProducto($id: Long!, $input: UpdateProductoInput!) {
+  updateProducto(id: $id, input: $input) {
+    id
+    nombre
+    precio
+    stock
+  }
+}
+```
+
+**Variables:**
+
+```json
+{
+  "id": 1,
+  "input": {
+    "precio": 1199.99,
+    "stock": 15
+  }
+}
+```
+
+**Eliminar producto:**
+
+```graphql
+mutation DeleteProducto($id: Long!) {
+  deleteProducto(id: $id)
+}
+```
+
+**Respuesta:**
+
+```json
+{
+  "data": {
+    "deleteProducto": true
+  }
+}
 ```
 
 ---
 
-## 20.10. Comparación REST vs GraphQL
+## 20.10. Subscriptions (Tiempo Real)
+
+Las subscriptions permiten recibir actualizaciones en tiempo real cuando ocurren eventos en el servidor. Son ideales para notificaciones, dashboards en vivo, y aplicaciones que requieren datos actualizados instantáneamente. HotChocolate usa WebSockets para implementar subscriptions.
+
+### Concepto de Subscriptions
+
+A diferencia de las queries y mutations que siguen el patrón request-response, las subscriptions mantienen una conexión abierta y el servidor envía datos cuando ocurren eventos. El cliente se suscribe a eventos específicos y recibe notificaciones cuando estos ocurren.
+
+```mermaid
+flowchart LR
+    subgraph "Cliente"
+        C1["Suscripción\nWS connection"]
+    end
+    
+    subgraph "Servidor"
+        E1["Evento\nProducto creado"]
+        E2["Notificación\nenviada"]
+    end
+    
+    C1 -->|"WS: Suscrito"| S
+    S -->|"WS: Keep-alive"| C1
+    E1 -->|"Trigger"| E2
+    E2 -->|"WS: Evento"| C1
+```
+
+### Implementación de Suscripciones
+
+```csharp
+public class ProductoSubscription
+{
+    [Subscribe]
+    [Topic]
+    public EventProductoCreated OnProductoCreated(
+        [EventMessage] EventProductoCreated message)
+    {
+        return message;
+    }
+}
+
+public record EventProductoCreated(
+    long ProductoId,
+    string Nombre,
+    decimal Precio,
+    DateTime CreatedAt
+);
+```
+
+### Registro de Suscripciones
+
+```csharp
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>()
+    .AddSubscriptionType<ProductoSubscription>()
+    .AddWebSocketTransport()
+    .AddInMemorySubscriptions();
+```
+
+### Configuración del Endpoint WebSocket
+
+```csharp
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromMinutes(2)
+});
+
+app.MapGraphQL();
+```
+
+### Ejemplo de Suscripción en Cliente
+
+**Suscribirse a nuevos productos:**
+
+```graphql
+subscription OnProductoCreado {
+  onProductoCreated {
+    productoId
+    nombre
+    precio
+    createdAt
+  }
+}
+```
+
+**Respuesta cuando se crea un producto:**
+
+```json
+{
+  "data": {
+    "onProductoCreated": {
+      "productoId": 11,
+      "nombre": "Producto en Tiempo Real",
+      "precio": 49.99,
+      "createdAt": "2026-01-17T10:30:00Z"
+    }
+  }
+}
+```
+
+### Subscription para Notificaciones por Rol
+
+```csharp
+public class PedidoSubscription
+{
+    [Subscribe]
+    [Topic]
+    public EventPedidoEstadoChanged OnPedidoEstadoChanged(
+        [Topic] long usuarioId,
+        [EventMessage] EventPedidoEstadoChanged message)
+    {
+        return message;
+    }
+}
+
+public record EventPedidoEstadoChanged(
+    long PedidoId,
+    long UsuarioId,
+    string NuevoEstado,
+    DateTime UpdatedAt
+);
+```
+
+### Suscripción Filtrada por Usuario
+
+```graphql
+subscription OnPedidoUpdate($userId: Long!) {
+  onPedidoEstadoChanged(usuarioId: $userId) {
+    pedidoId
+    nuevoEstado
+    updatedAt
+  }
+}
+```
+
+---
+
+## 20.11. Comparación REST vs GraphQL
 
 ```mermaid
 flowchart TD
@@ -531,8 +826,8 @@ flowchart TD
 | **Dashboards complejos** | ✅ GraphQL (una sola query) |
 | **API pública** | ✅ GraphQL (flexibilidad para clientes) |
 | **CRUD simple** | ⚪ REST (más simple) |
-| **Arquitectura de microservicios** | ✅ GraphQL ( stitching) |
-| **Streaming en tiempo real** | ⚪ REST + WebSockets |
+| **Arquitectura de microservicios** | ✅ GraphQL (stitching) |
+| **Streaming en tiempo real** | ✅ GraphQL + Subscriptions |
 
 ### Cuándo Usar REST
 
@@ -545,7 +840,66 @@ flowchart TD
 
 ---
 
-## 20.11. Resumen
+## 20.12. Estado Actual del Proyecto
+
+### Queries Implementadas ✅
+
+El proyecto actualmente soporta las siguientes queries de solo lectura:
+
+```graphql
+# Productos
+productos                    # Todos los productos con proyección
+producto(id: Long!)          # Producto por ID
+productos(first: Int)        # Productos paginados
+
+# Categorías
+categorias                   # Todas las categorías
+categoria(id: Long!)         # Categoría por ID
+categorias(first: Int)       # Categorías paginadas
+```
+
+### Mutations NO Implementadas ❌
+
+Las siguientes mutations están documentadas como ejemplo pero NO están implementadas en el proyecto:
+
+```graphql
+# Productos (usa API REST: POST/PUT/DELETE /api/productos)
+createProducto(input: ProductoInput!): Producto
+updateProducto(id: Long!, input: ProductoInput!): Producto
+deleteProducto(id: Long!): Boolean
+
+# Categorías (usa API REST: POST/PUT/DELETE /api/categorias)
+createCategoria(input: CategoriaInput!): Categoria
+updateCategoria(id: Long!, input: CategoriaInput!): Categoria
+deleteCategoria(id: Long!): Boolean
+```
+
+### Subscriptions NO Implementadas ❌
+
+Las subscriptions requieren configuración adicional de WebSockets y no están implementadas:
+
+```graphql
+# Tiempo real (usa WebSockets en /ws/v1/productos)
+subscription OnProductoCreado { ... }
+subscription OnPedidoUpdate { ... }
+```
+
+### Cómo Usar la API REST para Mutations
+
+Dado que GraphQL solo tiene queries implementadas, usa la API REST para operaciones de escritura:
+
+| Operación | Método | Endpoint | Ejemplo |
+|-----------|--------|----------|---------|
+| Crear producto | POST | `/api/productos` | `{"nombre": "Nuevo", "precio": 99.99, ...}` |
+| Actualizar producto | PUT | `/api/productos/{id}` | `{"nombre": "Actualizado", ...}` |
+| Eliminar producto | DELETE | `/api/productos/{id}` | - |
+| Crear categoría | POST | `/api/categorias` | `{"nombre": "Nueva"}` |
+| Actualizar categoría | PUT | `/api/categorias/{id}` | `{"nombre": "Actualizada"}` |
+| Eliminar categoría | DELETE | `/api/categorias/{id}` | - |
+
+---
+
+## 20.13. Resumen
 
 ### Arquitectura GraphQL del Proyecto
 
@@ -580,10 +934,18 @@ flowchart TD
     C3 --> D1 --> D2
 ```
 
+### Operaciones GraphQL
+
+| Operación | Tipo | Implementada | Endpoint |
+|-----------|------|--------------|----------|
+| **Queries** | Lectura | ✅ Sí | `/graphql` |
+| **Mutations** | Escritura | ❌ No | Usa REST |
+| **Subscriptions** | Tiempo real | ❌ No | Usa WebSockets |
+
 ### Registro en DI (Program.cs)
 
 ```csharp
-// Configuración completa
+// Configuración actual (solo queries)
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<TiendaQuery>()
@@ -598,10 +960,11 @@ app.MapGraphQL();
 
 ### Siguientes Pasos
 
-Con GraphQL dominado, el siguiente paso es aprender sobre mapeadores y transformación de datos.
+Con GraphQL dominado, el siguiente paso es aprender sobre mapeadores y transformación de datos en el documento de Mapeadores.
 
 ### Recursos Adicionales
 
 - HotChocolate: https://chillicream.com/docs/hotchocolate
 - GraphQL.org: https://graphql.org
 - GraphQL SDL: https://www.apollographql.com/docs/graphql-tools/schema-definitions
+- HotChocolate Subscriptions: https://chillicream.com/docs/hotchocolate/v13/server/subscriptions
