@@ -127,6 +127,306 @@ builder.Services
 
 ---
 
+## 20.3.1. Autenticación y Autorización con HotChocolate
+
+HotChocolate se integra de forma **transparente** con el sistema de autenticación y autorización de ASP.NET Core (Identity, JWT, Claims). Esto significa que puedes usar los mismos atributos y políticas de autorización que en los controladores REST.
+
+### Conceptos Clave
+
+HotChocolate permite proteger:
+- **Queries**: Controlar quién puede leer datos
+- **Mutations**: Controlar quién puede modificar datos
+- **Fields**: Controlar acceso a campos específicos
+
+### Integración con ASP.NET Core Identity
+
+La integración es transparente porque HotChocolate lee el `HttpContext` y los claims de usuario autenticado:
+
+```csharp
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(...);
+
+builder.Services
+    .AddAuthorization();
+
+// HotChocolate lee automáticamente el contexto de autenticación
+builder.Services
+    .AddGraphQLServer()
+    .AddAuthorization()  // ← Habilita soporte para [Authorize]
+    .AddQueryType<TiendaQuery>();
+```
+
+### Proteger Queries con [Authorize]
+
+```csharp
+public class TiendaQuery
+{
+    // Query pública - cualquiera puede ver productos
+    [UseFirstOrDefault]
+    [UseProjection]
+    public IQueryable<Producto> GetProductos(
+        [Service] IProductoRepository productoRepository)
+    {
+        return productoRepository.FindAllAsNoTracking();
+    }
+
+    // Query protegida - solo usuarios autenticados
+    [Authorize]  // ← Requiere JWT válido
+    [UseFirstOrDefault]
+    public async Task<Producto?> GetProducto(
+        long id,
+        [Service] IProductoRepository productoRepository)
+    {
+        return await productoRepository.FindByIdAsync(id);
+    }
+}
+```
+
+### Proteger Mutations con Roles
+
+```csharp
+public class ProductoMutation
+{
+    // Solo administradores pueden crear productos
+    [Authorize(policy: "AdminOnly")]  // ← Policy que requiere rol Admin
+    public async Task<Result<Producto, DomainError>> CreateProducto(
+        CreateProductoInput input,
+        [Service] IProductoService productoService)
+    {
+        return await productoService.CreateAsync(input.ToDto());
+    }
+
+    // Solo administradores pueden actualizar
+    [Authorize(Roles = "Admin")]
+    public async Task<Result<Producto, DomainError>> UpdateProducto(
+        long id,
+        UpdateProductoInput input,
+        [Service] IProductoService productoService)
+    {
+        return await productoService.UpdateAsync(id, input.ToDto());
+    }
+
+    // Solo administradores pueden eliminar
+    [Authorize(Roles = "Admin")]
+    public async Task<Result<bool, DomainError>> DeleteProducto(
+        long id,
+        [Service] IProductoService productoService)
+    {
+        return await productoService.DeleteAsync(id);
+    }
+}
+```
+
+### Proteger Fields Individuales
+
+```csharp
+public class ProductoType : ObjectType<Producto>
+{
+    protected override void Configure(IObjectTypeDescriptor<Producto> descriptor)
+    {
+        descriptor.Field(p => p.Id)
+            .Type<NonNullType<IdType>>();
+
+        descriptor.Field(p => p.Nombre)
+            .Type<NonNullType<StringType>>();
+
+        // Campo solo visible para administradores
+        descriptor.Field(p => p.CostoProveedor)
+            .Type<DecimalType>()
+            .Authorize(new[] { "Admin" });  // ← Solo Admin puede ver este campo
+
+        descriptor.Field(p => p.Categoria)
+            .Type<CategoriaType>();
+    }
+}
+```
+
+### Proteger Subscriptions
+
+```csharp
+public class ProductoSubscription
+{
+    // Subscription requiere JWT válido
+    [Authorize]
+    [Subscribe]
+    [Topic]
+    public ProductoCreadoEvent OnProductoCreado(
+        [EventMessage] ProductoCreadoEvent message)
+    {
+        return message;
+    }
+
+    // Subscription con política específica
+    [Authorize(policy: "AdminOnly")]
+    [Subscribe]
+    [Topic]
+    public ProductoEliminadoEvent OnProductoEliminado(
+        [EventMessage] ProductoEliminadoEvent message)
+    {
+        return message;
+    }
+}
+```
+
+### Definir Políticas de Autorización
+
+```csharp
+// Program.cs
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") ||
+            ctx.User.HasClaim(c => c.Type == "role" && c.Value == "Admin")));
+
+    options.AddPolicy("UserOrAdmin", policy =>
+        policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("User") ||
+            ctx.User.IsInRole("Admin")));
+    
+    options.AddPolicy("PremiumUser", policy =>
+        policy.RequireAssertion(ctx =>
+            ctx.User.HasClaim("subscription_tier", "premium")));
+});
+```
+
+### Claims Personalizados en GraphQL
+
+Puedes acceder a los claims del usuario desde cualquier resolver:
+
+```csharp
+public class TiendaQuery
+{
+    public async Task<List<Producto>> GetMisProductos(
+        [Service] IProductoRepository productoRepository,
+        [GlobalState("userId")] long userId)  // ← Injectado automáticamente
+    {
+        // Obtener productos del usuario actual
+        return await productoRepository.GetByUserIdAsync(userId);
+    }
+}
+
+// Configurar para inyectar claims
+builder.Services
+    .AddGraphQLServer()
+    .AddAuthorization()
+    .AddHttpRequestInterceptor((ctx, builder) =>
+    {
+        if (ctx.User.Identity?.IsAuthenticated == true)
+        {
+            var userId = ctx.User.FindFirst("sub")?.Value;
+            if (long.TryParse(userId, out var id))
+            {
+                builder.SetGlobalState("userId", id);
+            }
+        }
+        return ValueTask.CompletedTask;
+    });
+```
+
+### Autorización Basada en Claims
+
+```csharp
+public class PedidoMutation
+{
+    // Solo usuarios con claim "can_manage_orders" pueden acceder
+    [Authorize(policy: "ManageOrders")]
+    public async Task<Result<Pedido, DomainError>> CreatePedido(...)
+    {
+        // ...
+    }
+}
+
+// Definir política basada en claim
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ManageOrders", policy =>
+        policy.RequireClaim("can_manage_orders", "true"));
+});
+```
+
+### Tabla de Atributos de Autorización
+
+| Atributo | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `[Authorize]` | Requiere autenticación | Cualquier usuario logueado |
+| `[Authorize(Roles = "Admin")]` | Requiere rol específico | Solo administradores |
+| `[Authorize(Roles = "User,Admin")]` | Requiere uno de los roles | Usuario o administrador |
+| `[Authorize(Policy = "AdminOnly")]` | Requiere política personalizada | Configurada en Program.cs |
+| `[Authorize(Policy = "PremiumUser")]` | Policy con claims personalizados | Usuarios premium |
+
+### Flujo de Autorización en GraphQL
+
+```mermaid
+flowchart TD
+    subgraph "Request"
+        C[Cliente] -->|"POST /graphql<br/>Authorization: Bearer token"| HS
+    end
+    
+    subgraph "HotChocolate"
+        HS[HotChocolate Server] -->|"1. Extraer token"| CTX[HttpContext]
+        CTX -->|"2. Validar JWT"| AUTH[ASP.NET Auth]
+        AUTH -->|"3. Claims/Roles"| CTX
+        CTX -->|"4. Verificar política"| POLICY[Authorization]
+    end
+    
+    subgraph "Resultado"
+        POLICY -->|"5. Allow/Deny"| RES[Resolver]
+        RES -->|"6. Datos o Error"| C
+    end
+```
+
+### Manejo de Errores de Autorización
+
+HotChocolate devuelve errores GraphQL cuando la autorización falla:
+
+```json
+{
+  "errors": [
+    {
+      "message": "Authorization denied.",
+      "extensions": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  ]
+}
+```
+
+### Configuración Completa de Seguridad
+
+```csharp
+builder.Services
+    .AddGraphQLServer()
+    .AddAuthorization(options =>
+    {
+        options.DefaultPolicy = new AuthorizationPolicyBuilder(
+            JwtBearerDefaults.AuthenticationScheme)
+            .RequireAuthenticatedUser()
+            .Build();
+        
+        options.AddPolicy("AdminOnly", policy =>
+            policy.RequireRole("Admin"));
+    })
+    .AddQueryType<TiendaQuery>()
+    .AddMutationType<ProductoMutation>()
+    .AddSubscriptionType<ProductoSubscription>()
+    .AddInMemorySubscriptions();
+```
+
+### Resumen
+
+| Aspecto | Implementación |
+|---------|----------------|
+| **Autenticación** | JWT via ASP.NET Core Authentication |
+| **Autorización** | `[Authorize]`, `[Authorize(Roles)]`, Policies |
+| **Roles** | "Admin", "User" (desde Identity) |
+| **Claims** | Accesibles desde el HttpContext |
+| **Transparencia** | HotChocolate lee el mismo contexto que Controllers |
+
+---
+
 ## 20.4. Conceptos de Queries
 
 Las **Queries** (consultas) son el mecanismo principal para **leer datos** en GraphQL. Son el equivalente a las operaciones GET en REST, pero con una diferencia fundamental: el cliente define exactamente qué campos quiere recibir.
@@ -251,7 +551,7 @@ query {
 ```mermaid
 flowchart TD
     subgraph "Query Types"
-        Q1[Query Raíz<br/>Tipo obligatorio]
+        Q1[Query Raíz]
         Q2[Consultas simples]
         Q3[Consultas con parámetros]
         Q4[Consultas anidadas]
@@ -1384,9 +1684,9 @@ public async Task<Producto?> GetProducto(
 ```mermaid
 flowchart TD
     subgraph "GraphQL API"
-        Q[Queries<br/>TiendaQuery]
-        M[Mutations<br/>ProductoMutation]
-        S[Subscriptions<br/>ProductoSubscription]
+        Q[Queries]
+        M[Mutations]
+        S[Subscriptions]
     end
     
     subgraph "Tipos GraphQL"
@@ -1395,12 +1695,12 @@ flowchart TD
     end
     
     subgraph "Event System"
-        E[Events<br/>ProductoEvent]
-        P[Publisher<br/>IEventPublisher]
+        E[Events]
+        P[Publisher]
     end
     
     subgraph "Servicios"
-        PS[ProductoService<br/>(IProductoService)]
+        PS[ProductoService]
     end
     
     Q --> PT
@@ -1429,8 +1729,8 @@ flowchart TD
 ```mermaid
 flowchart TD
     subgraph "Cliente GraphQL"
-        HTTP[HTTP Client<br/>POST /graphql]
-        WS[WebSocket Client<br/>WS /graphql]
+        HTTP[HTTP Client]
+        WS[WebSocket Client]
     end
     
     subgraph "HotChocolate Server"
@@ -1510,7 +1810,8 @@ sequenceDiagram
     participant EB as EventBus
     participant S as Servicio
 
-    C->>WS: WS /graphql<br/>Authorization: Bearer token
+    C->>WS: WS /graphql
+    Note right of C: Authorization: Bearer token
     WS->>HS: Upgrade connection
     
     C->>WS: {"type":"subscribe", "payload":{"query":"..."}}
