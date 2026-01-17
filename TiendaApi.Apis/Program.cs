@@ -605,7 +605,7 @@ Log.Information("CREDENCIALES DE PRUEBA:");
 Log.Information("  Admin:   admin@tienda.com / admin (ROLE_ADMIN)");
 Log.Information("  Usuario: userdaw@tienda.com / userdaw (ROLE_USER)");
 Log.Information("=================================================================");
-Log.Information("🚀 Aplicacion iniciada correctamente en http://localhost:{Port}", port);
+Log.Information("🚀 Aplicacion iniciada correctamente en http://localhost:{Port} ({Mode} Mode)", port, isDevelopment ? "DESARROLLO" : "PRODUCCION");
 Log.Information("=================================================================");
 
 try
