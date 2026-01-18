@@ -7,25 +7,25 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using TiendaApi.Apis.Services.Auth;
 using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.WebSockets.Pedidos;
+using TiendaApi.Apis.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.WebSockets;
 
 /// <summary>
-/// Tests unitarios para PedidoWebSocketHandler.
+/// Tests unitarios para PedidosWebSocketHandler.
 /// Verifica el comportamiento de las notificaciones selectivas por usuario y el sistema de caché.
 /// </summary>
-public class PedidoWebSocketHandlerTests
+public class PedidosWebSocketHandlerTests
 {
-    private readonly Mock<ILogger<PedidoWebSocketHandler>> _mockLogger;
+    private readonly Mock<ILogger<PedidosWebSocketHandler>> _mockLogger;
     private readonly Mock<IJwtTokenExtractor> _mockTokenExtractor;
     private readonly Mock<ICacheService> _mockCacheService;
     private readonly Mock<IConfiguration> _mockConfiguration;
-    private readonly PedidoWebSocketHandler _handler;
+    private readonly PedidosWebSocketHandler _handler;
 
-    public PedidoWebSocketHandlerTests()
+    public PedidosWebSocketHandlerTests()
     {
-        _mockLogger = new Mock<ILogger<PedidoWebSocketHandler>>();
+        _mockLogger = new Mock<ILogger<PedidosWebSocketHandler>>();
         _mockTokenExtractor = new Mock<IJwtTokenExtractor>();
         _mockCacheService = new Mock<ICacheService>();
         _mockConfiguration = new Mock<IConfiguration>();
@@ -36,7 +36,7 @@ public class PedidoWebSocketHandlerTests
         _mockConfiguration.Setup(c => c.GetSection("WebSocket:RoleCacheTTLMinutes"))
             .Returns(sectionMock.Object);
 
-        _handler = new PedidoWebSocketHandler(
+        _handler = new PedidosWebSocketHandler(
             _mockLogger.Object,
             _mockTokenExtractor.Object,
             _mockCacheService.Object,
@@ -52,7 +52,6 @@ public class PedidoWebSocketHandlerTests
         var handler = CreateHandler();
 
         // Assert
-        Assert.That(handler.GetAdminConnectionCount(), Is.EqualTo(0));
         Assert.That(handler.GetConnectionCount(), Is.EqualTo(0));
     }
 
@@ -60,7 +59,7 @@ public class PedidoWebSocketHandlerTests
     public void Constructor_SetsUpDependenciesCorrectly()
     {
         // Arrange & Act
-        var logger = new Mock<ILogger<PedidoWebSocketHandler>>();
+        var logger = new Mock<ILogger<PedidosWebSocketHandler>>();
         var tokenExtractor = new Mock<IJwtTokenExtractor>();
         var cacheService = new Mock<ICacheService>();
         var config = new Mock<IConfiguration>();
@@ -71,7 +70,7 @@ public class PedidoWebSocketHandlerTests
             .Returns(sectionMock.Object);
 
         // Act
-        var handler = new PedidoWebSocketHandler(
+        var handler = new PedidosWebSocketHandler(
             logger.Object,
             tokenExtractor.Object,
             cacheService.Object,
@@ -270,26 +269,17 @@ public class PedidoWebSocketHandlerTests
 
     #endregion
 
-    #region PedidoNotificationType Tests
-
-    [Test]
-    public void PedidoNotificationType_HasCorrectValues()
-    {
-        // Assert
-        Assert.That(PedidoNotificationType.CREATED, Is.EqualTo("PEDIDO_CREATED"));
-        Assert.That(PedidoNotificationType.ESTADO_UPDATED, Is.EqualTo("PEDIDO_ESTADO_UPDATED"));
-    }
-
-    #endregion
-
     #region PedidoNotificacion Tests
+
+    private const string NotificationTypeCreated = "PEDIDO_CREATED";
+    private const string NotificationTypeEstadoUpdated = "PEDIDO_ESTADO_UPDATED";
 
     [Test]
     public void PedidoNotificacion_CanBeCreatedWithAllFields()
     {
         // Arrange & Act
         var notificacion = new PedidoNotificacion(
-            PedidoNotificationType.CREATED,
+            NotificationTypeCreated,
             "PED-001",
             123L,
             "Pendiente",
@@ -309,7 +299,7 @@ public class PedidoWebSocketHandlerTests
     {
         // Arrange & Act
         var notificacion = new PedidoNotificacion(
-            PedidoNotificationType.CREATED,
+            NotificationTypeCreated,
             "PED-001",
             123L,
             "Pendiente",
@@ -324,9 +314,9 @@ public class PedidoWebSocketHandlerTests
 
     #region Helpers
 
-    private PedidoWebSocketHandler CreateHandler()
+    private PedidosWebSocketHandler CreateHandler()
     {
-        return new PedidoWebSocketHandler(
+        return new PedidosWebSocketHandler(
             _mockLogger.Object,
             _mockTokenExtractor.Object,
             _mockCacheService.Object,

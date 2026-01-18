@@ -4,6 +4,7 @@ using FluentValidation.Results;
 using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
@@ -20,7 +21,7 @@ using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Auth;
 using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Validators.Pedidos;
-using TiendaApi.Apis.WebSockets.Pedidos;
+using TiendaApi.Apis.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.Pedidos;
 
@@ -35,10 +36,11 @@ public class PedidosServiceTests
     private Mock<ICacheService> _mockCacheService = null!;
     private Mock<IEmailService> _mockEmailService = null!;
     private Mock<IConfiguration> _mockConfiguration = null!;
-    private Mock<PedidoWebSocketHandler> _mockWebSocketHandler = null!;
+    private Mock<PedidosWebSocketHandler> _mockWebSocketHandler = null!;
     private Mock<IValidator<PedidoRequestDto>> _mockPedidoValidator = null!;
     private Mock<IValidator<PedidoItemRequestDto>> _mockItemValidator = null!;
     private Mock<IDbContextTransaction> _mockTransaction = null!;
+    private Mock<IHubContext<PedidosHub>> _mockHubContext = null!;
     private IPedidosService _service = null!;
 
     private void CreateService()
@@ -51,6 +53,7 @@ public class PedidosServiceTests
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockWebSocketHandler.Object,
+            _mockHubContext.Object,
             _mockPedidoValidator.Object,
             _mockItemValidator.Object
         );
@@ -65,8 +68,9 @@ public class PedidosServiceTests
         _mockCacheService = new Mock<ICacheService>();
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
-        _mockWebSocketHandler = new Mock<PedidoWebSocketHandler>(
-            Mock.Of<ILogger<PedidoWebSocketHandler>>(),
+        _mockHubContext = new Mock<IHubContext<PedidosHub>>();
+        _mockWebSocketHandler = new Mock<PedidosWebSocketHandler>(
+            Mock.Of<ILogger<PedidosWebSocketHandler>>(),
             Mock.Of<IJwtTokenExtractor>());
         _mockPedidoValidator = new Mock<IValidator<PedidoRequestDto>>();
         _mockItemValidator = new Mock<IValidator<PedidoItemRequestDto>>();
@@ -79,8 +83,8 @@ public class PedidosServiceTests
         _mockConfiguration.Setup(c => c.GetSection("WebSocket:RoleCacheTTLMinutes"))
             .Returns(wsSectionMock.Object);
 
-        _mockWebSocketHandler = new Mock<PedidoWebSocketHandler>(
-            Mock.Of<ILogger<PedidoWebSocketHandler>>(),
+        _mockWebSocketHandler = new Mock<PedidosWebSocketHandler>(
+            Mock.Of<ILogger<PedidosWebSocketHandler>>(),
             Mock.Of<IJwtTokenExtractor>(),
             _mockCacheService.Object,
             _mockConfiguration.Object);
@@ -187,6 +191,7 @@ public class PedidosServiceTests
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockWebSocketHandler.Object,
+            _mockHubContext.Object,
             _mockPedidoValidator.Object,
             _mockItemValidator.Object
         );
@@ -223,6 +228,7 @@ public class PedidosServiceTests
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockWebSocketHandler.Object,
+            _mockHubContext.Object,
             _mockPedidoValidator.Object,
             _mockItemValidator.Object
         );
@@ -702,12 +708,15 @@ public class PedidosServiceTests
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockWebSocketHandler.Object,
+            _mockHubContext.Object,
             _mockPedidoValidator.Object,
             _mockItemValidator.Object
         );
 
-        await _service.CreateAsync(userId, pedidoDto);
+        var result = await _service.CreateAsync(userId, pedidoDto);
 
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
         _mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 

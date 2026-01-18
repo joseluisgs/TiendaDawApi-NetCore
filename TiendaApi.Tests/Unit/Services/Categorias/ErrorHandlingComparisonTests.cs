@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -17,7 +18,7 @@ using TiendaApi.Apis.Services.Productos;
 using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Validators.Categorias;
 using TiendaApi.Apis.Validators.Productos;
-using TiendaApi.Apis.WebSockets.Productos;
+using TiendaApi.Apis.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 
@@ -70,7 +71,8 @@ public class ErrorHandlingComparisonTests
             mockCategoriaConfiguration.Object
         );
 
-        var mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductoWebSocketHandler>>());
+        var mockWebSocketHandler = new Mock<ProductosWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductosWebSocketHandler>>());
+        var mockHubContext = new Mock<IHubContext<ProductosHub>>();
         var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
         var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
@@ -83,6 +85,7 @@ public class ErrorHandlingComparisonTests
             _mockProductoLogger.Object,
             mockCacheService.Object,
             mockWebSocketHandler.Object,
+            mockHubContext.Object,
             mockEmailService.Object,
             mockConfiguration.Object,
             _mockProductoValidator.Object,
@@ -234,7 +237,8 @@ public class ErrorHandlingComparisonTests
             }));
 
         // Re-crear servicio con mocks configurados
-        var mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductoWebSocketHandler>>());
+        var mockWebSocketHandler = new Mock<ProductosWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductosWebSocketHandler>>());
+        var mockHubContext = new Mock<IHubContext<ProductosHub>>();
         var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
         var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
@@ -247,6 +251,7 @@ public class ErrorHandlingComparisonTests
             _mockProductoLogger.Object,
             mockCacheService.Object,
             mockWebSocketHandler.Object,
+            mockHubContext.Object,
             mockEmailService.Object,
             mockConfiguration.Object,
             _mockProductoValidator.Object,
