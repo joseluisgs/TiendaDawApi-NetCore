@@ -12,6 +12,7 @@
         --hk-light-pink: #FFB6C1;
         --hk-red: #FF1493;
         --hk-yellow: #FFD700;
+        --hk-purple: #9370DB;
       }
 
       body {
@@ -45,27 +46,14 @@
         color: var(--hk-pink);
         text-align: center;
         font-family: 'Knewave', cursive;
-        font-size: 2.5em;
+        font-size: 2.2em;
         margin-top: 0;
         text-shadow: 3px 3px var(--hk-light-pink);
-        position: relative;
       }
 
       h1::before, h1::after {
         content: '🎀';
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.6em;
-        animation: bounce 2s ease-in-out infinite;
-      }
-
-      h1::before { left: 20px; }
-      h1::after { right: 20px;1s; }
-
-      @keyframes bounce animation-delay:  {
-        0%, 100% { transform: translateY(-50%) scale(1); }
-        50% { transform: translateY(-60%) scale(1.2); }
+        font-size: 0.5em;
       }
 
       .config-section {
@@ -79,21 +67,18 @@
       .config-section h3 {
         color: var(--hk-red);
         margin-top: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        margin-bottom: 15px;
       }
 
       .form-row {
         display: flex;
         gap: 15px;
         flex-wrap: wrap;
-        margin-bottom: 15px;
       }
 
       .form-group {
         flex: 1;
-        min-width: 200px;
+        min-width: 250px;
         margin-bottom: 15px;
       }
 
@@ -124,9 +109,11 @@
 
       .token-group {
         background: linear-gradient(135deg, #E6E6FA, #DDA0DD);
-        border: 3px solid #9370DB;
+        border: 3px solid var(--hk-purple);
         border-radius: 15px;
-        padding: 15px;
+        padding: 12px 15px;
+        flex: 1;
+        min-width: 250px;
       }
 
       .token-group label {
@@ -134,18 +121,19 @@
       }
 
       .token-group input {
-        border-color: #9370DB;
+        border-color: var(--hk-purple);
         font-family: 'Courier New', monospace;
+        font-size: 0.9em;
       }
 
       textarea {
         width: 100%;
-        min-height: 180px;
+        min-height: 150px;
         border: 3px solid var(--hk-light-pink);
         border-radius: 15px;
         padding: 15px;
         font-family: 'Courier New', Courier, monospace;
-        font-size: 0.95em;
+        font-size: 0.9em;
         box-sizing: border-box;
         resize: vertical;
       }
@@ -159,49 +147,25 @@
       .btn-group {
         display: flex;
         gap: 15px;
-        margin-top: 15px;
         flex-wrap: wrap;
+        margin-top: 15px;
       }
 
       button {
         flex: 1;
-        min-width: 150px;
-        padding: 15px 25px;
+        min-width: 140px;
+        padding: 12px 20px;
         border: none;
         border-radius: 25px;
         font-family: 'Knewave', cursive;
-        font-size: 1.3em;
+        font-size: 1.2em;
         cursor: pointer;
         transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-      }
-
-      button::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        background: rgba(255,255,255,0.3);
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        transition: all 0.3s ease;
-      }
-
-      button:hover::before {
-        width: 300px;
-        height: 300px;
       }
 
       button:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      }
-
-      button:active {
-        transform: translateY(0);
       }
 
       .btn-primary {
@@ -214,6 +178,10 @@
         background: linear-gradient(135deg, var(--hk-yellow), #FFA500);
         color: #8B4513;
         border: 3px solid #DAA520;
+        font-size: 1em;
+        padding: 8px 15px;
+        min-width: auto;
+        flex: 0 0 auto;
       }
 
       .btn-success {
@@ -231,7 +199,7 @@
         white-space: pre-wrap;
         word-wrap: break-word;
         font-family: 'Courier New', Courier, monospace;
-        font-size: 0.9em;
+        font-size: 0.85em;
         max-height: 400px;
         overflow-y: auto;
       }
@@ -264,10 +232,15 @@
         background: rgba(255,255,255,0.5);
         padding: 2px 6px;
         border-radius: 5px;
-        font-size: 0.95em;
       }
 
-      /* Scrollbar bonita */
+      .quick-queries {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
       #response::-webkit-scrollbar {
         width: 12px;
       }
@@ -282,18 +255,23 @@
         border-radius: 10px;
       }
 
-      .quick-queries {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 15px;
+      .section-title {
+        color: var(--hk-pink);
+        font-size: 1.3em;
+        font-weight: bold;
+        margin: 25px 0 15px 0;
+        text-align: center;
       }
 
-      .quick-queries button {
-        flex: 0 1 auto;
-        min-width: auto;
-        padding: 8px 15px;
-        font-size: 0.9em;
+      .mutation-warning {
+        background: linear-gradient(135deg, #FFFACD, #FFE4B5);
+        border: 3px solid #DAA520;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 15px;
+        text-align: center;
+        font-weight: bold;
+        color: #8B4513;
       }
 
       @media (max-width: 768px) {
@@ -313,50 +291,71 @@
   </head>
   <body>
     <div class="container">
-      <h1>💖 Hello, GraphQL! 💖</h1>
+      <h1>💖 GraphQL TiendaDAW 💖</h1>
 
       <!-- Configuración -->
       <div class="config-section">
         <h3>⚙️ Configuración</h3>
         <div class="form-row">
           <div class="form-group">
-            <label for="endpoint">📡 Endpoint GraphQL:</label>
+            <label for="endpoint">📡 Endpoint:</label>
             <input type="url" id="endpoint" value="http://localhost:5000/graphql" 
                    placeholder="http://localhost:5000/graphql">
           </div>
-          <div class="form-group token-group">
-            <label for="token">🔐 JWT Token (opcional):</label>
+          <div class="token-group">
+            <label for="token">🔐 JWT Token (admin ops):</label>
             <input type="text" id="token" placeholder="eyJhbGciOiJIUzI1NiIsInR..." 
-                   title="Pega tu token JWT aquí para operaciones autenticadas">
+                   title="Pega tu token JWT aquí">
           </div>
         </div>
       </div>
 
       <!-- Consultas rápidas -->
       <div class="config-section">
-        <h3>🚀 Consultas Rápidas</h3>
+        <h3>📋 Queries</h3>
         <div class="quick-queries">
           <button class="btn-secondary" onclick="loadQuery('hello')">👋 Hello</button>
           <button class="btn-secondary" onclick="loadQuery('productos')">📦 Productos</button>
           <button class="btn-secondary" onclick="loadQuery('productoById')">🎁 Producto ID</button>
           <button class="btn-secondary" onclick="loadQuery('categorias')">📁 Categorías</button>
-          <button class="btn-secondary" onclick="loadQuery('users')">👥 Users (Admin)</button>
-          <button class="btn-secondary" onclick="loadQuery('createUser')">➕ Create User</button>
         </div>
       </div>
 
-      <!-- Consulta -->
+      <!-- Mutations (Admin) -->
       <div class="config-section">
-        <h3>📝 Query / Mutation:</h3>
-        <textarea id="query" placeholder="Escribe tu query de GraphQL aquí..."></textarea>
+        <h3>🛠️ Mutations (ADMIN)</h3>
+        <div class="mutation-warning">⚠️ Requiere token JWT de admin</div>
+        <div class="quick-queries">
+          <button class="btn-secondary" onclick="loadQuery('createProducto')">➕ Crear Producto</button>
+          <button class="btn-secondary" onclick="loadQuery('updateProducto')">✏️ Actualizar</button>
+          <button class="btn-secondary" onclick="loadQuery('deleteProducto')">🗑️ Eliminar</button>
+        </div>
+      </div>
+
+      <!-- Suscripciones -->
+      <div class="config-section">
+        <h3>📡 Subscriptions</h3>
+        <div class="mutation-warning">⚠️ Usa GraphiQL en el navegador para suscribirte</div>
+        <div class="quick-queries">
+          <button class="btn-secondary" onclick="loadQuery('subProductoCreado')">🎉 OnCreado</button>
+          <button class="btn-secondary" onclick="loadQuery('subProductoActualizado')">🔄 OnActualizado</button>
+          <button class="btn-secondary" onclick="loadQuery('subProductoEliminado')">❌ OnEliminado</button>
+          <button class="btn-secondary" onclick="loadQuery('subStockBajo')">⚠️ OnStockBajo</button>
+        </div>
+      </div>
+
+      <!-- Editor -->
+      <div class="config-section">
+        <h3>📝 Query / Mutation / Subscription:</h3>
+        <textarea id="query"></textarea>
         
         <div class="form-group" style="margin-top: 15px;">
-          <label for="variables">📋 Variables (en JSON, opcional):</label>
+          <label for="variables">📋 Variables (JSON, opcional):</label>
           <textarea id="variables" rows="3" placeholder='{ "id": 1 }'></textarea>
         </div>
 
         <div class="btn-group">
-          <button id="sendQuery" class="btn-primary">🎀 Enviar Query</button>
+          <button id="sendQuery" class="btn-primary">🎀 Enviar</button>
           <button onclick="clearAll()" class="btn-secondary">🧹 Limpiar</button>
         </div>
       </div>
@@ -370,15 +369,15 @@
 
       <!-- Info -->
       <div class="info-box">
-        <h4>💡 Información</h4>
-        <p>• <b>USER:</b> Para mutations como <code>createPedido</code>, necesita token JWT</p>
-        <p>• <b>ADMIN:</b> Para <code>createProducto</code>, <code>deleteUser</code>, etc.</p>
-        <p>• Obtén el token desde <code>POST /api/v1/auth/signin</code> con email/password</p>
+        <h4>💡 Info</h4>
+        <p>• <b>Queries:</b> Pública</p>
+        <p>• <b>Mutations:</b> Requiere token admin ( <code>POST /api/v1/auth/signin</code> )</p>
+        <p>• <b>Subscriptions:</b> Usa GraphiQL en <code>http://localhost:5000/graphiql</code></p>
       </div>
     </div>
 
     <script>
-      const predefinedQueries = {
+      const queries = {
         hello: `{
   hello
 }`,
@@ -389,12 +388,14 @@
     descripcion
     precio
     stock
+    imagen
     categoria {
+      id
       nombre
     }
   }
 }`,
-        productoById: `query ObtenerProducto($id: Long!) {
+        productoById: `query($id: Long!) {
   producto(id: $id) {
     id
     nombre
@@ -403,7 +404,6 @@
     stock
     imagen
     categoria {
-      id
       nombre
     }
   }
@@ -421,29 +421,70 @@
     }
   }
 }`,
-        users: `query {
-  users {
+        createProducto: `mutation Create($input: CreateProductoInput!) {
+  createProducto(input: $input) {
     id
-    username
-    email
-    role
-    createdAt
+    nombre
+    precio
   }
 }`,
-        createUser: `mutation CrearUsuario($input: CreateUserInputDto!) {
-  createUser(input: $input) {
-    id
-    username
-    email
-    role
-  }
-}`,
-        variablesCreateUser: `{
+        variablesCreate: `{
   "input": {
-    "username": "nuevouser",
-    "email": "nuevo@email.com",
-    "password": "password123",
-    "role": "USER"
+    "nombre": "Nuevo Producto",
+    "descripcion": "Descripción",
+    "precio": 99.99,
+    "stock": 10,
+    "categoriaId": 1,
+    "imagen": null
+  }
+}`,
+        updateProducto: `mutation Update($id: Long!, $input: UpdateProductoInput!) {
+  updateProducto(id: $id, input: $input) {
+    id
+    nombre
+    precio
+    stock
+  }
+}`,
+        variablesUpdate: `{
+  "id": 1,
+  "input": {
+    "precio": 149.99,
+    "stock": 20
+  }
+}`,
+        deleteProducto: `mutation Delete($id: Long!) {
+  deleteProducto(id: $id)
+}`,
+        variablesDelete: `{
+  "id": 1
+}`,
+        subProductoCreado: `subscription {
+  onProductoCreado {
+    productoId
+    nombre
+    precio
+    timestamp
+  }
+}`,
+        subProductoActualizado: `subscription {
+  onProductoActualizado {
+    productoId
+    cambios
+    timestamp
+  }
+}`,
+        subProductoEliminado: `subscription {
+  onProductoEliminado {
+    productoId
+    timestamp
+  }
+}`,
+        subStockBajo: `subscription {
+  onStockBajo {
+    productoId
+    stockActual
+    timestamp
   }
 }`
       };
@@ -452,12 +493,17 @@
         const queryEl = document.getElementById('query');
         const variablesEl = document.getElementById('variables');
         
-        if (predefinedQueries[type]) {
-          queryEl.value = predefinedQueries[type];
+        if (queries[type]) {
+          queryEl.value = queries[type];
         }
         
-        if (predefinedQueries['variables' + type.charAt(0).toUpperCase() + type.slice(1)]) {
-          variablesEl.value = predefinedQueries['variables' + type.charAt(0).toUpperCase() + type.slice(1)];
+        const varKey = type === 'productoById' ? 'variablesById' : 
+                      type === 'createProducto' ? 'variablesCreate' :
+                      type === 'updateProducto' ? 'variablesUpdate' :
+                      type === 'deleteProducto' ? 'variablesDelete' : '';
+        
+        if (varKey && queries[varKey]) {
+          variablesEl.value = queries[varKey];
         } else {
           variablesEl.value = '';
         }
@@ -479,13 +525,13 @@
         const errorElement = document.getElementById('error');
 
         if (!endpoint) {
-          errorElement.textContent = '⚠️ Por favor, ingresa la URL del endpoint GraphQL';
+          errorElement.textContent = '⚠️ Ingresa la URL del endpoint';
           errorElement.style.display = 'block';
           return;
         }
 
         if (!query.trim()) {
-          errorElement.textContent = '⚠️ Por favor, ingresa una query';
+          errorElement.textContent = '⚠️ Ingresa una query';
           errorElement.style.display = 'block';
           return;
         }
@@ -497,7 +543,7 @@
         try {
           variables = variablesString ? JSON.parse(variablesString) : {};
         } catch (e) {
-          errorElement.textContent = '❌ Error: Las variables no son un JSON válido.\n' + e.message;
+          errorElement.textContent = '❌ Error en JSON de variables:\n' + e.message;
           errorElement.style.display = 'block';
           responseElement.textContent = '';
           return;
@@ -516,10 +562,7 @@
           const response = await fetch(endpoint, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify({
-              query: query,
-              variables: variables
-            })
+            body: JSON.stringify({ query, variables })
           });
 
           const contentType = response.headers.get('content-type');
@@ -539,14 +582,13 @@
           }
         } catch (error) {
           console.error('Error:', error);
-          errorElement.textContent = '❌ Error de conexión: ' + error.message + '\n\nPosibles causas:\n• El servidor no está corriendo\n• CORS no configurado\n• SSL/HTTPS mismatch';
+          errorElement.textContent = '❌ Error de conexión:\n' + error.message + '\n\nPosibles causas:\n• Servidor no corriendo\n• CORS no configurado\n• SSL/HTTPS mismatch';
           errorElement.style.display = 'block';
           responseElement.textContent = '';
         }
       });
 
-      // Cargar consulta inicial
-      loadQuery('hello');
+      loadQuery('productos');
     </script>
   </body>
 </html>
