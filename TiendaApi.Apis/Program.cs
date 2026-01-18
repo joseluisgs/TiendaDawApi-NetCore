@@ -28,7 +28,7 @@ services.AddFluentValidation();
 // API
 services.AddApiVersioningPolicy();
 services.AddSwagger();
-services.AddCorsPolicy();
+services.AddCorsPolicy(configuration, environment.IsDevelopment());
 
 // Data
 services.AddDatabases(configuration);

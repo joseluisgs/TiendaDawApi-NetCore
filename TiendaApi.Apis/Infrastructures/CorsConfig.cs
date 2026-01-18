@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 
 namespace TiendaApi.Apis.Infrastructures;
@@ -9,20 +10,40 @@ namespace TiendaApi.Apis.Infrastructures;
 public static class CorsConfig
 {
     /// <summary>
-    /// Configura la política CORS permitiendo todos los orígenes.
-    /// Útil para desarrollo. En producción restringir.
+    /// Configura la política CORS según el entorno.
+    /// Desarrollo: AllowAll (permite todo)
+    /// Producción: Solo orígenes configurados en Cors:AllowedOrigins
     /// </summary>
-    public static IServiceCollection AddCorsPolicy(this IServiceCollection services)
+    public static IServiceCollection AddCorsPolicy(this IServiceCollection services, IConfiguration configuration, bool isDevelopment)
     {
-        Log.Information("🌐 Configurando CORS...");
+        Log.Information("🌐 Configurando CORS para {Environment}...", isDevelopment ? "DESARROLLO" : "PRODUCCIÓN");
+
         return services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll", policy =>
+            if (isDevelopment)
             {
-                policy.AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
-            });
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+                Log.Information("🌐 CORS: AllowAll (desarrollo)");
+            }
+            else
+            {
+                var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                    ?? throw new InvalidOperationException("Cors:AllowedOrigins no configurado");
+
+                options.AddPolicy("ProductionPolicy", policy =>
+                {
+                    policy.WithOrigins(allowedOrigins)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                });
+                Log.Information("🌐 CORS: ProductionPolicy con {Count} orígenes", allowedOrigins.Length);
+            }
         });
     }
 }

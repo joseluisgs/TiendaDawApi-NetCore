@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>💖 Cliente GraphQL para TiendaDAW 💖</title>
+    <title>💖 Cliente SignalR para TiendaDAW 💖</title>
     <link href="https://fonts.googleapis.com/css2?family=Knewave&family=Balsamiq+Sans&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -257,8 +258,8 @@
         color: var(--hk-purple);
       }
 
-      /* Config Section */
-      .config-section {
+      /* Token Display */
+      .token-section {
         background: linear-gradient(135deg, #FFF5EE, #FFE4E1);
         border: 4px solid var(--hk-light-pink);
         border-radius: 20px;
@@ -286,40 +287,6 @@
       .section-title::before { left: 10px; }
       .section-title::after { right: 10px; }
 
-      .form-row {
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-      }
-
-      .form-group {
-        flex: 1;
-        min-width: 200px;
-      }
-
-      .form-group label {
-        display: block;
-        color: var(--hk-red);
-        font-weight: bold;
-        margin-bottom: 8px;
-      }
-
-      .form-group input, .form-group textarea {
-        width: 100%;
-        padding: 12px 15px;
-        border: 3px solid var(--hk-light-pink);
-        border-radius: 20px;
-        font-size: 1em;
-        font-family: 'Balsamiq Sans', cursive;
-        transition: all 0.3s ease;
-      }
-
-      .form-group input:focus, .form-group textarea:focus {
-        outline: none;
-        border-color: var(--hk-pink);
-        box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
-      }
-
       .token-display {
         background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
         border: 3px solid var(--hk-purple);
@@ -341,14 +308,117 @@
         font-size: 0.85em;
         padding: 0 !important;
         margin-top: 5px;
+        width: 100%;
       }
 
       .token-display input:focus {
         box-shadow: none !important;
+        outline: none;
       }
 
-      /* Quick Buttons */
-      .quick-queries {
+      /* Hub Section */
+      .hub-section {
+        background: linear-gradient(135deg, #E0FFFF, #87CEEB);
+        border: 4px solid #4682B4;
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .hub-section .section-title {
+        color: #191970;
+      }
+
+      .hub-form {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+
+      .hub-group {
+        flex: 1;
+        min-width: 300px;
+      }
+
+      .hub-group label {
+        display: block;
+        color: #4682B4;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .hub-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 3px solid #87CEEB;
+        border-radius: 25px;
+        font-size: 1em;
+        font-family: 'Balsamiq Sans', cursive;
+        transition: all 0.3s ease;
+        background: white;
+      }
+
+      .hub-group input:focus {
+        outline: none;
+        border-color: #4682B4;
+        box-shadow: 0 0 20px rgba(70, 130, 180, 0.4);
+      }
+
+      .btn-connect {
+        padding: 12px 30px;
+        background: linear-gradient(135deg, var(--hk-green), #32CD32);
+        color: #006400;
+        border: 3px solid #228B22;
+        border-radius: 25px;
+        font-family: 'Knewave', cursive;
+        font-size: 1.2em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-connect:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(50, 205, 50, 0.5);
+      }
+
+      .btn-connect:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-disconnect {
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #FFB6C1, #FF69B4);
+        color: var(--hk-red);
+        border: 3px solid var(--hk-red);
+        border-radius: 25px;
+        font-family: 'Knewave', cursive;
+        font-size: 1.2em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-disconnect:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255, 105, 180, 0.5);
+      }
+
+      /* Subscriptions */
+      .subs-section {
+        background: linear-gradient(135deg, #F0FFF0, #F5FFFA);
+        border: 4px solid var(--hk-green);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .subs-section .section-title {
+        color: #006400;
+      }
+
+      .subs-list {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
@@ -356,88 +426,32 @@
         margin-bottom: 15px;
       }
 
-      .btn-quick {
-        padding: 8px 18px;
-        background: linear-gradient(135deg, var(--hk-blue), #4682B4);
-        color: white;
-        border: 3px solid #4682B4;
-        border-radius: 20px;
+      .sub-item {
+        padding: 10px 15px;
+        background: linear-gradient(135deg, var(--hk-green), #90EE90);
+        border: 3px solid #228B22;
+        border-radius: 15px;
         font-family: 'Balsamiq Sans', cursive;
-        font-size: 0.95em;
-        cursor: pointer;
-        transition: all 0.3s ease;
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
-      .btn-quick:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(70, 130, 180, 0.4);
-      }
-
-      .btn-quick.admin {
+      .sub-item.active {
         background: linear-gradient(135deg, #FFB347, #FF8C00);
         border-color: #FF8C00;
       }
 
-      .btn-quick.sub {
-        background: linear-gradient(135deg, var(--hk-green), #32CD32);
-        border-color: #32CD32;
-      }
-
-      /* Editor */
-      .editor-section {
+      /* Received Messages */
+      .received-section {
         background: linear-gradient(135deg, #FFF8DC, #FAF0E6);
         border: 4px dashed var(--hk-yellow);
         border-radius: 20px;
         padding: 20px;
-        margin-bottom: 20px;
       }
 
-      .editor-section textarea {
-        width: 100%;
-        min-height: 180px;
-        padding: 15px;
-        border: 3px solid var(--hk-light-pink);
-        border-radius: 20px;
-        font-family: 'Balsamiq Sans', cursive;
-        font-size: 0.9em;
-        box-sizing: border-box;
-        transition: all 0.3s ease;
-      }
-
-      .editor-section textarea:focus {
-        outline: none;
-        border-color: var(--hk-pink);
-        box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
-      }
-
-      .btn-send {
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, var(--hk-pink), var(--hk-red));
-        color: white;
-        border: 4px solid var(--hk-red);
-        border-radius: 25px;
-        font-family: 'Knewave', cursive;
-        font-size: 1.4em;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 15px;
-      }
-
-      .btn-send:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(255, 15, 147, 0.5);
-      }
-
-      /* Response */
-      .response-section {
-        background: linear-gradient(135deg, #F0FFF0, #F5FFFA);
-        border: 4px solid var(--hk-green);
-        border-radius: 20px;
-        padding: 20px;
-      }
-
-      #response {
+      #receivedMessages {
         background: #1e1e1e;
         border: 3px solid #333;
         border-radius: 15px;
@@ -445,20 +459,10 @@
         color: #00ff00;
         font-family: 'Balsamiq Sans', cursive;
         font-size: 0.85em;
-        max-height: 350px;
+        max-height: 500px;
         overflow-y: auto;
         white-space: pre-wrap;
         word-wrap: break-word;
-      }
-
-      #error {
-        background: linear-gradient(135deg, #FFE4E1, #FFB6C1);
-        border: 4px solid var(--hk-red);
-        border-radius: 15px;
-        padding: 15px;
-        color: #8B0000;
-        font-weight: bold;
-        margin-top: 15px;
       }
 
       /* Status */
@@ -525,31 +529,31 @@
       }
 
       /* Scrollbar */
-      #response::-webkit-scrollbar {
+      #receivedMessages::-webkit-scrollbar {
         width: 12px;
       }
 
-      #response::-webkit-scrollbar-track {
+      #receivedMessages::-webkit-scrollbar-track {
         background: #333;
         border-radius: 10px;
       }
 
-      #response::-webkit-scrollbar-thumb {
+      #receivedMessages::-webkit-scrollbar-thumb {
         background: var(--hk-pink);
         border-radius: 10px;
       }
 
       @media (max-width: 768px) {
-        .login-form {
+        .login-form, .hub-form {
           flex-direction: column;
           align-items: stretch;
         }
         
-        .input-group {
+        .input-group, .hub-group {
           max-width: 100%;
         }
         
-        .btn-login {
+        .btn-login, .btn-connect, .btn-disconnect {
           width: 100%;
         }
       }
@@ -559,21 +563,21 @@
     <div class="floating-ribbon">🎀</div>
 
     <div class="container">
-      <h1>💖 Cliente GraphQL para TiendaDAW 💖</h1>
+      <h1>💖 Cliente SignalR para TiendaDAW 💖</h1>
 
       <!-- Status Bar -->
       <div class="status-bar">
         <div id="authStatus" class="status-item status-disconnected">
           🔓 Sin autenticación
         </div>
-        <div id="responseStatus" class="status-item status-disconnected">
-          📡 Sin consultas
+        <div id="signalrStatus" class="status-item status-disconnected">
+          📡 SignalR desconectado
         </div>
       </div>
 
       <!-- Login Section -->
       <div class="login-section">
-        <h2 class="login-title">🔐 Iniciar Sesión para Obtener Token</h2>
+        <h2 class="login-title">🔐 Login para obtener Token</h2>
         <div class="login-form">
           <div class="input-group">
             <label for="email">📧 Email</label>
@@ -599,192 +603,72 @@
         </div>
       </div>
 
-      <!-- Token Display -->
-      <div class="config-section">
-        <h3 class="section-title">🔐 Token JWT (Auto-rellenado tras Login)</h3>
+      <!-- Token Section -->
+      <div class="token-section">
+        <h3 class="section-title">🔐 Token JWT (usado en accessTokenFactory)</h3>
         <div class="token-display">
           <label for="token">Tu Token:</label>
           <input type="text" id="token" placeholder="Pega tu token aquí o usa el login arriba">
         </div>
       </div>
 
-      <!-- Queries -->
-      <div class="config-section">
-        <h3 class="section-title">📋 Queries (Públicas)</h3>
-        <div class="quick-queries">
-          <button class="btn-quick" onclick="loadQuery('hello')">👋 Hello</button>
-          <button class="btn-quick" onclick="loadQuery('productos')">📦 Todos</button>
-          <button class="btn-quick" onclick="loadQuery('productoById')">🎁 Laptop (ID:1)</button>
-          <button class="btn-quick" onclick="loadQuery('productoById2')">👕 Camiseta (ID:2)</button>
-          <button class="btn-quick" onclick="loadQuery('categorias')">📁 Categorías</button>
+      <!-- Hub Section -->
+      <div class="hub-section">
+        <h3 class="section-title">🔗 Conectar a Hub SignalR</h3>
+        <div class="hub-form">
+          <div class="hub-group">
+            <label for="hubUrl">📡 Hub URL:</label>
+            <input type="text" id="hubUrl" placeholder="http://localhost:5000/hubs/pedidos">
+          </div>
+          <button id="btnConnect" class="btn-connect" onclick="connectSignalR()">
+            🔌 Conectar
+          </button>
+          <button id="btnDisconnect" class="btn-disconnect" onclick="disconnectSignalR()" disabled>
+            💔 Desconectar
+          </button>
+        </div>
+        <div class="subs-list">
+          <div class="sub-item" id="subPedidoCreado">
+            🎉 OnPedidoCreado
+          </div>
+          <div class="sub-item" id="subPedidoActualizado">
+            🔄 OnPedidoActualizado
+          </div>
+          <div class="sub-item" id="subPedidoEliminado">
+            ❌ OnPedidoEliminado
+          </div>
+          <div class="sub-item" id="subProductoCreado">
+            📦 OnProductoCreado
+          </div>
+          <div class="sub-item" id="subStockBajo">
+            ⚠️ OnStockBajo
+          </div>
         </div>
       </div>
 
-      <!-- Mutations (Admin) -->
-      <div class="config-section">
-        <h3 class="section-title">🛠️ Mutations (Requiere Token Admin)</h3>
-        <div class="quick-queries">
-          <button class="btn-quick admin" onclick="loadQuery('createProducto')">➕ Nuevo Producto</button>
-          <button class="btn-quick admin" onclick="loadQuery('updateProducto')">✏️ Update Laptop</button>
-          <button class="btn-quick admin" onclick="loadQuery('deleteProducto')">🗑️ Delete Libro</button>
-        </div>
-      </div>
+      <!-- Received Messages -->
+      <div class="received-section">
+        <h3 class="section-title">📨 Notificaciones Recibidas</h3>
+        <div id="receivedMessages">💖 Esperando notificaciones de SignalR... ✨
 
-      <!-- Subscriptions -->
-      <div class="config-section">
-        <h3 class="section-title">📡 Subscriptions (Usa GraphiQL)</h3>
-        <div class="quick-queries">
-          <button class="btn-quick sub" onclick="loadQuery('subCreado')">🎉 OnCreado</button>
-          <button class="btn-quick sub" onclick="loadQuery('subActualizado')">🔄 OnActualizado</button>
-          <button class="btn-quick sub" onclick="loadQuery('subEliminado')">❌ OnEliminado</button>
-          <button class="btn-quick sub" onclick="loadQuery('subStock')">⚠️ OnStockBajo</button>
-        </div>
-      </div>
-
-      <!-- Editor -->
-      <div class="editor-section">
-        <h3 class="section-title">📝 Query / Mutation</h3>
-        <div class="form-group">
-          <label for="query">📝 Query GraphQL:</label>
-          <textarea id="query"></textarea>
-        </div>
-        
-        <div class="form-group" style="margin-top: 15px;">
-          <label for="variables">📋 Variables (JSON):</label>
-          <textarea id="variables" rows="3" placeholder='{ "id": 1 }'></textarea>
-        </div>
-
-        <button class="btn-send" onclick="sendQuery()">
-          🚀 Enviar Consulta
-        </button>
-      </div>
-
-      <!-- Response -->
-      <div class="response-section">
-        <h3 class="section-title">📬 Respuesta</h3>
-        <div id="response">💖 Waiting for magic... ✨</div>
-        <div id="error" style="display: none"></div>
+Conecta a un Hub y espera a que el servidor envíe eventos en tiempo real.</div>
       </div>
 
       <!-- Info -->
       <div class="info-box">
         <h4>💡 Información</h4>
-        <p>• <b>Queries:</b> Públicas - no requieren token</p>
-        <p>• <b>Mutations:</b> Requiere token de admin</p>
-        <p>• <b>Subscriptions:</b> Usa GraphiQL en <code>http://localhost:5000/graphiql</code></p>
-        <p>• <b>Token:</b> Se auto-rellena tras hacer login arriba</p>
+        <p>• <b>Hubs disponibles:</b> <code>/hubs/pedidos</code> (auth), <code>/hubs/productos</code> (público)</p>
+        <p>• <b>Token:</b> Se pasa via <code>accessTokenFactory</code> - más seguro que query string</p>
+        <p>• <b>Eventos Pedidos:</b> PedidoCreado, PedidoActualizado, PedidoEliminado</p>
+        <p>• <b>Eventos Productos:</b> ProductoCreado, ProductoActualizado, StockBajo</p>
       </div>
     </div>
 
     <script>
       const API_URL = 'http://localhost:5000';
-      
-      const queries = {
-        hello: `{
-  hello
-}`,
-        productos: `query {
-  productos {
-    id
-    nombre
-    descripcion
-    precio
-    stock
-    imagen
-    categoria {
-      id
-      nombre
-    }
-  }
-}`,
-        productoById: `query($id: Long!) {
-  producto(id: $id) {
-    id
-    nombre
-    descripcion
-    precio
-    stock
-    imagen
-    categoria { nombre }
-  }
-}`,
-        varsId: `{"id": 1}`,
-        categorias: `{
-  categorias {
-    id
-    nombre
-    productos {
-      id
-      nombre
-      precio
-    }
-  }
-}`,
-        productoById2: `query($id: Long!) {
-  producto(id: $id) {
-    id
-    nombre
-    descripcion
-    precio
-    stock
-    imagen
-    categoria {
-      id
-      nombre
-    }
-  }
-}`,
-        varsId2: `{"id": 2}`,
-        createProducto: `mutation($input: CreateProductoInput!) {
-  createProducto(input: $input) {
-    id
-    nombre
-    precio
-    stock
-  }
-}`,
-        varsCreate: `{
-  "input": {
-    "nombre": "iPhone 15 Pro",
-    "descripcion": "Teléfono móvil Apple",
-    "precio": 999.99,
-    "stock": 25,
-    "categoriaId": 1,
-    "imagen": null
-  }
-}`,
-        updateProducto: `mutation($id: Long!, $input: UpdateProductoInput!) {
-  updateProducto(id: $id, input: $input) {
-    id
-    nombre
-    precio
-    stock
-  }
-}`,
-        varsUpdate: `{
-  "id": 1,
-  "input": {
-    "precio": 1199.99,
-    "stock": 8
-  }
-}`,
-        deleteProducto: `mutation($id: Long!) {
-  deleteProducto(id: $id)
-}`,
-        varsDelete: `{"id": 3}`,
-        subCreado: `subscription {
-  onProductoCreado { productoId nombre precio timestamp }
-}`,
-        subActualizado: `subscription {
-  onProductoActualizado { productoId cambios timestamp }
-}`,
-        subEliminado: `subscription {
-  onProductoEliminado { productoId timestamp }
-}`,
-        subStock: `subscription {
-  onStockBajo { productoId stockActual timestamp }
-}`
-      };
+      let connection = null;
+      let reconnectAttempts = 0;
+      const maxReconnectAttempts = 3;
 
       function fillDemo(email, password) {
         document.getElementById('email').value = email;
@@ -798,12 +682,12 @@
         const status = document.getElementById('authStatus');
 
         if (!email || !password) {
-          showError('📧 Completa email y contraseña 💕');
+          alert('📧 Completa email y contraseña 💕');
           return;
         }
 
         btn.disabled = true;
-        btn.textContent = '⏳ Validando...';
+        btn.textContent = '⏳...';
         status.className = 'status-item status-loading';
         status.textContent = '🔄 Autenticando...';
 
@@ -820,115 +704,162 @@
             document.getElementById('token').value = data.token;
             status.className = 'status-item status-connected';
             status.innerHTML = `🔓 ${data.user?.email || email} (${data.user?.role || 'USER'})`;
-            document.getElementById('response').textContent = '✅ Login exitoso! Token almacenado.\n\n' + 
-              JSON.stringify(data, null, 2);
+            addMessage('SISTEMA', '✅ Login exitoso! Token almacenado. Ya puedes conectar a SignalR. 💖', 'success');
           } else {
             status.className = 'status-item status-disconnected';
-            status.textContent = '🔓 Error de autenticación';
-            showError(data.message || '❌ Credenciales inválidas 💔');
+            status.textContent = '🔓 Error';
+            addMessage('SISTEMA', '❌ ' + (data.message || 'Credenciales inválidas'), 'error');
           }
         } catch (error) {
           status.className = 'status-item status-disconnected';
-          status.textContent = '🔓 Error de conexión';
-          showError('❌ No se pudo conectar al servidor.\n¿Está la API corriendo en ' + API_URL + '?');
+          status.textContent = '🔓 Error';
+          addMessage('SISTEMA', '❌ Error de conexión: ' + error.message, 'error');
         }
 
         btn.disabled = false;
         btn.textContent = '🎀 Login';
       }
 
-      function loadQuery(type) {
-        const queryEl = document.getElementById('query');
-        const varsEl = document.getElementById('variables');
-        
-        queryEl.value = queries[type] || '';
-        
-        // Manejar casos especiales de variables
-        if (type === 'productoById2') {
-          varsEl.value = queries['varsId2'];
-        } else if (queries['vars' + type.charAt(0).toUpperCase() + type.slice(1).replace('sub', '')]) {
-          varsEl.value = queries['vars' + type.charAt(0).toUpperCase() + type.slice(1).replace('sub', '')];
-        } else {
-          varsEl.value = '';
-        }
-        
-        document.getElementById('responseStatus').className = 'status-item status-connected';
-        document.getElementById('responseStatus').textContent = '📡 Query cargada';
-      }
-
-      function showError(msg) {
-        const err = document.getElementById('error');
-        err.textContent = msg;
-        err.style.display = 'block';
-      }
-
-      async function sendQuery() {
-        const endpoint = document.getElementById('token').value.trim() 
-          ? `${API_URL}/graphql` 
-          : `${API_URL}/graphql`;
+      function connectSignalR() {
+        const hubUrl = document.getElementById('hubUrl').value.trim();
         const token = document.getElementById('token').value.trim();
-        const query = document.getElementById('query').value;
-        const varsStr = document.getElementById('variables').value;
-        const status = document.getElementById('responseStatus');
+        const btnConnect = document.getElementById('btnConnect');
+        const btnDisconnect = document.getElementById('btnDisconnect');
+        const status = document.getElementById('signalrStatus');
 
-        if (!query.trim()) {
-          showError('📝 Escribe una query primero 💕');
-          return;
-        }
-
-        status.className = 'status-item status-loading';
-        status.textContent = '⏳ Enviando...';
-
-        let variables;
-        try {
-          variables = varsStr ? JSON.parse(varsStr) : {};
-        } catch (e) {
-          status.className = 'status-item status-disconnected';
-          showError('❌ Error en JSON de variables:\n' + e.message);
+        if (!hubUrl) {
+          alert('📡 Ingresa una URL de Hub SignalR 💕');
           return;
         }
 
         try {
-          const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          };
-          if (token) headers['Authorization'] = `Bearer ${token}`;
+          status.className = 'status-item status-loading';
+          status.textContent = '🔄 Conectando...';
+          btnConnect.disabled = true;
 
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ query, variables })
+          // Crear conexión SignalR con accessTokenFactory
+          connection = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl, {
+              accessTokenFactory: () => token  // ← Aquí se pasa el token
+            })
+            .withAutomaticReconnect([0, 1000, 5000, 10000])
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+          // Registrar manejadores de eventos
+          connection.on('PedidoCreado', (data) => {
+            addMessage('🎉 PEDIDO_CREADO', JSON.stringify(data, null, 2), 'received');
+            markSubActive('subPedidoCreado');
           });
 
-          const contentType = response.headers.get('content-type');
-          if (!contentType?.includes('application/json')) {
-            throw new Error('Respuesta no es JSON. ¿Servidor corriendo?');
-          }
+          connection.on('PedidoActualizado', (data) => {
+            addMessage('🔄 PEDIDO_ACTUALIZADO', JSON.stringify(data, null, 2), 'received');
+            markSubActive('subPedidoActualizado');
+          });
 
-          const result = await response.json();
+          connection.on('PedidoEliminado', (data) => {
+            addMessage('❌ PEDIDO_ELIMINADO', JSON.stringify(data, null, 2), 'received');
+            markSubActive('subPedidoEliminado');
+          });
 
-          status.className = 'status-item status-connected';
-          status.textContent = '✅ Respuesta recibida';
+          connection.on('ProductoCreado', (data) => {
+            addMessage('📦 PRODUCTO_CREADO', JSON.stringify(data, null, 2), 'received');
+            markSubActive('subProductoCreado');
+          });
 
-          if (result.errors?.length > 0) {
-            showError('❌ GraphQL Errors:\n' + JSON.stringify(result.errors, null, 2));
-            document.getElementById('response').textContent = result.data 
-              ? JSON.stringify(result.data, null, 2) 
-              : '(Sin datos)';
-          } else if (result.data) {
-            document.getElementById('error').style.display = 'none';
-            document.getElementById('response').textContent = JSON.stringify(result.data, null, 2);
-          }
+          connection.on('StockBajo', (data) => {
+            addMessage('⚠️ STOCK_BAJO', JSON.stringify(data, null, 2), 'received');
+            markSubActive('subStockBajo');
+          });
+
+          connection.onclose(() => {
+            status.className = 'status-item status-disconnected';
+            status.textContent = '📡 Desconectado';
+            btnConnect.disabled = false;
+            btnDisconnect.disabled = true;
+            resetSubs();
+            addMessage('SISTEMA', '🔌 SignalR desconectado 💕', 'info');
+          });
+
+          connection.onreconnecting(() => {
+            status.className = 'status-item status-loading';
+            status.textContent = '🔄 Reconectando...';
+          });
+
+          connection.onreconnected(() => {
+            status.className = 'status-item status-connected';
+            status.textContent = '✅ Conectado';
+            addMessage('SISTEMA', '🔄 Reconectado a SignalR! 💖', 'success');
+          });
+
+          connection.start()
+            .then(() => {
+              status.className = 'status-item status-connected';
+              status.textContent = '✅ Conectado';
+              btnConnect.disabled = true;
+              btnDisconnect.disabled = false;
+              reconnectAttempts = 0;
+              addMessage('SISTEMA', '🎉 SignalR conectado! Escuchando eventos... 💖', 'success');
+            })
+            .catch((error) => {
+              status.className = 'status-item status-disconnected';
+              status.textContent = '📡 Error';
+              btnConnect.disabled = false;
+              addMessage('SISTEMA', '❌ Error al conectar: ' + error.message, 'error');
+            });
+
         } catch (error) {
           status.className = 'status-item status-disconnected';
-          showError('❌ Error de conexión:\n' + error.message);
-          document.getElementById('response').textContent = '💔 Error de conexión';
+          status.textContent = '📡 Error';
+          btnConnect.disabled = false;
+          addMessage('SISTEMA', '❌ Error: ' + error.message, 'error');
         }
       }
 
-      // Load default query
-      loadQuery('productos');
+      function disconnectSignalR() {
+        if (connection) {
+          connection.stop();
+          connection = null;
+        }
+      }
+
+      function markSubActive(id) {
+        const el = document.getElementById(id);
+        el.classList.add('active');
+        setTimeout(() => el.classList.remove('active'), 2000);
+      }
+
+      function resetSubs() {
+        document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
+      }
+
+      function addMessage(prefix, content, type) {
+        const container = document.getElementById('receivedMessages');
+        const timestamp = new Date().toLocaleTimeString();
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.style.marginBottom = '10px';
+        messageDiv.style.padding = '10px';
+        messageDiv.style.borderRadius = '10px';
+        
+        if (type === 'received') {
+          messageDiv.style.background = 'rgba(152, 251, 152, 0.3)';
+          messageDiv.style.borderLeft = '4px solid #32CD32';
+        } else if (type === 'error') {
+          messageDiv.style.background = 'rgba(255, 182, 193, 0.5)';
+          messageDiv.style.borderLeft = '4px solid #FF1493';
+        } else {
+          messageDiv.style.background = 'rgba(255, 215, 0, 0.3)';
+          messageDiv.style.borderLeft = '4px solid #FFD700';
+        }
+        
+        messageDiv.innerHTML = `<strong>${prefix}</strong> [${timestamp}]:<br>${content.replace(/\n/g, '<br>')}`;
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
+      }
+
+      // Inicializar URL por defecto
+      document.getElementById('hubUrl').value = 'http://localhost:5000/hubs/pedidos';
     </script>
   </body>
 </html>

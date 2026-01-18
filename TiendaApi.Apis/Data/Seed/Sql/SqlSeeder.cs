@@ -48,6 +48,9 @@ public class SqlSeeder
 
     private async Task SeedUsersAsync()
     {
+        // Contraseñas en texto plano (para testing):
+        // Admin: admin@tienda.com / admin
+        // User:  userdaw@tienda.com / userdaw
         var users = new List<User>
         {
             new()
@@ -55,7 +58,7 @@ public class SqlSeeder
                 Id = 1,
                 Username = "admin",
                 Email = "admin@tienda.com",
-                PasswordHash = "$2a$11$vHqmFyFyRqKtaVJEz0XqFeI/xlPNGOKJbBYGzN0PqnQZQqZm3LzYy",
+                PasswordHash = "$2a$11$vHqmFyFyRqKtaVJEz0XqFeI/xlPNGOKJbBYGzN0PqnQZQqZm3LzYy", // bcrypt("admin")
                 Role = UserRoles.ADMIN,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
@@ -66,7 +69,7 @@ public class SqlSeeder
                 Id = 2,
                 Username = "userdaw",
                 Email = "userdaw@tienda.com",
-                PasswordHash = "$2a$11$y6x2PMrc.RgbGfXM.UVMReFNNQs6YnmsdAm2S3ieRo/FlWb86gLsi",
+                PasswordHash = "$2a$11$y6x2PMrc.RgbGfXM.UVMReFNNQs6YnmsdAm2S3ieRo/FlWb86gLsi", // bcrypt("userdaw")
                 Role = UserRoles.USER,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,

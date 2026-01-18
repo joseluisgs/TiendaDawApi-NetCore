@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>💖 Cliente GraphQL para TiendaDAW 💖</title>
+    <title>💖 Cliente WebSocket para TiendaDAW 💖</title>
     <link href="https://fonts.googleapis.com/css2?family=Knewave&family=Balsamiq+Sans&display=swap" rel="stylesheet">
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -257,8 +257,8 @@
         color: var(--hk-purple);
       }
 
-      /* Config Section */
-      .config-section {
+      /* Token Display */
+      .token-section {
         background: linear-gradient(135deg, #FFF5EE, #FFE4E1);
         border: 4px solid var(--hk-light-pink);
         border-radius: 20px;
@@ -286,40 +286,6 @@
       .section-title::before { left: 10px; }
       .section-title::after { right: 10px; }
 
-      .form-row {
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-      }
-
-      .form-group {
-        flex: 1;
-        min-width: 200px;
-      }
-
-      .form-group label {
-        display: block;
-        color: var(--hk-red);
-        font-weight: bold;
-        margin-bottom: 8px;
-      }
-
-      .form-group input, .form-group textarea {
-        width: 100%;
-        padding: 12px 15px;
-        border: 3px solid var(--hk-light-pink);
-        border-radius: 20px;
-        font-size: 1em;
-        font-family: 'Balsamiq Sans', cursive;
-        transition: all 0.3s ease;
-      }
-
-      .form-group input:focus, .form-group textarea:focus {
-        outline: none;
-        border-color: var(--hk-pink);
-        box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
-      }
-
       .token-display {
         background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
         border: 3px solid var(--hk-purple);
@@ -341,22 +307,113 @@
         font-size: 0.85em;
         padding: 0 !important;
         margin-top: 5px;
+        width: 100%;
       }
 
       .token-display input:focus {
         box-shadow: none !important;
+        outline: none;
       }
 
-      /* Quick Buttons */
-      .quick-queries {
+      /* URL Section */
+      .url-section {
+        background: linear-gradient(135deg, #E0FFFF, #87CEEB);
+        border: 4px solid #4682B4;
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .url-section .section-title {
+        color: #191970;
+      }
+
+      .url-form {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+
+      .url-group {
+        flex: 1;
+        min-width: 300px;
+      }
+
+      .url-group label {
+        display: block;
+        color: #4682B4;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .url-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 3px solid #87CEEB;
+        border-radius: 25px;
+        font-size: 1em;
+        font-family: 'Balsamiq Sans', cursive;
+        transition: all 0.3s ease;
+        background: white;
+      }
+
+      .url-group input:focus {
+        outline: none;
+        border-color: #4682B4;
+        box-shadow: 0 0 20px rgba(70, 130, 180, 0.4);
+      }
+
+      .btn-connect {
+        padding: 12px 30px;
+        background: linear-gradient(135deg, var(--hk-green), #32CD32);
+        color: #006400;
+        border: 3px solid #228B22;
+        border-radius: 25px;
+        font-family: 'Knewave', cursive;
+        font-size: 1.2em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-connect:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(50, 205, 50, 0.5);
+      }
+
+      .btn-connect:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-disconnect {
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #FFB6C1, #FF69B4);
+        color: var(--hk-red);
+        border: 3px solid var(--hk-red);
+        border-radius: 25px;
+        font-family: 'Knewave', cursive;
+        font-size: 1.2em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-disconnect:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255, 105, 180, 0.5);
+      }
+
+      /* Quick URLs */
+      .quick-urls {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
         justify-content: center;
-        margin-bottom: 15px;
+        margin-top: 15px;
       }
 
-      .btn-quick {
+      .btn-url {
         padding: 8px 18px;
         background: linear-gradient(135deg, var(--hk-blue), #4682B4);
         color: white;
@@ -368,76 +425,25 @@
         transition: all 0.3s ease;
       }
 
-      .btn-quick:hover {
+      .btn-url:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(70, 130, 180, 0.4);
       }
 
-      .btn-quick.admin {
+      .btn-url.auth {
         background: linear-gradient(135deg, #FFB347, #FF8C00);
         border-color: #FF8C00;
       }
 
-      .btn-quick.sub {
-        background: linear-gradient(135deg, var(--hk-green), #32CD32);
-        border-color: #32CD32;
-      }
-
-      /* Editor */
-      .editor-section {
-        background: linear-gradient(135deg, #FFF8DC, #FAF0E6);
-        border: 4px dashed var(--hk-yellow);
-        border-radius: 20px;
-        padding: 20px;
-        margin-bottom: 20px;
-      }
-
-      .editor-section textarea {
-        width: 100%;
-        min-height: 180px;
-        padding: 15px;
-        border: 3px solid var(--hk-light-pink);
-        border-radius: 20px;
-        font-family: 'Balsamiq Sans', cursive;
-        font-size: 0.9em;
-        box-sizing: border-box;
-        transition: all 0.3s ease;
-      }
-
-      .editor-section textarea:focus {
-        outline: none;
-        border-color: var(--hk-pink);
-        box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
-      }
-
-      .btn-send {
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, var(--hk-pink), var(--hk-red));
-        color: white;
-        border: 4px solid var(--hk-red);
-        border-radius: 25px;
-        font-family: 'Knewave', cursive;
-        font-size: 1.4em;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 15px;
-      }
-
-      .btn-send:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(255, 15, 147, 0.5);
-      }
-
-      /* Response */
-      .response-section {
+      /* Received Messages */
+      .received-section {
         background: linear-gradient(135deg, #F0FFF0, #F5FFFA);
         border: 4px solid var(--hk-green);
         border-radius: 20px;
         padding: 20px;
       }
 
-      #response {
+      #receivedMessages {
         background: #1e1e1e;
         border: 3px solid #333;
         border-radius: 15px;
@@ -445,20 +451,10 @@
         color: #00ff00;
         font-family: 'Balsamiq Sans', cursive;
         font-size: 0.85em;
-        max-height: 350px;
+        max-height: 500px;
         overflow-y: auto;
         white-space: pre-wrap;
         word-wrap: break-word;
-      }
-
-      #error {
-        background: linear-gradient(135deg, #FFE4E1, #FFB6C1);
-        border: 4px solid var(--hk-red);
-        border-radius: 15px;
-        padding: 15px;
-        color: #8B0000;
-        font-weight: bold;
-        margin-top: 15px;
       }
 
       /* Status */
@@ -525,31 +521,31 @@
       }
 
       /* Scrollbar */
-      #response::-webkit-scrollbar {
+      #receivedMessages::-webkit-scrollbar {
         width: 12px;
       }
 
-      #response::-webkit-scrollbar-track {
+      #receivedMessages::-webkit-scrollbar-track {
         background: #333;
         border-radius: 10px;
       }
 
-      #response::-webkit-scrollbar-thumb {
+      #receivedMessages::-webkit-scrollbar-thumb {
         background: var(--hk-pink);
         border-radius: 10px;
       }
 
       @media (max-width: 768px) {
-        .login-form {
+        .login-form, .url-form {
           flex-direction: column;
           align-items: stretch;
         }
         
-        .input-group {
+        .input-group, .url-group {
           max-width: 100%;
         }
         
-        .btn-login {
+        .btn-login, .btn-connect, .btn-disconnect {
           width: 100%;
         }
       }
@@ -559,21 +555,21 @@
     <div class="floating-ribbon">🎀</div>
 
     <div class="container">
-      <h1>💖 Cliente GraphQL para TiendaDAW 💖</h1>
+      <h1>💖 Cliente WebSocket para TiendaDAW 💖</h1>
 
       <!-- Status Bar -->
       <div class="status-bar">
         <div id="authStatus" class="status-item status-disconnected">
           🔓 Sin autenticación
         </div>
-        <div id="responseStatus" class="status-item status-disconnected">
-          📡 Sin consultas
+        <div id="wsStatus" class="status-item status-disconnected">
+          📡 WebSocket desconectado
         </div>
       </div>
 
       <!-- Login Section -->
       <div class="login-section">
-        <h2 class="login-title">🔐 Iniciar Sesión para Obtener Token</h2>
+        <h2 class="login-title">🔐 Login para obtener Token</h2>
         <div class="login-form">
           <div class="input-group">
             <label for="email">📧 Email</label>
@@ -599,192 +595,63 @@
         </div>
       </div>
 
-      <!-- Token Display -->
-      <div class="config-section">
-        <h3 class="section-title">🔐 Token JWT (Auto-rellenado tras Login)</h3>
+      <!-- Token Section -->
+      <div class="token-section">
+        <h3 class="section-title">🔐 Token JWT</h3>
         <div class="token-display">
-          <label for="token">Tu Token:</label>
+          <label for="token">Tu Token (se usa para WS de pedidos):</label>
           <input type="text" id="token" placeholder="Pega tu token aquí o usa el login arriba">
         </div>
       </div>
 
-      <!-- Queries -->
-      <div class="config-section">
-        <h3 class="section-title">📋 Queries (Públicas)</h3>
-        <div class="quick-queries">
-          <button class="btn-quick" onclick="loadQuery('hello')">👋 Hello</button>
-          <button class="btn-quick" onclick="loadQuery('productos')">📦 Todos</button>
-          <button class="btn-quick" onclick="loadQuery('productoById')">🎁 Laptop (ID:1)</button>
-          <button class="btn-quick" onclick="loadQuery('productoById2')">👕 Camiseta (ID:2)</button>
-          <button class="btn-quick" onclick="loadQuery('categorias')">📁 Categorías</button>
+      <!-- URL Section -->
+      <div class="url-section">
+        <h3 class="section-title">🔗 Conectar WebSocket</h3>
+        <div class="url-form">
+          <div class="url-group">
+            <label for="wsUrl">📡 WebSocket URL:</label>
+            <input type="text" id="wsUrl" placeholder="ws://localhost:5000/ws/productos">
+          </div>
+          <button id="btnConnect" class="btn-connect" onclick="connectWebSocket()">
+            🔌 Conectar
+          </button>
+          <button id="btnDisconnect" class="btn-disconnect" onclick="disconnectWebSocket()" disabled>
+            💔 Desconectar
+          </button>
+        </div>
+        <div class="quick-urls">
+          <button class="btn-url" onclick="setUrl('ws://localhost:5000/ws/productos')">
+            📦 Productos (público)
+          </button>
+          <button class="btn-url auth" onclick="setUrl('ws://localhost:5000/ws/pedidos?token=' + document.getElementById('token').value)">
+            📋 Pedidos (auth)
+          </button>
         </div>
       </div>
 
-      <!-- Mutations (Admin) -->
-      <div class="config-section">
-        <h3 class="section-title">🛠️ Mutations (Requiere Token Admin)</h3>
-        <div class="quick-queries">
-          <button class="btn-quick admin" onclick="loadQuery('createProducto')">➕ Nuevo Producto</button>
-          <button class="btn-quick admin" onclick="loadQuery('updateProducto')">✏️ Update Laptop</button>
-          <button class="btn-quick admin" onclick="loadQuery('deleteProducto')">🗑️ Delete Libro</button>
-        </div>
-      </div>
+      <!-- Received Messages -->
+      <div class="received-section">
+        <h3 class="section-title">📨 Notificaciones Recibidas</h3>
+        <div id="receivedMessages">💖 Esperando notificaciones... ✨
 
-      <!-- Subscriptions -->
-      <div class="config-section">
-        <h3 class="section-title">📡 Subscriptions (Usa GraphiQL)</h3>
-        <div class="quick-queries">
-          <button class="btn-quick sub" onclick="loadQuery('subCreado')">🎉 OnCreado</button>
-          <button class="btn-quick sub" onclick="loadQuery('subActualizado')">🔄 OnActualizado</button>
-          <button class="btn-quick sub" onclick="loadQuery('subEliminado')">❌ OnEliminado</button>
-          <button class="btn-quick sub" onclick="loadQuery('subStock')">⚠️ OnStockBajo</button>
-        </div>
-      </div>
-
-      <!-- Editor -->
-      <div class="editor-section">
-        <h3 class="section-title">📝 Query / Mutation</h3>
-        <div class="form-group">
-          <label for="query">📝 Query GraphQL:</label>
-          <textarea id="query"></textarea>
-        </div>
-        
-        <div class="form-group" style="margin-top: 15px;">
-          <label for="variables">📋 Variables (JSON):</label>
-          <textarea id="variables" rows="3" placeholder='{ "id": 1 }'></textarea>
-        </div>
-
-        <button class="btn-send" onclick="sendQuery()">
-          🚀 Enviar Consulta
-        </button>
-      </div>
-
-      <!-- Response -->
-      <div class="response-section">
-        <h3 class="section-title">📬 Respuesta</h3>
-        <div id="response">💖 Waiting for magic... ✨</div>
-        <div id="error" style="display: none"></div>
+Conecta a un WebSocket y espera a que el servidor envíe eventos.</div>
       </div>
 
       <!-- Info -->
       <div class="info-box">
         <h4>💡 Información</h4>
-        <p>• <b>Queries:</b> Públicas - no requieren token</p>
-        <p>• <b>Mutations:</b> Requiere token de admin</p>
-        <p>• <b>Subscriptions:</b> Usa GraphiQL en <code>http://localhost:5000/graphiql</code></p>
-        <p>• <b>Token:</b> Se auto-rellena tras hacer login arriba</p>
+        <p>• <b>Productos:</b> WS público - broadcast a todos</p>
+        <p>• <b>Pedidos:</b> WS requiere token en query string <code>?token=JWT</code></p>
+        <p>• <b>Eventos WS:</b> PRODUCTO_CREADO, PRODUCTO_UPDATED, PEDIDO_CREADO, PEDIDO_ESTADO</p>
+        <p>• <b>Token:</b> Auto-rellenado tras login</p>
       </div>
     </div>
 
     <script>
       const API_URL = 'http://localhost:5000';
-      
-      const queries = {
-        hello: `{
-  hello
-}`,
-        productos: `query {
-  productos {
-    id
-    nombre
-    descripcion
-    precio
-    stock
-    imagen
-    categoria {
-      id
-      nombre
-    }
-  }
-}`,
-        productoById: `query($id: Long!) {
-  producto(id: $id) {
-    id
-    nombre
-    descripcion
-    precio
-    stock
-    imagen
-    categoria { nombre }
-  }
-}`,
-        varsId: `{"id": 1}`,
-        categorias: `{
-  categorias {
-    id
-    nombre
-    productos {
-      id
-      nombre
-      precio
-    }
-  }
-}`,
-        productoById2: `query($id: Long!) {
-  producto(id: $id) {
-    id
-    nombre
-    descripcion
-    precio
-    stock
-    imagen
-    categoria {
-      id
-      nombre
-    }
-  }
-}`,
-        varsId2: `{"id": 2}`,
-        createProducto: `mutation($input: CreateProductoInput!) {
-  createProducto(input: $input) {
-    id
-    nombre
-    precio
-    stock
-  }
-}`,
-        varsCreate: `{
-  "input": {
-    "nombre": "iPhone 15 Pro",
-    "descripcion": "Teléfono móvil Apple",
-    "precio": 999.99,
-    "stock": 25,
-    "categoriaId": 1,
-    "imagen": null
-  }
-}`,
-        updateProducto: `mutation($id: Long!, $input: UpdateProductoInput!) {
-  updateProducto(id: $id, input: $input) {
-    id
-    nombre
-    precio
-    stock
-  }
-}`,
-        varsUpdate: `{
-  "id": 1,
-  "input": {
-    "precio": 1199.99,
-    "stock": 8
-  }
-}`,
-        deleteProducto: `mutation($id: Long!) {
-  deleteProducto(id: $id)
-}`,
-        varsDelete: `{"id": 3}`,
-        subCreado: `subscription {
-  onProductoCreado { productoId nombre precio timestamp }
-}`,
-        subActualizado: `subscription {
-  onProductoActualizado { productoId cambios timestamp }
-}`,
-        subEliminado: `subscription {
-  onProductoEliminado { productoId timestamp }
-}`,
-        subStock: `subscription {
-  onStockBajo { productoId stockActual timestamp }
-}`
-      };
+      let ws = null;
+      let reconnectAttempts = 0;
+      const maxReconnectAttempts = 3;
 
       function fillDemo(email, password) {
         document.getElementById('email').value = email;
@@ -798,12 +665,12 @@
         const status = document.getElementById('authStatus');
 
         if (!email || !password) {
-          showError('📧 Completa email y contraseña 💕');
+          alert('📧 Completa email y contraseña 💕');
           return;
         }
 
         btn.disabled = true;
-        btn.textContent = '⏳ Validando...';
+        btn.textContent = '⏳...';
         status.className = 'status-item status-loading';
         status.textContent = '🔄 Autenticando...';
 
@@ -820,115 +687,130 @@
             document.getElementById('token').value = data.token;
             status.className = 'status-item status-connected';
             status.innerHTML = `🔓 ${data.user?.email || email} (${data.user?.role || 'USER'})`;
-            document.getElementById('response').textContent = '✅ Login exitoso! Token almacenado.\n\n' + 
-              JSON.stringify(data, null, 2);
+            addMessage('SISTEMA', '✅ Login exitoso! Token almacenado. Ya puedes conectar a WS de pedidos. 💖', 'success');
           } else {
             status.className = 'status-item status-disconnected';
-            status.textContent = '🔓 Error de autenticación';
-            showError(data.message || '❌ Credenciales inválidas 💔');
+            status.textContent = '🔓 Error';
+            addMessage('SISTEMA', '❌ ' + (data.message || 'Credenciales inválidas'), 'error');
           }
         } catch (error) {
           status.className = 'status-item status-disconnected';
-          status.textContent = '🔓 Error de conexión';
-          showError('❌ No se pudo conectar al servidor.\n¿Está la API corriendo en ' + API_URL + '?');
+          status.textContent = '🔓 Error';
+          addMessage('SISTEMA', '❌ Error de conexión: ' + error.message, 'error');
         }
 
         btn.disabled = false;
         btn.textContent = '🎀 Login';
       }
 
-      function loadQuery(type) {
-        const queryEl = document.getElementById('query');
-        const varsEl = document.getElementById('variables');
-        
-        queryEl.value = queries[type] || '';
-        
-        // Manejar casos especiales de variables
-        if (type === 'productoById2') {
-          varsEl.value = queries['varsId2'];
-        } else if (queries['vars' + type.charAt(0).toUpperCase() + type.slice(1).replace('sub', '')]) {
-          varsEl.value = queries['vars' + type.charAt(0).toUpperCase() + type.slice(1).replace('sub', '')];
-        } else {
-          varsEl.value = '';
-        }
-        
-        document.getElementById('responseStatus').className = 'status-item status-connected';
-        document.getElementById('responseStatus').textContent = '📡 Query cargada';
+      function setUrl(url) {
+        document.getElementById('wsUrl').value = url;
+        addMessage('SISTEMA', '📡 URL configurada: ' + url, 'info');
       }
 
-      function showError(msg) {
-        const err = document.getElementById('error');
-        err.textContent = msg;
-        err.style.display = 'block';
-      }
+      function connectWebSocket() {
+        const url = document.getElementById('wsUrl').value.trim();
+        const btnConnect = document.getElementById('btnConnect');
+        const btnDisconnect = document.getElementById('btnDisconnect');
+        const status = document.getElementById('wsStatus');
 
-      async function sendQuery() {
-        const endpoint = document.getElementById('token').value.trim() 
-          ? `${API_URL}/graphql` 
-          : `${API_URL}/graphql`;
-        const token = document.getElementById('token').value.trim();
-        const query = document.getElementById('query').value;
-        const varsStr = document.getElementById('variables').value;
-        const status = document.getElementById('responseStatus');
-
-        if (!query.trim()) {
-          showError('📝 Escribe una query primero 💕');
-          return;
-        }
-
-        status.className = 'status-item status-loading';
-        status.textContent = '⏳ Enviando...';
-
-        let variables;
-        try {
-          variables = varsStr ? JSON.parse(varsStr) : {};
-        } catch (e) {
-          status.className = 'status-item status-disconnected';
-          showError('❌ Error en JSON de variables:\n' + e.message);
+        if (!url) {
+          alert('📡 Ingresa una URL de WebSocket 💕');
           return;
         }
 
         try {
-          const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+          status.className = 'status-item status-loading';
+          status.textContent = '🔄 Conectando...';
+          btnConnect.disabled = true;
+
+          ws = new WebSocket(url);
+
+          ws.onopen = () => {
+            status.className = 'status-item status-connected';
+            status.textContent = '✅ Conectado';
+            btnConnect.disabled = true;
+            btnDisconnect.disabled = false;
+            reconnectAttempts = 0;
+            addMessage('SISTEMA', '🎉 WebSocket conectado! 💖', 'success');
           };
-          if (token) headers['Authorization'] = `Bearer ${token}`;
 
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ query, variables })
-          });
+          ws.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              addMessage('RECIBIDO', JSON.stringify(data, null, 2), 'received');
+            } catch {
+              addMessage('RECIBIDO', event.data, 'received');
+            }
+          };
 
-          const contentType = response.headers.get('content-type');
-          if (!contentType?.includes('application/json')) {
-            throw new Error('Respuesta no es JSON. ¿Servidor corriendo?');
-          }
+          ws.onclose = (event) => {
+            status.className = 'status-item status-disconnected';
+            status.textContent = '📡 Desconectado';
+            btnConnect.disabled = false;
+            btnDisconnect.disabled = true;
+            
+            if (event.wasClean) {
+              addMessage('SISTEMA', '🔌 Desconectado cleanly 💕', 'info');
+            } else {
+              addMessage('SISTEMA', '⚠️ Conexión perdida! Reconectando...', 'error');
+              
+              if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                setTimeout(() => connectWebSocket(), 2000);
+              }
+            }
+          };
 
-          const result = await response.json();
+          ws.onerror = (error) => {
+            addMessage('SISTEMA', '❌ Error en WebSocket 💔', 'error');
+          };
 
-          status.className = 'status-item status-connected';
-          status.textContent = '✅ Respuesta recibida';
-
-          if (result.errors?.length > 0) {
-            showError('❌ GraphQL Errors:\n' + JSON.stringify(result.errors, null, 2));
-            document.getElementById('response').textContent = result.data 
-              ? JSON.stringify(result.data, null, 2) 
-              : '(Sin datos)';
-          } else if (result.data) {
-            document.getElementById('error').style.display = 'none';
-            document.getElementById('response').textContent = JSON.stringify(result.data, null, 2);
-          }
         } catch (error) {
           status.className = 'status-item status-disconnected';
-          showError('❌ Error de conexión:\n' + error.message);
-          document.getElementById('response').textContent = '💔 Error de conexión';
+          status.textContent = '📡 Error';
+          btnConnect.disabled = false;
+          addMessage('SISTEMA', '❌ Error: ' + error.message, 'error');
         }
       }
 
-      // Load default query
-      loadQuery('productos');
+      function disconnectWebSocket() {
+        if (ws) {
+          ws.close(1000, 'Desconexión manual');
+          ws = null;
+        }
+      }
+
+      function addMessage(prefix, content, type) {
+        const container = document.getElementById('receivedMessages');
+        const timestamp = new Date().toLocaleTimeString();
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.style.marginBottom = '10px';
+        messageDiv.style.padding = '10px';
+        messageDiv.style.borderRadius = '10px';
+        
+        if (type === 'sent') {
+          messageDiv.style.background = 'rgba(135, 206, 235, 0.3)';
+          messageDiv.style.borderLeft = '4px solid #4682B4';
+        } else if (type === 'received') {
+          messageDiv.style.background = 'rgba(152, 251, 152, 0.3)';
+          messageDiv.style.borderLeft = '4px solid #32CD32';
+        } else if (type === 'error') {
+          messageDiv.style.background = 'rgba(255, 182, 193, 0.5)';
+          messageDiv.style.borderLeft = '4px solid #FF1493';
+        } else {
+          messageDiv.style.background = 'rgba(255, 215, 0, 0.3)';
+          messageDiv.style.borderLeft = '4px solid #FFD700';
+        }
+        
+        messageDiv.innerHTML = `<strong>${prefix}</strong> [${timestamp}]:<br>${content.replace(/\n/g, '<br>')}`;
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
+      }
+
+      // Inicializar URL por defecto
+      setUrl('ws://localhost:5000/ws/productos');
     </script>
   </body>
 </html>
