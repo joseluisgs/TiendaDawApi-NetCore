@@ -23,7 +23,7 @@ using TiendaApi.Apis.Validators.Productos;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Storage;
-using TiendaApi.Apis.WebSockets.Productos;
+using TiendaApi.Apis.Realtime.Productos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Productos.Services;
 
@@ -127,7 +127,7 @@ public class ProductoServiceIntegrationTests
             return mockStorage.Object;
         });
         services.AddScoped<IEmailService, MemoryEmailService>();
-        services.AddScoped<ProductoWebSocketHandler>();
+        services.AddScoped<ProductosWebSocketHandler>();
 
         // Mock IEventPublisher for GraphQL subscriptions
         services.AddScoped<IEventPublisher>(sp =>

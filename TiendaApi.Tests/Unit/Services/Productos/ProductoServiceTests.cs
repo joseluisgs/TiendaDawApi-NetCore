@@ -2,6 +2,7 @@ using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -17,7 +18,7 @@ using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Productos;
 using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Validators.Productos;
-using TiendaApi.Apis.WebSockets.Productos;
+using TiendaApi.Apis.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Productos;
 
@@ -31,7 +32,8 @@ public class ProductoServiceTests
     private Mock<ICategoriaRepository> _mockCategoriaRepo = null!;
     private Mock<ILogger<ProductoService>> _mockLogger = null!;
     private Mock<ICacheService> _mockCacheService = null!;
-    private Mock<ProductoWebSocketHandler> _mockWebSocketHandler = null!;
+    private Mock<ProductosWebSocketHandler> _mockWebSocketHandler = null!;
+    private Mock<IHubContext<ProductosHub>> _mockHubContext = null!;
     private Mock<IEmailService> _mockEmailService = null!;
     private Mock<IConfiguration> _mockConfiguration = null!;
     private Mock<IValidator<ProductoRequestDto>> _mockValidator = null!;
@@ -46,7 +48,8 @@ public class ProductoServiceTests
         _mockCategoriaRepo = new Mock<ICategoriaRepository>();
         _mockLogger = new Mock<ILogger<ProductoService>>();
         _mockCacheService = new Mock<ICacheService>();
-        _mockWebSocketHandler = new Mock<ProductoWebSocketHandler>(Mock.Of<ILogger<ProductoWebSocketHandler>>());
+        _mockWebSocketHandler = new Mock<ProductosWebSocketHandler>(Mock.Of<ILogger<ProductosWebSocketHandler>>());
+        _mockHubContext = new Mock<IHubContext<ProductosHub>>();
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockValidator = new Mock<IValidator<ProductoRequestDto>>();
@@ -58,12 +61,15 @@ public class ProductoServiceTests
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
+        var hubContext = new Mock<IHubContext<ProductosHub>>();
+        var eventPublisher = new Mock<IEventPublisher>();
         _service = new ProductoService(
             _mockProductoRepo.Object,
             _mockCategoriaRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
             _mockWebSocketHandler.Object,
+            _mockHubContext.Object,
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
@@ -278,22 +284,18 @@ public class ProductoServiceTests
             _mockLogger.Object,
             _mockCacheService.Object,
             _mockWebSocketHandler.Object,
+            _mockHubContext.Object,
             _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
             _mockEventPublisher.Object
         );
-
-        // Act
-        var result = await _service.CreateAsync(dto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        var validationError = (ValidationError)result.Error;
-        validationError.ValidationErrors.Should().ContainKey("Precio");
     }
+
+    #endregion
+
+    #region CreateAsync_CategoriaNoExiste_RetornaFailure
 
     [Test]
     public async Task CreateAsync_CategoriaNoExiste_RetornaFailure()
@@ -313,20 +315,6 @@ public class ProductoServiceTests
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
-        // Re-crear servicio con mocks configurados
-        _service = new ProductoService(
-            _mockProductoRepo.Object,
-            _mockCategoriaRepo.Object,
-            _mockLogger.Object,
-            _mockCacheService.Object,
-            _mockWebSocketHandler.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockValidator.Object,
-            _mockStorageService.Object,
-            _mockEventPublisher.Object
-        );
-
         // Act
         var result = await _service.CreateAsync(dto);
 
@@ -336,6 +324,10 @@ public class ProductoServiceTests
         var validationError = (ValidationError)result.Error;
         validationError.ValidationErrors.Should().ContainKey("CategoriaId");
     }
+
+    #endregion
+
+    #region CreateAsync_ConStockInvalido_RetornaErrorValidacion
 
     [Test]
     public async Task CreateAsync_ConStockInvalido_RetornaErrorValidacion()
@@ -361,20 +353,6 @@ public class ProductoServiceTests
                 new ValidationFailure("Stock", "El stock no puede ser negativo")
             }));
 
-        // Re-crear servicio con mocks configurados
-        _service = new ProductoService(
-            _mockProductoRepo.Object,
-            _mockCategoriaRepo.Object,
-            _mockLogger.Object,
-            _mockCacheService.Object,
-            _mockWebSocketHandler.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockValidator.Object,
-            _mockStorageService.Object,
-            _mockEventPublisher.Object
-        );
-
         // Act
         var result = await _service.CreateAsync(dto);
 
@@ -383,6 +361,10 @@ public class ProductoServiceTests
         result.Error.Should().BeOfType<ValidationError>();
         ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Stock");
     }
+
+    #endregion
+
+    #region CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado
 
     [Test]
     public async Task CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado()

@@ -2,23 +2,23 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Dtos.Productos;
-using TiendaApi.Apis.WebSockets.Productos;
+using TiendaApi.Apis.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.WebSockets.Productos;
 
 /// <summary>
-/// Tests unitarios para ProductoWebSocketHandler.
+/// Tests unitarios para ProductosWebSocketHandler.
 /// </summary>
 public class WebSocketHandlerTests
 {
-    private Mock<ILogger<ProductoWebSocketHandler>> _mockLogger = null!;
-    private ProductoWebSocketHandler _handler = null!;
+    private Mock<ILogger<ProductosWebSocketHandler>> _mockLogger = null!;
+    private ProductosWebSocketHandler _handler = null!;
 
     [SetUp]
     public void Setup()
     {
-        _mockLogger = new Mock<ILogger<ProductoWebSocketHandler>>();
-        _handler = new ProductoWebSocketHandler(_mockLogger.Object);
+        _mockLogger = new Mock<ILogger<ProductosWebSocketHandler>>();
+        _handler = new ProductosWebSocketHandler(_mockLogger.Object);
     }
 
     #region Tests NotifyAsync (CREATE)

@@ -1,8 +1,30 @@
-namespace TiendaApi.Apis.WebSockets.Productos;
+namespace TiendaApi.Apis.Realtime.Common;
 
 /// <summary>
-/// DTO para mensajes de notificación de productos vía WebSocket.
+/// DTO para mensajes de notificación de productos en tiempo real.
 /// </summary>
+/// <remarks>
+/// <para><b>Ejemplo de uso:</b></para>
+/// <code>
+/// var notification = new ProductoNotificationDto
+/// {
+///     Type = NotificationType.CREATED,
+///     ProductoId = 123,
+///     ProductoNombre = "Laptop",
+///     Data = productoDto
+/// };
+/// </code>
+/// 
+/// <para><b>Serialización:</b></para>
+/// <code>
+/// {
+///   "type": "CREATED",
+///   "productoId": 123,
+///   "productoNombre": "Laptop",
+///   "timestamp": "2025-01-18T10:30:00Z"
+/// }
+/// </code>
+/// </remarks>
 public class ProductoNotificationDto
 {
     /// <summary>

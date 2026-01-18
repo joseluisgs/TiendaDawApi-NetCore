@@ -4,8 +4,6 @@ using TiendaApi.Apis.Data;
 using TiendaApi.Apis.Data.Seed.Mongo;
 using TiendaApi.Apis.Infrastructures;
 using TiendaApi.Apis.Middleware;
-using TiendaApi.Apis.WebSockets.Pedidos;
-using TiendaApi.Apis.WebSockets.Productos;
 
 // Configuración de Serilog
 Log.Logger = SerilogConfig.Configure().CreateLogger();
@@ -48,6 +46,9 @@ services.AddEmail(environment);
 services.AddStorage();
 services.AddWebSockets();
 
+// SignalR (Realtime)
+services.AddRealtimeSignalR();
+
 // GraphQL
 services.AddGraphQL(environment);
 
@@ -76,6 +77,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseWebSockets();
 app.MapWebSocketEndpoints();
+app.MapSignalRHubs();
 app.UseStaticFiles();
 app.MapControllers();
 app.MapGraphQL();
@@ -125,8 +127,12 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     Log.Information("GraphiQL UI:            http://localhost:{Port}/graphiql", port);
     Log.Information("=================================================================");
     Log.Information("WEBSOCKETS:");
-    Log.Information("  Productos (broadcast): ws://localhost:{Port}/ws/v1/productos", port);
-    Log.Information("  Pedidos (auth JWT):     ws://localhost:{Port}/ws/v1/pedidos?token=JWT", port);
+    Log.Information("  Productos (publico):  ws://localhost:{Port}/ws/productos", port);
+    Log.Information("  Pedidos (auth JWT):   ws://localhost:{Port}/ws/pedidos?token=JWT", port);
+    Log.Information("=================================================================");
+    Log.Information("SIGNALR (Realtime):");
+    Log.Information("  Productos (publico):  ws://localhost:{Port}/hubs/productos", port);
+    Log.Information("  Pedidos (auth JWT):   ws://localhost:{Port}/hubs/pedidos", port);
     Log.Information("=================================================================");
     Log.Information("ENDPOINTS REST:");
     Log.Information("  Auth:       POST /api/v1/auth/signup, /api/v1/auth/signin");

@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Errors;
@@ -9,31 +10,38 @@ using TiendaApi.Apis.GraphQL.Events;
 using TiendaApi.Apis.GraphQL.Publishers;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Realtime.Productos;
 using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Storage;
 using TiendaApi.Apis.Validators.Productos;
-using TiendaApi.Apis.WebSockets.Productos;
 
 namespace TiendaApi.Apis.Services.Productos;
 
 /// <summary>
 /// Servicio de productos usando Patrón Result.
-/// Las operaciones de caché, WebSocket y email se ejecutan en Task.Run (fire & forget)
-/// para no bloquear el hilo principal. Esto es especialmente importante si:
-/// - La caché está en Redis (latencia de red)
-/// - WebSocket tarda en enviar la notificación
-/// - El email falla o tarda en encolarse
-/// Si cualquiera de estas operaciones falla, se registra un warning pero no afecta a la respuesta.
+/// Las operaciones de caché, WebSocket nativo, SignalR, email y GraphQL Subscriptions
+/// se ejecutan en Task.Run (fire & forget) para no bloquear el hilo principal.
+/// 
+/// <para><b>Canales de notificación en tiempo real:</b></para>
+/// <list type="bullet">
+///   <item><description>WebSocket nativo: Notificaciones de broadcast a todos los clientes conectados públicamente</description></item>
+///   <item><description>SignalR: Notificaciones con autenticación y soporte para grupos (user-{id}, admins)</description></item>
+///   <item><description>Email: Notificaciones al administrador cuando se crea un producto</description></item>
+///   <item><description>GraphQL Subscriptions: Eventos para suscripciones GraphQL en tiempo real</description></item>
+/// </list>
+/// 
+/// <para><b>Nota:</b> Si cualquier operación secondary falla, se registra un warning pero no afecta a la respuesta.</para>
 /// </summary>
 public class ProductoService(
     IProductoRepository productoRepository,
     ICategoriaRepository categoriaRepository,
     ILogger<ProductoService> logger,
     ICacheService cacheService,
-    ProductoWebSocketHandler webSocketHandler,
+    ProductosWebSocketHandler webSocketHandler,
+    IHubContext<ProductosHub> productosHubContext,
     IEmailService emailService,
     IConfiguration configuration,
     IValidator<ProductoRequestDto> productoValidator,
@@ -169,6 +177,7 @@ public class ProductoService(
                 logger.LogInformation("Producto creado con ID: {Id}", dto.Id);
                 InvalidarCacheProducto("productos:all");
                 NotificarWebSocketProductoCreado(dto);
+                NotificarSignalRProductoCreado(dto);
                 EnviarEmailProductoCreado(saved);
                 EventoSuscripcionProductoCreado(dto);
             });
@@ -214,6 +223,7 @@ public class ProductoService(
                 logger.LogInformation("Producto actualizado con ID: {Id}", id);
                 InvalidarCacheProducto($"productos:{id}", "productos:all");
                 NotificarWebSocketProductoActualizado(resultDto);
+                NotificarSignalRProductoActualizado(resultDto);
                 EventoSuscripcionProductoActualizado(resultDto);
                 EventoSuscripcionStockBajo(resultDto, 10); // Umbral de stock bajo = 10
             });
@@ -251,6 +261,7 @@ public class ProductoService(
 
         InvalidarCacheProducto($"productos:{id}", "productos:all");
         NotificarWebSocketProductoEliminado(id);
+        NotificarSignalRProductoEliminado(id);
         EventoSuscripcionProductoEliminado(id);
 
         return UnitResult.Success<DomainError>();
@@ -349,7 +360,7 @@ public class ProductoService(
             });
     }
 
-    // ========== MÉTODOS PRIVADOS - CACHE ==========
+    #region Métodos Privados - Cache
 
     /// <summary>
     /// Añade un elemento a la caché de forma asíncrona (fire & forget).
@@ -390,7 +401,9 @@ public class ProductoService(
         });
     }
 
-    // ========== MÉTODOS PRIVADOS - WEBSOCKET ==========
+    #endregion
+
+    #region Métodos Privados - WebSocket Nativo
 
     /// <summary>
     /// Notifica vía WebSocket la creación de un producto.
@@ -461,7 +474,100 @@ public class ProductoService(
         });
     }
 
-    // ========== MÉTODOS PRIVADOS - EMAIL ==========
+    #endregion
+
+    #region Métodos Privados - SignalR
+
+    /// <summary>
+    /// Notifica vía SignalR la creación de un producto.
+    /// </summary>
+    private void NotificarSignalRProductoCreado(ProductoDto producto)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var payload = new
+                {
+                    productoId = producto.Id,
+                    nombre = producto.Nombre,
+                    descripcion = producto.Descripcion,
+                    precio = producto.Precio,
+                    stock = producto.Stock,
+                    categoriaId = producto.CategoriaId,
+                    categoriaNombre = producto.CategoriaNombre,
+                    tipo = "PRODUCTO_CREADO",
+                    timestamp = DateTime.UtcNow
+                };
+                await productosHubContext.Clients.All.SendAsync("ProductoCreado", payload);
+                logger.LogDebug("Notificación SignalR enviada tras crear producto: {ProductoId}", producto.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación SignalR al crear producto: {ProductoId}", producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Notifica vía SignalR la actualización de un producto.
+    /// </summary>
+    private void NotificarSignalRProductoActualizado(ProductoDto producto)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var payload = new
+                {
+                    productoId = producto.Id,
+                    nombre = producto.Nombre,
+                    descripcion = producto.Descripcion,
+                    precio = producto.Precio,
+                    stock = producto.Stock,
+                    categoriaId = producto.CategoriaId,
+                    categoriaNombre = producto.CategoriaNombre,
+                    tipo = "PRODUCTO_ACTUALIZADO",
+                    timestamp = DateTime.UtcNow
+                };
+                await productosHubContext.Clients.All.SendAsync("ProductoActualizado", payload);
+                logger.LogDebug("Notificación SignalR enviada tras actualizar producto: {ProductoId}", producto.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación SignalR al actualizar producto: {ProductoId}", producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Notifica vía SignalR la eliminación de un producto.
+    /// </summary>
+    private void NotificarSignalRProductoEliminado(long productoId)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var payload = new
+                {
+                    productoId,
+                    tipo = "PRODUCTO_ELIMINADO",
+                    timestamp = DateTime.UtcNow
+                };
+                await productosHubContext.Clients.All.SendAsync("ProductoEliminado", payload);
+                logger.LogDebug("Notificación SignalR enviada tras eliminar producto: {ProductoId}", productoId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación SignalR al eliminar producto: {ProductoId}", productoId);
+            }
+        });
+    }
+
+    #endregion
+
+    #region Métodos Privados - Email
 
     /// <summary>
     /// Envía email de notificación cuando se crea un producto.
@@ -495,7 +601,9 @@ public class ProductoService(
         });
     }
 
-    // ========== VALIDACIÓN ==========
+    #endregion
+
+    #region Métodos Privados - Validación
 
     /// <summary>
     /// Valida los datos de un producto usando FluentValidation.
@@ -533,7 +641,9 @@ public class ProductoService(
         return UnitResult.Success<DomainError>();
     }
 
-    // ========== EVENTOS DE GRAPHQL SUBSCRIPTIONS ==========
+    #endregion
+
+    #region Métodos Privados - GraphQL Subscriptions
 
     /// <summary>
     /// Publica evento de GraphQL Subscription cuando se crea un producto.
@@ -637,4 +747,6 @@ public class ProductoService(
             }
         });
     }
+
+    #endregion
 }

@@ -4,17 +4,29 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using TiendaApi.Apis.Dtos.Productos;
+using TiendaApi.Apis.Realtime.Common;
 
-namespace TiendaApi.Apis.WebSockets.Productos;
+namespace TiendaApi.Apis.Realtime.Productos;
 
 /// <summary>
 /// Tipos de notificación para eventos de productos.
 /// </summary>
 public static class ProductoNotificationType
 {
-    public const string CREATED = "PRODUCTO_CREATED";
-    public const string UPDATED = "PRODUCTO_UPDATED";
-    public const string DELETED = "PRODUCTO_DELETED";
+    /// <summary>
+    /// Notificación de producto creado.
+    /// </summary>
+    public const string CREATED = "PRODUCTO_CREADO";
+
+    /// <summary>
+    /// Notificación de producto actualizado.
+    /// </summary>
+    public const string UPDATED = "PRODUCTO_ACTUALIZADO";
+
+    /// <summary>
+    /// Notificación de producto eliminado.
+    /// </summary>
+    public const string DELETED = "PRODUCTO_ELIMINADO";
 }
 
 /// <summary>
@@ -41,22 +53,17 @@ public record ProductoNotificacion(
 /// </list>
 /// 
 /// <para><b>EndPoint de conexión:</b></para>
-/// <code>ws://localhost:5000/ws/v1/productos</code>
+/// <code>ws://localhost:5000/ws/productos</code>
 /// 
 /// <para><b>Ejemplo de conexión desde cliente JavaScript:</b></para>
 /// <code>
 /// // Sin autenticación requerida
-/// const ws = new WebSocket('ws://localhost:5000/ws/v1/productos');
-/// 
+/// const ws = new WebSocket('ws://localhost:5000/ws/productos');
+///
 /// ws.onmessage = (event) => {
 ///     const data = JSON.parse(event.data);
 ///     console.log('Notificación de producto:', data);
 /// };
-/// </code>
-/// 
-/// <para><b>Ejemplo de URL completa:</b></para>
-/// <code>
-/// ws://localhost:5000/ws/v1/productos
 /// </code>
 /// 
 /// <para><b>Casos de uso:</b></para>
@@ -70,7 +77,7 @@ public record ProductoNotificacion(
 /// <code>
 /// {
 ///   "entity": "productos",
-///   "type": "PRODUCTO_CREATED",
+///   "type": "PRODUCTO_CREADO",
 ///   "productoId": 123,
 ///   "producto": {
 ///     "id": 123,
@@ -78,30 +85,30 @@ public record ProductoNotificacion(
 ///     "precio": 99.99,
 ///     "stock": 50
 ///   },
-///   "timestamp": "2025-01-16T10:30:00Z"
+///   "timestamp": "2025-01-18T10:30:00Z"
 /// }
 /// </code>
 /// 
 /// <para><b>Tipos de eventos:</b></para>
 /// <list type="table">
 ///   <item>
-///     <term>PRODUCTO_CREATED</term>
+///     <term>PRODUCTO_CREADO</term>
 ///     <description>Se creó un nuevo producto. Incluye datos del producto.</description>
 ///   </item>
 ///   <item>
-///     <term>PRODUCTO_UPDATED</term>
+///     <term>PRODUCTO_ACTUALIZADO</term>
 ///     <description>Se actualizó un producto. Incluye datos actualizados.</description>
 ///   </item>
 ///   <item>
-///     <term>PRODUCTO_DELETED</term>
+///     <term>PRODUCTO_ELIMINADO</term>
 ///     <description>Se eliminó un producto. producto es null, solo envía productoId.</description>
 ///   </item>
 /// </list>
 /// </remarks>
-public class ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
+public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger)
 {
     private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
-    private readonly ILogger<ProductoWebSocketHandler> _logger = logger;
+    private readonly ILogger<ProductosWebSocketHandler> _logger = logger;
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -121,16 +128,6 @@ public class ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
     ///   <item><description>La conexión se almacena en el diccionario de conexiones.</description></item>
     ///   <item><description>Cuando se cierra la conexión, se elimina del diccionario.</description></item>
     /// </list>
-    /// 
-    /// <para><b>Ejemplo de conexión:</b></para>
-    /// <code>
-    /// // JavaScript
-    /// const ws = new WebSocket('ws://localhost:5000/ws/v1/productos');
-    /// 
-    /// ws.onopen = () => {
-    ///     console.log('Conectado al WebSocket de productos');
-    /// };
-    /// </code>
     /// </remarks>
     public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket)
     {
@@ -184,7 +181,7 @@ public class ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
     ///     productoDto  // Datos del producto
     /// ));
     /// // TODOS los clientes conectados recibirán esta notificación
-    /// 
+    ///
     /// // Notificar que se eliminó un producto
     /// await NotifyAsync(new ProductoNotificacion(
     ///     ProductoNotificationType.DELETED,
@@ -192,13 +189,6 @@ public class ProductoWebSocketHandler(ILogger<ProductoWebSocketHandler> logger)
     ///     null  // No hay datos del producto eliminado
     /// ));
     /// </code>
-    /// 
-    /// <para><b>Casos de uso:</b></para>
-    /// <list type="bullet">
-    ///   <item><description>Admin crea un producto → Notificar a todos los clientes.</description></item>
-    ///   <item><description>Admin actualiza precio → Notificar cambio a todos.</description></item>
-    ///   <item><description>Admin elimina producto → Notificar eliminación a todos.</description></item>
-    /// </list>
     /// </remarks>
     public async Task NotifyAsync(ProductoNotificacion notificacion)
     {

@@ -20,7 +20,7 @@ using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Pedidos;
 using TiendaApi.Apis.Validators.Pedidos;
-using TiendaApi.Apis.WebSockets.Pedidos;
+using TiendaApi.Apis.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 
@@ -167,7 +167,7 @@ public class PedidosServiceIntegrationTests
     private static void RegisterServices(IServiceCollection services)
     {
         services.AddScoped<ILogger<PedidosService>, Logger<PedidosService>>();
-        services.AddScoped<PedidoWebSocketHandler>();
+        services.AddScoped<PedidosWebSocketHandler>();
         services.AddScoped<IEmailService, MemoryEmailService>();
         services.AddScoped<ICacheService, MemoryCacheService>();
         services.AddScoped<IPedidosService, PedidosService>();

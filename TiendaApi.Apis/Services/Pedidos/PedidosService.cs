@@ -1,5 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using TiendaApi.Apis.Dtos.Common;
@@ -8,12 +10,13 @@ using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Errors.Pedidos;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
+using TiendaApi.Apis.Realtime.Common;
+using TiendaApi.Apis.Realtime.Pedidos;
 using TiendaApi.Apis.Repositories.Pedidos;
 using TiendaApi.Apis.Repositories.Productos;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Validators.Pedidos;
-using TiendaApi.Apis.WebSockets.Pedidos;
 
 namespace TiendaApi.Apis.Services.Pedidos;
 
@@ -21,15 +24,23 @@ namespace TiendaApi.Apis.Services.Pedidos;
 /// Servicio de pedidos que implementa el patrón Service Layer.
 /// Maneja toda la lógica de negocio relacionada con pedidos: verificación de stock,
 /// gestión de estados, almacenamiento en MongoDB y notificaciones.
-///
+/// 
+/// <para><b>Canales de notificación en tiempo real:</b></para>
+/// <list type="bullet">
+///   <item><description>WebSocket nativo: Notificaciones directas al cliente y administradores</description></item>
+///   <item><description>SignalR: Notificaciones con autenticación y soporte para grupos (user-{id}, admins)</description></item>
+///   <item><description>Email: Notificaciones al administrador sobre cambios de estado</description></item>
+/// </list>
+/// 
 /// <para><b>Características principales:</b></para>
 /// <list type="bullet">
 ///   <item><description>Enfoque híbrido: Serializable + Retry para integridad de datos</description></item>
-///   <item><description>Operaciones asíncronas (fire & forget) para caché, WebSocket y email</description></item>
+///   <item><description>Operaciones asíncronas (fire & forget) para caché, WebSocket, SignalR y email</description></item>
 ///   <item><description>Gestión completa de stock (decrementar/restaurar)</description></item>
 ///   <item><description>Validación con FluentValidation</description></item>
-///   <item><description>Notificaciones: WebSocket al cliente, Email al admin</description></item>
 /// </list>
+/// 
+/// <para><b>Nota:</b> Si cualquier operación secondary falla, se registra un warning pero no afecta a la respuesta.</para>
 /// </summary>
 public class PedidosService(
     IPedidosRepository pedidosRepository,
@@ -38,7 +49,8 @@ public class PedidosService(
     ICacheService cacheService,
     IEmailService emailService,
     IConfiguration configuration,
-    PedidoWebSocketHandler webSocketHandler,
+    PedidosWebSocketHandler webSocketHandler,
+    IHubContext<PedidosHub> pedidosHubContext,
     IValidator<PedidoRequestDto> pedidoValidator,
     IValidator<PedidoItemRequestDto> pedidoItemValidator
 ) : IPedidosService
@@ -151,6 +163,7 @@ public class PedidosService(
                 logger.LogInformation("Pedido {Id} actualizado por administrador", id);
                 InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}", "pedidos:all");
                 NotificarWebSocketPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
+                NotificarSignalRPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
                 EnviarEmailPedidoActualizadoAdmin(pedido.Id.ToString(), pedido.Estado ?? "", pedido.Total, pedido.UserId);
             });
     }
@@ -180,6 +193,7 @@ public class PedidosService(
 
         InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}", "pedidos:all");
 
+        NotificarSignalRPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "");
         EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
 
         return UnitResult.Success<DomainError>();
@@ -222,6 +236,7 @@ public class PedidosService(
                 logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
                 InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}");
                 NotificarWebSocketPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
+                NotificarSignalRPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
                 EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId);
             });
     }
@@ -536,6 +551,7 @@ public class PedidosService(
                 .Tap(_ =>
                 {
                     NotificarWebSocketPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE);
+                    NotificarSignalRPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
                     EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId);
                     InvalidarCachePedido($"pedidos:user:{userId}");
                 });
@@ -603,7 +619,7 @@ public class PedidosService(
             try
             {
                 await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
-                    PedidoNotificationType.CREATED,
+                    PedidoNotificationType.CREADO,
                     pedidoId,
                     userId,
                     estado,
@@ -633,7 +649,7 @@ public class PedidosService(
             try
             {
                 await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
-                    PedidoNotificationType.ESTADO_UPDATED,
+                    PedidoNotificationType.ESTADO_ACTUALIZADO,
                     pedidoId,
                     userId,
                     estado,
@@ -644,6 +660,85 @@ public class PedidosService(
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", pedidoId);
+            }
+        });
+    }
+
+    #endregion
+
+    #region ========== MÉTODOS PRIVADOS - SIGNALR ==========
+
+    private void NotificarSignalRPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var payload = new
+                {
+                    pedidoId,
+                    userId,
+                    estado,
+                    tipo = "PEDIDO_CREADO",
+                    total = pedido.Total,
+                    itemsCount = pedido.Items?.Count ?? 0,
+                    timestamp = DateTime.UtcNow
+                };
+                await pedidosHubContext.Clients.All.SendAsync("PedidoCreado", payload);
+                logger.LogDebug("Notificación SignalR enviada para pedido creado: {PedidoId}", pedidoId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
+            }
+        });
+    }
+
+    private void NotificarSignalRPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var payload = new
+                {
+                    pedidoId,
+                    userId,
+                    estado,
+                    tipo = "PEDIDO_ACTUALIZADO",
+                    total = pedido.Total,
+                    timestamp = DateTime.UtcNow
+                };
+                await pedidosHubContext.Clients.All.SendAsync("PedidoActualizado", payload);
+                logger.LogDebug("Notificación SignalR enviada para pedido actualizado: {PedidoId}", pedidoId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
+            }
+        });
+    }
+
+    private void NotificarSignalRPedidoEliminado(string pedidoId, long userId, string estado)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var payload = new
+                {
+                    pedidoId,
+                    userId,
+                    estado,
+                    tipo = "PEDIDO_ELIMINADO",
+                    timestamp = DateTime.UtcNow
+                };
+                await pedidosHubContext.Clients.All.SendAsync("PedidoEliminado", payload);
+                logger.LogDebug("Notificación SignalR enviada para pedido eliminado: {PedidoId}", pedidoId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
             }
         });
     }

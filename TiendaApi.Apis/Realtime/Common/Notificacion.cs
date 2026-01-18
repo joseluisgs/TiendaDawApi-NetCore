@@ -1,11 +1,32 @@
 using System.Text.Json.Serialization;
 
-namespace TiendaApi.Apis.WebSockets;
+namespace TiendaApi.Apis.Realtime.Common;
 
 /// <summary>
-/// DTO genérico de notificación para broadcasts vía WebSocket.
+/// DTO genérico de notificación para broadcasts en tiempo real.
 /// Puede ser utilizado para cualquier tipo de entidad.
 /// </summary>
+/// <remarks>
+/// <para><b>Uso:</b></para>
+/// <code>
+/// var notificacion = Notificacion&lt;ProductoDto&gt;.Create(
+///     "productos",
+///     Notificacion&lt;ProductoDto&gt;.Tipo.CREATE,
+///     productoDto
+/// );
+/// </code>
+/// 
+/// <para><b>Serialización JSON:</b></para>
+/// <code>
+/// {
+///   "entity": "productos",
+///   "type": "CREATE",
+///   "data": { ... },
+///   "createdAt": "2025-01-18T10:30:00Z"
+/// }
+/// </code>
+/// </remarks>
+/// <typeparam name="T">Tipo de datos de la notificación.</typeparam>
 public record Notificacion<T>
 {
     /// <summary>

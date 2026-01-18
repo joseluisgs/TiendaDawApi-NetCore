@@ -21,7 +21,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER)
 - 💾 **Multi-Base de Datos**: PostgreSQL (relacional), MongoDB (documentos), Redis (caché)
 - 🔐 **Seguridad**: JWT, validaciones FluentValidation, manejo global de excepciones
-- 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets para notificaciones.
+- 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets para notificaciones de manera nativa
 - 📊 **Versionado de API**: Control de versiones por URL.
 - 🧪 **Testing**: Tests con NUnit, Moq, Tescontainers y Newman.
 
@@ -94,7 +94,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 📧 **Notificaciones por Email**: Envío asíncrono con MailKit
 - 📊 **Cacheo con Redis**: Patrón Cache-Aside para mejorar rendimiento
 - 📡 **GraphQL**: Consultas flexibles con HotChocolate
-- 🔌 **WebSockets**: Notificaciones en tiempo real personalizadas por roles
+- 🔌 **WebSockets**: Notificaciones en tiempo real personalizadas por roles con Websockets y SignalR
 - 🗄️ **Multi-Database**: PostgreSQL + MongoDB + Redis
 - 📈 **Versionado de API**: Control de versiones por URL
 - ✅ **Validaciones**: FluentValidation declarativo
@@ -114,7 +114,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **JWT** - Autenticación basada en tokens
 - **FluentValidation** - Validaciones declarativas
 - **AutoMapper** - Mapeo de objetos
-- **Websockets/SignalR** - WebSockets en tiempo real
+- **Websockets/SignalR** - WebSockets en tiempo real puros y usando SignalR
 - **HotChocolate** - GraphQL server
 - **NUnit + Moq** - Testing unitario
 - **CSharpFunctionalExtensions** - Railway Oriented Programming
@@ -540,11 +540,11 @@ TiendaDawApi-NetCore/
 │   ├── Validators/                   # Validadores FluentValidation
 │   ├── Middleware/                   # Manejo global de excepciones
 │   ├── GraphQL/                      # Schema y tipos HotChocolate
-│   ├── WebSockets/                   # Handlers para notificaciones en tiempo real
+│   ├── Realtime/                     # WebSockets nativo y SignalR Hubs
 │   ├── Helpers/                      # Utilidades y extensiones
 │   ├── Errors/                       # Errores personalizados de dominio
 │   ├── Exceptions/                   # Excepciones personalizadas
-│   ├── Infrastructures/              # Extension Methods para configuración (DI, Pipeline, Middlewares)
+│   ├── Infrastructures/              # Extension Methods (DI, Pipeline, Bases de datos, Cache, SignalR, WebSockets, etc.)
 │   ├── Properties/                   # Configuración de lanzamiento
 │   ├── wwwroot/                      # Archivos estáticos (uploads, imágenes)
 │   ├── appsettings.json              # Configuración general
@@ -568,19 +568,19 @@ TiendaDawApi-NetCore/
 
 ### Descripción de Carpetas Principales
 
-| Carpeta             | Propósito              | Contenido                                                                                     |
-| ------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
-| **Controllers**     | Entry points HTTP      | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
-| **Services**        | Lógica de negocio      | AuthService, CategoriaService, ProductoService, UserService                                   |
-| **Repositories**    | Abstracción de datos   | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
-| **Models**          | Modelos de dominio     | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
-| **Dtos**            | Transferencia de datos | Request/Response para API                                                                     |
-| **Mappers**         | Modelos <-> DTO        | AutoMapper y Funciones de Extensión                                                           |
-| **Validators**      | Validación de entrada  | FluentValidation rules                                                                        |
-| **Middleware**      | Manejo de errores      | GlobalExceptionHandler                                                                        |
-| **GraphQL**         | Queries y Mutations    | Schema HotChocolate                                                                           |
-| **WebSockets**      | Tiempo real            | Notificaciones por rol                                                                        |
-| **Infrastructures** | Configuración modular  | Extension Methods para DI, Pipeline, Middlewares (Serilog, Auth, Database, Cache, etc.)       |
+| Carpeta             | Propósito                    | Contenido                                                                                     |
+| ------------------- | ---------------------------- | --------------------------------------------------------------------------------------------- |
+| **Controllers**     | Entry points HTTP            | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
+| **Services**        | Lógica de negocio            | AuthService, CategoriaService, ProductoService, UserService                                   |
+| **Repositories**    | Abstracción de datos         | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
+| **Models**          | Modelos de dominio           | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
+| **Dtos**            | Transferencia de datos       | Request/Response para API                                                                     |
+| **Mappers**         | Modelos <-> DTO              | AutoMapper y Funciones de Extensión                                                           |
+| **Validators**      | Validación de entrada        | FluentValidation rules                                                                        |
+| **Middleware**      | Manejo de errores            | GlobalExceptionHandler                                                                        |
+| **GraphQL**         | Queries, Mutations, Subs     | Schema HotChocolate                                                                           |
+| **Realtime**        | Tiempo real (WS + SignalR)   | WebSocket Handlers y SignalR Hubs para notificaciones por usuario/rol                          |
+| **Infrastructures** | Configuración modular        | Extension Methods para DI, Pipeline, SignalR, WebSockets, Middlewares                         |
 
 ## 🏗️ Arquitectura Híbrida Onion-Like
 
@@ -959,7 +959,8 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 - ✅ **Soft Delete**: Eliminación lógica en entidades (IsDeleted)
 - ✅ **JWT Claims**: Información de usuario (sub, email, role, jti) en tokens
 - ✅ **CORS Policy**: Configuración de orígenes permitidos
-- ✅ **WebSocket Security**: Autenticación mediante query string token
+- ✅ **WebSocket Security**: WS nativo con autenticación via query string (`?token=JWT`)
+- ✅ **SignalR Security**: Hubs con `[Authorize]`, Context.User disponible, grupos dinámicos (user-{id}, admins)
 - ✅ **Concurrency Control**: RowVersion para control de concurrencia optimista
 - ✅ **EF Core Parameterization**: Protección contra SQL Injection via LINQ
 
@@ -1044,17 +1045,46 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 
 ### WebSockets (Tiempo Real)
 
-| Endpoint                            | Auth | Descripción                             | Eventos                                              |
-| ----------------------------------- | ---- | --------------------------------------- | ---------------------------------------------------- |
-| `ws://host/ws/v1/productos`         | No   | Notificaciones de productos (broadcast) | PRODUCTO_CREATED, PRODUCTO_UPDATED, PRODUCTO_DELETED |
-| `ws://host/ws/v1/pedidos?token=JWT` | JWT  | Notificaciones de pedidos (por rol)     | PEDIDO_CREATED, PEDIDO_ESTADO_UPDATED                |
+| Endpoint                         | Auth | Descripción                             | Eventos                                              |
+| -------------------------------- | ---- | --------------------------------------- | ---------------------------------------------------- |
+| `ws://host/ws/productos`         | No   | Notificaciones de productos (broadcast) | PRODUCTO_CREATED, PRODUCTO_UPDATED, PRODUCTO_DELETED |
+| `ws://host/ws/pedidos?token=JWT` | JWT  | Notificaciones de pedidos (por rol)     | PEDIDO_CREATED, PEDIDO_ESTADO_UPDATED                |
 
 **WebSocket Productos:** Broadcast a todos los clientes conectados (sin autenticación).
 
-**WebSocket Pedidos:** 
+**WebSocket Pedidos:**
 - USER: Solo recibe notificaciones de SUS pedidos
 - ADMIN: Recibe notificaciones de TODOS los pedidos
 - Requiere JWT token como query string: `?token=JWT_TOKEN`
+
+### SignalR (Realtime)
+
+| Endpoint                        | Auth  | Descripción                              | Eventos                                                |
+| ------------------------------- | ----- | ---------------------------------------- | ------------------------------------------------------ |
+| `/hubs/productos`               | No    | Notificaciones de productos (broadcast)  | ProductoCreado, ProductoActualizado, ProductoEliminado |
+| `/hubs/pedidos`                 | JWT   | Notificaciones de pedidos (por rol)      | PedidoCreado, PedidoActualizado, PedidoEliminado       |
+
+**SignalR Productos:** Broadcast a todos los clientes conectados (sin autenticación).
+
+**SignalR Pedidos:**
+- USER: Solo recibe notificaciones de SUS pedidos (grupo `user-{id}`)
+- ADMIN: Recibe notificaciones de TODOS los pedidos (grupo `admins`)
+- Requiere JWT token via `accessTokenFactory()` en cliente
+
+**Cliente JavaScript:**
+```javascript
+const connection = new HubConnectionBuilder()
+    .withUrl("/hubs/pedidos", {
+        accessTokenFactory: () => jwtToken
+    })
+    .build();
+
+connection.on("PedidoCreado", (pedido) => {
+    console.log("Nuevo pedido:", pedido);
+});
+
+await connection.start();
+```
 
 ### GraphQL
 

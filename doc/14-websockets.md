@@ -1,6 +1,6 @@
 # 14. WebSockets y Comunicación en Tiempo Real
 
-Este documento explica cómo implementar comunicación bidireccional en tiempo real usando WebSockets nativamente en ASP.NET Core, comparando con SignalR como alternativa.
+Este documento explica cómo implementar comunicación bidireccional en tiempo real usando WebSockets nativamente en ASP.NET Core, comparando con SignalR como alternativa. Al usar ambas alternativas, entenderás sus diferencias, casos de uso y cómo integrarlas en servicios de negocio para notificaciones en tiempo real, según tus necesidades.
 
 ---
 
@@ -97,8 +97,8 @@ flowchart TD
     subgraph "SignalR - Pros"
         B1["Fácil de usar"]
         B2["Auto-reconexión"]
-        B3["Grup B4["Typeos integrados"]
-       -safe con Hub"]
+        B3["Grupos integrados"]
+        B4["Type-safe con Hub"]
     end
     
     subgraph "SignalR - Contras"
@@ -116,7 +116,120 @@ flowchart TD
 
 ---
 
-## 14.3. WebSocket Nativo en ASP.NET Core
+## 14.3. Conceptos Básicos
+
+Antes de implementar, entendamos los conceptos fundamentales:
+
+### 14.3.1. WebSocket Handler
+
+Un **Handler** es una clase que gestiona la conexión WebSocket y el intercambio de mensajes.
+
+```csharp
+// ¿Qué es un Handler?
+// Es un componente que:
+// 1. Acepta conexiones WebSocket
+// 2. Recibe mensajes del cliente
+// 3. Envía respuestas al cliente
+// 4. Maneja la desconexión
+
+public class EchoWebSocketHandler
+{
+    private readonly WebSocket _webSocket;
+    private readonly ILogger<EchoWebSocketHandler> _logger;
+
+    public EchoWebSocketHandler(WebSocket webSocket, ILogger<EchoWebSocketHandler> logger)
+    {
+        _webSocket = webSocket;
+        _logger = logger;
+    }
+
+    public async Task HandleAsync()
+    {
+        var buffer = new byte[1024];
+
+        while (_webSocket.State == WebSocketState.Open)
+        {
+            var result = await _webSocket.ReceiveAsync(
+                new ArraySegment<byte>(buffer),
+                CancellationToken.None);
+
+            if (result.MessageType == WebSocketMessageType.Close)
+            {
+                await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Cerrado", CancellationToken.None);
+                break;
+            }
+
+            // Echo: devuelve el mismo mensaje
+            var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            await _webSocket.SendAsync(
+                new ArraySegment<byte>(Encoding.UTF8.GetBytes($"Echo: {message}")),
+                WebSocketMessageType.Text,
+                true,
+                CancellationToken.None);
+        }
+    }
+}
+```
+
+### 14.3.2. SignalR Hub
+
+Un **Hub** es una abstracción de nivel superior que SignalR proporciona sobre WebSocket.
+
+```csharp
+// ¿Qué es un Hub?
+// Es una clase que:
+// 1. Gestiona múltiples conexiones automáticamente
+// 2. Permite llamar métodos entre cliente y servidor
+// 3. Tiene grupos integrados para notificaciones selectivas
+// 4. Soporta autenticación y autorización
+// 5. Maneja reconexión automática
+
+public class ChatHub : Hub
+{
+    // Context.ConnectionId - ID único de la conexión
+    // Context.User - Usuario autenticado (si aplica)
+    // Groups - Gestión de grupos
+    // Clients - Referencia a todos los clientes conectados
+
+    public async Task SendMessage(string user, string message)
+    {
+        // Enviar a todos los clientes
+        await Clients.All.SendAsync("ReceiveMessage", user, message);
+    }
+
+    public async Task SendToUser(string targetUser, string message)
+    {
+        // Enviar a un usuario específico (usando grupos)
+        await Clients.Group($"user-{targetUser}").SendAsync("PrivateMessage", message);
+    }
+}
+```
+
+### 14.3.3. Comparación Conceptual
+
+```mermaid
+flowchart TB
+    subgraph "WebSocket Nativo"
+        A1["WebSocket Handler"]
+        A2["Gestión manual de conexiones"]
+        A3["Envío manual de mensajes"]
+        A4["Grupos: Dictionary&lt;string, HashSet&gt;"]
+    end
+
+    subgraph "SignalR"
+        B1["Hub"]
+        B2["Conexiones automáticas"]
+        B3["Clients.All.SendAsync()"]
+        B4["Groups.AddToGroupAsync()"]
+    end
+
+    A1 --> A2 --> A3 --> A4
+    B1 --> B2 --> B3 --> B4
+```
+
+---
+
+## 14.4. WebSocket Nativo en ASP.NET Core
 
 ### Configuración de WebSockets
 
@@ -165,7 +278,7 @@ app.Run();
 
 ---
 
-## 14.4. Connection Manager
+## 14.5. Connection Manager
 
 ```csharp
 using System.Collections.Concurrent;
@@ -256,7 +369,7 @@ public class WebSocketMessage
 
 ---
 
-## 14.5. WebSocket Handler
+## 14.6. WebSocket Handler
 
 ```csharp
 public class WebSocketHandler
@@ -403,7 +516,7 @@ public class WebSocketHandler
 
 ---
 
-## 14.6. Servicio de Notificaciones WebSocket
+## 14.7. Servicio de Notificaciones WebSocket
 
 ```csharp
 namespace TiendaApi.Core.Services;
@@ -475,7 +588,7 @@ public class WebSocketNotificationService : IWebSocketNotificationService
 
 ---
 
-## 14.7. Integración con Servicios de Negocio
+## 14.8. Integración con Servicios de Negocio
 
 ```csharp
 public class PedidoService(
@@ -541,7 +654,7 @@ public class PedidoService(
 
 ---
 
-## 14.8. Cliente JavaScript WebSocket
+## 14.9. Cliente JavaScript WebSocket
 
 ```html
 <script>
@@ -668,7 +781,7 @@ wsClient.connect();
 
 ---
 
-## 14.9. SignalR como Alternativa
+## 14.10. SignalR como Alternativa
 
 SignalR proporciona una abstracción con características adicionales:
 
@@ -716,82 +829,165 @@ flowchart TD
 
 ---
 
-## 14.9.1. SignalR: Hub Equivalente al Connection Manager
+## 14.11. SignalR: Conceptos Fundamentales
 
-SignalR incluye gestión de conexiones automáticamente, eliminando la necesidad de un Connection Manager manual.
+SignalR proporciona una abstracción sobre WebSocket con características adicionales:
+
+### Componentes Principales
 
 ```csharp
-using Microsoft.AspNetCore.SignalR;
+// SignalR usa dos componentes principales:
 
-namespace TiendaApi.Core.Hubs;
+// 1. HUB: Clase que gestiona las conexiones
+//    - OnConnectedAsync(): Se ejecuta al conectarse
+//    - OnDisconnectedAsync(): Se ejecuta al desconectarse
+//    - Métodos invocables por los clientes
 
-public class NotificacionesHub : Hub
+// 2. IHubContext: Inyectable en servicios para enviar mensajes
+//    - Clients.All: Enviar a todos
+//    - Clients.Caller: Enviar al que llama
+//    - Clients.Group: Enviar a un grupo
+//    - Clients.User: Enviar a un usuario específico
+```
+
+### Hub Básico vs Nuestra Implementación
+
+```csharp
+// EJEMPLO BÁSICO (no lo usamos así en el proyecto)
+public class ChatHub : Hub
 {
-    private readonly IHubContext<NotificacionesHub> _hubContext;
-    private readonly ILogger<NotificacionesHub> _logger;
-
-    public NotificacionesHub(
-        IHubContext<NotificacionesHub> hubContext,
-        ILogger<NotificacionesHub> logger)
+    public async Task SendMessage(string message)
     {
-        _hubContext = hubContext;
-        _logger = logger;
+        await Clients.All.SendAsync("ReceiveMessage", message);
     }
+}
 
+// NUESTRO PATRÓN (usamos IHubContext en servicios)
+[Authorize]
+public class PedidosHub : Hub
+{
+    // Solo gestionamos conexión y grupos aquí
     public override async Task OnConnectedAsync()
     {
-        var httpContext = Context.GetHttpContext();
-        var userId = httpContext?.Request.Query["userId"].FirstOrDefault();
-        
-        if (!string.IsNullOrEmpty(userId))
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
-            _logger.LogInformation("Usuario {UserId} conectado al hub", userId);
-        }
+        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var isAdmin = Context.User?.IsInRole("Admin") == true;
+
+        // Añadir a grupos según identidad
+        if (userId != null)
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"user-{userId}");
+        if (isAdmin)
+            await Groups.AddToGroupAsync(Context.ConnectionId, "admins");
 
         await base.OnConnectedAsync();
     }
+}
 
-    public override async Task OnDisconnectedAsync(Exception? exception)
+// El servicio usa IHubContext para enviar mensajes (fire & forget)
+public class PedidoService
+{
+    private readonly IHubContext<PedidosHub> _hubContext;
+
+    public PedidoService(IHubContext<PedidosHub> hubContext)
     {
-        var httpContext = Context.GetHttpContext();
-        var userId = httpContext?.Request.Query["userId"].FirstOrDefault();
-        
-        if (!string.IsNullOrEmpty(userId))
-        {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user_{userId}");
-        }
-
-        _logger.LogInformation(
-            "Conexión cerrada: {ConnectionId}, Error: {Error}",
-            Context.ConnectionId, exception?.Message);
-
-        await base.OnDisconnectedAsync(exception);
+        _hubContext = hubContext;
     }
 
-    public async Task SubscribeToPedido(long pedidoId)
+    public async Task CreatePedidoAsync(Pedido pedido)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"pedido_{pedidoId}");
-        await Clients.Caller.SendAsync("Subscribed", new
-        {
-            topic = $"pedido_{pedidoId}",
-            timestamp = DateTime.UtcNow
-        });
-    }
+        await _repository.SaveAsync(pedido);
 
-    public async Task UnsubscribeFromPedido(long pedidoId)
-    {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"pedido_{pedidoId}");
-    }
+        // Notificar SOLO al usuario (desde el servicio)
+        await _hubContext.Clients
+            .Group($"user-{pedido.UsuarioId}")
+            .SendAsync("PedidoCreado", new { pedido.Id, estado = "Pendiente" });
 
-    public async Task SubscribeToProducto(long productoId)
-    {
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"producto_{productoId}");
+        // Notificar a TODOS los admins
+        await _hubContext.Clients
+            .Group("admins")
+            .SendAsync("NuevoPedido", new { pedido.Id, total = pedido.Total });
     }
+}
+```
 
-    public async Task SubscribeToCategoria(long categoriaId)
+### Comparación: Filtrar en Servicio vs Usar Identity
+
+```mermaid
+flowchart TB
+    subgraph "Opción 1: Filtrar en el Servicio"
+        A1["_hubContext.Clients.All"]
+        A2["Recibir mensaje"]
+        A3["¿Es el destinatario?"]
+        A4["Sí: Procesar"]
+        A5["No: Descartar"]
+        A6["Pros: Sin auth requerida"]
+        A7["Contras: Wasted traffic"]
+        A1 --> A2 --> A3 --> A4
+        A3 -.->|No| A5
+    end
+
+    subgraph "Opción 2: Usar Grupos de SignalR"
+        B1["[Authorize] en Hub"]
+        B2["OnConnectedAsync"]
+        B3["Groups.AddToGroupAsync"]
+        B4["_hubContext.Clients.Group"]
+        B5["Solo recibe destinatario"]
+        B6["Pros: Efficient, seguro"]
+        B7["Contras: Requiere auth"]
+        B1 --> B2 --> B3 --> B4 --> B5
+    end
+```
+
+| Enfoque                 | Cuándo Usarlo                            | Ejemplo                             |
+| ----------------------- | ---------------------------------------- | ----------------------------------- |
+| **Filtrar en servicio** | Cuando no hay autenticación, público     | Notificaciones de productos a todos |
+| **Grupos con Identity** | Cuando hay auth, notificaciones privadas | Pedidos, mensajes directos          |
+| **Grupos sin auth**     | Usuario auto-identificado                | Salas de chat, suscripciones        |
+
+### Nuestra Estrategia
+
+```csharp
+// En el proyecto usamos una combinación:
+
+// 1. Hubs públicos (sin auth) - broadcast a todos
+[AllowAnonymous]
+public class ProductosHub : Hub
+{
+    public override async Task OnConnectedAsync()
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"categoria_{categoriaId}");
+        await Clients.All.SendAsync("UsuarioConectado", Context.ConnectionId);
+        await base.OnConnectedAsync();
+    }
+}
+
+// 2. Hubs privados (con auth) - grupos selectivos
+[Authorize]
+public class PedidosHub : Hub
+{
+    public override async Task OnConnectedAsync()
+    {
+        var userId = Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"user-{userId}");
+
+        if (Context.User.IsInRole("Admin"))
+            await Groups.AddToGroupAsync(Context.ConnectionId, "admins");
+
+        await base.OnConnectedAsync();
+    }
+}
+
+// 3. Servicios usan IHubContext para enviar
+public class PedidoService
+{
+    private readonly IHubContext<PedidosHub> _hubContext;
+
+    public async Task CreateAsync(Pedido pedido)
+    {
+        await _repository.SaveAsync(pedido);
+
+        // ¡TRUCO! - Notificación selectiva sin que el cliente haga nada
+        await _hubContext.Clients
+            .Group($"user-{pedido.UsuarioId}")  // Solo este usuario
+            .SendAsync("PedidoCreado", new { ... });
     }
 }
 ```
@@ -825,94 +1021,159 @@ app.Run();
 
 ---
 
-## 14.9.2. SignalR: Servicio de Notificaciones Equivalente
+## 14.11. SignalR: Servicio de Notificaciones
+
+En lugar de crear un servicio de notificaciones separado, en nuestro proyecto usamos `IHubContext` directamente inyectado en los servicios de negocio. Esto es más simple y directo:
 
 ```csharp
-namespace TiendaApi.Core.Services;
+// PATRÓN DEL PROYECTO: IHubContext directamente en servicios
 
-public interface ISignalRNotificationService
+public class ProductoService
 {
-    Task NotifyPedidoUpdateAsync(long pedidoId, PedidoUpdateDto update);
-    Task NotifyProductoStockChangeAsync(long productoId, int nuevoStock);
-    Task NotifyUserAsync(long userId, NotificacionDto notificacion);
-    Task BroadcastAsync(string message, string type);
-}
+    private readonly IHubContext<ProductosHub> _hubContext;
+    private readonly ILogger<ProductoService> _logger;
 
-public class SignalRNotificationService : ISignalRNotificationService
-{
-    private readonly IHubContext<NotificacionesHub> _hubContext;
-    private readonly ILogger<SignalRNotificationService> _logger;
-
-    public SignalRNotificationService(
-        IHubContext<NotificacionesHub> hubContext,
-        ILogger<SignalRNotificationService> logger)
+    public ProductoService(
+        IProductoRepository productoRepository,
+        IHubContext<ProductosHub> hubContext,
+        ILogger<ProductoService> logger)
     {
         _hubContext = hubContext;
         _logger = logger;
     }
 
-    public async Task NotifyPedidoUpdateAsync(long pedidoId, PedidoUpdateDto update)
+    public async Task<ProductoDto> CreateAsync(ProductoRequestDto dto)
     {
-        var message = new
+        var producto = await _repository.SaveAsync(dto.ToEntity());
+        var resultDto = producto.ToDto();
+
+        // Fire & forget - notificar a todos los clientes conectados
+        _ = Task.Run(async () =>
         {
-            type = "pedido_update",
-            data = update,
-            timestamp = DateTime.UtcNow
-        };
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("ProductoCreado", new
+                {
+                    productoId = resultDto.Id,
+                    nombre = resultDto.Nombre,
+                    tipo = "PRODUCTO_CREADO",
+                    timestamp = DateTime.UtcNow
+                });
+                _logger.LogDebug("Notificación SignalR enviada");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error en notificación SignalR");
+            }
+        });
 
-        // Notificar a los clientes suscritos al pedido
-        await _hubContext.Clients
-            .Group($"pedido_{pedidoId}")
-            .SendAsync("PedidoUpdate", message);
-
-        // Notificar al usuario owner del pedido
-        await _hubContext.Clients
-            .Group($"user_{update.UsuarioId}")
-            .SendAsync("PedidoUpdate", message);
-
-        _logger.LogInformation(
-            "Notificación de pedido {PedidoId} enviada",
-            pedidoId);
+        return resultDto;
     }
 
-    public async Task NotifyProductoStockChangeAsync(long productoId, int nuevoStock)
+    public async Task UpdateAsync(long id, ProductoRequestDto dto)
     {
-        var message = new
-        {
-            type = "producto_stock",
-            data = new { productoId, stock = nuevoStock },
-            timestamp = DateTime.UtcNow
-        };
+        var producto = await _repository.UpdateAsync(id, dto);
+        var resultDto = producto.ToDto();
 
-        await _hubContext.Clients
-            .Group($"producto_{productoId}")
-            .SendAsync("ProductoStockChange", message);
+        // Notificar actualización a todos
+        _ = Task.Run(async () =>
+        {
+            await _hubContext.Clients.All.SendAsync("ProductoActualizado", new
+            {
+                productoId = resultDto.Id,
+                nombre = resultDto.Nombre,
+                stock = resultDto.Stock,
+                tipo = "PRODUCTO_ACTUALIZADO",
+                timestamp = DateTime.UtcNow
+            });
+        });
+
+        return resultDto;
     }
 
-    public async Task NotifyUserAsync(long userId, NotificacionDto notificacion)
+    public async Task DeleteAsync(long id)
     {
-        var message = new
-        {
-            type = "notificacion",
-            data = notificacion,
-            timestamp = DateTime.UtcNow
-        };
+        await _repository.DeleteAsync(id);
 
-        await _hubContext.Clients
-            .Group($"user_{userId}")
-            .SendAsync("Notificacion", message);
+        // Notificar eliminación a todos
+        _ = Task.Run(async () =>
+        {
+            await _hubContext.Clients.All.SendAsync("ProductoEliminado", new
+            {
+                productoId = id,
+                tipo = "PRODUCTO_ELIMINADO",
+                timestamp = DateTime.UtcNow
+            });
+        });
+    }
+}
+
+public class PedidoService
+{
+    private readonly IHubContext<PedidosHub> _hubContext;
+    private readonly ILogger<PedidoService> _logger;
+
+    public PedidoService(
+        IPedidoRepository pedidoRepository,
+        IHubContext<PedidosHub> hubContext,
+        ILogger<PedidoService> logger)
+    {
+        _hubContext = hubContext;
+        _logger = logger;
     }
 
-    public async Task BroadcastAsync(string message, string type)
+    public async Task<PedidoDto> CreateAsync(CreatePedidoRequest request)
     {
-        var payload = new
-        {
-            type = type,
-            data = message,
-            timestamp = DateTime.UtcNow
-        };
+        var pedido = await _repository.SaveAsync(request.ToEntity());
 
-        await _hubContext.Clients.All.SendAsync("Broadcast", payload);
+        // 🚀 TRUCO: Notificar SOLO al usuario (grupo: user-{id})
+        // El usuario ya está en este grupo gracias a OnConnectedAsync en el Hub
+        await _hubContext.Clients
+            .Group($"user-{request.UsuarioId}")
+            .SendAsync("PedidoCreado", new
+            {
+                pedidoId = pedido.Id,
+                estado = pedido.Estado,
+                total = pedido.Total,
+                timestamp = DateTime.UtcNow
+            });
+
+        // 🚀 TRUCO: Notificar a TODOS los administradores
+        await _hubContext.Clients
+            .Group("admins")
+            .SendAsync("NuevoPedido", new
+            {
+                pedidoId = pedido.Id,
+                usuarioId = request.UsuarioId,
+                total = pedido.Total
+            });
+
+        return pedido.ToDto();
+    }
+
+    public async Task UpdateEstadoAsync(long pedidoId, string nuevoEstado, long usuarioId)
+    {
+        var pedido = await _repository.UpdateEstadoAsync(pedidoId, nuevoEstado);
+
+        // Notificar al usuario específico
+        await _hubContext.Clients
+            .Group($"user-{usuarioId}")
+            .SendAsync("PedidoEstadoActualizado", new
+            {
+                pedidoId,
+                estado = nuevoEstado,
+                timestamp = DateTime.UtcNow
+            });
+
+        // Notificar a admins
+        await _hubContext.Clients
+            .Group("admins")
+            .SendAsync("PedidoActualizado", new
+            {
+                pedidoId,
+                estado = nuevoEstado,
+                timestamp = DateTime.UtcNow
+            });
     }
 }
 ```
@@ -920,12 +1181,41 @@ public class SignalRNotificationService : ISignalRNotificationService
 ### Inyección de Dependencias
 
 ```csharp
-builder.Services.AddSingleton<ISignalRNotificationService, SignalRNotificationService>();
+// Program.cs - SignalR registra automaticamente IHubContext<T>
+// ¡No se necesita configuración adicional!
+
+var builder = WebApplication.CreateBuilder(args);
+
+// SignalR se configura así:
+builder.Services.AddSignalR();
+
+// No es necesario AddSingleton<IHubContext<T>> - ya viene incluido
+
+var app = builder.Build();
+
+app.MapHub<ProductosHub>("/hubs/productos");
+app.MapHub<PedidosHub>("/hubs/pedidos");
+
+app.Run();
+
+// El servicio recibe IHubContext<T> automáticamente por DI
+public class MiServicio
+{
+    public MiServicio(IHubContext<ProductosHub> hubContext) { }
+}
 ```
+
+### Resumen: Patrón del Proyecto
+
+| Escenario           | Hub                | Cliente  | Envío desde Servicio                     |
+| ------------------- | ------------------ | -------- | ---------------------------------------- |
+| **Productos**       | `[AllowAnonymous]` | Sin auth | `_hubContext.Clients.All`                |
+| **Pedidos usuario** | `[Authorize]`      | JWT      | `_hubContext.Clients.Group("user-{id}")` |
+| **Pedidos admin**   | `[Authorize]`      | JWT      | `_hubContext.Clients.Group("admins")`    |
 
 ---
 
-## 14.9.3. SignalR: Integración con Servicios de Negocio
+## 14.12. SignalR: Integración con Servicios de Negocio
 
 ```csharp
 public class PedidoService(
@@ -998,7 +1288,7 @@ public class PedidoService(
 
 ---
 
-## 14.9.4. SignalR: Cliente JavaScript
+## 14.13. SignalR: Cliente JavaScript
 
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
@@ -1124,7 +1414,241 @@ client.connect();
 
 ---
 
-## 14.9.5. SignalR: Persistencia y Escalabilidad
+## 14.14. SignalR + Identity: Autenticación y Autorización
+
+SignalR se integra nativamente con el sistema de autenticación de ASP.NET Core Identity, permitiendo proteger los hubs y endpoints con JWT.
+
+### Protección de Hubs con [Authorize]
+
+```csharp
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
+
+[Authorize]  // Requiere autenticación JWT
+public class PedidosHub : Hub
+{
+    private readonly IHubContext<PedidosHub> _hubContext;
+    private readonly ILogger<PedidosHub> _logger;
+
+    public PedidosHub(IHubContext<PedidosHub> hubContext, ILogger<PedidosHub> logger)
+    {
+        _hubContext = hubContext;
+        _logger = logger;
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var isAdmin = Context.User?.IsInRole("Admin") == true;
+
+        // Añadir automáticamente a grupos según identidad
+        if (userId != null)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"user-{userId}");
+        }
+
+        if (isAdmin)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, "admins");
+        }
+
+        await base.OnConnectedAsync();
+    }
+}
+
+// Hub público sin autenticación
+[AllowAnonymous]
+public class ProductosHub : Hub
+{
+    // Anyone puede conectarse y recibir broadcasts
+}
+```
+
+### Configuración con JWT
+
+```csharp
+// Program.cs
+builder.Services.AddSignalR();
+
+// Client JavaScript con accessTokenFactory
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/hubs/pedidos", {
+        accessTokenFactory: () => localStorage.getItem('jwtToken'),
+        transport: signalR.HttpTransportType.WebSockets
+    })
+    .withAutomaticReconnect([0, 1000, 5000, 10000])
+    .build();
+
+await connection.start();
+```
+
+### El Truco de Grupos para Notificaciones Selectivas
+
+El patrón más poderoso de SignalR es usar grupos para enviar mensajes solo a usuarios específicos:
+
+```csharp
+// Servicio de notificaciones
+public class SignalRNotificationService
+{
+    private readonly IHubContext<PedidosHub> _hubContext;
+
+    public SignalRNotificationService(IHubContext<PedidosHub> hubContext)
+    {
+        _hubContext = hubContext;
+    }
+
+    // 🚀 TRUCO: Notificar SOLO al usuario específico
+    public async Task NotifyUserAsync(long userId, object message)
+    {
+        await _hubContext.Clients
+            .Group($"user-{userId}")  // <- Grupo mágico
+            .SendAsync("Notificacion", message);
+    }
+
+    // 🚀 TRUCO: Notificar SOLO a administradores
+    public async Task NotifyAdminsAsync(object message)
+    {
+        await _hubContext.Clients
+            .Group("admins")  // <- Grupo de admins
+            .SendAsync("AdminNotification", message);
+    }
+
+    // Broadcast a todos
+    public async Task BroadcastAsync(string eventName, object message)
+    {
+        await _hubContext.Clients.All.SendAsync(eventName, message);
+    }
+}
+```
+
+### Patrón de Grupos Automáticos
+
+En `OnConnectedAsync`, añade usuarios a grupos según su Claims:
+
+```csharp
+public override async Task OnConnectedAsync()
+{
+    var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    var userRole = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
+
+    // Grupo por ID de usuario - recibe solo sus notificaciones
+    if (userId != null)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"user-{userId}");
+    }
+
+    // Grupo por rol - admins reciben todas las notificaciones
+    if (userRole == "Admin")
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, "admins");
+    }
+
+    // Grupo por tipo de usuario
+    var isPremium = Context.User?.HasClaim("subscription", "premium") == true;
+    if (isPremium)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, "premium-users");
+    }
+
+    await base.OnConnectedAsync();
+}
+```
+
+### Envío desde Servicios de Negocio
+
+```csharp
+public class PedidoService
+{
+    private readonly IHubContext<PedidosHub> _hubContext;
+    private readonly ILogger<PedidoService> _logger;
+
+    public async Task<Result<Pedido>> CreateAsync(CreatePedidoRequest request)
+    {
+        var pedido = await _repository.AddAsync(request);
+
+        // 🚀 Notificar SOLO al usuario que hizo el pedido
+        await _hubContext.Clients
+            .Group($"user-{request.UsuarioId}")
+            .SendAsync("PedidoCreado", new
+            {
+                pedidoId = pedido.Id,
+                estado = "Pendiente",
+                total = pedido.Total,
+                timestamp = DateTime.UtcNow
+            });
+
+        // 🚀 Notificar a TODOS los administradores
+        await _hubContext.Clients
+            .Group("admins")
+            .SendAsync("NuevoPedido", new
+            {
+                pedidoId = pedido.Id,
+                usuarioId = request.UsuarioId,
+                total = pedido.Total
+            });
+
+        return pedido;
+    }
+
+    public async Task UpdateEstadoAsync(long pedidoId, string nuevoEstado, long usuarioId)
+    {
+        await _repository.UpdateEstadoAsync(pedidoId, nuevoEstado);
+
+        // Notificar al usuario específico
+        await _hubContext.Clients
+            .Group($"user-{usuarioId}")
+            .SendAsync("PedidoEstadoActualizado", new
+            {
+                pedidoId,
+                estado = nuevoEstado,
+                timestamp = DateTime.UtcNow
+            });
+    }
+}
+```
+
+### Ventajas del Sistema de Grupos
+
+```mermaid
+flowchart TD
+    subgraph "Usuario Normal (ID: 123)"
+        A1["Se conecta a /hubs/pedidos"]
+        A2["Se añade a grupo: user-123"]
+        A3["Recibe: Solo sus pedidos"]
+        A4["NO recibe: Pedidos de otros"]
+    end
+
+    subgraph "Administrador"
+        B1["Se conecta a /hubs/pedidos"]
+        B2["Se añade a grupos: user-{id}, admins"]
+        B3["Recibe: TODOS los pedidos"]
+        B4["Recibe: Notificaciones de sistema"]
+    end
+
+    subgraph "Servicio de Negocio"
+        C1["_hubContext.Clients.Group('user-123')"]
+        C2["_hubContext.Clients.Group('admins')"]
+    end
+
+    A1 --> A2 --> A3
+    B1 --> B2 --> B3
+    C1 -.-> A3
+    C2 -.-> B3
+```
+
+### Tabla de Grupos y sus Usos
+
+| Grupo           | miembros           | Uso                     | Ejemplo de Notificación      |
+| --------------- | ------------------ | ----------------------- | ---------------------------- |
+| `user-{id}`     | 1 usuario          | Notificaciones privadas | "Tu pedido #123 fue enviado" |
+| `admins`        | Todos los admins   | Panel de administración | "Nuevo pedido: #456"         |
+| `premium-users` | Usuarios premium   | Contenido exclusivo     | "Oferta especial para ti"    |
+| `pedido-{id}`   | Comprador + admins | Seguimiento de pedido   | "Pedido #123: En camino"     |
+
+---
+
+## 14.15. SignalR: Persistencia y Escalabilidad
 
 Para escalar SignalR en múltiples instancias, usar Redis Backplane:
 
@@ -1176,66 +1700,37 @@ flowchart TD
 
 ### Cuándo Usar WebSocket Nativo vs SignalR
 
-| Funcionalidad | WebSocket Nativo | SignalR |
-|---------------|------------------|---------|
-| **Gestión de conexiones** | Manual (~50 líneas) | Automática (0 líneas) |
-| **Grupos** | Dictionary manual | Groups.AddToGroupAsync() |
-| **Serialización** | JsonSerializer manual | Automático con tipos |
-| **Reconexión** | setTimeout + retry | AutoReconnect (configurable) |
-| **Typed messages** | String + switch case | Generic SendAsync<T>() |
-| **Autenticación** | JWT header manual | accessTokenFactory |
-| **Escalabilidad** | Redis Pub/Sub manual | Redis Backplane integrado |
-| **Fallback** | No disponible | SSE/LongPolling automático |
-| **Debugging** | Más difícil | Logging integrado |
-| **Líneas de código** | ~200-300 | ~80-100 |
+| Funcionalidad             | WebSocket Nativo      | SignalR                      |
+| ------------------------- | --------------------- | ---------------------------- |
+| **Gestión de conexiones** | Manual (~50 líneas)   | Automática (0 líneas)        |
+| **Grupos**                | Dictionary manual     | Groups.AddToGroupAsync()     |
+| **Serialización**         | JsonSerializer manual | Automático con tipos         |
+| **Reconexión**            | setTimeout + retry    | AutoReconnect (configurable) |
+| **Typed messages**        | String + switch case  | Generic SendAsync<T>()       |
+| **Autenticación**         | JWT header manual     | accessTokenFactory           |
+| **Autorización**          | Manual con middleware | [Authorize] integrado        |
+| **Identity Integration**  | No nativo             | Total con Claims             |
+| **Escalabilidad**         | Redis Pub/Sub manual  | Redis Backplane integrado    |
+| **Fallback**              | No disponible         | SSE/LongPolling automático   |
+| **Debugging**             | Más difícil           | Logging integrado            |
+| **Líneas de código**      | ~200-300              | ~80-100                      |
 
 ---
 
-## 14.10. Resumen y Buenas Prácticas
+## 14.16. Resumen y Buenas Prácticas
 
 ### Cuándo Usar Qué
 
-| Escenario      | Recomendación    | Razón              |
-| -------------- | ---------------- | ------------------ |
-| Chat simple    | WebSocket nativo | Menos overhead     |
-| Chat complejo  | SignalR          | Groups, history    |
-| Notificaciones | SignalR          | Auto-reconexión    |
-| Gaming         | WebSocket nativo | Máximo rendimiento |
-| Dashboard      | SignalR          | Facilidad          |
+| Escenario       | Recomendación    | Razón              |
+| --------------- | ---------------- | ------------------ |
+| Chat simple     | WebSocket nativo | Menos overhead     |
+| Chat complejo   | SignalR          | Groups, history    |
+| Notificaciones  | SignalR          | Auto-reconexión    |
+| Gaming          | WebSocket nativo | Máximo rendimiento |
+| Dashboard       | SignalR          | Facilidad          |
+| Notif. privadas | SignalR + Groups | user-{id}, admins  |
 
-### Buenas Prácticas
-
-```mermaid
-flowchart TB
-    subgraph "Seguridad"
-        A1["WSS (WebSocket Secure)"]
-        A2["Autenticación JWT"]
-        A3["Validar mensajes"]
-    end
-    
-    subgraph "Rendimiento"
-        B1["Compresión"]
-        B2["Heartbeat"]
-        B3["Límite de conexiones"]
-    end
-    
-    subgraph "Escalabilidad"
-        C1["Redis Pub/Sub"]
-        C2["Sticky sessions"]
-        C3["Connection limits"]
-    end
-    
-    subgraph "Monitoring"
-        D1["Conexiones activas"]
-        D2["Métricas de mensajes"]
-        D3["Logs de desconexión"]
-    end
-    
-    A1 --> A2 --> A3
-    B1 --> B2 --> B3
-    C1 --> C2 --> C3
-    D1 --> D2 --> D3
-```
+---
 
 ### Siguientes Pasos
 
@@ -1246,3 +1741,6 @@ Con comunicación en tiempo real dominada, el siguiente paso es aprender sobre l
 - WebSocket API: https://docs.microsoft.com/aspnet/core/fundamentals/websockets
 - SignalR: https://docs.microsoft.com/aspnet/core/signalr
 - WebSocket Protocol RFC: https://tools.ietf.org/html/rfc6455
+- SignalR Authentication: https://docs.microsoft.com/aspnet/core/signalr/authn-and-authz
+- SignalR Groups: https://docs.microsoft.com/aspnet/core/signalr/groups
+- Redis Backplane: https://docs.microsoft.com/aspnet/core/signalr/redis-backplane
