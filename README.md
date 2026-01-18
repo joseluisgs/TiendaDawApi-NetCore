@@ -79,6 +79,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
     - [Usuarios (Perfil Propio)](#usuarios-perfil-propio)
     - [Storage (Archivos)](#storage-archivos)
     - [WebSockets (Tiempo Real)](#websockets-tiempo-real)
+    - [SignalR (Realtime)](#signalr-realtime)
     - [GraphQL](#graphql)
   - [👥 Usuarios Demo](#-usuarios-demo)
   - [📝 Licencia](#-licencia)
@@ -1282,7 +1283,7 @@ subscription {
 }
 ```
 
-**Conexión WebSocket:**
+**Conexión Subscripción:**
 ```
 WS ws://localhost:5000/graphql
 
