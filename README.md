@@ -21,7 +21,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER)
 - 💾 **Multi-Base de Datos**: PostgreSQL (relacional), MongoDB (documentos), Redis (caché)
 - 🔐 **Seguridad**: JWT, validaciones FluentValidation, manejo global de excepciones
-- 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets para notificaciones de manera nativa
+- 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets y SignalR para notificaciones en tiempo real
 - 📊 **Versionado de API**: Control de versiones por URL.
 - 🧪 **Testing**: Tests con NUnit, Moq, Tescontainers y Newman.
 
@@ -1304,19 +1304,6 @@ WS ws://localhost:5000/graphql
     }
   }
 }
-```
-
-**Estructura del proyecto GraphQL:**
-
-```
-GraphQL/
-├── Queries/           → TiendaQuery (productos, categorias)
-├── Mutations/         → ProductoMutation (create/update/delete producto)
-├── Subscriptions/     → ProductoSubscription (onProductoCreado, etc.)
-├── Events/            → ProductoEvent (payloads de eventos)
-├── Inputs/            → ProductoInput (CreateProductoInput, UpdateProductoInput)
-├── Publishers/        → IEventPublisher, EventPublisher
-└── Types/             → ProductoType, CategoriaType
 ```
 
 ---
