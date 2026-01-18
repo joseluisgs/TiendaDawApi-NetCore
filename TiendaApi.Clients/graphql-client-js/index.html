@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cliente GraphQL 💖 TiendaDAW</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Knewave&family=Balsamiq+Sans&display=swap');
+
+      :root {
+        --hk-pink: #FF69B4;
+        --hk-light-pink: #FFB6C1;
+        --hk-red: #FF1493;
+        --hk-yellow: #FFD700;
+      }
+
+      body {
+        background: linear-gradient(135deg, #FFB6C1, #FFC0CB, #FFE4E1);
+        background-size: 400% 400%;
+        animation: gradientShift 8s ease infinite;
+        font-family: 'Balsamiq Sans', cursive, sans-serif;
+        min-height: 100vh;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      .container {
+        background-color: #ffffff;
+        border: 4px solid var(--hk-pink);
+        border-radius: 25px;
+        padding: 30px;
+        width: 95%;
+        max-width: 900px;
+        margin: 0 auto;
+        box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
+      }
+
+      h1 {
+        color: var(--hk-pink);
+        text-align: center;
+        font-family: 'Knewave', cursive;
+        font-size: 2.5em;
+        margin-top: 0;
+        text-shadow: 3px 3px var(--hk-light-pink);
+        position: relative;
+      }
+
+      h1::before, h1::after {
+        content: '🎀';
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.6em;
+        animation: bounce 2s ease-in-out infinite;
+      }
+
+      h1::before { left: 20px; }
+      h1::after { right: 20px;1s; }
+
+      @keyframes bounce animation-delay:  {
+        0%, 100% { transform: translateY(-50%) scale(1); }
+        50% { transform: translateY(-60%) scale(1.2); }
+      }
+
+      .config-section {
+        background: linear-gradient(135deg, #FFF0F5, #FFE4E1);
+        border: 3px solid var(--hk-light-pink);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .config-section h3 {
+        color: var(--hk-red);
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+      }
+
+      .form-group {
+        flex: 1;
+        min-width: 200px;
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        font-weight: bold;
+        color: var(--hk-red);
+        margin-bottom: 8px;
+        font-size: 1.1em;
+      }
+
+      input[type="text"], input[type="url"] {
+        width: 100%;
+        padding: 12px 15px;
+        border: 3px solid var(--hk-light-pink);
+        border-radius: 20px;
+        font-size: 1em;
+        font-family: 'Balsamiq Sans', cursive;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+      }
+
+      input:focus {
+        border-color: var(--hk-pink);
+        outline: none;
+        box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
+      }
+
+      .token-group {
+        background: linear-gradient(135deg, #E6E6FA, #DDA0DD);
+        border: 3px solid #9370DB;
+        border-radius: 15px;
+        padding: 15px;
+      }
+
+      .token-group label {
+        color: #4B0082;
+      }
+
+      .token-group input {
+        border-color: #9370DB;
+        font-family: 'Courier New', monospace;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 180px;
+        border: 3px solid var(--hk-light-pink);
+        border-radius: 15px;
+        padding: 15px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.95em;
+        box-sizing: border-box;
+        resize: vertical;
+      }
+
+      textarea:focus {
+        border-color: var(--hk-pink);
+        outline: none;
+        box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        flex: 1;
+        min-width: 150px;
+        padding: 15px 25px;
+        border: none;
+        border-radius: 25px;
+        font-family: 'Knewave', cursive;
+        font-size: 1.3em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255,255,255,0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.3s ease;
+      }
+
+      button:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+
+      button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--hk-pink), var(--hk-red));
+        color: white;
+        border: 3px solid var(--hk-red);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, var(--hk-yellow), #FFA500);
+        color: #8B4513;
+        border: 3px solid #DAA520;
+      }
+
+      .btn-success {
+        background: linear-gradient(135deg, #90EE90, #32CD32);
+        color: #006400;
+        border: 3px solid #228B22;
+      }
+
+      #response {
+        background: linear-gradient(135deg, #FDF5E6, #FFF8DC);
+        border: 3px dashed var(--hk-light-pink);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.9em;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      #error {
+        color: #8B0000;
+        background: linear-gradient(135deg, #FFB6C1, #FFA0A0);
+        border: 3px solid #DC143C;
+        border-radius: 15px;
+        padding: 15px;
+        margin-top: 20px;
+        font-weight: bold;
+      }
+
+      .info-box {
+        background: linear-gradient(135deg, #E0FFFF, #87CEEB);
+        border: 3px solid #4682B4;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        font-size: 0.9em;
+      }
+
+      .info-box h4 {
+        color: #191970;
+        margin: 0 0 10px 0;
+      }
+
+      .info-box code {
+        background: rgba(255,255,255,0.5);
+        padding: 2px 6px;
+        border-radius: 5px;
+        font-size: 0.95em;
+      }
+
+      /* Scrollbar bonita */
+      #response::-webkit-scrollbar {
+        width: 12px;
+      }
+
+      #response::-webkit-scrollbar-track {
+        background: var(--hk-light-pink);
+        border-radius: 10px;
+      }
+
+      #response::-webkit-scrollbar-thumb {
+        background: var(--hk-pink);
+        border-radius: 10px;
+      }
+
+      .quick-queries {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .quick-queries button {
+        flex: 0 1 auto;
+        min-width: auto;
+        padding: 8px 15px;
+        font-size: 0.9em;
+      }
+
+      @media (max-width: 768px) {
+        .form-row {
+          flex-direction: column;
+        }
+        
+        .btn-group {
+          flex-direction: column;
+        }
+        
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>💖 Hello, GraphQL! 💖</h1>
+
+      <!-- Configuración -->
+      <div class="config-section">
+        <h3>⚙️ Configuración</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="endpoint">📡 Endpoint GraphQL:</label>
+            <input type="url" id="endpoint" value="http://localhost:5000/graphql" 
+                   placeholder="http://localhost:5000/graphql">
+          </div>
+          <div class="form-group token-group">
+            <label for="token">🔐 JWT Token (opcional):</label>
+            <input type="text" id="token" placeholder="eyJhbGciOiJIUzI1NiIsInR..." 
+                   title="Pega tu token JWT aquí para operaciones autenticadas">
+          </div>
+        </div>
+      </div>
+
+      <!-- Consultas rápidas -->
+      <div class="config-section">
+        <h3>🚀 Consultas Rápidas</h3>
+        <div class="quick-queries">
+          <button class="btn-secondary" onclick="loadQuery('hello')">👋 Hello</button>
+          <button class="btn-secondary" onclick="loadQuery('productos')">📦 Productos</button>
+          <button class="btn-secondary" onclick="loadQuery('productoById')">🎁 Producto ID</button>
+          <button class="btn-secondary" onclick="loadQuery('categorias')">📁 Categorías</button>
+          <button class="btn-secondary" onclick="loadQuery('users')">👥 Users (Admin)</button>
+          <button class="btn-secondary" onclick="loadQuery('createUser')">➕ Create User</button>
+        </div>
+      </div>
+
+      <!-- Consulta -->
+      <div class="config-section">
+        <h3>📝 Query / Mutation:</h3>
+        <textarea id="query" placeholder="Escribe tu query de GraphQL aquí..."></textarea>
+        
+        <div class="form-group" style="margin-top: 15px;">
+          <label for="variables">📋 Variables (en JSON, opcional):</label>
+          <textarea id="variables" rows="3" placeholder='{ "id": 1 }'></textarea>
+        </div>
+
+        <div class="btn-group">
+          <button id="sendQuery" class="btn-primary">🎀 Enviar Query</button>
+          <button onclick="clearAll()" class="btn-secondary">🧹 Limpiar</button>
+        </div>
+      </div>
+
+      <!-- Respuesta -->
+      <div class="config-section">
+        <h3>📬 Respuesta:</h3>
+        <pre id="response"></pre>
+        <div id="error" style="display: none"></div>
+      </div>
+
+      <!-- Info -->
+      <div class="info-box">
+        <h4>💡 Información</h4>
+        <p>• <b>USER:</b> Para mutations como <code>createPedido</code>, necesita token JWT</p>
+        <p>• <b>ADMIN:</b> Para <code>createProducto</code>, <code>deleteUser</code>, etc.</p>
+        <p>• Obtén el token desde <code>POST /api/v1/auth/signin</code> con email/password</p>
+      </div>
+    </div>
+
+    <script>
+      const predefinedQueries = {
+        hello: `{
+  hello
+}`,
+        productos: `query {
+  productos {
+    id
+    nombre
+    descripcion
+    precio
+    stock
+    categoria {
+      nombre
+    }
+  }
+}`,
+        productoById: `query ObtenerProducto($id: Long!) {
+  producto(id: $id) {
+    id
+    nombre
+    descripcion
+    precio
+    stock
+    imagen
+    categoria {
+      id
+      nombre
+    }
+  }
+}`,
+        variablesById: `{
+  "id": 1
+}`,
+        categorias: `{
+  categorias {
+    id
+    nombre
+    productos {
+      id
+      nombre
+    }
+  }
+}`,
+        users: `query {
+  users {
+    id
+    username
+    email
+    role
+    createdAt
+  }
+}`,
+        createUser: `mutation CrearUsuario($input: CreateUserInputDto!) {
+  createUser(input: $input) {
+    id
+    username
+    email
+    role
+  }
+}`,
+        variablesCreateUser: `{
+  "input": {
+    "username": "nuevouser",
+    "email": "nuevo@email.com",
+    "password": "password123",
+    "role": "USER"
+  }
+}`
+      };
+
+      function loadQuery(type) {
+        const queryEl = document.getElementById('query');
+        const variablesEl = document.getElementById('variables');
+        
+        if (predefinedQueries[type]) {
+          queryEl.value = predefinedQueries[type];
+        }
+        
+        if (predefinedQueries['variables' + type.charAt(0).toUpperCase() + type.slice(1)]) {
+          variablesEl.value = predefinedQueries['variables' + type.charAt(0).toUpperCase() + type.slice(1)];
+        } else {
+          variablesEl.value = '';
+        }
+      }
+
+      function clearAll() {
+        document.getElementById('query').value = '';
+        document.getElementById('variables').value = '';
+        document.getElementById('response').textContent = '';
+        document.getElementById('error').style.display = 'none';
+      }
+
+      document.getElementById('sendQuery').addEventListener('click', async () => {
+        const endpoint = document.getElementById('endpoint').value.trim();
+        const token = document.getElementById('token').value.trim();
+        const query = document.getElementById('query').value;
+        const variablesString = document.getElementById('variables').value;
+        const responseElement = document.getElementById('response');
+        const errorElement = document.getElementById('error');
+
+        if (!endpoint) {
+          errorElement.textContent = '⚠️ Por favor, ingresa la URL del endpoint GraphQL';
+          errorElement.style.display = 'block';
+          return;
+        }
+
+        if (!query.trim()) {
+          errorElement.textContent = '⚠️ Por favor, ingresa una query';
+          errorElement.style.display = 'block';
+          return;
+        }
+
+        responseElement.textContent = '⏳ Enviando... 💖';
+        errorElement.style.display = 'none';
+
+        let variables;
+        try {
+          variables = variablesString ? JSON.parse(variablesString) : {};
+        } catch (e) {
+          errorElement.textContent = '❌ Error: Las variables no son un JSON válido.\n' + e.message;
+          errorElement.style.display = 'block';
+          responseElement.textContent = '';
+          return;
+        }
+
+        try {
+          const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          };
+
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+              query: query,
+              variables: variables
+            })
+          });
+
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('La respuesta no es JSON. ¿El servidor está corriendo?');
+          }
+
+          const result = await response.json();
+
+          if (result.errors && result.errors.length > 0) {
+            errorElement.textContent = '❌ GraphQL Errors:\n' + JSON.stringify(result.errors, null, 2);
+            errorElement.style.display = 'block';
+            responseElement.textContent = result.data ? JSON.stringify(result.data, null, 2) : '(Sin datos)';
+          } else if (result.data) {
+            responseElement.textContent = JSON.stringify(result.data, null, 2);
+            errorElement.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          errorElement.textContent = '❌ Error de conexión: ' + error.message + '\n\nPosibles causas:\n• El servidor no está corriendo\n• CORS no configurado\n• SSL/HTTPS mismatch';
+          errorElement.style.display = 'block';
+          responseElement.textContent = '';
+        }
+      });
+
+      // Cargar consulta inicial
+      loadQuery('hello');
+    </script>
+  </body>
+</html>
