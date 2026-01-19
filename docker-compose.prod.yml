@@ -120,8 +120,9 @@ services:
       - Jwt__Audience=${JWT_AUDIENCE:-TiendaApi}
       - Jwt__ExpireMinutes=${JWT_EXPIRE_MINUTES:-30}
       - MongoDbSettings__ConnectionString=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin
-      - MongoDbSettings__DatabaseName=${MONGO_DB:-tienda}
-      - MongoDbSettings__PedidosCollection=${MONGO_PEDIDOS_COLLECTION:-pedidos}
+       - MongoDbSettings__DatabaseName=${MONGO_DB:-tienda}
+       - MongoDbSettings__PedidosCollection=${MONGO_PEDIDOS_COLLECTION:-pedidos}
+       - Pedidos__RepositoryType=${PEDIDOS_REPOSITORY_TYPE:-MongoDbNative}
       - Smtp__Host=${SMTP_HOST:-smtp.gmail.com}
       - Smtp__Port=${SMTP_PORT:-587}
       - Smtp__Username=${SMTP_USERNAME:-}
