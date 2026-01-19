@@ -18,7 +18,7 @@ Imagina que tienes un servicio de productos que necesita obtener datos de la bas
 
 ### El problema sin Repository Pattern
 
-Sin un repositorio, los servicios contienen lógica de acceso a datos mezclada con lógica de negocio. Esto hace el código difícil de testear porque no puedes facilmente substituir el acceso a base de datos. También hace que cambiar la tecnología de persistencia requiera修改ar código en múltiples lugares.
+Sin un repositorio, los servicios contienen lógica de acceso a datos mezclada con lógica de negocio. Esto hace el código difícil de testear porque no puedes facilmente substituir el acceso a base de datos. También hace que cambiar la tecnología de persistencia requiera modificar código en múltiples lugares.
 
 ```csharp
 // ❌ INCORRECTO: Lógica de datos en el servicio

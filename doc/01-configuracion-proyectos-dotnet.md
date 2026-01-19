@@ -17,7 +17,7 @@
 
 ## 1.1. Creación de Soluciones y Proyectos
 
-Una **solución** en .NET es un contenedor lógico que agrupa uno o más proyectos relacionados.分离 la solución del código fuente permite gestionar mejor las dependencias entre proyectos y facilita el trabajo en equipo. Cuando creas una solución, estás creando un archivo .sln que actúa como índice de todos los proyectos que forman parte de tu aplicación.
+Una **solución** en .NET es un contenedor lógico que agrupa uno o más proyectos relacionados. Separar la solución del código fuente permite gestionar mejor las dependencias entre proyectos y facilita el trabajo en equipo. Cuando creas una solución, estás creando un archivo .sln que actúa como índice de todos los proyectos que forman parte de tu aplicación.
 
 ### ¿Por qué usar soluciones?
 
@@ -1218,7 +1218,7 @@ A lo largo de este documento hemos aprendido a configurar un proyecto .NET desde
 
 ### Puntos clave del módulo
 
-La creación de soluciones y proyectos con la estructura adecuada es el primer paso para un proyecto mantenible.分离 la solución en proyectos con responsabilidades claras (API, Core, Tests) facilita el desarrollo a largo plazo. Los paquetes NuGet extienden la funcionalidad del framework de forma modular. La configuración jerárquica con appsettings.json, variables de entorno y User Secrets permite adaptar la aplicación a cada entorno. El patrón de opciones proporciona acceso tipado y validado a la configuración. NUnit te permite escribir tests automatizados que garantizan la calidad del código. Hot Reload acelera drásticamente el ciclo de desarrollo.
+La creación de soluciones y proyectos con la estructura adecuada es el primer paso para un proyecto mantenible. Separar la solución en proyectos con responsabilidades claras (API, Core, Tests) facilita el desarrollo a largo plazo. Los paquetes NuGet extienden la funcionalidad del framework de forma modular. La configuración jerárquica con appsettings.json, variables de entorno y User Secrets permite adaptar la aplicación a cada entorno. El patrón de opciones proporciona acceso tipado y validado a la configuración. NUnit te permite escribir tests automatizados que garantizan la calidad del código. Hot Reload acelera drásticamente el ciclo de desarrollo.
 
 ### Buenas prácticas
 

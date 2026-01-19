@@ -1418,7 +1418,7 @@ flowchart TB
         A1["Cache datosreadonly o lentamente cambiantes"]
         A2["Evitar cachear datos sensibles"]
         A3["Establecer TTL apropiado"]
-        A4["Monitorear命中率 (hit rate)"]
+        A4["Monitorear la tasa de aciertos (hit rate)"]
     end
     
     subgraph "Rendimiento"
@@ -1437,8 +1437,8 @@ flowchart TB
     
     subgraph "Operaciones"
         D1["Monitoreo de memoria Redis"]
-        D2["Alertas de命中率 bajo"]
-        D3["定期 limpieza de claves huérfanas"]
+        D2["Alertas de tasa de aciertos baja"]
+        D3["Limpieza periódica de claves huérfanas"]
         D4["Backup de datos en cache"]
     end
     
