@@ -40,12 +40,12 @@ services.AddAuthentication(configuration);
 services.AddRepositories();
 services.AddServices();
 
-    // Additional Services (desarrollo vs producción)
-    services.AddCache(environment);
-    services.AddEmail(environment);
-    services.AddStorage();
-    services.AddWebSockets();
-    services.AddBackgroundJobs();
+// Servicios Adicionales (desarrollo vs producción)
+services.AddCache(environment);
+services.AddEmail(environment);
+services.AddStorage();
+services.AddWebSockets();
+services.AddBackgroundJobs();
 
 // SignalR (Realtime)
 services.AddRealtimeSignalR();

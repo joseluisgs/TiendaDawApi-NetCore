@@ -105,12 +105,12 @@ flowchart TB
     SVC --> WS
     WS --> C1
     
-    style M1 fill:#FFCDD2
-    style M3 fill:#C8E6C9
-    style M4 fill:#FFE0B2
-    style P1 fill:#E1BEE7
-    style P2 fill:#B3E5FC
-    style P3 fill:#FFECB3
+    style M1 fill:#E57373,color:#ffffff
+    style M3 fill:#4CAF50,color:#ffffff
+    style M4 fill:#FF9800,color:#ffffff
+    style P1 fill:#7B1FA2,color:#ffffff
+    style P2 fill:#1976D2,color:#ffffff
+    style P3 fill:#FBC02D,color:#000000
 ```
 
 ### Tecnologías utilizadas en el proyecto
@@ -431,8 +431,8 @@ flowchart LR
         H --> G --> F --> E --> D --> C --> B --> A
     end
     
-    style A fill:#FFCDD2
-    style H fill:#C8E6C9
+    style A fill:#E57373,color:#ffffff
+    style H fill:#4CAF50,color:#ffffff
 ```
 
 ### Errores comunes de orden
@@ -667,10 +667,10 @@ flowchart TB
         B5["Mejor para APIs medianas/grandes"]
     end
     
-    style A1 fill:#E3F2FD
-    style A2 fill:#E3F2FD
-    style B1 fill:#E8F5E9
-    style B2 fill:#E8F5E9
+    style A1 fill:#2196F3,color:#ffffff
+    style A2 fill:#2196F3,color:#ffffff
+    style B1 fill:#388E3C,color:#ffffff
+    style B2 fill:#388E3C,color:#ffffff
 ```
 
 ### ¿Por qué TiendaApi usa Controladores?

@@ -161,9 +161,9 @@ flowchart TB
     S1A --> S2A --> S3A
     G1A --> G2A --> G3A
     
-    style T1A fill:#FFEB3B
-    style T2A fill:#FFEB3B
-    style T3A fill:#FFEB3B
+    style T1A fill:#F9A825,color:#ffffff
+    style T2A fill:#F9A825,color:#ffffff
+    style T3A fill:#F9A825,color:#ffffff
     style S1A fill:#4CAF50
     style S2A fill:#4CAF50
     style S3A fill:#4CAF50

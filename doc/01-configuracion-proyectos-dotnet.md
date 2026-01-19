@@ -451,11 +451,11 @@ flowchart TB
         E["Command Line Arguments"]
     end
     
-    style A fill:#FFCDD2
-    style B fill:#FFCDD2
-    style C fill:#FFE0B2
-    style D fill:#C8E6C9
-    style E fill:#4CAF50
+    style A fill:#E57373,color:#ffffff
+    style B fill:#E57373,color:#ffffff
+    style C fill:#FF9800,color:#ffffff
+    style D fill:#4CAF50,color:#ffffff
+    style E fill:#2E7D32,color:#ffffff
 ```
 
 ---

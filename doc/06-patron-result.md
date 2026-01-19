@@ -253,14 +253,14 @@ flowchart TD
     style FAILURE fill:#E57373,stroke:#D32F2F,color:#ffffff
     style VALOR fill:#388E3C,stroke:#2E7D32,color:#ffffff
     style ERROR fill:#D32F2F,stroke:#B71C1C,color:#ffffff
-    style RESULT fill:#FFA726,stroke:#F57C00,color:#000000
-    style MAP fill:#81C784,stroke:#4CAF50,color:#000000
-    style TAP fill:#81C784,stroke:#4CAF50,color:#000000
-    style MATCH fill:#81C784,stroke:#4CAF50,color:#000000
-    style MAP_ERR fill:#EF9A9A,stroke:#E57373,color:#000000
-    style MATCH_ERR fill:#EF9A9A,stroke:#E57373,color:#000000
-    style CONTINUE fill:#90CAF9,stroke:#42A5F5,color:#000000
-    style HANDLER fill:#90CAF9,stroke:#42A5F5,color:#000000
+    style RESULT fill:#F57C00,color:#ffffff
+    style MAP fill:#388E3C,color:#ffffff
+    style TAP fill:#388E3C,color:#ffffff
+    style MATCH fill:#388E3C,color:#ffffff
+    style MAP_ERR fill:#C62828,color:#ffffff
+    style MATCH_ERR fill:#C62828,color:#ffffff
+    style CONTINUE fill:#1976D2,color:#ffffff
+    style HANDLER fill:#1976D2,color:#ffffff
 ```
 
 ### Instalación

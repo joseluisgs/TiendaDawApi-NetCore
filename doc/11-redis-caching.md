@@ -36,8 +36,8 @@ flowchart TD
     F --> G["Retornar dato"]
     G --> H["Tiempo: ~100ms+"]
     
-    style C fill:#90EE90
-    style E fill:#FFB6C1
+    style C fill:#4CAF50,color:#ffffff
+    style E fill:#F44336,color:#ffffff
 ```
 
 ### Métricas de Rendimiento del Cache

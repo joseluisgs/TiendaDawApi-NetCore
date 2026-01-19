@@ -51,9 +51,9 @@ flowchart TB
     FV -->|Válido| SVC
     SVC -->|Válido| SUCCESS
     
-    style DA fill:#FFCDD2
-    style FV fill:#FFE0B2
-    style SVC fill:#C8E6C9
+    style DA fill:#E57373,color:#ffffff
+    style FV fill:#FF9800,color:#ffffff
+    style SVC fill:#4CAF50,color:#ffffff
 ```
 
 ### Flujo de validación completo
