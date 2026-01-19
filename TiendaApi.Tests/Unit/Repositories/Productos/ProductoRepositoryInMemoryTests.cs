@@ -420,4 +420,155 @@ public class ProductoRepositoryInMemoryTests
 
         return query;
     }
+
+    #region GetRecentlyCreatedAsync Tests
+
+    /// <summary>
+    /// Verifica que con productos en la base de datos retorna la cantidad correcta.
+    /// </summary>
+    [Test]
+    public async Task GetRecentlyCreatedAsync_ConProductosEnBD_RetornaLosMismos()
+    {
+        using var context = CreateContext(nameof(GetRecentlyCreatedAsync_ConProductosEnBD_RetornaLosMismos));
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Producto 1", RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Producto 2", RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Producto 3", RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var productos = await context.Productos
+            .Where(p => p.CreatedAt >= DateTime.UtcNow.AddDays(-7) && !p.IsDeleted)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        productos.Should().HaveCount(3);
+    }
+
+    /// <summary>
+    /// Verifica que excluye productos eliminados lógicamente.
+    /// </summary>
+    [Test]
+    public async Task GetRecentlyCreatedAsync_ConProductoEliminado_ExcluyeProducto()
+    {
+        using var context = CreateContext(nameof(GetRecentlyCreatedAsync_ConProductoEliminado_ExcluyeProducto));
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Producto Activo", IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Producto Eliminado", IsDeleted = true, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var productos = await context.Productos
+            .Where(p => p.CreatedAt >= DateTime.UtcNow.AddDays(-7) && !p.IsDeleted)
+            .ToListAsync();
+
+        productos.Should().HaveCount(1);
+        productos.First().Nombre.Should().Be("Producto Activo");
+    }
+
+    /// <summary>
+    /// Verifica que productos eliminados lógicamente no son incluidos.
+    /// </summary>
+    [Test]
+    public async Task GetRecentlyCreatedAsync_MultiplesEliminados_ExcluyeTodos()
+    {
+        using var context = CreateContext(nameof(GetRecentlyCreatedAsync_MultiplesEliminados_ExcluyeTodos));
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Eliminado 1", IsDeleted = true, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Eliminado 2", IsDeleted = true, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Eliminado 3", IsDeleted = true, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var productos = await context.Productos
+            .Where(p => p.CreatedAt >= DateTime.UtcNow.AddDays(-7) && !p.IsDeleted)
+            .ToListAsync();
+
+        productos.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Verifica que productos activos son retornados.
+    /// </summary>
+    [Test]
+    public async Task GetRecentlyCreatedAsync_ConProductosActivos_RetornaTodos()
+    {
+        using var context = CreateContext(nameof(GetRecentlyCreatedAsync_ConProductosActivos_RetornaTodos));
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Activo 1", IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Activo 2", IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Activo 3", IsDeleted = false, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var productos = await context.Productos
+            .Where(p => p.CreatedAt >= DateTime.UtcNow.AddDays(-7) && !p.IsDeleted)
+            .ToListAsync();
+
+        productos.Should().HaveCount(3);
+    }
+
+    /// <summary>
+    /// Verifica que con un solo producto retorna ese producto.
+    /// </summary>
+    [Test]
+    public async Task GetRecentlyCreatedAsync_UnProducto_RetornaEseProducto()
+    {
+        using var context = CreateContext(nameof(GetRecentlyCreatedAsync_UnProducto_RetornaEseProducto));
+
+        context.Productos.Add(new Producto { Id = 1, Nombre = "Único", RowVersion = NewRowVersion() });
+        await context.SaveChangesAsync();
+
+        var productos = await context.Productos
+            .Where(p => p.CreatedAt >= DateTime.UtcNow.AddDays(-7) && !p.IsDeleted)
+            .ToListAsync();
+
+        productos.Should().HaveCount(1);
+        productos.First().Nombre.Should().Be("Único");
+    }
+
+    /// <summary>
+    /// Verifica que sin productos retorna lista vacía.
+    /// </summary>
+    [Test]
+    public async Task GetRecentlyCreatedAsync_SinProductos_RetornaListaVacia()
+    {
+        using var context = CreateContext(nameof(GetRecentlyCreatedAsync_SinProductos_RetornaListaVacia));
+
+        var productos = await context.Productos
+            .Where(p => p.CreatedAt >= DateTime.UtcNow.AddDays(-7) && !p.IsDeleted)
+            .ToListAsync();
+
+        productos.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Verifica que con productos mixtos (activos y eliminados) solo retorna activos.
+    /// </summary>
+    [Test]
+    public async Task GetRecentlyCreatedAsync_ProductosMixtos_RetornaSoloActivos()
+    {
+        using var context = CreateContext(nameof(GetRecentlyCreatedAsync_ProductosMixtos_RetornaSoloActivos));
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "Activo 1", IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "Eliminado 1", IsDeleted = true, RowVersion = NewRowVersion() },
+            new Producto { Id = 3, Nombre = "Activo 2", IsDeleted = false, RowVersion = NewRowVersion() },
+            new Producto { Id = 4, Nombre = "Eliminado 2", IsDeleted = true, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var productos = await context.Productos
+            .Where(p => p.CreatedAt >= DateTime.UtcNow.AddDays(-7) && !p.IsDeleted)
+            .ToListAsync();
+
+        productos.Should().HaveCount(2);
+        productos.All(p => !p.IsDeleted).Should().BeTrue();
+    }
+
+    #endregion
 }

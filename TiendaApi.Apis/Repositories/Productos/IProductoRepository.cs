@@ -381,4 +381,31 @@ public interface IProductoRepository
     /// 
     /// <returns>IQueryable de productos para composición de consultas GraphQL.</returns>
     IQueryable<Producto> FindAllAsNoTracking();
+
+    /// <summary>
+    /// Recupera productos creados en los últimos X días.
+    /// 
+    /// <remarks>
+    /// Este método es útil para reportes semanales de nuevos productos.
+    /// Solo retorna productos que:
+    /// - Han sido creados dentro del rango de días especificado.
+    /// - No han sido eliminados (IsDeleted = false).
+    /// 
+    /// Los resultados se ordenan por fecha de creación descendente.
+    /// </remarks>
+    /// 
+    /// <example>
+    /// <code>
+    /// // Obtener productos de los últimos 7 días
+    /// var productos = await _productoRepository.GetRecentlyCreatedAsync(7);
+    /// foreach (var p in productos)
+    /// {
+    ///     Console.WriteLine($"{p.Nombre} - {p.CreatedAt}");
+    /// }
+    /// </code>
+    /// </example>
+    /// 
+    /// <param name="days">Número de días hacia atrás para buscar productos.</param>
+    /// <returns>Colección de productos ordenados por fecha de creación descendente.</returns>
+    Task<IEnumerable<Producto>> GetRecentlyCreatedAsync(int days);
 }

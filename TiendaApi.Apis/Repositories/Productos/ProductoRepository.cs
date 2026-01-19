@@ -247,4 +247,20 @@ public class ProductoRepository(
         logger.LogDebug("Transacción iniciada con nivel de aislamiento: {IsolationLevel}", isolationLevel);
         return transaction;
     }
+
+    /// <summary>
+    /// Obtiene productos creados en los últimos X días para reportes.
+    /// </summary>
+    /// <param name="days">Número de días hacia atrás.</param>
+    /// <returns>Productos no eliminados ordenados por CreatedAt descendente.</returns>
+    public async Task<IEnumerable<Producto>> GetRecentlyCreatedAsync(int days)
+    {
+        var since = DateTime.UtcNow.AddDays(-days);
+        logger.LogDebug("Buscando productos creados desde: {Since}", since);
+
+        return await context.Productos
+            .Where(p => p.CreatedAt >= since && !p.IsDeleted)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+    }
 }

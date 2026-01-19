@@ -363,4 +363,160 @@ public class UserRepositoryInMemoryTests
     }
 
     #endregion
+
+    #region GetActiveUsersAsync Tests
+
+    /// <summary>
+    /// Verifica que retorna solo usuarios activos.
+    /// </summary>
+    [Test]
+    public async Task GetActiveUsersAsync_ConUsuariosActivos_RetornaSoloActivos()
+    {
+        using var context = CreateContext(nameof(GetActiveUsersAsync_ConUsuariosActivos_RetornaSoloActivos));
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "admin", Email = "admin@test.com" },
+            new User { Id = 2, Username = "user1", Email = "user1@test.com" }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+
+        var result = (await repository.GetActiveUsersAsync()).ToList();
+
+        result.Should().HaveCount(2);
+    }
+
+    /// <summary>
+    /// Verifica que excluye usuarios eliminados lógicamente.
+    /// </summary>
+    [Test]
+    public async Task GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados()
+    {
+        using var context = CreateContext(nameof(GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados));
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "activo", Email = "activo@test.com", IsDeleted = false },
+            new User { Id = 2, Username = "eliminado", Email = "eliminado@test.com", IsDeleted = true },
+            new User { Id = 3, Username = "otro", Email = "otro@test.com", IsDeleted = false }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+
+        var result = (await repository.GetActiveUsersAsync()).ToList();
+
+        result.Should().HaveCount(2);
+        result.All(u => !u.IsDeleted).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Verifica que retorna lista vacía cuando no hay usuarios activos.
+    /// </summary>
+    [Test]
+    public async Task GetActiveUsersAsync_SoloEliminados_RetornaListaVacia()
+    {
+        using var context = CreateContext(nameof(GetActiveUsersAsync_SoloEliminados_RetornaListaVacia));
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "eliminado1", Email = "del1@test.com", IsDeleted = true },
+            new User { Id = 2, Username = "eliminado2", Email = "del2@test.com", IsDeleted = true }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+
+        var result = (await repository.GetActiveUsersAsync()).ToList();
+
+        result.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Verifica que retorna lista vacía cuando no hay usuarios.
+    /// </summary>
+    [Test]
+    public async Task GetActiveUsersAsync_SinUsuarios_RetornaListaVacia()
+    {
+        using var context = CreateContext(nameof(GetActiveUsersAsync_SinUsuarios_RetornaListaVacia));
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+
+        var result = (await repository.GetActiveUsersAsync()).ToList();
+
+        result.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Verifica que usuarios están ordenados por Email.
+    /// </summary>
+    [Test]
+    public async Task GetActiveUsersAsync_MultiplesUsuarios_OrdenadosPorEmail()
+    {
+        using var context = CreateContext(nameof(GetActiveUsersAsync_MultiplesUsuarios_OrdenadosPorEmail));
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "zebra", Email = "zebra@test.com" },
+            new User { Id = 2, Username = "alfa", Email = "alfa@test.com" },
+            new User { Id = 3, Username = "beta", Email = "beta@test.com" }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+
+        var result = (await repository.GetActiveUsersAsync()).ToList();
+
+        result.Should().HaveCount(3);
+        result[0].Email.Should().Be("alfa@test.com");
+        result[1].Email.Should().Be("beta@test.com");
+        result[2].Email.Should().Be("zebra@test.com");
+    }
+
+    /// <summary>
+    /// Verifica que con usuarios mixtos solo retorna activos.
+    /// </summary>
+    [Test]
+    public async Task GetActiveUsersAsync_UsuariosMixtos_RetornaSoloActivos()
+    {
+        using var context = CreateContext(nameof(GetActiveUsersAsync_UsuariosMixtos_RetornaSoloActivos));
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "a1", Email = "a1@test.com", IsDeleted = false },
+            new User { Id = 2, Username = "d1", Email = "d1@test.com", IsDeleted = true },
+            new User { Id = 3, Username = "a2", Email = "a2@test.com", IsDeleted = false },
+            new User { Id = 4, Username = "d2", Email = "d2@test.com", IsDeleted = true },
+            new User { Id = 5, Username = "a3", Email = "a3@test.com", IsDeleted = false }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+
+        var result = (await repository.GetActiveUsersAsync()).ToList();
+
+        result.Should().HaveCount(3);
+        result.All(u => !u.IsDeleted).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Verifica que retorna un solo usuario activo.
+    /// </summary>
+    [Test]
+    public async Task GetActiveUsersAsync_UnUsuarioActivo_RetornaEseUsuario()
+    {
+        using var context = CreateContext(nameof(GetActiveUsersAsync_UnUsuarioActivo_RetornaEseUsuario));
+
+        context.Users.AddRange(
+            new User { Id = 1, Username = "solo", Email = "solo@test.com", IsDeleted = false },
+            new User { Id = 2, Username = "eliminado", Email = "del@test.com", IsDeleted = true }
+        );
+        await context.SaveChangesAsync();
+
+        var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
+
+        var result = (await repository.GetActiveUsersAsync()).ToList();
+
+        result.Should().HaveCount(1);
+        result[0].Username.Should().Be("solo");
+    }
+
+    #endregion
 }

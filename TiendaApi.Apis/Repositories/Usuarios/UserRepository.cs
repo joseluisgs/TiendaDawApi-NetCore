@@ -155,4 +155,18 @@ public class UserRepository(
             logger.LogInformation("Usuario eliminado suavemente con id: {Id}", id);
         }
     }
+
+    /// <summary>
+    /// Obtiene todos los usuarios activos (no eliminados).
+    /// </summary>
+    /// <returns>Usuarios activos ordenados por Email.</returns>
+    public async Task<IEnumerable<User>> GetActiveUsersAsync()
+    {
+        logger.LogDebug("Obteniendo usuarios activos");
+
+        return await context.Users
+            .Where(u => !u.IsDeleted)
+            .OrderBy(u => u.Email)
+            .ToListAsync();
+    }
 }

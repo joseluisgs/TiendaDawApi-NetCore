@@ -300,4 +300,34 @@ public interface IUserRepository
     /// <param name="id">Identificador del usuario a eliminar.</param>
     /// <returns>Tarea asíncrona completada tras la eliminación.</returns>
     Task DeleteAsync(long id);
+
+    /// <summary>
+    /// Recupera solo los usuarios activos del sistema.
+    /// 
+    /// <remarks>
+    /// Este método retorna usuarios donde IsDeleted es false.
+    /// Es útil para operaciones de mailing masivo como newsletters
+    /// o notificaciones a usuarios activos.
+    /// 
+    /// Los resultados se ordenan por Email para facilitar operaciones batch.
+    /// </remarks>
+    /// 
+    /// <example>
+    /// <code>
+    /// // Enviar newsletter a usuarios activos
+    /// var usuariosActivos = await _userRepository.GetActiveUsersAsync();
+    /// foreach (var usuario in usuariosActivos)
+    /// {
+    ///     await _emailService.SendEmailAsync(new EmailMessage
+    ///     {
+    ///         To = usuario.Email,
+    ///         Subject = "Novedades",
+    ///         Body = GetNewsletterHtml()
+    ///     });
+    /// }
+    /// </code>
+    /// </example>
+    /// 
+    /// <returns>Colección de usuarios activos ordenados por Email.</returns>
+    Task<IEnumerable<User>> GetActiveUsersAsync();
 }
