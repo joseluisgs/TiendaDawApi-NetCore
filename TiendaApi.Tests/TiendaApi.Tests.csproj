@@ -29,6 +29,7 @@
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageReference Include="Testcontainers.MongoDb" Version="4.3.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.3.0" />
+    <PackageReference Include="MongoDB.Driver" Version="3.5.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -158,10 +158,10 @@ public class PedidosServiceIntegrationTests
     {
         services.AddScoped<ILogger<ProductoRepository>, Logger<ProductoRepository>>();
         services.AddScoped<ILogger<CategoriaRepository>, Logger<CategoriaRepository>>();
-        services.AddScoped<ILogger<PedidosRepository>, Logger<PedidosRepository>>();
+        services.AddScoped<ILogger<PedidosEfCoreRepository>, Logger<PedidosEfCoreRepository>>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
-        services.AddScoped<IPedidosRepository, PedidosRepository>();
+        services.AddScoped<IPedidosRepository, PedidosEfCoreRepository>();
     }
 
     private static void RegisterServices(IServiceCollection services)

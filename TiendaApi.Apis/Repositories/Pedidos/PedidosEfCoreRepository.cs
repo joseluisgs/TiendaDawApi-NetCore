@@ -7,10 +7,13 @@ namespace TiendaApi.Apis.Repositories.Pedidos;
 
 /// <summary>
 /// Implementación del repositorio de pedidos usando MongoDB EF Core.
+/// 
+/// ⚠️ NOTA: Esta implementación tiene un bug conocido con EF Core 10
+/// (MongoDB Jira: EF-272). Para producción, usar PedidosNativeRepository.
 /// </summary>
-public class PedidosRepository(
+public class PedidosEfCoreRepository(
     TiendaMongoContext context,
-    ILogger<PedidosRepository> logger
+    ILogger<PedidosEfCoreRepository> logger
 ) : IPedidosRepository
 {
 

@@ -37,7 +37,7 @@ services.AddDatabases(configuration);
 services.AddAuthentication(configuration);
 
 // Business
-services.AddRepositories();
+services.AddRepositories(configuration);
 services.AddServices();
 
 // Servicios Adicionales (desarrollo vs producción)
