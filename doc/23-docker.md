@@ -1,6 +1,17 @@
 # 23. Docker y CI/CD con GitHub Actions
 
-Este documento explica cómo containerizar la aplicación con Docker y automatizar el proceso de build, test y deployment con GitHub Actions.
+## Índice
+
+[23. Docker y CI/CD con GitHub Actions](#23-docker-y-cicd-con-github-actions)
+  - [23.1. Conceptos Fundamentales](#231-conceptos-fundamentales)
+  - [23.2. GitHub Actions CI Pipeline](#232-github-actions-ci-pipeline)
+  - [23.3. ¿Qué es CI/CD?](#233-qué-es-cicd)
+  - [23.4. Conceptos de GitHub Actions](#234-conceptos-de-github-actions)
+  - [23.5. Archivo Dockerfile](#235-archivo-dockerfile)
+  - [23.6. Docker Compose](#236-docker-compose)
+  - [23.7. GitHub Actions Workflow Completo](#237-github-actions-workflow-completo)
+  - [23.8. Modos de Uso](#238-modos-de-uso)
+  - [23.9. Resumen y Buenas Prácticas](#239-resumen-y-buenas-prácticas)
 
 ---
 

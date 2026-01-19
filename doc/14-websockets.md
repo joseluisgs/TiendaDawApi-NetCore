@@ -1,6 +1,24 @@
 # 14. WebSockets y Comunicación en Tiempo Real
 
-Este documento explica cómo implementar comunicación bidireccional en tiempo real usando WebSockets nativamente en ASP.NET Core, comparando con SignalR como alternativa. Al usar ambas alternativas, entenderás sus diferencias, casos de uso y cómo integrarlas en servicios de negocio para notificaciones en tiempo real, según tus necesidades.
+## Índice
+
+[14. WebSockets y Comunicación en Tiempo Real](#14-websockets-y-comunicación-en-tiempo-real)
+  - [14.1. ¿Qué es la Comunicación en Tiempo Real?](#141-qué-es-la-comunicación-en-tiempo-real)
+  - [14.2. WebSocket vs SignalR - Comparación](#142-websocket-vs-signalr---comparación)
+  - [14.3. Conceptos Básicos](#143-conceptos-básicos)
+  - [14.4. WebSocket Nativo en ASP.NET Core](#144-websocket-nativo-en-aspnet-core)
+  - [14.5. Connection Manager](#145-connection-manager)
+  - [14.6. WebSocket Handler](#146-websocket-handler)
+  - [14.7. Servicio de Notificaciones WebSocket](#147-servicio-de-notificaciones-websocket)
+  - [14.8. Integración con Servicios de Negocio](#148-integración-con-servicios-de-negocio)
+  - [14.9. Cliente JavaScript WebSocket](#149-cliente-javascript-websocket)
+  - [14.10. SignalR como Alternativa](#1410-signalr-como-alternativa)
+  - [14.11. SignalR: Conceptos Fundamentales](#1411-signalr-conceptos-fundamentales)
+  - [14.12. SignalR: Servicio de Notificaciones](#1412-signalr-servicio-de-notificaciones)
+  - [14.13. SignalR: Integración con Servicios de Negocio](#1413-signalr-integración-con-servicios-de-negocio)
+  - [14.14. SignalR: Cliente JavaScript](#1414-signalr-cliente-javascript)
+  - [14.15. SignalR + Identity](#1415-signalr--identity)
+  - [14.16. Resumen y Buenas Prácticas](#1416-resumen-y-buenas-prácticas)
 
 ---
 

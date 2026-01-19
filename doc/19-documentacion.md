@@ -1,6 +1,14 @@
 # 19. Documentación y Versionado de APIs
 
-Este documento explica cómo documentar APIs con Swagger/OpenAPI y gestionar versiones de API para mantener compatibilidad.
+## Índice
+
+[19. Documentación y Versionado de APIs](#19-documentación-y-versionado-de-apis)
+  - [19.1. ¿Por qué Documentar y Versionar APIs?](#191-por-qué-documentar-y-versionar-apis)
+  - [19.2. Swagger/OpenAPI](#192-swaggeropenapi)
+  - [19.3. Anotaciones Swagger](#193-anotaciones-swagger)
+  - [19.4. Versionado de APIs](#194-versionado-de-apis)
+  - [19.5. OpenAPI Avanzado](#195-openapi-avanzado)
+  - [19.6. Resumen y Buenas Prácticas](#196-resumen-y-buenas-prácticas)
 
 ---
 

@@ -1,6 +1,17 @@
 # 13. Autorización y Roles en ASP.NET Core
 
-La **autorización** determina qué recursos puede acceder un usuario autenticado. Es el paso posterior a la autenticación y define los permisos y accesos del sistema.
+## Índice
+
+[13. Autorización y Roles en ASP.NET Core](#13-autorización-y-roles-en-aspnet-core)
+  - [13.1. Relación entre Autenticación y Autorización](#131-relación-entre-autenticación-y-autorización)
+  - [13.2. Middleware de Autorización](#132-middleware-de-autorización)
+  - [13.3. Autorización Basada en Roles](#133-autorización-basada-en-roles)
+  - [13.4. Políticas de Autorización (Policies)](#134-políticas-de-autorización-policies)
+  - [13.5. Requirements Personalizados](#135-requirements-personalizados)
+  - [13.6. Autorización Basada en Recursos](#136-autorización-basada-en-recursos)
+  - [13.7. Autorización con Scopes (OAuth2)](#137-autorización-con-scopes-oauth2)
+  - [13.8. Resumen de Métodos de Autorización](#138-resumen-de-métodos-de-autorización)
+  - [13.9. Buenas Prácticas de Autorización](#139-buenas-prácticas-de-autorización)
 
 ---
 

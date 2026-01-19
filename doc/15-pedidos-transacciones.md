@@ -1,6 +1,17 @@
 # 15. Pedidos: Transacciones y Control de Concurrencia
 
-Este documento explica cómo implementar el procesamiento de pedidos con transacciones de base de datos y control de concurrencia para evitar problemas de stock en escenarios de alta concurrencia. Se describen tres enfoques principales: optimista, pesimista y mixto.
+## Índice
+
+[15. Pedidos: Transacciones y Control de Concurrencia](#15-pedidos-transacciones-y-control-de-concurrencia)
+  - [15.1. El Problema de la Concurrencia en Pedidos](#151-el-problema-de-la-concurrencia-en-pedidos)
+  - [15.2. Transacciones con EF Core](#152-transacciones-con-ef-core)
+  - [15.3. Enfoque Optimista](#153-enfoque-optimista)
+  - [15.4. Enfoque Pesimista](#154-enfoque-pesimista)
+  - [15.5. Enfoque Mixto (Usado en el Proyecto)](#155-enfoque-mixto-usado-en-el-proyecto)
+  - [15.6. Comparación de Enfoques](#156-comparación-de-enfoques)
+  - [15.7. Errores de Dominio](#157-errores-de-dominio)
+  - [15.8. Controller](#158-controller)
+  - [15.9. Resumen](#159-resumen)
 
 ---
 

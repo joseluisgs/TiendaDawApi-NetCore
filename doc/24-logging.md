@@ -1,6 +1,17 @@
 # 24. Logging y Monitoreo
 
-Este documento explica cómo implementar logging estructurado, monitoreo y telemetría en una API .NET usando Serilog, Application Insights y OpenTelemetry.
+## Índice
+
+[24. Logging y Monitoreo](#24-logging-y-monitoreo)
+  - [24.1. ¿Por qué Logging y Monitoreo?](#241-por-qué-logging-y-monitoreo)
+  - [24.2. Logging Estructurado con Serilog](#242-logging-estructurado-con-serilog)
+  - [24.2.1. Configuración desde appsettings.json](#2421-configuración-desde-appsettingsjson)
+  - [24.3. Logs en Servicios](#243-logs-en-servicios)
+  - [24.4. Correlation ID](#244-correlation-id)
+  - [24.5. Métricas con Application Insights](#245-métricas-con-application-insights)
+  - [24.6. OpenTelemetry](#246-opentelemetry)
+  - [24.7. Health Checks](#247-health-checks)
+  - [24.8. Resumen y Buenas Prácticas](#248-resumen-y-buenas-prácticas)
 
 ---
 

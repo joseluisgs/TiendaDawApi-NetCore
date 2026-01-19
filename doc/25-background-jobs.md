@@ -1,6 +1,20 @@
 # 25. Background Jobs y Tareas Programadas
 
-Este documento explica cómo implementar tareas en segundo plano y trabajos programados en una API .NET usando `BackgroundService`, patrones de arquitectura y configuración flexible basada en entorno.
+## Índice
+
+[25. Background Jobs y Tareas Programadas](#25-background-jobs-y-tareas-programadas)
+  - [25.1. ¿Qué son Background Jobs?](#251-qué-son-background-jobs)
+  - [25.2. Arquitectura de Background Jobs](#252-arquitectura-de-background-jobs)
+  - [25.3. Implementación del Job de Reporte de Productos](#253-implementación-del-job-de-reporte-de-productos)
+  - [25.4. Background Service Orchestrator](#254-background-service-orchestrator)
+  - [25.5. Configuración DI con Extension Methods](#255-configuración-di-con-extension-methods)
+  - [25.6. Configuración en appsettings.json](#256-configuración-en-appsettingsjson)
+  - [25.7. Métodos de Repositorio](#257-métodos-de-repositorio)
+  - [25.8. Flujo de Ejecución](#258-flujo-de-ejecución)
+  - [25.9. Pruebas Unitarias](#259-pruebas-unitarias)
+  - [25.10. Beneficios y Consideraciones](#2510-beneficios-y-consideraciones)
+  - [25.11. Comparación con Otras Soluciones](#2511-comparación-con-otras-soluciones)
+  - [25.12. Resumen](#2512-resumen)
 
 ---
 

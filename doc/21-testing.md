@@ -1,6 +1,21 @@
 # 21. Testing con NUnit
 
-Este documento explica cómo implementar tests unitarios y de integración en una API .NET usando NUnit, FluentAssertions, Moq y TestContainers.
+## Índice
+
+[21. Testing con NUnit](#21-testing-con-nunit)
+  - [21.1. ¿Qué es Testing?](#211-qué-es-testing)
+  - [21.2. Tipos de Tests](#212-tipos-de-tests)
+  - [21.3. Frameworks de Testing en .NET](#213-frameworks-de-testing-en-net)
+  - [21.4. Estructura del Proyecto de Tests](#214-estructura-del-proyecto-de-tests)
+  - [21.5. Tests en Paralelo vs Secuenciales](#215-tests-en-paralelo-vs-secuenciales)
+  - [21.6. TestContainers](#216-testcontainers)
+  - [21.7. Anatomy de un Test Unitario](#217-anatomy-de-un-test-unitario)
+  - [21.8. NUnit Basics](#218-nunit-basics)
+  - [21.9. FluentAssertions](#219-fluentassertions)
+  - [21.10. Moq - Creando Mocks](#2110-moq---creando-mocks)
+  - [21.11. Tests de Controladores](#2111-tests-de-controladores)
+  - [21.12. Resumen y Buenas Prácticas](#2112-resumen-y-buenas-prácticas)
+  - [21.13. Testing E2E con Postman y Newman](#2113-testing-e2e-con-postman-y-newman)
 
 ---
 

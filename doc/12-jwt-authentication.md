@@ -1,6 +1,19 @@
 # 12. JWT Authentication con ASP.NET Core Identity
 
-La autenticación es el proceso de verificar la identidad de un usuario. En APIs REST modernas, el estándar más usado es **JWT (JSON Web Token)** junto con **ASP.NET Core Identity** para gestión de usuarios.
+## Índice
+
+[12. JWT Authentication con ASP.NET Core Identity](#12-jwt-authentication-con-aspnet-core-identity)
+  - [12.1. Concepto de Autenticación Stateless](#121-concepto-de-autenticación-stateless)
+  - [12.2. JWT (JSON Web Token) en Profundidad](#122-jwt-json-web-token-en-profundidad)
+  - [12.3. ASP.NET Core Identity](#123-aspnet-core-identity)
+  - [12.4. Configuración de Identity en Program.cs](#124-configuración-de-identity-en-programcs)
+  - [12.5. Custom UserClaimsPrincipalFactory](#125-custom-userclaimsprincipalfactory)
+  - [12.6. JwtService - Generación de Tokens](#126-jwtservice---generación-de-tokens)
+  - [12.7. Errores de Autenticación](#127-errores-de-autenticación)
+  - [12.8. AuthController - Endpoints de Autenticación](#128-authcontroller---endpoints-de-autenticación)
+  - [12.9. DTOs de Autenticación](#129-dtos-de-autenticación)
+  - [12.10. Configuración de appsettings.json](#1210-configuración-de-appsettingsjson)
+  - [12.11. Resumen y Buenas Prácticas](#1211-resumen-y-buenas-prácticas)
 
 ---
 

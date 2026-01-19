@@ -1,6 +1,18 @@
 # 16. File Storage: Almacenamiento de Archivos
 
-Este documento explica cómo implementar un sistema de almacenamiento de archivos en una API .NET, incluyendo la configuración de wwwroot, UseStaticFiles, carga y descarga de archivos, validación de seguridad, y el servicio FileSystemStorageService del proyecto.
+## Índice
+
+[16. File Storage: Almacenamiento de Archivos](#16-file-storage-almacenamiento-de-archivos)
+  - [16.1. Conceptos Fundamentales de Archivos Estáticos](#161-conceptos-fundamentales-de-archivos-estáticos)
+  - [16.2. Configuración de wwwroot en Program.cs](#162-configuración-de-wwwroot-en-programcs)
+  - [16.3. UseStaticFiles: Configuración Avanzada](#163-usestaticfiles-configuración-avanzada)
+  - [16.4. IStorageService: Interfaz del Proyecto](#164-istorageservice-interfaz-del-proyecto)
+  - [16.5. FileSystemStorageService: Implementación](#165-filesystemstorageservice-implementación)
+  - [16.6. Controlador de Archivos](#166-controlador-de-archivos)
+  - [16.7. Controlador de Productos con Imágenes](#167-controlador-de-productos-con-imágenes)
+  - [16.8. Seguridad: Path Traversal](#168-seguridad-path-traversal)
+  - [16.9. Configuración de Producción](#169-configuración-de-producción)
+  - [16.10. Resumen](#1610-resumen)
 
 ---
 

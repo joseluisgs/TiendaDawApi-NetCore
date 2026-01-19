@@ -1,6 +1,16 @@
 # 27. Organización de Program.cs y Formas de Estructurar el Startup
 
-A medida que una aplicación ASP.NET Core crece, el archivo `Program.cs` puede volverse monolítico y difícil de mantener. Este documento presenta patrones y técnicas para organizar el código de configuración y startup de manera modular, escalable y mantenible.
+## Índice
+
+[27. Organización de Program.cs y Formas de Estructurar el Startup](#27-organización-de-programcs-y-formas-de-estructurar-el-startup)
+  - [27.1. El Problema del Program.cs Monolítico](#271-el-problema-del-programcs-monolítico)
+  - [27.2. Patrón de Extension Methods para Configuración](#272-patrón-de-extension-methods-para-configuración)
+  - [27.3. Estructura de Carpetas: Infrastructures/](#273-estructura-de-carpetas-infrastructures)
+  - [27.4. Ejemplos de Implementación](#274-ejemplos-de-implementación)
+  - [27.5. Program.cs Refactorizado](#275-programcs-refactorizado)
+  - [27.6. Otras Formas de Estructurar el Startup](#276-otras-formas-de-estructurar-el-startup)
+  - [27.7. Buenas Prácticas y Recomendaciones](#277-buenas-prácticas-y-recomendaciones)
+  - [27.8. Resumen](#278-resumen)
 
 ---
 

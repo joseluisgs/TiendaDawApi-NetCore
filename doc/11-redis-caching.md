@@ -1,8 +1,18 @@
 # 11. Cache y Redis
 
-La gestión eficiente de datos en aplicaciones web es crucial para el rendimiento y la escalabilidad. El uso de un sistema de cache. Una Cache es una capa intermedia de almacenamiento que guarda datos temporalmente para acelerar el acceso a ellos. Como solución de cache distribuido, tenemos a Redis.
+## Índice
 
-Redis es un almacen de datos en memoria de alta velocidad (in-memory data store) usado como cache distribuido. En arquitecturas de alta disponibilidad, Redis es esencial para reducir la latencia y la carga en la base de datos principal.
+[11. Cache y Redis](#11-cache-y-redis)
+  - [11.1. Conceptos Fundamentales de Cache](#111-conceptos-fundamentales-de-cache)
+  - [11.2. Cache-Aside Pattern (Lazy Loading)](#112-cache-aside-pattern-lazy-loading)
+  - [11.3. MemoryCache vs Redis](#113-memorycache-vs-redis)
+  - [11.4. Configuración según Entorno](#114-configuración-según-entorno)
+  - [11.5. ICacheService Interface Contracts](#115-icacheservice-interface-contracts)
+  - [11.6. Implementación de Cache de Productos](#116-implementación-de-cache-de-productos)
+  - [11.7. Cache en Servicios de Negocio](#117-cache-en-servicios-de-negocio)
+  - [11.8. Invalidación de Cache](#118-invalidación-de-cache)
+  - [11.9. Cache de Segundo Nivel (Fallback)](#119-cache-de-segundo-nivel-fallback)
+  - [11.10. Resumen y Buenas Prácticas](#1110-resumen-y-buenas-prácticas)
 
 ---
 

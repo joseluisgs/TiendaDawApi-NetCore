@@ -1,6 +1,18 @@
 # 17. Email Services: Envío de Correos Electrónicos
 
-Este documento explica cómo implementar un sistema de envío de correos electrónicos en una API .NET, incluyendo configuración SMTP, plantillas HTML, cola asíncrona con BackgroundService, y pruebas con servicio de desarrollo.
+## Índice
+
+[17. Email Services: Envío de Correos Electrónicos](#17-email-services-envío-de-correos-electrónicos)
+  - [17.1. ¿Por Qué un Sistema de Emails Robusto?](#171-por-qué-un-sistema-de-emails-robusto)
+  - [17.2. Interfaz IEmailService](#172-interfaz-iemailservice)
+  - [17.3. Implementación con MailKit](#173-implementación-con-mailkit)
+  - [17.4. Servicio de Desarrollo (MemoryEmailService)](#174-servicio-de-desarrollo-memoryemailservice)
+  - [17.5. Sistema de Plantillas](#175-sistema-de-plantillas)
+  - [17.6. Cola de Emails con BackgroundService](#176-cola-de-emails-con-backgroundservice)
+  - [17.7. Envío de Emails desde Servicios de Negocio](#177-envío-de-emails-desde-servicios-de-negocio)
+  - [17.8. Configuración](#178-configuración)
+  - [17.9. docker-compose para Testing de Emails](#179-docker-compose-para-testing-de-emails)
+  - [17.10. Resumen y Buenas Prácticas](#1710-resumen-y-buenas-prácticas)
 
 ---
 

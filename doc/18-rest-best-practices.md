@@ -1,6 +1,16 @@
 # 18. REST Best Practices
 
-Este documento explica las mejores prácticas para diseñar APIs RESTful profesionales, incluyendo versionado, paginación, HATEOAS, filtrado, y respuestas estandarizadas.
+## Índice
+
+[18. REST Best Practices](#18-rest-best-practices)
+  - [18.1. Principios Fundamentales de REST](#181-principios-fundamentales-de-rest)
+  - [18.2. Versionado de API](#182-versionado-de-api)
+  - [18.3. Paginación](#183-paginación)
+  - [18.4. HATEOAS](#184-hateoas)
+  - [18.5. Response Envelopes](#185-response-envelopes)
+  - [18.6. Query Strings y Filtrado](#186-query-strings-y-filtrado)
+  - [18.7. ETag para Cacheo](#187-etag-para-cacheo)
+  - [18.8. Resumen](#188-resumen)
 
 ---
 

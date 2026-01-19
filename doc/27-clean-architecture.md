@@ -1,6 +1,14 @@
 # 26. Clean Architecture y CQRS
 
-Este documento explica cómo estructurar una API .NET usando principios de Clean Architecture y el patrón CQRS para código mantenible y escalable.
+## Índice
+
+[26. Clean Architecture y CQRS](#26-clean-architecture-y-cqrs)
+  - [26.1. ¿Qué es Clean Architecture?](#261-qué-es-clean-architecture)
+  - [26.2. Estructura del Proyecto](#262-estructura-del-proyecto)
+  - [26.3. Entities (Domain Layer)](#263-entities-domain-layer)
+  - [26.4. CQRS](#264-cqrs)
+  - [26.5. Repository con Especificaciones](#265-repository-con-especificaciones)
+  - [26.6. Resumen y Buenas Prácticas](#266-resumen-y-buenas-prácticas)
 
 ---
 

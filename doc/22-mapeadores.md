@@ -1,6 +1,17 @@
 # 22. Mapeadores: AutoMapper vs Funciones de Extensión
 
-Este documento explica cómo implementar mapeos entre entidades y DTOs en .NET, comparando **AutoMapper** con **Funciones de Extensión** como alternativas, incluyendo pros, contras, benchmarks y cuándo usar cada enfoque.
+## Índice
+
+[22. Mapeadores: AutoMapper vs Funciones de Extensión](#22-mapeadores-automapper-vs-funciones-de-extensión)
+  - [22.1. ¿Por Qué Usar Mapeadores?](#221-por-qué-usar-mapeadores)
+  - [22.2. AutoMapper](#222-automapper)
+  - [22.3. Funciones de Extensión (Alternativa)](#223-funciones-de-extensión-alternativa)
+  - [22.4. Comparación AutoMapper vs Extensiones](#224-comparación-automapper-vs-extensiones)
+  - [22.5. Benchmarks de Rendimiento](#225-benchmarks-de-rendimiento)
+  - [22.6. Cuándo Usar Cada Enfoque](#226-cuándo-usar-cada-enfoque)
+  - [22.7. Patrón Híbrido](#227-patrón-híbrido)
+  - [22.8. Errores Comunes](#228-errores-comunes)
+  - [22.9. Resumen](#229-resumen)
 
 ---
 

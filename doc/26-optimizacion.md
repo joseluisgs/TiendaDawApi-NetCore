@@ -1,6 +1,15 @@
 # 25. Optimización de Rendimiento
 
-Este documento explica técnicas para optimizar el rendimiento de una API .NET, incluyendo caching avanzado, optimización de queries y benchmarking.
+## Índice
+
+[25. Optimización de Rendimiento](#25-optimización-de-rendimiento)
+  - [25.1. ¿Por qué Optimizar?](#251-por-qué-optimizar)
+  - [25.2. Optimización de Endpoints](#252-optimización-de-endpoints)
+  - [25.3. Optimización de Base de Datos](#253-optimización-de-base-de-datos)
+  - [25.4. Caching Avanzado](#254-caching-avanzado)
+  - [25.5. Optimización de Entity Framework Core](#255-optimización-de-entity-framework-core)
+  - [25.6. Benchmarking](#256-benchmarking)
+  - [25.7. Resumen y Buenas Prácticas](#257-resumen-y-buenas-prácticas)
 
 ---
 

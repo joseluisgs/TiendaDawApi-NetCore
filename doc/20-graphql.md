@@ -1,6 +1,28 @@
 # 20. GraphQL con HotChocolate
 
-Este documento explica cómo implementar una API GraphQL en .NET usando **HotChocolate**, la biblioteca más popular para GraphQL en el ecosistema .NET. Se describe la configuración, tipos, queries, y comparación con REST.
+## Índice
+
+[20. GraphQL con HotChocolate](#20-graphql-con-hotchocolate)
+  - [20.1. ¿Qué es GraphQL?](#201-qué-es-graphql)
+  - [20.2. Instalación de HotChocolate](#202-instalación-de-hotchocolate)
+  - [20.3. Configuración en Program.cs](#203-configuración-en-programcs)
+  - [20.3.1. Autenticación y Autorización con HotChocolate](#2031-autenticación-y-autorización-con-hotchocolate)
+  - [20.4. Conceptos de Queries](#204-conceptos-de-queries)
+  - [20.5. TiendaQuery: Consultas del Proyecto](#205-tiendaquery-consultas-del-proyecto)
+  - [20.6. Tipos de GraphQL](#206-tipos-de-graphql)
+  - [20.7. Tipos de Datos en GraphQL](#207-tipos-de-datos-en-graphql)
+  - [20.8. GraphiQL: Herramienta de Desarrollo](#208-graphiql-herramienta-de-desarrollo)
+  - [20.9. Consultas de Ejemplo](#209-consultas-de-ejemplo)
+  - [20.10. Mutations](#2010-mutations)
+  - [20.11. Subscriptions](#2011-subscriptions)
+  - [20.12. Comparación REST vs GraphQL](#2012-comparación-rest-vs-graphql)
+  - [20.13. Input Types](#2013-input-types)
+  - [20.14. Events: Payloads de Eventos](#2014-events-payloads-de-eventos)
+  - [20.15. Publishers: Sistema Pub/Sub](#2015-publishers-sistema-pubsub)
+  - [20.16. Estructura de Carpetas GraphQL](#2016-estructura-de-carpetas-graphql)
+  - [20.17. Patrones Utilizados](#2017-patrones-utilizados)
+  - [20.18. Estado Actual del Proyecto](#2018-estado-actual-del-proyecto)
+  - [20.19. Resumen Completo](#2019-resumen-completo)
 
 ---
 
