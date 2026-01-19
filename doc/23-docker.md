@@ -39,7 +39,62 @@ flowchart TB
 
 ---
 
-## 23.2. ¿Qué es CI/CD?
+## 23.2. GitHub Actions CI Pipeline
+
+Este proyecto incluye un pipeline de CI/CD automatizado usando **GitHub Actions** que valida cada cambio de código.
+
+### Características del Pipeline
+
+| Job | Descripción | Tiempo estimado |
+|-----|-------------|-----------------|
+| **Build** | Compila la solución en Release | ~1-2 min |
+| **Test** | Ejecuta 1000+ tests unitarios | ~1 min |
+| **Validate Docs** | Verifica documentación | ~10 seg |
+
+### Triggers
+
+El pipeline se ejecuta automáticamente en:
+- **Push** a branches `main` o `develop`
+- **Pull Request** a `main`
+- **Manual** mediante workflow_dispatch
+
+### Configuración
+
+```yaml
+# .github/workflows/ci.yml
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+```
+
+### ¿Necesita Secretos?
+
+**NO** para CI básico (build + test). El pipeline usa:
+- Testcontainers para tests de integración
+- Sin conexión a bases de datos externas
+- Sin variables sensibles necesarias
+
+### Ver Resultados
+
+1. Ir a **Actions** tab en GitHub
+2. Ver el último workflow run
+3. Revisar logs de cada job
+
+### Badge de Status
+
+Añade este badge al README:
+
+```markdown
+![CI](https://github.com/joseluisgs/TiendaDawApi-NetCore/actions/workflows/ci.yml/badge.svg)
+```
+
+---
+
+## 23.3. ¿Qué es CI/CD?
 
 **CI/CD** son las siglas de **Continuous Integration** (Integración Continua) y **Continuous Deployment/Delivery** (Despliegue Continuo). Es una práctica moderna de desarrollo de software que automatiza la construcción, prueba y entrega de aplicaciones.
 
@@ -84,11 +139,7 @@ flowchart LR
 
 ---
 
-## 23.3. ¿Qué es GitHub Actions?
-
-**GitHub Actions** es una plataforma de automatización de CI/CD integrada en GitHub que permite automatizar flujos de trabajo directamente desde el repositorio.
-
-### Conceptos Básicos de GitHub Actions
+## 23.4. Conceptos de GitHub Actions
 
 ```mermaid
 flowchart TB
@@ -133,7 +184,7 @@ flowchart TD
 
 ---
 
-## 23.4. Archivo Dockerfile
+## 23.5. Archivo Dockerfile
 
 El **Dockerfile** es un archivo de texto que contiene instrucciones para construir una imagen Docker. Cada instrucción crea una capa en la imagen.
 
@@ -167,7 +218,7 @@ TiendaDawApi-NetCore/
 # Usamos la imagen SDK que incluye todas las
 # herramientas de compilación
 # ============================================
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 # Establecer el directorio de trabajo
 WORKDIR /src
@@ -176,7 +227,6 @@ WORKDIR /src
 # Esto permite que Docker use caché de capas
 # si no han cambiado los paquetes NuGet
 COPY "TiendaApi.Apis/TiendaApi.Apis.csproj" "TiendaApi.Apis/"
-COPY "TiendaApi.Core/TiendaApi.Core.csproj" "TiendaApi.Core/"
 COPY "TiendaApi.Tests/TiendaApi.Tests.csproj" "TiendaApi.Tests/"
 
 # RESTAURAR DEPENDENCIAS
@@ -185,7 +235,7 @@ RUN dotnet restore "TiendaApi.Apis/TiendaApi.Apis.csproj"
 
 # COPIAR TODO EL CÓDIGO FUENTE
 # Nota: Esto invalidará el caché cuando haya cambios
-COPY src/ ./
+COPY . .
 
 # PUBLICAR LA APLICACIÓN
 # -c Release: Compila en modo Release
@@ -200,13 +250,13 @@ RUN dotnet publish "TiendaApi.Apis/TiendaApi.Apis.csproj" \
 # ETAPA 2: RUNTIME - Imagen final
 # Imagen más pequeña que solo incluye el runtime
 # ============================================
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 # INSTALAR DEPENDENCIAS DEL SISTEMA
 # Necesarias para que .NET funcione correctamente
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
-    libicu72 \
+    libicu80 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -293,7 +343,7 @@ docker-compose*
 
 ---
 
-## 23.5. Docker Compose
+## 23.6. Docker Compose
 
 **Docker Compose** es una herramienta para definir y ejecutar aplicaciones Docker multi-contenedor. Se usa un archivo YAML para configurar todos los servicios.
 
@@ -410,7 +460,7 @@ volumes:
 
 ---
 
-## 23.6. GitHub Actions Workflow Completo
+## 23.7. GitHub Actions Workflow Completo
 
 El workflow de CI/CD define qué sucede automáticamente cuando se hace push o se crea un pull request.
 
@@ -458,7 +508,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  DOTNET_VERSION: '8.0.x'
+  DOTNET_VERSION: '10.0.x'
 
 # ============================================
 # JOBS - Conjuntos de tareas
@@ -613,7 +663,87 @@ Los **secrets** son variables encriptadas para datos sensibles como claves SSH, 
 
 ---
 
-## 23.7. Resumen y Buenas Prácticas
+## 23.8. Modos de Uso
+
+Este proyecto soporta diferentes modos de ejecución según las necesidades.
+
+### Comparación de Modos
+
+| Aspecto | CI (GitHub Actions) | Desarrollo Local | Producción |
+|---------|---------------------|------------------|------------|
+| **Base de datos** | Testcontainers | Docker Compose | Externo |
+| **Secrets** | No necesarios | .env | Variables entorno |
+| **Build** | Release | Debug | Release |
+| **Cache** | GitHub Actions Cache | Local | CDN |
+| **Logs** | GitHub Actions Logs | Consola | Serilog |
+
+### Modo CI (GitHub Actions)
+
+```yaml
+# .github/workflows/ci.yml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet build --configuration Release
+      - run: dotnet test --configuration Release
+```
+
+**Características:**
+- Sin secrets necesarios
+- Testcontainers para BDs
+- Builds reproducibles
+- Coverage automático
+
+### Modo Desarrollo Local
+
+```bash
+# Usando docker-compose.local.yml
+docker-compose -f docker-compose.local.yml up -d
+
+# O directamente con .NET
+dotnet run --project TiendaApi.Apis
+```
+
+**Características:**
+- Variables en `.env`
+- Hot reload con `dotnet watch`
+- Volúmenes montados
+- PostgreSQL, MongoDB, Redis locales
+
+### Modo Producción
+
+```bash
+# Build y deploy con Docker
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+**Características:**
+- Multi-stage build
+- Usuario no-root
+- Health checks
+- Variables de entorno seguras
+
+### Cambiar entre Modos
+
+```bash
+# Desarrollo
+export ASPNETCORE_ENVIRONMENT=Development
+
+# Staging  
+export ASPNETCORE_ENVIRONMENT=Staging
+
+# Producción
+export ASPNETCORE_ENVIRONMENT=Production
+```
+
+---
+
+## 23.9. Resumen y Buenas Prácticas
 
 ### Flujo Completo de CI/CD
 
