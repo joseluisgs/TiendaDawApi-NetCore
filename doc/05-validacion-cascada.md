@@ -1,6 +1,15 @@
 # 5. Validación en Cascada: Data Annotations + FluentValidation
 
-La validación de datos de entrada es una de las partes más importantes de cualquier API. Una API bien validada rechaza datos inválidos antes de llegar a la lógica de negocio, proporcionando mensajes de error claros y específicos. En el proyecto TiendaApi usamos una arquitectura de validación en tres capas que combina Data Annotations para validación básica, FluentValidation para reglas complejas de negocio, y el patrón Result para comunicar errores de forma estructurada.
+## Índice
+
+5 - [5. Validación en Cascada: Data Annotations + FluentValidation](#5-validación-en-cascada-data-annotations--fluentvalidation)
+    - [5.1. Capas de Validación: Overview](#51-capas-de-validación-overview)
+    - [5.2. Data Annotations](#52-data-annotations)
+    - [5.3. FluentValidation: Instalación y Validadores](#53-fluentvalidación-instalación-y-validadores)
+    - [5.4. Integración de FluentValidation con Controladores](#54-integración-de-fluentvalidation-con-controladores)
+    - [5.5. Cuándo Usar Cada Capa de Validación](#55-cuando-usar-cada-capa-de-validación)
+    - [5.6. Respuestas de Error Estandarizadas](#56-respuestas-de-error-estandarizadas)
+    - [5.7. Resumen y Buenas Prácticas](#57-resumen-y-buenas-prácticas)
 
 ---
 

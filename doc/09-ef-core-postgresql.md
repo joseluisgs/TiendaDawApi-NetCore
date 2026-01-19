@@ -1,6 +1,17 @@
 # 9. Entity Framework Core con PostgreSQL
 
-Entity Framework Core (EF Core) es el ORM oficial de Microsoft para .NET. Permite trabajar con bases de datos relacionales usando objetos .NET en lugar de SQL. En el proyecto TiendaApi usamos EF Core con PostgreSQL a través del proveedor Npgsql.
+## Índice
+
+9 - [9. Entity Framework Core con PostgreSQL](#9-entity-framework-core-con-postgresql)
+    - [9.1. DbContext y Configuración de Entidades](#91-dbcontext-y-configuración-de-entidades)
+    - [9.2. Configuración de Entidades: Data Annotations vs Fluent API](#92-configuración-de-entidades-data-annotations-vs-fluent-api)
+    - [9.3. Tipos de Relaciones en EF Core](#93-tipos-de-relaciones-en-ef-core)
+    - [9.4. Timestamps Automáticos: CreatedAt y UpdatedAt](#94-timestamps-automáticos-createdat-y-updatedat)
+    - [9.5. Migraciones de Base de Datos](#95-migraciones-de-base-de-datos)
+    - [9.6. Seed Data: Datos Iniciales](#96-seed-data-datos-iniciales)
+    - [9.7. SaveChanges y Transacciones](#97-savechanges-y-transacciones)
+    - [9.8. Shadow Properties y Global Query Filters](#98-shadow-properties-y-global-query-filters)
+    - [9.9. Resumen y Buenas Prácticas](#99-resumen-y-buenas-prácticas)
 
 ---
 

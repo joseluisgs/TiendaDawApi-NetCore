@@ -1,6 +1,16 @@
 # 6. Patrón Result con CSharpFunctionalExtensions
 
-El patrón Result es una alternativa al uso de excepciones para manejar errores de negocio. En lugar de lanzar excepciones cuando algo falla, los métodos devuelven un objeto `Result` que contiene información sobre si la operación fue exitosa o falló, junto con el valor resultante o el error. Este patrón hace el código más legible, más fácil de testear, y más predecible, especialmente en flujos complejos donde múltiples cosas pueden salir mal.
+## Índice
+
+6 - [6. Patrón Result con CSharpFunctionalExtensions](#6-patrón-result-con-csharpextensions)
+    - [6.1. Por Qué Excepciones No Son Para Errores de Negocio](#61-por-qué-excepciones-no-son-para-errores-de-negocio)
+    - [6.2. CSharpFunctionalExtensions: Result<T, Error>](#62-csharpextensions-resultt-error)
+    - [6.3. DomainError y ErrorType Enum](#63-domainerror-y-errortype-enum)
+    - [6.4. Result.Match() en Servicios](#64-resultmatch-en-servicios)
+    - [6.5. UnitResult para Operaciones Sin Retorno](#65-unitresult-para-operaciones-sin-retorno)
+    - [6.6. Integración Result + Controladores](#66-integración-result--controladores)
+    - [6.7. Ventajas del Patrón Result](#67-ventajas-del-patrón-result)
+    - [6.8. Resumen y Buenas Prácticas](#68-resumen-y-buenas-prácticas)
 
 ---
 

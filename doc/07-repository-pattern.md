@@ -1,6 +1,14 @@
 # 7. Repository Pattern
 
-El Repository Pattern es un patrón de diseño que abstrae el acceso a datos, proporcionando una interfaz limpia para las operaciones de CRUD y consultas. El patrón separa la lógica de acceso a datos de la lógica de negocio, permitiendo cambiar la implementación (por ejemplo, de PostgreSQL a MongoDB) sin afectar el código de los servicios. En el proyecto TiendaApi, cada entidad tiene su propio repositorio con métodos específicos para sus operaciones más comunes.
+## Índice
+
+7 - [7. Repository Pattern](#7-repository-pattern)
+    - [7.1. Qué es el Repository Pattern](#71-qué-es-el-repository-pattern)
+    - [7.2. Contratos: Definición de Interfaces](#72-contratos-definición-de-interfaces)
+    - [7.3. Implementación con Entity Framework Core](#73-implementación-con-entity-framework-core)
+    - [7.4. Unit of Work Implícito](#74-unit-of-work-implícito)
+    - [7.5. Separación de Responsabilidades](#75-separación-de-responsabilidades)
+    - [7.6. Resumen y Buenas Prácticas](#76-resumen-y-buenas-prácticas)
 
 ---
 

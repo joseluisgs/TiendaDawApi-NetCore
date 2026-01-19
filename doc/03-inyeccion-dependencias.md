@@ -1,6 +1,15 @@
 # 3. Inyección de Dependencias y Constructores Primarios
 
-La inyección de dependencias (DI) es el patrón arquitectónico más importante en ASP.NET Core. Es el mecanismo que permite que tus controladores y servicios reciban sus dependencias (repositorios, loggers, servicios externos) en lugar de crearlas internamente. Este patrón facilita el testing, el mantenimiento y la evolución del código. Los constructores primarios de C# 14 simplifican enormemente la sintaxis de la inyección de dependencias, haciendo el código más limpio y expresivo.
+## Índice
+
+3 - [3. Inyección de Dependencias y Constructores Primarios](#3-inyección-de-dependencias-y-constructores-primarios)
+    - [3.1. Qué es la Inyección de Dependencias](#31-qué-es-la-inyección-de-dependencias)
+    - [3.2. Tiempos de Vida de Servicios](#32-tiempos-de-vida-de-servicios)
+    - [3.3. Constructores Primarios de C# 14](#33-constructores-primarios-de-c-14)
+    - [3.4. Registro de Servicios en Program.cs](#34-registro-de-servicios-en-programcs)
+    - [3.5. Estructura del Proyecto: Controllers, Services, Repositories](#35-estructura-del-proyecto-controllers-services-repositories)
+    - [3.6. Interfaces y Abstracciones](#36-interfaces-y-abstracciones)
+    - [3.7. Resumen y Buenas Prácticas](#37-resumen-y-buenas-prácticas)
 
 ---
 

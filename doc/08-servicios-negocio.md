@@ -1,6 +1,16 @@
 # 8. Servicios de Negocio
 
-Los servicios de negocio son el corazón de tu aplicación. Contienen toda la lógica de dominio que no pertenece ni a los controladores ni a los repositorios. Un servicio bien diseñado es aquele que contiene únicamente reglas de negocio, delega acceso a datos a repositorios, usa Result Pattern para comunicar éxito o fracaso, y es completamente testable de forma aislada.
+## Índice
+
+8 - [8. Servicios de Negocio](#8-servicios-de-negocio)
+    - [8.1. Anatomía de un Servicio de Negocio](#81-anatomía-de-un-servicio-de-negocio)
+    - [8.2. Constructores Primarios en Servicios](#82-constructores-primarios-en-servicios)
+    - [8.3. Lógica de Negocio vs Acceso a Datos](#83-lógica-de-negocio-vs-acceso-a-datos)
+    - [8.4. Integración con Repositories](#84-integración-con-repositories)
+    - [8.5. Integración con Cache](#85-integración-con-cache)
+    - [8.6. Patrón Result en Servicios](#86-patrón-result-en-servicios)
+    - [8.7. Notificaciones WebSocket desde Servicios](#87-notificaciones-websocket-desde-servicios)
+    - [8.8. Resumen y Buenas Prácticas](#88-resumen-y-buenas-prácticas)
 
 ---
 

@@ -1,6 +1,17 @@
 # 1. Configuración de Proyectos .NET
 
-En este documento aprenderás a configurar un proyecto ASP.NET Core desde cero, gestionar dependencias con NuGet, estructurar tu solución y configurar los distintos entornos de desarrollo. Dominar esta configuración es fundamental antes de escribir cualquier línea de código de negocio.
+## Índice
+
+1 - [1. Configuración de Proyectos .NET](#1-configuración-de-proyectos-net)
+    - [1.1. Creación de Soluciones y Proyectos](#11-creación-de-soluciones-y-proyectos)
+    - [1.2. Instalación de Librerías con NuGet](#12-instalación-de-librerías-con-nuget)
+    - [1.3. Estructura de Proyectos](#13-estructura-de-proyectos)
+    - [1.4. Configuración con appsettings.json](#14-configuración-con-appsettingsjson)
+    - [1.5. Variables de Entorno y Secrets de Usuario](#15-variables-de-entorno-y-secrets-de-usuario)
+    - [1.6. Patrón de Opciones (IOptions<T>)](#16-patrón-de-opciones-ioptionst)
+    - [1.7. Testing con NUnit](#17-testing-con-nunit)
+    - [1.8. Hot Reload y dotnet watch run](#18-hot-reload-y-dotnet-watch-run)
+    - [1.9. Resumen y Buenas Prácticas](#19-resumen-y-buenas-prácticas)
 
 ---
 
