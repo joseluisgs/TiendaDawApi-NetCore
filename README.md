@@ -592,7 +592,7 @@ TiendaDawApi-NetCore/
 │   ├── websocket-client-js/          # Cliente WebSocket en JavaScript
 │   └── graphql-client-js/            # Cliente GraphQL en JavaScript
 │
-├── doc/                              # Documentación técnica (28 documentos)
+├── doc/                              # Documentación técnica
 └── README.md                         # Este archivo
 ```
 
@@ -754,104 +754,45 @@ graph TB
 
 ### Estructura de Dependencias
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           🌍 EXTERNAL LAYER                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
-│  │   REST   │  │  GraphQL │  │ WebSocket│  │   SMTP   │  │  Files   │  │ Background│  │
-│  │  (HTTP)  │  │ (HotChoc)│  │ (SignalR)│  │ (MailKit)│  │ (Static) │  │   Jobs   │  │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
-│       └─────────────┼─────────────┼─────────────┼─────────────┼─────────────┼────────┘
-│                     │             │             │             │             │
-│                     ▼             ▼             ▼             ▼             ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     🎯 APPLICATION LAYER (API)                          │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                     CONTROLLERS                                 │    │
-│  │  AuthController │ CategoriasController │ ProductosController    │    │
-│  │  PedidosController │ UsersController │ GraphQLController        │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│        │                    │                    │                      │
-│        ▼                    ▼                    ▼                      │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                     FILTERS & MIDDLEWARE                        │    │
-│  │  [Authorization] │ [Model Validation] │ [Exception Handler]     │    │
-│  │  [JWT Bearer] │ [CORS] │ [Rate Limiting] │ [Global Error]       │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                           │ Depende de: Core                            │
-└───────────────────────────┼─────────────────────────────────────────────┘
-                            ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    🔷 CORE LAYER (DOMAIN + APPLICATION)                 │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                   🏢 APPLICATION SERVICES                       │    │
-│  │  AuthService │ CategoriaService │ ProductoService │ UserService │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│         │                    │                    │                     │
-│         ▼                    ▼                    ▼                     │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │              🛠️ CROSS-CUTTING CONCERNS                          │    │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │    │
-│  │  │AutoMapper   │  │FluentValid. │  │ Result~T,E> │              │    │
-│  │  │(Mapping)    │  │(Validation) │  │  (ROP)      │              │    │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘              │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                           │ No depende de infraestructura               │
-│                           │ Depende de: Abstractions                    │
-└───────────────────────────┼─────────────────────────────────────────────┘
-                            ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   🟡 ABSTRACTIONS LAYER (CONTRACTS)                     │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    💾 REPOSITORY INTERFACES                     │    │
-│  │   IUserRepository │ IProductoRepository │ ICategoriaRepository  │    │
-│  │                   │ IPedidosRepository                          │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│                           │ Sin implementación                          │
-└───────────────────────────┼─────────────────────────────────────────────┘
-                            ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    🔴 INFRASTRUCTURE LAYER                              │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    💾 DATA ACCESS (IMPLEMENTATIONS)             │    │
-│  │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐     │    │
-│  │  │ REPOSITORIES   │  │    EF CORE     │  │   MONGODB      │     │    │
-│  │  │  (Impl)        │  │   (PostgreSQL) │  │   DRIVER       │     │    │
-│  │  └────────────────┘  └────────────────┘  └────────────────┘     │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│         │                    │                    │                     │
-│         ▼                    ▼                    ▼                     │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                 🗄️ DATA STORES (EXTERNAL)                       │    │
-│  │   🐘 PostgreSQL    │    🍃 MongoDB    │    🔴 Redis Cache      │    │
-│  │   (Users, Cats,    │    (Pedidos,     │    (Sessions,           │    │
-│  │    Products)       │     Items)       │     Cache)              │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                 🔐 SECURITY & IDENTITY                          │    │
-│  │  JWT Tokens │ BCrypt Hash │ Claims │ Roles │ Policies           │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                 📧 EXTERNAL SERVICES                            │    │
-│  │  SMTP (MailKit) │ File System (wwwroot) │ HTTP Clients          │    │
-│  │  Background Jobs (BackgroundService) │ Report Scheduling        │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│                           │ Implementa abstracciones                    │
-└───────────────────────────┴─────────────────────────────────────────────┘
-```
+```mermaid
+graph TB
+    subgraph "🟣 External Layer" 
+        REST["🌐 REST API<br/>HTTP"]
+        GQL["📡 GraphQL<br/>HotChocolate"]
+        WS["🔌 WebSocket<br/>SignalR"]
+        SMTP["📧 SMTP<br/>MailKit"]
+        FS["📁 File System<br/>wwwroot/uploads"]
+        BG["⏰ Background Jobs<br/>BackgroundService"]
+    end
 
-**Flujo de Dependencias:**
-```
-External → Application → Core → Abstractions → Infrastructure → External
-                           ↓
-                      (No depende de capas externas)
+    subgraph "🔵 Application Layer"
+        CTRL["🎯 Controllers<br/>Auth, Categorias, Productos<br/>Pedidos, Users, GraphQL"]
+        FILT["🔍 Filters & Middleware<br/>Auth, Validation, Exception<br/>JWT, CORS, RateLimit"]
+    end
+
+    subgraph "🟠 Core Layer"
+        SVC["🏢 Services<br/>Auth, Categoria, Producto<br/>User, Pedidos, Background"]
+        CCC["🛠️ Cross-Cutting<br/>AutoMapper, FluentValidation<br/>Result~T,E&gt;, Errors"]
+    end
+
+    subgraph "🟡 Abstractions"
+        REPO["💾 Repositories<br/>IUser, IProducto, ICategoria<br/>IPedidos, IBackgroundTask"]
+    end
+
+    subgraph "🔴 Infrastructure"
+        DA["💾 Data Access<br/>Repositories, EF Core<br/>MongoDB, Redis"]
+        DS["🗄️ Data Stores<br/>PostgreSQL, MongoDB<br/>Redis Cache"]
+        SEC["🔐 Security<br/>JWT, BCrypt, Claims<br/>Roles, Policies"]
+        EXT["📧 External Services<br/>SMTP, File System<br/>HTTP Clients, Background Jobs"]
+    end
+
+    REST & GQL & WS & SMTP & FS & BG === CTRL
+    CTRL === FILT
+    FILT === SVC
+    SVC === CCC
+    CCC === REPO
+    REPO === DA
+    DA === DS & SEC & EXT
 ```
 
 #### Ventajas de Esta Arquitectura
