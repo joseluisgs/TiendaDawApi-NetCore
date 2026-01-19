@@ -1,10 +1,13 @@
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
+using Moq;
 using NUnit.Framework;
 using System.Diagnostics;
 using System.Threading.Channels;
@@ -16,6 +19,7 @@ using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Categorias;
 using TiendaApi.Apis.Repositories.Pedidos;
 using TiendaApi.Apis.Repositories.Productos;
+using TiendaApi.Apis.Services.Auth;
 using TiendaApi.Apis.Services.Cache;
 using TiendaApi.Apis.Services.Email;
 using TiendaApi.Apis.Services.Pedidos;
@@ -25,14 +29,15 @@ using TiendaApi.Apis.Realtime.Pedidos;
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 
 /// <summary>
-/// Tests de integración para PedidosService con DI completo.
-/// Verifica el servicio con bases de datos reales usando Testcontainers.
+/// Tests de integración para PedidosService con MongoDB Driver nativo.
+/// Esta clase complementa PedidosServiceIntegrationTests, mostrando que
+/// los tests funcionan correctamente con el driver nativo (a diferencia de EF Core).
 /// </summary>
 [TestFixture]
 [NonParallelizable]
-public class PedidosServiceIntegrationTests
+public class PedidosNativeServiceIntegrationTests
 {
-    private static readonly ActivitySource ActivitySource = new("PedidosServiceIntegrationTests");
+    private static readonly ActivitySource ActivitySource = new("PedidosNativeServiceIntegrationTests");
     private MongoDbContainer? _mongoContainer;
     private PostgreSqlContainer? _postgresContainer;
     private IServiceProvider? _serviceProvider;
@@ -80,13 +85,14 @@ public class PedidosServiceIntegrationTests
     {
         var connectionString = _postgresContainer!.GetConnectionString();
         var mongoConnectionString = _mongoContainer!.GetConnectionString();
+        var mongoDatabaseName = "tienda_test";
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
-                { "MongoDbSettings:DatabaseName", "tienda_test" },
+                { "MongoDbSettings:DatabaseName", mongoDatabaseName },
                 { "Cache:PedidoCacheTTLMinutes", "5" }
             }!)
             .Build();
@@ -106,10 +112,22 @@ public class PedidosServiceIntegrationTests
         services.AddDbContext<TiendaDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        services.AddDbContext<TiendaMongoContext>(options =>
-            options.UseMongoDB(mongoConnectionString, "tienda_test"));
+        // Registrar SignalR (requerido por PedidosService)
+        services.AddSignalR();
 
-        RegisterRepositories(services, mongoConnectionString);
+        // Registrar MongoDB Driver nativo (sin EF Core)
+        services.AddSingleton<IMongoClient>(sp =>
+        {
+            return new MongoClient(mongoConnectionString);
+        });
+
+        services.AddSingleton(sp =>
+        {
+            var client = sp.GetRequiredService<IMongoClient>();
+            return client.GetDatabase(mongoDatabaseName);
+        });
+
+        RegisterRepositories(services);
         RegisterServices(services);
 
         _serviceProvider = services.BuildServiceProvider();
@@ -153,18 +171,33 @@ public class PedidosServiceIntegrationTests
         (_serviceProvider as IDisposable)?.Dispose();
     }
 
-    private static void RegisterRepositories(IServiceCollection services, string mongoConnectionString)
+    private static void RegisterRepositories(IServiceCollection services)
     {
         services.AddScoped<ILogger<ProductoRepository>, Logger<ProductoRepository>>();
         services.AddScoped<ILogger<CategoriaRepository>, Logger<CategoriaRepository>>();
-        services.AddScoped<ILogger<PedidosEfCoreRepository>, Logger<PedidosEfCoreRepository>>();
+        services.AddScoped<ILogger<PedidosNativeRepository>, Logger<PedidosNativeRepository>>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
-        services.AddScoped<IPedidosRepository, PedidosEfCoreRepository>();
+        // Usando PedidosNativeRepository (driver nativo) en lugar de PedidosEfCoreRepository
+        services.AddScoped<IPedidosRepository, PedidosNativeRepository>();
     }
 
     private static void RegisterServices(IServiceCollection services)
     {
+        // Mock para IJwtTokenExtractor (requerido por PedidosWebSocketHandler)
+        var mockJwtExtractor = new Mock<IJwtTokenExtractor>();
+        mockJwtExtractor.Setup(x => x.ExtractUserId(It.IsAny<string>())).Returns(1L);
+        services.AddSingleton<IJwtTokenExtractor>(mockJwtExtractor.Object);
+        
+        // Mock para IHubContext (requerido por PedidosService)
+        // Nota: SendAsync es un método de extensión, no se puede mockear directamente
+        // El mock simplemente evita NullReferenceException
+        var mockClients = new Mock<IHubClients>();
+        mockClients.Setup(c => c.All).Returns(Mock.Of<IClientProxy>());
+        var mockHubContext = new Mock<IHubContext<PedidosHub>>();
+        mockHubContext.Setup(c => c.Clients).Returns(mockClients.Object);
+        services.AddSingleton<IHubContext<PedidosHub>>(mockHubContext.Object);
+        
         services.AddScoped<ILogger<PedidosService>, Logger<PedidosService>>();
         services.AddScoped<PedidosWebSocketHandler>();
         services.AddScoped<IEmailService, MemoryEmailService>();
@@ -175,7 +208,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task FindAllAsync_SinPedidos_RetornaListaVacia()
     {
         var result = await _pedidosService!.FindAllAsync();
@@ -184,7 +216,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia()
     {
         var result = await _pedidosService!.FindByUserIdAsync(_userId);
@@ -193,7 +224,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task FindByIdAsync_SinPedidos_RetornaNotFound()
     {
         var result = await _pedidosService!.FindByIdAsync("507f1f77bcf86cd799439011");
@@ -201,7 +231,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_ConItemsValidos_RetornaPedidoCreado()
     {
         var dto = new PedidoRequestDto
@@ -232,7 +261,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task CreateAsync_ConItemsVacios_RetornaError()
     {
         var dto = new PedidoRequestDto
@@ -250,7 +278,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task CreateAsync_ConProductoNoExistente_RetornaError()
     {
         var dto = new PedidoRequestDto
@@ -271,7 +298,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task CreateAsync_ConStockCero_RetornaErrorDeStock()
     {
         await SetProductoStock(_productoId, 0);
@@ -295,7 +321,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task CreateAsync_ConStockInsuficiente_RetornaErrorDeStock()
     {
         await SetProductoStock(_productoId, 5);
@@ -319,7 +344,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_ConStockSuficiente_DecrementaStockCorrectamente()
     {
         var stockInicial = 50;
@@ -347,7 +371,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_CantidadExactaStock_PermitePedido()
     {
         var stockInicial = 10;
@@ -375,7 +398,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_CantidadMayorStock_RechazaPedido()
     {
         var stockInicial = 10;
@@ -403,7 +425,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_UsuarioNoExistente_RetornaError()
     {
         var dto = new PedidoRequestDto
@@ -419,7 +440,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task DecrementStockAsync_StockInsuficiente_NoDecrementa()
     {
         var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
@@ -436,7 +456,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task DecrementStockAsync_StockSuficiente_Decrementa()
     {
         var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
@@ -452,36 +471,57 @@ public class PedidosServiceIntegrationTests
         productoFinal!.Stock.Should().Be(7);
     }
 
-    #region ========== TESTS ADICIONALES - MÉTODOS DE ADMINISTRADOR (IGNORADOS - BUG EF-272) ==========
+    #region ========== UTILIDADES ==========
+
+    private async Task SetProductoStock(long productoId, int stock)
+    {
+        var producto = await _dbContext!.FindAsync<Producto>(productoId);
+        producto!.Stock = stock;
+        await _dbContext.SaveChangesAsync();
+    }
+
+    #endregion
+
+    #region ========== TESTS ADICIONALES - MÉTODOS DE ADMINISTRADOR ==========
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindAllPagedAsync_ConPaginacion_RetornaPedidosPaginados()
     {
+        // Arrange
         var page = 0;
         var size = 10;
+
+        // Act
         var result = await _pedidosService!.FindAllPagedAsync(page, size);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Page.Should().Be(1);
+        result.Value.PageSize.Should().Be(size);
+        result.Value.TotalCount.Should().BeGreaterThanOrEqualTo(0);
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta()
     {
+        // Arrange
         var page = 1;
         var size = 5;
+
+        // Act
         var result = await _pedidosService!.FindAllPagedAsync(page, size);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Page.Should().Be(2);
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateAdminAsync_ConDireccion_ActualizaPedido()
     {
+        // Arrange - Primero crear un pedido
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -497,26 +537,34 @@ public class PedidosServiceIntegrationTests
         createResult.IsSuccess.Should().BeTrue();
         var pedidoId = createResult.Value.Id;
 
+        // Actualizar
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Calle Nueva 123" };
+
+        // Act
         var result = await _pedidosService!.UpdateAdminAsync(pedidoId, updateDto);
 
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.DireccionEnvio.Should().Contain("Calle Nueva");
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound()
     {
+        // Arrange
         var updateDto = new UpdatePedidoDto { Estado = "ENVIADO" };
+
+        // Act
         var result = await _pedidosService!.UpdateAdminAsync("507f1f77bcf86cd799439011", updateDto);
+
+        // Assert
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateEstadoAsync_EstadoValido_ActualizaEstado()
     {
+        // Arrange - Crear pedido
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -532,24 +580,31 @@ public class PedidosServiceIntegrationTests
         createResult.IsSuccess.Should().BeTrue();
         var pedidoId = createResult.Value.Id;
 
+        // Act
         var result = await _pedidosService!.UpdateEstadoAsync(pedidoId, PedidoEstado.ENVIADO);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Estado.Should().Be(PedidoEstado.ENVIADO);
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateEstadoAsync_EstadoInvalido_RetornaError()
     {
+        // Arrange
         var pedidoId = "507f1f77bcf86cd799439011";
+
+        // Act
         var result = await _pedidosService!.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
+
+        // Assert
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteAdminAsync_PedidoExistente_MarcaComoEliminado()
     {
+        // Arrange - Crear pedido
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -565,26 +620,36 @@ public class PedidosServiceIntegrationTests
         createResult.IsSuccess.Should().BeTrue();
         var pedidoId = createResult.Value.Id;
 
+        // Act
         var result = await _pedidosService!.DeleteAdminAsync(pedidoId);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
+        // Nota: FindByIdAsync no filtra por IsDeleted, pero el soft delete se hizo correctamente
+        // Para verificar, el resultado de FindByIdAsync debería tener IsDeleted = true
+        var findResult = await _pedidosService!.FindByIdAsync(pedidoId);
+        findResult.IsSuccess.Should().BeTrue();
+        findResult.Value.Should().NotBeNull();
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound()
     {
+        // Act
         var result = await _pedidosService!.DeleteAdminAsync("507f1f77bcf86cd799439011");
+
+        // Assert
         result.IsFailure.Should().BeTrue();
     }
 
     #endregion
 
-    #region ========== TESTS ADICIONALES - MÉTODOS DE USUARIO (IGNORADOS - BUG EF-272) ==========
+    #region ========== TESTS ADICIONALES - MÉTODOS DE USUARIO ==========
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidosAsync_ConPedidos_RetornaPedidosDelUsuario()
     {
+        // Arrange
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -597,39 +662,51 @@ public class PedidosServiceIntegrationTests
         };
 
         await _pedidosService!.CreateAsync(_userId, dto);
+
+        // Act
         var result = await _pedidosService!.FindByUserIdAsync(_userId);
 
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Should().HaveCountGreaterThan(0);
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidosAsync_SinPedidos_RetornaListaVacia()
     {
+        // Arrange - Nuevo usuario sin pedidos
         var nuevoUserId = 999999L;
+
+        // Act
         var result = await _pedidosService!.FindByUserIdAsync(nuevoUserId);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEmpty();
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidosPagedAsync_ConPaginacion_RetornaPedidosPaginados()
     {
+        // Arrange
         var page = 0;
         var size = 10;
+
+        // Act
         var result = await _pedidosService!.FindMyPedidosAsync(_userId, page, size);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Page.Should().Be(1);
+        result.Value.PageSize.Should().Be(size);
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidoAsync_PedidoPropio_RetornaPedido()
     {
+        // Arrange - Crear pedido
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -645,25 +722,33 @@ public class PedidosServiceIntegrationTests
         createResult.IsSuccess.Should().BeTrue();
         var pedidoId = createResult.Value.Id;
 
+        // Act
         var result = await _pedidosService!.FindMyPedidoAsync(pedidoId, _userId);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
+        result.Value.Id.Should().Be(pedidoId);
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
-    public async Task FindMyPedidoAsync_PedidoAjeno_RetornaError()
+    public async Task FindMyPedidoAsync_PedidoAjoyo_RetornaError()
     {
+        // Arrange
         var pedidoId = "507f1f77bcf86cd799439011";
         var otroUserId = 999999L;
+
+        // Act
         var result = await _pedidosService!.FindMyPedidoAsync(pedidoId, otroUserId);
+
+        // Assert
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateMyPedidoAsync_EstadoPendiente_ActualizaDireccion()
     {
+        // Arrange - Crear pedido
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -680,16 +765,19 @@ public class PedidosServiceIntegrationTests
         var pedidoId = createResult.Value.Id;
 
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva Direccion 456" };
+
+        // Act
         var result = await _pedidosService!.UpdateMyPedidoAsync(pedidoId, _userId, updateDto);
 
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.DireccionEnvio.Should().Contain("Nueva Direccion");
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateMyPedidoAsync_EstadoNoPendiente_RetornaError()
     {
+        // Arrange - Crear pedido y cambiar estado
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -705,18 +793,22 @@ public class PedidosServiceIntegrationTests
         createResult.IsSuccess.Should().BeTrue();
         var pedidoId = createResult.Value.Id;
 
+        // Cambiar estado a ENVIADO
         await _pedidosService!.UpdateEstadoAsync(pedidoId, PedidoEstado.ENVIADO);
 
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva Direccion" };
+
+        // Act
         var result = await _pedidosService!.UpdateMyPedidoAsync(pedidoId, _userId, updateDto);
 
+        // Assert
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteMyPedidoAsync_EstadoPendiente_MarcaEliminado()
     {
+        // Arrange - Crear pedido
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -732,14 +824,17 @@ public class PedidosServiceIntegrationTests
         createResult.IsSuccess.Should().BeTrue();
         var pedidoId = createResult.Value.Id;
 
+        // Act
         var result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, _userId);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteMyPedidoAsync_EstadoNoPendiente_RetornaError()
     {
+        // Arrange - Crear pedido y cambiar estado
         var dto = new PedidoRequestDto
         {
             Destinatario = new DestinatarioDto
@@ -755,31 +850,28 @@ public class PedidosServiceIntegrationTests
         createResult.IsSuccess.Should().BeTrue();
         var pedidoId = createResult.Value.Id;
 
+        // Cambiar estado a ENVIADO
         await _pedidosService!.UpdateEstadoAsync(pedidoId, PedidoEstado.ENVIADO);
 
+        // Act
         var result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, _userId);
+
+        // Assert
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
-    public async Task DeleteMyPedidoAsync_PedidoAjeno_RetornaError()
+    public async Task DeleteMyPedidoAsync_PedidoAjoyo_RetornaError()
     {
+        // Arrange
         var pedidoId = "507f1f77bcf86cd799439011";
         var otroUserId = 999999L;
+
+        // Act
         var result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, otroUserId);
+
+        // Assert
         result.IsFailure.Should().BeTrue();
-    }
-
-    #endregion
-
-    #region ========== UTILIDADES ==========
-
-    private async Task SetProductoStock(long productoId, int stock)
-    {
-        var producto = await _dbContext!.FindAsync<Producto>(productoId);
-        producto!.Stock = stock;
-        await _dbContext.SaveChangesAsync();
     }
 
     #endregion
