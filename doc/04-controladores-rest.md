@@ -2,16 +2,16 @@
 
 ## Índice
 
-4 - [4. Controladores REST](#4-controladores-rest)
-    - [4.1. Anatomía de un Controlador](#41-anatomía-de-un-controlador)
-    - [4.2. Routing por Atributos vs Convenciones](#42-routing-por-atributos-vs-convenciones)
-    - [4.3. Verbos HTTP y Métodos de Acción](#43-verbos-http-y-métodos-de-acción)
-    - [4.4. Model Binding: De la Petición al Objeto](#44-model-binding-de-la-petición-al-objeto)
-    - [4.5. IActionResult vs ActionResult<T> vs Typed Results](#45-iactionresult-vs-actionresultt-vs-typed-results)
-    - [4.6. Helpers de Respuesta](#46-helpers-de-respuesta)
-    - [4.7. Headers, Status Codes y Content Negotiation](#47-headers-status-codes-y-content-negotiation)
-    - [4.8. Filters en Controladores](#48-filters-en-controladores)
-    - [4.9. Resumen y Buenas Prácticas](#49-resumen-y-buenas-prácticas)
+[4. Controladores REST](#4-controladores-rest)
+  - [4.1. Anatomía de un Controlador](#41-anatomía-de-un-controlador)
+  - [4.2. Routing por Atributos vs Convenciones](#42-routing-por-atributos-vs-convenciones)
+  - [4.3. Verbos HTTP y Métodos de Acción](#43-verbos-http-y-métodos-de-acción)
+  - [4.4. Model Binding: De la Petición al Objeto](#44-model-binding-de-la-petición-al-objeto)
+  - [4.5. IActionResult vs ActionResult<T> vs Typed Results](#45-iactionresult-vs-actionresultt-vs-typed-results)
+  - [4.6. Helpers de Respuesta](#46-helpers-de-respuesta)
+  - [4.7. Headers, Status Codes y Content Negotiation](#47-headers-status-codes-y-content-negotiation)
+  - [4.8. Filters en Controladores](#48-filters-en-controladores)
+  - [4.9. Resumen y Buenas Prácticas](#49-resumen-y-buenas-prácticas)
 
 ---
 

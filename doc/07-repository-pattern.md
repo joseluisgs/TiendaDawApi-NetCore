@@ -2,13 +2,13 @@
 
 ## Índice
 
-7 - [7. Repository Pattern](#7-repository-pattern)
-    - [7.1. Qué es el Repository Pattern](#71-qué-es-el-repository-pattern)
-    - [7.2. Contratos: Definición de Interfaces](#72-contratos-definición-de-interfaces)
-    - [7.3. Implementación con Entity Framework Core](#73-implementación-con-entity-framework-core)
-    - [7.4. Unit of Work Implícito](#74-unit-of-work-implícito)
-    - [7.5. Separación de Responsabilidades](#75-separación-de-responsabilidades)
-    - [7.6. Resumen y Buenas Prácticas](#76-resumen-y-buenas-prácticas)
+[7. Repository Pattern](#7-repository-pattern)
+  - [7.1. Qué es el Repository Pattern](#71-qué-es-el-repository-pattern)
+  - [7.2. Contratos: Definición de Interfaces](#72-contratos-definición-de-interfaces)
+  - [7.3. Implementación con Entity Framework Core](#73-implementación-con-entity-framework-core)
+  - [7.4. Unit of Work Implícito](#74-unit-of-work-implícito)
+  - [7.5. Separación de Responsabilidades](#75-separación-de-responsabilidades)
+  - [7.6. Resumen y Buenas Prácticas](#76-resumen-y-buenas-prácticas)
 
 ---
 

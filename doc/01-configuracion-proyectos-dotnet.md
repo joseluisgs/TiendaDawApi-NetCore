@@ -2,16 +2,16 @@
 
 ## Índice
 
-1 - [1. Configuración de Proyectos .NET](#1-configuración-de-proyectos-net)
-    - [1.1. Creación de Soluciones y Proyectos](#11-creación-de-soluciones-y-proyectos)
-    - [1.2. Instalación de Librerías con NuGet](#12-instalación-de-librerías-con-nuget)
-    - [1.3. Estructura de Proyectos](#13-estructura-de-proyectos)
-    - [1.4. Configuración con appsettings.json](#14-configuración-con-appsettingsjson)
-    - [1.5. Variables de Entorno y Secrets de Usuario](#15-variables-de-entorno-y-secrets-de-usuario)
-    - [1.6. Patrón de Opciones (IOptions<T>)](#16-patrón-de-opciones-ioptionst)
-    - [1.7. Testing con NUnit](#17-testing-con-nunit)
-    - [1.8. Hot Reload y dotnet watch run](#18-hot-reload-y-dotnet-watch-run)
-    - [1.9. Resumen y Buenas Prácticas](#19-resumen-y-buenas-prácticas)
+[1. Configuración de Proyectos .NET](#1-configuración-de-proyectos-net)
+  - [1.1. Creación de Soluciones y Proyectos](#11-creación-de-soluciones-y-proyectos)
+  - [1.2. Instalación de Librerías con NuGet](#12-instalación-de-librerías-con-nuget)
+  - [1.3. Estructura de Proyectos](#13-estructura-de-proyectos)
+  - [1.4. Configuración con appsettings.json](#14-configuración-con-appsettingsjson)
+  - [1.5. Variables de Entorno y Secrets de Usuario](#15-variables-de-entorno-y-secrets-de-usuario)
+  - [1.6. Patrón de Opciones (IOptions<T>)](#16-patrón-de-opciones-ioptionst)
+  - [1.7. Testing con NUnit](#17-testing-con-nunit)
+  - [1.8. Hot Reload y dotnet watch run](#18-hot-reload-y-dotnet-watch-run)
+  - [1.9. Resumen y Buenas Prácticas](#19-resumen-y-buenas-prácticas)
 
 ---
 
@@ -573,11 +573,11 @@ Los User Secrets se almacenan en una ubicación específica del sistema operativ
 
 ### Ubicación de User Secrets por sistema operativo
 
-| Sistema Operativo | Ubicación |
-|-------------------|-----------|
-| Windows | `%APPDATA%\Microsoft\UserSecrets\<user_secrets_id>\secrets.json` |
-| Linux | `~/.microsoft/usersecrets/<user_secrets_id>/secrets.json` |
-| macOS | `~/.microsoft/usersecrets/<user_secrets_id>/secrets.json` |
+| Sistema Operativo | Ubicación                                                        |
+| ----------------- | ---------------------------------------------------------------- |
+| Windows           | `%APPDATA%\Microsoft\UserSecrets\<user_secrets_id>\secrets.json` |
+| Linux             | `~/.microsoft/usersecrets/<user_secrets_id>/secrets.json`        |
+| macOS             | `~/.microsoft/usersecrets/<user_secrets_id>/secrets.json`        |
 
 ### Configurar User Secrets en Program.cs
 
@@ -1092,14 +1092,14 @@ services:
 
 Hot Reload detecta cambios en los siguientes tipos de archivos:
 
-| Tipo de Archivo | ¿Recarga Automática? |
-|-----------------|---------------------|
-| Archivos `.cs` (código C#) | Sí, la mayoría de cambios |
-| Archivos `.cshtml` (Razor) | Sí, inmediato |
-| Archivos `.razor` (Blazor) | Sí, inmediato |
-| Archivos `.json` (configuración) | Sí, con reload automático |
-| Archivos `.css`, `.js` (estáticos) | Sí, inmediato |
-| Archivos `.csproj` (proyecto) | No, requiere reinicio |
+| Tipo de Archivo                    | ¿Recarga Automática?      |
+| ---------------------------------- | ------------------------- |
+| Archivos `.cs` (código C#)         | Sí, la mayoría de cambios |
+| Archivos `.cshtml` (Razor)         | Sí, inmediato             |
+| Archivos `.razor` (Blazor)         | Sí, inmediato             |
+| Archivos `.json` (configuración)   | Sí, con reload automático |
+| Archivos `.css`, `.js` (estáticos) | Sí, inmediato             |
+| Archivos `.csproj` (proyecto)      | No, requiere reinicio     |
 
 ### Limitaciones de Hot Reload
 

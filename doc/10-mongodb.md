@@ -2,16 +2,16 @@
 
 ## Índice
 
-10 - [10. MongoDB con EF Core y Driver Nativo](#10-mongodb-con-ef-core-y-driver-nativo)
-    - [10.1. EF Core para MongoDB vs MongoDB Driver](#101-ef-core-para-mongodb-vs-mongodb-driver)
-    - [10.2. EF Core para MongoDB](#102-ef-core-para-mongodb)
-    - [10.3. MongoDB Driver Nativo](#103-mongodb-driver-nativo)
-    - [10.4. Repositorios con EF Core para MongoDB](#104-repositorios-con-ef-core-para-mongodb)
-    - [10.5. Repositorios con MongoDB Driver](#105-repositorios-con-mongodb-driver)
-    - [10.6. Aggregation Pipeline con MongoDB Driver](#106-aggregation-pipeline-con-mongodb-driver)
-    - [10.7. Seed de Datos en MongoDB](#107-seed-de-datos-en-mongodb)
-    - [10.8. Comparación: Cuándo Usar Cada Enfoque](#108-comparación-cuando-usar-cada-enfoque)
-    - [10.9. Resumen y Buenas Prácticas](#109-resumen-y-buenas-prácticas)
+[10. MongoDB con EF Core y Driver Nativo](#10-mongodb-con-ef-core-y-driver-nativo)
+  - [10.1. EF Core para MongoDB vs MongoDB Driver](#101-ef-core-para-mongodb-vs-mongodb-driver)
+  - [10.2. EF Core para MongoDB](#102-ef-core-para-mongodb)
+  - [10.3. MongoDB Driver Nativo](#103-mongodb-driver-nativo)
+  - [10.4. Repositorios con EF Core para MongoDB](#104-repositorios-con-ef-core-para-mongodb)
+  - [10.5. Repositorios con MongoDB Driver](#105-repositorios-con-mongodb-driver)
+  - [10.6. Aggregation Pipeline con MongoDB Driver](#106-aggregation-pipeline-con-mongodb-driver)
+  - [10.7. Seed de Datos en MongoDB](#107-seed-de-datos-en-mongodb)
+  - [10.8. Comparación: Cuándo Usar Cada Enfoque](#108-comparación-cuando-usar-cada-enfoque)
+  - [10.9. Resumen y Buenas Prácticas](#109-resumen-y-buenas-prácticas)
 
 ---
 

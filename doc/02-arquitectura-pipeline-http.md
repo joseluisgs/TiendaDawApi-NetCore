@@ -2,14 +2,14 @@
 
 ## Índice
 
-2 - [2. Arquitectura Global y Pipeline HTTP de ASP.NET Core](#2-arquitectura-global-y-pipeline-http-de-aspnet-core)
-    - [2.1. Arquitectura Global del Sistema](#21-arquitectura-global-del-sistema)
-    - [2.2. Pipeline HTTP de ASP.NET Core](#22-pipeline-http-de-aspnet-core)
-    - [2.3. Middlewares: Orden y Funcionamiento](#23-middlewares-orden-y-funcionamiento)
-    - [2.4. Kestrel como Servidor Web](#24-kestrel-como-servidor-web)
-    - [2.5. Program.cs: Minimal API vs Controladores](#25-programcs-minimal-api-vs-controladores)
-    - [2.6. Configuración de Hosting](#26-configuración-de-hosting)
-    - [2.7. Resumen y Buenas Prácticas](#27-resumen-y-buenas-prácticas)
+[2. Arquitectura Global y Pipeline HTTP de ASP.NET Core](#2-arquitectura-global-y-pipeline-http-de-aspnet-core)
+  - [2.1. Arquitectura Global del Sistema](#21-arquitectura-global-del-sistema)
+  - [2.2. Pipeline HTTP de ASP.NET Core](#22-pipeline-http-de-aspnet-core)
+  - [2.3. Middlewares: Orden y Funcionamiento](#23-middlewares-orden-y-funcionamiento)
+  - [2.4. Kestrel como Servidor Web](#24-kestrel-como-servidor-web)
+  - [2.5. Program.cs: Minimal API vs Controladores](#25-programcs-minimal-api-vs-controladores)
+  - [2.6. Configuración de Hosting](#26-configuración-de-hosting)
+  - [2.7. Resumen y Buenas Prácticas](#27-resumen-y-buenas-prácticas)
 
 ---
 
