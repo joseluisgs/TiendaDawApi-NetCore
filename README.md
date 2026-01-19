@@ -22,6 +22,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 💾 **Multi-Base de Datos**: PostgreSQL (relacional), MongoDB (documentos), Redis (caché)
 - 🔐 **Seguridad**: JWT, validaciones FluentValidation, manejo global de excepciones
 - 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets y SignalR para notificaciones en tiempo real
+- ⏰ **Background Jobs**: Tareas programadas con BackgroundService para reportes y sincronización
 - 📊 **Versionado de API**: Control de versiones por URL.
 - 🧪 **Testing**: Tests con NUnit, Moq, Tescontainers y Newman.
 
@@ -45,8 +46,10 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
     - [Lógica de Negocio](#lógica-de-negocio)
     - [Seguridad](#seguridad)
     - [APIs Avanzadas](#apis-avanzadas)
-    - [Documentación](#documentación)
     - [Servicios Externos](#servicios-externos)
+    - [Tareas en Segundo Plano](#tareas-en-segundo-plano)
+    - [Documentación](#documentación)
+    - [Servicios Externos](#servicios-externos-1)
     - [Testing y Calidad](#testing-y-calidad)
     - [DevOps y Producción](#devops-y-producción)
     - [Arquitectura](#arquitectura)
@@ -95,7 +98,8 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 📧 **Notificaciones por Email**: Envío asíncrono con MailKit
 - 📊 **Cacheo con Redis**: Patrón Cache-Aside para mejorar rendimiento
 - 📡 **GraphQL**: Consultas flexibles con HotChocolate
-- 🔌 **WebSockets**: Notificaciones en tiempo real personalizadas por roles con Websockets y SignalR
+- 🔌 **WebSockets/SignalR**: Notificaciones en tiempo real personalizadas por roles
+- ⏰ **Background Jobs**: Tareas programadas con BackgroundService (reportes semanales de productos)
 - 🗄️ **Multi-Database**: PostgreSQL + MongoDB + Redis
 - 📈 **Versionado de API**: Control de versiones por URL
 - ✅ **Validaciones**: FluentValidation declarativo
@@ -124,6 +128,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **Coverlet** - Métricas de coverage
 - **Docker** - Containerización
 - **Newman** - Pruebas de API
+- **BackgroundService** - Tareas programadas y jobs en segundo plano
 
 ## 🏃‍♂️ Inicio Rápido
 
@@ -290,6 +295,17 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | 14  | [WebSockets](doc/14-websockets.md) | Tiempo real  |
 | 20  | [GraphQL](doc/20-graphql.md)       | HotChocolate |
 
+### Servicios Externos
+| #   | Documento                                  | Descripción          |
+| --- | ------------------------------------------ | -------------------- |
+| 16  | [File Storage](doc/16-file-storage.md)     | Almacenamiento local |
+| 17  | [Email Services](doc/17-email-services.md) | MailKit              |
+
+### Tareas en Segundo Plano
+| #   | Documento                                    | Descripción        |
+| --- | -------------------------------------------- | ------------------ |
+| 25  | [Background Jobs](doc/25-background-jobs.md) | Tareas programadas |
+
 ### Documentación
 | #   | Documento                                        | Descripción         |
 | --- | ------------------------------------------------ | ------------------- |
@@ -307,17 +323,18 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | 21  | [Testing](doc/21-testing.md) | Unit, Integración, E2E |
 
 ### DevOps y Producción
-| #   | Documento                              | Descripción             |
-| --- | -------------------------------------- | ----------------------- |
-| 23  | [Docker CI/CD](doc/23-docker-ci-cd.md) | Contenedores, pipelines |
-| 24  | [Logging](doc/24-logging.md)           | Serilog, trazabilidad   |
-| 25  | [Optimización](doc/25-optimizacion.md) | Rendimiento             |
+| #   | Documento                                    | Descripción             |
+| --- | -------------------------------------------- | ----------------------- |
+| 23  | [Docker CI/CD](doc/23-docker-ci-cd.md)       | Contenedores, pipelines |
+| 24  | [Logging](doc/24-logging.md)                 | Serilog, trazabilidad   |
+| 25  | [Background Jobs](doc/25-background-jobs.md) | Tareas programadas      |
+| 26  | [Optimización](doc/26-optimizacion.md)       | Rendimiento             |
 
 ### Arquitectura
 | #   | Documento                                                 | Descripción                       |
 | --- | --------------------------------------------------------- | --------------------------------- |
-| 26  | [Clean Architecture](doc/26-clean-architecture.md)        | Capas, estructura                 |
-| 27  | [Organización Program.cs](doc/27-organizacion-program.md) | Extension Methods, modularización |
+| 27  | [Clean Architecture](doc/27-clean-architecture.md)        | Capas, estructura                 |
+| 28  | [Organización Program.cs](doc/28-organizacion-program.md) | Extension Methods, modularización |
 
 ## ⚒️ Diagrama de Clases del Dominio
 
@@ -533,6 +550,13 @@ TiendaDawApi-NetCore/
 │   ├── Program.cs                    # Configuración de Pipeline, DI y Middlewares
 │   ├── Controllers/                  # Controladores REST (Auth, Categorias, Productos, Pedidos, Users)
 │   ├── Services/                     # Lógica de negocio (Auth, Categorias, Productos, Users)
+│   │   ├── Background/               # Background Jobs y tareas programadas
+│   │   ├── Categorias/               # Servicios de categorías
+│   │   ├── Email/                    # Servicio de email (MailKit)
+│   │   ├── Pedidos/                  # Servicios de pedidos
+│   │   ├── Productos/                # Servicios de productos
+│   │   ├── Storage/                  # Servicios de almacenamiento
+│   │   └── Usuarios/                 # Servicios de usuarios
 │   ├── Repositories/                 # Acceso a datos (Categoria, Producto, User, Pedidos)
 │   ├── Models/                       # Modelos de dominio (User, Producto, Categoria, Pedido)
 │   ├── Dtos/                         # Data Transfer Objects (Request/Response)
@@ -563,25 +587,32 @@ TiendaDawApi-NetCore/
 │   ├── TiendaApi.NetCore.postman_environment.json
 │   └── README.md
 │
-├── doc/                              # Documentación técnica (26 documentos)
+├── TiendaApi.Clients/                # Clientes frontend de ejemplo
+│   ├── signalr-client-js/            # Cliente SignalR en JavaScript
+│   ├── websocket-client-js/          # Cliente WebSocket en JavaScript
+│   └── graphql-client-js/            # Cliente GraphQL en JavaScript
+│
+├── doc/                              # Documentación técnica (28 documentos)
 └── README.md                         # Este archivo
 ```
 
 ### Descripción de Carpetas Principales
 
-| Carpeta             | Propósito                    | Contenido                                                                                     |
-| ------------------- | ---------------------------- | --------------------------------------------------------------------------------------------- |
-| **Controllers**     | Entry points HTTP            | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
-| **Services**        | Lógica de negocio            | AuthService, CategoriaService, ProductoService, UserService                                   |
-| **Repositories**    | Abstracción de datos         | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
-| **Models**          | Modelos de dominio           | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
-| **Dtos**            | Transferencia de datos       | Request/Response para API                                                                     |
-| **Mappers**         | Modelos <-> DTO              | AutoMapper y Funciones de Extensión                                                           |
-| **Validators**      | Validación de entrada        | FluentValidation rules                                                                        |
-| **Middleware**      | Manejo de errores            | GlobalExceptionHandler                                                                        |
-| **GraphQL**         | Queries, Mutations, Subs     | Schema HotChocolate                                                                           |
-| **Realtime**        | Tiempo real (WS + SignalR)   | WebSocket Handlers y SignalR Hubs para notificaciones por usuario/rol                          |
-| **Infrastructures** | Configuración modular        | Extension Methods para DI, Pipeline, SignalR, WebSockets, Middlewares                         |
+| Carpeta               | Propósito                  | Contenido                                                                                     |
+| --------------------- | -------------------------- | --------------------------------------------------------------------------------------------- |
+| **Controllers**       | Entry points HTTP          | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
+| **Services**          | Lógica de negocio          | AuthService, CategoriaService, ProductoService, UserService                                   |
+| **Background**        | Tareas programadas         | BackgroundJobService, ProductoReportTask para reportes                                        |
+| **Repositories**      | Abstracción de datos       | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
+| **Models**            | Modelos de dominio         | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
+| **Dtos**              | Transferencia de datos     | Request/Response para API                                                                     |
+| **Mappers**           | Modelos <-> DTO            | AutoMapper y Funciones de Extensión                                                           |
+| **Validators**        | Validación de entrada      | FluentValidation rules                                                                        |
+| **Middleware**        | Manejo de errores          | GlobalExceptionHandler                                                                        |
+| **GraphQL**           | Queries, Mutations, Subs   | Schema HotChocolate                                                                           |
+| **Realtime**          | Tiempo real (WS + SignalR) | WebSocket Handlers y SignalR Hubs para notificaciones por usuario/rol                         |
+| **Infrastructures**   | Configuración modular      | Extension Methods para DI, Pipeline, SignalR, WebSockets, Middlewares                         |
+| **TiendaApi.Clients** | Clientes frontend          | signalr-client-js, websocket-client-js, graphql-client-js                                     |
 
 ## 🏗️ Arquitectura Híbrida Onion-Like
 
@@ -607,6 +638,7 @@ graph TB
         WS[WebSocket<br/>SignalR]
         SMTP[SMTP<br/>MailKit]
         FS[File System<br/>wwwroot/uploads]
+        BG[Background Jobs<br/>BackgroundService<br/>Reportes]
     end
 
     subgraph "🎯 Application Layer - API"
@@ -707,6 +739,7 @@ graph TB
     style REST fill:#3498db,color:#fff
     style GQL fill:#e74c3c,color:#fff
     style WS fill:#9b59b6,color:#fff
+    style BG fill:#8e44ad,color:#fff
     style CTRL fill:#2980b9,color:#fff
     style SVC fill:#27ae60,color:#fff
     style DOM fill:#f39c12,color:#000
@@ -722,15 +755,15 @@ graph TB
 ### Estructura de Dependencias
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                         🌍 EXTERNAL LAYER                              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
-│  │   REST   │  │  GraphQL │  │ WebSocket│  │   SMTP   │  │  Files   │  │
-│  │  (HTTP)  │  │ (HotChoc)│  │ (SignalR)│  │ (MailKit)│  │ (Static) │  │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
-└───────┼─────────────┼─────────────┼─────────────┼─────────────┼────────┘
-        │             │             │             │             │
-        ▼             ▼             ▼             ▼             ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           🌍 EXTERNAL LAYER                                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │   REST   │  │  GraphQL │  │ WebSocket│  │   SMTP   │  │  Files   │  │ Background│  │
+│  │  (HTTP)  │  │ (HotChoc)│  │ (SignalR)│  │ (MailKit)│  │ (Static) │  │   Jobs   │  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
+│       └─────────────┼─────────────┼─────────────┼─────────────┼─────────────┼────────┘
+│                     │             │             │             │             │
+│                     ▼             ▼             ▼             ▼             ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     🎯 APPLICATION LAYER (API)                          │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
@@ -807,6 +840,7 @@ graph TB
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                 📧 EXTERNAL SERVICES                            │    │
 │  │  SMTP (MailKit) │ File System (wwwroot) │ HTTP Clients          │    │
+│  │  Background Jobs (BackgroundService) │ Report Scheduling        │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
 │                           │ Implementa abstracciones                    │
@@ -1060,10 +1094,10 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 
 ### SignalR (Realtime)
 
-| Endpoint                        | Auth  | Descripción                              | Eventos                                                |
-| ------------------------------- | ----- | ---------------------------------------- | ------------------------------------------------------ |
-| `/hubs/productos`               | No    | Notificaciones de productos (broadcast)  | ProductoCreado, ProductoActualizado, ProductoEliminado |
-| `/hubs/pedidos`                 | JWT   | Notificaciones de pedidos (por rol)      | PedidoCreado, PedidoActualizado, PedidoEliminado       |
+| Endpoint          | Auth | Descripción                             | Eventos                                                |
+| ----------------- | ---- | --------------------------------------- | ------------------------------------------------------ |
+| `/hubs/productos` | No   | Notificaciones de productos (broadcast) | ProductoCreado, ProductoActualizado, ProductoEliminado |
+| `/hubs/pedidos`   | JWT  | Notificaciones de pedidos (por rol)     | PedidoCreado, PedidoActualizado, PedidoEliminado       |
 
 **SignalR Productos:** Broadcast a todos los clientes conectados (sin autenticación).
 
