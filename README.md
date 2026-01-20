@@ -253,25 +253,78 @@ open coverage/index.html
   - Job `test`: Unit tests siempre (parallel)
   - Job `test-integration`: Solo bajo demanda con `workflow_dispatch` en main
 
-### Tests E2E con Newman (Postman)
+### Tests E2E con Newman (Postman) y Bruno
 
-Pruebas end-to-end de la API usando Newman:
+Pruebas end-to-end de la API usando Newman y Bruno CLI:
+
+#### Postman (Newman)
 
 ```bash
-# Instalar Newman globalmente
+# Opción 1: Con Docker (recomendado)
+cd TiendaApi.ApiTests/Postman
+docker-compose up --build
+
+# Ver informes generados
+open reports/report.html
+
+# Opción 2: Con Newman local
 npm install -g newman
-
-# Ejecutar colección con entorno
-newman run TiendaApi.Postman/TiendaApi.NetCore.postman_collection.json \
-  -e TiendaApi.Postman/TiendaApi.NetCore.postman_environment.json
-
-# Con reporte HTML
-newman run TiendaApi.Postman/TiendaApi.NetCore.postman_collection.json \
-  -e TiendaApi.Postman/TiendaApi.NetCore.postman_environment.json \
-  -r html --reporter-html-export newman-report.html
+newman run TiendaApi.ApiTests/Postman/TiendaApi.NetCore.postman_collection.json \
+  -e TiendaApi.ApiTests/Postman/TiendaApi.NetCore.postman_environment.json \
+  -r html,json,junit --reporter-html-export report.html \
+  --reporter-json-export report.json \
+  --reporter-junit-export junit-report.xml
 ```
 
-**Colección disponible en:** `TiendaApi.Postman/TiendaApi.NetCore.postman_collection.json`
+**Colección disponible en:** `TiendaApi.ApiTests/Postman/TiendaApi.NetCore.postman_collection.json`
+
+**Informes generados:**
+- `report.html` - Informe visual
+- `report.json` - Datos estructurados
+- `junit-report.xml` - Para CI/CD
+
+#### Bruno (CLI)
+
+```bash
+# Opción 1: Con Docker (recomendado)
+cd TiendaApi.ApiTests/Bruno
+docker-compose up --build
+
+# Ver informes generados
+open reports/report.html
+
+# Opción 2: Con Bruno CLI local
+npm install -g @usebruno/cli
+bru run TiendaApi.ApiTests/Bruno \
+  --env TiendaApi.ApiTests/Bruno/environments/local.bru \
+  --output reports/report.json \
+  --format json
+```
+
+**Tests disponibles en:** `TiendaApi.ApiTests/Bruno/`
+
+**Estructura de tests:**
+```
+Bruno/
+├── 00-Setup/              # Health check, cleanup
+├── 01-Authentication/     # Signup, Signin (Happy path + errores)
+├── 02-Categorias/         # CRUD completo + errores
+├── 03-Productos/          # CRUD completo + filtros + imagen
+├── 04-Pedidos-Admin/      # Gestión completa admin
+├── 05-Pedidos-Usuario/    # Mis pedidos (propios)
+├── 06-Usuarios/           # Admin + Perfil propio
+├── 07-Storage/            # Archivos estáticos
+├── 10-GraphQL-Categorias/ # Queries
+├── 11-GraphQL-Productos/  # Queries + Mutations
+├── 12-GraphQL-Suscripciones/ # Subscriptions
+├── 13-Teardown/           # Cleanup
+└── environments/          # Variables de entorno
+```
+
+**Informes generados:**
+- `report.html` - Informe visual
+- `report.json` - Datos estructurados
+- `junit-report.xml` - Para CI/CD
 
 ## 📚 Documentación
 
@@ -606,15 +659,25 @@ TiendaDawApi-NetCore/
 │   ├── Integration/                  # Tests de integración con bases de datos reales
 │   └── coverage/                     # Reporte de cobertura de código
 │
-├── TiendaApi.Postman/                # Colección Postman para tests E2E
-│   ├── TiendaApi.NetCore.postman_collection.json
-│   ├── TiendaApi.NetCore.postman_environment.json
-│   └── README.md
+├── TiendaApi.ApiTests/              # Tests E2E (Postman + Bruno)
+│   ├── Postman/                     # Colección Postman + Newman
+│   │   ├── TiendaApi.NetCore.postman_collection.json
+│   │   ├── TiendaApi.NetCore.postman_environment.json
+│   │   ├── test-image.png
+│   │   ├── docker-compose.yml
+│   │   └── reports/
+│   │
+│   ├── Bruno/                       # Tests Bruno CLI
+│   │   ├── 00-Setup/ a 13-Teardown/ # Tests organizados por carpeta
+│   │   ├── environments/local.bru   # Variables de entorno
+│   │   ├── assets/test-image.png
+│   │   ├── docker-compose.yml
+│   │   └── reports/
 │
-├── TiendaApi.Clients/                # Clientes frontend de ejemplo
-│   ├── signalr-client-js/            # Cliente SignalR en JavaScript
-│   ├── websocket-client-js/          # Cliente WebSocket en JavaScript
-│   └── graphql-client-js/            # Cliente GraphQL en JavaScript
+├── TiendaApi.ApiClients/            # Clientes frontend de ejemplo
+│   ├── signalr-client-js/           # Cliente SignalR en JavaScript
+│   ├── websocket-client-js/         # Cliente WebSocket en JavaScript
+│   └── graphql-client-js/           # Cliente GraphQL en JavaScript
 │
 ├── doc/                              # Documentación técnica
 └── README.md                         # Este archivo
