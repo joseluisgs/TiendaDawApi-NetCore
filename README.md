@@ -38,6 +38,9 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
     - [Desarrollo en Producción con Docker](#desarrollo-en-producción-con-docker)
   - [🧪 Estrategia de Testing](#-estrategia-de-testing)
     - [Ejecución de Tests](#ejecución-de-tests)
+      - [Comandos específicos por tipo de test](#comandos-específicos-por-tipo-de-test)
+      - [Con coverage](#con-coverage)
+      - [Configuración de tests](#configuración-de-tests)
     - [Tests E2E con Newman (Postman)](#tests-e2e-con-newman-postman)
   - [📚 Documentación](#-documentación)
     - [Fundamentos y Configuración](#fundamentos-y-configuración)
@@ -221,18 +224,16 @@ TiendaDawApi implementa una pirámide de pruebas profesional:
 ```bash
 # 🚀 Ejecutar TODOS los tests (requiere Docker ejecutándose)
 dotnet test
-# Resultado: 1167 tests, ~77 segundos, coverage 74.53%
 ```
 
 #### Comandos específicos por tipo de test
 
-| Escenario | Comando | Docker | Tests | Tiempo |
-|-----------|---------|--------|-------|--------|
-| **Solo unitarios** (rápido, sin dependencias) | `dotnet test --filter "FullyQualifiedName~Unit"` | ❌ | 1026 | ~9 seg |
-| **Solo integración** (requiere servicios) | `dotnet test --filter "FullyQualifiedName~Integration"` | ✅ | 141 | ~76 seg |
-| **Unitarios sin Docker** | `SKIP_INTEGRATION_TESTS=true dotnet test` | ❌ | 1026 | ~9 seg |
-| **Todos sin Docker** | `SKIP_INTEGRATION_TESTS=true dotnet test` | ❌ | 1026 | ~9 seg |
-| **Todos con Docker** (completo) | `dotnet test` | ✅ | 1167 | ~77 seg |
+| Escenario                                     | Comando                                                 | Docker |
+| --------------------------------------------- | ------------------------------------------------------- | ------ |
+| **Solo unitarios** (rápido, sin dependencias) | `dotnet test --filter "FullyQualifiedName~Unit"`        | ❌      |
+| **Solo integración** (requiere servicios)     | `dotnet test --filter "FullyQualifiedName~Integration"` | ✅      |
+| **Todos sin Docker**                          | `SKIP_INTEGRATION_TESTS=true dotnet test`               | ❌      |
+| **Todos con Docker** (completo)               | `dotnet test`                                           | ✅      |
 
 #### Con coverage
 
