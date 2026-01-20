@@ -163,13 +163,15 @@ var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret"));
 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
 var token = new JwtSecurityToken(
-    issuer: "TiendaApi",
-    audience: "TiendaApiClients",
-    claims: userClaims,
-    expires: DateTime.UtcNow.AddMinutes(15),
-    signingCredentials: creds
-);
+        issuer: "TiendaApi",
+        audience: "TiendaApiClients",
+        claims: userClaims,
+        expires: DateTime.UtcNow.AddMinutes(15),
+        signingCredentials: creds
+    );
 ```
+
+> **Nota sobre algoritmos de firma:** Nuestro proyecto usa **HS256** (HMAC-SHA256) por su buen balance entre seguridad y rendimiento. La clave JWT de 94 caracteres excede ampliamente el mínimo requerido (32 bytes para HS256, 64 bytes para HS512). Para entornos con requisitos de cumplimiento normativo más estrictos (PCI-DSS, HIPAA), se podría cambiar a **HS512** (HMAC-SHA512) que ofrece fuerza criptográfica superior (2^512 vs 2^256), aunque la diferencia práctica con la tecnología actual es teórica (ambos son computacionalmente imposibles de romper).
 
 ---
 
