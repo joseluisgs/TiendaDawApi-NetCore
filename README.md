@@ -211,23 +211,46 @@ API_PORT=5000
 
 TiendaDawApi implementa una pirámide de pruebas profesional:
 
-- **Unit Tests**: Validación de servicios, repositorios y lógica de negocio
-- **Integration Tests**: Tests con bases de datos reales
-- **Coverage**: Indicadores de cobertura con Coverlet
+- **Unit Tests**: Validación de servicios, repositorios y lógica de negocio (1026 tests)
+- **Integration Tests**: Tests con bases de datos reales usando Testcontainers (141 tests)
+- **Coverage**: Indicadores de cobertura con Coverlet (74.53%)
 - **Newman**: Pruebas de API automatizadas
 
 ### Ejecución de Tests
 
 ```bash
-# Ejecutar todos los tests unitarios
+# 🚀 Ejecutar TODOS los tests (requiere Docker ejecutándose)
 dotnet test
+# Resultado: 1167 tests, ~77 segundos, coverage 74.53%
+```
 
-# Con coverage
+#### Comandos específicos por tipo de test
+
+| Escenario | Comando | Docker | Tests | Tiempo |
+|-----------|---------|--------|-------|--------|
+| **Solo unitarios** (rápido, sin dependencias) | `dotnet test --filter "FullyQualifiedName~Unit"` | ❌ | 1026 | ~9 seg |
+| **Solo integración** (requiere servicios) | `dotnet test --filter "FullyQualifiedName~Integration"` | ✅ | 141 | ~76 seg |
+| **Unitarios sin Docker** | `SKIP_INTEGRATION_TESTS=true dotnet test` | ❌ | 1026 | ~9 seg |
+| **Todos sin Docker** | `SKIP_INTEGRATION_TESTS=true dotnet test` | ❌ | 1026 | ~9 seg |
+| **Todos con Docker** (completo) | `dotnet test` | ✅ | 1167 | ~77 seg |
+
+#### Con coverage
+
+```bash
+# Ejecutar todos los tests con coverage
 dotnet test --collect:"XPlat Code Coverage"
 
 # Ver reporte de coverage
 open coverage/index.html
 ```
+
+#### Configuración de tests
+
+- **Unit Tests**: Ejecutan en paralelo (`ParallelScope.Children`) para máximo rendimiento
+- **Integration Tests**: No paralelos (`NonParallelizable`) para evitar conflictos de recursos
+- **CI**: 
+  - Job `test`: Unit tests siempre (parallel)
+  - Job `test-integration`: Solo bajo demanda con `workflow_dispatch` en main
 
 ### Tests E2E con Newman (Postman)
 
