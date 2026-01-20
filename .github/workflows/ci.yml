@@ -42,7 +42,7 @@ jobs:
           retention-days: 1
 
   test:
-    name: Test
+    name: Test (Unit - Parallel)
     needs: build
     runs-on: ubuntu-latest
 
@@ -61,8 +61,8 @@ jobs:
           name: build-output
           path: TiendaApi.Apis/bin/Release/net10.0/
 
-      - name: Run tests (unit only, sequential)
-        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --settings "TiendaApi.Tests/NUnit.runsettings" --filter "FullyQualifiedName!~Integration" --verbosity minimal
+      - name: Run unit tests (parallel)
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "FullyQualifiedName~Unit" --verbosity minimal
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -102,8 +102,8 @@ jobs:
           name: build-output
           path: TiendaApi.Apis/bin/Release/net10.0/
 
-      - name: Run integration tests
-        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "Category=Integration" --verbosity minimal
+      - name: Run integration tests (sequential, non-parallel)
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "FullyQualifiedName~Integration" --verbosity minimal
 
   validate-docs:
     name: Validate Documentation
