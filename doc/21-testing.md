@@ -16,6 +16,7 @@
   - [21.11. Tests de Controladores](#2111-tests-de-controladores)
   - [21.12. Resumen y Buenas Prácticas](#2112-resumen-y-buenas-prácticas)
   - [21.13. Testing E2E con Postman y Newman](#2113-testing-e2e-con-postman-y-newman)
+  - [21.14. Testing E2E con Bruno CLI](#2114-testing-e2e-con-bruno-cli)
 
 ---
 
@@ -2297,9 +2298,376 @@ newman run collection.json \
 - Postman Tests: https://learning.postman.com/docs/writing-scripts/test-scripts/
 - Newman HTML Reporter: https://github.com/DannyDainton/newman-reporter-htmlextra
 
+---
+
+## 21.14. Testing E2E con Bruno CLI
+
+**Bruno** es una alternativa open source a Postman que permite crear y ejecutar tests de API desde archivos de texto plano (`.bru`), ideal para control de versiones y CI/CD.
+
+### ¿Qué es Bruno CLI?
+
+Bruno CLI es la versión de línea de comandos de Bruno que permite ejecutar colecciones de tests sin necesidad de la interfaz gráfica.
+
+```mermaid
+flowchart LR
+    subgraph "Desarrollo"
+        A1["Editor de texto"]
+        A2["Crear archivos .bru"]
+        A3["Git version control"]
+    end
+    
+    subgraph "Ejecución"
+        B1["Bruno CLI"]
+        B2["Variables de entorno"]
+        B3["Informes"]
+    end
+    
+    subgraph "CI/CD"
+        C1["Docker"]
+        C2["GitHub Actions"]
+        C3["Reportes HTML/JSON"]
+    end
+    
+    A1 --> A2 --> A3
+    A2 --> B1
+    B1 --> B2
+    B2 --> B3
+    B3 --> C1
+    C1 --> C2
+    C2 --> C3
+```
+
+### Instalación de Bruno CLI
+
+```bash
+# Opción 1: Con npm (requiere Node.js)
+npm install -g @usebruno/cli
+
+# Opción 2: Con Docker
+docker run --rm -it -v $(pwd):/app node:20-alpine sh
+```
+
+### Estructura de Archivos Bruno
+
+```
+Bruno/
+├── 00-Setup/
+│   ├── health-check.bru
+│   └── cleanup.bru
+├── 01-Authentication/
+│   ├── signup-usuario-nuevo.bru
+│   ├── signin-admin.bru
+│   └── signin-usuario.bru
+├── 02-Categorias/
+│   ├── get-all.bru
+│   ├── get-by-id.bru
+│   ├── post-crear.bru
+│   ├── put-actualizar.bru
+│   └── delete-eliminar.bru
+├── 03-Productos/
+│   ├── get-all.bru
+│   ├── post-crear.bru
+│   └── ...
+├── environments/
+│   └── local.bru
+└── assets/
+    └── test-image.png
+```
+
+### Formato de Archivo .bru
+
+```bru
+meta {
+  name: Get All Productos
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/productos
+  headers {
+    Content-Type: application/json
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "items");
+  assertIsArray(response.body.items);
+}
+```
+
+### Variables de Entorno en Bruno
+
+```bru
+meta {
+  name: local
+  type: http
+}
+
+vars {
+  baseUrl: http://localhost:5000
+  adminUsername: admin
+  adminPassword: Admin1234
+  userUsername: user
+  userPassword: User1234
+}
+```
+
+### Autenticación con JWT
+
+```bru
+meta {
+  name: Signin Admin
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/signin
+  headers {
+    Content-Type: application/json
+  }
+  body {
+    {
+      "username": "{{adminUsername}}",
+      "password": "{{adminPassword}}"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "token");
+  
+  bru.setVar("adminToken", response.body.token);
+}
+```
+
+### Tests con Variables Compartidas
+
+```bru
+meta {
+  name: Crear Categoria
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{adminToken}}
+  }
+  body {
+    {
+      "nombre": "Electrónica Test",
+      "descripcion": "Categoría de prueba"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 201);
+  assertPropertyExists(response.body, "id");
+  
+  bru.setVar("categoriaId", response.body.id);
+}
+```
+
+### Tests de Validación de Errores
+
+```bru
+meta {
+  name: POST - Error sin auth
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  headers {
+    Content-Type: application/json
+  }
+  body {
+    {
+      "nombre": "Test",
+      "descripcion": "Test"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 401);
+}
+```
+
+### Ejecutar Colección con Bruno CLI
+
+```bash
+# Ejecutar colección completa
+bru run /ruta/a/Bruno
+
+# Con variables de entorno específicas
+bru run /ruta/a/Bruno --env /ruta/a/environments/local.bru
+
+# Con salida JSON para CI/CD
+bru run /ruta/a/Bruno --output results.json --format json
+
+# Verbose output
+bru run /ruta/a/Bruno --verbose
+```
+
+### Ejecución con Docker
+
+```yaml
+# docker-compose.yml para Bruno
+version: '3.8'
+
+services:
+  bruno:
+    image: node:20-alpine
+    container_name: tienda-api-bruno-tests
+    working_dir: /app
+    volumes:
+      - ./Bruno:/app/collections:ro
+      - ./reports:/app/reports
+    environment:
+      - BASE_URL=http://host.docker.internal:5000
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=Admin1234
+    command: >
+      sh -c "
+        npm install -g @usebruno/cli 2>/dev/null &&
+        bru run /app/collections
+        --env /app/collections/environments/local.bru
+        --output /app/reports/report.json
+        --format json
+      "
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+```
+
+### Informes de Resultados
+
+Bruno genera informes en formato JSON que pueden convertirse a HTML:
+
+```bash
+# Bruno genera report.json
+cat reports/report.json | jq '.'
+
+# Generar HTML desde JSON (con jq y HTML template)
+jq -r '
+  "<html><head><title>Bruno Test Report</title></head><body>" +
+  "<h1>Test Results</h1>" +
+  "<p>Total: " + (.stats.assertions // 0 | tostring) + "</p>" +
+  "<p>Passed: " + (.stats.passed // 0 | tostring) + "</p>" +
+  "<p>Failed: " + (.stats.failed // 0 | tostring) + "</p>" +
+  "</body></html>"
+' reports/report.json > reports/report.html
+```
+
+### Integración en CI/CD con GitHub Actions
+
+```yaml
+name: E2E Tests with Bruno
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: tienda
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      
+      - name: Build API
+        run: dotnet build --configuration Release
+      
+      - name: Run API
+        run: |
+          dotnet run &
+          sleep 10
+      
+      - name: Run Bruno E2E Tests
+        run: |
+          npm install -g @usebruno/cli
+          bru run TiendaApi.ApiTests/Bruno \
+            --env TiendaApi.ApiTests/Bruno/environments/local.bru \
+            --output test-results/report.json \
+            --format json
+      
+      - name: Generate HTML Report
+        run: |
+          jq -r '...' test-results/report.json > test-results/report.html
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bruno-test-results
+          path: test-results/
+```
+
+### Comparación Postman/Newman vs Bruno
+
+| Aspecto | Postman/Newman | Bruno |
+|---------|----------------|-------|
+| **Licencia** | Propietario (freemium) | MIT (open source) |
+| **Formato** | JSON (un archivo grande) | Archivos .bru (texto plano) |
+| **Versionado** | Difícil (JSON binario) | Fácil (Git friendly) |
+| **Interfaz** | GUI completa | CLI + archivos de texto |
+| **Variables** | GUI + scripts JS | bru.setVar() / bru.getVar() |
+| **Reportes** | HTML nativo | JSON (requiere conversión) |
+| **SignalR** | ✅ Soportado | ⚠️ Bug abierto (#5969) |
+| **Comunidad** | Muy grande | En crecimiento |
+
+### Cuándo Usar Bruno vs Postman
+
+| Escenario | Herramienta Recomendada |
+|-----------|------------------------|
+| **Trabajo en equipo con GUI** | Postman |
+| **Control de versiones** | Bruno (archivos de texto) |
+| **CI/CD pipelines** | Ambos (CLI disponible) |
+| **SignalR testing** | Postman ( Bruno tiene bug abierto) |
+| **Open source strict** | Bruno (MIT) |
+| **Quick prototyping** | Postman (GUI más rápida) |
+
+### Recursos Adicionales de Bruno
+
+- Documentación Bruno: https://docs.usebruno.com/
+- Bruno CLI: https://github.com/usebruno/bruno
+- GitHub Issues: https://github.com/usebruno/bruno/issues
+
+---
+
 ### Siguientes Pasos
 
-Con testing E2E dominado, tienes un arsenal completo de herramientas para asegurar la calidad de tu API.
+Con testing E2E dominado (tanto Postman como Bruno), tienes un arsenal completo de herramientas para asegurar la calidad de tu API.
 
 ### Resumen Final del Módulo de Testing
 
@@ -2309,3 +2677,4 @@ Con testing E2E dominado, tienes un arsenal completo de herramientas para asegur
 | **Integration Tests** | TestContainers | Probar componentes con BD real |
 | **Controller Tests** | WebApplicationFactory | Probar endpoints HTTP |
 | **E2E Tests** | Postman + Newman | Probar flujos completos de usuario |
+| **E2E Tests** | Bruno CLI | Probar API con archivos de texto versionables |
