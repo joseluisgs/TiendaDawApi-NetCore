@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace TiendaApi.Apis.Models;
 
@@ -75,6 +76,8 @@ public class Pedido : ITimestamped
     ///   <item><description>Ordenable por tiempo de creación.</description></item>
     /// </list>
     /// </remarks>
+    /// </summary>
+    [BsonId]
     [Key]
     public ObjectId Id { get; set; } = ObjectId.GenerateNewId();
 
