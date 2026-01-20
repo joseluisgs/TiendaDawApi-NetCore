@@ -303,24 +303,6 @@ bru run TiendaApi.ApiTests/Bruno \
 
 **Tests disponibles en:** `TiendaApi.ApiTests/Bruno/`
 
-**Estructura de tests:**
-```
-Bruno/
-├── 00-Setup/              # Health check, cleanup
-├── 01-Authentication/     # Signup, Signin (Happy path + errores)
-├── 02-Categorias/         # CRUD completo + errores
-├── 03-Productos/          # CRUD completo + filtros + imagen
-├── 04-Pedidos-Admin/      # Gestión completa admin
-├── 05-Pedidos-Usuario/    # Mis pedidos (propios)
-├── 06-Usuarios/           # Admin + Perfil propio
-├── 07-Storage/            # Archivos estáticos
-├── 10-GraphQL-Categorias/ # Queries
-├── 11-GraphQL-Productos/  # Queries + Mutations
-├── 12-GraphQL-Suscripciones/ # Subscriptions
-├── 13-Teardown/           # Cleanup
-└── environments/          # Variables de entorno
-```
-
 **Informes generados:**
 - `report.html` - Informe visual
 - `report.json` - Datos estructurados
