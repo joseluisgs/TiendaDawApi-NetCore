@@ -1,0 +1,16 @@
+meta {
+  name: GET By Id - No existe
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/productos/999999
+  headers {
+    Content-Type: application/json
+  }
+}
+
+tests {
+  assertStatus(response.status, 404);
+}

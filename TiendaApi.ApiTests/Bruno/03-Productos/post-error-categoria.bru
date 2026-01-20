@@ -1,0 +1,26 @@
+meta {
+  name: POST - Error categoría no existe
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/productos
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{adminToken}}
+  }
+  body {
+    {
+      "nombre": "Test",
+      "descripcion": "Test",
+      "precio": 100,
+      "stock": 10,
+      "categoriaId": 999999
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 404);
+}

@@ -1,0 +1,23 @@
+meta {
+  name: POST - Error nombre duplicado
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{adminToken}}
+  }
+  body {
+    {
+      "nombre": "Electrónica Test",
+      "descripcion": "Duplicada"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 409);
+}

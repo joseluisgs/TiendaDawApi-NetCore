@@ -1,0 +1,22 @@
+meta {
+  name: POST - Error sin auth
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  headers {
+    Content-Type: application/json
+  }
+  body {
+    {
+      "nombre": "Test",
+      "descripcion": "Test"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 401);
+}

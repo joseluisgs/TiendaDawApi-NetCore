@@ -1,0 +1,16 @@
+meta {
+  name: GET By Id - No existe
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/users/999999
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+}
+
+tests {
+  assertStatus(response.status, 404);
+}

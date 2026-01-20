@@ -1,0 +1,23 @@
+meta {
+  name: PUT - Actualizar estado
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/pedidos/{{pedidoId}}/estado
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{adminToken}}
+  }
+  body {
+    {
+      "estado": "ENVIADO"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertEquals(response.body.estado, "ENVIADO");
+}

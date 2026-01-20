@@ -1,0 +1,24 @@
+meta {
+  name: SUBSCRIPTION - onProductoActualizado
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{adminToken}}
+  }
+  body {
+    {
+      "query": "subscription { onProductoActualizado { productoId nombre precio stock updatedAt } }"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "data");
+  assertPropertyExists(response.body.data.onProductoActualizado);
+}

@@ -1,0 +1,17 @@
+meta {
+  name: GET By Id - No existe (Público)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/categorias/999999
+  headers {
+    Content-Type: application/json
+  }
+}
+
+tests {
+  assertStatus(response.status, 404);
+  assertPropertyExists(response.body, "message");
+}

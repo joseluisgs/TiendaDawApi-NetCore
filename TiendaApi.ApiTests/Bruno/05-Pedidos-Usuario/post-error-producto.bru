@@ -1,0 +1,41 @@
+meta {
+  name: POST - Error producto no existe
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/pedidos/me
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{userToken}}
+  }
+  body {
+    {
+      "cliente": {
+        "nombreCompleto": "Test",
+        "email": "test@test.com",
+        "telefono": "+34123456789",
+        "direccion": {
+          "calle": "Calle Test",
+          "numero": "1",
+          "ciudad": "Test",
+          "provincia": "Test",
+          "pais": "Test",
+          "codigoPostal": "12345"
+        }
+      },
+      "lineasPedido": [
+        {
+          "idProducto": 999999,
+          "cantidad": 1,
+          "precioUnitario": 100
+        }
+      ]
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 404);
+}

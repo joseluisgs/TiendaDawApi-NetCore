@@ -1,0 +1,16 @@
+meta {
+  name: GET By Id - No existe
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/999999999999999999999999
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+}
+
+tests {
+  assertStatus(response.status, 404);
+}

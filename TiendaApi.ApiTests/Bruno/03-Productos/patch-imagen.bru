@@ -1,0 +1,22 @@
+meta {
+  name: PATCH - Subir imagen (Admin)
+  type: http
+  seq: 12
+}
+
+patch {
+  url: {{baseUrl}}/api/productos/{{productoId}}/imagen
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+  form {
+    image: file://assets/test-image.png
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "id");
+  assertPropertyExists(response.body, "imagenUrl");
+  assertNotEquals(response.body.imagenUrl, "");
+}

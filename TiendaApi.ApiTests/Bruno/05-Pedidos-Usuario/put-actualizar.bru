@@ -1,0 +1,24 @@
+meta {
+  name: PUT - Actualizar mi pedido
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/api/pedidos/me/{{pedidoId}}
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{userToken}}
+  }
+  body {
+    {
+      "notas": "Actualizado desde tests E2E"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "id");
+  assertEquals(response.body.estado, "PENDIENTE");
+}

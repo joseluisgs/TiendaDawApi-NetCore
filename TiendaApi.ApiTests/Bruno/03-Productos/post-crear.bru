@@ -1,0 +1,33 @@
+meta {
+  name: POST - Crear (Admin)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/productos
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{adminToken}}
+  }
+  body {
+    {
+      "nombre": "Laptop HP Test",
+      "descripcion": "Laptop profesional para testing E2E",
+      "precio": 999.99,
+      "stock": 50,
+      "categoriaId": 1,
+      "imagenUrl": "https://ejemplo.com/laptop-test.jpg"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 201);
+  assertPropertyExists(response.body, "id");
+  assertEquals(response.body.nombre, "Laptop HP Test");
+  assertEquals(response.body.precio, 999.99);
+  assertEquals(response.body.stock, 50);
+  
+  bru.setVar("productoId", response.body.id);
+}

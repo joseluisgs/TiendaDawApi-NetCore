@@ -1,0 +1,16 @@
+meta {
+  name: Error sin auth
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/users
+  headers {
+    Content-Type: application/json
+  }
+}
+
+tests {
+  assertStatus(response.status, 401);
+}

@@ -1,0 +1,27 @@
+meta {
+  name: QUERY - Obtener producto por ID
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  headers {
+    Content-Type: application/json
+  }
+  body {
+    {
+      "query": "query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { nombre } } }",
+      "variables": {
+        "id": 1
+      }
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "data");
+  assertPropertyExists(response.body.data.producto);
+  assertIsObject(response.body.data.producto);
+}

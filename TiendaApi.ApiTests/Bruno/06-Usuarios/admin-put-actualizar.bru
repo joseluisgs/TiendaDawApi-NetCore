@@ -1,0 +1,25 @@
+meta {
+  name: PUT - Actualizar usuario
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/users/{{testUserId}}
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{adminToken}}
+  }
+  body {
+    {
+      "username": "updateduser",
+      "email": "updated@test.com"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertEquals(response.body.username, "updateduser");
+  assertEquals(response.body.email, "updated@test.com");
+}

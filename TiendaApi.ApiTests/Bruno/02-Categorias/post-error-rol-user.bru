@@ -1,0 +1,23 @@
+meta {
+  name: POST - Error con rol USER
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{userToken}}
+  }
+  body {
+    {
+      "nombre": "Test",
+      "descripcion": "Test"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 403);
+}

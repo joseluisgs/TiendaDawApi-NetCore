@@ -1,0 +1,23 @@
+meta {
+  name: Signup - Error email inválido
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/signup
+  headers {
+    Content-Type: application/json
+  }
+  body {
+    {
+      "username": "testuser",
+      "email": "email-invalido",
+      "password": "Test1234"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 400);
+}

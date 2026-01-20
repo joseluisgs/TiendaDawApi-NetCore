@@ -1,0 +1,17 @@
+meta {
+  name: GET Mis Pedidos
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/me
+  headers {
+    Authorization: Bearer {{userToken}}
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertIsArray(response.body);
+}

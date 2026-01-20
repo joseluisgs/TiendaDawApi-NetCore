@@ -1,0 +1,17 @@
+meta {
+  name: GET All
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertIsArray(response.body);
+}

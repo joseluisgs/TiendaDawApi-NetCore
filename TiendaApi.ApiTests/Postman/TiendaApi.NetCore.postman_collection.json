@@ -2459,6 +2459,182 @@
 					"response": []
 				},
 				{
+					"name": "GET Mis Pedidos Paginados",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Pedidos My GetAll Paged - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Pedidos My GetAll Paged - Has pagination\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('object');",
+									"    pm.expect(jsonData.items).to.be.an('array');",
+									"    pm.expect(jsonData.page).to.be.a('number');",
+									"    pm.expect(jsonData.totalItems).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{userToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos/me/paged?page=1&size=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"me",
+								"paged"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Página 1"
+								},
+								{
+									"key": "size",
+									"value": "5",
+									"description": "5 items por página"
+								}
+							]
+						},
+						"description": "Obtiene pedidos propios paginados."
+					},
+					"response": []
+				},
+				{
+					"name": "PUT - Actualizar mi pedido",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Pedidos My Update - Status 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Pedidos My Update - Returns updated pedido\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('object');",
+									"    pm.expect(jsonData.estado).to.equal('PENDIENTE');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{userToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"notas\": \"Actualizado desde tests E2E\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos/me/{{pedidoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"me",
+								"{{pedidoId}}"
+							]
+						},
+						"description": "Actualiza pedido propio. Solo permite modificar pedidos en estado PENDIENTE."
+					},
+					"response": []
+				},
+				{
+					"name": "PUT - Error pedido no es mío",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Pedidos My Update Forbidden - Status 403 Forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{userToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"notas\": \"Test\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos/me/999999999999999999999999",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"me",
+								"999999999999999999999999"
+							]
+						},
+						"description": "Actualizar pedido de otro usuario debe retornar 403"
+					},
+					"response": []
+				},
+				{
 					"name": "DELETE - Cancelar pedido",
 					"event": [
 						{

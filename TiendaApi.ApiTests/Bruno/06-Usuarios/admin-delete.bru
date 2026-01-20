@@ -1,0 +1,16 @@
+meta {
+  name: DELETE - Eliminar usuario
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/api/users/{{testUserId}}
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+}
+
+tests {
+  assertStatus(response.status, 204);
+}

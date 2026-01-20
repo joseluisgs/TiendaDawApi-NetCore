@@ -1,0 +1,14 @@
+meta {
+  name: GET Image - No existe
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/storage/uploads/productos/no-existe.png
+}
+
+tests {
+  assertStatus(response.status, 404);
+  assertEquals(response.body.error, "Archivo no encontrado");
+}

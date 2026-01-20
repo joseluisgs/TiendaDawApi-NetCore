@@ -1,0 +1,16 @@
+meta {
+  name: Limpiar variables
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  headers {
+    Content-Type: application/json
+  }
+}
+
+vars:post-response {
+  bru.clearGlobalVars();
+}

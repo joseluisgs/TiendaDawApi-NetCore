@@ -1,0 +1,26 @@
+meta {
+  name: GET All con filtros
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/productos
+  headers {
+    Content-Type: application/json
+  }
+  query {
+    nombre: Laptop
+    precioMax: 1500
+    stockMin: 5
+    page: 0
+    size: 10
+    sortBy: precio
+    direction: desc
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "items");
+}

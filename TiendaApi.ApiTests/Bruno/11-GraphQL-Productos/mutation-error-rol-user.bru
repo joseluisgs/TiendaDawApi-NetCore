@@ -1,0 +1,33 @@
+meta {
+  name: MUTATION - Crear producto (rol USER)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{userToken}}
+  }
+  body {
+    {
+      "query": "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }",
+      "variables": {
+        "input": {
+          "nombre": "Test User",
+          "precio": 99,
+          "stock": 10,
+          "categoriaId": 1
+        }
+      }
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "errors");
+  assertIsArray(response.body.errors);
+  assertContains(response.body.errors[0].message, "forbidden");
+}

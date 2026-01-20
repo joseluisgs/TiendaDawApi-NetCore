@@ -1,0 +1,22 @@
+meta {
+  name: GET All paginated
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/paged
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+  query {
+    page: 1
+    size: 10
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "items");
+  assertIsArray(response.body.items);
+}

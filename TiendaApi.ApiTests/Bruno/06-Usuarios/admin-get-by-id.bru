@@ -1,0 +1,20 @@
+meta {
+  name: GET By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/users/{{testUserId}}
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "id");
+  assertPropertyExists(response.body, "username");
+  assertPropertyExists(response.body, "email");
+  assertPropertyExists(response.body, "role");
+}

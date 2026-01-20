@@ -1,0 +1,22 @@
+meta {
+  name: PUT - Error pedido no es mío
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/api/pedidos/me/999999999999999999999999
+  headers {
+    Content-Type: application/json
+    Authorization: Bearer {{userToken}}
+  }
+  body {
+    {
+      "notas": "Test"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 403);
+}

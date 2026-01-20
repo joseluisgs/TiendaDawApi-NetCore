@@ -1,0 +1,24 @@
+meta {
+  name: Signup - Error usuario duplicado
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/signup
+  headers {
+    Content-Type: application/json
+  }
+  body {
+    {
+      "username": "{{adminUsername}}",
+      "email": "otro@test.com",
+      "password": "Test1234"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 409);
+  assertPropertyExists(response.body, "message");
+}

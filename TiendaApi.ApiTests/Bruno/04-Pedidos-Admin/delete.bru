@@ -1,0 +1,16 @@
+meta {
+  name: DELETE
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/api/pedidos/{{pedidoId}}
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+}
+
+tests {
+  assertStatus(response.status, 204);
+}

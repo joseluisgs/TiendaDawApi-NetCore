@@ -1,0 +1,16 @@
+meta {
+  name: DELETE - Eliminar (Admin)
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/api/productos/{{productoId}}
+  headers {
+    Authorization: Bearer {{adminToken}}
+  }
+}
+
+tests {
+  assertStatus(response.status, 204);
+}

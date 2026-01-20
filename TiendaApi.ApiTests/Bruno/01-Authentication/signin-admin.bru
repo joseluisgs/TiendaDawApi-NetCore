@@ -1,0 +1,27 @@
+meta {
+  name: Signin - Admin
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/signin
+  headers {
+    Content-Type: application/json
+  }
+  body {
+    {
+      "username": "{{adminUsername}}",
+      "password": "{{adminPassword}}"
+    }
+  }
+}
+
+tests {
+  assertStatus(response.status, 200);
+  assertPropertyExists(response.body, "token");
+  assertPropertyExists(response.body, "user");
+  assertEquals(response.body.user.role, "ADMIN");
+  
+  bru.setVar("adminToken", response.body.token);
+}
