@@ -46,10 +46,6 @@ public class ProductoServiceIntegrationTests
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
-        // Skip si no hay Docker o servicios disponibles
-        ServiceAvailability.AssumeServicesAvailable();
-        ServiceAvailability.AssumeMongoDbAvailable();
-
         _mongoContainer = new MongoDbBuilder()
             .WithImage("mongo:7.0")
             .WithPortBinding(27017, true)

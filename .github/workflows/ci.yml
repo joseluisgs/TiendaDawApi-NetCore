@@ -61,8 +61,8 @@ jobs:
           name: build-output
           path: TiendaApi.Apis/bin/Release/net10.0/
 
-      - name: Run tests
-        run: SKIP_INTEGRATION_TESTS=true dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --verbosity minimal
+      - name: Run tests (unit only, sequential)
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --settings "TiendaApi.Tests/NUnit.runsettings" --filter "FullyQualifiedName!~Integration" --verbosity minimal
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

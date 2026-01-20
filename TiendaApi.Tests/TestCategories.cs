@@ -74,12 +74,3 @@ public class IntegrationTestCategoryAttribute : CategoryAttribute
 {
     public IntegrationTestCategoryAttribute() : base(TestCategories.Integration) { }
 }
-
-/// <summary>
-/// Atributo para tests que requieren Docker.
-/// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-public class RequiresDockerAttribute : CategoryAttribute
-{
-    public RequiresDockerAttribute() : base(TestCategories.Docker) { }
-}

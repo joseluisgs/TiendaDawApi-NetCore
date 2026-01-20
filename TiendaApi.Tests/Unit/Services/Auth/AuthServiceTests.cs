@@ -15,6 +15,8 @@ namespace TiendaApi.Tests.Unit.Services.Auth;
 /// <summary>
 /// Tests unitarios para AuthService usando Patrón Result.
 /// </summary>
+[TestFixture]
+[NonParallelizable]
 [UnitTest]
 [Category(TestCategories.Auth)]
 [Category(TestCategories.Service)]
