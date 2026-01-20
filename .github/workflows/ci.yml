@@ -62,7 +62,7 @@ jobs:
           path: TiendaApi.Apis/bin/Release/net10.0/
 
       - name: Run tests
-        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --verbosity minimal
+        run: SKIP_INTEGRATION_TESTS=true dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --verbosity minimal
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -70,6 +70,40 @@ jobs:
           name: coverage-report
           path: TiendaApi.Tests/coverage/
           retention-days: 7
+
+  test-integration:
+    name: Test (Integration)
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+
+    services:
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: TiendaApi.Apis/bin/Release/net10.0/
+
+      - name: Run integration tests
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "Category=Integration" --verbosity minimal
 
   validate-docs:
     name: Validate Documentation
