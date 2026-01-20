@@ -1,21 +1,24 @@
-# 12. JWT Authentication con ASP.NET Core Identity
+# 12. JWT Authentication con ASP.NET Core Identity y Metodo Personalizado
 
-## Índice
+## Indice
 
-[12. JWT Authentication con ASP.NET Core Identity](#12-jwt-authentication-con-aspnet-core-identity)
-  - [12.1. Concepto de Autenticación Stateless](#121-concepto-de-autenticación-stateless)
-  - [12.2. JWT (JSON Web Token) en Profundidad](#122-jwt-json-web-token-en-profundidad)
+[12. JWT Authentication](#12-jwt-authentication)
+  - [12.1. Concepto de Autenticacion Stateless](#121-concepto-de-autenticacion-stateless)
+  - [12.2. JWT en Profundidad](#122-jwt-en-profundidad)
   - [12.3. ASP.NET Core Identity](#123-aspnet-core-identity)
-  - [12.4. Configuración de Identity en Program.cs](#124-configuración-de-identity-en-programcs)
+  - [12.4. Configuracion de Identity en Program.cs](#124-configuracion-de-identity-en-programcs)
   - [12.5. Custom UserClaimsPrincipalFactory](#125-custom-userclaimsprincipalfactory)
-  - [12.6. JwtService - Generación de Tokens](#126-jwtservice---generación-de-tokens)
-  - [12.7. Errores de Autenticación](#127-errores-de-autenticación)
-  - [12.8. AuthController - Endpoints de Autenticación](#128-authcontroller---endpoints-de-autenticación)
-  - [12.9. DTOs de Autenticación](#129-dtos-de-autenticación)
-  - [12.10. Configuración de appsettings.json](#1210-configuración-de-appsettingsjson)
-  - [12.11. Resumen y Buenas Prácticas](#1211-resumen-y-buenas-prácticas)
+  - [12.6. JwtService - Generacion de Tokens](#126-jwtservice---generacion-de-tokens)
+  - [12.7. Errores de Autenticacion](#127-errores-de-autenticacion)
+  - [12.8. AuthController - Endpoints de Autenticacion](#128-authcontroller---endpoints-de-autenticacion)
+  - [12.9. DTOs de Autenticacion](#129-dtos-de-autenticacion)
+  - [12.10. Configuracion de appsettings.json](#1210-configuracion-de-appsettingsjson)
+  - [12.11. Resumen y Buenas Practicas](#1211-resumen-y-buenas-practicas)
+  - [12.12. Enfoque Personalizado - Nuestra Implementacion](#1212-enfoque-personalizado---nuestra-implementacion)
+  - [12.13. Comparacion del Middleware](#1213-comparacion-del-middleware)
 
 ---
+
 
 ## 12.1. Concepto de Autenticación Stateless
 
@@ -1455,3 +1458,626 @@ Con JWT dominado, el siguiente paso es aprender sobre autorización y roles.
 - RFC 7519 (JWT): https://datatracker.ietf.org/doc/html/rfc7519
 - ASP.NET Core Identity: https://learn.microsoft.com/aspnet/core/security/authentication/
 - Microsoft JWT Authentication: https://learn.microsoft.com/aspnet/core/security/authentication/jwt-authn
+
+---
+
+## 12.12. Enfoque Personalizado: Nuestra Implementacion
+
+### Por Que No Usamos ASP.NET Core Identity en TiendaDawApi
+
+Nuestro proyecto TiendaDawApi implementa **autenticacion JWT personalizada** en lugar de usar ASP.NET Core Identity. Esto no es un error, sino una **decision arquitectonica deliberada**.
+
+```mermaid
+flowchart TB
+    subgraph "Decision Arquitectonica"
+        A1["Tipo de aplicacion?"]
+        A2["API REST sin UI"]
+        A3["External logins?"]
+        A4["2FA necesario?"]
+        A5["Complejidad necesaria?"]
+    end
+    
+    A1 -->|API REST| A2
+    A2 -->|No| A3
+    A3 -->|No| A4
+    A4 -->|No| A5
+    A5 -->|"No - Solo email/pass"| B1["Metodo Personalizado"]
+    
+    subgraph "Identity - Sobredimensionado"
+        B2["8 tablas BD"]
+        B3["External logins"]
+        B4["2FA integrado"]
+        B5["UI login"]
+    end
+```
+
+### Que es BCrypt y Por Que Lo Usamos
+
+**BCrypt** es un algoritmo de hashing de contraseñas diseñado para ser lento y costoso computacionalmente. Esto lo hace resistente a ataques de fuerza bruta.
+
+```mermaid
+flowchart LR
+    subgraph "Registro (Signup)"
+        R1["Password: Test1234"] --> R2["BCrypt.HashPassword()"]
+        R2 --> R3["$2y$12$xyz...abc"]
+        R3 --> R4["Guardar en BD"]
+    end
+    
+    subgraph "Login (Signin)"
+        L1["Password: Test1234"] --> L2["Leer hash de BD"]
+        L2 --> L3["BCrypt.Verify(Test1234, hash)"]
+        L3 --> L4{"Coincide?"}
+        L4 -->|Si| L5["Login OK"]
+        L4 -->|No| L6["Login Fallo"]
+    end
+    
+    style R1 fill:#4caf50,stroke:#2e7d32,color:#fff
+    style R2 fill:#4caf50,stroke:#2e7d32,color:#fff
+    style R3 fill:#4caf50,stroke:#2e7d32,color:#fff
+    style R4 fill:#4caf50,stroke:#2e7d32,color:#fff
+    
+    style L1 fill:#2196f3,stroke:#1565c0,color:#fff
+    style L2 fill:#2196f3,stroke:#1565c0,color:#fff
+    style L3 fill:#2196f3,stroke:#1565c0,color:#fff
+    style L4 fill:#ff9800,stroke:#ef6c00,color:#fff
+    style L5 fill:#4caf50,stroke:#2e7d32,color:#fff
+    style L6 fill:#f44336,stroke:#c62828,color:#fff
+```
+
+#### Caracteristicas de BCrypt
+
+| Caracteristica | Descripcion |
+|----------------|-------------|
+| **Work Factor** | Configurable (12 por defecto). Mas alto = mas lento |
+| **Salt Automatico** | Cada hash tiene un salt unico |
+| **Resistente a Rainbow Tables** | El salt unico hace inutiles las tablas precalculadas |
+| **Adaptive** | Puede incrementarse la complejidad con el tiempo |
+
+#### Comparacion de Algoritmos
+
+| Algoritmo | Velocidad | Resistencia | Recomendado |
+|-----------|-----------|-------------|-------------|
+| **MD5** | Muy rapido | Baja | ❌ No usar |
+| **SHA-256** | Rapido | Media | ❌ No para passwords |
+| **PBKDF2** | Lento | Buena | ✅ Aceptable |
+| **BCrypt** | Muy lento | Excelente | ✅ Recomendado |
+| **Argon2** | Muy lento | Excelente | ✅ El mejor |
+
+### Flujo de Registro (Signup)
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant C as Frontend
+    participant A as AuthController
+    participant S as AuthService
+    participant R as UserRepository
+    participant DB as PostgreSQL
+    
+    U->>C: Email + Password + Username
+    C->>A: POST /api/v1/auth/signup
+    A->>S: SignupAsync(request)
+    
+    S->>R: GetByEmail(email)
+    R->>DB: SELECT * FROM users WHERE email = ?
+    DB-->>R: Resultado
+    R-->>S: User o null
+    
+    alt Email ya existe
+        S-->>A: Error EmailDuplicado
+        A-->>C: 409 Conflict
+    else Email unico
+        S->>S: hash = BCrypt.HashPassword(password)
+        
+        S->>R: Add(user con hash)
+        R->>DB: INSERT INTO users (...)
+        DB-->>R: User insertado
+        R-->>S: User creado
+        
+        S-->>A: User creado
+        A-->>C: 201 Created + {token, user}
+    end
+```
+
+**Pasos del registro:**
+1. Usuario envia email, password y username
+2. Buscar si el email ya existe en la BD
+3. Si existe → error 409
+4. Si no existe → hashear password con BCrypt
+5. Guardar usuario en la BD
+6. Retornar 201 con usuario creado
+
+### Flujo de Login (Signin)
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant C as Frontend
+    participant A as AuthController
+    participant S as AuthService
+    participant R as UserRepository
+    participant DB as PostgreSQL
+    participant J as JwtService
+    
+    U->>C: Email + Password
+    C->>A: POST /api/v1/auth/signin
+    A->>S: SigninAsync(email, password)
+    
+    S->>R: GetByEmail(email)
+    R->>DB: SELECT * FROM users WHERE email = ?
+    DB-->>R: Resultado
+    R-->>S: User o null
+    
+    alt Usuario no existe
+        S-->>A: Error CredencialesInvalidas
+        A-->>C: 401 Unauthorized
+    else Usuario soft-deleted
+        S-->>A: Error UsuarioEliminado
+        A-->>C: 401 Unauthorized
+    else Usuario existe
+        S->>S: BCrypt.Verify(password, hash)
+        
+        alt Password incorrecto
+            S-->>A: Error CredencialesInvalidas
+            A-->>C: 401 Unauthorized
+        else Password correcto
+            S->>J: GenerateToken(user)
+            J-->>S: JWT string
+            
+            S-->>A: {token, user}
+            A-->>C: 200 OK + {token, user}
+        end
+    end
+```
+
+**Pasos del login:**
+1. Usuario envia email y password
+2. Buscar usuario por email en la BD
+3. Si no existe o esta eliminado → error 401
+4. Verificar password con BCrypt.Verify()
+5. Si es incorrecto → error 401
+6. Si es correcto → generar JWT
+7. Retornar 200 con token y usuario
+
+### Flujo de Peticion Autorizada
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant C as Frontend
+    participant A as AuthController
+    participant M as Middleware JWT
+    participant DB as PostgreSQL
+    
+    U->>C: GET /api/productos
+    C->>A: GET /api/productos
+    
+    Note over C,A: Header: Bearer jwt-token
+    
+    A->>M: Validate JWT Token
+    M->>M: Verificar firma y expiracion
+    
+    alt Token invalido/expirado
+        M-->>A: 401 Unauthorized
+        A-->>C: 401 Unauthorized
+    else Token valido
+        M-->>A: ClaimsPrincipal
+        A->>DB: SELECT * FROM productos
+        DB-->>A: Lista productos
+        A-->>C: 200 OK + productos
+    end
+```
+
+**Pasos de peticion autorizada:**
+1. Cliente envia peticion con header Authorization: Bearer token
+2. Middleware de JWT extrae y valida el token
+3. Si el token es invalido o expirado → 401
+4. Si el token es valido → continuar al controller
+5. Controller ejecuta la logica y consulta BD
+6. Retornar respuesta al cliente
+
+### Arquitectura de Nuestra Autenticacion
+
+```mermaid
+flowchart TB
+    subgraph "Capa de Presentacion"
+        C1["AuthController"]
+        C2["UsersController"]
+        C3["PedidosController"]
+    end
+    
+    subgraph "Capa de Aplicacion - Servicios"
+        S1["AuthService"]
+        S2["JwtService"]
+    end
+    
+    subgraph "Capa de Infraestructura - Repositorios"
+        R1["IUserRepository"]
+        R2["UserRepository"]
+    end
+    
+    subgraph "Base de Datos"
+        DB1["PostgreSQL - tabla users"]
+    end
+    
+    subgraph "Externos"
+        E1["BCrypt.Net"]
+        E2["System.IdentityModel.Tokens.Jwt"]
+    end
+    
+    C1 --> S1
+    C2 --> S1
+    C3 --> S1
+    
+    S1 --> S2
+    S1 --> R1
+    S2 --> E2
+    R1 --> R2
+    R2 --> DB1
+    
+    S2 -.->|Hash/Verify| E1
+    
+    style C1 fill:#1976d2,color:#fff
+    style C2 fill:#1976d2,color:#fff
+    style C3 fill:#1976d2,color:#fff
+    style S1 fill:#388e3c,color:#fff
+    style S2 fill:#388e3c,color:#fff
+    style R1 fill:#ffa000,color:#fff
+    style R2 fill:#ffa000,color:#fff
+    style DB1 fill:#5c6bc0,color:#fff
+```
+
+### Tablas de Identity vs Nuestra Tabla
+
+```mermaid
+erDiagram
+    %% Identity crea 8 tablas
+    subgraph "ASP.NET Core Identity (8 tablas)"
+        T1["AspNetUsers"] {
+            bigint Id PK
+            string UserName
+            string Email
+            string PasswordHash
+            string SecurityStamp
+            string ConcurrencyStamp
+            boolean EmailConfirmed
+            boolean TwoFactorEnabled
+            int AccessFailedCount
+        }
+        T2["AspNetRoles"] {
+            bigint Id PK
+            string Name
+        }
+        T3["AspNetUserRoles"] {
+            bigint UserId
+            bigint RoleId
+        }
+        T4["AspNetUserClaims"] {
+            int Id
+            bigint UserId
+        }
+        T5["AspNetUserLogins"]
+        T6["AspNetUserTokens"]
+        T7["AspNetRoleClaims"]
+    end
+    
+    %% Nuestra tabla
+    subgraph "Nuestro Metodo (1 tabla)"
+        U1["users"] {
+            bigint Id PK
+            string Username
+            string Email
+            string PasswordHash
+            string Avatar
+            string Role
+            boolean IsDeleted
+            timestamp CreatedAt
+            timestamp UpdatedAt
+        }
+    end
+    
+    style T1 fill:#d32f2f,stroke:#b71c1c,color:#fff
+    style T2 fill:#d32f2f,stroke:#b71c1c,color:#fff
+    style T3 fill:#d32f2f,stroke:#b71c1c,color:#fff
+    style T4 fill:#d32f2f,stroke:#b71c1c,color:#fff
+    style T5 fill:#d32f2f,stroke:#b71c1c,color:#fff
+    style T6 fill:#d32f2f,stroke:#b71c1c,color:#fff
+    style T7 fill:#d32f2f,stroke:#b71c1c,color:#fff
+    
+    style U1 fill:#2e7d32,stroke:#1b5e20,color:#fff
+```
+
+### Implementacion del Metodo Personalizado
+
+#### 1. Modelo de Usuario Simple
+
+```csharp
+// Models/User.cs
+public class User : ITimestamped
+{
+    public long Id { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
+    public string Role { get; set; } = UserRoles.USER;
+    public string? Avatar { get; set; }
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
+}
+
+public static class UserRoles
+{
+    public const string ADMIN = "ADMIN";
+    public const string USER = "USER";
+}
+```
+
+#### 2. Autenticación con BCrypt Directo
+
+```csharp
+// Services/AuthService.cs
+public class AuthService
+{
+    private readonly IUserRepository _userRepository;
+    
+    public async Task<Result<(string token, User user), Error>> SigninAsync(
+        string email, string password)
+    {
+        // Buscar usuario
+        var user = await _userRepository.GetByEmailAsync(email);
+        if (user == null)
+            return Result.Failure<(string, User), Error>(
+                Errors.Auth.CredencialesInvalidas);
+        
+        // Verificar soft-delete
+        if (user.IsDeleted)
+            return Result.Failure<(string, User), Error>(
+                Errors.Auth.UsuarioEliminado);
+        
+        // BCrypt directo - sin abstracciones
+        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            return Result.Failure<(string, User), Error>(
+                Errors.Auth.CredencialesInvalidas);
+        
+        // Generar JWT
+        var token = _jwtService.GenerateToken(user);
+        
+        return Result.Success<(string, User), Error>((token, user));
+    }
+    
+    public async Task<Result<User, Error>> SignupAsync(SignupRequest request)
+    {
+        // Verificar email único
+        var existing = await _userRepository.GetByEmailAsync(request.Email);
+        if (existing != null)
+            return Result.Failure<User, Error>(
+                Errors.Auth.EmailDuplicado);
+        
+        // Crear usuario con BCrypt hash
+        var user = new User
+        {
+            Username = request.Username,
+            Email = request.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Role = UserRoles.USER
+        };
+        
+        await _userRepository.AddAsync(user);
+        return user;
+    }
+}
+```
+
+#### 3. Generación de JWT Manual
+
+```csharp
+// Services/JwtService.cs
+public class JwtService
+{
+    public string GenerateToken(User user)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role),
+            new Claim("username", user.Username),
+            new Claim("jti", Guid.NewGuid().ToString())
+        };
+        
+        var token = new JwtSecurityToken(
+            issuer: _issuer,
+            audience: _audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(24),
+            signingCredentials: creds
+        );
+        
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+```
+
+#### 4. Configuración Ligera
+
+```csharp
+// Infrastructures/AuthenticationConfig.cs
+public static class AuthenticationConfig
+{
+    public static IServiceCollection AddAuthentication(
+        this IServiceCollection services, 
+        IConfiguration configuration)
+    {
+        var jwtKey = configuration["Jwt:Key"] 
+            ?? throw new InvalidOperationException("JWT Key no configurada");
+        
+        // Solo JWT Bearer - sin Identity
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(jwtKey)),
+                ValidateIssuer = true,
+                ValidIssuer = configuration["Jwt:Issuer"] ?? "TiendaApi",
+                ValidateAudience = true,
+                ValidAudience = configuration["Jwt:Audience"] ?? "TiendaApi",
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+        
+        // Políticas de autorización simples
+        services.AddAuthorizationBuilder()
+            .AddPolicy("RequireAdminRole", 
+                policy => policy.RequireRole(UserRoles.ADMIN))
+            .AddPolicy("RequireUserRole", 
+                policy => policy.RequireRole(UserRoles.USER, UserRoles.ADMIN));
+        
+        return services;
+    }
+}
+```
+
+### Resultados Equivalentes
+
+Aunque la implementación es diferente, **conseguimos los mismos objetivos de seguridad**:
+
+| Objetivo | Con Identity | Con Nuestro Método |
+|----------|-------------|-------------------|
+| **Contraseñas seguras** | ✅ PBKDF2 con salt | ✅ BCrypt con salt |
+| **JWT válido** | ✅ Generado por Identity | ✅ Generado manualmente |
+| **Roles controlados** | ✅ IdentityRole<T> | ✅ String simple |
+| **Protección SQL Injection** | ✅ EF Core parametrizes | ✅ EF Core parametrizes |
+| **Soft-delete** | ✅ Configurable | ✅ Implementado manualmente |
+
+### Cuándo Usar Cada Enfoque
+
+```mermaid
+flowchart TD
+    A[¿Qué tipo de aplicación?] --> B{¿Tiene UI de login?}
+    B -->|Sí - Web Forms/Razor| C[Identity ✅]
+    B -->|No - Solo API| D[¿External Logins?]
+    D -->|Sí - Google, Facebook| E[Identity ✅]
+    D -->|No - Solo email/pass| F[Personalizado ✅]
+    
+    C --> G["UI completa + Cookies"]
+    F --> H["JWT Bearer + BCrypt"]
+    
+    style C fill:#1565c0,stroke:#0d47a1,color:#fff
+    style F fill:#2e7d32,stroke:#1b5e20,color:#fff
+    style G fill:#1565c0,stroke:#0d47a1,color:#fff
+    style H fill:#2e7d32,stroke:#1b5e20,color:#fff
+```
+
+| Escenario | Recomendación | Razón |
+|-----------|---------------|-------|
+| **API REST simple** | Personalizado ✅ | Ligero, control total |
+| **Razor Pages** | Identity ✅ | Cookies + UI login |
+| **Blazor Server** | Identity ✅ | Integración completa |
+| **SPA + API Backend** | Personalizado en API ✅ | JWT es natural para SPAs |
+| **Google/Facebook Login** | Identity ✅ | External logins incluidos |
+| **2FA obligatorio** | Identity ✅ | Integrado |
+
+### Conclusión
+
+**Nuestra implementación no es "menos segura" ni "incorrecta".** Es simplemente más adecuada para una API REST sin UI que solo necesita:
+- Registro/Login con email y contraseña
+- Roles simples (USER/ADMIN)
+- JWT para autenticación stateless
+
+Si en el futuro necesitamos external logins o 2FA, podemos migrar a Identity sin perder funcionalidad. Pero para el caso de uso actual, el método personalizado es la elección correcta.
+
+### Recursos Adicionales
+
+- BCrypt: https://github.com/BcryptNet/bcrypt.net
+- JWT: https://jwt.io/
+- RFC 7519: https://datatracker.ietf.org/doc/html/rfc7519
+
+### Comparacion del Middleware de Autenticacion y Autorizacion
+
+Una pregunta frecuente es: **"Si no usamos Identity, funciona igual el [Authorize]?"** La respuesta es **SI**. El middleware de autenticacion y autorizacion de ASP.NET Core funciona independientemente de como gestionemos los usuarios.
+
+```mermaid
+flowchart TB
+    R1["Request con Bearer Token"] --> M1["Authentication Middleware"]
+    M1 -->|"Token valido"| M2["Authorization Middleware"]
+    M2 -->|"[Authorize]"| M3["Controller"]
+    M3 --> A1["200 OK"]
+    
+    M1 -->|"Token invalido"| A2["401 Unauthorized"]
+    M2 -->|"Sin rol"| A3["403 Forbidden"]
+    
+    style M1 fill:#5c6bc0,stroke:#3949ab,color:#fff
+    style M2 fill:#7e57c2,stroke:#5e35b1,color:#fff
+    style M3 fill:#9575cd,stroke:#7e57c2,color:#fff
+```
+
+#### Comparacion: Middleware con Identity vs Personalizado
+
+| Aspecto | Con Identity | Personalizado |
+|---------|-------------|---------------|
+| **Authentication Middleware** | `AddIdentityCookies()` | `AddJwtBearer()` |
+| **Authorization Middleware** | `AddAuthorization()` | `AddAuthorization()` (igual) |
+| **[Authorize] attribute** | ✅ | ✅ |
+| **[Authorize(Roles="Admin")]** | ✅ | ✅ |
+| **User.Identity.Name** | ✅ | ✅ |
+| **User.IsInRole("ADMIN")** | ✅ | ✅ |
+
+#### Codigo del Middleware (Igual en Ambos Casos)
+
+```csharp
+services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(configuration["Jwt:Key"])),
+            ValidateIssuer = true,
+            ValidIssuer = configuration["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = configuration["Jwt:Audience"],
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+services.AddAuthorization();  // EXACTAMENTE IGUAL
+
+[Authorize]  // ✅ Funciona igual
+public IActionResult GetAll() { }
+
+[Authorize(Roles = "ADMIN")]  // ✅ Funciona igual
+public IActionResult Create(ProductoRequest request) { }
+```
+
+#### Lo que Funciona Exactamente Igual
+
+| Funcionabilidad | Identity | Personalizado |
+|----------------|----------|---------------|
+| `[Authorize]` | ✅ | ✅ |
+| `[Authorize(Roles="ADMIN")]` | ✅ | ✅ |
+| `User.Identity.IsAuthenticated` | ✅ | ✅ |
+| `User.Identity.Name` | ✅ | ✅ |
+| `User.IsInRole("ADMIN")` | ✅ | ✅ |
+
+#### Conclusion: El Middleware No Sabe Como Generamos el Token
+
+```
+Request --> Authentication Middleware --> Authorization Middleware --> Controller
+           Da igual como            Da igual como
+           generemos el JWT         configuremos roles
+```
+
+**El middleware solo necesita:**
+1. Un token JWT valido (lo validamos igual)
+2. Claims con los roles necesarios (los ahadimos igual)
+3. La configuracion de TokenValidationParameters (igual)

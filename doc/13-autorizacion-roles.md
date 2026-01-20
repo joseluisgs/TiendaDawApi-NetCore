@@ -95,20 +95,59 @@ sequenceDiagram
     end
 ```
 
-### Configuración de Servicios de Autorización
+### Configuracion de Servicios de Autorizacion
 
 ```csharp
 using Microsoft.AspNetCore.Authorization;
 
 builder.Services.AddAuthorization(options =>
 {
-    // Configuración de políticas aquí (ver secciones siguientes)
+    // Configuracion de politicas aqui (ver secciones siguientes)
 });
 ```
 
+## 13.3. La Autorizacion Funciona Igual con Identity o Personalizado
+
+El sistema de autorizacion de ASP.NET Core es **independiente** del sistema de autenticacion. Esto significa que `[Authorize]`, `User.IsInRole()` y las politicas funcionan **exactamente igual** tanto si usamos ASP.NET Core Identity como si usamos nuestro metodo personalizado con JWT.
+
+```mermaid
+flowchart TB
+    subgraph "Authentication (diferente)"
+        I1["Identity"] --> I2["ClaimsPrincipal"]
+        P1["JWT Personalizado"] --> P2["ClaimsPrincipal"]
+    end
+    
+    subgraph "Authorization (IGUAL)"
+        I2 --> A["AddAuthorization()"]
+        P2 --> A
+        A --> B["[Authorize]"]
+        B --> C["User.IsInRole()"]
+        C --> D["Policy evaluation"]
+    end
+    
+    style A fill:#5c6bc0,stroke:#3949ab,color:#fff
+    style B fill:#5c6bc0,stroke:#3949ab,color:#fff
+    style C fill:#5c6bc0,stroke:#3949ab,color:#fff
+    style D fill:#5c6bc0,stroke:#3949ab,color:#fff
+```
+
+#### Lo que Funciona Igual
+
+| Funcionabilidad | Con Identity | Personalizado |
+|----------------|--------------|---------------|
+| `[Authorize]` | ✅ | ✅ |
+| `[Authorize(Roles="ADMIN")]` | ✅ | ✅ |
+| `User.IsInRole("ADMIN")` | ✅ | ✅ |
+| `User.Identity.Name` | ✅ | ✅ |
+| Politicas personalizadas | ✅ | ✅ |
+
+#### Conclusion
+
+Nuestro sistema de autorizacion con roles funciona **perfectamente** con el metodo personalizado JWT. No necesitamos ASP.NET Core Identity para tener `[Authorize]`, politicas o control de roles.
+
 ---
 
-## 13.3. Autorización Basada en Roles
+## 13.4. Autorizacion Basada en Roles
 
 Los roles son una forma simple de agrupar permisos. Un usuario puede tener uno o varios roles.
 
@@ -247,7 +286,7 @@ public async Task<IActionResult> ManageProduct(...)
 
 ---
 
-## 13.4. Políticas de Autorización (Policies)
+## 13.5. Políticas de Autorización (Policies)
 
 Las políticas permiten definir condiciones de autorización más complejas que simples roles.
 
@@ -387,7 +426,7 @@ public class AdminController : ControllerBase
 
 ---
 
-## 13.5. Requirements Personalizados (IAuthorizationRequirement)
+## 13.6. Requirements Personalizados (IAuthorizationRequirement)
 
 Para condiciones de autorización muy específicas, puedes crear tus propios requirements y handlers.
 
@@ -582,7 +621,7 @@ builder.Services.AddAuthorization(options =>
 
 ---
 
-## 13.6. Autorización Basada en Recursos (Resource-Based)
+## 13.7. Autorización Basada en Recursos (Resource-Based)
 
 Cuando la autorización depende del recurso específico que se está accediendo, usamos el servicio `IAuthorizationService`.
 
@@ -688,7 +727,7 @@ public class ProductoService
 
 ---
 
-## 13.7. Autorización con Scopes (OAuth2)
+## 13.8. Autorización con Scopes (OAuth2)
 
 Para APIs que consumen aplicaciones de terceros, los scopes definen los permisos específicos.
 
@@ -720,7 +759,7 @@ builder.Services.AddAuthorization(options =>
 
 ---
 
-## 13.8. Resumen de Métodos de Autorización
+## 13.9. Resumen de Métodos de Autorización
 
 | Método | Uso | Ejemplo |
 |--------|-----|---------|
@@ -772,7 +811,7 @@ flowchart TB
 
 ---
 
-## 13.9. Buenas Prácticas de Autorización
+## 13.10. Buenas Prácticas de Autorización
 
 ```mermaid
 flowchart TB
