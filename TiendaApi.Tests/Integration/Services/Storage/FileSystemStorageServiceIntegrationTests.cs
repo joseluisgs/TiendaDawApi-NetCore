@@ -16,7 +16,8 @@ namespace TiendaApi.Tests.Integration.Services.Storage;
 /// Verifica operaciones reales con el sistema de archivos.
 /// </summary>
 [TestFixture]
-[NonParallelizable]
+[Category("Integration")]
+[Category("Storage")]
 public class FileSystemStorageServiceIntegrationTests
 {
     private string _testDirectory = null!;

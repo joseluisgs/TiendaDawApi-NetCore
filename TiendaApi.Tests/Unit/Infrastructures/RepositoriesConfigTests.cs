@@ -13,6 +13,8 @@ namespace TiendaApi.Tests.Unit.Infrastructures;
 /// Verifica que el repositorio de pedidos se registra correctamente según la configuración.
 /// </summary>
 [TestFixture]
+[Category("Unit")]
+[Category("Infrastructure")]
 public class RepositoriesConfigTests
 {
     private Mock<IConfiguration> _mockConfiguration = null!;
