@@ -1,20 +1,19 @@
 namespace TiendaApi.Apis.Exceptions;
 
 /// <summary>
-/// Excepción para recursos no encontrados.
+/// Excepción para recursos no encontrados (HTTP 404).
 /// </summary>
 public class NotFoundException : Exception
 {
-    /// <summary>
-    /// Crea una nueva excepción de recurso no encontrado.
-    /// </summary>
+    /// <summary>Crea excepción con mensaje.</summary>
+    /// <param name="message">Mensaje descriptivo.</param>
     public NotFoundException(string message) : base(message)
     {
     }
 
-    /// <summary>
-    /// Crea una nueva excepción de recurso no encontrado con inner exception.
-    /// </summary>
+    /// <summary>Crea excepción con inner exception.</summary>
+    /// <param name="message">Mensaje descriptivo.</param>
+    /// <param name="innerException">Excepción interna.</param>
     public NotFoundException(string message, Exception innerException)
         : base(message, innerException)
     {

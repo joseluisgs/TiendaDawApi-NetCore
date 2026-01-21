@@ -262,7 +262,7 @@ public class CategoriaServiceTests
         _mockRepository.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(categoria);
         _mockRepository.Setup(r => r.DeleteAsync(1))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
 
         // Act
         var result = await _service.DeleteAsync(1);

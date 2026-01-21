@@ -1,49 +1,42 @@
 namespace TiendaApi.Apis.Errors.StorageErrors;
 
 /// <summary>
-/// Errores específicos del dominio de almacenamiento de archivos.
+/// Errores de almacenamiento de archivos (HTTP 400).
 /// </summary>
 public static class StorageError
 {
-    /// <summary>
-    /// El archivo está vacío.
-    /// </summary>
+    /// <summary>Crea error cuando el archivo está vacío.</summary>
+    /// <returns>ValidationError (HTTP 400).</returns>
     public static ValidationError ArchivoVacio() =>
-        new("El archivo está vacío", new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
+        ValidationError.Create("El archivo está vacío");
 
-    /// <summary>
-    /// El archivo excede el tamaño máximo.
-    /// </summary>
+    /// <summary>Crea error cuando el archivo excede el tamaño máximo.</summary>
+    /// <returns>ValidationError (HTTP 400).</returns>
     public static ValidationError ArchivoMuyGrande() =>
-        new("El archivo excede el tamaño máximo permitido", new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
+        ValidationError.Create("El archivo excede el tamaño máximo permitido");
 
-    /// <summary>
-    /// Extensión de archivo no permitida.
-    /// </summary>
+    /// <summary>Crea error cuando la extensión no está permitida.</summary>
+    /// <returns>ValidationError (HTTP 400).</returns>
     public static ValidationError ExtensionNoPermitida() =>
-        new("Extensión de archivo no permitida", new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
+        ValidationError.Create("Extensión de archivo no permitida");
 
-    /// <summary>
-    /// Tipo de contenido no permitido.
-    /// </summary>
+    /// <summary>Crea error cuando el tipo de contenido no está permitido.</summary>
+    /// <returns>ValidationError (HTTP 400).</returns>
     public static ValidationError TipoContenidoNoPermitido() =>
-        new("Tipo de contenido no permitido", new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
+        ValidationError.Create("Tipo de contenido no permitido");
 
-    /// <summary>
-    /// Nombre de archivo inválido.
-    /// </summary>
+    /// <summary>Crea error cuando el nombre de archivo es inválido.</summary>
+    /// <returns>ValidationError (HTTP 400).</returns>
     public static ValidationError NombreArchivoInvalido() =>
-        new("Nombre de archivo inválido", new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
+        ValidationError.Create("Nombre de archivo inválido");
 
-    /// <summary>
-    /// Error al guardar el archivo.
-    /// </summary>
+    /// <summary>Crea error al guardar archivo.</summary>
+    /// <returns>ValidationError (HTTP 400).</returns>
     public static ValidationError ErrorGuardando() =>
-        new("Error al guardar archivo", new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
+        ValidationError.Create("Error al guardar archivo");
 
-    /// <summary>
-    /// Error al eliminar el archivo.
-    /// </summary>
+    /// <summary>Crea error al eliminar archivo.</summary>
+    /// <returns>ValidationError (HTTP 400).</returns>
     public static ValidationError ErrorEliminando() =>
-        new("Error al eliminar archivo", new Dictionary<string, string[]>()); // new Dictionary<string, string[]>() = diccionario vacío
+        ValidationError.Create("Error al eliminar archivo");
 }

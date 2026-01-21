@@ -13,6 +13,7 @@ using Npgsql;
 using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
+using TiendaApi.Apis.Exceptions;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Pedidos;
 using TiendaApi.Apis.Repositories.Productos;

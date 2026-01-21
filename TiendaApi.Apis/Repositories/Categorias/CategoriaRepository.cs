@@ -7,62 +7,48 @@ using TiendaApi.Apis.Models;
 namespace TiendaApi.Apis.Repositories.Categorias;
 
 /// <summary>
-/// Implementación del repositorio de categorías usando Entity Framework Core.
+/// Implementación del repositorio de categorías.
 /// </summary>
 public class CategoriaRepository(
     TiendaDbContext context,
     ILogger<CategoriaRepository> logger
 ) : ICategoriaRepository
 {
-
-    /// <summary>
-    /// Obtiene todas las categorías ordenadas por nombre.
-    /// </summary>
-    /// <returns>Colección de categorías ordenadas.</returns>
+    /// <inheritdoc/>
     public async Task<IEnumerable<Categoria>> FindAllAsync()
     {
         logger.LogDebug("Buscando todas las categorías");
-
         return await context.Categorias
             .OrderBy(c => c.Nombre)
             .ToListAsync();
     }
 
-    /// <summary>
-    /// Obtiene todas las categorías como IQueryable para uso con HotChocolate.
-    /// </summary>
-    /// <returns>IQueryable de categorías.</returns>
+    /// <inheritdoc/>
     public IQueryable<Categoria> FindAllAsNoTracking()
     {
-        logger.LogDebug("Obteniendo categorías como IQueryable para HotChocolate");
-
+        logger.LogDebug("Obteniendo categorías como IQueryable");
         return context.Categorias
             .OrderBy(c => c.Nombre)
             .AsNoTracking();
     }
 
-    /// <summary>
-    /// Obtiene categorías paginadas con filtros opcionales.
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<(IEnumerable<Categoria> Items, int TotalCount)> FindAllPagedAsync(CategoriaFilterDto filter)
     {
         logger.LogDebug("Buscando categorías paginadas con filtros");
 
-        var query = filter.IsDeleted.HasValue
-            ? context.Categorias.IgnoreQueryFilters().AsQueryable()
-            : context.Categorias.AsQueryable();
+        var query = context.Categorias.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Nombre))
-            query = query.Where(c => EF.Functions.Like(c.Nombre, $"%{filter.Nombre}%"));
+            query = query.Where(c => c.Nombre.Contains(filter.Nombre));
 
         if (filter.IsDeleted.HasValue)
             query = query.Where(c => c.IsDeleted == filter.IsDeleted.Value);
 
         var totalCount = await query.CountAsync();
 
-        query = ApplySorting(query, filter.SortBy, filter.Direction);
-
         var items = await query
+            .OrderBy(GetSortExpression(filter.SortBy))
             .Skip(filter.Page * filter.Size)
             .Take(filter.Size)
             .ToListAsync();
@@ -70,94 +56,82 @@ public class CategoriaRepository(
         return (items, totalCount);
     }
 
-    private static IQueryable<Categoria> ApplySorting(IQueryable<Categoria> query, string sortBy, string direction)
-    {
-        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
-
-        Expression<Func<Categoria, object>> keySelector = sortBy.ToLower() switch
-        {
-            "nombre" => c => c.Nombre,
-            "createdat" => c => c.CreatedAt,
-            "updatedat" => c => c.UpdatedAt,
-            _ => c => c.Id
-        };
-
-        return isDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-    }
-
-    /// <summary>
-    /// Obtiene una categoría por su identificador.
-    /// </summary>
-    /// <param name="id">Identificador de la categoría.</param>
-    /// <returns>La categoría encontrada o null.</returns>
+    /// <inheritdoc/>
     public async Task<Categoria?> FindByIdAsync(long id)
     {
-        return await context.Categorias
-            .FirstOrDefaultAsync(c => c.Id == id);
+        logger.LogDebug("Buscando categoría por ID: {Id}", id);
+        return await context.Categorias.FindAsync(id);
     }
 
-    /// <summary>
-    /// Guarda una nueva categoría.
-    /// </summary>
-    /// <param name="categoria">Categoría a guardar.</param>
-    /// <returns>La categoría guardada con fecha de creación y modificación.</returns>
-    public async Task<Categoria> SaveAsync(Categoria categoria)
+    /// <inheritdoc/>
+    public async Task<bool> ExistsByIdAsync(long id)
     {
-        context.Categorias.Add(categoria);
-        await context.SaveChangesAsync();
-
-        logger.LogInformation("Categoría guardada con ID: {Id}", categoria.Id);
-
-        return categoria;
+        return await context.Categorias.AnyAsync(c => c.Id == id);
     }
 
-    /// <summary>
-    /// Actualiza una categoría existente.
-    /// </summary>
-    /// <param name="categoria">Categoría con datos actualizados.</param>
-    /// <returns>La categoría actualizada.</returns>
-    public async Task<Categoria> UpdateAsync(Categoria categoria)
-    {
-        context.Categorias.Update(categoria);
-        await context.SaveChangesAsync();
-
-        logger.LogInformation("Categoría actualizada con ID: {Id}", categoria.Id);
-
-        return categoria;
-    }
-
-    /// <summary>
-    /// Elimina una categoría por su identificador (eliminación suave).
-    /// </summary>
-    /// <param name="id">Identificador de la categoría a eliminar.</param>
-    /// <returns>Tarea asíncrona.</returns>
-    public async Task DeleteAsync(long id)
-    {
-        var categoria = await FindByIdAsync(id);
-        if (categoria is not null)
-        {
-            categoria.IsDeleted = true;
-            await context.SaveChangesAsync();
-
-            logger.LogInformation("Categoría eliminada lógicamente con ID: {Id}", id);
-        }
-    }
-
-    /// <summary>
-    /// Verifica si existe una categoría con el nombre especificado.
-    /// </summary>
-    /// <param name="nombre">Nombre de la categoría.</param>
-    /// <param name="excludeId">Identificador a excluir de la búsqueda.</param>
-    /// <returns>True si existe, False en caso contrario.</returns>
+    /// <inheritdoc/>
     public async Task<bool> ExistsByNombreAsync(string nombre, long? excludeId = null)
     {
         var query = context.Categorias.Where(c => c.Nombre == nombre);
-
         if (excludeId.HasValue)
-        {
             query = query.Where(c => c.Id != excludeId.Value);
-        }
-
         return await query.AnyAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task<Categoria> CreateAsync(Categoria categoria)
+    {
+        logger.LogDebug("Creando categoría: {Nombre}", categoria.Nombre);
+        context.Categorias.Add(categoria);
+        await context.SaveChangesAsync();
+        return categoria;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Categoria> UpdateAsync(Categoria categoria)
+    {
+        logger.LogDebug("Actualizando categoría ID: {Id}", categoria.Id);
+        context.Categorias.Update(categoria);
+        await context.SaveChangesAsync();
+        return categoria;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteAsync(long id)
+    {
+        logger.LogDebug("Eliminando categoría ID: {Id}", id);
+        var categoria = await FindByIdAsync(id);
+        if (categoria == null) return false;
+
+        categoria.IsDeleted = true;
+        await UpdateAsync(categoria);
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Categoria> SaveAsync(Categoria categoria)
+    {
+        logger.LogDebug("Guardando categoría: {Nombre}", categoria.Nombre);
+        var existing = await FindByIdAsync(categoria.Id);
+        if (existing != null)
+        {
+            context.Entry(existing).CurrentValues.SetValues(categoria);
+        }
+        else
+        {
+            context.Categorias.Add(categoria);
+        }
+        await context.SaveChangesAsync();
+        return categoria;
+    }
+
+    private static Expression<Func<Categoria, object>> GetSortExpression(string sortBy)
+    {
+        return sortBy.ToLowerInvariant() switch
+        {
+            "nombre" => c => c.Nombre,
+            "createdat" => c => c.CreatedAt,
+            _ => c => c.Id
+        };
     }
 }

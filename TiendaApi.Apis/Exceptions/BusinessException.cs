@@ -1,20 +1,19 @@
 namespace TiendaApi.Apis.Exceptions;
 
 /// <summary>
-/// Excepción para violaciones de reglas de negocio.
+/// Excepción para violaciones de reglas de negocio (HTTP 400/422).
 /// </summary>
 public class BusinessException : Exception
 {
-    /// <summary>
-    /// Crea una nueva excepción de negocio.
-    /// </summary>
+    /// <summary>Crea excepción con mensaje.</summary>
+    /// <param name="message">Mensaje descriptivo.</param>
     public BusinessException(string message) : base(message)
     {
     }
 
-    /// <summary>
-    /// Crea una nueva excepción de negocio con inner exception.
-    /// </summary>
+    /// <summary>Crea excepción con inner exception.</summary>
+    /// <param name="message">Mensaje descriptivo.</param>
+    /// <param name="innerException">Excepción interna.</param>
     public BusinessException(string message, Exception innerException)
         : base(message, innerException)
     {

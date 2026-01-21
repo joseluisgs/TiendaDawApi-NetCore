@@ -8,6 +8,7 @@ using TiendaApi.Apis.Dtos.Common;
 using TiendaApi.Apis.Dtos.Pedidos;
 using TiendaApi.Apis.Errors;
 using TiendaApi.Apis.Errors.Pedidos;
+using TiendaApi.Apis.Exceptions;
 using TiendaApi.Apis.Mappers;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Realtime.Common;
