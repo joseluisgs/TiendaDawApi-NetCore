@@ -14,7 +14,7 @@
 
 ---
 
-## 27.1. Por Qué HTTPS es Obligatorio
+## 27.1. Por qué HTTPS es Obligatorio
 
 ### El Problema con HTTP
 
@@ -245,9 +245,9 @@ A continuación se explican las principales vulnerabilidades que los security he
 ```mermaid
 flowchart LR
     subgraph "Ataque Man-in-the-Middle"
-        Cliente["👤 Usuario"] -->|"POST /auth/signin<br/>{email, password}"| Internet["🌐 Internet"]
-        Internet -->|"Datos interceptados"| Servidor["🖥️ Servidor"]
-        Hacker["😈 Atacante"] -.->|"Lee todo el tráfico"| Internet
+        Cliente["Usuario"] -->|"POST /auth/signin<br/>{email, password}"| Internet["Internet"]
+        Internet -->|"Datos interceptados"| Servidor["Servidor"]
+        Hacker["Atacante"] -.->|"Lee todo el trafico"| Internet
     end
     
     style Hacker fill:#e74c3c,color:#fff
@@ -257,7 +257,7 @@ flowchart LR
 
 **Ejemplo de ataque:**
 ```
-// Tráfico HTTP capturado (texto plano)
+// Trafico HTTP capturado (texto plano)
 POST /auth/signin HTTP/1.1
 Host: api.tienda.com
 Content-Type: application/json
@@ -268,7 +268,7 @@ Content-Type: application/json
 
 **Solución con HTTPS:**
 ```
-// Tráfico HTTPS cifrado (AES-256)
+// Trafico HTTPS cifrado (AES-256)
 POST /auth/signin HTTP/1.1
 Host: api.tienda.com
 Content-Type: application/json
@@ -294,7 +294,7 @@ sequenceDiagram
     Usuario->>Atacante: GET http://api.tienda.com
     Atacante->>Usuario: 200 OK (proxy a HTTP real)
     
-    Note over Usuario: 🔴 PROBLEMA: Todo el tráfico<br/>pasa por el atacante
+    Note over Usuario: PROBLEMA: Todo el trafico<br/>pasa por el atacante
 ```
 
 **Ataque de Downgrade:**
@@ -314,14 +314,14 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
 #### XSS (Cross-Site Scripting)
 
-**Vulnerabilidad:** Un atacante inyecta código JavaScript malicioso que se ejecuta en el navegador de la víctima.
+**Vulnerabilidad:** Un atacante inyecta codigo JavaScript malicioso que se ejecuta en el navegador de la victima.
 
 ```mermaid
 flowchart LR
     subgraph "Ataque XSS"
-        Atacante["😈 Atacante"] -->|"Comentario malicioso<br/>\<script\>robCookies()\</script\>"| Servidor["🖥️ Servidor"]
-        Servidor -->|"Guarda en BD"| BD[(📦 Base de Datos)]
-        Usuario["👤 Usuario"] -->|"Carga página"| Servidor
+        Atacante["Atacante"] -->|"Comentario malicioso<br/>\<script\>robCookies()\</script\>"| Servidor["Servidor"]
+        Servidor -->|"Guarda en BD"| BD[(Base de Datos)]
+        Usuario["Usuario"] -->|"Carga pagina"| Servidor
         Servidor -->|"Muestra comentario<br/>con script injectado"| Usuario
         Usuario -->|"Script ejecuta<br/>roba cookies"| Atacante
     end
@@ -354,20 +354,20 @@ X-XSS-Protection: 1; mode=block
 ```mermaid
 flowchart TD
     subgraph "Ataque Clickjacking"
-        subgraph "Página del Atacante (visible)"
-            A1["🎮 Botón 'Jugar'"
-            style A1 fill:#27ae60,color:#fff"]
-            A2["📺 Video gracioso"
-            style A2 fill:#3498db,color:#fff"]
+        subgraph "Pagina del Atacante (visible)"
+            A1["Boton 'Jugar'"]
+            A2["Video gracioso"]
+            style A1 fill:#27ae60,color:#fff
+            style A2 fill:#3498db,color:#fff
         end
         
         subgraph "Iframe invisible (superpuesto)"
-            B1["🔐 Botón 'Eliminar cuenta'"]
-            B2["💰 Botón 'Transferir dinero'"]
+            B1["Boton 'Eliminar cuenta'"]
+            B2["Boton 'Transferir dinero'"]
         end
         
-        A1 -->|"Usuario cree que hace<br/>clic en 'Jugar'"| B1
-        A2 -->|"Usuario cree que hace<br/>clic en 'Video'"| B2
+        A1 -->|"Usuario hace clic"| B1
+        A2 -->|"Usuario hace clic"| B2
         
         style B1 fill:#e74c3c,color:#fff,stroke-dasharray: 5 5
         style B2 fill:#e74c3c,color:#fff,stroke-dasharray: 5 5
@@ -376,14 +376,14 @@ flowchart TD
 
 **Ejemplo de clickjacking:**
 ```html
-<!-- Página del atacante -->
+<!-- Pagina del atacante -->
 <html>
   <style>
     iframe { position: absolute; opacity: 0; }
     button { position: absolute; top: 100px; }
   </style>
   <iframe src="https://banco.com/transferir?cuenta=atacante&monto=10000"></iframe>
-  <button>¡Gana un premio!</button>
+  <button>Gana un premio!</button>
 </html>
 <!-- El usuario cree hacer clic en el premio, pero en realidad
      hace clic en Transferir del banco -->
@@ -393,7 +393,7 @@ flowchart TD
 ```
 X-Frame-Options: DENY
 
-// El navegador rechaza mostrar la página en un iframe
+// El navegador rechaza mostrar la pagina en un iframe
 ```
 
 #### MIME Sniffing
@@ -403,11 +403,11 @@ X-Frame-Options: DENY
 ```mermaid
 flowchart LR
     subgraph "Ataque MIME Sniffing"
-        Atacante["😈 Atacante"] -->|"Archivo malicioso<br/>upload.php con<br/>contenido JPEG"| Servidor["🖥️ Servidor"]
-        Servidor -->|"Guarda como imagen<br/>(parece JPEG)"| BD[(📦 BD")]
-        Usuario["👤 Usuario"] -->|"Descarga archivo<br/>como imagen"| Servidor
+        Atacante["Atacante"] -->|"Archivo malicioso<br/>upload.php con<br/>contenido JPEG"| Servidor["Servidor"]
+        Servidor -->|"Guarda como imagen<br/>(parece JPEG)"| BD[(Base de Datos)]
+        Usuario["Usuario"] -->|"Descarga archivo<br/>como imagen"| Servidor
         Servidor -->|"Content-Type: image/jpeg<br/>pero el navegador<br/>detecta PHP"| Usuario
-        Usuario -->|"Ejecuta el PHP<br/>como código"| Peligro["💥 Código<br/>malicioso<br/>ejecutado"]
+        Usuario -->|"Ejecuta el PHP<br/>como codigo"| Peligro["Codigo<br/>malicioso<br/>ejecutado"]
     end
     
     style Atacante fill:#e74c3c,color:#fff
@@ -415,12 +415,12 @@ flowchart LR
 ```
 
 **Ejemplo de MIME Sniffing:**
-```
-// Archivo sub看起来 como imagen pero contiene PHP
+```php
+// Archivo aparentemente como imagen pero contiene PHP
 Content-Type: image/jpeg
 
 <?php
-system($_GET['cmd']);  // El navegador lo ejecuta como código PHP
+system($_GET['cmd']);  // El navegador lo ejecuta como codigo PHP
 ```
 
 **Protección con X-Content-Type-Options:**
