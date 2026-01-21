@@ -51,7 +51,7 @@ flowchart LR
     subgraph "HTTPS (Seguro)"
         A1["Cliente"] -->|"POST /auth/signin<br/>{email, password}"| A2["Servidor"]
         A2 -->|"Response<br/>{token}"| A1
-        A3["Hacker"] -.x|"No puede descifrar"| A2
+        A3["Hacker"] -.->|"No puede descifrar"| A2
     end
     
     style A3 fill:#e74c3c,color:#fff,stroke-dasharray: 5 5
