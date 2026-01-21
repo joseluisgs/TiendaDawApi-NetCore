@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Apis.Data;
-using TiendaApi.Apis.Dtos.Common;
+using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Models;
 using TiendaApi.Apis.Repositories.Productos;
 
