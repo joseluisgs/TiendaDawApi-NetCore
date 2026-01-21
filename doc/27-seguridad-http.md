@@ -45,7 +45,7 @@ flowchart LR
 
 ### La Solución: HTTPS
 
-HTTPS cifratoda la comunicación entre cliente y servidor usando TLS (Transport Layer Security). Esto garantiza confidencialidad, integridad y autenticidad de los datos transmitidos.
+HTTPS cifra toda la comunicación entre cliente y servidor usando TLS (Transport Layer Security). Esto garantiza confidencialidad, integridad y autenticidad de los datos transmitidos.
 
 ```mermaid
 flowchart LR
@@ -248,7 +248,7 @@ flowchart LR
     subgraph "Ataque Man-in-the-Middle"
         Cliente["Usuario"] -->|"POST /auth/signin<br/>{email, password}"| Internet["Internet"]
         Internet -->|"Datos interceptados"| Servidor["Servidor"]
-        Hacker["Atacante"] -.->|"Lee todo el trafico"| Internet
+        Hacker["Atacante"] -.->|"Lee todo el tráfico"| Internet
     end
     
     style Hacker fill:#e74c3c,color:#fff
@@ -295,7 +295,7 @@ sequenceDiagram
     Usuario->>Atacante: GET http://api.tienda.com
     Atacante->>Usuario: 200 OK (proxy a HTTP real)
     
-    Note over Usuario: PROBLEMA: Todo el trafico<br/>pasa por el atacante
+    Note over Usuario: PROBLEMA: Todo el tráfico<br/>pasa por el atacante
 ```
 
 **Ataque de Downgrade:**
@@ -315,7 +315,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
 #### XSS (Cross-Site Scripting)
 
-**Vulnerabilidad:** Un atacante inyecta codigo JavaScript malicioso que se ejecuta en el navegador de la victima.
+**Vulnerabilidad:** Un atacante inyecta código JavaScript malicioso que se ejecuta en el navegador de la victima.
 
 ```mermaid
 flowchart LR
@@ -408,7 +408,7 @@ flowchart LR
         Servidor -->|"Guarda como imagen<br/>(parece JPEG)"| BD[(Base de Datos)]
         Usuario["Usuario"] -->|"Descarga archivo<br/>como imagen"| Servidor
         Servidor -->|"Content-Type: image/jpeg<br/>pero el navegador<br/>detecta PHP"| Usuario
-        Usuario -->|"Ejecuta el PHP<br/>como codigo"| Peligro["Codigo<br/>malicioso<br/>ejecutado"]
+        Usuario -->|"Ejecuta el PHP<br/>como código"| Peligro["Codigo<br/>malicioso<br/>ejecutado"]
     end
     
     style Atacante fill:#e74c3c,color:#fff
@@ -421,7 +421,7 @@ flowchart LR
 Content-Type: image/jpeg
 
 <?php
-system($_GET['cmd']);  // El navegador lo ejecuta como codigo PHP
+system($_GET['cmd']);  // El navegador lo ejecuta como código PHP
 ```
 
 **Protección con X-Content-Type-Options:**
@@ -905,7 +905,7 @@ public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
 }
 ```
 
-### Consideraciones de Produccion
+### Consideraciones de Producción
 
 | Aspecto | Recomendacion |
 |---------|---------------|
