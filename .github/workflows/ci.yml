@@ -55,7 +55,7 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-       - name: Download build artifacts
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-output
