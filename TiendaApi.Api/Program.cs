@@ -1,15 +1,19 @@
 using Serilog;
+using Serilog.Extensions.Logging;
 using TiendaApi.Api;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Data.Seed.Mongo;
 using TiendaApi.Api.Infrastructures;
 using TiendaApi.Api.Middleware;
 
-// Configuración de Serilog
+// Configuración de Serilog (antes del builder)
 Log.Logger = SerilogConfig.Configure().CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Host.UseSerilog();
+
+// Serilog como provider principal de logging (unifica ASP.NET Core + Serilog)
+builder.Logging.AddSerilog(Log.Logger);
+builder.Host.UseSerilog(Log.Logger);
 
 Log.Information("🚀 Inicializando TiendaApi...");
 
