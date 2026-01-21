@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-output
-          path: TiendaApi.Apis/bin/Release/net10.0/
+          path: TiendaApi.Api/bin/Release/net10.0/
           retention-days: 1
 
   test:
@@ -55,11 +55,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Download build artifacts
+       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-output
-          path: TiendaApi.Apis/bin/Release/net10.0/
+          path: TiendaApi.Api/bin/Release/net10.0/
 
       - name: Run unit tests (parallel)
         run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "FullyQualifiedName~Unit" --verbosity minimal
@@ -100,7 +100,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-output
-          path: TiendaApi.Apis/bin/Release/net10.0/
+          path: TiendaApi.Api/bin/Release/net10.0/
 
       - name: Run integration tests (sequential, non-parallel)
         run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "FullyQualifiedName~Integration" --verbosity minimal
