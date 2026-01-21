@@ -13,12 +13,7 @@ using TiendaApi.Apis.Validators.Categorias;
 namespace TiendaApi.Apis.Services.Categorias;
 
 /// <summary>
-/// Servicio de categorías usando Patrón Result.
-/// Maneja la lógica de negocio: validaciones, verificación de duplicados.
-/// Las operaciones de caché se ejecutan en Task.Run (fire & forget)
-/// para no bloquear el hilo principal. Esto es especialmente importante si:
-/// - La caché está en Redis (latencia de red)
-/// Si la operación de caché falla, se registra un warning pero no afecta a la respuesta.
+/// Implementación del servicio de categorías.
 /// </summary>
 public class CategoriaService(
     ICategoriaRepository repository,
@@ -31,10 +26,7 @@ public class CategoriaService(
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
         int.Parse(configuration["Cache:CategoriaCacheTTLMinutes"] ?? "10"));
 
-    /// <summary>
-    /// Obtiene todas las categorías.
-    /// Devuelve: Result.Success(List) | Result.Failure nunca
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync()
     {
         logger.LogInformation("Buscando todas las categorías");
@@ -55,10 +47,7 @@ public class CategoriaService(
             .Tap(_ => AñadirCacheCategoria(cacheKey, dtos));
     }
 
-    /// <summary>
-    /// Obtiene categorías paginadas con filtros.
-    /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<Result<PagedResult<CategoriaDto>, DomainError>> FindAllPagedAsync(CategoriaFilterDto filter)
     {
         logger.LogInformation("Obteniendo categorías paginadas - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
@@ -77,43 +66,28 @@ public class CategoriaService(
         return Result.Success<PagedResult<CategoriaDto>, DomainError>(pagedResult);
     }
 
-    /// <summary>
-    /// Obtiene una categoría por su ID.
-    /// Devuelve: Result.Success(CategoriaDto) | Result.Failure(NotFound)
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<Result<CategoriaDto, DomainError>> FindByIdAsync(long id)
     {
-        logger.LogInformation("Buscando categoría con id: {Id}", id);
+        logger.LogInformation("Buscando categoría: {Id}", id);
 
         var cacheKey = $"categorias:{id}";
         var cachedCategoria = await cacheService.GetAsync<CategoriaDto>(cacheKey);
 
         if (cachedCategoria is not null)
-        {
-            logger.LogInformation("Devolviendo categoría desde caché: {Id}", id);
             return Result.Success<CategoriaDto, DomainError>(cachedCategoria);
-        }
 
         var categoria = await repository.FindByIdAsync(id);
 
         if (categoria is null)
-        {
-            logger.LogWarning("Categoría con id {Id} no encontrada", id);
-            return Result.Failure<CategoriaDto, DomainError>(
-                CategoriaError.NotFound(id)
-            );
-        }
+            return Result.Failure<CategoriaDto, DomainError>(CategoriaError.NotFound(id));
 
         var dto = categoria.ToDto();
-
         return Result.Success<CategoriaDto, DomainError>(dto)
             .Tap(_ => AñadirCacheCategoria(cacheKey, dto));
     }
 
-    /// <summary>
-    /// Crea una nueva categoría.
-    /// Devuelve: Result.Success(CategoriaDto) | Result.Failure(Validation/Conflict)
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto)
     {
         logger.LogInformation("Creando categoría: {Nombre}", dto.Nombre);
@@ -132,18 +106,15 @@ public class CategoriaService(
         return Result.Success<CategoriaDto, DomainError>(result)
             .Tap(_ =>
             {
-                logger.LogInformation("Categoría creada con id: {Id}", saved.Id);
+                logger.LogInformation("Categoría creada: {Id}", saved.Id);
                 InvalidarCacheCategoria("categorias:all", $"categorias:{result.Id}");
             });
     }
 
-    /// <summary>
-    /// Actualiza una categoría existente.
-    /// Devuelve: Result.Success(CategoriaDto) | Result.Failure(NotFound/Validation/Conflict)
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto)
     {
-        logger.LogInformation("Actualizando categoría con id: {Id}", id);
+        logger.LogInformation("Actualizando categoría: {Id}", id);
 
         var validationResult = await ValidateCategoriaAsync(dto);
         if (validationResult.IsFailure)
@@ -164,78 +135,49 @@ public class CategoriaService(
         return Result.Success<CategoriaDto, DomainError>(result)
             .Tap(_ =>
             {
-                logger.LogInformation("Categoría actualizada con id: {Id}", id);
+                logger.LogInformation("Categoría actualizada: {Id}", id);
                 InvalidarCacheCategoria("categorias:all", $"categorias:{id}");
             });
     }
 
-    /// <summary>
-    /// Elimina una categoría.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(NotFound)
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
-        logger.LogInformation("Eliminando categoría con id: {Id}", id);
+        logger.LogInformation("Eliminando categoría: {Id}", id);
 
         var categoria = await repository.FindByIdAsync(id);
         if (categoria is null)
             return UnitResult.Failure<DomainError>(CategoriaError.NotFound(id));
 
         await repository.DeleteAsync(id);
-        logger.LogInformation("Categoría eliminada con id: {Id}", id);
+        logger.LogInformation("Categoría eliminada: {Id}", id);
 
         InvalidarCacheCategoria("categorias:all", $"categorias:{id}");
 
         return UnitResult.Success<DomainError>();
     }
 
-    // ========== MÉTODOS PRIVADOS - CACHE ==========
-
-    /// <summary>
-    /// Añade un elemento a la caché de forma asíncrona (fire & forget).
-    /// </summary>
     private void AñadirCacheCategoria<T>(string key, T value)
     {
         _ = Task.Run(async () =>
         {
-            try
-            {
-                await cacheService.SetAsync(key, value, _cacheTTL);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error adding to cache: Key={Key}", key);
-            }
+            try { await cacheService.SetAsync(key, value, _cacheTTL); }
+            catch (Exception ex) { logger.LogWarning(ex, "Error adding to cache: Key={Key}", key); }
         });
     }
 
-    /// <summary>
-    /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
-    /// </summary>
     private void InvalidarCacheCategoria(params string[] keys)
     {
         _ = Task.Run(async () =>
         {
             foreach (var key in keys)
             {
-                try
-                {
-                    await cacheService.RemoveAsync(key);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
-                }
+                try { await cacheService.RemoveAsync(key); }
+                catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
             }
         });
     }
 
-    // ========== VALIDACIÓN ==========
-
-    /// <summary>
-    /// Valida la categoría usando FluentValidation.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
-    /// </summary>
     private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto)
     {
         var validationResult = await categoriaValidator.ValidateAsync(dto);
@@ -244,33 +186,20 @@ public class CategoriaService(
         {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(e => e.ErrorMessage).ToArray()
-                );
+                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
 
-            return UnitResult.Failure<DomainError>(
-                CategoriaError.ValidacionConCampos(errors)
-            );
+            return UnitResult.Failure<DomainError>(CategoriaError.ValidacionConCampos(errors));
         }
 
         return UnitResult.Success<DomainError>();
     }
 
-    /// <summary>
-    /// Verifica si el nombre ya existe en otra categoría.
-    /// Devuelve: Result.Success(true) | Result.Failure(Conflict)
-    /// </summary>
     private async Task<Result<bool, DomainError>> CheckNombreDuplicado(string nombre, long? excludeId = null)
     {
         var exists = await repository.ExistsByNombreAsync(nombre, excludeId);
 
         if (exists)
-        {
-            return Result.Failure<bool, DomainError>(
-                CategoriaError.NombreDuplicado(nombre)
-            );
-        }
+            return Result.Failure<bool, DomainError>(CategoriaError.NombreDuplicado(nombre));
 
         return Result.Success<bool, DomainError>(true);
     }
