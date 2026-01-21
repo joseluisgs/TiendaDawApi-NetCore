@@ -11,7 +11,8 @@
   - [23.6. Docker Compose](#236-docker-compose)
   - [23.7. GitHub Actions Workflow Completo](#237-github-actions-workflow-completo)
   - [23.8. Modos de Uso](#238-modos-de-uso)
-  - [23.9. Resumen y Buenas Prácticas](#239-resumen-y-buenas-prácticas)
+  - [23.9. Comandos de Test](#239-comandos-de-test)
+  - [23.10. Resumen y Buenas Prácticas](#2310-resumen-y-buenas-prácticas)
 
 ---
 
@@ -739,6 +740,36 @@ docker-compose -f docker-compose.prod.yml up -d --build
 - Health checks
 - Variables de entorno seguras
 
+### Comandos de Test
+
+Este proyecto distingue entre tests unitarios y de integración:
+
+| Escenario | Comando | Docker |
+| --------- | ------- | ------ |
+| **Solo unitarios** (rápido, sin dependencias) | `dotnet test --filter "FullyQualifiedName~Unit"` | ❌ |
+| **Solo integración** (requiere servicios) | `dotnet test --filter "FullyQualifiedName~Integration"` | ✅ |
+| **Todos sin Docker** | `SKIP_INTEGRATION_TESTS=true dotnet test` | ❌ |
+| **Todos con Docker** (completo) | `dotnet test` | ✅ |
+
+#### Características de los Tests
+
+| Tipo | Paralelismo | Tiempo | Cobertura |
+|------|-------------|--------|-----------|
+| **Unitarios** | ✅ Paralelos | ~7s | 71.52% |
+| **Integración** | ❌ Secuenciales | ~81s | 40.57% |
+
+#### Configuración de Paralelismo
+
+```csharp
+// Tests de integración tienen [NonParallelizable]
+// porque comparten recursos (Testcontainers)
+[NonParallelizable]
+public class ProductoServiceIntegrationTests { }
+
+// Tests unitarios son paralelos por defecto en NUnit
+public class ProductoValidatorTests { }
+```
+
 ### Cambiar entre Modos
 
 ```bash
@@ -754,7 +785,7 @@ export ASPNETCORE_ENVIRONMENT=Production
 
 ---
 
-## 23.9. Resumen y Buenas Prácticas
+## 23.10. Resumen y Buenas Prácticas
 
 ### Flujo Completo de CI/CD
 
