@@ -162,7 +162,7 @@ open http://localhost:5000
 # Acceso a Swagger UI (Desarrollo - HTTP)
 open http://localhost:5000/swagger
 
-> **Nota:** En producción, la API usa HTTPS obligatorio con HSTS. Ver [Seguridad HTTP](doc/27-seguridad-http.md) para más detalles.
+> **Nota:** En producción, la API usa HTTPS obligatorio con HSTS.
 ```
 
 ### Desarrollo en Producción con Docker
@@ -393,6 +393,7 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | 24  | [Logging](doc/24-logging.md)                 | Serilog, trazabilidad   |
 | 25  | [Background Jobs](doc/25-background-jobs.md) | Tareas programadas      |
 | 26  | [Optimización](doc/26-optimizacion.md)       | Rendimiento             |
+| 27  | [Seguridad HTTP](doc/27-seguridad-http.md)   | HSTS, HTTPS, Headers    |
 
 ### Arquitectura
 | #   | Documento                                                 | Descripción                       |
