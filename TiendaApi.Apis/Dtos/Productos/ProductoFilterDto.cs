@@ -1,4 +1,4 @@
-namespace TiendaApi.Apis.Dtos.Common;
+namespace TiendaApi.Apis.Dtos.Productos;
 
 /// <summary>
 /// DTO de filtros para búsqueda y paginación de productos.

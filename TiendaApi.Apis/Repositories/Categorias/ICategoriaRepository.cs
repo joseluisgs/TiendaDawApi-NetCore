@@ -1,4 +1,4 @@
-using TiendaApi.Apis.Dtos.Common;
+using TiendaApi.Apis.Dtos.Categorias;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Categorias;

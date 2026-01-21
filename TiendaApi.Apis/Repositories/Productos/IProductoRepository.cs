@@ -1,5 +1,5 @@
 using System.Data;
-using TiendaApi.Apis.Dtos.Common;
+using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Models;
 
 namespace TiendaApi.Apis.Repositories.Productos;

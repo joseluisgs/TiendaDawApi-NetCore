@@ -1,4 +1,4 @@
-namespace TiendaApi.Apis.Dtos.Common;
+namespace TiendaApi.Apis.Dtos.Usuarios;
 
 /// <summary>
 /// DTO para filtrar y paginar usuarios.
