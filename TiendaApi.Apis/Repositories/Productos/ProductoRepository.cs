@@ -1,6 +1,7 @@
 using System.Data;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using TiendaApi.Apis.Data;
 using TiendaApi.Apis.Dtos.Productos;
 using TiendaApi.Apis.Models;
@@ -8,45 +9,34 @@ using TiendaApi.Apis.Models;
 namespace TiendaApi.Apis.Repositories.Productos;
 
 /// <summary>
-/// Implementación del repositorio de productos usando Entity Framework Core.
+/// Implementación del repositorio de productos.
 /// </summary>
 public class ProductoRepository(
     TiendaDbContext context,
     ILogger<ProductoRepository> logger
 ) : IProductoRepository
 {
-
-    /// <summary>
-    /// Obtiene todos los productos ordenados por nombre.
-    /// </summary>
-    /// <returns>Colección de productos con su categoría incluida.</returns>
+    /// <inheritdoc/>
     public async Task<IEnumerable<Producto>> FindAllAsync()
     {
         logger.LogDebug("Buscando todos los productos");
-
         return await context.Productos
             .Include(p => p.Categoria)
             .OrderBy(p => p.Nombre)
             .ToListAsync();
     }
 
-    /// <summary>
-    /// Obtiene todos los productos como IQueryable para uso con HotChocolate.
-    /// </summary>
-    /// <returns>IQueryable de productos.</returns>
+    /// <inheritdoc/>
     public IQueryable<Producto> FindAllAsNoTracking()
     {
-        logger.LogDebug("Obteniendo productos como IQueryable para HotChocolate");
-
+        logger.LogDebug("Obteniendo productos como IQueryable");
         return context.Productos
             .Include(p => p.Categoria)
             .OrderBy(p => p.Nombre)
             .AsNoTracking();
     }
 
-    /// <summary>
-    /// Obtiene productos paginados con filtros opcionales.
-    /// </summary>
+    /// <inheritdoc/>
     public async Task<(IEnumerable<Producto> Items, int TotalCount)> FindAllPagedAsync(ProductoFilterDto filter)
     {
         logger.LogDebug("Buscando productos paginados con filtros");
@@ -71,7 +61,6 @@ public class ProductoRepository(
             query = query.Where(p => p.Stock >= filter.StockMin.Value);
 
         var totalCount = await query.CountAsync();
-
         query = ApplySorting(query, filter.SortBy, filter.Direction);
 
         var items = await query
@@ -82,29 +71,7 @@ public class ProductoRepository(
         return (items, totalCount);
     }
 
-    private static IQueryable<Producto> ApplySorting(IQueryable<Producto> query, string sortBy, string direction)
-    {
-        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
-
-        Expression<Func<Producto, object>> keySelector = sortBy.ToLower() switch
-        {
-            "nombre" => p => p.Nombre,
-            "precio" => p => p.Precio,
-            "stock" => p => p.Stock,
-            "createdat" => p => p.CreatedAt,
-            "updatedat" => p => p.UpdatedAt,
-            "categoria" => p => p.Categoria.Nombre,
-            _ => p => p.Id
-        };
-
-        return isDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-    }
-
-    /// <summary>
-    /// Obtiene un producto por su identificador.
-    /// </summary>
-    /// <param name="id">Identificador del producto.</param>
-    /// <returns>El producto encontrado con su categoría o null.</returns>
+    /// <inheritdoc/>
     public async Task<Producto?> FindByIdAsync(long id)
     {
         return await context.Productos
@@ -112,15 +79,10 @@ public class ProductoRepository(
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    /// <summary>
-    /// Obtiene productos por identificador de categoría.
-    /// </summary>
-    /// <param name="categoriaId">Identificador de la categoría.</param>
-    /// <returns>Colección de productos de la categoría ordenada por nombre.</returns>
+    /// <inheritdoc/>
     public async Task<IEnumerable<Producto>> FindByCategoriaIdAsync(long categoriaId)
     {
         logger.LogDebug("Buscando productos para categoría: {CategoriaId}", categoriaId);
-
         return await context.Productos
             .Include(p => p.Categoria)
             .Where(p => p.CategoriaId == categoriaId)
@@ -128,49 +90,27 @@ public class ProductoRepository(
             .ToListAsync();
     }
 
-    /// <summary>
-    /// Guarda un nuevo producto.
-    /// </summary>
-    /// <param name="producto">Producto a guardar.</param>
-    /// <returns>El producto guardado con fecha de creación y categoría cargada.</returns>
+    /// <inheritdoc/>
     public async Task<Producto> SaveAsync(Producto producto)
     {
         context.Productos.Add(producto);
         await context.SaveChangesAsync();
-
-        await context.Entry(producto)
-            .Reference(p => p.Categoria)
-            .LoadAsync();
-
+        await context.Entry(producto).Reference(p => p.Categoria).LoadAsync();
         logger.LogInformation("Producto guardado con ID: {Id}", producto.Id);
-
         return producto;
     }
 
-    /// <summary>
-    /// Actualiza un producto existente.
-    /// </summary>
-    /// <param name="producto">Producto con datos actualizados.</param>
-    /// <returns>El producto actualizado con categoría cargada.</returns>
+    /// <inheritdoc/>
     public async Task<Producto> UpdateAsync(Producto producto)
     {
         context.Productos.Update(producto);
         await context.SaveChangesAsync();
-
-        await context.Entry(producto)
-            .Reference(p => p.Categoria)
-            .LoadAsync();
-
+        await context.Entry(producto).Reference(p => p.Categoria).LoadAsync();
         logger.LogInformation("Producto actualizado con ID: {Id}", producto.Id);
-
         return producto;
     }
 
-    /// <summary>
-    /// Elimina un producto por su identificador (eliminación suave).
-    /// </summary>
-    /// <param name="id">Identificador del producto a eliminar.</param>
-    /// <returns>Tarea asíncrona.</returns>
+    /// <inheritdoc/>
     public async Task DeleteAsync(long id)
     {
         var producto = await FindByIdAsync(id);
@@ -178,45 +118,31 @@ public class ProductoRepository(
         {
             producto.IsDeleted = true;
             await context.SaveChangesAsync();
-
             logger.LogInformation("Producto eliminado lógicamente con ID: {Id}", id);
         }
     }
 
-    /// <summary>
-    /// Verifica si existe un producto con el identificador especificado.
-    /// </summary>
-    /// <param name="id">Identificador del producto.</param>
-    /// <returns>True si existe, False en caso contrario.</returns>
+    /// <inheritdoc/>
     public async Task<bool> ExistsAsync(long id)
     {
         return await context.Productos.AnyAsync(p => p.Id == id);
     }
 
-    /// <summary>
-    /// Decrementa el stock de un producto atómicamente usando control de concurrencia optimista.
-    /// Genera DbUpdateConcurrencyException si el RowVersion no coincide.
-    /// </summary>
-    /// <param name="productoId">Identificador del producto.</param>
-    /// <param name="cantidad">Cantidad a decrementar del stock.</param>
-    /// <param name="expectedRowVersion">Versión esperada del registro (para control de concurrencia).</param>
-    /// <returns>True si el stock fue decrementado, False si el producto no existe o no hay suficiente stock.</returns>
+    /// <inheritdoc/>
     public async Task<bool> DecrementStockAsync(long productoId, int cantidad, byte[] expectedRowVersion)
     {
-        logger.LogDebug("Intentando decrementar stock para producto: {ProductoId}, cantidad: {Cantidad}", productoId, cantidad);
-
+        logger.LogDebug("Decrementando stock para producto: {ProductoId}, cantidad: {Cantidad}", productoId, cantidad);
         var producto = await context.Productos.FindAsync(productoId);
 
         if (producto is null)
         {
-            logger.LogWarning("Producto no encontrado para decrementar stock: {ProductoId}", productoId);
+            logger.LogWarning("Producto no encontrado: {ProductoId}", productoId);
             return false;
         }
 
         if (producto.Stock < cantidad)
         {
-            logger.LogWarning("Stock insuficiente para producto: {ProductoId}. Stock actual: {Stock}, cantidad solicitada: {Cantidad}",
-                productoId, producto.Stock, cantidad);
+            logger.LogWarning("Stock insuficiente. Actual: {Stock}, Solicitado: {Cantidad}", producto.Stock, cantidad);
             return false;
         }
 
@@ -225,42 +151,47 @@ public class ProductoRepository(
         try
         {
             await context.SaveChangesAsync();
-            logger.LogInformation("Stock decrementado exitosamente para producto: {ProductoId}, nuevo stock: {Stock}", productoId, producto.Stock);
+            logger.LogInformation("Stock decrementado. Nuevo stock: {Stock}", producto.Stock);
             return true;
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            logger.LogWarning(ex, "Conflicto de concurrencia al decrementar stock para producto: {ProductoId}", productoId);
+            logger.LogWarning(ex, "Conflicto de concurrencia al decrementar stock: {ProductoId}", productoId);
             throw;
         }
     }
 
-    /// <summary>
-    /// Inicia una transacción con el nivel de aislamiento especificado.
-    /// Usado para el enfoque híbrido Serializable + Retry.
-    /// </summary>
-    /// <param name="isolationLevel">Nivel de aislamiento de la transacción.</param>
-    /// <returns>La transacción iniciada.</returns>
-    public async Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel)
+    /// <inheritdoc/>
+    public async Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel)
     {
         var transaction = await context.Database.BeginTransactionAsync(isolationLevel);
-        logger.LogDebug("Transacción iniciada con nivel de aislamiento: {IsolationLevel}", isolationLevel);
+        logger.LogDebug("Transacción iniciada con nivel: {IsolationLevel}", isolationLevel);
         return transaction;
     }
 
-    /// <summary>
-    /// Obtiene productos creados en los últimos X días para reportes.
-    /// </summary>
-    /// <param name="days">Número de días hacia atrás.</param>
-    /// <returns>Productos no eliminados ordenados por CreatedAt descendente.</returns>
+    /// <inheritdoc/>
     public async Task<IEnumerable<Producto>> GetRecentlyCreatedAsync(int days)
     {
         var since = DateTime.UtcNow.AddDays(-days);
-        logger.LogDebug("Buscando productos creados desde: {Since}", since);
-
+        logger.LogDebug("Buscando productos desde: {Since}", since);
         return await context.Productos
             .Where(p => p.CreatedAt >= since && !p.IsDeleted)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
+    }
+
+    private static IQueryable<Producto> ApplySorting(IQueryable<Producto> query, string sortBy, string direction)
+    {
+        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
+        Expression<Func<Producto, object>> keySelector = sortBy.ToLower() switch
+        {
+            "nombre" => p => p.Nombre,
+            "precio" => p => p.Precio,
+            "stock" => p => p.Stock,
+            "createdat" => p => p.CreatedAt,
+            "categoria" => p => p.Categoria.Nombre,
+            _ => p => p.Id
+        };
+        return isDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 }
