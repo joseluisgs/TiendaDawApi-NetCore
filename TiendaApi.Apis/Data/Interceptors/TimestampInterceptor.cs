@@ -7,35 +7,34 @@ using TiendaApi.Apis.Data.Abstractions;
 namespace TiendaApi.Apis.Data.Interceptors;
 
 /// <summary>
-/// Interceptor de EF Core para автоматически asignar timestamps CreatedAt y UpdatedAt.
-/// Implementa IEntityTypeConfiguration para entidades que implementan ITimestamped.
+/// Interceptor de EF Core que asigna CreatedAt y UpdatedAt automáticamente.
 /// </summary>
 public class TimestampInterceptor : SaveChangesInterceptor
 {
+    /// <summary>
+    /// Asigna timestamps antes de guardar cambios (sync).
+    /// </summary>
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
         if (eventData.Context == null)
-        {
             return base.SavingChanges(eventData, result);
-        }
 
         UpdateTimestamps(eventData.Context);
-
         return base.SavingChanges(eventData, result);
     }
 
+    /// <summary>
+    /// Asigna timestamps antes de guardar cambios (async).
+    /// </summary>
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
         if (eventData.Context == null)
-        {
             return base.SavingChangesAsync(eventData, result, cancellationToken);
-        }
 
         UpdateTimestamps(eventData.Context);
-
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
@@ -51,7 +50,6 @@ public class TimestampInterceptor : SaveChangesInterceptor
                     entry.Property(e => e.CreatedAt).CurrentValue = now;
                     entry.Property(e => e.UpdatedAt).CurrentValue = now;
                     break;
-
                 case EntityState.Modified:
                     entry.Property(e => e.UpdatedAt).CurrentValue = now;
                     break;
@@ -61,12 +59,12 @@ public class TimestampInterceptor : SaveChangesInterceptor
 }
 
 /// <summary>
-/// Extensiones para registrar TimestampInterceptor en DbContext.
+/// Extensiones para configurar timestamps en entidades.
 /// </summary>
 public static class TimestampExtensions
 {
     /// <summary>
-    /// Configura las propiedades CreatedAt y UpdatedAt como GeneratedOnAdd/Update.
+    /// Configura CreatedAt y UpdatedAt como GeneratedOnAdd/Update.
     /// </summary>
     public static void ConfigureTimestamps(this EntityTypeBuilder entity)
     {
@@ -77,7 +75,6 @@ public static class TimestampExtensions
 
         entity.Property("UpdatedAt")
             .IsRequired()
-            .ValueGeneratedOnUpdate()
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            .ValueGeneratedOnUpdate();
     }
 }

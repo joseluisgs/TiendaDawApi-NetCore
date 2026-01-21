@@ -9,6 +9,10 @@ using TiendaApi.Apis.Helpers.Pagination;
 
 namespace TiendaApi.Apis.Controllers;
 
+/// <summary>
+/// Controlador de API para gestión de productos.
+/// Endpoints: CRUD paginado, filtrado, búsqueda por categoría.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
@@ -17,6 +21,19 @@ public class ProductosController(
     ILogger<ProductosController> logger
 ) : ControllerBase
 {
+    /// <summary>
+    /// Obtiene todos los productos paginados con filtros opcionales.
+    /// </summary>
+    /// <param name="nombre">Filtrar por nombre (contiene).</param>
+    /// <param name="categoria">Filtrar por nombre de categoría.</param>
+    /// <param name="isDeleted">Filtrar por estado de eliminación.</param>
+    /// <param name="precioMax">Filtrar por precio máximo.</param>
+    /// <param name="stockMin">Filtrar por stock mínimo.</param>
+    /// <param name="page">Número de página (0-indexed).</param>
+    /// <param name="size">Elementos por página.</param>
+    /// <param name="sortBy">Campo de ordenación (id, nombre, precio, stock).</param>
+    /// <param name="direction">Dirección (asc, desc).</param>
+    /// <returns>200 OK con lista paginada de productos.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<ProductoDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
@@ -49,6 +66,11 @@ public class ProductosController(
         );
     }
 
+    /// <summary>
+    /// Obtiene un producto por su ID.
+    /// </summary>
+    /// <param name="id">ID del producto.</param>
+    /// <returns>200 OK con el producto, o 404 si no existe.</returns>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -69,6 +91,11 @@ public class ProductosController(
         );
     }
 
+    /// <summary>
+    /// Obtiene todos los productos de una categoría.
+    /// </summary>
+    /// <param name="categoriaId">ID de la categoría.</param>
+    /// <returns>200 OK con lista de productos, o 404 si la categoría no existe.</returns>
     [HttpGet("categoria/{categoriaId}")]
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -89,6 +116,11 @@ public class ProductosController(
         );
     }
 
+    /// <summary>
+    /// Crea un nuevo producto en el sistema.
+    /// </summary>
+    /// <param name="dto">Datos del producto a crear.</param>
+    /// <returns>201 Created con el producto creado, o 400/404/409 si hay errores.</returns>
     [HttpPost]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -114,6 +146,12 @@ public class ProductosController(
         );
     }
 
+    /// <summary>
+    /// Actualiza un producto existente completamente.
+    /// </summary>
+    /// <param name="id">ID del producto a actualizar.</param>
+    /// <param name="dto">Nuevos datos del producto.</param>
+    /// <returns>200 OK con el producto actualizado, o 400/404 si hay errores.</returns>
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -138,6 +176,11 @@ public class ProductosController(
         );
     }
 
+    /// <summary>
+    /// Elimina un producto (soft-delete).
+    /// </summary>
+    /// <param name="id">ID del producto a eliminar.</param>
+    /// <returns>204 No Content si tiene éxito, o 404 si no existe.</returns>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -161,6 +204,12 @@ public class ProductosController(
         };
     }
 
+    /// <summary>
+    /// Actualiza la imagen de un producto.
+    /// </summary>
+    /// <param name="id">ID del producto.</param>
+    /// <param name="image">Archivo de imagen (JPG, PNG, GIF, WEBP, max 10MB).</param>
+    /// <returns>200 OK con el producto actualizado, o 400/404 si hay errores.</returns>
     [HttpPatch("{id}/imagen")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -197,6 +246,12 @@ public class ProductosController(
         );
     }
 
+    /// <summary>
+    /// Actualiza parcialmente un producto (campos específicos).
+    /// </summary>
+    /// <param name="id">ID del producto.</param>
+    /// <param name="dto">Campos a actualizar.</param>
+    /// <returns>200 OK con el producto actualizado, o 400/404 si hay errores.</returns>
     [HttpPatch("{id}")]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

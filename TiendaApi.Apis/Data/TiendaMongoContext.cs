@@ -10,10 +10,14 @@ namespace TiendaApi.Apis.Data;
 /// </summary>
 public class TiendaMongoContext : DbContext
 {
+    /// <summary>
+    /// Constructor con opciones de configuración.
+    /// </summary>
     public TiendaMongoContext(DbContextOptions<TiendaMongoContext> options) : base(options)
     {
     }
 
+    /// <summary>DbSet de Pedidos.</summary>
     public DbSet<Pedido> Pedidos { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

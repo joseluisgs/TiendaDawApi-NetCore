@@ -13,6 +13,10 @@ using TiendaApi.Apis.Helpers.Pagination;
 
 namespace TiendaApi.Apis.Controllers;
 
+/// <summary>
+/// Controlador de API para gestión de usuarios.
+/// Endpoints: CRUD paginado, solo accesibles por administradores.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
@@ -21,6 +25,17 @@ public class UsersController(
     ILogger<UsersController> logger
 ) : ControllerBase
 {
+    /// <summary>
+    /// Obtiene todos los usuarios paginados con filtros opcionales.
+    /// </summary>
+    /// <param name="username">Filtrar por nombre de usuario (contiene).</param>
+    /// <param name="email">Filtrar por email (contiene).</param>
+    /// <param name="isDeleted">Filtrar por estado de eliminación.</param>
+    /// <param name="page">Número de página (0-indexed).</param>
+    /// <param name="size">Elementos por página.</param>
+    /// <param name="sortBy">Campo de ordenación.</param>
+    /// <param name="direction">Dirección (asc, desc).</param>
+    /// <returns>200 OK con lista paginada de usuarios.</returns>
     [HttpGet]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(PagedResult<UserDto>), StatusCodes.Status200OK)]
@@ -61,6 +76,11 @@ public class UsersController(
         );
     }
 
+    /// <summary>
+    /// Obtiene un usuario por su ID.
+    /// </summary>
+    /// <param name="id">ID del usuario.</param>
+    /// <returns>200 OK con el usuario, o 404 si no existe.</returns>
     [HttpGet("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -83,6 +103,11 @@ public class UsersController(
         );
     }
 
+    /// <summary>
+    /// Crea un nuevo usuario en el sistema.
+    /// </summary>
+    /// <param name="dto">Datos del usuario a crear.</param>
+    /// <returns>201 Created con el usuario creado, o 400/409 si hay errores.</returns>
     [HttpPost]
     [Authorize(Roles = "ADMIN")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
@@ -107,6 +132,12 @@ public class UsersController(
         );
     }
 
+    /// <summary>
+    /// Actualiza un usuario existente.
+    /// </summary>
+    /// <param name="id">ID del usuario.</param>
+    /// <param name="dto">Nuevos datos del usuario.</param>
+    /// <returns>200 OK con el usuario actualizado, o 400/404/409 si hay errores.</returns>
     [HttpPut("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -133,6 +164,12 @@ public class UsersController(
         );
     }
 
+    /// <summary>
+    /// Actualiza el avatar de un usuario.
+    /// </summary>
+    /// <param name="id">ID del usuario.</param>
+    /// <param name="dto">URL del nuevo avatar.</param>
+    /// <returns>200 OK con el usuario actualizado, o 400/404 si hay errores.</returns>
     [HttpPatch("{id}/avatar")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -163,6 +200,11 @@ public class UsersController(
         );
     }
 
+    /// <summary>
+    /// Elimina un usuario (soft-delete).
+    /// </summary>
+    /// <param name="id">ID del usuario a eliminar.</param>
+    /// <returns>204 No Content si tiene éxito, o 404 si no existe.</returns>
     [HttpDelete("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -186,6 +228,10 @@ public class UsersController(
         };
     }
 
+    /// <summary>
+    /// Obtiene el perfil del usuario autenticado.
+    /// </summary>
+    /// <returns>200 OK con los datos del usuario.</returns>
     [HttpGet("me/profile")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -209,6 +255,11 @@ public class UsersController(
         );
     }
 
+    /// <summary>
+    /// Actualiza el perfil del usuario autenticado.
+    /// </summary>
+    /// <param name="dto">Nuevos datos del perfil.</param>
+    /// <returns>200 OK con el usuario actualizado, o 400/404 si hay errores.</returns>
     [HttpPut("me/profile")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -238,6 +289,10 @@ public class UsersController(
         );
     }
 
+    /// <summary>
+    /// Elimina la cuenta del usuario autenticado (soft-delete).
+    /// </summary>
+    /// <returns>204 No Content si tiene éxito.</returns>
     [HttpDelete("me/profile")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

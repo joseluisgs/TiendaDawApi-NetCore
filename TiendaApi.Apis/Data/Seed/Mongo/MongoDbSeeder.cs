@@ -6,16 +6,15 @@ using TiendaApi.Apis.Models;
 namespace TiendaApi.Apis.Data.Seed.Mongo;
 
 /// <summary>
-/// Seeder para datos iniciales de MongoDB (pedidos).
+/// Seeder para datos iniciales de MongoDB.
+/// Crea pedidos de ejemplo.
 /// </summary>
 public class MongoDbSeeder
 {
     private readonly IMongoCollection<Pedido> _pedidosCollection;
     private readonly ILogger<MongoDbSeeder> _logger;
 
-    public MongoDbSeeder(
-        IMongoCollection<Pedido> pedidosCollection,
-        ILogger<MongoDbSeeder> logger)
+    public MongoDbSeeder(IMongoCollection<Pedido> pedidosCollection, ILogger<MongoDbSeeder> logger)
     {
         _pedidosCollection = pedidosCollection;
         _logger = logger;

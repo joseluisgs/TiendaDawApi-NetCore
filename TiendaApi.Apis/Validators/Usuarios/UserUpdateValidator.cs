@@ -5,9 +5,13 @@ namespace TiendaApi.Apis.Validators.Usuarios;
 
 /// <summary>
 /// Validador FluentValidation para UserUpdateDto.
+/// Reglas opcionales: Email válido, Password(6-100).
 /// </summary>
 public class UserUpdateValidator : AbstractValidator<UserUpdateDto>
 {
+    /// <summary>
+    /// Define reglas de validación para UserUpdateDto.
+    /// </summary>
     public UserUpdateValidator()
     {
         RuleFor(u => u.Email)

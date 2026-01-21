@@ -107,83 +107,52 @@ Las excepciones son aproximadamente 100 veces más lentas que devolver un Result
 
 ### Flujo completo de una operación con Result Pattern
 
-Este diagrama muestra el flujo completo de una operación de creación de producto, pasando por validaciones, verificación de base de datos, y finalmente devolviendo el resultado al controlador.
-
 ```mermaid
 sequenceDiagram
+    participant Client as Cliente
     participant Ctrl as Controller
     participant Svc as ProductoService
     participant Repo as IProductoRepository
     participant Cache as ICacheService
     participant DB as PostgreSQL
 
-    Note over Ctrl: POST /api/productos
-    Note over Ctrl: {nombre: "", precio: -5}
-
+    Note over Client,DB: ESCENARIO 1: Datos inválidos
+    Client->>Ctrl: POST /api/productos {nombre: "", precio: -5}
     Ctrl->>Svc: CreateAsync(dto)
-    
-    rect rgb(255, 200, 200)
-    Note over Svc: Validacion 1: nombre vacio
-    Svc-->>Ctrl: Result.Failure(DomainError.Validation)
+    Svc-->>Ctrl: Result.Failure(ValidationError)
     Ctrl-->>Client: 400 Bad Request
-    end
 
-    Note over Ctrl: POST /api/productos
-    Note over Ctrl: {nombre: "Laptop", precio: -5}
-
+    Note over Client,DB: ESCENARIO 2: Recurso no encontrado
+    Client->>Ctrl: POST /api/productos {nombre: "Laptop", categoriaId: 999}
     Ctrl->>Svc: CreateAsync(dto)
-    
-    rect rgb(255, 200, 200)
-    Note over Svc: Validacion 2: precio negativo
-    Svc-->>Ctrl: Result.Failure(DomainError.Validation)
-    Ctrl-->>Client: 400 Bad Request
-    end
+    Svc->>Repo: FindByIdAsync(999)
+    Repo->>DB: SELECT * FROM categorias WHERE id = 999
+    DB-->>Repo: null
+    Repo-->>Svc: null
+    Svc-->>Ctrl: Result.Failure(NotFoundError)
+    Ctrl-->>Client: 404 Not Found
 
-    Note over Ctrl: POST /api/productos
-    Note over Ctrl: {nombre: "Laptop", precio: 999}
-
+    Note over Client,DB: ESCENARIO 3: Conflicto
+    Client->>Ctrl: POST /api/productos {nombre: "Laptop", precio: 999}
     Ctrl->>Svc: CreateAsync(dto)
-    
-    rect rgb(255, 255, 200)
-    Note over Svc: Validacion: OK
-    Note over Svc: Verificar categoria existe
-    Svc->>Repo: FindByIdAsync(categoriaId)
-    Repo->>DB: SELECT * FROM categorias WHERE id = ?
-    DB-->>Repo: Categoria encontrada
-    Repo-->>Svc: Result.Success(categoria)
-    end
-
-    rect rgb(255, 200, 200)
-    Note over Svc: Verificar: nombre unico
     Svc->>Repo: ExistsByNombreAsync("Laptop")
-    Repo->>DB: SELECT EXISTS(SELECT * FROM ...)
-    DB-->>Repo: true (ya existe)
+    Repo->>DB: SELECT EXISTS(...)
+    DB-->>Repo: true
     Repo-->>Svc: true
-    Svc-->>Ctrl: Result.Failure(DomainError.Conflict)
+    Svc-->>Ctrl: Result.Failure(ConflictError)
     Ctrl-->>Client: 409 Conflict
-    end
 
-    Note over Ctrl: POST /api/productos
-    Note over Ctrl: {nombre: "Mouse Nuevo", precio: 29.99}
-
+    Note over Client,DB: ESCENARIO 4: Éxito
+    Client->>Ctrl: POST /api/productos {nombre: "Mouse", precio: 29.99}
     Ctrl->>Svc: CreateAsync(dto)
-    
-    rect rgb(200, 255, 200)
-    Note over Svc: Validaciones: OK
-    Note over Svc: Categoria: OK
-    Note over Svc: Nombre unico: OK
     Svc->>Repo: SaveAsync(producto)
     Repo->>DB: INSERT INTO productos ...
     DB-->>Repo: producto con ID
     Repo-->>Svc: Result.Success(producto)
-    
-    Note over Svc: Invalidar cache
     Svc->>Cache: RemoveAsync("productos:all")
     Cache-->>Svc: OK
-    
     Svc-->>Ctrl: Result.Success(productoDto)
     Ctrl-->>Client: 201 Created {productoDto}
-    end
 ```
 
 ### Comparación visual
@@ -350,125 +319,348 @@ var finalResult = Result.FirstFailureOrSuccess(result1, result2, result3);
 
 ---
 
-## 6.3. DomainError y ErrorType Enum
+## 6.3. DomainError: Factory + Fachada + Herencia
 
-En el proyecto TiendaApi, definimos un tipo `DomainError` que encapsula toda la información sobre un error de negocio. Esto incluye un mensaje legible, un tipo de error para clasificarlo, y opcionalmente una lista de errores de validación. Este enfoque permite que los controladores traduzcan fácilmente errores de dominio a códigos HTTP.
+### Árbol de Herencia
 
-### Definición de ErrorType
+```mermaid
+classDiagram
+    class DomainError {
+        <<abstract record>>
+        +string Message
+    }
 
-El enum `ErrorType` clasifica los errores en categorías estándar de HTTP, lo que facilita la traducción a códigos de estado:
+    class NotFoundError {
+        <<sealed record>>
+        +static FromId(id, resourceType)
+    }
+
+    class ValidationError {
+        <<sealed record>>
+        +Dictionary~string, string[]~ ValidationErrors
+        +static WithFieldErrors()
+    }
+
+    class BusinessRuleError {
+        <<sealed record>>
+    }
+
+    class UnauthorizedError {
+        <<sealed record>>
+        +static InvalidCredentials()
+        +static TokenExpired()
+    }
+
+    class ForbiddenError {
+        <<sealed record>>
+        +static NotOwner()
+    }
+
+    class ConflictError {
+        <<sealed record>>
+        +static Duplicate()
+    }
+
+    class InternalError {
+        <<sealed record>>
+    }
+
+    DomainError <|-- NotFoundError
+    DomainError <|-- ValidationError
+    DomainError <|-- BusinessRuleError
+    DomainError <|-- UnauthorizedError
+    DomainError <|-- ForbiddenError
+    DomainError <|-- ConflictError
+    DomainError <|-- InternalError
+```
+
+### ¿Qué es un Factory Method? (Patrón Factory)
+
+Un **Factory Method** es un método estático que encapsula la creación de objetos. Su función es:
+- **Ocultar** la complejidad de creación
+- **Estandarizar** el formato de los mensajes
+- **Centralizar** la lógica de construcción
 
 ```csharp
-namespace TiendaApi.Core.Errors;
+// ❌ Sin factory: formato inconsistente, repetitivo
+new NotFoundError("Recurso con ID 5 no encontrado")
+new NotFoundError("Usuario 10 no existe")
+new NotFoundError("El producto 7 no fue encontrado")
 
-public enum ErrorType
+// ✅ Con factory: mensaje estandarizado
+NotFoundError.FromId(5, "Producto")     // "Recurso con ID 5 no encontrado"
+NotFoundError.FromId(10, "Usuario")     // "Recurso con ID 10 no encontrado"
+NotFoundError.FromId(7, "Producto")     // "Recurso con ID 7 no encontrado"
+```
+
+| Aspecto | Sin Factory | Con Factory |
+|---------|-------------|-------------|
+| Formato | Inconsistente | Estándar |
+| Mantenibilidad | Cambiar = buscar/reemplazar | Un solo lugar |
+| Semántica | `new Error(...)` no explica qué hace | `FromId(...)` es autoexplicativo |
+
+### Clase Base y Factory Methods
+
+```csharp
+// Errors/Base/DomainError.cs
+public abstract record DomainError(string Message)
 {
-    Validation,      // 400 Bad Request - Datos inválidos
-    NotFound,        // 404 Not Found - Recurso no existe
-    Unauthorized,    // 401 Unauthorized - No autenticado
-    Forbidden,       // 403 Forbidden - Autenticado pero sin permisos
-    Conflict,        // 409 Conflict - Conflicto con estado actual
-    BusinessRule,    // 422 Unprocessable Entity - Regla de negocio violada
-    Internal         // 500 Internal Server Error - Error inesperado
+    public override string ToString() => $"{GetType().Name}: {Message}";
+}
+
+// Factory method en NotFoundError
+public sealed record NotFoundError(string Message) : DomainError(Message)
+{
+    public static NotFoundError FromId(long id, string resourceType = "Unknown") =>
+        new($"Recurso con ID {id} no encontrado");
+}
+
+// Factory method en ValidationError
+public sealed record ValidationError(string Message, Dictionary<string, string[]> ValidationErrors)
+    : DomainError(Message)
+{
+    public static ValidationError WithFieldErrors(Dictionary<string, string[]> fieldErrors) =>
+        new("Errores de validación", fieldErrors);
+}
+
+// Factory method en ConflictError
+public sealed record ConflictError(string Message) : DomainError(Message)
+{
+    public static ConflictError Duplicate(string resourceType, string value) =>
+        new($"Ya existe un {resourceType} con el valor '{value}'");
 }
 ```
 
-### Definición de DomainError
+### ¿Qué es una Fachada? (Patrón Fachada)
 
-La clase `DomainError` encapsula toda la información del error y proporciona factory methods estáticos para crear errores comunes:
+Una **Fachada** es una clase estática que actúa como punto de entrada único a un subsistema complejo. Su función es:
+- **Centralizar** todos los errores de un dominio
+- **Añadir semántica** específica del negocio
+- **Delegar** a los factories base
 
 ```csharp
-namespace TiendaApi.Core.Errors;
+// ❌ Sinfachada: dispersión y duplicación
+NotFoundError.FromId(5, "Producto")
+ConflictError.Duplicate("email", "user@test.com")
+new BusinessRuleError("No se puede eliminar el usuario 3")
 
-public class DomainError
+// ✅ Confachada: organización y semántica
+ProductoError.NotFound(5)                    // Delega a FromId()
+UsuarioError.EmailExistente("user@test.com")  // Delega a Duplicate()
+UsuarioError.NoSePuedeEliminarConPedidos(3)  // Crea BusinessRuleError con mensaje semántico
+```
+
+| Aspecto | Sin Fachada | Con Fachada |
+|---------|-------------|-------------|
+| Organización | Errores dispersos | Un archivo por dominio |
+| Descubrimiento | Buscar en código | Ver la clase estática |
+| Semántica | Genérica | Específica del negocio |
+
+### Patrón Fachada por Dominio
+
+```mermaid
+flowchart TB
+    subgraph "Código Cliente"
+        SVC["ProductoService\nUsuarioService\nPedidoService"]
+    end
+
+    subgraph "FACHADA: Capa de semántica"
+        PE["ProductoError"]
+        UE["UsuarioError"]
+        PdE["PedidoError"]
+    end
+
+    subgraph "FACTORIES: Capa de construcción"
+        NF["NotFoundError"]
+        BR["BusinessRuleError"]
+        CF["ConflictError"]
+        VE["ValidationError"]
+        UEr["UnauthorizedError"]
+        FE["ForbiddenError"]
+        IE["InternalError"]
+    end
+
+    SVC -->|"Error semántico"| PE
+    UE -->|"Error semántico"| PdE
+
+    PE -->|"FromId()"| NF
+    PE -->|"new BusinessRuleError()"| BR
+    PE -->|"Duplicate()"| CF
+    PE -->|"WithFieldErrors()"| VE
+
+    UE -->|"Duplicate()"| CF
+    PdE -->|"NotOwner()"| FE
+```
+
+```csharp
+// Errors/Productos/ProductoError.cs
+public static class ProductoError
 {
-    public string Message { get; }
-    public ErrorType Type { get; }
-    public List<string>? ValidationErrors { get; }
+    // Delega a NotFoundError.FromId()
+    public static NotFoundError NotFound(long id) =>
+        NotFoundError.FromId(id, "Producto");
 
-    private DomainError(string message, ErrorType type, List<string>? validationErrors = null)
-    {
-        Message = message;
-        Type = type;
-        ValidationErrors = validationErrors;
-    }
+    // Crea BusinessRuleError específico
+    public static BusinessRuleError StockInsuficiente(string nombre, int disp, int sol) =>
+        new($"Stock insuficiente para '{nombre}'. Disp: {disp}, Sol: {sol}");
 
-    // Factory methods para errores comunes
-    public static DomainError Validation(string message, List<string>? errors = null) =>
-        new(message, ErrorType.Validation, errors);
+    // Delega a ConflictError.Duplicate()
+    public static ConflictError ProductoAdquirido(long id) =>
+        new("El producto fue adquirido por otro usuario");
 
-    public static DomainError NotFound(string message) =>
-        new(message, ErrorType.NotFound);
+    // Delega a ValidationError.WithFieldErrors()
+    public static ValidationError ValidacionConCampos(Dictionary<string, string[]> errores) =>
+        ValidationError.WithFieldErrors(errores);
+}
 
-    public static DomainError Unauthorized(string message) =>
-        new(message, ErrorType.Unauthorized);
+// Errors/Usuarios/UsuarioError.cs
+public static class UsuarioError
+{
+    // Delega a ConflictError.Duplicate()
+    public static ConflictError EmailExistente(string email) =>
+        ConflictError.Duplicate("email", email);
 
-    public static DomainError Forbidden(string message) =>
-        new(message, ErrorType.Forbidden);
+    // Delega a UnauthorizedError.InvalidCredentials()
+    public static UnauthorizedError CredencialesInvalidas() =>
+        UnauthorizedError.InvalidCredentials();
 
-    public static DomainError Conflict(string message) =>
-        new(message, ErrorType.Conflict);
-
-    public static DomainError BusinessRule(string message) =>
-        new(message, ErrorType.BusinessRule);
-
-    public static DomainError Internal(string message) =>
-        new(message, ErrorType.Internal);
-
-    // Método de conveniencia para crear error de validación con lista
-    public static DomainError Validation(string message, params string[] errors) =>
-        new(message, ErrorType.Validation, errors.ToList());
+    // Crea BusinessRuleError semántico
+    public static BusinessRuleError NoSePuedeEliminarConPedidos(long id) =>
+        new($"No se puede eliminar el usuario {id} porque tiene pedidos");
 }
 ```
 
-### Uso de DomainError en servicios
+### Resumen: Capas de Abstracción
+
+```mermaid
+flowchart TB
+    subgraph A
+        C1[Codigo Cliente]
+    end
+
+    subgraph B
+        F1[Fachada]
+    end
+
+    subgraph C
+        F2[Factory]
+    end
+
+    subgraph D
+        B1[Base]
+    end
+
+    C1 -->|"return Error"| B
+    B -->|"FromId/new"| C
+    C -->|"new"| D
+```
 
 ```csharp
-public class ProductoService
+// Errors/Productos/ProductoError.cs
+public static class ProductoError
 {
-    public Result<ProductoDto, DomainError> GetById(long id)
-    {
-        // Error de no encontrado
-        if (id <= 0)
-            return Result.Failure<ProductoDto, DomainError>(
-                DomainError.NotFound($"Producto {id} no encontrado"));
-        
-        var producto = _repository.FindById(id);
-        if (producto == null)
-            return Result.Failure<ProductoDto, DomainError>(
-                DomainError.NotFound($"Producto {id} no encontrado"));
-        
-        return Result.Success<ProductoDto, DomainError>(producto.ToDto());
-    }
+    public static NotFoundError NotFound(long id) =>
+        NotFoundError.FromId(id, "Producto");
 
-    public Result<ProductoDto, DomainError> Create(ProductoCreateDto dto)
-    {
-        // Error de validación
-        if (string.IsNullOrEmpty(dto.Nombre))
-            return Result.Failure<ProductoDto, DomainError>(
-                DomainError.Validation("El nombre es obligatorio"));
-        
-        if (dto.Precio <= 0)
-            return Result.Failure<ProductoDto, DomainError>(
-                DomainError.Validation("El precio debe ser mayor a 0"));
-        
-        // Error de conflicto
-        if (_repository.ExistsByNombre(dto.Nombre))
-            return Result.Failure<ProductoDto, DomainError>(
-                DomainError.Conflict($"Ya existe un producto con el nombre '{dto.Nombre}'"));
-        
-        // Error de regla de negocio
-        if (dto.Stock < 0)
-            return Result.Failure<ProductoDto, DomainError>(
-                DomainError.BusinessRule("El stock no puede ser negativo"));
-        
-        var producto = new Producto(dto);
-        var guardado = _repository.Save(producto);
-        
-        return Result.Success<ProductoDto, DomainError>(guardado.ToDto());
-    }
+    public static BusinessRuleError StockInsuficiente(string nombre, int disp, int sol) =>
+        new($"Stock insuficiente para '{nombre}'. Disp: {disp}, Sol: {sol}");
+
+    public static ConflictError ProductoAdquirido(long id) =>
+        new("El producto fue adquirido por otro usuario");
+
+    public static ValidationError ValidacionConCampos(Dictionary<string, string[]> errores) =>
+        ValidationError.WithFieldErrors(errores);
+}
+
+// Errors/Usuarios/UsuarioError.cs
+public static class UsuarioError
+{
+    public static ConflictError EmailExistente(string email) =>
+        ConflictError.Duplicate("email", email);
+
+    public static UnauthorizedError CredencialesInvalidas() =>
+        UnauthorizedError.InvalidCredentials();
+
+    public static BusinessRuleError NoSePuedeEliminarConPedidos(long id) =>
+        new($"No se puede eliminar el usuario {id} porque tiene pedidos");
 }
 ```
+
+### Uso en Servicios
+
+```csharp
+public async Task<Result<ProductoDto, DomainError>> FindByIdAsync(long id)
+{
+    var producto = await _repo.FindByIdAsync(id);
+    if (producto == null)
+        return Result.Failure<ProductoDto, DomainError>(
+            ProductoError.NotFound(id));  // NotFoundError
+
+    return Result.Success<ProductoDto, DomainError>(producto.ToDto());
+}
+
+public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
+{
+    var validation = await _validator.ValidateAsync(dto);
+    if (!validation.IsValid)
+        return Result.Failure<ProductoDto, DomainError>(
+            ProductoError.ValidacionConCampos(errores));  // ValidationError
+
+    if (_repo.ExistsByNombre(dto.Nombre))
+        return Result.Failure<ProductoDto, DomainError>(
+            UsuarioError.UsernameExistente(dto.Nombre));  // ConflictError
+
+    // ... guardar y retornar Success
+}
+```
+
+### Mapeo a HTTP
+
+```csharp
+private IActionResult GetHttpResult(DomainError error) => error switch
+{
+    NotFoundError => NotFound(new { error.Message }),
+    ValidationError => BadRequest(new { error.Message }),
+    BusinessRuleError => UnprocessableEntity(new { error.Message }),
+    UnauthorizedError => Unauthorized(new { error.Message }),
+    ForbiddenError => Forbid(),
+    ConflictError => Conflict(new { error.Message }),
+    InternalError => StatusCode(500, new { error.Message }),
+    _ => StatusCode(500, new { error.Message })
+};
+```
+
+### Comparativa: Excepciones vs Result
+
+```mermaid
+flowchart TB
+    subgraph "Rendimiento"
+        A1["Excepciones: ~5000ns"]
+        A2["Result: ~50ns"]
+        A3["Speedup: 100x"]
+    end
+
+    subgraph "Testabilidad"
+        B1["Assert.Throws"]
+        B2["result.IsFailure.Should()"]
+    end
+
+    subgraph "Flujo"
+        C1["try-catch oculto"]
+        C2["Match explícito"]
+    end
+
+    A1 --> A3
+    B1 --> B2
+    C1 --> C2
+```
+
+| Aspecto | Excepciones | Result |
+|---------|-------------|--------|
+| Rendimiento | ~100x más lento | Óptimo |
+| Legibilidad | try-catch oculto | Explícito |
+| Completitud | Se olvida capturar | Match fuerza manejo |
+| Testabilidad | Assert.Throws | Tests directos |
 
 ---
 

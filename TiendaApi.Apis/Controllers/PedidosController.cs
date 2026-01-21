@@ -43,6 +43,11 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// <summary>
     /// Obtiene los pedidos del sistema de forma paginada (solo administradores).
     /// </summary>
+    /// <param name="page">Número de página (1-indexed).</param>
+    /// <param name="size">Elementos por página.</param>
+    /// <param name="sortBy">Campo de ordenación.</param>
+    /// <param name="direction">Dirección (asc, desc).</param>
+    /// <returns>200 OK con lista paginada de pedidos.</returns>
     [HttpGet("paged")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(PagedResult<PedidoDto>), StatusCodes.Status200OK)]
@@ -71,6 +76,8 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// <summary>
     /// Obtiene un pedido específico por su ID (solo administradores).
     /// </summary>
+    /// <param name="id">ID del pedido.</param>
+    /// <returns>200 OK con el pedido, o 404 si no existe.</returns>
     [HttpGet("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
@@ -95,6 +102,9 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// Actualiza un pedido (solo administradores).
     /// Los administradores pueden actualizar cualquier pedido.
     /// </summary>
+    /// <param name="id">ID del pedido.</param>
+    /// <param name="dto">Nuevos datos del pedido.</param>
+    /// <returns>200 OK con el pedido actualizado, o 400/404 si hay errores.</returns>
     [HttpPut("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
@@ -121,6 +131,8 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// <summary>
     /// Elimina un pedido (solo administradores).
     /// </summary>
+    /// <param name="id">ID del pedido a eliminar.</param>
+    /// <returns>204 No Content si tiene éxito, o 404 si no existe.</returns>
     [HttpDelete("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -146,6 +158,9 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// <summary>
     /// Actualiza el estado de un pedido (solo administradores).
     /// </summary>
+    /// <param name="id">ID del pedido.</param>
+    /// <param name="dto">Nuevo estado del pedido.</param>
+    /// <returns>200 OK con el pedido actualizado, o 400/404 si hay errores.</returns>
     [HttpPut("{id}/estado")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
@@ -177,6 +192,7 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// <summary>
     /// Obtiene todos los pedidos del usuario autenticado (sin paginación).
     /// </summary>
+    /// <returns>200 OK con lista de pedidos del usuario.</returns>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
@@ -202,6 +218,11 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// <summary>
     /// Obtiene los pedidos del usuario autenticado de forma paginada.
     /// </summary>
+    /// <param name="page">Número de página (1-indexed).</param>
+    /// <param name="size">Elementos por página.</param>
+    /// <param name="sortBy">Campo de ordenación.</param>
+    /// <param name="direction">Dirección (asc, desc).</param>
+    /// <returns>200 OK con lista paginada de pedidos.</returns>
     [HttpGet("me/paged")]
     [Authorize]
     [ProducesResponseType(typeof(PagedResult<PedidoDto>), StatusCodes.Status200OK)]
@@ -237,6 +258,8 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// <summary>
     /// Crea un nuevo pedido para el usuario autenticado.
     /// </summary>
+    /// <param name="dto">Datos del pedido a crear.</param>
+    /// <returns>201 Created con el pedido creado, o 400/404 si hay errores.</returns>
     [HttpPost("me")]
     [Authorize]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status201Created)]
@@ -276,6 +299,8 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// <summary>
     /// Obtiene un pedido propio por su ID.
     /// </summary>
+    /// <param name="id">ID del pedido.</param>
+    /// <returns>200 OK con el pedido, o 404 si no existe o no es suyo.</returns>
     [HttpGet("me/{id}")]
     [Authorize]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
@@ -309,6 +334,9 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// Actualiza un pedido propio.
     /// Solo permite modificar pedidos en estado PENDIENTE.
     /// </summary>
+    /// <param name="id">ID del pedido.</param>
+    /// <param name="dto">Nuevos datos del pedido.</param>
+    /// <returns>200 OK con el pedido actualizado, o 400/404 si hay errores.</returns>
     [HttpPut("me/{id}")]
     [Authorize]
     [ProducesResponseType(typeof(PedidoDto), StatusCodes.Status200OK)]
@@ -345,6 +373,8 @@ public class PedidosController(IPedidosService service) : ControllerBase
     /// Cancela y elimina un pedido propio.
     /// Solo permite eliminar pedidos en estado PENDIENTE.
     /// </summary>
+    /// <param name="id">ID del pedido a eliminar.</param>
+    /// <returns>204 No Content si tiene éxito, o 400/404 si hay errores.</returns>
     [HttpDelete("me/{id}")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

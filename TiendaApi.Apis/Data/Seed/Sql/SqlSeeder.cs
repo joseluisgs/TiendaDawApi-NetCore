@@ -5,15 +5,14 @@ namespace TiendaApi.Apis.Data.Seed.Sql;
 
 /// <summary>
 /// Seeder para datos iniciales de PostgreSQL.
+/// Crea usuarios, categorías y productos de ejemplo.
 /// </summary>
 public class SqlSeeder
 {
     private readonly TiendaDbContext _context;
     private readonly ILogger<SqlSeeder> _logger;
 
-    public SqlSeeder(
-        TiendaDbContext context,
-        ILogger<SqlSeeder> logger)
+    public SqlSeeder(TiendaDbContext context, ILogger<SqlSeeder> logger)
     {
         _context = context;
         _logger = logger;

@@ -5,206 +5,56 @@ namespace TiendaApi.Apis.Models;
 using TiendaApi.Apis.Data.Abstractions;
 
 /// <summary>
-/// Entidad de dominio que representa un producto en el catálogo de la tienda.
-/// 
-/// <para>
-/// Un producto es el elemento central del sistema de comercio electrónico.
-/// Contiene toda la información necesaria para、展示, venta y gestión del inventario.
-/// </para>
-/// 
-/// <para>
-/// <b>Características principales:</b>
-/// <list type="bullet">
-///   <item><description>Identificador único auto-generado.</description></item>
-///   <item><description>Información de inventario (stock) para control de ventas.</description></item>
-///   <item><description>Gestión flexible de imágenes (locales o externas).</description></item>
-///   <item><description>Relación con categoría para organización.</description></item>
-///   <item><description>Control de concurrencia optimista mediante RowVersion.</description></item>
-/// </list>
-/// </para>
+/// Entidad de dominio que representa un producto en el catálogo.
 /// </summary>
 public class Producto : ITimestamped
 {
-    /// <summary>
-    /// URL de imagen por defecto para productos sin imagen personalizada.
-    /// 
-    /// <para>
-    /// Se usa cuando el campo Imagen es nulo o vacío, proporcionando
-    /// una imagen de marcador de posición visualmente coherente.
-    /// </para>
-    /// </summary>
+    /// <summary>URL de imagen por defecto cuando no hay imagen personalizada.</summary>
     public const string IMAGE_DEFAULT = "https://via.placeholder.com/150";
 
-    /// <summary>
-    /// Prefijo de ruta para imágenes locales almacenadas en el servidor.
-    /// 
-    /// <para>
-    /// Las imágenes cargadas por usuarios se almacenan en la carpeta
-    /// /storage/uploads/productos/ y se referencian con este prefijo.
-    /// </para>
-    /// </summary>
+    /// <summary>Prefijo para imágenes locales (/storage/uploads/productos/).</summary>
     public const string IMAGE_LOCAL_PREFIX = "/storage/uploads/productos/";
 
-    /// <summary>
-    /// Identificador único del producto (clave primaria).
-    /// 
-    /// <para>
-    /// Se genera automáticamente al guardar en la base de datos PostgreSQL.
-    /// Es el identificador usado en URLs y referencias externas.
-    /// </para>
-    /// <remarks>
-    /// Valor ejemplo: 1, 2, 3, ... (números positivos)
-    /// </remarks>
+    /// <summary>ID único del producto (PK en PostgreSQL).</summary>
     public long Id { get; set; }
 
-    /// <summary>
-    /// Nombre del producto.
-    /// 
-    /// <para>
-    /// Campo obligatorio que identifica el producto de forma legible.
-    /// Se usa en búsquedas, listados y detalles del producto.
-    /// </para>
-    /// <remarks>
-    /// Longitud típica: 3-200 caracteres
-    /// </remarks>
+    /// <summary>Nombre del producto (3-200 caracteres).</summary>
     public string Nombre { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Descripción detallada del producto.
-    /// 
-    /// <para>
-    /// Proporciona información adicional sobre características,
-    /// especificaciones, materiales, dimensiones, etc.
-    /// </para>
-    /// <remarks>
-    /// Puede estar vacío si el nombre es suficientemente descriptivo.
-    /// </remarks>
+    /// <summary>Descripción detallada del producto.</summary>
     public string Descripcion { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Precio unitario del producto en la moneda configurada (EUR).
-    /// 
-    /// <para>
-    /// Puede incluir decimales para precios con céntimos.
-    /// Se valida que sea mayor o igual a 0.
-    /// </para>
-    /// <remarks>
-    /// Formato: decimal con hasta 2 decimales (ej: 19.99)
-    /// </remarks>
+    /// <summary>Precio unitario en EUR (decimal con hasta 2 decimales).</summary>
     public decimal Precio { get; set; }
 
-    /// <summary>
-    /// Cantidad disponible en inventario.
-    /// 
-    /// <para>
-    /// Representa el stock físico disponible para venta.
-    /// Se decrementa automáticamente al crear pedidos.
-    /// </para>
-    /// <remarks>
-    /// <list type="bullet">
-    ///   <item><term>0</term>: Sin stock (no se puede comprar).</item>
-    ///   <item><term>&gt; 0</term>: Stock disponible.</item>
-    ///   <item><term>Negativo</term>: Permite backorders (pre-pedidos).</item>
-    /// </list>
-    /// </remarks>
+    /// <summary>Stock disponible (0 = sin stock, >0 = disponible, <0 = backorder).</summary>
     public int Stock { get; set; }
 
-    /// <summary>
-    /// URL o ruta de la imagen del producto.
-    /// 
-    /// <para>
-    /// Puede ser de tres tipos:
-    /// <list type="bullet">
-    ///   <item><description>URL externa (http://, https://): Imágenes de CDNs o servicios.</description></item>
-    ///   <item><description>Ruta local (/storage/images/...): Imágenes cargadas por usuarios.</description></item>
-    ///   <item><description>Nulo o IMAGE_DEFAULT: Sin imagen personalizada.</description></item>
-    /// </list>
-    /// </para>
-    /// </summary>
-    /// <example>
-    /// Valores válidos:
-    /// "https://cdn.example.com/producto.jpg"
-    /// "/storage/images/productos/123456.jpg"
-    /// null (usa IMAGE_DEFAULT)
-    /// </example>
+    /// <summary>URL o ruta de la imagen del producto (null = usa IMAGE_DEFAULT).</summary>
     public string? Imagen { get; set; }
 
-    /// <summary>
-    /// Indica si el producto ha sido eliminado (soft-delete).
-    /// 
-    /// <para>
-    /// Los productos eliminados no aparecen en búsquedas ni listados,
-    /// pero los datos históricos se mantienen para pedidos existentes.
-    /// </para>
+    /// <summary>Indica si el producto está eliminado (soft-delete).</summary>
     public bool IsDeleted { get; set; }
 
-    /// <summary>
-    /// Fecha y hora UTC de creación del registro.
-    /// 
-    /// <para>
-    /// Se asigna automáticamente al crear el producto.
-    /// Se usa para ordenación y auditoría.
-    /// </para>
+    /// <summary>Fecha de creación en UTC.</summary>
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 
-    /// <summary>
-    /// Fecha y hora UTC de la última modificación.
-    /// 
-    /// <para>
-    /// Se actualiza cada vez que se modifica el producto.
-    /// Si nunca se modificó, coincide con CreatedAt.
-    /// </para>
+    /// <summary>Fecha de última modificación en UTC.</summary>
     public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
 
-    /// <summary>
-    /// Token de versión para control de concurrencia optimista.
-    /// 
-    /// <para>
-    /// Entity Framework actualiza este campo automáticamente cada vez que
-    /// se modifica el registro. Si dos usuarios modifican simultáneamente,
-    /// el segundo recibe un error de concurrencia.
-    /// </para>
-    /// <remarks>
-    /// Implementado como columna bytea en PostgreSQL para control de concurrencia.
-    /// </remarks>
+    /// <summary>Token de control de concurrencia optimista (bytea en PostgreSQL).</summary>
     public byte[] RowVersion { get; set; } = new byte[8];
 
-    /// <summary>
-    /// Identificador de la categoría a la que pertenece el producto.
-    /// 
-    /// <para>
-    /// Clave foránea que establece la relación con Categoría.
-    /// Si es 0, el producto no tiene categoría asignada.
-    /// </para>
+    /// <summary>ID de la categoría asociada (FK).</summary>
     public long CategoriaId { get; set; }
 
-    /// <summary>
-    /// Categoría asociada al producto (carga lazy o eager).
-    /// 
-    /// <para>
-    /// Relación muchos-a-uno: muchos productos pueden pertenecer
-    /// a una misma categoría.
-    /// </para>
+    /// <summary>Categoría asociada (relación muchos-a-uno).</summary>
     public Categoria Categoria { get; set; } = null!;
 
     /// <summary>
-    /// Determina si la imagen del producto es local (almacenada en el servidor).
-    /// 
-    /// <para>
-    /// Las imágenes locales requieren manejo especial para servir
-    /// archivos estáticos y limpieza al eliminar el producto.
-    /// </para>
-    /// <returns>
-    /// <see langword="true"/> si la imagen es local (comienza con IMAGE_LOCAL_PREFIX),
-    /// <see langword="false"/> si es URL externa o no tiene imagen.
-    /// </returns>
-    /// <example>
-    /// Uso típico:
-    /// <code>
-    /// if (producto.IsLocalImage())
-    ///     await storageService.DeleteFileAsync(producto.Imagen);
-    /// </code>
-    /// </example>
+    /// Determina si la imagen es local (almacenada en el servidor).
+    /// </summary>
+    /// <returns>true si la imagen comienza con IMAGE_LOCAL_PREFIX.</returns>
     public bool IsLocalImage()
     {
         if (string.IsNullOrEmpty(Imagen))
@@ -215,39 +65,17 @@ public class Producto : ITimestamped
 
     /// <summary>
     /// Determina si el producto usa la imagen por defecto.
-    /// 
-    /// <para>
-    /// Útil para mostrar un badge "Sin imagen" en la interfaz
-    /// o para incentivar la carga de imágenes.
-    /// </para>
-    /// <returns>
-    /// <see langword="true"/> si Imagen es null, vacío o igual a IMAGE_DEFAULT.
-    /// </returns>
+    /// </summary>
+    /// <returns>true si Imagen es null, vacío o igual a IMAGE_DEFAULT.</returns>
     public bool HasDefaultImage()
     {
         return string.IsNullOrEmpty(Imagen) || Imagen == IMAGE_DEFAULT;
     }
 
     /// <summary>
-    /// Obtiene la URL completa de la imagen lista para mostrar en navegador.
-    /// 
-    /// <para>
-    /// Normaliza diferentes formatos de entrada:
-    /// <list type="number">
-    ///   <item><description>URLs externas (http/https): retornadas sin modificación.</description></item>
-    ///   <item><description>Rutas con /storage: retornadas con prefijo.</description></item>
-    ///   <item><description>Rutas relativas (/images/...): prepend /storage.</description></item>
-    ///   <item><description>Nombres de archivo: prepend IMAGE_LOCAL_PREFIX.</description></item>
-    ///   <item><description>Sin imagen: retorna IMAGE_DEFAULT.</description></item>
-    /// </list>
-    /// </para>
-    /// <returns>URL absoluta o relativa lista para usar en etiquetas &lt;img src="..."&gt;.</returns>
-    /// <example>
-    /// Uso en Razor/HTML:
-    /// <code>
-    /// &lt;img src="@producto.GetImagenUrl()" alt="@producto.Nombre" /&gt;
-    /// </code>
-    /// </example>
+    /// Obtiene la URL completa de la imagen normalizada para mostrar.
+    /// </summary>
+    /// <returns>URL absoluta o relativa lista para usar en &lt;img src&gt;.</returns>
     public string GetImagenUrl()
     {
         if (string.IsNullOrEmpty(Imagen))

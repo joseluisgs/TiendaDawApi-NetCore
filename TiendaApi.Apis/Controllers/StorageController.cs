@@ -70,6 +70,8 @@ public class StorageController(
     /// <summary>
     /// Determina el tipo de contenido MIME según la extensión del archivo.
     /// </summary>
+    /// <param name="extension">Extensión del archivo (ej: ".jpg", ".png").</param>
+    /// <returns>Tipo MIME correspondiente (ej: "image/jpeg").</returns>
     private static string GetContentType(string extension)
     {
         return extension.ToLowerInvariant() switch

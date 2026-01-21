@@ -6,6 +6,10 @@ using TiendaApi.Apis.Services.Auth;
 
 namespace TiendaApi.Apis.Controllers;
 
+/// <summary>
+/// Controlador de API para autenticación de usuarios.
+/// Endpoints: SignUp (registro) y SignIn (login) con JWT.
+/// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiVersion("1.0")]
@@ -15,6 +19,11 @@ public class AuthController(
     ILogger<AuthController> logger
 ) : ControllerBase
 {
+    /// <summary>
+    /// Registra un nuevo usuario en el sistema.
+    /// </summary>
+    /// <param name="dto">Datos de registro (username, email, password).</param>
+    /// <returns>201 Created con la respuesta de autenticación, o 400/409 si hay errores.</returns>
     [HttpPost("signup")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -36,6 +45,11 @@ public class AuthController(
         );
     }
 
+    /// <summary>
+    /// Inicia sesión y devuelve un token JWT.
+    /// </summary>
+    /// <param name="dto">Credenciales de acceso (username, password).</param>
+    /// <returns>200 OK con el token JWT, o 401 si las credenciales son inválidas.</returns>
     [HttpPost("signin")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
