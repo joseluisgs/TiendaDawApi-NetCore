@@ -6,53 +6,8 @@ using Microsoft.Extensions.Logging;
 namespace TiendaApi.Apis.Services.Auth;
 
 /// <summary>
-/// Implementación de IJwtTokenExtractor que extrae información de tokens JWT.
+/// Implementación de IJwtTokenExtractor para extraer información de tokens JWT.
 /// </summary>
-/// <remarks>
-/// <para><b>Características:</b></para>
-/// <list type="bullet">
-///   <item><description>Parseo de tokens JWT sin validación completa (más rápido).</description></item>
-///   <item><description>Extracción de claims comunes (userId, rol, email).</description></item>
-///   <item><description>Verificación de formato de token (sin firma ni expiración).</description></item>
-/// </list>
-/// 
-/// <para><b>Nota de seguridad:</b></para>
-/// Este servicio solo extrae información de tokens. NO valida:
-/// <list type="bullet">
-///   <item><description>Firma del token (puede ser modificado por cliente).</description></item>
-///   <item><description> expiración del token.</description></item>
-///   <item><description>Issuer/Audience.</description></item>
-/// </list>
-/// <para>
-/// Para validación completa de tokens, usar JwtService.ValidateToken().
-/// </para>
-/// 
-/// <para><b>Casos de uso apropiados:</b></para>
-/// <list type="bullet">
-///   <item><description>WebSocket connections (autenticación inicial).</description></item>
-///   <item><description>Controladores que necesitan acceso rápido a claims.</description></item>
-///   <item><description>Servicios que necesitan userId sin acceder a BD.</description></item>
-/// </list>
-/// 
-/// <para><b>Ejemplo de uso:</b></para>
-/// <code>
-/// private readonly IJwtTokenExtractor _tokenExtractor;
-/// 
-/// public MiServicio(IJwtTokenExtractor tokenExtractor)
-/// {
-///     _tokenExtractor = tokenExtractor;
-/// }
-/// 
-/// public void ProcesarPeticion(string token)
-/// {
-///     var (userId, isAdmin, role) = _tokenExtractor.ExtractUserInfo(token);
-///     if (userId.HasValue)
-///     {
-///         // El token tiene un userId válido
-///     }
-/// }
-/// </code>
-/// </remarks>
 public class JwtTokenExtractor : IJwtTokenExtractor
 {
     private readonly ILogger<JwtTokenExtractor> _logger;
@@ -258,8 +213,6 @@ public class JwtTokenExtractor : IJwtTokenExtractor
         return Encoding.UTF8.GetString(bytes);
     }
 
-    #region Métodos Privados
-
     private JwtSecurityToken? ReadToken(string token)
     {
         if (string.IsNullOrWhiteSpace(token))
@@ -279,6 +232,4 @@ public class JwtTokenExtractor : IJwtTokenExtractor
             return null;
         }
     }
-
-    #endregion
 }

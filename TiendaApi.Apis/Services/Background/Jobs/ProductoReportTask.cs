@@ -11,22 +11,10 @@ using TiendaApi.Apis.Services.Email;
 namespace TiendaApi.Apis.Services.Background.Jobs;
 
 /// <summary>
-/// Servicio de reportes de productos.
-/// Obtiene productos nuevos de los últimos X días y envía notificaciones por email a usuarios activos.
-/// 
-/// <para><b>Comportamiento:</b></para>
-/// <list type="bullet">
-///   <item><description>En desarrollo: Solo registra logs informativos</description></item>
-///   <item><description>En producción: Envía emails con productos nuevos a usuarios activos</description></item>
-/// </list>
-/// 
-/// <para><b>Configuración (appsettings.json):</b></para>
-/// <list type="bullet">
-///   <item><description>Scheduler:ProductoReportDays - Días hacia atrás para productos</description></item>
-///   <item><description>IsDevelopment - Modo desarrollo o producción</description></item>
-/// </list>
-/// </summary>
-public class ProductoReportTask(
+    /// Servicio de reportes de productos.
+    /// Obtiene productos nuevos y envía notificaciones por email.
+    /// </summary>
+    public class ProductoReportTask(
     IProductoRepository productoRepository,
     IUserRepository userRepository,
     IEmailService emailService,

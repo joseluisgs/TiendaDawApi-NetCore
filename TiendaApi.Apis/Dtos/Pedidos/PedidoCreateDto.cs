@@ -3,24 +3,30 @@ using System.ComponentModel.DataAnnotations;
 namespace TiendaApi.Apis.Dtos.Pedidos;
 
 /// <summary>
-/// DTO para crear un nuevo pedido.
-/// Define la estructura de datos que el cliente debe enviar para registrar un pedido.
-///
-/// <remarks>
-/// Flujo de creación de pedido:
-/// 1. Cliente envía lista de productos, cantidades y datos del destinatario
-/// 2. Servidor valida disponibilidad de stock
-/// 3. Se calculan precios y totales
-/// 4. Se crea el pedido con estado "Pendiente"
-/// 5. Se decrementa el stock de productos
-///
-/// <para>
-/// El campo <c>Destinatario</c> es obligatorio y define los datos de la persona
-/// que recibirá el pedido (puede ser diferente al comprador, ej: regalo).
-/// </para>
-/// </remarks>
-/// </summary>
-public record PedidoRequestDto
+    /// DTO para crear un pedido.
+    /// </summary>
+    /// <example>
+    /// {
+    ///   "destinatario": {
+    ///     "nombreCompleto": "María García",
+    ///     "email": "maria@email.com",
+    ///     "telefono": "+34612345678",
+    ///     "direccion": {
+    ///       "calle": "Gran Vía",
+    ///       "numero": "42",
+    ///       "ciudad": "Madrid",
+    ///       "provincia": "Madrid",
+    ///       "pais": "España",
+    ///       "codigoPostal": "28013"
+    ///     }
+    ///   },
+    ///   "items": [
+    ///     { "productoId": 101, "cantidad": 2 },
+    ///     { "productoId": 102, "cantidad": 1 }
+    ///   ]
+    /// }
+    /// </example>
+    public record PedidoRequestDto
 {
     /// <summary>
     /// Información del destinatario del pedido.
@@ -61,18 +67,9 @@ public record PedidoRequestDto
 }
 
 /// <summary>
-/// DTO de artículo de pedido para solicitudes.
-/// Define la estructura de datos que el cliente debe enviar para especificar
-/// qué productos desea incluir en su pedido.
-///
-/// <remarks>
-/// Restricciones de negocio:
-/// - La cantidad debe ser mayor a 0
-/// - El producto debe existir y estar activo
-/// - El producto debe tener stock disponible
-/// </remarks>
-/// </summary>
-public record PedidoItemRequestDto
+    /// DTO de artículo de pedido para solicitudes.
+    /// </summary>
+    public record PedidoItemRequestDto
 {
     /// <summary>
     /// Identificador del producto a incluir en el pedido.
@@ -94,18 +91,9 @@ public record PedidoItemRequestDto
 }
 
 /// <summary>
-/// DTO para actualizar el estado de un pedido.
-/// Utilizado por administradores para avanzar el pedido en su flujo de estados.
-///
-/// <remarks>
-/// Estados permitidos según estado actual:
-/// - "Pendiente" → "Procesando" | "Cancelado"
-/// - "Procesando" → "Enviado" | "Cancelado"
-/// - "Enviado" → "Entregado"
-/// - "Entregado" → (ninguno, estado final)
-/// - "Cancelado" → (ninguno, estado final)
-/// </remarks>
-public record UpdateEstadoDto
+    /// DTO para actualizar el estado de un pedido.
+    /// </summary>
+    public record UpdateEstadoDto
 {
     /// <summary>
     /// Nuevo estado para el pedido.
@@ -120,16 +108,9 @@ public record UpdateEstadoDto
 }
 
 /// <summary>
-/// DTO para actualizar datos de un pedido.
-/// Permite modificar campos específicos sin enviar todos los datos.
-///
-/// <remarks>
-/// Uso típico:
-/// - Cambiar dirección de envío antes del envío
-/// - Agregar observaciones
-/// - Modificar estado (admin)
-/// </remarks>
-public record UpdatePedidoDto
+    /// DTO para actualizar datos de un pedido.
+    /// </summary>
+    public record UpdatePedidoDto
 {
     /// <summary>
     /// Nuevo estado del pedido (opcional).

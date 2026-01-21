@@ -4,31 +4,19 @@ using System.Text.Json.Serialization;
 namespace TiendaApi.Apis.Dtos.Pedidos;
 
 /// <summary>
-/// DTO que representa una dirección postal estructurada para el envío de pedidos.
-/// </summary>
-/// <remarks>
-/// <para>
-/// Este DTO se utiliza para передавать información de dirección en las solicitudes
-/// y respuestas de la API relacionadas con pedidos.
-/// </para>
-/// <para>
-/// <b>Ejemplo de JSON:</b>
-/// <code>
-/// {
-///   "calle": "Gran Vía",
-///   "numero": "42",
-///   "ciudad": "Madrid",
-///   "provincia": "Madrid",
-///   "pais": "España",
-///   "codigoPostal": "28013"
-/// }
-/// </code>
-/// </para>
-/// <para>
-/// <b>Campos obligatorios:</b> Calle, Ciudad, País
-/// </para>
-/// </remarks>
-public class DireccionDto
+    /// DTO de dirección postal para envíos.
+    /// </summary>
+    /// <example>
+    /// {
+    ///   "calle": "Gran Vía",
+    ///   "numero": "42",
+    ///   "ciudad": "Madrid",
+    ///   "provincia": "Madrid",
+    ///   "pais": "España",
+    ///   "codigoPostal": "28013"
+    /// }
+    /// </example>
+    public class DireccionDto
 {
     /// <summary>
     /// Nombre de la calle, avenida, plaza o vía pública.

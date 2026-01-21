@@ -6,21 +6,9 @@ using TiendaApi.Apis.Services.Background.Jobs;
 namespace TiendaApi.Apis.Services.Background.Host;
 
 /// <summary>
-/// Servicio de fondo que ejecuta tareas programadas.
-/// Maneja la ejecución periódica de jobs según la configuración.
-/// 
-/// <para><b>Comportamiento:</b></para>
-/// <list type="bullet">
-///   <item><description>En desarrollo: Ejecuta cada 1 minuto</description></item>
-///   <item><description>En producción: Ejecuta según configuración (por defecto cada 7 días)</description></item>
-/// </list>
-/// 
-/// <para><b>Jobs disponibles:</b></para>
-/// <list type="bullet">
-///   <item><description>ProductoReportTask: Envía reportes de productos nuevos por email</description></item>
-/// </list>
-/// </summary>
-public class BackgroundJobService(
+    /// Servicio de fondo que ejecuta tareas programadas.
+    /// </summary>
+    public class BackgroundJobService(
     IServiceProvider serviceProvider,
     ILogger<BackgroundJobService> logger,
     IConfiguration configuration

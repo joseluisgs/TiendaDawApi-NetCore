@@ -21,21 +21,9 @@ using TiendaApi.Apis.Validators.Productos;
 namespace TiendaApi.Apis.Services.Productos;
 
 /// <summary>
-/// Servicio de productos usando Patrón Result.
-/// Las operaciones de caché, WebSocket nativo, SignalR, email y GraphQL Subscriptions
-/// se ejecutan en Task.Run (fire & forget) para no bloquear el hilo principal.
-/// 
-/// <para><b>Canales de notificación en tiempo real:</b></para>
-/// <list type="bullet">
-///   <item><description>WebSocket nativo: Notificaciones de broadcast a todos los clientes conectados públicamente</description></item>
-///   <item><description>SignalR: Notificaciones con autenticación y soporte para grupos (user-{id}, admins)</description></item>
-///   <item><description>Email: Notificaciones al administrador cuando se crea un producto</description></item>
-///   <item><description>GraphQL Subscriptions: Eventos para suscripciones GraphQL en tiempo real</description></item>
-/// </list>
-/// 
-/// <para><b>Nota:</b> Si cualquier operación secondary falla, se registra un warning pero no afecta a la respuesta.</para>
-/// </summary>
-public class ProductoService(
+    /// Servicio de productos usando Patrón Result.
+    /// </summary>
+    public class ProductoService(
     IProductoRepository productoRepository,
     ICategoriaRepository categoriaRepository,
     ILogger<ProductoService> logger,

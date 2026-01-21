@@ -22,28 +22,9 @@ using TiendaApi.Apis.Validators.Pedidos;
 namespace TiendaApi.Apis.Services.Pedidos;
 
 /// <summary>
-/// Servicio de pedidos que implementa el patrón Service Layer.
-/// Maneja toda la lógica de negocio relacionada con pedidos: verificación de stock,
-/// gestión de estados, almacenamiento en MongoDB y notificaciones.
-/// 
-/// <para><b>Canales de notificación en tiempo real:</b></para>
-/// <list type="bullet">
-///   <item><description>WebSocket nativo: Notificaciones directas al cliente y administradores</description></item>
-///   <item><description>SignalR: Notificaciones con autenticación y soporte para grupos (user-{id}, admins)</description></item>
-///   <item><description>Email: Notificaciones al administrador sobre cambios de estado</description></item>
-/// </list>
-/// 
-/// <para><b>Características principales:</b></para>
-/// <list type="bullet">
-///   <item><description>Enfoque híbrido: Serializable + Retry para integridad de datos</description></item>
-///   <item><description>Operaciones asíncronas (fire & forget) para caché, WebSocket, SignalR y email</description></item>
-///   <item><description>Gestión completa de stock (decrementar/restaurar)</description></item>
-///   <item><description>Validación con FluentValidation</description></item>
-/// </list>
-/// 
-/// <para><b>Nota:</b> Si cualquier operación secondary falla, se registra un warning pero no afecta a la respuesta.</para>
-/// </summary>
-public class PedidosService(
+    /// Servicio de pedidos que implementa el patrón Service Layer.
+    /// </summary>
+    public class PedidosService(
     IPedidosRepository pedidosRepository,
     IProductoRepository productoRepository,
     ILogger<PedidosService> logger,

@@ -1,26 +1,9 @@
 namespace TiendaApi.Apis.GraphQL.Inputs;
 
 /// <summary>
-/// Datos de entrada para crear un nuevo producto.
-/// </summary>
-/// <remarks>
-/// <para><b>Validaciones:</b></para>
-/// <list type="bullet">
-///   <item><description>Nombre: obligatorio, entre 3 y 200 caracteres</description></item>
-///   <item><description>Descripción: opcional, máximo 1000 caracteres</description></item>
-///   <item><description>Precio: obligatorio, mayor a 0</description></item>
-///   <item><description>Stock: obligatorio, no negativo</description></item>
-///   <item><description>Imagen: opcional, URL válida, máximo 500 caracteres</description></item>
-///   <item><description>CategoriaId: obligatorio, debe existir</description></item>
-/// </list>
-/// <para><b>Errores posibles:</b></para>
-/// <list type="bullet">
-///   <item><description>VALIDATION: datos inválidos</description></item>
-///   <item><description>NOT_FOUND: la categoría no existe</description></item>
-///   <item><description>CONFLICT: ya existe producto con el mismo nombre</description></item>
-/// </list>
-/// </remarks>
-public record CreateProductoInput
+    /// Datos de entrada para crear un producto.
+    /// </summary>
+    public record CreateProductoInput
 {
     /// <summary>
     /// Nombre del producto. Obligatorio y único.
@@ -60,24 +43,9 @@ public record CreateProductoInput
 }
 
 /// <summary>
-/// Datos de entrada para actualizar un producto existente.
-/// Todos los campos son opcionales: los valores null indican "no modificar".
-/// </summary>
-/// <remarks>
-/// <para><b>Comportamiento:</b></para>
-/// <list type="bullet">
-///   <item><description>Solo se modifican los campos proporcionados</description></item>
-///   <item><description>Si se modifica el nombre, debe ser único</description></item>
-///   <item><description>Si se modifica la categoría, debe existir</description></item>
-/// </list>
-/// <para><b>Errores posibles:</b></para>
-/// <list type="bullet">
-///   <item><description>NOT_FOUND: el producto no existe</description></item>
-///   <item><description>CONFLICT: el nuevo nombre ya está en uso</description></item>
-///   <item><description>VALIDATION: datos inválidos</description></item>
-/// </list>
-/// </remarks>
-public record UpdateProductoInput
+    /// Datos de entrada para actualizar un producto.
+    /// </summary>
+    public record UpdateProductoInput
 {
     /// <summary>
     /// Nuevo nombre del producto (opcional).
