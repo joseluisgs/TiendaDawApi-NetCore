@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Controllers;
+using TiendaApi.Api.Controllers;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 

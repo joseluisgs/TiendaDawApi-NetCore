@@ -103,7 +103,7 @@ services:
 
   api:
     build:
-      context: ./TiendaApi.Apis
+      context: ./TiendaApi.Api
       dockerfile: Dockerfile
       args:
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}

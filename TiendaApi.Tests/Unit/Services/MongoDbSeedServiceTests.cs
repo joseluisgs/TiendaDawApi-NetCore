@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
-using TiendaApi.Apis.Data.Seed.Mongo;
-using TiendaApi.Apis.Models;
+using TiendaApi.Api.Data.Seed.Mongo;
+using TiendaApi.Api.Models;
 
 namespace TiendaApi.Tests.Unit.Services;
 

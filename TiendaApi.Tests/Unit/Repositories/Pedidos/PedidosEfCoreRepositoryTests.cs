@@ -4,9 +4,9 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using Moq;
 using NUnit.Framework;
-using TiendaApi.Apis.Data;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Pedidos;
+using TiendaApi.Api.Data;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Repositories.Pedidos;
 

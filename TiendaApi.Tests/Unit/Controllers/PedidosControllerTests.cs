@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System.Security.Claims;
-using TiendaApi.Apis.Controllers;
-using TiendaApi.Apis.Dtos.Common;
-using TiendaApi.Apis.Dtos.Pedidos;
-using TiendaApi.Apis.Errors;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Services.Pedidos;
+using TiendaApi.Api.Controllers;
+using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Pedidos;
+using TiendaApi.Api.Errors;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Services.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 

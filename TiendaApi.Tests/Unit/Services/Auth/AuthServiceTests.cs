@@ -3,12 +3,12 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Dtos.Usuarios;
-using TiendaApi.Apis.Errors;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Usuarios;
-using TiendaApi.Apis.Services.Auth;
-using TiendaApi.Apis.Validators.Usuarios;
+using TiendaApi.Api.Dtos.Usuarios;
+using TiendaApi.Api.Errors;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Usuarios;
+using TiendaApi.Api.Services.Auth;
+using TiendaApi.Api.Validators.Usuarios;
 
 namespace TiendaApi.Tests.Unit.Services.Auth;
 

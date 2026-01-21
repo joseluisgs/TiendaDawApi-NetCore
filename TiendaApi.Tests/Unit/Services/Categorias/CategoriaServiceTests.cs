@@ -4,13 +4,13 @@ using FluentValidation.Results;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Dtos.Categorias;
-using TiendaApi.Apis.Errors;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Categorias;
-using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.Services.Categorias;
-using TiendaApi.Apis.Validators.Categorias;
+using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Errors;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Services.Categorias;
+using TiendaApi.Api.Validators.Categorias;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 

@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Services.Auth;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Services.Auth;
 
 namespace TiendaApi.Tests.Unit.Services.Auth;
 

@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Errors;
-using TiendaApi.Apis.Services.Storage;
+using TiendaApi.Api.Errors;
+using TiendaApi.Api.Services.Storage;
 
 namespace TiendaApi.Tests.Unit.Services.Storage;
 

@@ -8,15 +8,15 @@ using NUnit.Framework;
 using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
-using TiendaApi.Apis.Data;
-using TiendaApi.Apis.Dtos.Usuarios;
-using TiendaApi.Apis.Dtos.Common;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Usuarios;
-using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.Services.Email;
-using TiendaApi.Apis.Services.Users;
-using TiendaApi.Apis.Validators.Usuarios;
+using TiendaApi.Api.Data;
+using TiendaApi.Api.Dtos.Usuarios;
+using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Usuarios;
+using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Services.Email;
+using TiendaApi.Api.Services.Users;
+using TiendaApi.Api.Validators.Usuarios;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Services;
 

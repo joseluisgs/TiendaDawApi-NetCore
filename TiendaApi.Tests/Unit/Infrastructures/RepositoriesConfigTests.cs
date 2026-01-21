@@ -3,8 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUnit.Framework;
-using TiendaApi.Apis.Infrastructures;
-using TiendaApi.Apis.Repositories.Pedidos;
+using TiendaApi.Api.Infrastructures;
+using TiendaApi.Api.Repositories.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Infrastructures;
 
@@ -79,6 +79,6 @@ public class RepositoriesConfigTests
         _services.AddRepositories(_mockConfiguration.Object);
 
         // Assert
-        _services.Should().Contain(d => d.ServiceType == typeof(TiendaApi.Apis.Repositories.Categorias.ICategoriaRepository));
+        _services.Should().Contain(d => d.ServiceType == typeof(TiendaApi.Api.Repositories.Categorias.ICategoriaRepository));
     }
 }

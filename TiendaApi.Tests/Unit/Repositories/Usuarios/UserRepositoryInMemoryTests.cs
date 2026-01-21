@@ -2,10 +2,10 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Data;
-using TiendaApi.Apis.Dtos.Usuarios;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Usuarios;
+using TiendaApi.Api.Data;
+using TiendaApi.Api.Dtos.Usuarios;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Usuarios;
 
 namespace TiendaApi.Tests.Unit.Repositories.Usuarios;
 

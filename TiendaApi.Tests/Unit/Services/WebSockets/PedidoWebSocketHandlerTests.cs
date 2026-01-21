@@ -5,9 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using TiendaApi.Apis.Services.Auth;
-using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.Realtime.Pedidos;
+using TiendaApi.Api.Services.Auth;
+using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.WebSockets;
 

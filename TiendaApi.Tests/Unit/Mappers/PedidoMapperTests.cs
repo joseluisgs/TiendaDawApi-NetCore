@@ -1,9 +1,9 @@
 using FluentAssertions;
 using MongoDB.Bson;
-using TiendaApi.Apis.Dtos.Common;
-using TiendaApi.Apis.Dtos.Pedidos;
-using TiendaApi.Apis.Mappers;
-using TiendaApi.Apis.Models;
+using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Pedidos;
+using TiendaApi.Api.Mappers;
+using TiendaApi.Api.Models;
 
 namespace TiendaApi.Tests.Unit.Mappers;
 

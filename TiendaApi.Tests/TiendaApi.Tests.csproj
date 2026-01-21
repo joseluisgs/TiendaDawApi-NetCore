@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TiendaApi.Apis\TiendaApi.csproj" />
+    <ProjectReference Include="..\TiendaApi.Api\TiendaApi.csproj" />
   </ItemGroup>
 
 </Project>

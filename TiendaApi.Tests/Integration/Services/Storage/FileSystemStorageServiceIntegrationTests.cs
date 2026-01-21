@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using System.Text;
-using TiendaApi.Apis.Services.Storage;
+using TiendaApi.Api.Services.Storage;
 
 namespace TiendaApi.Tests.Integration.Services.Storage;
 

@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Threading.Channels;
 using Testcontainers.PostgreSql;
-using TiendaApi.Apis.Data;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Categorias;
-using TiendaApi.Apis.Repositories.Productos;
-using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.Services.Email;
+using TiendaApi.Api.Data;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 

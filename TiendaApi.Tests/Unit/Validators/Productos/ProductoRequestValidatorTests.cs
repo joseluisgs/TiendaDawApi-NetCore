@@ -1,7 +1,7 @@
 using FluentValidation;
 using FluentValidation.TestHelper;
-using TiendaApi.Apis.Dtos.Productos;
-using TiendaApi.Apis.Validators.Productos;
+using TiendaApi.Api.Dtos.Productos;
+using TiendaApi.Api.Validators.Productos;
 
 namespace TiendaApi.Tests.Unit.Validators.Productos;
 

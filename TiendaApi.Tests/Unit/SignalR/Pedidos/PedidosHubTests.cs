@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using TiendaApi.Apis.Realtime.Pedidos;
+using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.SignalR.Pedidos;
 

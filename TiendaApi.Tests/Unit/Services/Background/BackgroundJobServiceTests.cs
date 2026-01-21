@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using TiendaApi.Apis.Services.Background.Host;
+using TiendaApi.Api.Services.Background.Host;
 
 namespace TiendaApi.Tests.Unit.Services.Background;
 

@@ -3,7 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Services.Auth;
+using TiendaApi.Api.Services.Auth;
 
 namespace TiendaApi.Tests.Unit.Services.Auth;
 

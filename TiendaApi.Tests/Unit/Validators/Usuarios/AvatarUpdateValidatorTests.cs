@@ -1,6 +1,6 @@
 using FluentAssertions;
-using TiendaApi.Apis.Dtos.Usuarios;
-using TiendaApi.Apis.Validators.Usuarios;
+using TiendaApi.Api.Dtos.Usuarios;
+using TiendaApi.Api.Validators.Usuarios;
 
 namespace TiendaApi.Tests.Unit.Validators.Usuarios;
 

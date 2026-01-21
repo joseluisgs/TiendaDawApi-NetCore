@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Npgsql;
 using System.Collections.Generic;
-using TiendaApi.Apis.Exceptions;
-using TiendaApi.Apis.Middleware;
+using TiendaApi.Api.Exceptions;
+using TiendaApi.Api.Middleware;
 
 namespace TiendaApi.Tests.Unit.Middleware;
 

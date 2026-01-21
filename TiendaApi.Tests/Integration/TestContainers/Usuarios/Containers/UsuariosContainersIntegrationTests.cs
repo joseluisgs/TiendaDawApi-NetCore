@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
-using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.Services.Email;
+using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Containers;
 

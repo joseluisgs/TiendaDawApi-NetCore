@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
-using TiendaApi.Apis.GraphQL.Queries;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Categorias;
-using TiendaApi.Apis.Repositories.Productos;
+using TiendaApi.Api.GraphQL.Queries;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Productos;
 
 namespace TiendaApi.Tests.Unit.GraphQL;
 

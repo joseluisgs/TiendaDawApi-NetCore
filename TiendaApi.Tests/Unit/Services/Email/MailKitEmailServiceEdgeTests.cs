@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Services.Email;
+using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Unit.Services.Email;
 

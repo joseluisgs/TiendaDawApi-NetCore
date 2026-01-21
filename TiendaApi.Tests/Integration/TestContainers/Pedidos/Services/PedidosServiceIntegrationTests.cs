@@ -10,17 +10,17 @@ using System.Diagnostics;
 using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
-using TiendaApi.Apis.Data;
-using TiendaApi.Apis.Dtos.Pedidos;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Categorias;
-using TiendaApi.Apis.Repositories.Pedidos;
-using TiendaApi.Apis.Repositories.Productos;
-using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.Services.Email;
-using TiendaApi.Apis.Services.Pedidos;
-using TiendaApi.Apis.Validators.Pedidos;
-using TiendaApi.Apis.Realtime.Pedidos;
+using TiendaApi.Api.Data;
+using TiendaApi.Api.Dtos.Pedidos;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Pedidos;
+using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Services.Email;
+using TiendaApi.Api.Services.Pedidos;
+using TiendaApi.Api.Validators.Pedidos;
+using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 

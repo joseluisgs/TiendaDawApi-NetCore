@@ -5,20 +5,20 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Dtos.Categorias;
-using TiendaApi.Apis.Dtos.Productos;
-using TiendaApi.Apis.Errors;
-using TiendaApi.Apis.GraphQL.Publishers;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Categorias;
-using TiendaApi.Apis.Repositories.Productos;
-using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.Services.Categorias;
-using TiendaApi.Apis.Services.Productos;
-using TiendaApi.Apis.Services.Storage;
-using TiendaApi.Apis.Validators.Categorias;
-using TiendaApi.Apis.Validators.Productos;
-using TiendaApi.Apis.Realtime.Productos;
+using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Dtos.Productos;
+using TiendaApi.Api.Errors;
+using TiendaApi.Api.GraphQL.Publishers;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Services.Categorias;
+using TiendaApi.Api.Services.Productos;
+using TiendaApi.Api.Services.Storage;
+using TiendaApi.Api.Validators.Categorias;
+using TiendaApi.Api.Validators.Productos;
+using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 
@@ -73,8 +73,8 @@ public class ErrorHandlingComparisonTests
 
         var mockWebSocketHandler = new Mock<ProductosWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductosWebSocketHandler>>());
         var mockHubContext = new Mock<IHubContext<ProductosHub>>();
-        var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
-        var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
+        var mockEmailService = new Mock<TiendaApi.Api.Services.Email.IEmailService>();
+        var mockCacheService = new Mock<TiendaApi.Api.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
         var mockStorageService = new Mock<IStorageService>();
         var mockEventPublisher = new Mock<IEventPublisher>();
@@ -239,10 +239,10 @@ public class ErrorHandlingComparisonTests
         // Re-crear servicio con mocks configurados
         var mockWebSocketHandler = new Mock<ProductosWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductosWebSocketHandler>>());
         var mockHubContext = new Mock<IHubContext<ProductosHub>>();
-        var mockEmailService = new Mock<TiendaApi.Apis.Services.Email.IEmailService>();
-        var mockCacheService = new Mock<TiendaApi.Apis.Services.Cache.ICacheService>();
+        var mockEmailService = new Mock<TiendaApi.Api.Services.Email.IEmailService>();
+        var mockCacheService = new Mock<TiendaApi.Api.Services.Cache.ICacheService>();
         var mockConfiguration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
-        var mockStorageService = new Mock<TiendaApi.Apis.Services.Storage.IStorageService>();
+        var mockStorageService = new Mock<TiendaApi.Api.Services.Storage.IStorageService>();
         var mockEventPublisher = new Mock<IEventPublisher>();
 
         _productoService = new ProductoService(

@@ -41,7 +41,9 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
       - [Comandos específicos por tipo de test](#comandos-específicos-por-tipo-de-test)
       - [Con coverage](#con-coverage)
       - [Configuración de tests](#configuración-de-tests)
-    - [Tests E2E con Newman (Postman)](#tests-e2e-con-newman-postman)
+    - [Tests E2E con Newman (Postman) y Bruno](#tests-e2e-con-newman-postman-y-bruno)
+      - [Postman (Newman)](#postman-newman)
+      - [Bruno (CLI)](#bruno-cli)
   - [📚 Documentación](#-documentación)
     - [Fundamentos y Configuración](#fundamentos-y-configuración)
     - [API y Controllers](#api-y-controllers)
@@ -605,7 +607,7 @@ TiendaDawApi-NetCore/
 ├── docker-compose.prod.yml           # Producción (con API containerizada)
 ├── .env.example                      # Variables de entorno de ejemplo
 │
-├── TiendaApi.Apis/                   # Proyecto Principal (ASP.NET Core 10)
+├── TiendaApi.Api/                    # Proyecto Principal (ASP.NET Core 10)
 │   ├── Program.cs                    # Configuración de Pipeline, DI y Middlewares
 │   ├── Controllers/                  # Controladores REST (Auth, Categorias, Productos, Pedidos, Users)
 │   ├── Services/                     # Lógica de negocio (Auth, Categorias, Productos, Users)
@@ -641,25 +643,25 @@ TiendaDawApi-NetCore/
 │   ├── Integration/                  # Tests de integración con bases de datos reales
 │   └── coverage/                     # Reporte de cobertura de código
 │
-├── TiendaApi.ApiTests/              # Tests E2E (Postman + Bruno)
-│   ├── Postman/                     # Colección Postman + Newman
+├── TiendaApi.Tests.E2E/              # Tests E2E (Postman + Bruno)
+│   ├── Postman/                      # Colección Postman + Newman
 │   │   ├── TiendaApi.NetCore.postman_collection.json
 │   │   ├── TiendaApi.NetCore.postman_environment.json
 │   │   ├── test-image.png
 │   │   ├── docker-compose.yml
 │   │   └── reports/
 │   │
-│   ├── Bruno/                       # Tests Bruno CLI
-│   │   ├── 00-Setup/ a 13-Teardown/ # Tests organizados por carpeta
-│   │   ├── environments/local.bru   # Variables de entorno
+│   ├── Bruno/                        # Tests Bruno CLI
+│   │   ├── 00-Setup/ a 13-Teardown/  # Tests organizados por carpeta
+│   │   ├── environments/local.bru    # Variables de entorno
 │   │   ├── assets/test-image.png
 │   │   ├── docker-compose.yml
 │   │   └── reports/
 │
-├── TiendaApi.ApiClients/            # Clientes frontend de ejemplo
-│   ├── signalr-client-js/           # Cliente SignalR en JavaScript
-│   ├── websocket-client-js/         # Cliente WebSocket en JavaScript
-│   └── graphql-client-js/           # Cliente GraphQL en JavaScript
+├── TiendaApi.Clients/                # Clientes frontend de ejemplo
+│   ├── signalr-client-js/            # Cliente SignalR en JavaScript
+│   ├── websocket-client-js/          # Cliente WebSocket en JavaScript
+│   └── graphql-client-js/            # Cliente GraphQL en JavaScript
 │
 ├── doc/                              # Documentación técnica
 └── README.md                         # Este archivo

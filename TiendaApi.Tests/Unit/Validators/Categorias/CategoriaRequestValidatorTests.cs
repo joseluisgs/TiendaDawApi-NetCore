@@ -1,6 +1,6 @@
 using FluentValidation.TestHelper;
-using TiendaApi.Apis.Dtos.Categorias;
-using TiendaApi.Apis.Validators.Categorias;
+using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Validators.Categorias;
 
 namespace TiendaApi.Tests.Unit.Validators.Categorias;
 

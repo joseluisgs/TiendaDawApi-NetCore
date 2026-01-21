@@ -1,7 +1,7 @@
 using FluentAssertions;
-using TiendaApi.Apis.Dtos.Usuarios;
-using TiendaApi.Apis.Mappers;
-using TiendaApi.Apis.Models;
+using TiendaApi.Api.Dtos.Usuarios;
+using TiendaApi.Api.Mappers;
+using TiendaApi.Api.Models;
 
 namespace TiendaApi.Tests.Unit.Mappers;
 

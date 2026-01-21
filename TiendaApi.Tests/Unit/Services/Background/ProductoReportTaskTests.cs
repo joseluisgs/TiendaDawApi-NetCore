@@ -4,11 +4,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Productos;
-using TiendaApi.Apis.Repositories.Usuarios;
-using TiendaApi.Apis.Services.Background.Jobs;
-using TiendaApi.Apis.Services.Email;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Repositories.Usuarios;
+using TiendaApi.Api.Services.Background.Jobs;
+using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Unit.Services.Background;
 

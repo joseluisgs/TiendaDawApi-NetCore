@@ -6,19 +6,19 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Dtos.Productos;
-using TiendaApi.Apis.Errors;
-using TiendaApi.Apis.Errors.Productos;
-using TiendaApi.Apis.GraphQL.Publishers;
-using TiendaApi.Apis.Models;
-using TiendaApi.Apis.Repositories.Categorias;
-using TiendaApi.Apis.Repositories.Productos;
-using TiendaApi.Apis.Services.Cache;
-using TiendaApi.Apis.Services.Email;
-using TiendaApi.Apis.Services.Productos;
-using TiendaApi.Apis.Services.Storage;
-using TiendaApi.Apis.Validators.Productos;
-using TiendaApi.Apis.Realtime.Productos;
+using TiendaApi.Api.Dtos.Productos;
+using TiendaApi.Api.Errors;
+using TiendaApi.Api.Errors.Productos;
+using TiendaApi.Api.GraphQL.Publishers;
+using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Services.Email;
+using TiendaApi.Api.Services.Productos;
+using TiendaApi.Api.Services.Storage;
+using TiendaApi.Api.Validators.Productos;
+using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Productos;
 
@@ -519,7 +519,7 @@ public class ProductoServiceTests
         mockFile.Setup(f => f.Length).Returns(1000);
         mockFile.Setup(f => f.ContentType).Returns("image/png");
 
-        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Apis.Errors.DomainError>("/uploads/productos/new.png");
+        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Api.Errors.DomainError>("/uploads/productos/new.png");
         _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
             .ReturnsAsync(saveResult);
 
@@ -555,11 +555,11 @@ public class ProductoServiceTests
         mockFile.Setup(f => f.Length).Returns(1000);
         mockFile.Setup(f => f.ContentType).Returns("image/png");
 
-        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Apis.Errors.DomainError>("/uploads/productos/new.png");
+        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Api.Errors.DomainError>("/uploads/productos/new.png");
         _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
             .ReturnsAsync(saveResult);
 
-        var deleteResult = CSharpFunctionalExtensions.Result.Success<bool, TiendaApi.Apis.Errors.DomainError>(true);
+        var deleteResult = CSharpFunctionalExtensions.Result.Success<bool, TiendaApi.Api.Errors.DomainError>(true);
         _mockStorageService.Setup(s => s.DeleteFileAsync("/storage/uploads/productos/old.png"))
             .ReturnsAsync(deleteResult);
 

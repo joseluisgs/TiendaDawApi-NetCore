@@ -1,9 +1,9 @@
 using FluentAssertions;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using TiendaApi.Apis.Dtos.Common;
-using TiendaApi.Apis.Dtos.Usuarios;
-using TiendaApi.Apis.Validators.Usuarios;
+using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Usuarios;
+using TiendaApi.Api.Validators.Usuarios;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Validators;
 

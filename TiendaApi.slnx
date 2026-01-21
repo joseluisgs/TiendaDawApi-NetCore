@@ -4,6 +4,6 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="TiendaApi.Apis/TiendaApi.csproj" />
+  <Project Path="TiendaApi.Api/TiendaApi.csproj" />
   <Project Path="TiendaApi.Tests/TiendaApi.Tests.csproj" />
 </Solution>

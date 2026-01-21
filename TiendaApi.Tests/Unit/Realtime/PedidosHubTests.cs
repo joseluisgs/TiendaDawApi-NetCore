@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using System.Security.Claims;
-using TiendaApi.Apis.Realtime.Pedidos;
+using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Realtime;
 

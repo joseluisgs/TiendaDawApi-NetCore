@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using TiendaApi.Apis.Data;
-using TiendaApi.Apis.Dtos.Productos;
-using TiendaApi.Apis.Models;
+using TiendaApi.Api.Data;
+using TiendaApi.Api.Dtos.Productos;
+using TiendaApi.Api.Models;
 
 namespace TiendaApi.Tests.Unit.Repositories.Productos;
 

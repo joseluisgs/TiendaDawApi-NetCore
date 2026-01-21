@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TiendaApi.Apis.Services.Cache;
+using TiendaApi.Api.Services.Cache;
 
 namespace TiendaApi.Tests.Unit.Services.Cache;
 

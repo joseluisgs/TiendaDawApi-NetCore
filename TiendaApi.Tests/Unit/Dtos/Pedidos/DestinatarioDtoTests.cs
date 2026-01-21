@@ -1,8 +1,8 @@
 using FluentAssertions;
 using FluentValidation;
-using TiendaApi.Apis.Dtos.Common;
-using TiendaApi.Apis.Dtos.Pedidos;
-using TiendaApi.Apis.Validators.Pedidos;
+using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Pedidos;
+using TiendaApi.Api.Validators.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Dtos.Pedidos;
 
