@@ -156,11 +156,13 @@ dotnet run --project TiendaApi.Apis
 # O con Hot Reload
 dotnet watch run --project TiendaApi.Apis
 
-# Acceso a la API
+# Acceso a la API (Desarrollo - HTTP)
 open http://localhost:5000
 
-# Acceso a Swagger UI
+# Acceso a Swagger UI (Desarrollo - HTTP)
 open http://localhost:5000/swagger
+
+> **Nota:** En producción, la API usa HTTPS obligatorio con HSTS. Ver [Seguridad HTTP](doc/27-seguridad-http.md) para más detalles.
 ```
 
 ### Desarrollo en Producción con Docker
@@ -345,10 +347,11 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | 22  | [Mapeadores](doc/22-mapeadores.md)                         | AutoMapper vs extensiones         |
 
 ### Seguridad
-| #   | Documento                                          | Descripción     |
-| --- | -------------------------------------------------- | --------------- |
-| 12  | [JWT Authentication](doc/12-jwt-authentication.md) | Tokens, Claims  |
-| 13  | [Autorización Roles](doc/13-autorizacion-roles.md) | Policies, Roles |
+| #   | Documento                                          | Descripción              |
+| --- | -------------------------------------------------- | ------------------------ |
+| 12  | [JWT Authentication](doc/12-jwt-authentication.md) | Tokens, Claims           |
+| 13  | [Autorización Roles](doc/13-autorizacion-roles.md) | Policies, Roles          |
+| 27  | [Seguridad HTTP](doc/27-seguridad-http.md)         | HSTS, HTTPS, Headers     |
 
 ### APIs Avanzadas
 | #   | Documento                          | Descripción  |
@@ -394,8 +397,8 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 ### Arquitectura
 | #   | Documento                                                 | Descripción                       |
 | --- | --------------------------------------------------------- | --------------------------------- |
-| 27  | [Clean Architecture](doc/27-clean-architecture.md)        | Capas, estructura                 |
-| 28  | [Organización Program.cs](doc/28-organizacion-program.md) | Extension Methods, modularización |
+| 28  | [Clean Architecture](doc/28-clean-architecture.md)        | Capas, estructura                 |
+| 29  | [Organización Program.cs](doc/29-organizacion-program.md) | Extension Methods, modularización |
 
 ## ⚒️ Diagrama de Clases del Dominio
 
@@ -1010,6 +1013,10 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 - ✅ **SignalR Security**: Hubs con `[Authorize]`, Context.User disponible, grupos dinámicos (user-{id}, admins)
 - ✅ **Concurrency Control**: RowVersion para control de concurrencia optimista
 - ✅ **EF Core Parameterization**: Protección contra SQL Injection via LINQ
+- ✅ **HTTPS + HSTS**: Redirección HTTP→HTTPS y HSTS con max-age 365 días
+- ✅ **Security Headers**: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
+
+> **Ver más:** [Seguridad HTTP](doc/27-seguridad-http.md)
 
 ## 📡 Endpoints
 

@@ -72,7 +72,20 @@ Log.Information("✅ Aplicación construida");
 app.UseSwaggerUI(isDevelopment);
 app.UseGraphiQL();
 app.UseGlobalExceptionHandler();
-app.UseHttpsRedirection();
+
+// Security Headers - Siempre activo (no afecta funcionalidad)
+app.UseSecurityHeaders();
+
+// HTTPS + HSTS - Solo en producción (para desarrollo/testing local, permitir HTTP)
+if (!isDevelopment)
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+else
+{
+    Log.Information("🔓 Modo desarrollo: HTTP permitido (sin redirección HTTPS)");
+}
 app.UseCorsPolicy();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -119,28 +132,34 @@ finally
 static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
 {
     var urls = configuration["ASPNETCORE_URLS"]?.Split(';') ?? new[] { "http://localhost:5000" };
-    var port = urls.FirstOrDefault()?.Split(':').LastOrDefault() ?? "5000";
+    var firstUrl = urls.FirstOrDefault() ?? "http://localhost:5000";
+    var protocol = firstUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
+    var host = firstUrl.Contains("://") ? firstUrl.Split("://")[1].Split(':')[0] : "localhost";
+    var port = firstUrl.Contains(':') ? firstUrl.Split(':').Last() : "5000";
+
+    var mode = isDevelopment ? "DESARROLLO" : "PRODUCCION";
+    var baseUrl = $"{protocol}://{host}:{port}";
 
     Log.Information("=================================================================");
     Log.Information("TiendaApi - API REST Educativa");
     Log.Information("=================================================================");
-    Log.Information("Documentacion Swagger:  http://localhost:{Port}/", port);
-    Log.Information("GraphiQL UI:            http://localhost:{Port}/graphiql", port);
+    Log.Information("Documentacion Swagger:  {BaseUrl}/", baseUrl);
+    Log.Information("GraphiQL UI:            {BaseUrl}/graphiql", baseUrl);
     Log.Information("=================================================================");
     Log.Information("WEBSOCKETS:");
-    Log.Information("  Productos (publico):  ws://localhost:{Port}/ws/productos", port);
-    Log.Information("  Pedidos (auth JWT):   ws://localhost:{Port}/ws/pedidos?token=JWT", port);
+    Log.Information("  Productos (publico):  ws://{Host}:{Port}/ws/productos", host, port);
+    Log.Information("  Pedidos (auth JWT):   ws://{Host}:{Port}/ws/pedidos?token=JWT", host, port);
     Log.Information("=================================================================");
     Log.Information("SIGNALR (Realtime):");
-    Log.Information("  Productos (publico):  ws://localhost:{Port}/hubs/productos", port);
-    Log.Information("  Pedidos (auth JWT):   ws://localhost:{Port}/hubs/pedidos", port);
+    Log.Information("  Productos (publico):  ws://{Host}:{Port}/hubs/productos", host, port);
+    Log.Information("  Pedidos (auth JWT):   ws://{Host}:{Port}/hubs/pedidos", host, port);
     Log.Information("=================================================================");
     Log.Information("ENDPOINTS REST:");
-    Log.Information("  Auth:       POST /api/v1/auth/signup, /api/v1/auth/signin");
-    Log.Information("  Categorias: GET/POST/PUT/DELETE /api/categorias");
-    Log.Information("  Productos:  GET/POST/PUT/DELETE /api/productos");
-    Log.Information("  Pedidos:    GET/POST /api/pedidos");
-    Log.Information("  Usuarios:   GET/POST/PUT/DELETE /api/users");
+    Log.Information("  Auth:       POST {BaseUrl}/api/v1/auth/signup, /api/v1/auth/signin", baseUrl);
+    Log.Information("  Categorias: GET/POST/PUT/DELETE {BaseUrl}/api/categorias", baseUrl);
+    Log.Information("  Productos:  GET/POST/PUT/DELETE {BaseUrl}/api/productos", baseUrl);
+    Log.Information("  Pedidos:    GET/POST {BaseUrl}/api/pedidos", baseUrl);
+    Log.Information("  Usuarios:   GET/POST/PUT/DELETE {BaseUrl}/api/users", baseUrl);
     Log.Information("=================================================================");
     Log.Information("DATOS SEMBRADOS (Seed):");
     Log.Information("  PostgreSQL: admin (admin@tienda.com/admin), userdaw (userdaw@tienda.com/userdaw)");
@@ -152,7 +171,7 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     Log.Information("  Admin:   admin@tienda.com / admin (ROLE_ADMIN)");
     Log.Information("  Usuario: userdaw@tienda.com / userdaw (ROLE_USER)");
     Log.Information("=================================================================");
-    Log.Information("🚀 Aplicacion iniciada correctamente en http://localhost:{Port} ({Mode})",
-        port, isDevelopment ? "DESARROLLO" : "PRODUCCION");
+    Log.Information("🚀 Aplicacion iniciada correctamente en {BaseUrl} ({Mode})",
+        baseUrl, mode);
     Log.Information("=================================================================");
 }
