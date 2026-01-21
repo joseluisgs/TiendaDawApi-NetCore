@@ -33,6 +33,10 @@ public class GlobalExceptionHandler(
         }
     }
 
+    /// <summary>Maneja las excepciones capturadas.</summary>
+    /// <param name="context">Contexto HTTP.</param>
+    /// <param name="exception">Excepción capturada.</param>
+    /// <param name="errorId">ID de seguimiento del error.</param>
     private async Task HandleExceptionAsync(HttpContext context, Exception exception, string errorId)
     {
         context.Response.ContentType = "application/json";
@@ -120,10 +124,13 @@ public class GlobalExceptionHandler(
 }
 
 /// <summary>
-/// Método de extensión para registrar el middleware.
+/// Extensiones para registro del middleware.
 /// </summary>
 public static class GlobalExceptionHandlerExtensions
 {
+    /// <summary>Registra el middleware de excepciones.</summary>
+    /// <param name="app">Constructor de la aplicación.</param>
+    /// <returns>IApplicationBuilder.</returns>
     public static IApplicationBuilder UseGlobalExceptionHandler(this IApplicationBuilder app)
     {
         return app.UseMiddleware<GlobalExceptionHandler>();
