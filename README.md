@@ -100,6 +100,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - 🏪 **CRUD Completo**: Productos, Categorías, Pedidos y Usuarios
 - 🔐 **Autenticación JWT**: Token-based con roles y claims
+- 🔒 **HTTPS + HSTS**: Redirección HTTP→HTTPS, HSTS 365 días, Security Headers
 - 📧 **Notificaciones por Email**: Envío asíncrono con MailKit
 - 📊 **Cacheo con Redis**: Patrón Cache-Aside para mejorar rendimiento
 - 📡 **GraphQL**: Consultas flexibles con HotChocolate
@@ -134,6 +135,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **Docker** - Containerización
 - **Newman** - Pruebas de API
 - **BackgroundService** - Tareas programadas y jobs en segundo plano
+- **Security Headers** - X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy
 
 ## 🏃‍♂️ Inicio Rápido
 
@@ -218,10 +220,10 @@ API_PORT=5000
 
 TiendaDawApi implementa una pirámide de pruebas profesional:
 
-- **Unit Tests**: Validación de servicios, repositorios y lógica de negocio (1026 tests)
-- **Integration Tests**: Tests con bases de datos reales usando Testcontainers (141 tests)
-- **Coverage**: Indicadores de cobertura con Coverlet (74.53%)
-- **Newman**: Pruebas de API automatizadas
+- **Unit Tests**: Validación de servicios, repositorios y lógica de negocio 
+- **Integration Tests**: Tests con bases de datos reales usando Testcontainers
+- **Coverage**: Indicadores de cobertura con Coverlet
+- **Newman o Bruno**: Pruebas de API automatizadas
 
 ### Ejecución de Tests
 
