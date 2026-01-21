@@ -1,20 +1,20 @@
-# 27. Organización de Program.cs y Formas de Estructurar el Startup
+# 29. Organización de Program.cs y Formas de Estructurar el Startup
 
 ## Índice
 
-[27. Organización de Program.cs y Formas de Estructurar el Startup](#27-organización-de-programcs-y-formas-de-estructurar-el-startup)
-  - [27.1. El Problema del Program.cs Monolítico](#271-el-problema-del-programcs-monolítico)
-  - [27.2. Patrón de Extension Methods para Configuración](#272-patrón-de-extension-methods-para-configuración)
-  - [27.3. Estructura de Carpetas: Infrastructures/](#273-estructura-de-carpetas-infrastructures)
-  - [27.4. Ejemplos de Implementación](#274-ejemplos-de-implementación)
-  - [27.5. Program.cs Refactorizado](#275-programcs-refactorizado)
-  - [27.6. Otras Formas de Estructurar el Startup](#276-otras-formas-de-estructurar-el-startup)
-  - [27.7. Buenas Prácticas y Recomendaciones](#277-buenas-prácticas-y-recomendaciones)
-  - [27.8. Resumen](#278-resumen)
+[29. Organización de Program.cs y Formas de Estructurar el Startup](#27-organización-de-programcs-y-formas-de-estructurar-el-startup)
+  - [29.1. El Problema del Program.cs Monolítico](#291-el-problema-del-programcs-monolítico)
+  - [29.2. Patrón de Extension Methods para Configuración](#292-patrón-de-extension-methods-para-configuración)
+  - [29.3. Estructura de Carpetas: Infrastructures/](#293-estructura-de-carpetas-infrastructures)
+  - [29.4. Ejemplos de Implementación](#294-ejemplos-de-implementación)
+  - [29.5. Program.cs Refactorizado](#295-programcs-refactorizado)
+  - [29.6. Otras Formas de Estructurar el Startup](#296-otras-formas-de-estructurar-el-startup)
+  - [29.7. Buenas Prácticas y Recomendaciones](#297-buenas-prácticas-y-recomendaciones)
+  - [29.8. Resumen](#298-resumen)
 
 ---
 
-## 27.1. El Problema del Program.cs Monolítico
+## 29.1. El Problema del Program.cs Monolítico
 
 Cuando una aplicación crece, `Program.cs` acumula responsabilidades de configuración de servicios, middlewares, inicialización de bases de datos,Logging, autenticación, CORS, Swagger, y muchas otras configuraciones. Este crecimiento desorganizado genera varios problemas que afectan la mantenibilidad y la calidad del código a largo plazo.
 
@@ -187,7 +187,7 @@ Este código, aunque funcional, presenta todos los problemas mencionados anterio
 
 ---
 
-## 27.2. Patrón de Extension Methods para Configuración
+## 29.2. Patrón de Extension Methods para Configuración
 
 El patrón de extension methods es una técnica elegant para organizar el código de configuración de ASP.NET Core. Consiste en crear métodos de extensión para `IServiceCollection` (para configuración de servicios) y `WebApplication` (para configuración de middlewares), agrupando configuraciones relacionadas en archivos separados.
 
@@ -255,7 +255,7 @@ El módulo de **Additional** incluye email, almacenamiento de archivos, WebSocke
 
 ---
 
-## 27.3. Estructura de Carpetas: Infrastructures/
+## 29.3. Estructura de Carpetas: Infrastructures/
 
 La carpeta `Infrastructures/` (o `Infrastructure/`) es el lugar recomendado para almacenar todos los métodos de extensión relacionados con la configuración de la aplicación. Esta estructura sigue el patrón de arquitectura limpia (Clean Architecture) donde la infraestructura contiene detalles de implementación técnica.
 
@@ -359,7 +359,7 @@ flowchart TB
 
 ---
 
-## 27.4. Ejemplos de Implementación
+## 29.4. Ejemplos de Implementación
 
 ### Ejemplo 1: Configuración de Base de Datos
 
@@ -622,7 +622,7 @@ public static class CacheConfig
 
 ---
 
-## 27.5. Program.cs Refactorizado
+## 29.5. Program.cs Refactorizado
 
 El resultado de aplicar este patrón es un `Program.cs` limpio, legible y mantenible:
 
@@ -736,7 +736,7 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
 
 ---
 
-## 27.6. Otras Formas de Estructurar el Startup
+## 29.6. Otras Formas de Estructurar el Startup
 
 ### Opción 1: Módulos con Clase de Configuración
 
@@ -871,7 +871,7 @@ app.Run();
 
 ---
 
-## 27.7. Buenas Prácticas y Recomendaciones
+## 29.7. Buenas Prácticas y Recomendaciones
 
 ### Principios de Diseño
 
@@ -962,7 +962,7 @@ public void AddDatabases_ValidConfiguration_RegistersServices()
 
 ---
 
-## 27.8. Resumen
+## 29.8. Resumen
 
 A lo largo de este documento hemos explorado el problema del `Program.cs` monolítico y presentado soluciones prácticas para organizar el código de configuración de aplicaciones ASP.NET Core.
 
