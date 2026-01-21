@@ -16,13 +16,14 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
     {
         RuleFor(r => r.Username)
             .NotEmpty().WithMessage("El nombre de usuario es obligatorio")
-            .Length(3, 50).WithMessage("El nombre de usuario debe tener entre 3 y 50 caracteres")
+            .MinimumLength(3).WithMessage("El nombre de usuario debe tener al menos 3 caracteres")
+            .MaximumLength(50).WithMessage("El nombre de usuario no puede exceder 50 caracteres")
             .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Solo se permiten letras, números y guiones bajos");
 
         RuleFor(r => r.Email)
-            .NotEmpty().WithMessage("El email es obligatorio")
+            .NotEmpty().WithMessage("El correo electrónico es obligatorio")
             .EmailAddress().WithMessage("Debe ser un correo electrónico válido")
-            .MaximumLength(100).WithMessage("El email no puede exceder 100 caracteres");
+            .MaximumLength(100).WithMessage("El correo no puede exceder 100 caracteres");
 
         RuleFor(r => r.Password)
             .NotEmpty().WithMessage("La contraseña es obligatoria")

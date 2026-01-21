@@ -17,10 +17,10 @@ public class PedidoRequestValidator : AbstractValidator<PedidoRequestDto>
     public PedidoRequestValidator()
     {
         RuleFor(p => p.Items)
-            .NotEmpty().WithMessage("El pedido debe contener artículos");
+            .NotEmpty().WithMessage("El pedido debe contener al menos un artículo");
 
         RuleFor(p => p.Destinatario)
-            .NotNull().WithMessage("El destinatario es obligatorio")
+            .NotNull().WithMessage("El destinatario es obligatorio.")
             .SetValidator(DestinatarioValidator);
     }
 }

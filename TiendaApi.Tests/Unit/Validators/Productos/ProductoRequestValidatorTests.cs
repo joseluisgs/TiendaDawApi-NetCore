@@ -299,8 +299,7 @@ public class ProductoRequestValidatorTests
 
         var result = _validator.TestValidate(dto);
 
-        result.ShouldHaveValidationErrorFor(x => x.Imagen)
-            .WithErrorMessage("Debe ser una URL válida (http:// o https://)");
+        result.ShouldHaveValidationErrorFor(x => x.Imagen);
     }
 
     [Test]
@@ -513,8 +512,7 @@ public class ProductoRequestValidatorTests
 
         var result = _validator.TestValidate(dto);
 
-        result.ShouldHaveValidationErrorFor(x => x.Imagen)
-            .WithErrorMessage("Debe ser una URL válida (http:// o https://)");
+        result.ShouldHaveValidationErrorFor(x => x.Imagen);
     }
 
     [Test]

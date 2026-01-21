@@ -16,7 +16,8 @@ public class ProductoRequestValidator : AbstractValidator<ProductoRequestDto>
     {
         RuleFor(p => p.Nombre)
             .NotEmpty().WithMessage("El nombre es obligatorio")
-            .Length(3, 200).WithMessage("El nombre debe tener entre 3 y 200 caracteres");
+            .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")
+            .MaximumLength(200).WithMessage("El nombre no puede exceder 200 caracteres");
 
         RuleFor(p => p.Descripcion)
             .MaximumLength(1000).WithMessage("La descripción no puede exceder 1000 caracteres");
@@ -28,7 +29,12 @@ public class ProductoRequestValidator : AbstractValidator<ProductoRequestDto>
             .GreaterThanOrEqualTo(0).WithMessage("El stock no puede ser negativo");
 
         RuleFor(p => p.Imagen)
-            .MaximumLength(500).WithMessage("La URL de imagen no puede exceder 500 caracteres");
+            .MaximumLength(500).WithMessage("La URL de la imagen no puede exceder 500 caracteres")
+            .Must(url => string.IsNullOrEmpty(url) ||
+                (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+                 (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
+            .WithMessage("Debe ser una URL válida (http:// o https://)")
+            .When(p => !string.IsNullOrEmpty(p.Imagen));
 
         RuleFor(p => p.CategoriaId)
             .GreaterThan(0).WithMessage("Debe seleccionar una categoría válida");

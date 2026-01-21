@@ -16,6 +16,7 @@ public class CategoriaRequestValidator : AbstractValidator<CategoriaRequestDto>
     {
         RuleFor(c => c.Nombre)
             .NotEmpty().WithMessage("El nombre es obligatorio")
-            .Length(3, 100).WithMessage("El nombre debe tener entre 3 y 100 caracteres");
+            .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")
+            .MaximumLength(100).WithMessage("El nombre no puede exceder 100 caracteres");
     }
 }

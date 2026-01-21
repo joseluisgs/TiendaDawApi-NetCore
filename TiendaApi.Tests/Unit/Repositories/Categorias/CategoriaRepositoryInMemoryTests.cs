@@ -121,8 +121,9 @@ public class CategoriaRepositoryInMemoryTests
 
         await repository.DeleteAsync(1);
 
-        var categoria = await repository.FindByIdAsync(1);
-        categoria.Should().BeNull();
+        var categoria = await context.Categorias.IgnoreQueryFilters().SingleOrDefaultAsync(c => c.Id == 1);
+        categoria.Should().NotBeNull();
+        categoria!.IsDeleted.Should().BeTrue();
     }
 
     [Test]

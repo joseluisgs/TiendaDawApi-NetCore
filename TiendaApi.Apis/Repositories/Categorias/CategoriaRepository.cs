@@ -43,12 +43,18 @@ public class CategoriaRepository(
             query = query.Where(c => c.Nombre.Contains(filter.Nombre));
 
         if (filter.IsDeleted.HasValue)
+        {
+            query = query.IgnoreQueryFilters();
             query = query.Where(c => c.IsDeleted == filter.IsDeleted.Value);
+        }
 
         var totalCount = await query.CountAsync();
 
-        var items = await query
-            .OrderBy(GetSortExpression(filter.SortBy))
+        var orderedQuery = filter.Direction.Equals("desc", StringComparison.OrdinalIgnoreCase)
+            ? query.OrderByDescending(GetSortExpression(filter.SortBy))
+            : query.OrderBy(GetSortExpression(filter.SortBy));
+
+        var items = await orderedQuery
             .Skip(filter.Page * filter.Size)
             .Take(filter.Size)
             .ToListAsync();

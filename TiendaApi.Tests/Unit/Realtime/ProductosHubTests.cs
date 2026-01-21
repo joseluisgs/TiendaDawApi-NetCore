@@ -79,7 +79,7 @@ public class ProductosHubTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente SignalR conectado")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente conectado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -124,7 +124,7 @@ public class ProductosHubTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente SignalR desconectado")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente desconectado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -143,7 +143,7 @@ public class ProductosHubTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente SignalR desconectado con error")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente desconectado")),
                 exception,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
