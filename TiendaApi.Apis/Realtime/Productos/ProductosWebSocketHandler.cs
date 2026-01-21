@@ -9,32 +9,23 @@ using TiendaApi.Apis.Realtime.Common;
 namespace TiendaApi.Apis.Realtime.Productos;
 
 /// <summary>
-/// Tipos de notificación para eventos de productos.
+/// Tipos de notificación para productos.
 /// </summary>
 public static class ProductoNotificationType
 {
-    /// <summary>
-    /// Notificación de producto creado.
-    /// </summary>
+    /// <summary>Producto creado.</summary>
     public const string CREATED = "PRODUCTO_CREADO";
 
-    /// <summary>
-    /// Notificación de producto actualizado.
-    /// </summary>
+    /// <summary>Producto actualizado.</summary>
     public const string UPDATED = "PRODUCTO_ACTUALIZADO";
 
-    /// <summary>
-    /// Notificación de producto eliminado.
-    /// </summary>
+    /// <summary>Producto eliminado.</summary>
     public const string DELETED = "PRODUCTO_ELIMINADO";
 }
 
 /// <summary>
 /// Datos de notificación para eventos de productos.
 /// </summary>
-/// <param name="Tipo">Tipo de notificación (CREATED, UPDATED, DELETED).</param>
-/// <param name="ProductoId">Identificador del producto.</param>
-/// <param name="Producto">Datos del producto (null para DELETED).</param>
 public record ProductoNotificacion(
     string Tipo,
     long ProductoId,
@@ -42,154 +33,52 @@ public record ProductoNotificacion(
 );
 
 /// <summary>
-/// Handler de WebSocket para gestionar conexiones de notificaciones de productos.
+/// Handler de WebSocket para notificaciones de productos (público).
 /// </summary>
-/// <remarks>
-/// <para><b>Características:</b></para>
-/// <list type="bullet">
-///   <item><description>Notificaciones de broadcast a TODOS los clientes conectados.</description></item>
-///   <item><description>No requiere autenticación (público).</description></item>
-///   <item><description>Ideal para dashboards públicos y catálogos en tiempo real.</description></item>
-/// </list>
-/// 
-/// <para><b>EndPoint de conexión:</b></para>
-/// <code>ws://localhost:5000/ws/productos</code>
-/// 
-/// <para><b>Ejemplo de conexión desde cliente JavaScript:</b></para>
-/// <code>
-/// // Sin autenticación requerida
+/// <example>
+/// ws://localhost:5000/ws/productos
 /// const ws = new WebSocket('ws://localhost:5000/ws/productos');
-///
-/// ws.onmessage = (event) => {
-///     const data = JSON.parse(event.data);
-///     console.log('Notificación de producto:', data);
-/// };
-/// </code>
-/// 
-/// <para><b>Casos de uso:</b></para>
-/// <list type="bullet">
-///   <item><description>Dashboards públicos que muestran nuevos productos.</description></item>
-///   <item><description>Actualización de catálogos en tiempo real.</description></item>
-///   <item><description>Sistemas de inventario que monitorean cambios.</description></item>
-/// </list>
-/// 
-/// <para><b>Ejemplo de respuesta de notificación:</b></para>
-/// <code>
-/// {
-///   "entity": "productos",
-///   "type": "PRODUCTO_CREADO",
-///   "productoId": 123,
-///   "producto": {
-///     "id": 123,
-///     "nombre": "Nuevo Producto",
-///     "precio": 99.99,
-///     "stock": 50
-///   },
-///   "timestamp": "2025-01-18T10:30:00Z"
-/// }
-/// </code>
-/// 
-/// <para><b>Tipos de eventos:</b></para>
-/// <list type="table">
-///   <item>
-///     <term>PRODUCTO_CREADO</term>
-///     <description>Se creó un nuevo producto. Incluye datos del producto.</description>
-///   </item>
-///   <item>
-///     <term>PRODUCTO_ACTUALIZADO</term>
-///     <description>Se actualizó un producto. Incluye datos actualizados.</description>
-///   </item>
-///   <item>
-///     <term>PRODUCTO_ELIMINADO</term>
-///     <description>Se eliminó un producto. producto es null, solo envía productoId.</description>
-///   </item>
-/// </list>
-/// </remarks>
+/// ws.onmessage = (event) => console.log('Notificación:', JSON.parse(event.data));
+/// // Respuesta: {"entity":"productos","type":"PRODUCTO_CREADO","productoId":123,"producto":{...},"timestamp":"2025-01-18T10:30:00Z"}
+/// </example>
 public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger)
 {
     private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
     private readonly ILogger<ProductosWebSocketHandler> _logger = logger;
-    private readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
+    private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-    /// <summary>
-    /// Maneja una nueva conexión WebSocket para productos.
-    /// </summary>
-    /// <param name="context">Contexto HTTP de la conexión.</param>
+    /// <summary>Maneja una conexión WebSocket.</summary>
+    /// <param name="context">Contexto HTTP.</param>
     /// <param name="webSocket">Instancia del WebSocket.</param>
-    /// <returns>Tarea asíncrona representando la conexión.</returns>
-    /// <remarks>
-    /// <para><b>Proceso de conexión:</b></para>
-    /// <list type="number">
-    ///   <item><description>El cliente se conecta sin necesidad de autenticación.</description></item>
-    ///   <item><description>Se genera un connectionId único para la sesión.</description></item>
-    ///   <item><description>La conexión se almacena en el diccionario de conexiones.</description></item>
-    ///   <item><description>Cuando se cierra la conexión, se elimina del diccionario.</description></item>
-    /// </list>
-    /// </remarks>
     public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket)
     {
         var connectionId = Guid.NewGuid().ToString();
         _connections.TryAdd(connectionId, webSocket);
-
-        _logger.LogInformation("Conexión WebSocket establecida para productos: {ConnectionId}", connectionId);
+        _logger.LogInformation("Conexión WebSocket: {ConnectionId}", connectionId);
 
         try
         {
             var buffer = new byte[1024 * 4];
-            var result = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer),
-                CancellationToken.None);
+            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
             while (!result.CloseStatus.HasValue)
-            {
-                result = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer),
-                    CancellationToken.None);
-            }
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
-            await webSocket.CloseAsync(
-                result.CloseStatus.Value,
-                result.CloseStatusDescription,
-                CancellationToken.None);
+            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error en conexión WebSocket para productos: {ConnectionId}", connectionId);
+            _logger.LogError(ex, "Error en WebSocket: {ConnectionId}", connectionId);
         }
         finally
         {
             _connections.TryRemove(connectionId, out _);
-            _logger.LogInformation("Conexión WebSocket cerrada para productos: {ConnectionId}", connectionId);
+            _logger.LogInformation("Conexión cerrada: {ConnectionId}", connectionId);
         }
     }
 
-    /// <summary>
-    /// Notifica a todos los clientes conectados un evento de producto.
-    /// </summary>
+    /// <summary>Notifica a todos los clientes.</summary>
     /// <param name="notificacion">Datos de la notificación.</param>
-    /// <returns>Tarea asíncrona de la notificación.</returns>
-    /// <remarks>
-    /// <para><b>Ejemplo de uso:</b></para>
-    /// <code>
-    /// // Notificar que se creó un nuevo producto
-    /// await NotifyAsync(new ProductoNotificacion(
-    ///     ProductoNotificationType.CREATED,
-    ///     123,
-    ///     productoDto  // Datos del producto
-    /// ));
-    /// // TODOS los clientes conectados recibirán esta notificación
-    ///
-    /// // Notificar que se eliminó un producto
-    /// await NotifyAsync(new ProductoNotificacion(
-    ///     ProductoNotificationType.DELETED,
-    ///     123,
-    ///     null  // No hay datos del producto eliminado
-    /// ));
-    /// </code>
-    /// </remarks>
     public async Task NotifyAsync(ProductoNotificacion notificacion)
     {
         var wrapper = new
@@ -200,71 +89,39 @@ public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger
             producto = notificacion.Producto,
             timestamp = DateTime.UtcNow
         };
-
         await BroadcastNotificationAsync(wrapper);
     }
 
-    /// <summary>
-    /// Obtiene el número de conexiones activas.
-    /// </summary>
-    /// <returns>Número de conexiones activas.</returns>
+    /// <summary>Obtiene el número de conexiones activas.</summary>
+    /// <returns>Número de conexiones.</returns>
     public int GetConnectionCount() => _connections.Count;
 
-    #region Métodos Privados
-
-    /// <summary>
-    /// Envía una notificación a todos los clientes WebSocket conectados.
-    /// </summary>
-    /// <param name="notification">Notificación a broadcast.</param>
-    /// <returns>Tarea asíncrona del broadcast.</returns>
     private async Task BroadcastNotificationAsync<T>(T notification)
     {
-        if (_connections.IsEmpty)
-        {
-            _logger.LogDebug("No hay clientes WebSocket conectados para productos, omitiendo notificación");
-            return;
-        }
+        if (_connections.IsEmpty) return;
 
         var json = JsonSerializer.Serialize(notification, _jsonOptions);
         var bytes = Encoding.UTF8.GetBytes(json);
         var buffer = new ArraySegment<byte>(bytes);
-
-        _logger.LogInformation(
-            "Broadcasting notificación de producto a {Count} clientes",
-            _connections.Count);
-
-        var disconnectedConnections = new List<string>();
+        var disconnected = new List<string>();
 
         foreach (var kvp in _connections)
         {
             try
             {
                 if (kvp.Value.State == WebSocketState.Open)
-                {
-                    await kvp.Value.SendAsync(
-                        buffer,
-                        WebSocketMessageType.Text,
-                        endOfMessage: true,
-                        CancellationToken.None);
-                }
+                    await kvp.Value.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
                 else
-                {
-                    disconnectedConnections.Add(kvp.Key);
-                }
+                    disconnected.Add(kvp.Key);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error al enviar notificación a la conexión: {ConnectionId}", kvp.Key);
-                disconnectedConnections.Add(kvp.Key);
+                _logger.LogWarning(ex, "Error al enviar a: {ConnectionId}", kvp.Key);
+                disconnected.Add(kvp.Key);
             }
         }
 
-        foreach (var connectionId in disconnectedConnections)
-        {
-            _connections.TryRemove(connectionId, out _);
-            _logger.LogDebug("Eliminado cliente WebSocket de producto desconectado: {ConnectionId}", connectionId);
-        }
+        foreach (var id in disconnected)
+            _connections.TryRemove(id, out _);
     }
-
-    #endregion
 }
