@@ -133,7 +133,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **Swashbuckle/Swagger** - Documentación automática de API
 - **Coverlet** - Métricas de coverage
 - **Docker** - Containerización
-- **Newman** - Pruebas de API
+- **Newman/Bruno** - Pruebas de API
 - **BackgroundService** - Tareas programadas y jobs en segundo plano
 - **Security Headers** - X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy
 
