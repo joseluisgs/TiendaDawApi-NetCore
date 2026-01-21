@@ -1,5 +1,5 @@
 using FluentAssertions;
-using TiendaApi.Apis.Controllers;
+using TiendaApi.Apis.Dtos.Usuarios;
 
 namespace TiendaApi.Tests.Unit.Dtos.Usuarios;
 

@@ -319,8 +319,3 @@ public class UsersController(
         };
     }
 }
-
-public record AvatarUpdateDto
-{
-    public string AvatarUrl { get; init; } = string.Empty;
-}
