@@ -18,7 +18,7 @@ public class DireccionValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Calle)
-            .WithErrorMessage("La calle no puede superar los 200 caracteres.");
+            .WithErrorMessage("La calle no puede superar los 200 caracteres");
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class DireccionValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Numero)
-            .WithErrorMessage("El número no puede superar los 20 caracteres.");
+            .WithErrorMessage("El número no puede superar los 20 caracteres");
     }
 
     [Test]
@@ -88,7 +88,7 @@ public class DireccionValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Ciudad)
-            .WithErrorMessage("La ciudad no puede superar los 100 caracteres.");
+            .WithErrorMessage("La ciudad no puede superar los 100 caracteres");
     }
 
     [Test]
@@ -123,7 +123,7 @@ public class DireccionValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Provincia)
-            .WithErrorMessage("La provincia no puede superar los 100 caracteres.");
+            .WithErrorMessage("La provincia no puede superar los 100 caracteres");
     }
 
     [Test]
@@ -158,7 +158,7 @@ public class DireccionValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Pais)
-            .WithErrorMessage("El país no puede superar los 100 caracteres.");
+            .WithErrorMessage("El país no puede superar los 100 caracteres");
     }
 
     [Test]
@@ -193,7 +193,7 @@ public class DireccionValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.CodigoPostal)
-            .WithErrorMessage("El código postal no puede superar los 20 caracteres.");
+            .WithErrorMessage("El código postal no puede superar los 20 caracteres");
     }
 
     [Test]
@@ -204,7 +204,7 @@ public class DireccionValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.CodigoPostal)
-            .WithErrorMessage("El código postal debe tener exactamente 5 dígitos.");
+            .WithErrorMessage("El código postal debe tener exactamente 5 dígitos");
     }
 
     [Test]
@@ -215,7 +215,7 @@ public class DireccionValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.CodigoPostal)
-            .WithErrorMessage("El código postal debe tener exactamente 5 dígitos.");
+            .WithErrorMessage("El código postal debe tener exactamente 5 dígitos");
     }
 
     [Test]

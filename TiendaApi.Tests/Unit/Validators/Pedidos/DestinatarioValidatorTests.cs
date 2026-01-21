@@ -19,7 +19,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.NombreCompleto)
-            .WithErrorMessage("El nombre completo no puede superar los 200 caracteres.");
+            .WithErrorMessage("El nombre completo no puede superar los 200 caracteres");
     }
 
     [Test]
@@ -64,7 +64,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
-            .WithErrorMessage("El email no puede superar los 254 caracteres.");
+            .WithErrorMessage("El email no puede superar los 254 caracteres");
     }
 
     [Test]
@@ -75,7 +75,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
-            .WithErrorMessage("El email del destinatario no es válido.");
+            .WithErrorMessage("El email del destinatario no es válido");
     }
 
     [Test]
@@ -86,7 +86,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
-            .WithErrorMessage("El email del destinatario no es válido.");
+            .WithErrorMessage("El email del destinatario no es válido");
     }
 
     [Test]
@@ -126,7 +126,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Telefono)
-            .WithErrorMessage("El teléfono no puede superar los 20 caracteres.");
+            .WithErrorMessage("El teléfono no puede superar los 20 caracteres");
     }
 
     [Test]
@@ -142,7 +142,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Telefono)
-            .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos.");
+            .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos");
     }
 
     [Test]
@@ -158,7 +158,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Telefono)
-            .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos.");
+            .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos");
     }
 
     [Test]
@@ -174,7 +174,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Telefono)
-            .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos.");
+            .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos");
     }
 
     [Test]
@@ -245,7 +245,7 @@ public class DestinatarioValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Direccion)
-            .WithErrorMessage("La dirección del destinatario no es válida.");
+            .WithErrorMessage("La dirección del destinatario no es válida");
     }
 
     [Test]
