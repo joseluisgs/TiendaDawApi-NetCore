@@ -82,7 +82,7 @@ public class AvatarUpdateDtoTests
     }
 
     /// <summary>
-    /// Verifica que soporta rutas locales.
+    /// Verifica que rutas locales son aceptadas (sin esquema http/https).
     /// </summary>
     [Test]
     public void AvatarUrl_PuedeContenerRutasLocales()
@@ -90,7 +90,7 @@ public class AvatarUpdateDtoTests
         // Arrange & Act
         var dto = new AvatarUpdateDto { AvatarUrl = "/storage/usuarios/avatar.png" };
 
-        // Assert
+        // Assert - Las rutas locales son aceptadas aunque no sean URLs válidas
         dto.AvatarUrl.Should().Be("/storage/usuarios/avatar.png");
     }
 
