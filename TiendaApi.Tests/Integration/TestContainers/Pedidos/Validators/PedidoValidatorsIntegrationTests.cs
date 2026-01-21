@@ -225,4 +225,199 @@ public class PedidoValidatorsIntegrationTests
 
         await Task.CompletedTask;
     }
+
+    #region DireccionValidator Tests
+
+    [Test]
+    public async Task DireccionValidator_ConDtoValido_PasaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+
+        var dto = new DireccionDto
+        {
+            Calle = "Gran Vía",
+            Numero = "42",
+            Ciudad = "Madrid",
+            Provincia = "Madrid",
+            Pais = "España",
+            CodigoPostal = "28013"
+        };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeTrue();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task DireccionValidator_ConCalleVacia_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+
+        var dto = new DireccionDto { Calle = "" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task DireccionValidator_ConCiudadVacia_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+
+        var dto = new DireccionDto { Calle = "Calle Test", Ciudad = "" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task DireccionValidator_ConPaisVacio_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+
+        var dto = new DireccionDto { Calle = "Calle Test", Pais = "" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task DireccionValidator_ConCodigoPostalInvalido_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+
+        var dto = new DireccionDto
+        {
+            Calle = "Calle Test",
+            Ciudad = "Madrid",
+            Pais = "España",
+            CodigoPostal = "1234"
+        };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    #endregion
+
+    #region DestinatarioValidator Tests
+
+    [Test]
+    public async Task DestinatarioValidator_ConDtoValido_PasaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
+
+        var dto = new DestinatarioDto
+        {
+            NombreCompleto = "Juan Pérez",
+            Email = "juan@email.com",
+            Telefono = "+34612345678",
+            Direccion = new DireccionDto
+            {
+                Calle = "Gran Vía",
+                Ciudad = "Madrid",
+                Pais = "España"
+            }
+        };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeTrue();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task DestinatarioValidator_ConNombreCompletoVacio_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
+
+        var dto = new DestinatarioDto { NombreCompleto = "" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task DestinatarioValidator_ConEmailInvalido_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
+
+        var dto = new DestinatarioDto
+        {
+            NombreCompleto = "Juan Pérez",
+            Email = "email-invalido"
+        };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task DestinatarioValidator_SinDireccion_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
+
+        var dto = new DestinatarioDto
+        {
+            NombreCompleto = "Juan Pérez",
+            Email = "juan@email.com",
+            Direccion = null!
+        };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    #endregion
 }

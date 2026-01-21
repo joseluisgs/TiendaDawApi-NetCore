@@ -221,4 +221,200 @@ public class UsuarioValidatorsIntegrationTests
 
         await Task.CompletedTask;
     }
+
+    #region AvatarUpdateValidator Tests
+
+    [Test]
+    public async Task AvatarUpdateValidator_ConUrlHttpsValida_PasaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<AvatarUpdateDto>>();
+
+        var dto = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar.jpg" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeTrue();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task AvatarUpdateValidator_ConUrlHttpValida_PasaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<AvatarUpdateDto>>();
+
+        var dto = new AvatarUpdateDto { AvatarUrl = "http://example.com/avatar.jpg" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeTrue();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task AvatarUpdateValidator_ConUrlVacia_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<AvatarUpdateDto>>();
+
+        var dto = new AvatarUpdateDto { AvatarUrl = "" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task AvatarUpdateValidator_ConUrlSinProtocolo_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<AvatarUpdateDto>>();
+
+        var dto = new AvatarUpdateDto { AvatarUrl = "www.example.com/avatar.jpg" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task AvatarUpdateValidator_ConUrlFtp_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<AvatarUpdateDto>>();
+
+        var dto = new AvatarUpdateDto { AvatarUrl = "ftp://ftp.example.com/avatar.jpg" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task AvatarUpdateValidator_ConUrlExcede500Caracteres_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<AvatarUpdateDto>>();
+
+        var urlLarga = new string('a', 501);
+        var dto = new AvatarUpdateDto { AvatarUrl = $"https://example.com/{urlLarga}.jpg" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    #endregion
+
+    #region UserUpdateValidator Tests
+
+    [Test]
+    public async Task UserUpdateValidator_ConEmailValido_PasaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<UserUpdateDto>>();
+
+        var dto = new UserUpdateDto { Email = "nuevo@email.com" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeTrue();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task UserUpdateValidator_ConEmailInvalido_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<UserUpdateDto>>();
+
+        var dto = new UserUpdateDto { Email = "email-invalido" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task UserUpdateValidator_ConPasswordValido_PasaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<UserUpdateDto>>();
+
+        var dto = new UserUpdateDto { Password = "NuevaPass123" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeTrue();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task UserUpdateValidator_ConPasswordCorto_FallaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<UserUpdateDto>>();
+
+        var dto = new UserUpdateDto { Password = "123" };
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeFalse();
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task UserUpdateValidator_SinCampos_PasaValidacion()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
+
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IValidator<UserUpdateDto>>();
+
+        var dto = new UserUpdateDto();
+        var result = await validator.ValidateAsync(dto);
+
+        result.IsValid.Should().BeTrue();
+
+        await Task.CompletedTask;
+    }
+
+    #endregion
 }

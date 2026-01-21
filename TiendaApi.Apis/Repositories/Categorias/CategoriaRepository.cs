@@ -66,7 +66,7 @@ public class CategoriaRepository(
     public async Task<Categoria?> FindByIdAsync(long id)
     {
         logger.LogDebug("Buscando categoría por ID: {Id}", id);
-        return await context.Categorias.FindAsync(id);
+        return await context.Categorias.FirstOrDefaultAsync(c => c.Id == id);
     }
 
     /// <inheritdoc/>
