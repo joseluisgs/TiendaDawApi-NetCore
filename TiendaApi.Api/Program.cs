@@ -33,6 +33,7 @@ services.AddFluentValidation();
 services.AddApiVersioningPolicy();
 services.AddSwagger();
 services.AddCorsPolicy(configuration, environment.IsDevelopment());
+services.AddRateLimitingPolicy();
 
 // Data
 services.AddDatabases(configuration);
@@ -79,6 +80,9 @@ app.UseGlobalExceptionHandler();
 
 // Security Headers - Siempre activo (no afecta funcionalidad)
 app.UseSecurityHeaders();
+
+// Rate Limiting - Protege contra DDoS y fuerza bruta
+app.UseRateLimiting();
 
 // HTTPS + HSTS - Solo en producción (para desarrollo/testing local, permitir HTTP)
 if (!isDevelopment)

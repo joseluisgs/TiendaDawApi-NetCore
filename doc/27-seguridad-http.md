@@ -11,6 +11,7 @@
   - [27.6. Implementación en Program.cs](#276-implementación-en-programcs)
   - [27.7. Verificación de Seguridad](#277-verificación-de-seguridad)
   - [27.8. Resumen y Buenas Prácticas](#278-resumen-y-buenas-prácticas)
+  - [27.9. Rate Limiting](#279-rate-limiting)
 
 ---
 
@@ -762,6 +763,167 @@ graph LR
     style F fill:#27ae60,color:#fff
     style G fill:#27ae60,color:#fff
 ```
+
+## 27.9. Rate Limiting (Protección contra Abuso)
+
+### ¿Qué es Rate Limiting?
+
+Rate Limiting es una técnica de seguridad que limita el número de solicitudes que un cliente puede hacer a una API en un período de tiempo específico. Protege contra ataques de denegación de servicio (DDoS), fuerza bruta y abuso de la API.
+
+```mermaid
+flowchart LR
+    subgraph "Sin Rate Limiting"
+        A1["Atacante"] -->|"1000 req/s"| S["Servidor"]
+        S -->|"CPU 100%<br/>Colapso"| S
+    end
+    
+    subgraph "Con Rate Limiting"
+        B1["Atacante"] -->|"100 req/15s"| L["Rate Limiter"]
+        L -->|"429 Too Many Requests"| B1
+        B2["Usuario Normal"] -->|"50 req/15s"| L
+        L -->|"200 OK"| B2
+    end
+    
+    style S fill:#e74c3c,color:#fff
+    style L fill:#27ae60,color:#fff
+```
+
+### Vulnerabilidades que Previene Rate Limiting
+
+| Vulnerabilidad | Descripción | Impacto |
+|----------------|-------------|---------|
+| **DDoS** | Ataque de denegación de servicio distribuido | API inaccesible |
+| **Fuerza Bruta** | Múltiples intentos de login/password | Cuentas comprometidas |
+| **Scraping** | Extracción masiva de datos | Robo de información |
+| **Abuso de API** | Uso excesivo de recursos | Degradación de rendimiento |
+
+### Tipos de Rate Limiting
+
+```mermaid
+graph TD
+    A["Rate Limiting"] --> B["IP Based"]
+    A --> C["User Based"]
+    A --> D["Endpoint Based"]
+    A --> E["Global"]
+    
+    B --> B1["Por direccion IP"]
+    C --> C1["Por usuario autenticado"]
+    D --> D1["Por endpoint especifico"]
+    E --> E1["Para toda la API"]
+    
+    style A fill:#3498db,color:#fff
+    style B fill:#27ae60,color:#fff
+    style C fill:#27ae60,color:#fff
+    style D fill:#27ae60,color:#fff
+    style E fill:#27ae60,color:#fff
+```
+
+### Configuración de Rate Limiting en TiendaApi
+
+La API implementa Rate Limiting usando `AspNetCoreRateLimit` con diferentes reglas según el tipo de endpoint:
+
+```csharp
+// En Program.cs
+services.AddRateLimitingPolicy();
+
+// Middleware
+app.UseRateLimiting();
+```
+
+### Reglas de Rate Limiting Implementadas
+
+| Endpoint | Limite | Periodo | Razon |
+|----------|--------|---------|-------|
+| `*` (General) | 100 | 15s | Uso general de la API |
+| `*/api/v1/auth/*` | 10 | 1m | Prevenir fuerza bruta en login |
+| `POST:*` | 20 | 1m | Limitar escrituras |
+| `POST:/graphql` | 200 | 1m | Queries GraphQL flexibles |
+
+### Respuesta cuando se Excede el Limite
+
+```json
+{
+    "statusCode": 429,
+    "message": "Too Many Requests",
+    "headers": {
+        "X-RateLimit-Limit": "10",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": "60",
+        "Retry-After": "60"
+    }
+}
+```
+
+### Cabeceras de Rate Limiting
+
+| Cabecera | Descripcion |
+|----------|-------------|
+| `X-RateLimit-Limit` | Limite maximo de solicitudes |
+| `X-RateLimit-Remaining` | Solicitudes restantes |
+| `X-RateLimit-Reset` | Tiempo hasta reset (segundos) |
+| `Retry-After` | Segundos esperados antes de reintentar |
+
+### Implementacion del Middleware
+
+```csharp
+// RateLimitConfig.cs
+public static IServiceCollection AddRateLimitingPolicy(this IServiceCollection services)
+{
+    services.AddMemoryCache();
+    services.Configure<RateLimitOptions>(options =>
+    {
+        options.EnableEndpointRateLimiting = true;
+        options.HttpStatusCode = 429;
+        options.QuotaExceededMessage = "Demasiadas solicitudes. Por favor, intente mas tarde.";
+        
+        options.GeneralRules = new List<RateLimitRule>
+        {
+            new RateLimitRule
+            {
+                Endpoint = "*",
+                Limit = 100,
+                Period = "15s"
+            },
+            new RateLimitRule
+            {
+                Endpoint = "*/api/v1/auth/*",
+                Limit = 10,
+                Period = "1m"
+            }
+        };
+    });
+
+    services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+    
+    return services;
+}
+
+public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
+{
+    app.UseIpRateLimiting();
+    return app;
+}
+```
+
+### Consideraciones de Produccion
+
+| Aspecto | Recomendacion |
+|---------|---------------|
+| **Almacenamiento** | Usar Redis para multiples instancias |
+| **Limites estrictos** | Mas restrictivos en endpoints sensibles |
+| **Whitelist** | Excluir IPs de monitoring |
+| **Logging** | Registrar intentos bloqueados |
+| **Escalabilidad** | Usar Redis para granjas de servidores |
+
+### Buenas Practicas de Rate Limiting
+
+| Practica | Descripcion | Prioridad |
+|----------|-------------|-----------|
+| **Limites por endpoint** | Diferentes limites segun sensibilidad | Alta |
+| **Autenticacion estricta** | Limites mas bajos en auth | Alta |
+| **Respuestas claras** | 429 con headers informativos | Media |
+| **Monitorizacion** | Alertar sobre patrones anomalos | Media |
+| **Escalabilidad** | Usar Redis para granjas de servidores | Media |
 
 ### Documentos Relacionados
 
