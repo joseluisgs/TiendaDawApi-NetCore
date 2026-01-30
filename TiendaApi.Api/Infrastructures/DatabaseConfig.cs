@@ -7,16 +7,16 @@ using TiendaApi.Api.Data;
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Proporciona métodos de extensión para la configuración de persistencia políglota (PostgreSQL y MongoDB).
+/// Configuración de bases de datos (PostgreSQL + MongoDB).
 /// </summary>
 public static class DatabaseConfig
 {
     /// <summary>
-    /// Registra y configura los contextos de base de datos relacional y documental.
+    /// Configura PostgreSQL y MongoDB según configuración.
     /// </summary>
-    /// <param name="services">Contenedor de inyección de dependencias.</param>
-    /// <param name="configuration">Acceso a los archivos 'appsettings'.</param>
-    /// <returns>La colección de servicios para encadenamiento fluido.</returns>
+    /// <param name="services">Colección de servicios.</param>
+    /// <param name="configuration">Configuración de la app.</param>
+    /// <returns>IServiceCollection para encadenar.</returns>
     public static IServiceCollection AddDatabases(this IServiceCollection services, IConfiguration configuration)
     {
         Log.Information("Configurando PostgreSQL...");

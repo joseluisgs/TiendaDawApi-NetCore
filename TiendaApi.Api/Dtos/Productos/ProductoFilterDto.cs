@@ -1,25 +1,77 @@
 namespace TiendaApi.Api.Dtos.Productos;
 
 /// <summary>
-/// Parámetros de filtrado y ordenación para la búsqueda de productos.
+/// DTO de filtros para búsqueda y paginación de productos.
+/// Proporciona criterios flexibles para filtrar productos por múltiples condiciones.
+///
+/// <remarks>
+/// Uso típico:
+/// - GET /api/productos?nombre=Laptop&amp;precioMax=1500&amp;stockMin=5
+/// - Catálogos con filtros dinámicos
+/// - Búsquedas avanzadas en tienda
+/// </remarks>
 /// </summary>
-/// <param name="Nombre">Contiene el nombre.</param>
-/// <param name="Categoria">Nombre de la categoría.</param>
-/// <param name="IsDeleted">Estado de borrado lógico.</param>
-/// <param name="PrecioMax">Precio máximo permitido.</param>
-/// <param name="StockMin">Stock mínimo requerido.</param>
-/// <param name="Page">Número de página (0-indexed).</param>
-/// <param name="Size">Elementos por página.</param>
-/// <param name="SortBy">Campo de ordenación.</param>
-/// <param name="Direction">Dirección (asc/desc).</param>
-public record ProductoFilterDto(
-    string? Nombre = null,
-    string? Categoria = null,
-    bool? IsDeleted = null,
-    decimal? PrecioMax = null,
-    int? StockMin = null,
+public record ProductoFilterDto
+(
+    /// <summary>
+    /// Filtrar productos por nombre (búsqueda parcial, sensible a mayúsculas/minúsculas).
+    /// Busca coincidencias en el nombre del producto.
+    /// </summary>
+    /// <example>Laptop</example>
+    string? Nombre,
+
+    /// <summary>
+    /// Filtrar productos por nombre de categoría.
+    /// Permite ver productos de una categoría específica por su nombre.
+    /// </summary>
+    /// <example>Electrónica</example>
+    string? Categoria,
+
+    /// <summary>
+    /// Filtrar por estado de eliminación lógica.
+    /// </summary>
+    /// <example>false</example>
+    bool? IsDeleted,
+
+    /// <summary>
+    /// Filtrar por precio máximo (productos menores o iguales al valor).
+    /// Útil para filtros de rango de precio.
+    /// </summary>
+    /// <example>1000.00</example>
+    decimal? PrecioMax,
+
+    /// <summary>
+    /// Filtrar por stock mínimo (productos con stock igual o superior).
+    /// Útil para mostrar solo productos disponibles.
+    /// </summary>
+    /// <example>10</example>
+    int? StockMin,
+
+    /// <summary>
+    /// Número de página (base 0).
+    /// </summary>
+    /// <default>0</default>
+    /// <example>0</example>
     int Page = 0,
+
+    /// <summary>
+    /// Cantidad de elementos por página.
+    /// </summary>
+    /// <default>10</default>
+    /// <example>10</example>
     int Size = 10,
+
+    /// <summary>
+    /// Campo para ordenar resultados.
+    /// </summary>
+    /// <default>id</default>
+    /// <example>precio</example>
     string SortBy = "id",
+
+    /// <summary>
+    /// Dirección de ordenamiento (asc/desc).
+    /// </summary>
+    /// <default>asc</default>
+    /// <example>desc</example>
     string Direction = "asc"
 );

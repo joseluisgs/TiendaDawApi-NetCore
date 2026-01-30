@@ -12,7 +12,9 @@ using TiendaApi.Api.Validators.Categorias;
 
 namespace TiendaApi.Api.Services.Categorias;
 
-/// <inheritdoc cref="ICategoriaService" />
+/// <summary>
+/// Implementación del servicio de categorías.
+/// </summary>
 public class CategoriaService(
     ICategoriaRepository repository,
     ILogger<CategoriaService> logger,
@@ -24,7 +26,7 @@ public class CategoriaService(
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
         int.Parse(configuration["Cache:CategoriaCacheTTLMinutes"] ?? "10"));
 
-    /// <inheritdoc cref="ICategoriaService.FindAllAsync" />
+    /// <inheritdoc/>
     public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync()
     {
         logger.LogInformation("Buscando todas las categorías");
@@ -45,7 +47,7 @@ public class CategoriaService(
             .Tap(_ => AñadirCacheCategoria(cacheKey, dtos));
     }
 
-    /// <inheritdoc cref="ICategoriaService.FindAllPagedAsync(CategoriaFilterDto)" />
+    /// <inheritdoc/>
     public async Task<Result<PagedResult<CategoriaDto>, DomainError>> FindAllPagedAsync(CategoriaFilterDto filter)
     {
         logger.LogInformation("Obteniendo categorías paginadas - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
@@ -64,7 +66,7 @@ public class CategoriaService(
         return Result.Success<PagedResult<CategoriaDto>, DomainError>(pagedResult);
     }
 
-    /// <inheritdoc cref="ICategoriaService.FindByIdAsync(long)" />
+    /// <inheritdoc/>
     public async Task<Result<CategoriaDto, DomainError>> FindByIdAsync(long id)
     {
         logger.LogInformation("Buscando categoría: {Id}", id);
@@ -85,7 +87,7 @@ public class CategoriaService(
             .Tap(_ => AñadirCacheCategoria(cacheKey, dto));
     }
 
-    /// <inheritdoc cref="ICategoriaService.CreateAsync(CategoriaRequestDto)" />
+    /// <inheritdoc/>
     public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto)
     {
         logger.LogInformation("Creando categoría: {Nombre}", dto.Nombre);
@@ -109,7 +111,7 @@ public class CategoriaService(
             });
     }
 
-    /// <inheritdoc cref="ICategoriaService.UpdateAsync(long, CategoriaRequestDto)" />
+    /// <inheritdoc/>
     public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto)
     {
         logger.LogInformation("Actualizando categoría: {Id}", id);
@@ -138,7 +140,7 @@ public class CategoriaService(
             });
     }
 
-    /// <inheritdoc cref="ICategoriaService.DeleteAsync(long)" />
+    /// <inheritdoc/>
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
         logger.LogInformation("Eliminando categoría: {Id}", id);

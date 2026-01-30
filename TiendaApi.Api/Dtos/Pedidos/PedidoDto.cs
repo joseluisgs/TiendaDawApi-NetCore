@@ -1,78 +1,85 @@
-using TiendaApi.Api.Dtos.Common;
-
 namespace TiendaApi.Api.Dtos.Pedidos;
 
 /// <summary>
-/// Objeto de transferencia para la visualización detallada de un pedido.
-/// </summary>
-public record PedidoDto
-{
-    /// <summary>Identificador único (GUID) del pedido.</summary>
-    public string Id { get; init; } = string.Empty;
+    /// DTO de respuesta para pedidos.
+    /// </summary>
+    /// <example>
+    /// {
+    ///   "id": "PED-2024-0001",
+    ///   "userId": 1,
+    ///   "destinatario": {
+    ///     "nombreCompleto": "María García",
+    ///     "email": "maria@email.com",
+    ///     "telefono": "+34612345678",
+    ///     "direccion": {
+    ///       "calle": "Gran Vía",
+    ///       "numero": "42",
+    ///       "ciudad": "Madrid",
+    ///       "provincia": "Madrid",
+    ///       "pais": "España",
+    ///       "codigoPostal": "28013"
+    ///     }
+    ///   },
+    ///   "items": [
+    ///     { "productoId": 101, "nombreProducto": "Laptop", "cantidad": 1, "precio": 999.99, "subtotal": 999.99 }
+    ///   ],
+    ///   "total": 999.99,
+    ///   "estado": "Pendiente",
+    ///   "direccionEnvio": "Calle Principal 123, Ciudad",
+    ///   "createdAt": "2024-01-15T10:30:00Z"
+    /// }
+    /// </example>
+    public record PedidoDto(
+    /// <summary>
+    /// Identificador único del pedido con formato "PED-YYYY-NNNN".
+    /// Generado automáticamente siguiendo el patrón de secuencial anual.
+    /// </summary>
+    /// <example>PED-2024-0001</example>
+    string Id,
 
-    /// <summary>Identificador del usuario que realizó la compra.</summary>
-    public long UserId { get; init; }
+    /// <summary>
+    /// Identificador del usuario que realizó el pedido.
+    /// Referencia a la tabla de usuarios del sistema.
+    /// </summary>
+    /// <example>1</example>
+    long UserId,
 
-    /// <summary>Información sobre el destinatario y la dirección de envío.</summary>
-    public DestinatarioDto? Destinatario { get; init; }
+    /// <summary>
+    /// Información del destinatario del pedido.
+    /// Siempre está presente y define quién recibirá el paquete.
+    /// </summary>
+    DestinatarioDto Destinatario,
 
-    /// <summary>Lista de productos incluidos en el pedido.</summary>
-    public List<PedidoItemDto> Items { get; init; } = new();
+    /// <summary>
+    /// Lista de artículos incluidos en el pedido.
+    /// Cada ítem representa un producto con su cantidad y precio.
+    /// </summary>
+    List<PedidoItemDto> Items,
 
-    /// <summary>Importe total del pedido.</summary>
-    public decimal Total { get; init; }
+    /// <summary>
+    /// Total del pedido en la moneda base del sistema.
+    /// Suma de todos los subtotales de items más impuestos.
+    /// </summary>
+    /// <example>999.99</example>
+    decimal Total,
 
-    /// <summary>Estado actual (PENDIENTE, ENVIADO, etc.).</summary>
-    public string Estado { get; init; } = string.Empty;
+    /// <summary>
+    /// Estado actual del pedido en el flujo de procesamiento.
+    /// </summary>
+    /// <example>Pendiente</example>
+    string Estado,
 
-    /// <summary>Fecha de creación.</summary>
-    public DateTime CreatedAt { get; init; }
+    /// <summary>
+    /// Dirección de entrega del pedido (deprecated, usar Destinatario.Direccion).
+    /// Se mantiene por compatibilidad con versiones anteriores.
+    /// </summary>
+    /// <example>Calle Principal 123, Ciudad</example>
+    string? DireccionEnvio,
 
-    /// <summary>Fecha de última modificación.</summary>
-    public DateTime UpdatedAt { get; init; }
-}
-
-/// <summary>
-/// Representa un artículo individual dentro de un pedido.
-/// </summary>
-public record PedidoItemDto
-{
-    /// <summary>ID del producto.</summary>
-    public long ProductoId { get; init; }
-
-    /// <summary>Nombre del producto en el momento de la compra.</summary>
-    public string NombreProducto { get; init; } = string.Empty;
-
-    /// <summary>Unidades adquiridas.</summary>
-    public int Cantidad { get; init; }
-
-    /// <summary>Precio unitario aplicado.</summary>
-    public decimal Precio { get; init; }
-
-    /// <summary>Subtotal por este artículo.</summary>
-    public decimal Subtotal { get; init; }
-}
-
-/// <summary>
-/// DTO para la creación de un nuevo pedido.
-/// </summary>
-public record PedidoRequestDto
-{
-    /// <summary>Información del envío.</summary>
-    public DestinatarioDto? Destinatario { get; init; }
-
-    /// <summary>Listado de artículos solicitados.</summary>
-    public List<PedidoItemRequestDto> Items { get; init; } = new();
-}
-
-/// <summary>
-/// Solicitud de un artículo individual.
-/// </summary>
-public record PedidoItemRequestDto
-{
-    /// <summary>Identificador del producto deseado.</summary>
-    public long ProductoId { get; init; }
-
-    /// <summary>Cantidad a comprar.</summary>
-    public int Cantidad { get; init; }
-}
+    /// <summary>
+    /// Fecha y hora de creación del pedido en formato UTC.
+    /// Utilizado para auditoría y tracking temporal.
+    /// </summary>
+    /// <example>2024-01-15T10:30:00Z</example>
+    DateTime CreatedAt
+);
