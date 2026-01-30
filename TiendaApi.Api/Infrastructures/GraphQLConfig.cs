@@ -22,6 +22,7 @@ public static class GraphQLConfig
         Log.Information("🔍 Configurando GraphQL con HotChocolate...");
         return services
             .AddGraphQLServer()
+            .AddAuthorization()
             .AddQueryType<TiendaQuery>()
             .AddMutationType<ProductoMutation>()
             .AddSubscriptionType<ProductoSubscription>()
