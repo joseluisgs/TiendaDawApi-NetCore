@@ -1,13 +1,23 @@
+@using ClientBlazor.Cliente.Components.Layout
+
 <Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
     </Found>
     <NotFound>
         <LayoutView Layout="@typeof(MainLayout)">
-            <div class="container">
-                <h1>Pagina no encontrada</h1>
-                <a href="/" class="btn-quick">Volver al inicio</a>
+            <div class="container" style="text-align: center; padding: 50px;">
+                <h1 style="color: var(--hk-red); font-family: 'Balsamiq Sans', cursive;">404 - Página no encontrada 🎀</h1>
+                <p>Lo sentimos, pero el recurso solicitado no existe.</p>
+                <a href="/" class="btn-quick" style="display: inline-block; margin-top: 20px;">Volver al inicio</a>
             </div>
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    /// <summary>
+    /// Componente raíz de la aplicación Blazor.
+    /// Define el enrutamiento y el layout principal por defecto.
+    /// </summary>
+}

@@ -8,7 +8,7 @@ namespace TiendaApi.Api.Controllers;
 
 /// <summary>
 /// Controlador de API para autenticación de usuarios.
-/// Endpoints: SignUp (registro) y SignIn (login) con JWT.
+/// Proporciona endpoints para registro (SignUp) e inicio de sesión (SignIn) emitiendo tokens JWT.
 /// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
@@ -22,8 +22,12 @@ public class AuthController(
     /// <summary>
     /// Registra un nuevo usuario en el sistema.
     /// </summary>
-    /// <param name="dto">Datos de registro (username, email, password).</param>
-    /// <returns>201 Created con la respuesta de autenticación, o 400/409 si hay errores.</returns>
+    /// <param name="dto">Objeto con los datos de registro (username, email, password).</param>
+    /// <returns>
+    /// 201 Created con la respuesta de autenticación (token y datos de usuario), 
+    /// o 400 BadRequest si hay fallos de validación, 
+    /// o 409 Conflict si el usuario o email ya existen.
+    /// </returns>
     [HttpPost("signup")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -46,10 +50,13 @@ public class AuthController(
     }
 
     /// <summary>
-    /// Inicia sesión y devuelve un token JWT.
+    /// Inicia sesión y devuelve un token JWT válido.
     /// </summary>
-    /// <param name="dto">Credenciales de acceso (username, password).</param>
-    /// <returns>200 OK con el token JWT, o 401 si las credenciales son inválidas.</returns>
+    /// <param name="dto">Credenciales de acceso (username y password).</param>
+    /// <returns>
+    /// 200 OK con el token JWT y datos de perfil, 
+    /// o 401 Unauthorized si las credenciales son inválidas.
+    /// </returns>
     [HttpPost("signin")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

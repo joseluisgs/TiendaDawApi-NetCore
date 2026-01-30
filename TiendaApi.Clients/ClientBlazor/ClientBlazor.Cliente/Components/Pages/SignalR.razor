@@ -1,24 +1,25 @@
 @page "/signalr"
 @using ClientBlazor.Cliente.Components.Shared
 @using ClientBlazor.Cliente.Configuration
-@using ClientBlazor.Cliente.Services
+@using ClientBlazor.Cliente.Services.SignalR
 @using ClientBlazor.Cliente.State
 @using System.Text.Json
+@implements IAsyncDisposable
 
-@inject SignalRService SignalRService
-@inject NotificationStore NotificationStore
+@inject ISignalRService SignalRService
+@inject INotificationStore NotificationStore
 
 <NavMenu />
 
 <div class="config-section">
     <h3 class="section-title">SignalR Hub Client</h3>
     <p style="color: var(--hk-red); margin-bottom: 15px;">
-        Cliente SignalR Hub para comunicación en tiempo real
+        Cliente SignalR Hub para comunicacion en tiempo real
     </p>
 
     <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch; margin-bottom: 15px;">
         <select @bind="selectedHubType" style="min-width: 200px; height: 50px; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white; box-sizing: border-box;">
-            <option value="productos">📦 Productos (Público)</option>
+            <option value="productos">📦 Productos (Publico)</option>
             <option value="pedidos">🛒 Pedidos (Requiere JWT)</option>
         </select>
 
@@ -38,7 +39,7 @@
     @if (selectedHubType == "pedidos")
     {
         <p style="color: var(--hk-red); text-align: center; font-weight: bold; margin-top: 10px;">
-            🔐 Los SignalR Hubs de pedidos requieren autenticación JWT
+            🔐 Los SignalR Hubs de pedidos requieren autenticacion JWT
         </p>
     }
 </div>
@@ -59,11 +60,11 @@
 
 <div class="info-box">
     <h4>SignalR Events</h4>
-    <p><b>Productos (Público):</b></p>
+    <p><b>Productos (Publico):</b></p>
     <p>• <code>ProductoCreado</code> - Se crea un nuevo producto</p>
     <p>• <code>ProductoActualizado</code> - Se actualiza un producto</p>
     <p>• <code>ProductoEliminado</code> - Se elimina un producto</p>
-    <p>• <code>StockBajo</code> - El stock de un producto está bajo</p>
+    <p>• <code>StockBajo</code> - El stock de un producto esta bajo</p>
     <p><b>Pedidos (JWT requerido):</b></p>
     <p>• <code>PedidoCreado</code> - Se crea un nuevo pedido</p>
     <p>• <code>PedidoActualizado</code> - Se actualiza el estado de un pedido</p>
@@ -71,7 +72,7 @@
     <p><b>URLs:</b></p>
     <p>• <code>http://localhost:5000/hubs/productos</code> (productos)</p>
     <p>• <code>http://localhost:5000/hubs/pedidos</code> (pedidos)</p>
-    <p><b>Nota:</b> Los eventos llegan automáticamente al conectarse al Hub, sin suscripciones específicas.</p>
+    <p><b>Nota:</b> Los eventos llegan automaticamente al conectarse al Hub, sin suscripciones especificas.</p>
 </div>
 
 @code {
@@ -93,7 +94,6 @@
         {
             await SignalRService.ConnectPedidosAsync();
         }
-
         StateHasChanged();
     }
 
@@ -112,20 +112,21 @@
     private void HandleMessageReceived(string message)
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
-        messages += $"[{timestamp}] {message}\n";
+        messages += "[" + timestamp + "] " + message + "\n";
 
-        // Limitar el número de mensajes mostrados (últimos 50)
+        // Limitar el numero de mensajes mostrados (ultimos 50)
         var lines = messages.Split('\n');
         if (lines.Length > 50)
         {
             messages = string.Join('\n', lines.Skip(lines.Length - 50));
         }
 
-        StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         SignalRService.OnMessageReceived -= HandleMessageReceived;
+        await SignalRService.DisconnectAsync();
     }
 }

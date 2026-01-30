@@ -1,161 +1,94 @@
-@using ClientBlazor.Cliente.State
 @using System.Reactive.Disposables
+@using ClientBlazor.Cliente.State.Notifications
 @implements IDisposable
-@inject NotificationStore NotificationStore
+@inject INotificationStore NotificationStore
 
-@if (notifications.Count > 0)
-{
-    <div class="toast-container">
-        @foreach (var notification in notifications)
-        {
-            <div class="toast @(GetToastClass(notification.Type))"
-                 @key="notification.Id">
-                <div class="toast-header">
-                    <span class="toast-icon">@GetToastIcon(notification.Type)</span>
-                    <span class="toast-title">@notification.Title</span>
-                    <div class="toast-timer" style="width: @(GetTimerWidth(notification))%"></div>
-                    @if (notification.Dismissable)
-                    {
-                        <button class="toast-close" @onclick="() => Dismiss(notification.Id)">
-                            ×
-                        </button>
-                    }
-                </div>
-                <div class="toast-body">
-                    @notification.Message
-                </div>
+<div class="toast-container">
+    @foreach (var notification in notifications)
+    {
+        <div class="toast-item @GetToastClass(notification.Type)" @onclick="() => NotificationStore.Dismiss(notification.Id)">
+            <div class="toast-icon">@GetToastIcon(notification.Type)</div>
+            <div class="toast-content">
+                @if (!string.IsNullOrEmpty(notification.Title))
+                {
+                    <div class="toast-title">@notification.Title</div>
+                }
+                <div class="toast-message">@notification.Message</div>
             </div>
-        }
-    </div>
-}
+            <button class="toast-close">&times;</button>
+            @if (notification.IsAutoDismiss)
+            {
+                <div class="toast-timer" style="width: @GetTimerWidth(notification)%"></div>
+            }
+        </div>
+    }
+</div>
 
 @code {
-    private List<NotificationStore.Notification> notifications = new();
-    private readonly Dictionary<string, System.Timers.Timer> timers = new();
-    private readonly System.Timers.Timer updateTimer = new(100); // Timer global para actualización
+    /// <summary>Lista reactiva de notificaciones activas para renderizar.</summary>
+    private List<Notification> notifications = new();
+    
+    /// <summary>Contenedor de suscripciones RX para limpieza automática.</summary>
+    private CompositeDisposable subscriptions = new();
 
-    private readonly List<IDisposable> subscriptions = new();
-
+    /// <summary>
+    /// Suscribe el componente a los cambios en el almacén de notificaciones.
+    /// </summary>
     protected override void OnInitialized()
     {
         subscriptions.Add(NotificationStore.Notifications.Subscribe(notifs => {
             notifications = notifs;
-
-            // Gestionar timers
-            UpdateTimers();
-
             StateHasChanged();
         }));
-
-        // Timer global para actualizar barras de progreso y cerrar toasts expirados
-        updateTimer.Elapsed += (sender, e) =>
-        {
-            InvokeAsync(() =>
-            {
-                var expiredIds = new List<string>();
-
-                foreach (var notification in notifications)
-                {
-                    if (notification.IsAutoDismiss)
-                    {
-                        var elapsed = (DateTime.Now - notification.CreatedAt).TotalMilliseconds;
-                        var remaining = notification.DurationMs - elapsed;
-
-                        if (remaining <= 0)
-                        {
-                            expiredIds.Add(notification.Id);
-                        }
-                    }
-                }
-
-                // Cerrar toasts expirados
-                foreach (var id in expiredIds)
-                {
-                    NotificationStore.Dismiss(id);
-                }
-
-                // Si hay toasts con timer, actualizar UI
-                if (notifications.Any(n => n.IsAutoDismiss))
-                {
-                    StateHasChanged();
-                }
-            });
-        };
-        updateTimer.Start();
     }
 
-    private void UpdateTimers()
-    {
-        // Limpiar timers de notificaciones que ya no existen
-        var currentIds = notifications.Select(n => n.Id).ToHashSet();
-        var timersToRemove = timers.Keys.Where(id => !currentIds.Contains(id)).ToList();
-
-        foreach (var id in timersToRemove)
-        {
-            if (timers.TryGetValue(id, out var timer))
-            {
-                timer.Stop();
-                timer.Dispose();
-                timers.Remove(id);
-            }
-        }
-    }
-
-    private void Dismiss(string id)
-    {
-        NotificationStore.Dismiss(id);
-    }
-
-    private double GetTimerWidth(NotificationStore.Notification notification)
-    {
-        if (!notification.IsAutoDismiss) return 0;
-
-        var elapsed = (DateTime.Now - notification.CreatedAt).TotalMilliseconds;
-        var progress = Math.Max(0, (notification.DurationMs - elapsed) / notification.DurationMs * 100);
-        return progress;
-    }
-
-    private string GetToastClass(NotificationStore.NotificationType type)
-    {
-        return type switch
-        {
-            NotificationStore.NotificationType.Success => "toast-success",
-            NotificationStore.NotificationType.Error => "toast-error",
-            NotificationStore.NotificationType.Warning => "toast-warning",
-            NotificationStore.NotificationType.Info => "toast-info",
-            _ => "toast-info"
-        };
-    }
-
-    private string GetToastIcon(NotificationStore.NotificationType type)
-    {
-        return type switch
-        {
-            NotificationStore.NotificationType.Success => "✅",
-            NotificationStore.NotificationType.Error => "❌",
-            NotificationStore.NotificationType.Warning => "⚠️",
-            NotificationStore.NotificationType.Info => "ℹ️",
-            _ => "ℹ️"
-        };
-    }
-
+    /// <summary>
+    /// Libera las suscripciones reactivas cuando el componente se destruye.
+    /// </summary>
     public void Dispose()
     {
-        foreach (var sub in subscriptions)
-        {
-            sub.Dispose();
-        }
-        subscriptions.Clear();
+        subscriptions.Dispose();
+    }
 
-        // Limpiar todos los timers
-        updateTimer.Stop();
-        updateTimer.Dispose();
+    /// <summary>
+    /// Calcula el porcentaje de ancho del temporizador visual del Toast.
+    /// </summary>
+    /// <param name="notification">La notificación a procesar.</param>
+    /// <returns>Valor entre 0 y 100.</returns>
+    private double GetTimerWidth(Notification notification)
+    {
+        if (notification.DurationMs <= 0) return 0;
+        var elapsed = (DateTime.Now - notification.CreatedAt).TotalMilliseconds;
+        return Math.Max(0, 100 - (elapsed / notification.DurationMs * 100));
+    }
 
-        foreach (var timer in timers.Values)
+    /// <summary>
+    /// Obtiene la clase CSS correspondiente al tipo de notificación.
+    /// </summary>
+    private string GetToastClass(NotificationType type)
+    {
+        return type switch
         {
-            timer.Stop();
-            timer.Dispose();
-        }
-        timers.Clear();
+            NotificationType.Success => "toast-success",
+            NotificationType.Error => "toast-error",
+            NotificationType.Warning => "toast-warning",
+            NotificationType.Info => "toast-info",
+            _ => ""
+        };
+    }
+
+    /// <summary>
+    /// Obtiene el icono Emoji representativo del tipo de alerta.
+    /// </summary>
+    private string GetToastIcon(NotificationType type)
+    {
+        return type switch
+        {
+            NotificationType.Success => "✅",
+            NotificationType.Error => "❌",
+            NotificationType.Warning => "⚠️",
+            NotificationType.Info => "ℹ️",
+            _ => ""
+        };
     }
 }

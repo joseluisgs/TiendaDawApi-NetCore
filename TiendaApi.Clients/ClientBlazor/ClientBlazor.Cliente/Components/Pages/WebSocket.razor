@@ -1,33 +1,34 @@
 @page "/websocket"
 @using ClientBlazor.Cliente.Components.Shared
 @using ClientBlazor.Cliente.Configuration
-@using ClientBlazor.Cliente.Services
+@using ClientBlazor.Cliente.Services.Websocket
 @using ClientBlazor.Cliente.State
 @using System.Text.Json
+@implements IDisposable
 
-@inject WebSocketService WebSocketService
-@inject NotificationStore NotificationStore
+@inject IWebSocketService WebSocketService
+@inject INotificationStore NotificationStore
 
 <NavMenu />
 
 <div class="config-section">
     <h3 class="section-title">WebSocket Client</h3>
     <p style="color: var(--hk-red); margin-bottom: 15px;">
-        Cliente WebSocket nativo para comunicación en tiempo real
+        Cliente WebSocket nativo para comunicacion en tiempo real
     </p>
 
     <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch; margin-bottom: 20px;">
         <select @bind="selectedWebSocketType" style="min-width: 200px; height: 50px; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white; box-sizing: border-box;">
-            <option value="productos">📦 Productos (Público)</option>
+            <option value="productos">📦 Productos (Publico)</option>
             <option value="pedidos">🛒 Pedidos (Requiere JWT)</option>
         </select>
 
         <button class="btn-quick" style="min-width: 180px; height: 50px; box-sizing: border-box; font-family: 'Balsamiq Sans', cursive; font-size: 1em;" @onclick="ConnectAsync" disabled="@WebSocketService.IsConnected">
-            @(WebSocketService.IsConnected ? "🔴 Conexión Activa" : "▶️ Conectar")
+            @(WebSocketService.IsConnected ? "🔴 Conexion Activa" : "▶️ Conectar")
         </button>
 
         <button class="btn-quick" style="min-width: 180px; height: 50px; box-sizing: border-box; font-family: 'Balsamiq Sans', cursive; font-size: 1em;" @onclick="DisconnectAsync" disabled="@(!WebSocketService.IsConnected)">
-            ⏹️ Desconectar Conexión
+            ⏹️ Desconectar Conexion
         </button>
 
         <button class="btn-quick" style="min-width: 100px; height: 50px; box-sizing: border-box; font-family: 'Balsamiq Sans', cursive; font-size: 1em;" @onclick="ClearMessages">
@@ -38,13 +39,13 @@
     @if (selectedWebSocketType == "pedidos")
     {
         <p style="color: var(--hk-red); text-align: center; font-weight: bold; margin-top: 10px;">
-            🔐 Los WebSocket de pedidos requieren autenticación JWT
+            🔐 Los WebSocket de pedidos requieren autenticacion JWT
         </p>
     }
 </div>
 
 <div class="response-section">
-    <h3 class="section-title">Estado de Conexión</h3>
+    <h3 class="section-title">Estado deConexion</h3>
     <div class="response-display" style="color: @(WebSocketService.IsConnected ? "var(--hk-green)" : "var(--hk-red)"); font-weight: bold;">
         Estado: @(WebSocketService.IsConnected ? "🟢 Conectado" : "🔴 Desconectado") - Tipo: @selectedWebSocketType.ToUpper()
     </div>
@@ -59,11 +60,11 @@
 
 <div class="info-box">
     <h4>WebSocket Events</h4>
-    <p><b>Productos (Público):</b></p>
+    <p><b>Productos (Publico):</b></p>
     <p>• <code>ProductoCreado</code> - Se crea un nuevo producto</p>
     <p>• <code>ProductoActualizado</code> - Se actualiza un producto</p>
     <p>• <code>ProductoEliminado</code> - Se elimina un producto</p>
-    <p>• <code>StockBajo</code> - El stock de un producto está bajo</p>
+    <p>• <code>StockBajo</code> - El stock de un producto esta bajo</p>
     <p><b>Pedidos (JWT requerido):</b></p>
     <p>• <code>PedidoCreado</code> - Se crea un nuevo pedido</p>
     <p>• <code>PedidoActualizado</code> - Se actualiza el estado de un pedido</p>
@@ -71,7 +72,7 @@
     <p><b>URLs:</b></p>
     <p>• <code>ws://localhost:5000/ws/productos</code> (productos)</p>
     <p>• <code>ws://localhost:5000/ws/pedidos?token=JWT</code> (pedidos)</p>
-    <p><b>Nota:</b> Los eventos llegan automáticamente al conectarse, sin suscripciones específicas.</p>
+    <p><b>Nota:</b> Los eventos llegan automaticamente al conectarse, sin suscripciones especificas.</p>
 </div>
 
 @code {
@@ -93,7 +94,6 @@
         {
             await WebSocketService.ConnectPedidosAsync();
         }
-
         StateHasChanged();
     }
 
@@ -112,16 +112,16 @@
     private void HandleMessageReceived(string message)
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
-        messages += $"[{timestamp}] {message}\n";
+        messages += "[" + timestamp + "] " + message + "\n";
 
-        // Limitar el número de mensajes mostrados (últimos 50)
+        // Limitar el numero de mensajes mostrados (ultimos 50)
         var lines = messages.Split('\n');
         if (lines.Length > 50)
         {
-            messages = string.Join('\n', lines.Skip(lines.Length - 50));
+            messages = string.Join("\n", lines.Skip(lines.Length - 50));
         }
 
-        StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()

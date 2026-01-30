@@ -2,32 +2,24 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using ClientBlazor.Cliente;
 using ClientBlazor.Cliente.Components;
-using ClientBlazor.Cliente.State;
-using ClientBlazor.Cliente.Configuration;
-using ClientBlazor.Cliente.Services;
+using ClientBlazor.Cliente.Infrastructures;
 
-// Crear el host de la aplicacion Blazor WebAssembly
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-// Agregar componentes raiz
-builder.RootComponents.Add<App>("#app"); // Componente principal de la aplicacion
-builder.RootComponents.Add<HeadOutlet>("head::after"); // Manejo del head del documento
+// Configuración de componentes raíz
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Registrar stores globales (estado reactivo con RX)
-builder.Services.AddSingleton<AuthStore>(); // Store para gestion de autenticacion
-builder.Services.AddSingleton<NotificationStore>(); // Store para notificaciones globales
+// Configuración de servicios mediante métodos de extensión (Patrón API)
+builder.Services
+    .AddStateStores()
+    .AddDomainServices() // Registro de servicios de dominio (incluyendo Storage)
+    .AddHttpInfrastructure() // Usa Storage en el Handler
+    .AddApiClients();
 
-// Registrar servicios de dominio
-builder.Services.AddTransient<AuthService>(); // Servicio de autenticacion
-builder.Services.AddTransient<RestService>(); // Servicio REST simulado
-builder.Services.AddTransient<GraphQLService>(); // Servicio GraphQL simulado
-builder.Services.AddTransient<WebSocketService>(); // Servicio WebSocket simulado
-builder.Services.AddTransient<SignalRService>(); // Servicio SignalR simulado
+var host = builder.Build();
 
-// HttpClient para llamadas a la API
-builder.Services.AddScoped(sp =>
-    new HttpClient { BaseAddress = new Uri(AppConfig.ApiBaseUrl) });
+// Inicializar el estado de la aplicación (LocalStorage -> Stores)
+await host.InitializeAppStateAsync();
 
-
-// Construir y ejecutar la aplicacion
-await builder.Build().RunAsync();
+await host.RunAsync();

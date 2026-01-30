@@ -1,33 +1,23 @@
 namespace ClientBlazor.Cliente.DTOs.Categorias;
 
-/// <summary>
-/// DTO de categoría para respuestas de API.
-/// Copia exacta del CategoriaDto de la API.
-/// </summary>
-public record CategoriaDto(
-    long Id,
-    string Nombre,
-    DateTime CreatedAt,
-    DateTime UpdatedAt
-);
+public record CategoriaDto
+{
+    public long Id { get; init; }
+    public string Nombre { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+    public DateTime UpdatedAt { get; init; }
+}
 
-/// <summary>
-/// DTO de categoría para solicitudes de creación.
-/// Copia exacta del CategoriaRequestDto de la API.
-/// </summary>
 public record CategoriaRequestDto
 {
     public string Nombre { get; init; } = string.Empty;
 }
 
-/// <summary>
-/// DTO de filtros para búsqueda de categorías.
-/// Copia exacta del CategoriaFilterDto de la API.
-/// </summary>
-public record CategoriaFilterDto(
-    string? Nombre,
-    int Page = 0,
-    int Size = 10,
-    string SortBy = "id",
-    string Direction = "asc"
-);
+public record CategoriaFilterDto
+{
+    public string? Nombre { get; init; }
+    public int Page { get; init; } = 0;
+    public int Size { get; init; } = 10;
+    public string SortBy { get; init; } = "id";
+    public string Direction { get; init; } = "asc";
+}

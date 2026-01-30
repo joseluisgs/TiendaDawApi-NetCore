@@ -1,29 +1,48 @@
 using Bunit;
 using ClientBlazor.Cliente.Components.Shared;
-using ClientBlazor.Cliente.State;
+using ClientBlazor.Cliente.State.Auth;
+using ClientBlazor.Cliente.Services.Rest;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
+using Moq;
 
 namespace ClientBlazor.Tests.Components;
 
+/// <summary>
+/// Pruebas de UI para el panel de información del usuario autenticado.
+/// Objetivo: Validar el renderizado condicional según el estado de la sesión.
+/// </summary>
 [TestFixture]
 public class AuthPanelTests
 {
     private BunitContext _ctx = null!;
-    private AuthStore _authStore = null!;
+    private IAuthStore _authStore = null!;
+    private Mock<IAuthService> _authServiceMock = null!;
 
+    /// <summary>
+    /// Configura el entorno de renderizado.
+    /// </summary>
     [SetUp]
     public void Setup()
     {
         _ctx = new BunitContext();
         _authStore = new AuthStore();
-        _ctx.Services.AddSingleton(_authStore);
+        _authServiceMock = new Mock<IAuthService>();
+        
+        _ctx.Services.AddSingleton<IAuthStore>(_authStore);
+        _ctx.Services.AddSingleton<IAuthService>(_authServiceMock.Object);
     }
 
+    /// <summary>
+    /// Limpieza.
+    /// </summary>
     [TearDown]
     public void TearDown() => _ctx.Dispose();
 
+    /// <summary>
+    /// Comprueba que el panel no sea visible si el usuario no ha iniciado sesión.
+    /// </summary>
     [Test]
     public void Should_Not_Render_Anything_When_Not_Authenticated()
     {
@@ -34,6 +53,9 @@ public class AuthPanelTests
         cut.FindAll(".auth-panel").Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Verifica que la información del perfil del usuario se muestre correctamente al estar autenticado.
+    /// </summary>
     [Test]
     public void Should_Render_User_Info_When_Authenticated()
     {
@@ -50,6 +72,9 @@ public class AuthPanelTests
         cut.Find(".role-user").Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Valida que se aplique el estilo visual de administrador cuando el rol es 'ADMIN'.
+    /// </summary>
     [Test]
     public void Should_Render_Admin_Role_Class_Correctly()
     {
@@ -63,8 +88,11 @@ public class AuthPanelTests
         cut.Find(".role-admin").Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Verifica que al pulsar el botón de cierre de sesión se invoque al servicio de autenticación.
+    /// </summary>
     [Test]
-    public void Clicking_Logout_Should_Call_Store_Logout()
+    public void Clicking_Logout_Should_Call_AuthService_Logout()
     {
         // Arrange
         _authStore.SetAuth("token", "user", "User", "USER");
@@ -74,8 +102,6 @@ public class AuthPanelTests
         cut.Find("button.auth-logout-btn").Click();
 
         // Assert
-        _authStore.GetState().IsAuthenticated.Should().BeFalse();
-        
-        cut.WaitForState(() => cut.FindAll(".auth-panel").Count == 0);
+        _authServiceMock.Verify(s => s.LogoutAsync(), Times.Once);
     }
 }

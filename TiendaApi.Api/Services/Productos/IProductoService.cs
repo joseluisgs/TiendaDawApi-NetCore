@@ -7,54 +7,73 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Services.Productos;
 
 /// <summary>
-/// Contrato del servicio de productos.
+/// Define el contrato para la gestión de productos en el backend.
+/// Maneja la lógica de negocio, validaciones, persistencia y notificaciones en tiempo real.
 /// </summary>
 public interface IProductoService
 {
-    /// <summary>Obtiene todos los productos.</summary>
-    /// <returns>Resultado con colección de productos.</returns>
+    /// <summary>
+    /// Recupera la lista completa de productos activos en el sistema.
+    /// </summary>
+    /// <returns>Resultado con la colección de <see cref="ProductoDto"/>.</returns>
     Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync();
 
-    /// <summary>Obtiene productos paginados con filtros.</summary>
-    /// <param name="filter">Filtros de búsqueda y paginación.</param>
-    /// <returns>Resultado con productos paginados.</returns>
+    /// <summary>
+    /// Recupera productos aplicando criterios de filtrado y paginación.
+    /// </summary>
+    /// <param name="filter">Deltas de filtrado y opciones de página.</param>
+    /// <returns>Resultado con el objeto paginado.</returns>
     Task<Result<PagedResult<ProductoDto>, DomainError>> FindAllPagedAsync(ProductoFilterDto filter);
 
-    /// <summary>Busca un producto por ID.</summary>
+    /// <summary>
+    /// Busca un producto por su identificador numérico único.
+    /// </summary>
     /// <param name="id">ID del producto.</param>
-    /// <returns>Resultado con el producto o error.</returns>
+    /// <returns>Resultado con el producto o error 404.</returns>
     Task<Result<ProductoDto, DomainError>> FindByIdAsync(long id);
 
-    /// <summary>Obtiene productos por categoría.</summary>
+    /// <summary>
+    /// Obtiene todos los productos pertenecientes a una categoría específica.
+    /// </summary>
     /// <param name="categoriaId">ID de la categoría.</param>
-    /// <returns>Resultado con colección de productos.</returns>
+    /// <returns>Resultado con la lista de productos.</returns>
     Task<Result<IEnumerable<ProductoDto>, DomainError>> FindByCategoriaIdAsync(long categoriaId);
 
-    /// <summary>Crea un nuevo producto.</summary>
-    /// <param name="dto">Datos del producto.</param>
-    /// <returns>Resultado con el producto creado.</returns>
+    /// <summary>
+    /// Registra un nuevo producto validando sus campos y la existencia de la categoría.
+    /// </summary>
+    /// <param name="dto">Datos del producto a crear.</param>
+    /// <returns>Resultado con el producto guardado.</returns>
     Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto);
 
-    /// <summary>Actualiza un producto existente.</summary>
-    /// <param name="id">ID del producto.</param>
+    /// <summary>
+    /// Actualiza completamente un producto existente.
+    /// </summary>
+    /// <param name="id">ID del producto a modificar.</param>
     /// <param name="dto">Nuevos datos.</param>
     /// <returns>Resultado con el producto actualizado.</returns>
     Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto);
 
-    /// <summary>Elimina un producto (soft delete).</summary>
-    /// <param name="id">ID del producto.</param>
+    /// <summary>
+    /// Realiza un borrado lógico del producto en el sistema.
+    /// </summary>
+    /// <param name="id">ID del producto a eliminar.</param>
     /// <returns>Resultado de la operación.</returns>
     Task<UnitResult<DomainError>> DeleteAsync(long id);
 
-    /// <summary>Actualiza la imagen de un producto.</summary>
+    /// <summary>
+    /// Sube y asigna una nueva imagen a un producto.
+    /// </summary>
     /// <param name="id">ID del producto.</param>
-    /// <param name="image">Archivo de imagen.</param>
-    /// <returns>Resultado con el producto actualizado.</returns>
+    /// <param name="image">Archivo de imagen proveniente del cliente.</param>
+    /// <returns>Resultado con el producto actualizado incluyendo la nueva ruta.</returns>
     Task<Result<ProductoDto, DomainError>> UpdateImageAsync(long id, IFormFile image);
 
-    /// <summary>Actualiza parcialmente un producto.</summary>
+    /// <summary>
+    /// Actualiza únicamente los campos proporcionados de un producto.
+    /// </summary>
     /// <param name="id">ID del producto.</param>
-    /// <param name="dto">Campos a actualizar.</param>
+    /// <param name="dto">Campos opcionales a modificar.</param>
     /// <returns>Resultado con el producto actualizado.</returns>
     Task<Result<ProductoDto, DomainError>> UpdatePartialAsync(long id, ProductoPatchDto dto);
 }

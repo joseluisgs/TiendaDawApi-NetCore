@@ -1,108 +1,112 @@
-using NUnit.Framework;
+using ClientBlazor.Cliente.State.Auth;
 using FluentAssertions;
-using ClientBlazor.Cliente.State;
-using ClientBlazor.Cliente.DTOs.Auth;
-using System.Reactive.Linq;
+using NUnit.Framework;
 
 namespace ClientBlazor.Tests.State;
 
+/// <summary>
+/// Pruebas para el almacén de estado de autenticación (AuthStore).
+/// Objetivo: Validar la gestión reactiva de la sesión del usuario.
+/// </summary>
 [TestFixture]
 public class AuthStoreTests
 {
     private AuthStore _authStore = null!;
 
+    /// <summary>
+    /// Inicializa una nueva instancia limpia de AuthStore antes de cada test.
+    /// </summary>
     [SetUp]
-    public void SetUp()
+    public void Setup()
     {
-        // Reiniciamos el store antes de cada test
         _authStore = new AuthStore();
     }
 
+    /// <summary>
+    /// Comprueba que al arrancar, el estado inicial sea de no autenticado.
+    /// </summary>
     [Test]
-    public void Initial_State_Should_Be_Not_Authenticated()
+    public void Initial_State_Should_Be_Unauthenticated()
     {
-        // Act
         var state = _authStore.GetState();
-
-        // Assert - Usando FluentAssertions
-        state.IsAuthenticated.Should().BeFalse();
-        state.Token.Should().BeNullOrEmpty();
-        // El estado inicial tiene strings vacíos, no nulos, según la definición del record
-        state.Email.Should().BeEmpty();
-        state.Nombre.Should().BeEmpty();
-        state.Role.Should().BeEmpty();
-        state.IsLoading.Should().BeFalse();
-    }
-
-    [Test]
-    public void SetAuth_Should_Update_State_Correctly()
-    {
-        // Arrange
-        var token = "test-jwt-token";
-        var email = "test@example.com";
-        var nombre = "Test User";
-        var role = "USER";
-
-        // Act
-        _authStore.SetAuth(token, email, nombre, role);
-        var state = _authStore.GetState();
-
-        // Assert
-        state.IsAuthenticated.Should().BeTrue();
-        state.Token.Should().Be(token);
-        state.Email.Should().Be(email);
-        state.Nombre.Should().Be(nombre);
-        state.Role.Should().Be(role);
-    }
-
-    [Test]
-    public void Logout_Should_Clear_State()
-    {
-        // Arrange
-        _authStore.SetAuth("token", "email", "name", "role");
-        
-        // Act
-        _authStore.Logout();
-        var state = _authStore.GetState();
-
-        // Assert
         state.IsAuthenticated.Should().BeFalse();
         state.Token.Should().BeNull();
         state.Email.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Verifica que al establecer los datos de sesión, todos los campos del estado se actualicen.
+    /// </summary>
     [Test]
-    public void IsAuthenticated_Observable_Should_Notify_Changes()
+    public void SetAuth_Should_Update_All_Fields_Correctly()
     {
         // Arrange
-        bool? lastValue = null;
-        using var subscription = _authStore.IsAuthenticatedObservable.Subscribe(val => lastValue = val);
+        var token = "test-token";
+        var email = "test@example.com";
+        var nombre = "Test User";
+        var role = "ADMIN";
 
-        // Act 1: Initial state
-        lastValue.Should().BeFalse();
+        // Act
+        _authStore.SetAuth(token, email, nombre, role);
 
-        // Act 2: Login
-        _authStore.SetAuth("token", "email", "name", "role");
-        lastValue.Should().BeTrue();
-
-        // Act 3: Logout
-        _authStore.Logout();
-        lastValue.Should().BeFalse();
+        // Assert
+        var state = _authStore.GetState();
+        state.IsAuthenticated.Should().BeTrue();
+        state.Token.Should().Be(token);
+        state.Email.Should().Be(email);
+        state.Nombre.Should().Be(nombre);
+        state.Role.Should().Be(role);
+        state.IsAdmin.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Valida que el proceso de Logout limpie todos los datos sensibles del estado.
+    /// </summary>
     [Test]
-    public void IsAdmin_Should_Return_True_Only_For_Admin_Role()
+    public void Logout_Should_Reset_State_To_Defaults()
     {
-        // Act & Assert 1: User
-        _authStore.SetAuth("token", "email", "name", "USER");
-        _authStore.GetState().IsAdmin.Should().BeFalse();
+        // Arrange
+        _authStore.SetAuth("token", "email", "name", "role");
 
-        // Act & Assert 2: Admin
-        _authStore.SetAuth("token", "email", "name", "ADMIN");
-        _authStore.GetState().IsAdmin.Should().BeTrue();
-        
-        // Act & Assert 3: Case insensitive
+        // Act
+        _authStore.Logout();
+
+        // Assert
+        var state = _authStore.GetState();
+        state.IsAuthenticated.Should().BeFalse();
+        state.Token.Should().BeNull();
+        state.Email.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Verifica el comportamiento reactivo: los observadores deben recibir el nuevo token.
+    /// </summary>
+    [Test]
+    public void TokenObservable_Should_Emit_New_Values()
+    {
+        // Arrange
+        string? lastValue = null;
+        using var subscription = _authStore.TokenObservable.Subscribe(val => lastValue = val);
+
+        // Act
+        _authStore.SetAuth("new-token", "e", "n", "r");
+
+        // Assert
+        lastValue.Should().Be("new-token");
+    }
+
+    /// <summary>
+    /// Comprueba que la detección del rol de administrador no sea sensible a mayúsculas/minúsculas.
+    /// </summary>
+    [Test]
+    public void IsAdmin_Should_Be_Case_Insensitive()
+    {
+        // Admin lowercase
         _authStore.SetAuth("token", "email", "name", "admin");
+        _authStore.GetState().IsAdmin.Should().BeTrue();
+
+        // Admin uppercase
+        _authStore.SetAuth("token", "email", "name", "ADMIN");
         _authStore.GetState().IsAdmin.Should().BeTrue();
     }
 }

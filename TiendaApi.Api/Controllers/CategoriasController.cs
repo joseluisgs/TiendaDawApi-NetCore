@@ -11,8 +11,8 @@ using TiendaApi.Api.Helpers.Pagination;
 namespace TiendaApi.Api.Controllers;
 
 /// <summary>
-/// Controlador de API para gestión de categorías de productos.
-/// Endpoints: CRUD paginado de categorías.
+/// Controlador de API para la gestión de categorías de productos.
+/// Permite realizar operaciones CRUD con soporte para paginación y filtrado.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -23,15 +23,15 @@ public class CategoriasController(
 ) : ControllerBase
 {
     /// <summary>
-    /// Obtiene todas las categorías paginadas con filtros opcionales.
+    /// Obtiene todas las categorías paginadas aplicando filtros opcionales.
     /// </summary>
-    /// <param name="nombre">Filtrar por nombre (contiene).</param>
-    /// <param name="isDeleted">Filtrar por estado de eliminación.</param>
-    /// <param name="page">Número de página (0-indexed).</param>
-    /// <param name="size">Elementos por página.</param>
-    /// <param name="sortBy">Campo de ordenación.</param>
-    /// <param name="direction">Dirección (asc, desc).</param>
-    /// <returns>200 OK con lista paginada de categorías.</returns>
+    /// <param name="nombre">Filtrar por nombre de categoría (contiene).</param>
+    /// <param name="isDeleted">Filtrar por estado de eliminación lógica.</param>
+    /// <param name="page">Número de página a recuperar (0-indexed).</param>
+    /// <param name="size">Cantidad de elementos por página.</param>
+    /// <param name="sortBy">Campo por el cual ordenar los resultados.</param>
+    /// <param name="direction">Dirección de la ordenación (asc o desc).</param>
+    /// <returns>Una respuesta 200 OK con el objeto <see cref="PagedResult{CategoriaDto}"/>.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<CategoriaDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
@@ -76,10 +76,10 @@ public class CategoriasController(
     }
 
     /// <summary>
-    /// Obtiene una categoría por su ID.
+    /// Recupera una categoría específica mediante su identificador único.
     /// </summary>
-    /// <param name="id">ID de la categoría.</param>
-    /// <returns>200 OK con la categoría, o 404 si no existe.</returns>
+    /// <param name="id">ID numérico de la categoría.</param>
+    /// <returns>La categoría encontrada o 404 si no existe.</returns>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -101,10 +101,11 @@ public class CategoriasController(
     }
 
     /// <summary>
-    /// Crea una nueva categoría.
+    /// Crea una nueva categoría de productos.
+    /// Solo accesible para usuarios con rol de administrador.
     /// </summary>
     /// <param name="dto">Datos de la categoría a crear.</param>
-    /// <returns>201 Created con la categoría creada, o 400/409 si hay errores.</returns>
+    /// <returns>201 Created con la categoría recién creada.</returns>
     [HttpPost]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status201Created)]
@@ -130,11 +131,12 @@ public class CategoriasController(
     }
 
     /// <summary>
-    /// Actualiza una categoría existente.
+    /// Actualiza los datos de una categoría existente.
+    /// Requiere permisos de administrador.
     /// </summary>
-    /// <param name="id">ID de la categoría.</param>
+    /// <param name="id">ID de la categoría a actualizar.</param>
     /// <param name="dto">Nuevos datos de la categoría.</param>
-    /// <returns>200 OK con la categoría actualizada, o 400/404/409 si hay errores.</returns>
+    /// <returns>200 OK con la categoría actualizada o error correspondiente.</returns>
     [HttpPut("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
@@ -162,13 +164,14 @@ public class CategoriasController(
     }
 
     /// <summary>
-    /// Elimina una categoría (soft-delete).
+    /// Elimina una categoría del sistema (borrado lógico).
+    /// Requiere permisos de administrador.
     /// </summary>
     /// <param name="id">ID de la categoría a eliminar.</param>
-    /// <returns>204 No Content si tiene éxito, o 404 si no existe.</returns>
+    /// <returns>204 No Content si se eliminó con éxito.</returns>
     [HttpDelete("{id}")]
     [Authorize(Roles = UserRoles.ADMIN)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204 NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

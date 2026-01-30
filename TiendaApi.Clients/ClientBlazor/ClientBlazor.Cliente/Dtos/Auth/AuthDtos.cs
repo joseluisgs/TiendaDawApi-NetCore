@@ -1,33 +1,23 @@
 namespace ClientBlazor.Cliente.DTOs.Auth;
 
-/// <summary>
-/// DTO para el inicio de sesión.
-/// Copia exacta del LoginDto de la API.
-/// </summary>
 public record LoginDto
 {
     public string Username { get; init; } = string.Empty;
     public string Password { get; init; } = string.Empty;
 }
 
-/// <summary>
-/// DTO de respuesta de autenticación.
-/// Copia exacta del AuthResponseDto de la API.
-/// </summary>
-public record AuthResponseDto(
-    string Token,
-    UserDto User
-);
+public record AuthResponseDto
+{
+    public string Token { get; init; } = string.Empty;
+    public UserDto User { get; init; } = default!;
+}
 
-/// <summary>
-/// DTO de usuario.
-/// Copia exacta del UserDto de la API.
-/// </summary>
-public record UserDto(
-    long Id,
-    string Username,
-    string Email,
-    string Avatar,
-    string Role,
-    DateTime CreatedAt
-);
+public record UserDto
+{
+    public long Id { get; init; }
+    public string Username { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+    public string Avatar { get; init; } = string.Empty;
+    public string Role { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+}

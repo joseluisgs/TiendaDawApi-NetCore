@@ -4,67 +4,93 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Productos;
 
 /// <summary>
-/// Contrato del repositorio de productos.
+/// Define el contrato para el acceso a datos de productos.
+/// Proporciona métodos para operaciones CRUD, consultas complejas, paginación y gestión de concurrencia.
 /// </summary>
 public interface IProductoRepository
 {
-    /// <summary>Obtiene todos los productos ordenados por nombre.</summary>
-    /// <returns>Colección de productos.</returns>
+    /// <summary>
+    /// Recupera todos los productos de la base de datos, incluyendo su categoría.
+    /// </summary>
+    /// <returns>Una colección de entidades <see cref="Producto"/>.</returns>
     Task<IEnumerable<Producto>> FindAllAsync();
 
-    /// <summary>Obtiene productos como IQueryable para GraphQL.</summary>
-    /// <returns>IQueryable de productos.</returns>
+    /// <summary>
+    /// Obtiene un flujo de consulta de productos sin seguimiento de cambios para optimizar lecturas.
+    /// </summary>
+    /// <returns>Un <see cref="IQueryable{Producto}"/>.</returns>
     IQueryable<Producto> FindAllAsNoTracking();
 
-    /// <summary>Obtiene productos paginados con filtros.</summary>
-    /// <param name="filter">Filtros de búsqueda y paginación.</param>
-    /// <returns>Tupla con items y total.</returns>
+    /// <summary>
+    /// Realiza una búsqueda paginada de productos aplicando múltiples filtros.
+    /// </summary>
+    /// <param name="filter">DTO con los parámetros de búsqueda y paginación.</param>
+    /// <returns>Una tupla con el listado de productos y el conteo total para la paginación.</returns>
     Task<(IEnumerable<Producto> Items, int TotalCount)> FindAllPagedAsync(ProductoFilterDto filter);
 
-    /// <summary>Busca un producto por ID.</summary>
+    /// <summary>
+    /// Busca un producto por su identificador único.
+    /// </summary>
     /// <param name="id">ID del producto.</param>
-    /// <returns>Producto o null.</returns>
+    /// <returns>La entidad <see cref="Producto"/> o null si no se encuentra.</returns>
     Task<Producto?> FindByIdAsync(long id);
 
-    /// <summary>Obtiene productos por categoría.</summary>
+    /// <summary>
+    /// Recupera los productos asociados a una categoría específica.
+    /// </summary>
     /// <param name="categoriaId">ID de la categoría.</param>
-    /// <returns>Colección de productos.</returns>
+    /// <returns>Lista de productos de dicha categoría.</returns>
     Task<IEnumerable<Producto>> FindByCategoriaIdAsync(long categoriaId);
 
-    /// <summary>Guarda o actualiza un producto.</summary>
-    /// <param name="producto">Producto a guardar.</param>
-    /// <returns>Producto guardado.</returns>
+    /// <summary>
+    /// Inserta un nuevo producto en la base de datos.
+    /// </summary>
+    /// <param name="producto">La entidad a guardar.</param>
+    /// <returns>La entidad persistida con su ID generado.</returns>
     Task<Producto> SaveAsync(Producto producto);
 
-    /// <summary>Actualiza un producto existente.</summary>
-    /// <param name="producto">Producto con datos actualizados.</param>
-    /// <returns>Producto actualizado.</returns>
+    /// <summary>
+    /// Actualiza los datos de un producto ya existente.
+    /// </summary>
+    /// <param name="producto">La entidad con los cambios.</param>
+    /// <returns>La entidad actualizada.</returns>
     Task<Producto> UpdateAsync(Producto producto);
 
-    /// <summary>Elimina un producto (soft delete).</summary>
+    /// <summary>
+    /// Realiza una eliminación lógica del producto marcándolo como borrado.
+    /// </summary>
     /// <param name="id">ID del producto.</param>
     Task DeleteAsync(long id);
 
-    /// <summary>Verifica si existe un producto por ID.</summary>
-    /// <param name="id">ID del producto.</param>
+    /// <summary>
+    /// Determina si un producto existe en el sistema.
+    /// </summary>
+    /// <param name="id">ID a comprobar.</param>
     /// <returns>True si existe.</returns>
     Task<bool> ExistsAsync(long id);
 
-    /// <summary>Decrementa stock con control de concurrencia.</summary>
+    /// <summary>
+    /// Reduce el stock de un producto de forma atómica.
+    /// Utiliza control de concurrencia optimista mediante RowVersion.
+    /// </summary>
     /// <param name="productoId">ID del producto.</param>
-    /// <param name="cantidad">Cantidad a restar.</param>
-    /// <param name="expectedRowVersion">Versión original del registro.</param>
-    /// <returns>True si se decrementó exitosamente.</returns>
+    /// <param name="cantidad">Unidades a descontar.</param>
+    /// <param name="expectedRowVersion">Versión de fila esperada para validar concurrencia.</param>
+    /// <returns>True si la operación tuvo éxito.</returns>
     Task<bool> DecrementStockAsync(long productoId, int cantidad, byte[] expectedRowVersion);
 
-    /// <summary>Inicia una transacción.</summary>
-    /// <param name="isolationLevel">Nivel de aislamiento.</param>
-    /// <returns>Transacción iniciada.</returns>
+    /// <summary>
+    /// Inicia una transacción de base de datos con el nivel de aislamiento especificado.
+    /// </summary>
+    /// <param name="isolationLevel">Nivel de aislamiento (ej. Serializable).</param>
+    /// <returns>Una instancia de transacción activa.</returns>
     Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync(
         System.Data.IsolationLevel isolationLevel);
 
-    /// <summary>Obtiene productos creados recientemente.</summary>
-    /// <param name="days">Días hacia atrás.</param>
-    /// <returns>Colección de productos.</returns>
+    /// <summary>
+    /// Obtiene los productos que han sido creados en los últimos días.
+    /// </summary>
+    /// <param name="days">Número de días hacia atrás desde hoy.</param>
+    /// <returns>Colección de productos recientes.</returns>
     Task<IEnumerable<Producto>> GetRecentlyCreatedAsync(int days);
 }

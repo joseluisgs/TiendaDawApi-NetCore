@@ -1,6 +1,8 @@
-@using ClientBlazor.Cliente.State
+@using ClientBlazor.Cliente.State.Auth
+@using ClientBlazor.Cliente.Services.Rest
 @implements IDisposable
-@inject AuthStore AuthStore
+@inject IAuthStore AuthStore
+@inject IAuthService AuthService
 
 @if (isAuthenticated)
 {
@@ -31,53 +33,65 @@
 }
 
 @code {
+    /// <summary>Indica si el usuario actual está logueado en el sistema.</summary>
     private bool isAuthenticated = false;
+    /// <summary>Indica si el usuario tiene privilegios de administrador.</summary>
     private bool isAdmin = false;
+    /// <summary>Email del usuario autenticado.</summary>
     private string email = "";
+    /// <summary>Rol textual del usuario.</summary>
     private string role = "";
+    /// <summary>Nombre o pseudónimo a mostrar en el saludo.</summary>
     private string displayName = "";
     
+    /// <summary>Lista de suscripciones reactivas para gestión de memoria.</summary>
     private readonly List<IDisposable> subscriptions = new();
 
+    /// <summary>
+    /// Suscribe el componente a todos los campos relevantes del AuthStore al iniciar.
+    /// </summary>
     protected override void OnInitialized()
     {
         subscriptions.Add(AuthStore.IsAuthenticatedObservable.Subscribe(auth => {
             isAuthenticated = auth;
-            StateHasChanged();
+            InvokeAsync(StateHasChanged);
         }));
 
         subscriptions.Add(AuthStore.IsAdminObservable.Subscribe(admin => {
             isAdmin = admin;
-            StateHasChanged();
+            InvokeAsync(StateHasChanged);
         }));
 
         subscriptions.Add(AuthStore.EmailObservable.Subscribe(e => {
             email = e;
-            StateHasChanged();
+            InvokeAsync(StateHasChanged);
         }));
 
         subscriptions.Add(AuthStore.RoleObservable.Subscribe(r => {
             role = r;
-            StateHasChanged();
+            InvokeAsync(StateHasChanged);
         }));
 
         subscriptions.Add(AuthStore.DisplayNameObservable.Subscribe(name => {
             displayName = name;
-            StateHasChanged();
+            InvokeAsync(StateHasChanged);
         }));
     }
 
-    private void Logout()
+    /// <summary>
+    /// Invoca el proceso de cierre de sesión mediante el servicio de autenticación.
+    /// </summary>
+    private async Task Logout()
     {
-        AuthStore.Logout();
+        await AuthService.LogoutAsync();
     }
 
+    /// <summary>
+    /// Libera los recursos y cancela las suscripciones activas al destruir el componente.
+    /// </summary>
     public void Dispose()
     {
-        foreach (var sub in subscriptions)
-        {
-            sub.Dispose();
-        }
+        foreach (var sub in subscriptions) sub.Dispose();
         subscriptions.Clear();
     }
 }

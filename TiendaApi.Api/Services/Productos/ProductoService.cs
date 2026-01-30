@@ -20,10 +20,8 @@ using TiendaApi.Api.Validators.Productos;
 
 namespace TiendaApi.Api.Services.Productos;
 
-/// <summary>
-    /// Servicio de productos usando Patrón Result.
-    /// </summary>
-    public class ProductoService(
+/// <inheritdoc cref="IProductoService" />
+public class ProductoService(
     IProductoRepository productoRepository,
     ICategoriaRepository categoriaRepository,
     ILogger<ProductoService> logger,
@@ -40,10 +38,7 @@ namespace TiendaApi.Api.Services.Productos;
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
         int.Parse(configuration["Cache:ProductoCacheTTLMinutes"] ?? "10"));
 
-    /// <summary>
-    /// Obtener todos los productos con patrón cache-aside.
-    /// Devuelve: Result.Success(List) | Result.Failure nunca
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.FindAllAsync" />
     public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync()
     {
         logger.LogInformation("Obteniendo todos los productos");
@@ -64,10 +59,7 @@ namespace TiendaApi.Api.Services.Productos;
             .Tap(_ => AñadirCacheProducto(cacheKey, dtos));
     }
 
-    /// <summary>
-    /// Obtener productos paginados con filtros.
-    /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.FindAllPagedAsync(ProductoFilterDto)" />
     public async Task<Result<PagedResult<ProductoDto>, DomainError>> FindAllPagedAsync(ProductoFilterDto filter)
     {
         logger.LogInformation("Obteniendo productos paginados - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
@@ -86,10 +78,7 @@ namespace TiendaApi.Api.Services.Productos;
         return Result.Success<PagedResult<ProductoDto>, DomainError>(pagedResult);
     }
 
-    /// <summary>
-    /// Obtener un producto por ID con patrón cache-aside.
-    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound)
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.FindByIdAsync(long)" />
     public async Task<Result<ProductoDto, DomainError>> FindByIdAsync(long id)
     {
         logger.LogInformation("Obteniendo producto con ID: {Id}", id);
@@ -119,10 +108,7 @@ namespace TiendaApi.Api.Services.Productos;
             .Tap(_ => AñadirCacheProducto(cacheKey, dto));
     }
 
-    /// <summary>
-    /// Obtener productos por categoría.
-    /// Devuelve: Result.Success(List) | Result.Failure(NotFound)
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.FindByCategoriaIdAsync(long)" />
     public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindByCategoriaIdAsync(long categoriaId)
     {
         logger.LogInformation("Obteniendo productos para categoría: {CategoriaId}", categoriaId);
@@ -141,10 +127,7 @@ namespace TiendaApi.Api.Services.Productos;
         return Result.Success<IEnumerable<ProductoDto>, DomainError>(dtos);
     }
 
-    /// <summary>
-    /// Crear un nuevo producto.
-    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(Validation/NotFound)
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.CreateAsync(ProductoRequestDto)" />
     public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
     {
         logger.LogInformation("Creando producto: {Nombre}", dto.Nombre);
@@ -155,7 +138,6 @@ namespace TiendaApi.Api.Services.Productos;
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
 
-        // ROP: Guardar -> Mapear -> Efectos (log, cache, websocket, email)
         var saved = await productoRepository.SaveAsync(dto.ToEntity());
         var resultDto = saved.ToDto();
 
@@ -171,10 +153,7 @@ namespace TiendaApi.Api.Services.Productos;
             });
     }
 
-    /// <summary>
-    /// Actualizar un producto existente.
-    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.UpdateAsync(long, ProductoRequestDto)" />
     public async Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto)
     {
         logger.LogInformation("Actualizando producto con ID: {Id}", id);
@@ -213,14 +192,11 @@ namespace TiendaApi.Api.Services.Productos;
                 NotificarWebSocketProductoActualizado(resultDto);
                 NotificarSignalRProductoActualizado(resultDto);
                 EventoSuscripcionProductoActualizado(resultDto);
-                EventoSuscripcionStockBajo(resultDto, 10); // Umbral de stock bajo = 10
+                EventoSuscripcionStockBajo(resultDto, 10);
             });
     }
 
-    /// <summary>
-    /// Eliminar un producto.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(NotFound)
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.DeleteAsync(long)" />
     public async Task<UnitResult<DomainError>> DeleteAsync(long id)
     {
         logger.LogInformation("Eliminando producto con ID: {Id}", id);
@@ -255,10 +231,7 @@ namespace TiendaApi.Api.Services.Productos;
         return UnitResult.Success<DomainError>();
     }
 
-    /// <summary>
-    /// Actualizar la imagen de un producto.
-    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.UpdateImageAsync(long, IFormFile)" />
     public async Task<Result<ProductoDto, DomainError>> UpdateImageAsync(long id, IFormFile image)
     {
         logger.LogInformation("Actualizando imagen de producto con ID: {Id}", id);
@@ -300,10 +273,7 @@ namespace TiendaApi.Api.Services.Productos;
             });
     }
 
-    /// <summary>
-    /// Actualizar parcialmente un producto (solo campos proporcionados).
-    /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
-    /// </summary>
+    /// <inheritdoc cref="IProductoService.UpdatePartialAsync(long, ProductoPatchDto)" />
     public async Task<Result<ProductoDto, DomainError>> UpdatePartialAsync(long id, ProductoPatchDto dto)
     {
         logger.LogInformation("Actualizando parcialmente producto con ID: {Id}", id);
@@ -350,9 +320,6 @@ namespace TiendaApi.Api.Services.Productos;
 
     #region Métodos Privados - Cache
 
-    /// <summary>
-    /// Añade un elemento a la caché de forma asíncrona (fire & forget).
-    /// </summary>
     private void AñadirCacheProducto<T>(string key, T value)
     {
         _ = Task.Run(async () =>
@@ -368,9 +335,6 @@ namespace TiendaApi.Api.Services.Productos;
         });
     }
 
-    /// <summary>
-    /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
-    /// </summary>
     private void InvalidarCacheProducto(params string[] keys)
     {
         _ = Task.Run(async () =>
@@ -393,9 +357,6 @@ namespace TiendaApi.Api.Services.Productos;
 
     #region Métodos Privados - WebSocket Nativo
 
-    /// <summary>
-    /// Notifica vía WebSocket la creación de un producto.
-    /// </summary>
     private void NotificarWebSocketProductoCreado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
@@ -407,18 +368,14 @@ namespace TiendaApi.Api.Services.Productos;
                     producto.Id,
                     producto
                 ));
-                logger.LogDebug("Notificación WebSocket enviada tras crear producto: {ProductoId}", producto.Id);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error en notificación WebSocket al crear producto: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error en notificación WebSocket al crear producto");
             }
         });
     }
 
-    /// <summary>
-    /// Notifica vía WebSocket la actualización de un producto.
-    /// </summary>
     private void NotificarWebSocketProductoActualizado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
@@ -430,18 +387,14 @@ namespace TiendaApi.Api.Services.Productos;
                     producto.Id,
                     producto
                 ));
-                logger.LogDebug("Notificación WebSocket enviada tras actualizar producto: {ProductoId}", producto.Id);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error en notificación WebSocket al actualizar producto: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error en notificación WebSocket al actualizar producto");
             }
         });
     }
 
-    /// <summary>
-    /// Notifica vía WebSocket la eliminación de un producto.
-    /// </summary>
     private void NotificarWebSocketProductoEliminado(long productoId)
     {
         _ = Task.Run(async () =>
@@ -453,11 +406,10 @@ namespace TiendaApi.Api.Services.Productos;
                     productoId,
                     null
                 ));
-                logger.LogDebug("Notificación WebSocket enviada tras eliminar producto: {ProductoId}", productoId);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error en notificación WebSocket al eliminar producto: {ProductoId}", productoId);
+                logger.LogWarning(ex, "Error en notificación WebSocket al eliminar producto");
             }
         });
     }
@@ -466,89 +418,47 @@ namespace TiendaApi.Api.Services.Productos;
 
     #region Métodos Privados - SignalR
 
-    /// <summary>
-    /// Notifica vía SignalR la creación de un producto.
-    /// </summary>
     private void NotificarSignalRProductoCreado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                var payload = new
-                {
-                    productoId = producto.Id,
-                    nombre = producto.Nombre,
-                    descripcion = producto.Descripcion,
-                    precio = producto.Precio,
-                    stock = producto.Stock,
-                    categoriaId = producto.CategoriaId,
-                    categoriaNombre = producto.CategoriaNombre,
-                    tipo = "PRODUCTO_CREADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoCreado", payload);
-                logger.LogDebug("Notificación SignalR enviada tras crear producto: {ProductoId}", producto.Id);
+                await productosHubContext.Clients.All.SendAsync("ProductoCreado", producto);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error en notificación SignalR al crear producto: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error en notificación SignalR al crear producto");
             }
         });
     }
 
-    /// <summary>
-    /// Notifica vía SignalR la actualización de un producto.
-    /// </summary>
     private void NotificarSignalRProductoActualizado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                var payload = new
-                {
-                    productoId = producto.Id,
-                    nombre = producto.Nombre,
-                    descripcion = producto.Descripcion,
-                    precio = producto.Precio,
-                    stock = producto.Stock,
-                    categoriaId = producto.CategoriaId,
-                    categoriaNombre = producto.CategoriaNombre,
-                    tipo = "PRODUCTO_ACTUALIZADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoActualizado", payload);
-                logger.LogDebug("Notificación SignalR enviada tras actualizar producto: {ProductoId}", producto.Id);
+                await productosHubContext.Clients.All.SendAsync("ProductoActualizado", producto);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error en notificación SignalR al actualizar producto: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error en notificación SignalR al actualizar producto");
             }
         });
     }
 
-    /// <summary>
-    /// Notifica vía SignalR la eliminación de un producto.
-    /// </summary>
     private void NotificarSignalRProductoEliminado(long productoId)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                var payload = new
-                {
-                    productoId,
-                    tipo = "PRODUCTO_ELIMINADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoEliminado", payload);
-                logger.LogDebug("Notificación SignalR enviada tras eliminar producto: {ProductoId}", productoId);
+                await productosHubContext.Clients.All.SendAsync("ProductoEliminado", productoId);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error en notificación SignalR al eliminar producto: {ProductoId}", productoId);
+                logger.LogWarning(ex, "Error en notificación SignalR al eliminar producto");
             }
         });
     }
@@ -557,9 +467,6 @@ namespace TiendaApi.Api.Services.Productos;
 
     #region Métodos Privados - Email
 
-    /// <summary>
-    /// Envía email de notificación cuando se crea un producto.
-    /// </summary>
     private void EnviarEmailProductoCreado(Producto producto)
     {
         _ = Task.Run(async () =>
@@ -569,22 +476,12 @@ namespace TiendaApi.Api.Services.Productos;
                 var adminEmail = configuration["Smtp:AdminEmail"];
                 if (string.IsNullOrEmpty(adminEmail)) return;
 
-                var content = EmailTemplates.ProductoCreado(producto.Nombre, producto.Precio, producto.Stock, producto.Id);
-                var body = EmailTemplates.CreateBase("Nuevo Producto Creado", content);
-
-                var emailMessage = new EmailMessage
-                {
-                    To = adminEmail,
-                    Subject = "🆕 Nuevo Producto en Tienda DAW",
-                    Body = body,
-                    IsHtml = true
-                };
-                await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras crear producto");
+                var body = EmailTemplates.ProductoCreado(producto.Nombre, producto.Precio, producto.Stock, producto.Id);
+                await emailService.EnqueueEmailAsync(new EmailMessage { To = adminEmail, Subject = "Nuevo Producto", Body = body, IsHtml = true });
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras crear producto");
+                logger.LogWarning(ex, "Error al enviar email de producto creado");
             }
         });
     }
@@ -593,10 +490,6 @@ namespace TiendaApi.Api.Services.Productos;
 
     #region Métodos Privados - Validación
 
-    /// <summary>
-    /// Valida los datos de un producto usando FluentValidation.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation/NotFound)
-    /// </summary>
     private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto)
     {
         var validationResult = await productoValidator.ValidateAsync(dto);
@@ -605,25 +498,15 @@ namespace TiendaApi.Api.Services.Productos;
         {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(e => e.ErrorMessage).ToArray()
-                );
+                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
 
-            return UnitResult.Failure<DomainError>(
-                ProductoError.ValidacionConCampos(errors)
-            );
+            return UnitResult.Failure<DomainError>(ProductoError.ValidacionConCampos(errors));
         }
 
         var categoriaExists = await categoriaRepository.FindByIdAsync(dto.CategoriaId);
         if (categoriaExists is null)
         {
-            return UnitResult.Failure<DomainError>(
-                ProductoError.ValidacionConCampos(new Dictionary<string, string[]>
-                {
-                    { "CategoriaId", new[] { $"La categoría con ID {dto.CategoriaId} no fue encontrada" } }
-                })
-            );
+            return UnitResult.Failure<DomainError>(ProductoError.ValidacionConCampos(new Dictionary<string, string[]> { { "CategoriaId", new[] { "Categoría no encontrada" } } }));
         }
 
         return UnitResult.Success<DomainError>();
@@ -633,105 +516,63 @@ namespace TiendaApi.Api.Services.Productos;
 
     #region Métodos Privados - GraphQL Subscriptions
 
-    /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se crea un producto.
-    /// </summary>
     private void EventoSuscripcionProductoCreado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent
-                {
-                    ProductoId = producto.Id,
-                    Nombre = producto.Nombre,
-                    Precio = producto.Precio,
-                    Stock = producto.Stock,
-                    CreatedAt = DateTime.UtcNow
-                });
-                logger.LogDebug("Evento GraphQL Subscription enviado tras crear producto: {ProductoId}", producto.Id);
+                await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent { ProductoId = producto.Id, Nombre = producto.Nombre, Precio = producto.Precio, Stock = producto.Stock, CreatedAt = DateTime.UtcNow });
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al crear producto: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error publicando evento GraphQL tras crear producto");
             }
         });
     }
 
-    /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se actualiza un producto.
-    /// </summary>
     private void EventoSuscripcionProductoActualizado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                await eventPublisher.PublishAsync("onProductoActualizado", new ProductoActualizadoEvent
-                {
-                    ProductoId = producto.Id,
-                    Nombre = producto.Nombre,
-                    Precio = producto.Precio,
-                    Stock = producto.Stock,
-                    UpdatedAt = DateTime.UtcNow
-                });
-                logger.LogDebug("Evento GraphQL Subscription enviado tras actualizar producto: {ProductoId}", producto.Id);
+                await eventPublisher.PublishAsync("onProductoActualizado", new ProductoActualizadoEvent { ProductoId = producto.Id, Nombre = producto.Nombre, Precio = producto.Precio, Stock = producto.Stock, UpdatedAt = DateTime.UtcNow });
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al actualizar producto: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error publicando evento GraphQL tras actualizar producto");
             }
         });
     }
 
-    /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se elimina un producto.
-    /// </summary>
     private void EventoSuscripcionProductoEliminado(long productoId)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                await eventPublisher.PublishAsync("onProductoEliminado", new ProductoEliminadoEvent
-                {
-                    ProductoId = productoId,
-                    DeletedAt = DateTime.UtcNow
-                });
-                logger.LogDebug("Evento GraphQL Subscription enviado tras eliminar producto: {ProductoId}", productoId);
+                await eventPublisher.PublishAsync("onProductoEliminado", new ProductoEliminadoEvent { ProductoId = productoId, DeletedAt = DateTime.UtcNow });
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al eliminar producto: {ProductoId}", productoId);
+                logger.LogWarning(ex, "Error publicando evento GraphQL tras eliminar producto");
             }
         });
     }
 
-    /// <summary>
-    /// Publica evento de GraphQL Subscription cuando el stock está bajo.
-    /// </summary>
     private void EventoSuscripcionStockBajo(ProductoDto producto, int umbralStock)
     {
         if (producto.Stock > umbralStock) return;
-
         _ = Task.Run(async () =>
         {
             try
             {
-                await eventPublisher.PublishAsync("onStockBajo", new ProductoStockBajoEvent
-                {
-                    ProductoId = producto.Id,
-                    Nombre = producto.Nombre,
-                    StockActual = producto.Stock,
-                    UmbralStock = umbralStock,
-                    DetectedAt = DateTime.UtcNow
-                });
-                logger.LogDebug("Evento GraphQL Subscription enviado por stock bajo: {ProductoId}, Stock: {Stock}", producto.Id, producto.Stock);
+                await eventPublisher.PublishAsync("onStockBajo", new ProductoStockBajoEvent { ProductoId = producto.Id, Nombre = producto.Nombre, StockActual = producto.Stock, UmbralStock = umbralStock, DetectedAt = DateTime.UtcNow });
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription de stock bajo: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error publicando evento GraphQL de stock bajo");
             }
         });
     }

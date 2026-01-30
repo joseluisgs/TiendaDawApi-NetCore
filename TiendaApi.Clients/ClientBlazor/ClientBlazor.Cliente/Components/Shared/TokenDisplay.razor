@@ -1,6 +1,6 @@
-@using ClientBlazor.Cliente.State
+@using ClientBlazor.Cliente.State.Auth
 @implements IDisposable
-@inject AuthStore AuthStore
+@inject IAuthStore AuthStore
 
 <div class="token-section">
     <h3 class="section-title">Token JWT</h3>
@@ -16,24 +16,29 @@
 </div>
 
 @code {
+    /// <summary>Valor textual del token JWT actual.</summary>
     private string currentToken = "";
 
+    /// <summary>Contenedor de suscripciones para limpieza.</summary>
     private readonly List<IDisposable> subscriptions = new();
 
+    /// <summary>
+    /// Escucha los cambios del token en el store para actualizar la UI.
+    /// </summary>
     protected override void OnInitialized()
     {
         subscriptions.Add(AuthStore.TokenObservable.Subscribe(token => {
             currentToken = token ?? "";
-            StateHasChanged();
+            InvokeAsync(StateHasChanged);
         }));
     }
 
+    /// <summary>
+    /// Libera suscripciones.
+    /// </summary>
     public void Dispose()
     {
-        foreach (var sub in subscriptions)
-        {
-            sub.Dispose();
-        }
+        foreach (var sub in subscriptions) sub.Dispose();
         subscriptions.Clear();
     }
 }
