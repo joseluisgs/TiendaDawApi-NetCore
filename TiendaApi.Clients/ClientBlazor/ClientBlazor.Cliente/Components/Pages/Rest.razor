@@ -1,0 +1,399 @@
+@page "/rest"
+@using ClientBlazor.Cliente.Components.Shared
+@using ClientBlazor.Cliente.Services
+@using ClientBlazor.Cliente.DTOs.Productos
+@using ClientBlazor.Cliente.DTOs.Categorias
+@using ClientBlazor.Cliente.DTOs.Common
+@using ClientBlazor.Cliente.Domain.Errors
+@using ClientBlazor.Cliente.State
+@using CSharpFunctionalExtensions
+@using System.Text.Json
+
+@inject RestService RestService
+@inject NotificationStore NotificationStore
+
+<NavMenu />
+
+<div class="config-section" data-testid="rest-page">
+    <h3 class="section-title">REST API Client</h3>
+
+    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; justify-content: center; margin-bottom: 20px;">
+        <div class="form-group" style="min-width: 180px;">
+            <label>Recurso</label>
+            <select @bind="recurso" @bind:after="OnRecursoChanged" style="width: 100%; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white;">
+                <option value="productos">Productos</option>
+                <option value="categorias">Categorías</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="min-width: 200px;">
+            <label>Operación</label>
+            <select @bind="operacion" @bind:after="OnOperacionChanged" style="width: 100%; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white;">
+                <option value="get-list">GET - Listar todos</option>
+                <option value="get-by-id">GET - Por ID</option>
+                <option value="post">POST - Crear</option>
+                <option value="put">PUT - Actualizar</option>
+                <option value="delete">DELETE - Eliminar</option>
+            </select>
+        </div>
+
+        @if (NeedsId())
+        {
+            <div class="form-group" style="min-width: 100px;">
+                <label>ID</label>
+                <input type="number" @bind="id" placeholder="1" style="width: 100%; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white;" />
+            </div>
+        }
+
+
+
+        <button class="btn-connect" @onclick="ExecuteAsync" disabled="@isExecuting">
+            @(isExecuting ? "Ejecutando..." : "Ejecutar")
+        </button>
+    </div>
+
+    @if (operacion == "post" || operacion == "put")
+    {
+        <p style="color: var(--hk-red); text-align: center; font-weight: bold; margin-top: 10px;">
+            🔐 Operaciones POST/PUT requieren autenticación JWT
+        </p>
+    }
+
+    @if (operacion == "delete")
+    {
+        <p style="color: var(--hk-red); text-align: center; font-weight: bold; margin-top: 10px;">
+            🔐 Operación DELETE requiere autenticación JWT
+        </p>
+    }
+</div>
+
+
+@if (operacion == "post" || operacion == "put")
+{
+    <div class="editor-section">
+        <h3 class="section-title">JSON Request Body</h3>
+        <textarea @bind="jsonBody"
+                  placeholder="El JSON se genera automáticamente..."
+                  style="min-height: 120px;"></textarea>
+        <button class="btn-quick" style="margin-top: 10px;" @onclick="GenerateJson">
+            💡 Restablecer JSON
+        </button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(responseText))
+{
+    <div class="response-section">
+        <h3 class="section-title">Respuesta</h3>
+        <div class="response-display">
+            <pre style="white-space: pre-wrap; font-family: 'Balsamiq Sans', cursive;">@responseText</pre>
+        </div>
+    </div>
+}
+
+<div class="info-box">
+    <h4>Operaciones Disponibles</h4>
+    <p>• <b>GET</b> /api/@recurso - Listar todos</p>
+    <p>• <b>GET</b> /api/@recurso/@(id == 0 ? "{id}" : id.ToString()) - Por ID</p>
+    <p>• <b>POST</b> /api/@recurso - Crear</p>
+    <p>• <b>PUT</b> /api/@recurso/@(id == 0 ? "{id}" : id.ToString()) - Actualizar</p>
+    <p>• <b>DELETE</b> /api/@recurso/@(id == 0 ? "{id}" : id.ToString()) - Eliminar</p>
+</div>
+
+@code {
+    private string recurso = "productos";
+    private string operacion = "get-list";
+    private long id = 1;
+    private string jsonBody = "";
+    private string responseText = "";
+    private bool isExecuting = false;
+
+    protected override void OnInitialized()
+    {
+        GenerateJson();
+    }
+
+    private void OnRecursoChanged()
+    {
+        operacion = "get-list";
+        id = 1;
+        GenerateJson();
+    }
+
+    private void OnOperacionChanged()
+    {
+        if (operacion == "get-list" || operacion == "get-by-id" || operacion == "delete")
+        {
+            jsonBody = "{}";
+        }
+        else
+        {
+            GenerateJson();
+        }
+    }
+
+    private bool NeedsId()
+    {
+        return operacion == "get-by-id" || operacion == "put" || operacion == "delete";
+    }
+
+    private void GenerateJson()
+    {
+        if (recurso == "productos")
+        {
+            jsonBody = operacion switch
+            {
+                "post" => @"{
+  ""Nombre"": ""Nuevo producto"",
+  ""Descripcion"": ""Descripción del producto"",
+  ""Precio"": 99.99,
+  ""Stock"": 10,
+  ""CategoriaId"": 1
+}",
+                "put" => @"{
+  ""Nombre"": ""Producto actualizado"",
+  ""Descripcion"": ""Descripción actualizada"",
+  ""Precio"": 149.99,
+  ""Stock"": 20,
+  ""CategoriaId"": 1
+}",
+                _ => "{}"
+            };
+        }
+        else
+        {
+            jsonBody = "{}";
+        }
+    }
+
+    private async Task ExecuteAsync()
+    {
+        // Validaciones de UI con notificaciones
+        if (NeedsId() && id <= 0)
+        {
+            NotificationStore.Warning("Debes especificar un ID válido");
+            return;
+        }
+
+        if ((operacion == "post" || operacion == "put") && string.IsNullOrWhiteSpace(jsonBody))
+        {
+            NotificationStore.Warning("Se requiere JSON body para esta operación");
+            return;
+        }
+
+        if ((operacion == "post" || operacion == "put") && jsonBody == "{}")
+        {
+            NotificationStore.Warning("El JSON body no puede estar vacío");
+            return;
+        }
+
+        isExecuting = true;
+        responseText = "";
+        StateHasChanged();
+
+        try
+        {
+            string operation = $"{operacion.ToUpper()} /{recurso}";
+            string responseContent = "";
+
+            switch (recurso)
+            {
+                case "productos":
+                    var productoResult = await ExecuteProductoOperation();
+                    if (productoResult.IsSuccess)
+                    {
+                        responseContent = JsonSerializer.Serialize(productoResult.Value, new JsonSerializerOptions { WriteIndented = true });
+                        NotificationStore.Success("Operación ejecutada correctamente");
+                    }
+                    else
+                    {
+                        responseContent = $"ERROR: {productoResult.Error.Message}";
+                        NotificationStore.Error($"Error en la operación: {productoResult.Error.Message}");
+                    }
+                    break;
+                case "categorias":
+                    var categoriaResult = await ExecuteCategoriaOperation();
+                    if (categoriaResult.IsSuccess)
+                    {
+                        responseContent = JsonSerializer.Serialize(categoriaResult.Value, new JsonSerializerOptions { WriteIndented = true });
+                        NotificationStore.Success("Operación ejecutada correctamente");
+                    }
+                    else
+                    {
+                        responseContent = $"ERROR: {categoriaResult.Error.Message}";
+                        NotificationStore.Error($"Error en la operación: {categoriaResult.Error.Message}");
+                    }
+                    break;
+                default:
+                    NotificationStore.Error($"Recurso {recurso} no soportado");
+                    return;
+            }
+
+            responseText = $"{operation}\n\n{responseContent}";
+        }
+        catch (Exception ex)
+        {
+            responseText = $"ERROR: {ex.Message}";
+            NotificationStore.Error($"Error ejecutando operación: {ex.Message}");
+        }
+        finally
+        {
+            isExecuting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<Result<object, DomainError>> ExecuteProductoOperation()
+    {
+        var filter = new ProductoFilterDto(
+            Nombre: null,
+            Categoria: null,
+            IsDeleted: null,
+            PrecioMax: null,
+            StockMin: null,
+            Page: 0,
+            Size: 10,
+            SortBy: "id",
+            Direction: "asc"
+        );
+
+        switch (operacion)
+        {
+            case "get-list":
+                var listResult = await RestService.GetProductosAsync(filter);
+                return listResult.IsSuccess
+                    ? Result.Success<object, DomainError>(listResult.Value)
+                    : Result.Failure<object, DomainError>(listResult.Error);
+            case "get-by-id":
+                var byIdResult = await GetProductoById();
+                return byIdResult.IsSuccess
+                    ? Result.Success<object, DomainError>(byIdResult.Value)
+                    : Result.Failure<object, DomainError>(byIdResult.Error);
+            case "post":
+                var postResult = await ExecutePostProducto();
+                return postResult.IsSuccess
+                    ? Result.Success<object, DomainError>(postResult.Value)
+                    : Result.Failure<object, DomainError>(postResult.Error);
+            case "put":
+                var putResult = await ExecutePutProducto();
+                return putResult.IsSuccess
+                    ? Result.Success<object, DomainError>(putResult.Value)
+                    : Result.Failure<object, DomainError>(putResult.Error);
+            case "delete":
+                var deleteResult = await ExecuteDeleteProducto();
+                return deleteResult.IsSuccess
+                    ? Result.Success<object, DomainError>(deleteResult.Value)
+                    : Result.Failure<object, DomainError>(deleteResult.Error);
+            default:
+                throw new NotSupportedException($"Operación {operacion} no soportada");
+        }
+    }
+
+    private async Task<Result<object, DomainError>> ExecuteCategoriaOperation()
+    {
+        var filter = new CategoriaFilterDto(
+            Nombre: null,
+            Page: 0,
+            Size: 10,
+            SortBy: "id",
+            Direction: "asc"
+        );
+        var result = await RestService.GetCategoriasAsync(filter);
+        return result.IsSuccess
+            ? Result.Success<object, DomainError>(result.Value)
+            : Result.Failure<object, DomainError>(result.Error);
+    }
+
+    private async Task<Result<PagedResult<ProductoDto>, DomainError>> GetProductoById()
+    {
+        // Para simular get-by-id, filtramos la lista simulada por ID
+        var filter = new ProductoFilterDto(
+            Nombre: null,
+            Categoria: null,
+            IsDeleted: null,
+            PrecioMax: null,
+            StockMin: null,
+            Page: 0,
+            Size: 100, // Obtener más para buscar por ID
+            SortBy: "id",
+            Direction: "asc"
+        );
+
+        var result = await RestService.GetProductosAsync(filter);
+        if (result.IsFailure)
+            return result;
+
+        var producto = result.Value.Items.FirstOrDefault(p => p.Id == id);
+        if (producto == null)
+            return Result.Failure<PagedResult<ProductoDto>, DomainError>(NetworkErrors.NotFound);
+
+        // Devolver como lista con un solo elemento
+        return Result.Success<PagedResult<ProductoDto>, DomainError>(
+            new PagedResult<ProductoDto>(
+                Items: new List<ProductoDto> { producto },
+                TotalCount: 1,
+                Page: 0,
+                PageSize: 1
+            )
+        );
+    }
+
+    private async Task<Result<ProductoDto, DomainError>> ExecutePostProducto()
+    {
+        if (string.IsNullOrWhiteSpace(jsonBody))
+        {
+            NotificationStore.Warning("Se requiere JSON body para POST");
+            return Result.Failure<ProductoDto, DomainError>(ValidationErrors.EmptyField("jsonBody"));
+        }
+
+        try
+        {
+            var request = JsonSerializer.Deserialize<ProductoRequestDto>(jsonBody);
+            if (request == null)
+            {
+                NotificationStore.Error("JSON inválido para ProductoRequestDto");
+                return Result.Failure<ProductoDto, DomainError>(ValidationErrors.InvalidEmail); // Reutilizando error
+            }
+
+            return await RestService.CreateProductoAsync(request);
+        }
+        catch (JsonException ex)
+        {
+            NotificationStore.Error($"Error parseando JSON: {ex.Message}");
+            return Result.Failure<ProductoDto, DomainError>(ValidationErrors.InvalidEmail); // Reutilizando error
+        }
+    }
+
+    private async Task<Result<ProductoDto, DomainError>> ExecutePutProducto()
+    {
+        if (string.IsNullOrWhiteSpace(jsonBody))
+        {
+            NotificationStore.Warning("Se requiere JSON body para PUT");
+            return Result.Failure<ProductoDto, DomainError>(ValidationErrors.EmptyField("jsonBody"));
+        }
+
+        try
+        {
+            var request = JsonSerializer.Deserialize<ProductoRequestDto>(jsonBody);
+            if (request == null)
+            {
+                NotificationStore.Error("JSON inválido para ProductoRequestDto");
+                return Result.Failure<ProductoDto, DomainError>(ValidationErrors.InvalidEmail); // Reutilizando error
+            }
+
+            return await RestService.UpdateProductoAsync(id, request);
+        }
+        catch (JsonException ex)
+        {
+            NotificationStore.Error($"Error parseando JSON: {ex.Message}");
+            return Result.Failure<ProductoDto, DomainError>(ValidationErrors.InvalidEmail); // Reutilizando error
+        }
+    }
+
+    private async Task<Result<bool, DomainError>> ExecuteDeleteProducto()
+    {
+        return await RestService.DeleteProductoAsync(id);
+    }
+
+
+}

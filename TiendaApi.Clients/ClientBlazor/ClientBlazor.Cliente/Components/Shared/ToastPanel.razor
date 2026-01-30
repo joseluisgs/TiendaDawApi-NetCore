@@ -1,0 +1,161 @@
+@using ClientBlazor.Cliente.State
+@using System.Reactive.Disposables
+@implements IDisposable
+@inject NotificationStore NotificationStore
+
+@if (notifications.Count > 0)
+{
+    <div class="toast-container">
+        @foreach (var notification in notifications)
+        {
+            <div class="toast @(GetToastClass(notification.Type))"
+                 @key="notification.Id">
+                <div class="toast-header">
+                    <span class="toast-icon">@GetToastIcon(notification.Type)</span>
+                    <span class="toast-title">@notification.Title</span>
+                    <div class="toast-timer" style="width: @(GetTimerWidth(notification))%"></div>
+                    @if (notification.Dismissable)
+                    {
+                        <button class="toast-close" @onclick="() => Dismiss(notification.Id)">
+                            ×
+                        </button>
+                    }
+                </div>
+                <div class="toast-body">
+                    @notification.Message
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<NotificationStore.Notification> notifications = new();
+    private readonly Dictionary<string, System.Timers.Timer> timers = new();
+    private readonly System.Timers.Timer updateTimer = new(100); // Timer global para actualización
+
+    private readonly List<IDisposable> subscriptions = new();
+
+    protected override void OnInitialized()
+    {
+        subscriptions.Add(NotificationStore.Notifications.Subscribe(notifs => {
+            notifications = notifs;
+
+            // Gestionar timers
+            UpdateTimers();
+
+            StateHasChanged();
+        }));
+
+        // Timer global para actualizar barras de progreso y cerrar toasts expirados
+        updateTimer.Elapsed += (sender, e) =>
+        {
+            InvokeAsync(() =>
+            {
+                var expiredIds = new List<string>();
+
+                foreach (var notification in notifications)
+                {
+                    if (notification.IsAutoDismiss)
+                    {
+                        var elapsed = (DateTime.Now - notification.CreatedAt).TotalMilliseconds;
+                        var remaining = notification.DurationMs - elapsed;
+
+                        if (remaining <= 0)
+                        {
+                            expiredIds.Add(notification.Id);
+                        }
+                    }
+                }
+
+                // Cerrar toasts expirados
+                foreach (var id in expiredIds)
+                {
+                    NotificationStore.Dismiss(id);
+                }
+
+                // Si hay toasts con timer, actualizar UI
+                if (notifications.Any(n => n.IsAutoDismiss))
+                {
+                    StateHasChanged();
+                }
+            });
+        };
+        updateTimer.Start();
+    }
+
+    private void UpdateTimers()
+    {
+        // Limpiar timers de notificaciones que ya no existen
+        var currentIds = notifications.Select(n => n.Id).ToHashSet();
+        var timersToRemove = timers.Keys.Where(id => !currentIds.Contains(id)).ToList();
+
+        foreach (var id in timersToRemove)
+        {
+            if (timers.TryGetValue(id, out var timer))
+            {
+                timer.Stop();
+                timer.Dispose();
+                timers.Remove(id);
+            }
+        }
+    }
+
+    private void Dismiss(string id)
+    {
+        NotificationStore.Dismiss(id);
+    }
+
+    private double GetTimerWidth(NotificationStore.Notification notification)
+    {
+        if (!notification.IsAutoDismiss) return 0;
+
+        var elapsed = (DateTime.Now - notification.CreatedAt).TotalMilliseconds;
+        var progress = Math.Max(0, (notification.DurationMs - elapsed) / notification.DurationMs * 100);
+        return progress;
+    }
+
+    private string GetToastClass(NotificationStore.NotificationType type)
+    {
+        return type switch
+        {
+            NotificationStore.NotificationType.Success => "toast-success",
+            NotificationStore.NotificationType.Error => "toast-error",
+            NotificationStore.NotificationType.Warning => "toast-warning",
+            NotificationStore.NotificationType.Info => "toast-info",
+            _ => "toast-info"
+        };
+    }
+
+    private string GetToastIcon(NotificationStore.NotificationType type)
+    {
+        return type switch
+        {
+            NotificationStore.NotificationType.Success => "✅",
+            NotificationStore.NotificationType.Error => "❌",
+            NotificationStore.NotificationType.Warning => "⚠️",
+            NotificationStore.NotificationType.Info => "ℹ️",
+            _ => "ℹ️"
+        };
+    }
+
+    public void Dispose()
+    {
+        foreach (var sub in subscriptions)
+        {
+            sub.Dispose();
+        }
+        subscriptions.Clear();
+
+        // Limpiar todos los timers
+        updateTimer.Stop();
+        updateTimer.Dispose();
+
+        foreach (var timer in timers.Values)
+        {
+            timer.Stop();
+            timer.Dispose();
+        }
+        timers.Clear();
+    }
+}

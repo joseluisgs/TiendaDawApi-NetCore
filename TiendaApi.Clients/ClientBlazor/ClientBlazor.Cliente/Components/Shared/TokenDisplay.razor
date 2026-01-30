@@ -1,0 +1,39 @@
+@using ClientBlazor.Cliente.State
+@implements IDisposable
+@inject AuthStore AuthStore
+
+<div class="token-section">
+    <h3 class="section-title">Token JWT</h3>
+
+    <div class="token-display">
+        <label for="token">Tu Token:</label>
+        <input type="text"
+               id="token"
+               readonly
+               @bind="currentToken"
+               placeholder="Inicia sesión para obtener un token" />
+    </div>
+</div>
+
+@code {
+    private string currentToken = "";
+
+    private readonly List<IDisposable> subscriptions = new();
+
+    protected override void OnInitialized()
+    {
+        subscriptions.Add(AuthStore.TokenObservable.Subscribe(token => {
+            currentToken = token ?? "";
+            StateHasChanged();
+        }));
+    }
+
+    public void Dispose()
+    {
+        foreach (var sub in subscriptions)
+        {
+            sub.Dispose();
+        }
+        subscriptions.Clear();
+    }
+}

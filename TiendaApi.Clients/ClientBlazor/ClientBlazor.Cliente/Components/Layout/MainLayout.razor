@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+@using ClientBlazor.Cliente.Components.Shared
+
+<div class="floating-ribbon">🎀</div>
+
+<div class="container">
+    @if (showLoading)
+    {
+        <div class="initial-loading-page">
+            <div class="loading-bow-page">🎀</div>
+            <div class="loading-text-page">Cargando...</div>
+        </div>
+    }
+    else
+    {
+        <h1>ClientBlazor para TiendaDAW</h1>
+        
+        <AuthPanel />
+        
+        <div class="main-content">
+            @Body
+        </div>
+
+        <ToastPanel />
+    }
+</div>
+
+@code {
+    private bool showLoading = true;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+        showLoading = false;
+    }
+}

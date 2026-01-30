@@ -1,0 +1,83 @@
+@using ClientBlazor.Cliente.State
+@implements IDisposable
+@inject AuthStore AuthStore
+
+@if (isAuthenticated)
+{
+    <div class="auth-panel" data-testid="auth-panel">
+        <div class="auth-card">
+            <div class="auth-header">
+                <span class="auth-bow">🎀</span>
+                <span class="auth-greeting">@displayName</span>
+                <span class="auth-bow flip">🎀</span>
+            </div>
+            
+            <div class="auth-details">
+                <div class="detail-item">
+                    <span class="detail-icon">📧</span>
+                    <span class="detail-email">@email</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-icon">🔑</span>
+                    <span class="detail-role @(isAdmin ? "role-admin" : "role-user")">@role</span>
+                </div>
+            </div>
+            
+            <button class="auth-logout-btn" @onclick="Logout">
+                Cerrar Sesión
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isAuthenticated = false;
+    private bool isAdmin = false;
+    private string email = "";
+    private string role = "";
+    private string displayName = "";
+    
+    private readonly List<IDisposable> subscriptions = new();
+
+    protected override void OnInitialized()
+    {
+        subscriptions.Add(AuthStore.IsAuthenticatedObservable.Subscribe(auth => {
+            isAuthenticated = auth;
+            StateHasChanged();
+        }));
+
+        subscriptions.Add(AuthStore.IsAdminObservable.Subscribe(admin => {
+            isAdmin = admin;
+            StateHasChanged();
+        }));
+
+        subscriptions.Add(AuthStore.EmailObservable.Subscribe(e => {
+            email = e;
+            StateHasChanged();
+        }));
+
+        subscriptions.Add(AuthStore.RoleObservable.Subscribe(r => {
+            role = r;
+            StateHasChanged();
+        }));
+
+        subscriptions.Add(AuthStore.DisplayNameObservable.Subscribe(name => {
+            displayName = name;
+            StateHasChanged();
+        }));
+    }
+
+    private void Logout()
+    {
+        AuthStore.Logout();
+    }
+
+    public void Dispose()
+    {
+        foreach (var sub in subscriptions)
+        {
+            sub.Dispose();
+        }
+        subscriptions.Clear();
+    }
+}

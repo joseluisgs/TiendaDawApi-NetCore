@@ -1,0 +1,145 @@
+@using ClientBlazor.Cliente.Configuration
+@using ClientBlazor.Cliente.State
+@using ClientBlazor.Cliente.Domain.Errors
+@using CSharpFunctionalExtensions
+
+<div class="login-section">
+    <h2 class="login-title">Iniciar Sesion</h2>
+    
+    <div class="login-form">
+        <div class="input-group">
+            <label for="email">Email</label>
+            <span class="input-icon">📧</span>
+            <input type="email" 
+                   id="email" 
+                   @bind="email" 
+                   placeholder="tu@email.com" 
+                   data-testid="email-input" />
+        </div>
+        
+        <div class="input-group">
+            <label for="password">Password</label>
+            <span class="input-icon">🔑</span>
+            <input type="password" 
+                   id="password" 
+                   @bind="password" 
+                   placeholder="Contrasena" 
+                   data-testid="password-input" />
+        </div>
+        
+        <button class="btn-login" @onclick="HandleLogin" disabled="@isLoading" data-testid="login-btn">
+            @(isLoading ? "⏳ Conectando..." : "🔐 Login")
+        </button>
+    </div>
+    
+    <div class="demo-users">
+        <button class="demo-user" @onclick="() => FillDemo(AppConfig.AdminUser.Email, AppConfig.AdminUser.Password)">
+            👑 Admin
+            <br><span class="role">@AppConfig.AdminUser.Role</span>
+        </button>
+        <button class="demo-user" @onclick="() => FillDemo(AppConfig.RegularUser.Email, AppConfig.RegularUser.Password)">
+            👤 User
+            <br><span class="role">@AppConfig.RegularUser.Role</span>
+        </button>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// Email del usuario para el login.
+    /// </summary>
+    private string email = "";
+
+    /// <summary>
+    /// Contraseña del usuario para el login.
+    /// </summary>
+    private string password = "";
+
+    /// <summary>
+    /// Indica si hay una operación de login en progreso.
+    /// </summary>
+    private bool isLoading = false;
+
+    /// <summary>
+    /// Store de autenticación inyectado.
+    /// Gestiona el estado de autenticación global.
+    /// </summary>
+    [Inject]
+    private AuthStore AuthStore { get; set; } = default!;
+
+    /// <summary>
+    /// Store de notificaciones inyectado.
+    /// Gestiona las notificaciones de la aplicación.
+    /// </summary>
+    [Inject]
+    private NotificationStore NotificationStore { get; set; } = default!;
+
+    /// <summary>
+    /// Servicio de autenticación inyectado.
+    /// Maneja la lógica de login y validación.
+    /// </summary>
+    [Inject]
+    private ClientBlazor.Cliente.Services.AuthService AuthService { get; set; } = default!;
+
+    /// <summary>
+    /// Llena los campos del formulario con datos de demostración.
+    /// Facilita las pruebas de login con usuarios predefinidos.
+    /// </summary>
+    /// <param name="demoEmail">Email de demostración a establecer.</param>
+    /// <param name="demoPassword">Contraseña de demostración a establecer.</param>
+    private void FillDemo(string demoEmail, string demoPassword)
+    {
+        email = demoEmail;
+        password = demoPassword;
+    }
+
+    /// <summary>
+    /// Maneja el proceso de login cuando se pulsa el botón.
+    /// Valida, llama al servicio y actualiza el estado de la aplicación.
+    /// </summary>
+    private async void HandleLogin()
+    {
+        if (isLoading) return; // Evitar múltiples clicks
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await AuthService.LoginAsync(email, password);
+
+            result.Match(
+                onSuccess: _ =>
+                {
+                    // Login exitoso - el servicio ya actualizó el estado y mostró notificación
+                },
+                onFailure: error =>
+                {
+                    // Login fallido - mostrar error específico
+                    var message = error.Code switch
+                    {
+                        var code when code == ValidationErrors.EmptyField("").Code =>
+                            "Por favor, completa todos los campos",
+                        var code when code == ValidationErrors.InvalidEmail.Code =>
+                            "Por favor, introduce un email válido",
+                        var code when code == NetworkErrors.ConnectionFailed.Code =>
+                            "Error de conexión. Inténtalo de nuevo",
+                        _ => error.Message
+                    };
+
+                    NotificationStore.Error(message, "Login Fallido");
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Error inesperado
+            NotificationStore.Error($"Error inesperado: {ex.Message}", "Error");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
