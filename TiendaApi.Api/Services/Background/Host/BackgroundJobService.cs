@@ -15,7 +15,7 @@ namespace TiendaApi.Api.Services.Background.Host;
 ) : BackgroundService
 {
     private readonly bool _isDevelopment = configuration.GetValue<bool>("IsDevelopment");
-    private readonly int _executionIntervalMinutes = configuration.GetValue<int>("Scheduler:ExecutionIntervalMinutes", 1);
+    private readonly int _executionIntervalMinutes = configuration.GetValue<int>("Scheduler:ExecutionIntervalMinutes", 1440);
     private readonly int _executionIntervalHours = configuration.GetValue<int>("Scheduler:ExecutionIntervalHours", 168);
 
     /// <summary>
