@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MongoDB.EntityFrameworkCore.Extensions;
+using TiendaApi.Api.Data.Interceptors;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Api.Data;
@@ -30,6 +31,7 @@ public class TiendaMongoContext : DbContext
             entity.HasKey(p => p.Id);
             entity.Property(p => p.Estado).IsRequired().HasMaxLength(50);
             entity.Property(p => p.Total).HasPrecision(10, 2);
+            entity.ConfigureTimestamps();
         });
     }
 }
