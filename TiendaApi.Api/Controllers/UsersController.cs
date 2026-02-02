@@ -109,7 +109,7 @@ public class UsersController(
     /// <param name="dto">Datos del usuario a crear.</param>
     /// <returns>201 Created con el usuario creado, o 400/409 si hay errores.</returns>
     [HttpPost]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -186,6 +186,9 @@ public class UsersController(
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var currentUserId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        if (id != currentUserId && userRole != UserRoles.ADMIN)
+            return Forbid();
 
         var resultado = await service.UpdateAvatarAsync(id, dto.AvatarUrl);
 
