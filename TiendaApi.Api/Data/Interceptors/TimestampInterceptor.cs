@@ -74,7 +74,6 @@ public static class TimestampExtensions
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         entity.Property("UpdatedAt")
-            .IsRequired()
-            .ValueGeneratedOnUpdate();
+            .IsRequired();
     }
 }
