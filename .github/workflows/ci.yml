@@ -27,6 +27,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
 
       - name: Restore dependencies
         run: dotnet restore ${{ env.SOLUTION }}
@@ -54,6 +55,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -62,13 +64,19 @@ jobs:
           path: TiendaApi.Api/bin/Release/net10.0/
 
       - name: Run unit tests (parallel)
-        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "FullyQualifiedName~Unit" --verbosity minimal
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "FullyQualifiedName~Unit" --verbosity minimal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate Coverage HTML Report
+        run: reportgenerator "-reports:./TestResults/**/coverage.cobertura.xml" "-targetdir:./TestResults/CoverageReport" "-reporttypes:HtmlInline_AzurePipelines"
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: TiendaApi.Tests/coverage/
+          path: ./TestResults/CoverageReport
           retention-days: 7
 
   test-integration:
@@ -95,6 +103,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -106,23 +115,38 @@ jobs:
         run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-build --filter "FullyQualifiedName~Integration" --verbosity minimal
 
   validate-docs:
-    name: Validate Documentation
+    name: Generate & Validate Documentation
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check for broken links (basic)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+
+      - name: Install DocFX
+        run: dotnet tool install --global docfx
+
+      - name: Create fallback docfx.json
         run: |
-          echo "Checking markdown files for common issues..."
-          # Simple check: ensure each .md file has at least one header
-          for file in doc/*.md; do
-            if ! head -1 "$file" | grep -q '^# '; then
-              echo "WARNING: $file might not have a proper title"
-            fi
-          done
-          echo "Documentation check completed"
+          if [ ! -f docfx.json ]; then
+            echo '{"metadata":[{"src":[{"files":["**/*.csproj"]}],"dest":"api"}],"build":{"content":[{"files":["api/*.yml","doc/*.md","*.md"]},{"files":["api/**.yml"],"src":"api"}],"dest":"_site","template":["default"]}}' > docfx.json
+          fi
+
+      - name: Build Documentation (HTML)
+        run: docfx docfx.json
+
+      - name: Upload Documentation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-documentation-html
+          path: _site
+          if-no-files-found: warn
+          retention-days: 7
 
   summary:
     name: Summary
@@ -138,11 +162,11 @@ jobs:
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Docs | ${{ needs.validate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test (Unit + Coverage) | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docs (HTML) | ${{ needs.validate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.build.result }}" == "success" ]] && [[ "${{ needs.test.result }}" == "success" ]]; then
-            echo "✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All checks passed! NuGet cache enabled for faster builds." >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Some checks failed. Please review the errors above." >> $GITHUB_STEP_SUMMARY
           fi
