@@ -67,10 +67,21 @@ jobs:
       - name: Install ReportGenerator
         run: dotnet tool install --global dotnet-reportgenerator-globaltool
 
+      - name: Find coverage files
+        id: find-coverage
+        run: |
+          if ls ./TestResults/**/coverage.cobertura.xml 2>/dev/null; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate Coverage HTML Report
+        if: steps.find-coverage.outputs.found == 'true'
         run: reportgenerator "-reports:./TestResults/**/coverage.cobertura.xml" "-targetdir:./TestResults/CoverageReport" "-reporttypes:HtmlInline_AzurePipelines"
 
       - name: Upload coverage report
+        if: steps.find-coverage.outputs.found == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -130,7 +141,38 @@ jobs:
       - name: Create fallback docfx.json
         run: |
           if [ ! -f docfx.json ]; then
-            echo '{"metadata":[{"src":[{"files":["**/*.csproj"]}],"dest":"api"}],"build":{"content":[{"files":["api/*.yml","doc/*.md","*.md"]},{"files":["api/**.yml"],"src":"api"}],"dest":"_site","template":["default"]}}' > docfx.json
+            cat > docfx.json << 'EOF'
+            {
+              "metadata": [
+                {
+                  "src": [
+                    {
+                      "files": ["TiendaApi.Api/TiendaApi.Api.csproj"],
+                      "properties": {
+                        "TargetFramework": "net10.0"
+                      }
+                    }
+                  ],
+                  "dest": "api"
+                }
+              ],
+              "build": {
+                "content": [
+                  {
+                    "files": ["api/*.yml", "doc/*.md", "*.md"]
+                  },
+                  {
+                    "files": ["api/**.yml"],
+                    "src": "api"
+                  }
+                ],
+                "dest": "_site",
+                "template": ["default"],
+                "globalMetadataFiles": [],
+                "fileMetadataFiles": []
+              }
+            }
+            EOF
           fi
 
       - name: Build Documentation (HTML)
