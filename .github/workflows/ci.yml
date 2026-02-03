@@ -27,7 +27,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          cache: true
 
       - name: Restore dependencies
         run: dotnet restore ${{ env.SOLUTION }}
@@ -55,7 +54,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          cache: true
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -103,7 +101,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          cache: true
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -126,7 +123,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          cache: true
 
       - name: Install DocFX
         run: dotnet tool install --global docfx
@@ -166,7 +162,7 @@ jobs:
           echo "| Docs (HTML) | ${{ needs.validate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.build.result }}" == "success" ]] && [[ "${{ needs.test.result }}" == "success" ]]; then
-            echo "✅ All checks passed! NuGet cache enabled for faster builds." >> $GITHUB_STEP_SUMMARY
+            echo "✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Some checks failed. Please review the errors above." >> $GITHUB_STEP_SUMMARY
           fi
