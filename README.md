@@ -57,7 +57,6 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
     - [Servicios Externos](#servicios-externos-1)
     - [Testing y Calidad](#testing-y-calidad)
     - [DevOps y Producción](#devops-y-producción)
-      - [CI/CD con GitHub Actions](#30-cicd-con-github-actions)
     - [Arquitectura](#arquitectura)
   - [⚒️ Diagrama de Clases del Dominio](#️-diagrama-de-clases-del-dominio)
   - [🗄️ Entidades por Base de Datos](#️-entidades-por-base-de-datos)
@@ -390,19 +389,20 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | 21  | [Testing](doc/21-testing.md) | Unit, Integración, E2E |
 
 ### DevOps y Producción
-| #   | Documento                                    | Descripción             |
-| --- | -------------------------------------------- | ----------------------- |
-| 23  | [Docker CI/CD](doc/23-docker-ci-cd.md)       | Contenedores, pipelines |
-| 24  | [Logging](doc/24-logging.md)                 | Serilog, trazabilidad   |
-| 25  | [Background Jobs](doc/25-background-jobs.md) | Tareas programadas      |
-| 26  | [Optimización](doc/26-optimizacion.md)       | Rendimiento             |
-| 27  | [Seguridad HTTP](doc/27-seguridad-http.md)   | HSTS, HTTPS, Headers    |
+| #   | Documento                                    | Descripción              |
+| --- | -------------------------------------------- | ------------------------ |
+| 23  | [Docker](doc/23-docker-ci-cd.md)       | Contenedores, pipelines  |
+| 24  | [Logging](doc/24-logging.md)                 | Serilog, trazabilidad    |
+| 25  | [Background Jobs](doc/25-background-jobs.md) | Tareas programadas       |
+| 26  | [Optimización](doc/26-optimizacion.md)       | Rendimiento              |
+| 27  | [Seguridad HTTP](doc/27-seguridad-http.md)  | HSTS, HTTPS, Headers    |
+| 28  | [CI/CD con GitHub Actions](doc/28-ci-cd.md) | Pipelines, automatización |
 
 ### Arquitectura
 | #   | Documento                                                 | Descripción                       |
 | --- | --------------------------------------------------------- | --------------------------------- |
-| 28  | [Clean Architecture](doc/28-clean-architecture.md)        | Capas, estructura                 |
-| 29  | [Organización Program.cs](doc/29-organizacion-program.md) | Extension Methods, modularización |
+| 29  | [Clean Architecture](doc/29-clean-architecture.md)        | Capas, estructura                 |
+| 30  | [Organización Program.cs](doc/30-organizacion-program.md) | Extension Methods, modularización |
 
 ## ⚒️ Diagrama de Clases del Dominio
 

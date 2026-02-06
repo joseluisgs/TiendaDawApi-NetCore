@@ -1,23 +1,23 @@
-# 30. CI/CD con GitHub Actions
+# 28. CI/CD con GitHub Actions
 
 ## Índice
 
-[30. CI/CD con GitHub Actions](#30-cicd-con-github-actions)
-  - [30.1. Fundamentos de CI/CD](#301-fundamentos-de-cicd)
-  - [30.2. Arquitectura del Pipeline](#302-arquitectura-del-pipeline)
-  - [30.3. Anatomía del Workflow](#303-anatomía-del-workflow)
-  - [30.4. Jobs y sus Dependencias](#304-jobs-y-sus-dependencias)
-  - [30.5. Estrategias de Testing Automatizado](#305-estrategias-de-testing-automatizado)
-  - [30.6. Gestión de Artefactos](#306-gestión-de-artefactos)
-  - [30.7. Documentación Automatizada](#307-documentación-automatizada)
-  - [30.8. GitHub CLI: Tu Aliada en la Consola](#308-github-cli-tu-aliada-en-la-consola)
-  - [30.9. Ejecución y Monitoreo de Workflows](#309-ejecución-y-monitoreo-de-workflows)
-  - [30.10. Mejores Prácticas](#3010-mejores-prácticas)
-  - [30.11. Resumen](#3011-resumen)
+[28. CI/CD con GitHub Actions](#28-cicd-con-github-actions)
+  - [28.1. Fundamentos de CI/CD](#281-fundamentos-de-cicd)
+  - [28.2. Arquitectura del Pipeline](#282-arquitectura-del-pipeline)
+  - [28.3. Anatomía del Workflow](#283-anatomía-del-workflow)
+  - [28.4. Jobs y sus Dependencias](#284-jobs-y-sus-dependencias)
+  - [28.5. Estrategias de Testing Automatizado](#285-estrategias-de-testing-automatizado)
+  - [28.6. Gestión de Artefactos](#286-gestión-de-artefactos)
+  - [28.7. Documentación Automatizada](#287-documentación-automatizada)
+  - [28.8. GitHub CLI: Tu Aliada en la Consola](#288-github-cli-tu-aliada-en-la-consola)
+  - [28.9. Ejecución y Monitoreo de Workflows](#289-ejecución-y-monitoreo-de-workflows)
+  - [28.10. Mejores Prácticas](#2810-mejores-prácticas)
+  - [28.11. Resumen](#2811-resumen)
 
 ---
 
-## 30.1. Fundamentos de CI/CD
+## 28.1. Fundamentos de CI/CD
 
 Continuous Integration (CI) y Continuous Delivery/Deployment (CD) son prácticas fundamentales en el desarrollo de software moderno que transforman radicalmente la forma en que los equipos entregan valor a sus usuarios. Estas metodologías automatizan los procesos de construcción, prueba y despliegue de aplicaciones, reduciendo significativamente el riesgo de errores en producción y acelerando el ciclo de desarrollo. En el contexto de proyectos educativos como TiendaDawApi, implementar CI/CD no solo demuestra competencia técnica avanzada, sino que también prepara al alumnado para entornos profesionales donde estas prácticas son obligatorias.
 
@@ -35,7 +35,7 @@ En segundo lugar, los pipelines de CI/CD funcionan como un sistema de retroalime
 
 Finalmente, la documentación generada automáticamente por los pipelines (artefactos, informes de cobertura, logs de ejecución) proporciona evidencia tangible del trabajo realizado, útil tanto para evaluación académica como para portafolios profesionales. Los entrevistadores técnicos valoran enormemente candidatos que pueden demostrar experiencia con herramientas de automatización modernas.
 
-## 30.2. Arquitectura del Pipeline
+## 28.2. Arquitectura del Pipeline
 
 El pipeline de CI/CD de TiendaDawApi sigue una arquitectura modular que separa claramente las responsabilidades de cada etapa del proceso. Esta separación permite ejecuciones paralelas cuando es posible, reduciendo significativamente el tiempo total de ejecución del pipeline completo.
 
@@ -97,7 +97,7 @@ gantt
 
 Este diagrama de Gantt ilustra cómo los jobs se superponen temporalmente, con el job Summary esperando pacientemente a que todos los jobs anteriores completen. El tiempo total del pipeline está dominado por el job más lento (Docs en este ejemplo) en lugar de la suma de todos los tiempos.
 
-## 30.3. Anatomía del Workflow
+## 28.3. Anatomía del Workflow
 
 Un workflow de GitHub Actions se define mediante un archivo YAML que describe los jobs, steps y condiciones de ejecución. Comprender cada componente es esencial para crear pipelines efectivos y mantenibles.
 
@@ -170,7 +170,7 @@ Las acciones (actions) son unidades reutilizables de código que encapsulan tare
 
 La acción `actions/checkout@v4` descarga el código del repositorio en el runner, mientras que `actions/setup-dotnet@v4` configura el SDK de .NET con la versión especificada. El parámetro `with` permite pasar configuraciones adicionales a las acciones, haciendo uso de la sintaxis de expresiones `${{ }}` para inyectar valores dinámicos.
 
-## 30.4. Jobs y sus Dependencias
+## 28.4. Jobs y sus Dependencias
 
 La gestión de dependencias entre jobs es crucial para pipelines eficientes. GitHub Actions permite especificar estas dependencias mediante la palabra clave `needs`, creando un grafo Directed Acyclic Graph (DAG) de ejecuciones.
 
@@ -282,7 +282,7 @@ test-integration:
 
 Los tests de integración requieren servicios externos, por lo que GitHub Actions permite definir contenedores de servicios que se ejecutan junto con el job. La condición `if` restringe la ejecución a eventos manuales en la rama principal, evitando el costo computacional de estos tests durante el desarrollo diario.
 
-## 30.5. Estrategias de Testing Automatizado
+## 28.5. Estrategias de Testing Automatizado
 
 Una estrategia de testing robusta es el corazón de cualquier pipeline de CI efectivo. TiendaDawApi implementa una jerarquía de pruebas que balancea velocidad de ejecución con cobertura exhaustiva.
 
@@ -372,7 +372,7 @@ test-integration:
 
 La configuración de servicios permite crear contenedores Docker que proporcionan MongoDB y Redis durante la ejecución de los tests. GitHub Actions会自动管理 la red entre el contenedor del job y los servicios, exponiendo los puertos especificados.
 
-## 30.6. Gestión de Artefactos
+## 28.6. Gestión de Artefactos
 
 Los artefactos son archivos generados durante la ejecución del pipeline que se persisten más allá del job que los creó. Son esenciales para compartir archivos entre jobs y para mantener registros de despliegues.
 
@@ -415,7 +415,7 @@ flowchart TD
     style F fill:#98FB98
 ```
 
-## 30.7. Documentación Automatizada
+## 28.7. Documentación Automatizada
 
 La generación automática de documentación garantiza que la documentación técnica permanezca sincronizada con el código fuente.
 
@@ -481,7 +481,7 @@ validate-docs:
 
 DocFX analiza el código fuente y los comentarios XML para generar documentación API en formato HTML. El parámetro `if-no-files-found: warn` previene que el paso falle silenciosamente si no hay archivos que procesar.
 
-## 30.8. GitHub CLI: Tu Aliada en la Consola
+## 28.8. GitHub CLI: Tu Aliada en la Consola
 
 La GitHub CLI (`gh`) es una herramienta de línea de comandos que permite interactuar directamente con GitHub desde tu terminal, eliminando la necesidad de abrir el navegador para muchas tareas comunes.
 
@@ -604,7 +604,7 @@ gh run list --limit 1 --json id,databaseId,status,name
 gh run list -L1 --jq '.[] | .id'
 ```
 
-## 30.9. Ejecución y Monitoreo de Workflows
+## 28.9. Ejecución y Monitoreo de Workflows
 
 El monitoreo efectivo de workflows requiere comprender tanto la interfaz web como las herramientas de CLI.
 
@@ -676,31 +676,41 @@ gh run view <run-id> --log | grep -i error
 gh run view <run-id>
 ```
 
-## 30.10. Mejores Prácticas
+## 28.10. Mejores Prácticas
 
 Implementar CI/CD efectivo requiere seguir convenciones y patrones que maximizan la confiabilidad y mantenibilidad del pipeline.
 
 ### Principios Fundamentales
 
 ```mermaid
-mindmap
-  root((CI/CD<br/>Best Practices))
-    Speed
-      Ejecutar jobs en paralelo
-      Cachear dependencias
-      Usar artifacts eficientemente
-    Reliability
-      Tests independientes
-      Verificaciones condicionales
-      Logs detallados
-    Maintainability
-      Variables de entorno
-      Jobs modulares
-      Documentación
-    Security
-      Secretos cifrados
-      Permisos mínimos
-      Revisiones de código
+flowchart TB
+    subgraph BP["Mejores Prácticas de CI/CD"]
+        direction TB
+        subgraph S1["Velocidad"]
+            direction LR
+            S1a[Ejecutar jobs en paralelo]
+            S1b[Cachear dependencias]
+            S1c[Usar artifacts eficientemente]
+        end
+        subgraph S2["Confiabilidad"]
+            direction LR
+            S2a[Tests independientes]
+            S2b[Verificaciones condicionales]
+            S2c[Logs detallados]
+        end
+        subgraph S3["Mantenibilidad"]
+            direction LR
+            S3a[Variables de entorno]
+            S3b[Jobs modulares]
+            S3c[Documentación]
+        end
+        subgraph S4["Seguridad"]
+            direction LR
+            S4a[Secretos cifrados]
+            S4b[Permisos mínimos]
+            S4c[Revisiones de código]
+        end
+    end
 ```
 
 ### Optimización de Tiempos de Ejecución
@@ -761,7 +771,7 @@ steps:
       exit 1
 ```
 
-## 30.11. Resumen
+## 28.11. Resumen
 
 La implementación de CI/CD con GitHub Actions representa un salto cualitativo en el desarrollo de software, transformando procesos manuales propensos a errores en flujos automatizados, confiables y reproducibles. A lo largo de este documento hemos explorado los fundamentos teóricos y prácticos necesarios para construir pipelines profesionales.
 

@@ -1,18 +1,18 @@
-# 28. Clean Architecture y CQRS
+# 29. Clean Architecture y CQRS
 
 ## Índice
 
-[28. Clean Architecture y CQRS](#28-clean-architecture-y-cqrs)
-  - [28.1. ¿Qué es Clean Architecture?](#281-qué-es-clean-architecture)
-  - [28.2. Estructura del Proyecto](#282-estructura-del-proyecto)
-  - [28.3. Entities (Domain Layer)](#283-entities-domain-layer)
-  - [28.4. CQRS](#284-cqrs)
-  - [28.5. Repository con Especificaciones](#285-repository-con-especificaciones)
-  - [28.6. Resumen y Buenas Prácticas](#286-resumen-y-buenas-prácticas)
+[29. Clean Architecture y CQRS](#29-clean-architecture-y-cqrs)
+  - [29.1. ¿Qué es Clean Architecture?](#291-qué-es-clean-architecture)
+  - [29.2. Estructura del Proyecto](#292-estructura-del-proyecto)
+  - [29.3. Entities (Domain Layer)](#293-entities-domain-layer)
+  - [29.4. CQRS](#294-cqrs)
+  - [29.5. Repository con Especificaciones](#295-repository-con-especificaciones)
+  - [29.6. Resumen y Buenas Prácticas](#296-resumen-y-buenas-prácticas)
 
 ---
 
-## 28.1. ¿Qué es Clean Architecture?
+## 29.1. ¿Qué es Clean Architecture?
 
 **Clean Architecture** es un patrón de diseño que separa las preocupaciones en capas, manteniendo el núcleo de negocio independiente de detalles de implementación como frameworks, bases de datos o UI.
 
@@ -60,7 +60,7 @@ flowchart BT
 
 ---
 
-## 28.2. Estructura del Proyecto
+## 29.2. Estructura del Proyecto
 
 ```
 TiendaApi/
@@ -116,7 +116,7 @@ TiendaApi/
 
 ---
 
-## 28.3. Entities (Domain Layer)
+## 29.3. Entities (Domain Layer)
 
 ```csharp
 namespace TiendaApi.Core.Domain.Entities;
@@ -215,7 +215,7 @@ public class Categoria : Entity
 
 ---
 
-## 28.4. CQRS - Command Query Responsibility Segregation
+## 29.4. CQRS - Command Query Responsibility Segregation
 
 **CQRS** separa las operaciones de lectura (Query) de las operaciones de escritura (Command), permitiendo optimizaciones independientes.
 
@@ -418,7 +418,7 @@ public class ValidationBehavior<TRequest, TResponse>
 
 ---
 
-## 28.5. Repository con Especificaciones
+## 29.5. Repository con Especificaciones
 
 ```csharp
 namespace TiendaApi.Core.Domain.Interfaces;
@@ -489,7 +489,7 @@ public interface IProductoReadRepository
 
 ---
 
-## 28.6. Resumen y Buenas Prácticas
+## 29.6. Resumen y Buenas Prácticas
 
 ### Principios de Clean Architecture
 
