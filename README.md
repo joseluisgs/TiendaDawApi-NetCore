@@ -57,6 +57,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
     - [Servicios Externos](#servicios-externos-1)
     - [Testing y Calidad](#testing-y-calidad)
     - [DevOps y Producción](#devops-y-producción)
+      - [CI/CD con GitHub Actions](#30-cicd-con-github-actions)
     - [Arquitectura](#arquitectura)
   - [⚒️ Diagrama de Clases del Dominio](#️-diagrama-de-clases-del-dominio)
   - [🗄️ Entidades por Base de Datos](#️-entidades-por-base-de-datos)
