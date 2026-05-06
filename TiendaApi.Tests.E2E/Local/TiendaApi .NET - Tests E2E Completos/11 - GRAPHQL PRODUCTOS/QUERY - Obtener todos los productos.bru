@@ -15,7 +15,9 @@ headers {
 }
 
 body:json {
-  {"query": "query { productos { id nombre precio stock } }"}
+  {
+    "query": "query { productos { id nombre precio stock } }"
+  }
 }
 
 script:post-response {
@@ -37,6 +39,7 @@ script:post-response {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
 
 docs {

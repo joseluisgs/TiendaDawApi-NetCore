@@ -1,21 +1,23 @@
 meta {
   name: QUERY - Obtener todas las categorías
-  type: http
+  type: graphql
   seq: 1
 }
 
 post {
   url: {{baseUrl}}/graphql
-  body: json
+  body: graphql
   auth: inherit
 }
 
-headers {
-  Content-Type: application/json
-}
-
-body:json {
-  {"query": "query { categorias { id nombre } }"}
+body:graphql {
+  query {
+    categorias {
+      id
+      nombre
+    }
+  }
+  
 }
 
 script:post-response {
@@ -37,6 +39,7 @@ script:post-response {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
 
 docs {

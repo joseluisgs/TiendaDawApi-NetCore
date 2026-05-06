@@ -15,7 +15,12 @@ headers {
 }
 
 body:json {
-  {"query": "query($id: Long!) { categoria(id: $id) { id nombre } }", "variables": {"id": 1}}
+  {
+    "query": "query($id: Long!) { categoria(id: $id) { id nombre } }",
+    "variables": {
+      "id": 1
+    }
+  }
 }
 
 script:post-response {
@@ -33,6 +38,7 @@ script:post-response {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
 
 docs {
