@@ -21,8 +21,8 @@ public static class ControllersConfig
             options.RespectBrowserAcceptHeader = true;
             options.ReturnHttpNotAcceptable = true;
         })
-        .AddXmlSerializerFormatters()
-        .AddXmlDataContractSerializerFormatters();
+        //.AddXmlSerializerFormatters()
+        //.AddXmlDataContractSerializerFormatters();
     }
 
     /// <summary>

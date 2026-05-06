@@ -4,6 +4,8 @@ using Serilog;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Data.Seed.Mongo;
 
+using TiendaApi.Api.Data.Seed.Sql;
+
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
@@ -29,6 +31,11 @@ public static class DatabaseInitializationExtensions
             logger.LogWarning("🗄️ [DESARROLLO] Eliminando y recreando base de datos...");
             context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
+            
+            // Seed PostgreSQL
+            var sqlSeeder = scope.ServiceProvider.GetRequiredService<SqlSeeder>();
+            await sqlSeeder.SeedAsync();
+            
             logger.LogInformation("✅ Base de datos recreada con datos semilla");
         }
         else
