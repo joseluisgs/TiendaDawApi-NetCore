@@ -17,8 +17,6 @@ namespace TiendaApi.Tests.Unit.Services.Background;
 /// Verifica la lógica de reportes de productos y envío de emails.
 /// </summary>
 [TestFixture]
-[Category("Unit")]
-[Category("BackgroundJob")]
 public class ProductoReportTaskTests
 {
     private Mock<IProductoRepository> _mockProductoRepository = null!;
