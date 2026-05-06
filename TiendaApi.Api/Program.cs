@@ -78,7 +78,6 @@ Log.Information("✅ Aplicación construida");
 // ============================================================================
 
 app.UseSwaggerUI(isDevelopment);
-app.UseGraphiQL();
 app.UseGlobalExceptionHandler();
 
 // Security Headers - Siempre activo (no afecta funcionalidad)
