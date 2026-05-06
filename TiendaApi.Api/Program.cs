@@ -173,14 +173,14 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     Log.Information("  Usuarios:   GET/POST/PUT/DELETE {BaseUrl}/api/users", baseUrl);
     Log.Information("=================================================================");
     Log.Information("DATOS SEMBRADOS (Seed):");
-    Log.Information("  PostgreSQL: admin (admin@tienda.com/admin), userdaw (userdaw@tienda.com/userdaw)");
+    Log.Information("  PostgreSQL: admin (admin/admin), userdaw (userdaw/userdaw)");
     Log.Information("              Categorias: Electronica, Ropa, Libros");
     Log.Information("              Productos: Laptop Dell XPS 15, Camiseta Nike, Clean Code");
     Log.Information("  MongoDB:    3 pedidos de ejemplo");
     Log.Information("=================================================================");
     Log.Information("CREDENCIALES DE PRUEBA:");
-    Log.Information("  Admin:   admin@tienda.com / admin (ROLE_ADMIN)");
-    Log.Information("  Usuario: userdaw@tienda.com / userdaw (ROLE_USER)");
+    Log.Information("  Admin:   admin / admin (ROLE_ADMIN)");
+    Log.Information("  Usuario: userdaw / userdaw (ROLE_USER)");
     Log.Information("=================================================================");
     Log.Information("🚀 Aplicacion iniciada correctamente en {BaseUrl} ({Mode})",
         baseUrl, mode);
