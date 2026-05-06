@@ -1,21 +1,21 @@
 meta {
   name: MUTATION - Crear producto (sin auth)
-  type: http
+  type: graphql
   seq: 4
 }
 
 post {
   url: {{baseUrl}}/graphql
-  body: json
+  body: graphql
   auth: inherit
 }
 
-headers {
-  Content-Type: application/json
+body:graphql {
+  mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }
 }
 
-body:json {
-  {"query": "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }", "variables": {"input": {"nombre": "Test", "precio": 99, "stock": 10, "categoriaId": 1}}}
+body:graphql:vars {
+  {"input": {"nombre": "Test", "precio": 99, "stock": 10, "categoriaId": 1}}
 }
 
 script:post-response {

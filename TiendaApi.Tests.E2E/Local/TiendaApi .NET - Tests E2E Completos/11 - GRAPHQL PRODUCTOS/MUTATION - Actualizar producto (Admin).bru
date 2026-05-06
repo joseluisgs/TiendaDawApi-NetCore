@@ -1,25 +1,25 @@
 meta {
   name: MUTATION - Actualizar producto (Admin)
-  type: http
+  type: graphql
   seq: 7
 }
 
 post {
   url: {{baseUrl}}/graphql
-  body: json
+  body: graphql
   auth: bearer
-}
-
-headers {
-  Content-Type: application/json
 }
 
 auth:bearer {
   token: {{adminToken}}
 }
 
-body:json {
-  {"query": "mutation($id: Long!, $input: UpdateProductoInput!) { updateProducto(id: $id, input: $input) { id nombre precio stock } }", "variables": {"id": {{graphqlProductoId}}, "input": {"precio": 149.99, "stock": 20}}}
+body:graphql {
+  mutation($id: Long!, $input: UpdateProductoInput!) { updateProducto(id: $id, input: $input) { id nombre precio stock } }
+}
+
+body:graphql:vars {
+  {"id": {{graphqlProductoId}}, "input": {"precio": 149.99, "stock": 20}}
 }
 
 script:post-response {

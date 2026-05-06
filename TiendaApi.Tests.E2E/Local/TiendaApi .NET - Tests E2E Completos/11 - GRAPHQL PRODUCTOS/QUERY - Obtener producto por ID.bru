@@ -1,21 +1,21 @@
 meta {
   name: QUERY - Obtener producto por ID
-  type: http
+  type: graphql
   seq: 2
 }
 
 post {
   url: {{baseUrl}}/graphql
-  body: json
+  body: graphql
   auth: inherit
 }
 
-headers {
-  Content-Type: application/json
+body:graphql {
+  query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { nombre } } }
 }
 
-body:json {
-  {"query": "query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { nombre } } }", "variables": {"id": 1}}
+body:graphql:vars {
+  {"id": 1}
 }
 
 script:post-response {

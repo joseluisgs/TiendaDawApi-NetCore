@@ -1,7 +1,21 @@
 meta {
   name: QUERY - Obtener categoría por ID
-  type: http
+  type: graphql
   seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query($id: Long!) { categoria(id: $id) { id nombre } }
+}
+
+body:graphql:vars {
+  {"id": 1}
 }
 
 post {

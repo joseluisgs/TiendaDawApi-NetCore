@@ -1,25 +1,25 @@
 meta {
   name: MUTATION - Eliminar producto (Admin)
-  type: http
+  type: graphql
   seq: 8
 }
 
 post {
   url: {{baseUrl}}/graphql
-  body: json
+  body: graphql
   auth: bearer
-}
-
-headers {
-  Content-Type: application/json
 }
 
 auth:bearer {
   token: {{adminToken}}
 }
 
-body:json {
-  {"query": "mutation($id: Long!) { deleteProducto(id: $id) }", "variables": {"id": {{graphqlProductoId}}}}
+body:graphql {
+  mutation($id: Long!) { deleteProducto(id: $id) }
+}
+
+body:graphql:vars {
+  {"id": {{graphqlProductoId}}}
 }
 
 script:post-response {

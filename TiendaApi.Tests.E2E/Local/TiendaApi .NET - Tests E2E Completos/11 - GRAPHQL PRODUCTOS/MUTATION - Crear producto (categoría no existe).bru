@@ -1,25 +1,25 @@
 meta {
   name: MUTATION - Crear producto (categoría no existe)
-  type: http
+  type: graphql
   seq: 6
 }
 
 post {
   url: {{baseUrl}}/graphql
-  body: json
+  body: graphql
   auth: bearer
-}
-
-headers {
-  Content-Type: application/json
 }
 
 auth:bearer {
   token: {{adminToken}}
 }
 
-body:json {
-  {"query": "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }", "variables": {"input": {"nombre": "Test", "precio": 99, "stock": 10, "categoriaId": 999999}}}
+body:graphql {
+  mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }
+}
+
+body:graphql:vars {
+  {"input": {"nombre": "Test", "precio": 99, "stock": 10, "categoriaId": 999999}}
 }
 
 script:post-response {
