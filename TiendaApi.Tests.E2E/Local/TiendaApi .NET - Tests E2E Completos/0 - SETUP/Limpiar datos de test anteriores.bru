@@ -1,0 +1,30 @@
+meta {
+  name: Limpiar datos de test anteriores
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/categorias
+  body: none
+  auth: inherit
+}
+
+script:pre-request {
+  // Limpiar variables de test
+  pm.globals.unset("testUsername");
+  pm.globals.unset("testUserId");
+  pm.globals.unset("categoriaId");
+  pm.globals.unset("productoId");
+  pm.globals.unset("pedidoId");
+  pm.globals.unset("adminToken");
+  pm.globals.unset("userToken");
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Endpoint público para verificar conectividad
+}

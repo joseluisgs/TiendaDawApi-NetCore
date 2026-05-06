@@ -1,0 +1,25 @@
+meta {
+  name: Limpiar variables
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: inherit
+}
+
+script:pre-request {
+  // Limpiar variables de test
+  pm.collectionVariables.clear();
+  pm.globals.clear();
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Limpia todas las variables de test
+}

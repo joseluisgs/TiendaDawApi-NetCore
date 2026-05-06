@@ -1,0 +1,31 @@
+meta {
+  name: GET Image
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/storage/uploads/productos/test-image.png
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Storage Image - Status 200 or 404", function () {
+      expect([200, 404]).to.include(res.getStatus());
+  });
+  
+  test("Storage Image - Content-Type is image", function () {
+      if (res.getStatus() === 200) {
+          expect(res.getHeader('Content-Type')).to.match(/^image\//);
+      }
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene imagen del almacenamiento.
+}

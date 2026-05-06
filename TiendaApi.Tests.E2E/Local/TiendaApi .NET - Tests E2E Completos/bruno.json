@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "TiendaApi .NET - Tests E2E Completos",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

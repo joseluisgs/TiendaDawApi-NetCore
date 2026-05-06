@@ -1,0 +1,43 @@
+meta {
+  name: SUBSCRIPTION - onStockBajo
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {"query": "subscription { onStockBajo { productoId nombre stockMinimo umbral } }"}
+}
+
+script:post-response {
+  test("GraphQL Subscription StockBajo - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL Subscription StockBajo - Has data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data).to.be.an('object');
+      expect(jsonData.data.onStockBajo).to.be.an('object');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Suscripción a alertas de stock bajo (requiere token JWT)
+}

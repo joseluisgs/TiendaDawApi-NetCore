@@ -1,0 +1,43 @@
+meta {
+  name: SUBSCRIPTION - onProductoActualizado
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {"query": "subscription { onProductoActualizado { productoId nombre precio stock updatedAt } }"}
+}
+
+script:post-response {
+  test("GraphQL Subscription ProductoActualizado - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL Subscription ProductoActualizado - Has data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data).to.be.an('object');
+      expect(jsonData.data.onProductoActualizado).to.be.an('object');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Suscripción a productos actualizados (requiere token JWT)
+}

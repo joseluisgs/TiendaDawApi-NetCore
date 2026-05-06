@@ -1,0 +1,29 @@
+meta {
+  name: GET By Id - No es mi pedido
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/me/999999999999999999999999
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Pedidos My GetById Forbidden - Status 403 Forbidden", function () {
+      expect(res.getStatus()).to.equal(403);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Acceder a pedido de otro usuario debe retornar 403
+}

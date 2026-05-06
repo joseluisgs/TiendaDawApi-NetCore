@@ -1,0 +1,43 @@
+meta {
+  name: POST - Error validación (precio negativo)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/productos
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Test",
+      "descripcion": "Test",
+      "precio": -100,
+      "stock": 10,
+      "categoriaId": 1
+  }
+}
+
+script:post-response {
+  test("Productos Create Invalid - Status 400 Bad Request", function () {
+      expect(res.getStatus()).to.equal(400);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Crear producto con precio negativo debe retornar 400
+}

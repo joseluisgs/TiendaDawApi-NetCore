@@ -1,0 +1,39 @@
+meta {
+  name: MUTATION - Crear producto (rol USER)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {"query": "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }", "variables": {"input": {"nombre": "Test User", "precio": 99, "stock": 10, "categoriaId": 1}}}
+}
+
+script:post-response {
+  test("GraphQL CreateProducto Forbidden - Returns error", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.an('array');
+      expect(jsonData.errors[0].message).to.include('forbidden');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Crear producto con rol USER debe fallar
+}

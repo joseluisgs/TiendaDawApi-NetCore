@@ -1,3 +1,4 @@
+using System.Text;
 using Serilog;
 using Serilog.Extensions.Logging;
 using TiendaApi.Api;
@@ -5,6 +6,8 @@ using TiendaApi.Api.Data;
 using TiendaApi.Api.Data.Seed.Mongo;
 using TiendaApi.Api.Infrastructures;
 using TiendaApi.Api.Middleware;
+
+Console.OutputEncoding = Encoding.UTF8;
 
 // Configuración de Serilog (antes del builder)
 Log.Logger = SerilogConfig.Configure().CreateLogger();

@@ -1,0 +1,40 @@
+meta {
+  name: QUERY - Obtener producto por ID
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"query": "query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { nombre } } }", "variables": {"id": 1}}
+}
+
+script:post-response {
+  test("GraphQL ProductoById - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL ProductoById - Returns producto", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data.producto).to.be.an('object');
+      expect(jsonData.data.producto.id).to.be.a('number');
+      expect(jsonData.data.producto.nombre).to.be.a('string');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Obtiene producto por ID (público)
+}

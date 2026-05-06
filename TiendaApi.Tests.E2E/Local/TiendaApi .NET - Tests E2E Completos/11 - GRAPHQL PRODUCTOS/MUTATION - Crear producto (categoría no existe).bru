@@ -1,0 +1,39 @@
+meta {
+  name: MUTATION - Crear producto (categoría no existe)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {"query": "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }", "variables": {"input": {"nombre": "Test", "precio": 99, "stock": 10, "categoriaId": 999999}}}
+}
+
+script:post-response {
+  test("GraphQL CreateProducto NotFound - Returns error", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.an('array');
+      expect(jsonData.errors[0].message).to.include('NOT_FOUND');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Crear producto con categoría inexistente debe fallar
+}

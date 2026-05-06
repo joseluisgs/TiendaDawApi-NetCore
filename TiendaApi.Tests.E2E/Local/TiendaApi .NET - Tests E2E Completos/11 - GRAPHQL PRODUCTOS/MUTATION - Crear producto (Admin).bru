@@ -1,0 +1,51 @@
+meta {
+  name: MUTATION - Crear producto (Admin)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {"query": "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre precio stock } }", "variables": {"input": {"nombre": "GraphQL Test Producto", "descripcion": "Producto de prueba desde GraphQL", "precio": 99.99, "stock": 10, "categoriaId": 1}}}
+}
+
+script:post-response {
+  test("GraphQL CreateProducto - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL CreateProducto - Returns created producto", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data.createProducto.id).to.be.a('number');
+      expect(jsonData.data.createProducto.nombre).to.equal('GraphQL Test Producto');
+      expect(jsonData.data.createProducto.precio).to.equal(99.99);
+      expect(jsonData.data.createProducto.stock).to.equal(10);
+  });
+  
+  // Guardar ID para siguientes tests
+  if (res.getStatus() === 200 && !jsonData.errors) {
+      const jsonData = res.getBody();
+      pm.collectionVariables.set("graphqlProductoId", jsonData.data.createProducto.id.toString());
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Crea producto (requiere token ADMIN)
+}

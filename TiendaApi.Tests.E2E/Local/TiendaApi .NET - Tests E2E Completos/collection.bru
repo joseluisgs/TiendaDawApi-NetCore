@@ -1,0 +1,62 @@
+meta {
+  name: TiendaApi .NET - Tests E2E Completos
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+vars:pre-request {
+  baseUrl: http://localhost:5000
+  adminUsername: admin
+  adminPassword: Admin1234
+  userUsername: user
+  userPassword: User1234
+  adminToken: 
+  userToken: 
+  testUsername: 
+  testUserId: 
+  categoriaId: 
+  productoId: 
+  pedidoId: 
+}
+
+script:pre-request {
+  // Script global de pre-request
+  console.log('Ejecutando pre-request para: ' + pm.request.name);
+}
+
+script:post-response {
+  // Script global de test
+  if (res.getStatus() >= 400) {
+      console.log('Error en: ' + pm.request.name + ' - Status: ' + res.getStatus());
+      console.log('Response: ' + JSON.stringify(res.getBody()));
+  }
+}
+
+docs {
+  Colección completa de tests E2E para TiendaApi .NET 10
+  
+  Incluye:
+  - Tests happy path para todos los endpoints
+  - Tests de validación y errores (400, 401, 403, 404, 409)
+  - Tests de autenticación y autorización
+  - Tests de subida de archivos
+  - Scripts automatizados con Newman
+  
+  ## Uso con Newman:
+  ```bash
+  newman run TiendaApi.NetCore.postman_collection.json -e TiendaApi.NetCore.postman_environment.json
+  ```
+  
+  ## Variables requeridas:
+  - {{baseUrl}}: URL base de la API
+  - {{adminUsername}}: Usuario administrador
+  - {{adminPassword}}: Contraseña admin
+  - {{userUsername}}: Usuario normal
+  - {{userPassword}}: Contraseña usuario
+}
