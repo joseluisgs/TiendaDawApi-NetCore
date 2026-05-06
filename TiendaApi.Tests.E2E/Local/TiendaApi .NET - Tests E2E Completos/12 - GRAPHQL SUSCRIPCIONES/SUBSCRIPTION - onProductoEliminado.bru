@@ -1,41 +1,42 @@
 meta {
   name: SUBSCRIPTION - onProductoEliminado
-  type: http
+  type: ws
   seq: 3
 }
 
-post {
-  url: {{baseUrl}}/graphql
-  body: json
-  auth: bearer
-}
-
-headers {
-  Content-Type: application/json
+ws {
+  url: ws://localhost:5031/graphql
+  body: ws
+  auth: inherit
 }
 
 auth:bearer {
   token: {{adminToken}}
 }
 
-body:json {
-  {"query": "subscription { onProductoEliminado { productoId nombre deletedAt } }"}
+body:ws {
+  name: subscribe
+  type: json
+  content: '''
+    {"query": "subscription { onProductoEliminado { productoId nombre deletedAt } }"}
+  '''
 }
 
 script:post-response {
   test("GraphQL Subscription ProductoEliminado - Status 200 OK", function () {
-      expect(res.getStatus()).to.equal(200);
+    expect(res.getStatus()).to.equal(200);
   });
   
   test("GraphQL Subscription ProductoEliminado - Has data", function () {
-      const jsonData = res.getBody();
-      expect(jsonData.data).to.be.an('object');
-      expect(jsonData.data.onProductoEliminado).to.be.an('object');
+    const jsonData = res.getBody();
+    expect(jsonData.data).to.be.an('object');
+    expect(jsonData.data.onProductoEliminado).to.be.an('object');
   });
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
 
 docs {
