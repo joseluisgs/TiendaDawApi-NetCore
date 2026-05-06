@@ -105,7 +105,7 @@ app.MapWebSocketEndpoints();
 app.MapSignalRHubs();
 app.UseStaticFiles();
 app.MapControllers();
-app.MapGraphQL();
+app.MapGraphQLEndpoints();
 
 // ============================================================================
 // 🗄️ INICIALIZACIÓN DE DATOS

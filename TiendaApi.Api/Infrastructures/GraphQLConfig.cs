@@ -7,6 +7,7 @@ using TiendaApi.Api.GraphQL.Publishers;
 using TiendaApi.Api.GraphQL.Queries;
 using TiendaApi.Api.GraphQL.Subscriptions;
 using TiendaApi.Api.GraphQL.Types;
+using Microsoft.AspNetCore.Builder;
 
 namespace TiendaApi.Api.Infrastructures;
 
@@ -33,6 +34,18 @@ public static class GraphQLConfig
             .AddInMemorySubscriptions()
             .AddType<ProductoType>()
             .AddType<CategoriaType>()
-            .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = environment.IsDevelopment());
+            .ModifyRequestOptions(opt => 
+            {
+                opt.IncludeExceptionDetails = environment.IsDevelopment();
+            });
+    }
+
+    /// <summary>
+    /// Configura los endpoints de GraphQL incluyendo WebSocket para suscripciones.
+    /// </summary>
+    public static void MapGraphQLEndpoints(this WebApplication app)
+    {
+        app.MapGraphQL();
+        app.MapGraphQLWebSocket();
     }
 }
