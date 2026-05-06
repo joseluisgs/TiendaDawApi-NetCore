@@ -7,7 +7,7 @@ auth {
 }
 
 auth:bearer {
-  token: {{adminToken}}
+  token: {{token}}
 }
 
 vars:pre-request {
@@ -16,6 +16,7 @@ vars:pre-request {
   adminPassword: admin
   userUsername: userdaw
   userPassword: userdaw
+  token: 
   adminToken: 
   userToken: 
   testUsername: 
@@ -33,9 +34,9 @@ script:pre-request {
 script:post-response {
   // Script global de test
   if (res.getStatus() >= 400) {
-      const requestName = bru.getRequestName ? bru.getRequestName() : 'Request';
-      console.log('Error en: ' + requestName + ' - Status: ' + res.getStatus());
-      console.log('Response: ' + JSON.stringify(res.getBody()));
+    const requestName = bru.getRequestName ? bru.getRequestName() : 'Request';
+    console.log('Error en: ' + requestName + ' - Status: ' + res.getStatus());
+    console.log('Response: ' + JSON.stringify(res.getBody()));
   }
 }
 

@@ -20,7 +20,7 @@ auth:bearer {
 
 body:json {
   {
-      "cliente": {
+      "destinatario": {
           "nombreCompleto": "Juan Perez",
           "email": "juanperez@test.com",
           "telefono": "+34123456789",
@@ -33,9 +33,9 @@ body:json {
               "codigoPostal": "28001"
           }
       },
-      "lineasPedido": [
+      "items": [
           {
-              "idProducto": 1,
+              "productoId": 1,
               "cantidad": 2,
               "precioUnitario": 999.99
           }
@@ -45,22 +45,22 @@ body:json {
 
 script:post-response {
   test("Pedidos My Create - Status 201 Created", function () {
-      expect(res.getStatus()).to.equal(201);
+    expect(res.getStatus()).to.equal(201);
   });
   
   test("Pedidos My Create - Returns created pedido", function () {
-      const jsonData = res.getBody();
-      expect(jsonData.id).to.be.a('string');
-      expect(jsonData.estado).to.equal('PENDIENTE');
-      expect(jsonData.cliente).to.be.an('object');
-      expect(jsonData.lineasPedido).to.be.an('array');
-      expect(jsonData.total).to.be.a('number');
+    const jsonData = res.getBody();
+    expect(jsonData.id).to.be.a('string');
+    expect(jsonData.estado).to.equal('PENDIENTE');
+    expect(jsonData.destinatario).to.be.an('object');
+    expect(jsonData.items).to.be.an('array');
+    expect(jsonData.total).to.be.a('number');
   });
   
   // Guardar ID para siguientes tests
   if (res.getStatus() === 201) {
-      const jsonData = res.getBody();
-      bru.setVar("pedidoId", jsonData.id);
+    const jsonData = res.getBody();
+    bru.setVar("pedidoId", jsonData.id);
   }
 }
 
