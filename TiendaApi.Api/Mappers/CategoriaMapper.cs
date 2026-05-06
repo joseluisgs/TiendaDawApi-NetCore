@@ -10,7 +10,7 @@ public static class CategoriaMapper
 {
     /// <summary>Convierte Categoria a CategoriaDto.</summary>
     public static CategoriaDto ToDto(this Categoria categoria) =>
-        new(categoria.Id, categoria.Nombre, categoria.CreatedAt, categoria.UpdatedAt);
+        new(categoria.Id, categoria.Nombre, categoria.Descripcion, categoria.CreatedAt, categoria.UpdatedAt);
 
     /// <summary>Convierte lista de Categorias a lista de CategoriaDto.</summary>
     public static IEnumerable<CategoriaDto> ToDtoList(this IEnumerable<Categoria> categorias) =>
@@ -20,6 +20,7 @@ public static class CategoriaMapper
     public static Categoria ToEntity(this CategoriaRequestDto dto) => new()
     {
         Nombre = dto.Nombre,
+        Descripcion = dto.Descripcion,
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow
     };
@@ -28,5 +29,6 @@ public static class CategoriaMapper
     public static void UpdateEntity(this CategoriaRequestDto dto, Categoria categoria)
     {
         categoria.Nombre = dto.Nombre;
+        categoria.Descripcion = dto.Descripcion;
     }
 }

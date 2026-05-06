@@ -80,6 +80,7 @@ public class SqlSeeder
             new()
             {
                 Nombre = "Electrónica",
+                Descripcion = "Dispositivos electrónicos y gadgets",
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -87,6 +88,7 @@ public class SqlSeeder
             new()
             {
                 Nombre = "Ropa",
+                Descripcion = "Prendas de vestir para todas las edades",
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -94,6 +96,7 @@ public class SqlSeeder
             new()
             {
                 Nombre = "Libros",
+                Descripcion = "Libros de todos los géneros y temáticas",
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow

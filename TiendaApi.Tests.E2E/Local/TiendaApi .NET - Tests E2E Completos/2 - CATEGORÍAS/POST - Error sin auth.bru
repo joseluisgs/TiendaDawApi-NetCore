@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/api/categorias
   body: json
-  auth: inherit
+  auth: none
 }
 
 headers {
@@ -29,6 +29,7 @@ script:post-response {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
 
 docs {

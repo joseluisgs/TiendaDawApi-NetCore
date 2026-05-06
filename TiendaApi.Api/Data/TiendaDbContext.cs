@@ -44,6 +44,7 @@ public class TiendaDbContext : DbContext
             entity.HasKey(c => c.Id);
             entity.Property(c => c.Id).UseIdentityAlwaysColumn();
             entity.Property(c => c.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(c => c.Descripcion).HasMaxLength(500);
             entity.HasIndex(c => c.Nombre).IsUnique();
             entity.Property(c => c.IsDeleted).HasDefaultValue(false);
             entity.ConfigureTimestamps();
