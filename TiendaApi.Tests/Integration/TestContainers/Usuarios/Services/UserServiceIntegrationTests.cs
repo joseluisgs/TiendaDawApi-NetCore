@@ -24,7 +24,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Services;
 /// Tests de integración para UserService con DI completo.
 /// Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
-[TestFixture]
+[TestFixture]`n[Category("Integration")]
 [NonParallelizable]
 public class UserServiceIntegrationTests
 {

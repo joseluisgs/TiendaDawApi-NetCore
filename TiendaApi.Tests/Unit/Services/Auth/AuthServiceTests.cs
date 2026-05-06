@@ -16,6 +16,9 @@ namespace TiendaApi.Tests.Unit.Services.Auth;
 /// Tests unitarios para AuthService usando Patrón Result.
 /// </summary>
 [TestFixture]
+[Category("Unit")]
+[Category("Service")]
+[Category("Auth")]
 public class AuthServiceTests
 {
     private Mock<IUserRepository> _mockUserRepository = null!;

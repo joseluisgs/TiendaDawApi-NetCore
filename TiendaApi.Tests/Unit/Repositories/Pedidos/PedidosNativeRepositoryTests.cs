@@ -14,6 +14,8 @@ namespace TiendaApi.Tests.Unit.Repositories.Pedidos;
 /// Verifica el repositorio con driver nativo de MongoDB.
 /// </summary>
 [TestFixture]
+[Category("Unit")]
+[Category("Repository")]
 public class PedidosNativeRepositoryTests
 {
     private Mock<IMongoDatabase> _mockDatabase = null!;

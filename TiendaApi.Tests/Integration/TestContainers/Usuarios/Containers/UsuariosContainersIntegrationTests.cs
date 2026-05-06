@@ -13,7 +13,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Containers;
 /// Tests de integración para Containers de Usuarios.
 /// Verifica la conectividad y configuración de containers Docker (PostgreSQL, MongoDB).
 /// </summary>
-[TestFixture]
+[TestFixture]`n[Category("Integration")]
 public class UsuariosContainersIntegrationTests
 {
     private MongoDbContainer? _mongoContainer;

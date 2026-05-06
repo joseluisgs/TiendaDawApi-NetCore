@@ -11,6 +11,8 @@ using TiendaApi.Api.Repositories.Pedidos;
 namespace TiendaApi.Tests.Unit.Repositories.Pedidos;
 
 [TestFixture]
+[Category("Unit")]
+[Category("Repository")]
 public class PedidosEfCoreRepositoryTests
 {
     #region Constructor Tests

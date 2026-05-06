@@ -8,9 +8,9 @@ using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Tests.Unit.GraphQL;
 
-/// <summary>
-/// Tests unitarios para ProductoMutation (GraphQL).
-/// </summary>
+[TestFixture]
+[Category("Unit")]
+[Category("GraphQL")]
 public class ProductoMutationTests
 {
     private Mock<IProductoService> _productoServiceMock = null!;
@@ -74,7 +74,7 @@ public class ProductoMutationTests
 
         _productoServiceMock
             .Setup(s => s.CreateAsync(It.IsAny<ProductoRequestDto>()))
-            .ReturnsAsync((ProductoDto?)null);
+            .ReturnsAsync(default(ProductoDto));
 
         var result = await _mutation.CreateProducto(input, _productoServiceMock.Object);
 
@@ -134,7 +134,7 @@ public class ProductoMutationTests
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
 
         _productoServiceMock.Setup(s => s.FindByIdAsync(productoId))
-            .ReturnsAsync((ProductoDto?)null);
+            .ReturnsAsync(default(ProductoDto));
 
         var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
 
@@ -142,7 +142,7 @@ public class ProductoMutationTests
     }
 
     [Test]
-    public async Task UpdatePokemon_SoloPrecio_ActualizaSoloPrecio()
+    public async Task UpdateProducto_SoloPrecio_ActualizaSoloPrecio()
     {
         long productoId = 1;
         var input = new UpdateProductoInput { Precio = 1999.99m };

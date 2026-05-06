@@ -19,7 +19,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 /// Tests de integración para verificar control de concurrencia con RowVersion.
 /// Usa solo PostgreSQL para simplificar.
 /// </summary>
-[TestFixture]
+[TestFixture]`n[Category("Integration")]
 public class ProductoConcurrencyIntegrationTests
 {
     private static readonly ActivitySource ActivitySource = new("ProductoConcurrencyTests");

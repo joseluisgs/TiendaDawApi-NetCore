@@ -24,7 +24,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Services;
 /// Tests de integración para CategoriaService con DI completo.
 /// Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
-[TestFixture]
+[TestFixture]`n[Category("Integration")]
 [NonParallelizable]
 public class CategoriaServiceIntegrationTests
 {
