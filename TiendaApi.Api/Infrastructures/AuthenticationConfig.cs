@@ -50,7 +50,8 @@ public static class AuthenticationConfig
                 .RequireAuthenticatedUser()
                 .Build())
             .AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRoles.ADMIN))
-            .AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRoles.USER, UserRoles.ADMIN));
+            .AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRoles.USER, UserRoles.ADMIN))
+            .AddPolicy("AdminOnly", policy => policy.RequireRole(UserRoles.ADMIN));
 
         return services;
     }
