@@ -1,5 +1,6 @@
 meta {
-  name: TiendaApi .NET - Tests E2E Completos
+  name: TiendaApi.NET - Tests E2E Colección
+  description: Colección de tests E2E para la API de TiendaApi.NET.
 }
 
 auth {
@@ -42,18 +43,18 @@ script:post-response {
 }
 
 docs {
-  Colección completa de tests E2E para TiendaApi .NET 10
+  Colección completa de tests E2E para TiendaApi.NET
   
   Incluye:
   - Tests happy path para todos los endpoints
   - Tests de validación y errores (400, 401, 403, 404, 409)
   - Tests de autenticación y autorización
   - Tests de subida de archivos
-  - Scripts automatizados con Newman
+  - Scripts automatizados con Bruno
   
-  ## Uso con Newman:
+  ## Uso con Bruno:
   ```bash
-  newman run TiendaApi.NetCore.postman_collection.json -e TiendaApi.NetCore.postman_environment.json
+  bru run collection.bru -env .env
   ```
   
   ## Variables requeridas:
