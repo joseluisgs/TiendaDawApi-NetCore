@@ -12,13 +12,13 @@ get {
 
 script:pre-request {
   // Limpiar variables de test
-  pm.globals.unset("testUsername");
-  pm.globals.unset("testUserId");
-  pm.globals.unset("categoriaId");
-  pm.globals.unset("productoId");
-  pm.globals.unset("pedidoId");
-  pm.globals.unset("adminToken");
-  pm.globals.unset("userToken");
+  bru.setVar("testUsername", null);
+  bru.setVar("testUserId", null);
+  bru.setVar("categoriaId", null);
+  bru.setVar("productoId", null);
+  bru.setVar("pedidoId", null);
+  bru.setVar("adminToken", null);
+  bru.setVar("userToken", null);
 }
 
 settings {

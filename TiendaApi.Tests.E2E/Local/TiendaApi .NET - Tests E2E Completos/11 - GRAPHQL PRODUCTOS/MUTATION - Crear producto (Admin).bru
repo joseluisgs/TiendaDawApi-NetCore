@@ -36,9 +36,11 @@ script:post-response {
   });
   
   // Guardar ID para siguientes tests
-  if (res.getStatus() === 200 && !jsonData.errors) {
+  if (res.getStatus() === 200) {
       const jsonData = res.getBody();
-      pm.collectionVariables.set("graphqlProductoId", jsonData.data.createProducto.id.toString());
+      if (!jsonData.errors) {
+          bru.setVar("graphqlProductoId", jsonData.data.createProducto.id.toString());
+      }
   }
 }
 

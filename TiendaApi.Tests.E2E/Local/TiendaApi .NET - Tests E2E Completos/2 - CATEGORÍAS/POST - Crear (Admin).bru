@@ -40,8 +40,7 @@ script:post-response {
   // Guardar ID para siguientes tests
   if (res.getStatus() === 201) {
       const jsonData = res.getBody();
-      pm.collectionVariables.set("categoriaId", jsonData.id.toString());
-      pm.testVariables.set("categoriaId", jsonData.id.toString());
+      bru.setVar("categoriaId", jsonData.id.toString());
   }
 }
 

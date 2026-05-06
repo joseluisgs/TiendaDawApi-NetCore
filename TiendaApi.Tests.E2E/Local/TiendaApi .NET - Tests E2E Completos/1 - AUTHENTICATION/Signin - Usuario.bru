@@ -40,8 +40,7 @@ script:post-response {
   // Guardar token de usuario
   if (res.getStatus() === 200) {
       const jsonData = res.getBody();
-      pm.collectionVariables.set("userToken", jsonData.token);
-      pm.testVariables.set("userToken", jsonData.token);
+      bru.setVar("userToken", jsonData.token);
   }
 }
 

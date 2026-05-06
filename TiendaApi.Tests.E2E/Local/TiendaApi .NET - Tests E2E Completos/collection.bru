@@ -11,11 +11,11 @@ auth:bearer {
 }
 
 vars:pre-request {
-  baseUrl: http://localhost:5000
+  baseUrl: http://localhost:5031
   adminUsername: admin
-  adminPassword: Admin1234
-  userUsername: user
-  userPassword: User1234
+  adminPassword: admin
+  userUsername: userdaw
+  userPassword: userdaw
   adminToken: 
   userToken: 
   testUsername: 
@@ -27,13 +27,14 @@ vars:pre-request {
 
 script:pre-request {
   // Script global de pre-request
-  console.log('Ejecutando pre-request para: ' + pm.request.name);
+  console.log('Ejecutando pre-request para: Tienda Api');
 }
 
 script:post-response {
   // Script global de test
   if (res.getStatus() >= 400) {
-      console.log('Error en: ' + pm.request.name + ' - Status: ' + res.getStatus());
+      const requestName = bru.getRequestName ? bru.getRequestName() : 'Request';
+      console.log('Error en: ' + requestName + ' - Status: ' + res.getStatus());
       console.log('Response: ' + JSON.stringify(res.getBody()));
   }
 }

@@ -40,8 +40,7 @@ script:post-response {
   // Guardar token de admin
   if (res.getStatus() === 200) {
       const jsonData = res.getBody();
-      pm.collectionVariables.set("adminToken", jsonData.token);
-      pm.testVariables.set("adminToken", jsonData.token);
+      bru.setVar("adminToken", jsonData.token);
   }
 }
 

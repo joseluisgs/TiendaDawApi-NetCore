@@ -11,9 +11,13 @@ get {
 }
 
 script:pre-request {
-  // Limpiar variables de test
-  pm.collectionVariables.clear();
-  pm.globals.clear();
+  // En Bruno las variables se gestionan mejor individualmente o por entornos.
+  // Limpiamos las principales para el siguiente run.
+  bru.setVar("adminToken", null);
+  bru.setVar("userToken", null);
+  bru.setVar("categoriaId", null);
+  bru.setVar("productoId", null);
+  bru.setVar("pedidoId", null);
 }
 
 settings {

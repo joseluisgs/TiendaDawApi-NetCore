@@ -11,11 +11,11 @@ services:
       - ./test-image.png:/etc/newman/test-image.png:ro
       - ./reports:/etc/newman/reports
     environment:
-      - BASE_URL=${BASE_URL:-http://host.docker.internal:5000}
+      - BASE_URL=${BASE_URL:-http://host.docker.internal:5031}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin1234}
-      - USER_USERNAME=${USER_USERNAME:-user}
-      - USER_PASSWORD=${USER_PASSWORD:-User1234}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - USER_USERNAME=${USER_USERNAME:-userdaw}
+      - USER_PASSWORD=${USER_PASSWORD:-userdaw}
     command: >
       run TiendaApi.NetCore.postman_collection.json
       -e TiendaApi.NetCore.postman_environment.json
