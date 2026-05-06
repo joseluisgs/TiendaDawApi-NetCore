@@ -7,11 +7,7 @@ meta {
 ws {
   url: ws://localhost:5031/graphql
   body: ws
-  auth: inherit
-}
-
-auth:bearer {
-  token: {{adminToken}}
+  auth: none
 }
 
 body:ws {
@@ -40,5 +36,5 @@ settings {
 }
 
 docs {
-  GraphQL: Suscripción a productos actualizados (requiere token JWT)
+  GraphQL: Suscripción a productos actualizados (público)
 }
