@@ -29,16 +29,22 @@ body:json {
 
 script:post-response {
   test("Users Create - Status 201 Created", function () {
-      expect(res.getStatus()).to.equal(201);
+    expect(res.getStatus()).to.equal(201);
   });
   
   test("Users Create - Returns created user", function () {
-      const jsonData = res.getBody();
-      expect(jsonData.id).to.be.a('number');
-      expect(jsonData.username).to.equal('newuser');
-      expect(jsonData.email).to.equal('newuser@test.com');
-      expect(jsonData.role).to.equal('USER');
+    const jsonData = res.getBody();
+    expect(jsonData.id).to.be.a('number');
+    expect(jsonData.username).to.equal('newuser');
+    expect(jsonData.email).to.equal('newuser@test.com');
+    expect(jsonData.role).to.equal('USER');
   });
+  
+  // Guardar ID para siguientes tests
+  if (res.getStatus() === 201) {
+    const jsonData = res.getBody();
+    bru.setVar("testUserId", jsonData.id);
+  }
 }
 
 settings {

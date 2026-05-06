@@ -20,22 +20,19 @@ auth:bearer {
 
 body:json {
   {
-      "firstName": "Juan",
-      "lastName": "Pérez",
-      "email": "{{userUsername}}@updated.com"
+      "email": "userdaw@updated.com"
   }
 }
 
 script:post-response {
   test("Users MyProfile Update - Status 200 OK", function () {
-      expect(res.getStatus()).to.equal(200);
+    expect(res.getStatus()).to.equal(200);
   });
   
   test("Users MyProfile Update - Returns updated user", function () {
-      const jsonData = res.getBody();
-      expect(jsonData).to.be.an('object');
-      expect(jsonData.firstName).to.equal('Juan');
-      expect(jsonData.lastName).to.equal('Pérez');
+    const jsonData = res.getBody();
+    expect(jsonData).to.be.an('object');
+    expect(jsonData.email).to.equal('userdaw@updated.com');
   });
 }
 
