@@ -1,5 +1,4 @@
 using HotChocolate;
-using HotChocolate.Authorization;
 using HotChocolate.Types;
 using TiendaApi.Api.GraphQL.Events;
 
@@ -13,7 +12,6 @@ public class ProductoSubscription
     /// <summary>Evento cuando se crea un producto.</summary>
     /// <param name="message">Datos del evento.</param>
     /// <returns>Evento publicado.</returns>
-    [Authorize]
     [Subscribe]
     [Topic("onProductoCreado")]
     public ProductoCreadoEvent OnProductoCreado([EventMessage] ProductoCreadoEvent message) => message;
@@ -21,7 +19,6 @@ public class ProductoSubscription
     /// <summary>Evento cuando se actualiza un producto.</summary>
     /// <param name="message">Datos del evento.</param>
     /// <returns>Evento publicado.</returns>
-    [Authorize]
     [Subscribe]
     [Topic("onProductoActualizado")]
     public ProductoActualizadoEvent OnProductoActualizado([EventMessage] ProductoActualizadoEvent message) => message;
@@ -29,7 +26,6 @@ public class ProductoSubscription
     /// <summary>Evento cuando se elimina un producto.</summary>
     /// <param name="message">Datos del evento.</param>
     /// <returns>Evento publicado.</returns>
-    [Authorize]
     [Subscribe]
     [Topic("onProductoEliminado")]
     public ProductoEliminadoEvent OnProductoEliminado([EventMessage] ProductoEliminadoEvent message) => message;
@@ -37,7 +33,6 @@ public class ProductoSubscription
     /// <summary>Evento cuando el stock está bajo.</summary>
     /// <param name="message">Datos del evento.</param>
     /// <returns>Evento publicado.</returns>
-    [Authorize]
     [Subscribe]
     [Topic("onStockBajo")]
     public ProductoStockBajoEvent OnStockBajo([EventMessage] ProductoStockBajoEvent message) => message;
