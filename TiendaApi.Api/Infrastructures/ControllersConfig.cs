@@ -16,11 +16,10 @@ public static class ControllersConfig
     public static IMvcBuilder AddMvcControllers(this IServiceCollection services)
     {
         Log.Information("📦 Configurando controladores MVC...");
-        return services.AddControllers(options =>
-        {
+        return services.AddControllers(options => {
             options.RespectBrowserAcceptHeader = true;
             options.ReturnHttpNotAcceptable = true;
-        })
+        });
         //.AddXmlSerializerFormatters()
         //.AddXmlDataContractSerializerFormatters();
     }
