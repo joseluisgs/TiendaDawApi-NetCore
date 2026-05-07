@@ -127,7 +127,7 @@
     private void OnTipoChanged() { operacion = (tipo == "query") ? "productos" : "createProducto"; id = 1; responseText = ""; GenerateQuery(); }
     private void OnIdChanged() => GenerateQuery();
     private void OnOperacionChanged() { id = (operacion == "producto" || operacion == "categoria" || operacion == "updateProducto" || operacion == "deleteProducto") ? 1 : 0; responseText = ""; GenerateQuery(); }
-    private void OnSubscriptionTypeChanged() { StopSubscription(); subscriptionEvents = ""; StateHasChanged(); }
+    private void OnSubscriptionTypeChanged() { StopSubscription(); if (subscriptionEvents != "") subscriptionEvents += "[" + DateTime.Now.ToString("HH:mm:ss") + "] Desconectado de GraphQL\n"; StateHasChanged(); }
     private bool NeedsId() => (tipo == "query" && (operacion == "producto" || operacion == "categoria")) || (tipo == "mutation" && (operacion == "updateProducto" || operacion == "deleteProducto"));
 
     /// <summary>Genera la cadena de consulta GraphQL formateada según la selección actual.</summary>
@@ -169,7 +169,7 @@
         
         subscription?.Dispose();
         subscriptionRunning = true;
-        subscriptionEvents = "[" + DateTime.Now.ToString("HH:mm:ss") + "] Iniciada: " + subscriptionType + "\n";
+        subscriptionEvents = "[" + DateTime.Now.ToString("HH:mm:ss") + "] Conectado a GraphQL (" + subscriptionType + ")\n";
         StateHasChanged();
         try {
             string q = "";
