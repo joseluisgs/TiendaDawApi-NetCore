@@ -11,7 +11,8 @@ namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Validators;
 /// Tests de integración para Validators de Categorías.
 /// Verifica la validación de DTOs usando FluentValidation.
 /// </summary>
-[TestFixture]`n[Category("Integration")]
+[TestFixture]
+[Category("Integration")]
 public class CategoriaValidatorsIntegrationTests
 {
     [Test]

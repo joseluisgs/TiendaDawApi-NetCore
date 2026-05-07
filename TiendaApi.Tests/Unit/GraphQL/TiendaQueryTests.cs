@@ -124,7 +124,7 @@ public class TiendaQueryTests
     public async Task GetProductosPaged_WithPaging_ReturnsPagedResult()
     {
         var filter = new ProductoFilterDto(null, null, null, null, null, 1, 10);
-        var items = new List<ProductoDto>().AsEnumerable();
+        var items = new List<Producto>();
         var pagedResult = (items, 2);
 
         _productoRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
@@ -143,7 +143,7 @@ public class TiendaQueryTests
     public async Task GetCategoriasPaged_WithPaging_ReturnsPagedResult()
     {
         var filter = new CategoriaFilterDto { Page = 1, Size = 10 };
-        var items = new List<CategoriaDto>().AsEnumerable();
+        var items = new List<Categoria>();
         var pagedResult = (items, 2);
 
         _categoriaRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))

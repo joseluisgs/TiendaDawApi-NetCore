@@ -11,7 +11,8 @@ namespace TiendaApi.Tests.Integration.TestContainers.Productos.Validators;
 /// Tests de integración para Validators de Productos.
 /// Verifica la validación de DTOs usando FluentValidation.
 /// </summary>
-[TestFixture]`n[Category("Integration")]
+[TestFixture]
+[Category("Integration")]
 public class ProductoValidatorsIntegrationTests
 {
     [Test]

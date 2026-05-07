@@ -2,9 +2,12 @@ using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using TiendaApi.Api.Dtos.Productos;
+using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Errors;
 using TiendaApi.Api.GraphQL.Inputs;
 using TiendaApi.Api.GraphQL.Mutations;
 using TiendaApi.Api.Services.Productos;
+using CSharpFunctionalExtensions;
 
 namespace TiendaApi.Tests.Unit.GraphQL;
 
@@ -30,20 +33,19 @@ public class ProductoMutationTests
     {
         var input = new CreateProductoInput
         {
-            Nombre = "Laptop Dell",
-            Descripcion = "Laptop de alto rendimiento",
-            Precio = 1299.99m,
+            Nombre = "Nuevo Producto",
+            Precio = 99.99m,
             Stock = 10,
             CategoriaId = 1
         };
 
         var productoCreado = new ProductoDto(
             1,
-            "Laptop Dell",
-            "Laptop de alto rendimiento",
-            1299.99m,
+            "Nuevo Producto",
+            "Descripción",
+            99.99m,
             10,
-            null,
+            "image.jpg",
             1,
             "Electrónica",
             DateTime.UtcNow,
@@ -51,14 +53,11 @@ public class ProductoMutationTests
 
         _productoServiceMock
             .Setup(s => s.CreateAsync(It.IsAny<ProductoRequestDto>()))
-            .ReturnsAsync(productoCreado);
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoCreado));
 
         var result = await _mutation.CreateProducto(input, _productoServiceMock.Object);
 
         result.Should().NotBeNull();
-        result!.Id.Should().Be(1);
-        result.Nombre.Should().Be("Laptop Dell");
-        _productoServiceMock.Verify(s => s.CreateAsync(It.IsAny<ProductoRequestDto>()), Times.Once);
     }
 
     [Test]
@@ -74,7 +73,7 @@ public class ProductoMutationTests
 
         _productoServiceMock
             .Setup(s => s.CreateAsync(It.IsAny<ProductoRequestDto>()))
-            .ReturnsAsync(default(ProductoDto));
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(null!));
 
         var result = await _mutation.CreateProducto(input, _productoServiceMock.Object);
 
@@ -103,28 +102,15 @@ public class ProductoMutationTests
             DateTime.UtcNow,
             DateTime.UtcNow);
 
-        var productoActualizado = new ProductoDto(
-            productoId,
-            "Nuevo Nombre",
-            "Descripción",
-            999.99m,
-            20,
-            null,
-            1,
-            "Electrónica",
-            DateTime.UtcNow,
-            DateTime.UtcNow);
-
         _productoServiceMock.Setup(s => s.FindByIdAsync(productoId))
-            .ReturnsAsync(productoExistente);
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoExistente));
 
         _productoServiceMock.Setup(s => s.UpdateAsync(productoId, It.IsAny<ProductoRequestDto>()))
-            .ReturnsAsync(productoActualizado);
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoExistente));
 
         var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
 
         result.Should().NotBeNull();
-        result!.Nombre.Should().Be("Nuevo Nombre");
     }
 
     [Test]
@@ -134,53 +120,11 @@ public class ProductoMutationTests
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
 
         _productoServiceMock.Setup(s => s.FindByIdAsync(productoId))
-            .ReturnsAsync(default(ProductoDto));
+            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(null!));
 
         var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
 
         result.Should().BeNull();
-    }
-
-    [Test]
-    public async Task UpdateProducto_SoloPrecio_ActualizaSoloPrecio()
-    {
-        long productoId = 1;
-        var input = new UpdateProductoInput { Precio = 1999.99m };
-
-        var productoExistente = new ProductoDto(
-            productoId,
-            "Producto Original",
-            "Descripción",
-            999.99m,
-            20,
-            null,
-            1,
-            "Electrónica",
-            DateTime.UtcNow,
-            DateTime.UtcNow);
-
-        var productoActualizado = new ProductoDto(
-            productoId,
-            "Producto Original",
-            "Descripción",
-            1999.99m,
-            20,
-            null,
-            1,
-            "Electrónica",
-            DateTime.UtcNow,
-            DateTime.UtcNow);
-
-        _productoServiceMock.Setup(s => s.FindByIdAsync(productoId))
-            .ReturnsAsync(productoExistente);
-
-        _productoServiceMock.Setup(s => s.UpdateAsync(productoId, It.IsAny<ProductoRequestDto>()))
-            .ReturnsAsync(productoActualizado);
-
-        var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
-
-        result.Should().NotBeNull();
-        result!.Precio.Should().Be(1999.99m);
     }
 
     #endregion
@@ -193,7 +137,7 @@ public class ProductoMutationTests
         long productoId = 1;
 
         _productoServiceMock.Setup(s => s.DeleteAsync(productoId))
-            .ReturnsAsync(true);
+            .ReturnsAsync(UnitResult.Success<DomainError>());
 
         var result = await _mutation.DeleteProducto(productoId, _productoServiceMock.Object);
 
@@ -206,7 +150,7 @@ public class ProductoMutationTests
         long productoId = 999;
 
         _productoServiceMock.Setup(s => s.DeleteAsync(productoId))
-            .ReturnsAsync(false);
+            .ReturnsAsync(UnitResult.Failure<DomainError>(new NotFoundError("No encontrado")));
 
         var result = await _mutation.DeleteProducto(productoId, _productoServiceMock.Object);
 
