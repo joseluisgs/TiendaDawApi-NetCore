@@ -9,12 +9,12 @@
     
     <div class="login-form">
         <div class="input-group">
-            <label for="email">Email</label>
+            <label for="email">Usuario</label>
             <span class="input-icon">📧</span>
             <input type="email" 
                    id="email" 
                    @bind="email" 
-                   placeholder="tu@email.com" 
+                   placeholder="tu@email.com o usuario" 
                    data-testid="email-input" />
         </div>
         
@@ -99,9 +99,8 @@
                     var message = error.Code switch
                     {
                         var code when code == ValidationErrors.EmptyField("").Code => "Por favor, completa todos los campos",
-                        var code when code == ValidationErrors.InvalidEmail.Code => "Por favor, introduce un email válido",
                         var code when code == NetworkErrors.ConnectionFailed.Code => "Error de conexión. Inténtalo de nuevo",
-                        _ => error.Message
+                        _ => "Credenciales inválidas"
                     };
                     NotificationStore.Error(message, "Login Fallido");
                 }

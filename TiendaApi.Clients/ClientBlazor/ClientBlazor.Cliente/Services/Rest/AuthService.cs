@@ -74,7 +74,10 @@ public class AuthService(
             HttpStatusCode.Unauthorized => AuthErrors.InvalidCredentials,
             HttpStatusCode.Forbidden => AuthErrors.InsufficientPermissions,
             HttpStatusCode.NotFound => AuthErrors.UserNotFound,
-            _ => NetworkErrors.ServerError
+            HttpStatusCode.BadRequest => NetworkErrors.NotFound,
+            HttpStatusCode.InternalServerError => NetworkErrors.ServerError,
+            HttpStatusCode.ServiceUnavailable => NetworkErrors.ConnectionFailed,
+            _ => NetworkErrors.ConnectionFailed
         };
     }
 
@@ -88,6 +91,5 @@ public class AuthService(
     {
         if (string.IsNullOrWhiteSpace(email)) throw ValidationErrors.EmptyField("email");
         if (string.IsNullOrWhiteSpace(password)) throw ValidationErrors.EmptyField("password");
-        if (!email.Contains('@')) throw ValidationErrors.InvalidEmail;
     }
 }
