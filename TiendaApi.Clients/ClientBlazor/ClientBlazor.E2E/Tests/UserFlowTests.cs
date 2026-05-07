@@ -283,4 +283,82 @@ public class UserFlowTests : PageTest
         await graphqlPage.CloseAsync();
         await triggerPage.CloseAsync();
     }
+
+    [Test]
+    public async Task Login_With_Invalid_Credentials_Should_Show_Error_Notification()
+    {
+        // 1. Ir a la home
+        await Page.GotoAsync("/");
+
+        // 2. Rellenar con credenciales erróneas
+        await Page.TestId("email-input").FillAsync("usuario_inexistente");
+        await Page.TestId("password-input").FillAsync("password_falso");
+        
+        // 3. Click en login
+        await Page.TestId("login-btn").ClickAsync();
+
+        // 4. Verificar que aparece una notificación de error (Toast)
+        // Buscamos el contenedor de toasts o el texto del error
+        var toast = Page.Locator(".toast-container");
+        await Expect(toast).ToBeVisibleAsync();
+        await Expect(toast).ToContainTextAsync("Error", new() { Timeout = 10000 });
+
+        // 5. Verificar que el AuthPanel NO es visible
+        await Expect(Page.TestId("auth-panel")).Not.ToBeVisibleAsync();
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/login-failure.png" });
+    }
+
+    [Test]
+    public async Task GraphQL_Public_Query_For_Categorias_Should_Succeed()
+    {
+        // 1. Ir a GraphQL (sin login, es público)
+        await Page.GotoAsync("/graphql");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // 2. Seleccionar Operación "categorias (Listar todas)"
+        await Page.Locator(".form-group")
+            .Filter(new() { HasText = "Operacion" })
+            .Locator("select")
+            .SelectOptionAsync(new[] { "categorias" });
+
+        // 3. Ejecutar Query
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
+
+        // 4. Verificar que la respuesta contiene datos (JSON)
+        var responseArea = Page.Locator(".response-section").Nth(0).Locator(".response-display");
+        await Expect(responseArea).ToContainTextAsync("\"id\":", new() { Timeout = 10000 });
+        await Expect(responseArea).ToContainTextAsync("nombre", new() { Timeout = 10000 });
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/graphql-query-categorias.png" });
+    }
+
+    [Test]
+    public async Task Rest_Page_Resource_Switch_Should_Update_Available_Operations_Info()
+    {
+        // 1. Ir a REST
+        await Page.GotoAsync("/rest");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // 2. Por defecto está en "productos". Verificar info box
+        var infoBox = Page.Locator(".info-box");
+        await Expect(infoBox).ToContainTextAsync("/api/productos");
+
+        // 3. Cambiar recurso a "Categorías"
+        await Page.Locator(".form-group")
+            .Filter(new() { HasText = "Recurso" })
+            .Locator("select")
+            .SelectOptionAsync(new[] { "categorias" });
+
+        // 4. Verificar que la información de ayuda se actualiza
+        await Expect(infoBox).ToContainTextAsync("/api/categorias");
+        
+        // 5. Verificar que el select de operaciones se resetea a "GET - Listar todos" (comportamiento Blazor)
+        var operacionSelect = Page.Locator(".form-group")
+            .Filter(new() { HasText = "Operación" })
+            .Locator("select");
+        await Expect(operacionSelect).ToHaveValueAsync("get-list");
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/rest-resource-switch.png" });
+    }
 }
