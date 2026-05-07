@@ -73,7 +73,7 @@ public class ProductoMutationTests
 
         _productoServiceMock
             .Setup(s => s.CreateAsync(It.IsAny<ProductoRequestDto>()))
-            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(null!));
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(new BusinessRuleError("Error")));
 
         var result = await _mutation.CreateProducto(input, _productoServiceMock.Object);
 
@@ -120,7 +120,7 @@ public class ProductoMutationTests
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
 
         _productoServiceMock.Setup(s => s.FindByIdAsync(productoId))
-            .ReturnsAsync(Result.Success<ProductoDto, DomainError>(null!));
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(new NotFoundError("No encontrado")));
 
         var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
 

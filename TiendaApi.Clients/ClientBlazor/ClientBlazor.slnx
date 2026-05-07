@@ -3,6 +3,6 @@
   <SolutionItems>
     <SolutionItem Path="ClientBlazor.Cliente/ClientBlazor.Cliente.csproj" />
     <SolutionItem Path="ClientBlazor.Tests/ClientBlazor.Tests.csproj" />
+    <SolutionItem Path="ClientBlazor.E2E/ClientBlazor.E2E.csproj" />
   </SolutionItems>
-  <Project Path="ClientBlazor.E2E/ClientBlazor.E2E.csproj" />
 </Solution>
