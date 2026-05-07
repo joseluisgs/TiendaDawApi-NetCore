@@ -106,11 +106,13 @@
     {
         operacion = "get-list";
         id = 1;
+        responseText = "";
         GenerateJson();
     }
 
     private void OnOperacionChanged()
     {
+        responseText = "";
         if (operacion == "get-list" || operacion == "get-by-id" || operacion == "delete") jsonBody = "{}";
         else GenerateJson();
     }

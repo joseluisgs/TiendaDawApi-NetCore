@@ -18,7 +18,7 @@
     </p>
 
     <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch; margin-bottom: 15px;">
-        <select @bind="selectedHubType" style="min-width: 200px; height: 50px; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white; box-sizing: border-box;">
+        <select @bind="selectedHubType" @bind:after="OnSelectedHubTypeChanged" style="min-width: 200px; height: 50px; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white; box-sizing: border-box;">
             <option value="productos">📦 Productos (Publico)</option>
             <option value="pedidos">🛒 Pedidos (Requiere JWT)</option>
         </select>
@@ -122,6 +122,16 @@
         }
 
         InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnSelectedHubTypeChanged()
+    {
+        if (SignalRService.IsConnected)
+        {
+            await SignalRService.DisconnectAsync();
+        }
+        messages = "";
+        StateHasChanged();
     }
 
     public async ValueTask DisposeAsync()

@@ -6,13 +6,14 @@ namespace TiendaApi.Api.GraphQL.Publishers;
 
 public class EventPublisher : IEventPublisher
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public EventPublisher(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider;
+    public EventPublisher(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
 
     public async Task PublishAsync<T>(string topic, T payload)
     {
-        var sender = _serviceProvider.GetRequiredService<ITopicEventSender>();
+        using var scope = _scopeFactory.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ITopicEventSender>();
         await sender.SendAsync(topic, payload);
     }
 }
@@ -21,7 +22,7 @@ public static class EventPublisherExtensions
 {
     public static IServiceCollection AddGraphQLPubSub(this IServiceCollection services)
     {
-        services.AddScoped<IEventPublisher, EventPublisher>();
+        services.AddSingleton<IEventPublisher, EventPublisher>();
         return services;
     }
 }

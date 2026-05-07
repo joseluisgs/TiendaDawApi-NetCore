@@ -2,9 +2,11 @@
 @using ClientBlazor.Cliente.State.Notifications
 @implements IDisposable
 @inject INotificationStore NotificationStore
+@using System.Timers
+@implements IAsyncDisposable
 
 <div class="toast-container">
-    @foreach (var notification in notifications)
+    @foreach (var notification in activeNotifications)
     {
         <div class="toast-item @GetToastClass(notification.Type)" @onclick="() => NotificationStore.Dismiss(notification.Id)">
             <div class="toast-icon">@GetToastIcon(notification.Type)</div>
@@ -25,21 +27,30 @@
 </div>
 
 @code {
-    /// <summary>Lista reactiva de notificaciones activas para renderizar.</summary>
-    private List<Notification> notifications = new();
-    
-    /// <summary>Contenedor de suscripciones RX para limpieza automática.</summary>
+    private List<Notification> activeNotifications = new();
+    private System.Timers.Timer? _timer;
     private CompositeDisposable subscriptions = new();
-
-    /// <summary>
-    /// Suscribe el componente a los cambios en el almacén de notificaciones.
-    /// </summary>
+    
     protected override void OnInitialized()
     {
         subscriptions.Add(NotificationStore.Notifications.Subscribe(notifs => {
-            notifications = notifs;
+            activeNotifications = notifs.ToList();
             StateHasChanged();
         }));
+        
+        _timer = new System.Timers.Timer(100);
+        _timer.Elapsed += (s, e) =>
+        {
+            var expired = activeNotifications.Where(n => n.IsExpired).ToList();
+            if (expired.Any())
+            {
+                foreach (var n in expired)
+                {
+                    NotificationStore.Dismiss(n.Id);
+                }
+            }
+        };
+        _timer.Start();
     }
 
     /// <summary>
@@ -47,7 +58,15 @@
     /// </summary>
     public void Dispose()
     {
+        _timer?.Stop();
+        _timer?.Dispose();
         subscriptions.Dispose();
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
     }
 
     /// <summary>
