@@ -36,7 +36,8 @@ public class UserFlowTests : PageTest
         await Page.ScreenshotAsync(new() { Path = "screenshots/login-1-home.png" });
 
         // 2. Rellenar formulario de login (usando la extensión TestId)
-        await Page.TestId("email-input").FillAsync("userdaw@tienda.com");
+        // La API espera el Username, que es "userdaw", no el email completo en este caso
+        await Page.TestId("email-input").FillAsync("userdaw");
         await Page.TestId("password-input").FillAsync("userdaw");
         
         await Page.ScreenshotAsync(new() { Path = "screenshots/login-2-filled.png" });
@@ -117,28 +118,47 @@ public class UserFlowTests : PageTest
     [Test]
     public async Task WebSocket_Connection_Should_Receive_Events()
     {
-        // 1. Ir a WebSocket
+        // Para que este test pase de forma determinista, necesitamos disparar un evento.
+        // Los eventos automáticos del backend (Background Services) no están garantizados en tiempo.
+        // Por tanto: 1. Login como Admin -> 2. Conectar WS -> 3. Crear Producto -> 4. Verificar Evento
+        
+        // 1. Login como Admin
+        await Page.GotoAsync("/");
+        await Page.TestId("email-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("login-btn").ClickAsync();
+        await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
+
+        // 2. Ir a WebSocket y conectar
         await Page.GotoAsync("/websocket");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        // 2. Conectar a Productos (botón público)
-        // Por defecto ya está seleccionado 'productos', así que solo pulsamos Conectar
-        // Buscamos el botón que contiene "Conectar"
         await Page.GetByRole(AriaRole.Button, new() { Name = "▶️ Conectar" }).ClickAsync();
-
-        // 3. Esperar confirmación de conexión en el log
-        // Buscamos en el área de logs (response-display dentro de response-section)
-        // El servicio de WS simulado dispara eventos tras un delay, pero el mensaje de conexión es inmediato
-        // Buscamos el div específico de respuesta que muestra el estado
         await Expect(Page.Locator(".response-display").Filter(new() { HasText = "Estado: 🟢 Conectado" })).ToBeVisibleAsync(new() { Timeout = 10000 });
 
-        await Page.ScreenshotAsync(new() { Path = "screenshots/ws-1-connected.png" });
+        // 3. Abrir una nueva pestaña para disparar el evento (Crear producto)
+        var secondPage = await Page.Context.NewPageAsync();
+        await secondPage.GotoAsync("/rest");
+        
+        // Seleccionar Operación "POST - Crear"
+        await secondPage.Locator(".form-group")
+            .Filter(new() { HasText = "Operación" })
+            .Locator("select")
+            .SelectOptionAsync(new[] { "post" });
+        
+        // Pulsar Ejecutar
+        await secondPage.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
+        // Esperar a que termine la ejecución en la segunda pestaña
+        await Expect(secondPage.Locator(".response-display")).ToContainTextAsync("\"Id\":", new() { Timeout = 10000 });
 
-        // 4. Esperar un evento automático
-        // El log está en un <pre>
+        // 4. Volver a la primera página y verificar el evento
+        await Page.BringToFrontAsync();
         var logsArea = Page.Locator("pre");
-        await Expect(logsArea).ToContainTextAsync("\"tipo\":", new() { Timeout = 15000 });
+        await Expect(logsArea).ToContainTextAsync("\"type\":", new() { Timeout = 15000 });
+        await Expect(logsArea).ToContainTextAsync("PRODUCTO_CREADO");
 
         await Page.ScreenshotAsync(new() { Path = "screenshots/ws-2-event-received.png" });
+        
+        // Limpieza
+        await secondPage.CloseAsync();
     }
 }
