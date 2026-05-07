@@ -54,7 +54,7 @@
 <div class="response-section">
     <h3 class="section-title">Mensajes Recibidos</h3>
     <div class="response-display">
-        <pre style="white-space: pre-wrap; font-family: 'Balsamiq Sans', cursive; max-height: 400px; overflow-y: auto; min-height: 100px;">@(string.IsNullOrEmpty(messages) ? "Esperando mensajes..." : messages)</pre>
+        <pre style="white-space: pre-wrap; font-family: 'Balsamiq Sans', cursive; max-height: 400px; overflow-y: auto; min-height: 100px;">@(WebSocketService.IsConnected ? (string.IsNullOrEmpty(messages) ? "Esperando mensajes..." : messages) : "Desconectado")</pre>
     </div>
 </div>
 
