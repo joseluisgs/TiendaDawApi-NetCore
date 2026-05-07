@@ -6,8 +6,6 @@ using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Models;
-using TiendaApi.Api.Services.Pedidos;
-using TiendaApi.Api.Services.Storage;
 using TiendaApi.Api.Services.Users;
 using TiendaApi.Api.Helpers.Pagination;
 
