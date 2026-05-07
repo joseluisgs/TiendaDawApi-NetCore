@@ -1,12 +1,10 @@
 <Solution>
-  <SolutionName>ClientBlazor</SolutionName>
   <Configurations>
-    <Configuration Name="Debug|Any CPU" />
-    <Configuration Name="Release|Any CPU" />
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
   </Configurations>
-  <Projects>
-    <Project Path="ClientBlazor.Cliente\ClientBlazor.Cliente.csproj" />
-    <Project Path="ClientBlazor.Tests\ClientBlazor.Tests.csproj" />
-    <Project Path="ClientBlazor.E2E\ClientBlazor.E2E.csproj" />
-  </Projects>
+  <Project Path="ClientBlazor.Cliente/ClientBlazor.Cliente.csproj" />
+  <Project Path="ClientBlazor.Tests/ClientBlazor.Tests.csproj" />
+  <Project Path="ClientBlazor.E2E/ClientBlazor.E2E.csproj" />
 </Solution>
