@@ -153,8 +153,11 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     Log.Information("=================================================================");
     Log.Information("TiendaApi - API REST Educativa");
     Log.Information("=================================================================");
+    Log.Information("DOCUMENTACIÓN:");
     Log.Information("Documentacion Swagger:  {BaseUrl}/", baseUrl);
-    Log.Information("GraphiQL UI:            {BaseUrl}/graphiql", baseUrl);
+    Log.Information("=================================================================");
+    Log.Information("GRAPHQL:");
+    Log.Information("GraphQL UI:            {BaseUrl}/graphql", baseUrl);
     Log.Information("=================================================================");
     Log.Information("WEBSOCKETS:");
     Log.Information("  Productos (publico):  ws://{Host}:{Port}/ws/productos", host, port);

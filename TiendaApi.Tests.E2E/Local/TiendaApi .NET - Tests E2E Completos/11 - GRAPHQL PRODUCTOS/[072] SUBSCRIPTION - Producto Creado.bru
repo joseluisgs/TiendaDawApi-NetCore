@@ -1,0 +1,37 @@
+meta {
+  name: SUBSCRIPTION - Producto Creado
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: {{wsBaseUrl}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  subscription {
+    onProductoCreado {
+      id
+      nombre
+      precio
+      categoriaId
+    }
+  }
+}
+
+script:post-response {
+  test("Subscription - Connected", function () {
+      expect(res.getStatus()).to.equal(101);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 30000
+}
+
+docs {
+  GraphQL Subscription: Escuchar eventos de producto creado
+}
