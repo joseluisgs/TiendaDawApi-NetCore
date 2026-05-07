@@ -84,11 +84,11 @@
     </div>
 </div>
 
-@if (!string.IsNullOrEmpty(subscriptionEvents)) {
+@if (subscriptionRunning || !string.IsNullOrEmpty(subscriptionEvents)) {
     <div class="response-section">
         <h3 class="section-title">Subscription Events</h3>
         <div class="response-display">
-            <pre style="white-space: pre-wrap; font-family: 'Balsamiq Sans', cursive; max-height: 300px; overflow-y: auto;">@subscriptionEvents</pre>
+            <pre style="white-space: pre-wrap; font-family: 'Balsamiq Sans', cursive; max-height: 300px; overflow-y: auto;">@(string.IsNullOrEmpty(subscriptionEvents) ? "Esperando eventos..." : subscriptionEvents)</pre>
         </div>
     </div>
 }
