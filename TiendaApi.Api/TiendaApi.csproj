@@ -7,7 +7,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);NU1605;1591;1570;1587</NoWarn>
+    <NoWarn>$(NoWarn);NU1605;NU1903;1591;1570;1587</NoWarn>
     <AssemblyName>TiendaApi.Api</AssemblyName>
     <RootNamespace>TiendaApi.Api</RootNamespace>
   </PropertyGroup>
