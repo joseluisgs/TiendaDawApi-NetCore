@@ -578,7 +578,7 @@
           <div class="input-group">
             <label for="email">📧 Email</label>
             <span class="input-icon">📧</span>
-            <input type="email" id="email" placeholder="tu@email.com" value="admin@tienda.com">
+            <input type="text" id="email" placeholder="admin" value="admin">
           </div>
           <div class="input-group">
             <label for="password">🔑 Password</label>
@@ -590,10 +590,10 @@
           </button>
         </div>
         <div class="demo-users">
-          <div class="demo-user" onclick="fillDemo('admin@tienda.com', 'admin')">
+          <div class="demo-user" onclick="fillDemo('admin', 'admin')">
             👑 Admin<br><span class="role">ADMIN</span>
           </div>
-          <div class="demo-user" onclick="fillDemo('userdaw@tienda.com', 'userdaw')">
+          <div class="demo-user" onclick="fillDemo('userdaw', 'userdaw')">
             👤 User<br><span class="role">USER</span>
           </div>
         </div>
@@ -612,7 +612,6 @@
       <div class="config-section">
         <h3 class="section-title">📋 Queries (Públicas)</h3>
         <div class="quick-queries">
-          <button class="btn-quick" onclick="loadQuery('hello')">👋 Hello</button>
           <button class="btn-quick" onclick="loadQuery('productos')">📦 Todos</button>
           <button class="btn-quick" onclick="loadQuery('productoById')">🎁 Laptop (ID:1)</button>
           <button class="btn-quick" onclick="loadQuery('productoById2')">👕 Camiseta (ID:2)</button>
@@ -671,18 +670,15 @@
         <h4>💡 Información</h4>
         <p>• <b>Queries:</b> Públicas - no requieren token</p>
         <p>• <b>Mutations:</b> Requiere token de admin</p>
-        <p>• <b>Subscriptions:</b> Usa GraphiQL en <code>http://localhost:5000/graphiql</code></p>
+        <p>• <b>Subscriptions:</b> Usa GraphiQL en <code>http://localhost:5031/graphiql</code></p>
         <p>• <b>Token:</b> Se auto-rellena tras hacer login arriba</p>
       </div>
     </div>
 
     <script>
-      const API_URL = 'http://localhost:5000';
+      const API_URL = 'http://localhost:5031';
       
       const queries = {
-        hello: `{
-  hello
-}`,
         productos: `query {
   productos {
     id
@@ -811,7 +807,7 @@
           const response = await fetch(`${API_URL}/api/v1/auth/signin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ username: email, password })
           });
 
           const data = await response.json();

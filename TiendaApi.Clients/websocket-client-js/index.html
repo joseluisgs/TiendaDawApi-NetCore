@@ -574,7 +574,7 @@
           <div class="input-group">
             <label for="email">📧 Email</label>
             <span class="input-icon">📧</span>
-            <input type="email" id="email" placeholder="tu@email.com" value="admin@tienda.com">
+            <input type="text" id="email" placeholder="admin" value="admin">
           </div>
           <div class="input-group">
             <label for="password">🔑 Password</label>
@@ -586,10 +586,10 @@
           </button>
         </div>
         <div class="demo-users">
-          <div class="demo-user" onclick="fillDemo('admin@tienda.com', 'admin')">
+          <div class="demo-user" onclick="fillDemo('admin', 'admin')">
             👑 Admin<br><span class="role">ADMIN</span>
           </div>
-          <div class="demo-user" onclick="fillDemo('userdaw@tienda.com', 'userdaw')">
+          <div class="demo-user" onclick="fillDemo('userdaw', 'userdaw')">
             👤 User<br><span class="role">USER</span>
           </div>
         </div>
@@ -610,7 +610,7 @@
         <div class="url-form">
           <div class="url-group">
             <label for="wsUrl">📡 WebSocket URL:</label>
-            <input type="text" id="wsUrl" placeholder="ws://localhost:5000/ws/productos">
+            <input type="text" id="wsUrl" placeholder="ws://localhost:5031/ws/productos">
           </div>
           <button id="btnConnect" class="btn-connect" onclick="connectWebSocket()">
             🔌 Conectar
@@ -620,10 +620,10 @@
           </button>
         </div>
         <div class="quick-urls">
-          <button class="btn-url" onclick="setUrl('ws://localhost:5000/ws/productos')">
+          <button class="btn-url" onclick="setUrl('ws://localhost:5031/ws/productos')">
             📦 Productos (público)
           </button>
-          <button class="btn-url auth" onclick="setUrl('ws://localhost:5000/ws/pedidos?token=' + document.getElementById('token').value)">
+          <button class="btn-url auth" onclick="setUrl('ws://localhost:5031/ws/pedidos?token=' + document.getElementById('token').value)">
             📋 Pedidos (auth)
           </button>
         </div>
@@ -648,7 +648,7 @@ Conecta a un WebSocket y espera a que el servidor envíe eventos.</div>
     </div>
 
     <script>
-      const API_URL = 'http://localhost:5000';
+      const API_URL = 'http://localhost:5031';
       let ws = null;
       let reconnectAttempts = 0;
       const maxReconnectAttempts = 3;
@@ -678,7 +678,7 @@ Conecta a un WebSocket y espera a que el servidor envíe eventos.</div>
           const response = await fetch(`${API_URL}/api/v1/auth/signin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ username: email, password })
           });
 
           const data = await response.json();
@@ -810,7 +810,7 @@ Conecta a un WebSocket y espera a que el servidor envíe eventos.</div>
       }
 
       // Inicializar URL por defecto
-      setUrl('ws://localhost:5000/ws/productos');
+      setUrl('ws://localhost:5031/ws/productos');
     </script>
   </body>
 </html>
