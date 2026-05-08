@@ -392,6 +392,11 @@ Para que FluentValidation se ejecute automáticamente en cada petición, debes c
 >
 > Si solo usas la primera parte, la validación debe llamarse manualmente desde los servicios. Si usas ambas, la validación se ejecuta automáticamente antes de llegar al controller y devuelve 400 Bad Request si falla. Esta es la configuración recomendada para APIs REST.
 
+> **NOTA PARA EL ALUMNO**: Data Annotations y FluentValidation son complementarios:
+> - **Data Annotations** → Valida formato básico (requerido, rango, email, formato). Se define en el propio DTO.
+> - **FluentValidation** → Valida reglas de negocio complejas (condicionales, múltiples campos, mensajes personalizados). Se define en clases separadas.
+> - Ambos se ejecutan **antes** del controller. Si las reglas son simples (solo formato), no es necesario añadir FluentValidation; si hay reglas de negocio complejas, es muy recomendable.
+
 ### Configuración básica
 
 ```csharp

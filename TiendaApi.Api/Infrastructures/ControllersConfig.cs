@@ -29,7 +29,8 @@ public static class ControllersConfig
     /// Registra validadores y configura auto-validación en el pipeline MVC.
     /// </summary>
     /// <remarks>
-    /// Flujo: Busca validadores → Auto-validación en acciones → Adapters opcional para cliente.
+    /// Data Annotations valida formato básico (requerido, rango, email). FluentValidation complementa
+    /// con reglas de negocio complejas (condicionales, múltiples campos). Ambos se ejecutan antes del controller.
     /// </remarks>
     public static IServiceCollection AddFluentValidationServices(this IServiceCollection services)
     {

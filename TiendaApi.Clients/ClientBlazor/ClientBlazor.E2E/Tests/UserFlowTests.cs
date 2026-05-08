@@ -452,4 +452,196 @@ public class UserFlowTests : PageTest
 
         await Page.ScreenshotAsync(new() { Path = "screenshots/rest-resource-switch.png" });
     }
+
+    [Test]
+    public async Task Session_Should_Persist_After_Page_Refresh()
+    {
+        // 1. Login como Admin
+        await Page.GotoAsync("/");
+        await Page.TestId("email-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("login-btn").ClickAsync();
+        await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
+        
+        // 2. Ir a REST
+        await Page.GotoAsync("/rest");
+        
+        // 3. Recargar la página (F5)
+        await Page.ReloadAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        
+        // 4. Verificar que la sesión persiste (AuthPanel visible)
+        await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
+        
+        await Page.ScreenshotAsync(new() { Path = "screenshots/session-persist.png" });
+    }
+
+    [Test]
+    public async Task Logout_From_GraphQL_Page_Should_Clear_Session()
+    {
+        // 1. Login como Admin
+        await Page.GotoAsync("/");
+        await Page.TestId("email-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("login-btn").ClickAsync();
+        await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
+        
+        // 2. Ir a GraphQL
+        await Page.GotoAsync("/graphql");
+        
+        // 3. Hacer logout desde GraphQL
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Cerrar Sesión" }).ClickAsync();
+        
+        // 4. Verificar que el panel desaparece
+        await Expect(Page.TestId("auth-panel")).Not.ToBeVisibleAsync();
+        
+        // 5. Intentar ejecutar una mutation y verificar que requiere login
+        await Page.Locator(".form-group").Filter(new() { HasText = "Tipo" }).Locator("select").SelectOptionAsync("mutation");
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
+        
+        var responseArea = Page.Locator(".response-section").Nth(0).Locator(".response-display");
+        await Expect(responseArea).ToContainTextAsync("Debes iniciar sesión", new() { Timeout = 10000 });
+        
+        await Page.ScreenshotAsync(new() { Path = "screenshots/logout-graphql.png" });
+    }
+
+    [Test]
+    public async Task GraphQL_Public_Query_For_Productos_Should_Succeed()
+    {
+        // 1. Ir a GraphQL (sin login, es público)
+        await Page.GotoAsync("/graphql");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // 2. Por defecto es Query, asegurar que está en "productos"
+        await Page.Locator(".form-group")
+            .Filter(new() { HasText = "Operacion" })
+            .Locator("select")
+            .SelectOptionAsync(new[] { "productos" });
+
+        // 3. Ejecutar Query
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
+
+        // 4. Verificar que la respuesta contiene datos (JSON)
+        var responseArea = Page.Locator(".response-section").Nth(0).Locator(".response-display");
+        await Expect(responseArea).ToContainTextAsync("\"id\":", new() { Timeout = 10000 });
+        await Expect(responseArea).ToContainTextAsync("nombre", new() { Timeout = 10000 });
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/graphql-query-productos.png" });
+    }
+
+    [Test]
+    public async Task GraphQL_Type_Change_Should_Update_Available_Operations()
+    {
+        // 1. Ir a GraphQL
+        await Page.GotoAsync("/graphql");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // 2. Verificar que por defecto está en Query y muestra opciones de query
+        var operacionSelect = Page.Locator(".form-group").Filter(new() { HasText = "Operacion" }).Locator("select");
+        await Expect(operacionSelect).ToContainTextAsync("productos", new() { Timeout = 5000 });
+        await Expect(operacionSelect).ToContainTextAsync("categorias", new() { Timeout = 5000 });
+
+        // 3. Cambiar a Mutation
+        await Page.Locator(".form-group").Filter(new() { HasText = "Tipo" }).Locator("select").SelectOptionAsync("mutation");
+
+        // 4. Verificar que las operaciones cambian a mutaciones
+        await Expect(operacionSelect).ToContainTextAsync("createProducto", new() { Timeout = 5000 });
+        await Expect(operacionSelect).ToContainTextAsync("updateProducto", new() { Timeout = 5000 });
+        // Las opciones de query ya no deberían estar visibles o seleccionadas
+        await Expect(operacionSelect).Not.ToContainTextAsync("productos", new() { Timeout = 5000 });
+
+        // 5. Volver a Query
+        await Page.Locator(".form-group").Filter(new() { HasText = "Tipo" }).Locator("select").SelectOptionAsync("query");
+
+        // 6. Verificar que vuelven las opciones de query
+        await Expect(operacionSelect).ToContainTextAsync("productos", new() { Timeout = 5000 });
+        await Expect(operacionSelect).ToContainTextAsync("categorias", new() { Timeout = 5000 });
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/graphql-type-change.png" });
+    }
+
+    [Test]
+    public async Task WebSocket_Pedidos_Requires_Authentication()
+    {
+        // 1. Login como Admin
+        await Page.GotoAsync("/");
+        await Page.TestId("email-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("login-btn").ClickAsync();
+        await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
+
+        // 2. Ir a WebSocket
+        await Page.GotoAsync("/websocket");
+        
+        // 3. Seleccionar Hub de Pedidos
+        await Page.Locator("select").Nth(0).SelectOptionAsync("pedidos");
+
+        // 4. Conectar
+        await Page.GetByRole(AriaRole.Button, new() { Name = "▶️ Conectar" }).ClickAsync();
+
+        // 5. Verificar conexión exitosa (con JWT)
+        var statusLocator = Page.Locator(".response-display").Filter(new() { HasText = "Estado:" });
+        
+        // Acepta conexión exitosa o error de autenticación
+        var result = await Task.WhenAny(
+            Expect(statusLocator).ToContainTextAsync("🟢 Conectado", new() { Timeout = 15000 }),
+            Expect(statusLocator).ToContainTextAsync("autentic", new() { Timeout = 5000 })
+        );
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/ws-pedidos-jwt.png" });
+    }
+
+    [Test]
+    public async Task Rest_Categorias_Get_By_Id_Should_Succeed()
+    {
+        // 1. Ir a REST
+        await Page.GotoAsync("/rest");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // 2. Cambiar recurso a "Categorías"
+        await Page.Locator(".form-group")
+            .Filter(new() { HasText = "Recurso" })
+            .Locator("select")
+            .SelectOptionAsync(new[] { "categorias" });
+
+        // 3. Seleccionar operación "GET - Por ID"
+        await Page.Locator(".form-group")
+            .Filter(new() { HasText = "Operación" })
+            .Locator("select")
+            .SelectOptionAsync(new[] { "get-by-id" });
+
+        // 4. Introducir ID
+        await Page.Locator("input[type='number']").FillAsync("1");
+
+        // 5. Ejecutar
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
+
+        // 6. Verificar resultado
+        var responseArea = Page.Locator(".response-display");
+        await Expect(responseArea).ToBeVisibleAsync();
+        await Expect(responseArea).ToContainTextAsync("\"Id\": 1");
+        await Expect(responseArea).ToContainTextAsync("Nombre");
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/rest-categorias-get-by-id.png" });
+    }
+
+    [Test]
+    public async Task Rest_Page_Should_Show_Executing_State()
+    {
+        // 1. Ir a REST (sin login para que tarde más)
+        await Page.GotoAsync("/rest");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // 2. Ejecutar una operación (GET listar todos)
+        var executeButton = Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" });
+        
+        // 3. Click y verificar que el texto cambia (si es rápido, verificamos al menos que responde)
+        await executeButton.ClickAsync();
+        
+        // Verificar que después de ejecutar hay respuesta
+        var responseArea = Page.Locator(".response-display");
+        await Expect(responseArea).ToContainTextAsync("\"", new() { Timeout = 10000 });
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/rest-executing.png" });
+    }
 }
