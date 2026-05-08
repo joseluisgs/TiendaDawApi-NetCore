@@ -30,7 +30,7 @@ var environment = builder.Environment;
 
 // Core - Controllers
 services.AddMvcControllers();
-services.AddFluentValidation();
+services.AddFluentValidationServices();
 
 // API
 services.AddApiVersioningPolicy();

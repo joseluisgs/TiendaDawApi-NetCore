@@ -384,11 +384,11 @@ public class ProductoCreateDtoValidator : AbstractValidator<ProductoCreateDto>
 
 ## 5.4. Integración de FluentValidation con Controladores
 
-Para que FluentValidation se ejecute automáticamente en cada petición, debes configurarlo en Program.cs y opcionalmente crear un filtro o usar la integración automática con ASP.NET Core. La forma más común es usar `AddFluentValidation` con la opción de configurar `ValidatorOptions` globalmente.
+Para que FluentValidation se ejecute automáticamente en cada petición, debes configurarlo en Program.cs usando `AddFluentValidationAutoValidation()`. Esto registra los validadores y activa la validación automática en el pipeline.
 
-> **NOTA PARA EL ALUMNO**: La configuración de FluentValidation tiene dos partes que pueden usarse independientemente:
+> **NOTA PARA EL ALUMNO**: La configuración de FluentValidation tiene dos partes:
 > - `AddValidatorsFromAssemblyContaining<Program>()` → Registra los validadores en el contenedor DI (necesario)
-> - `AddFluentValidation()` → Activa la validación automática en el pipeline (opcional)
+> - `AddFluentValidationAutoValidation()` → Activa la validación automática en el pipeline
 >
 > Si solo usas la primera parte, la validación debe llamarse manualmente desde los servicios. Si usas ambas, la validación se ejecuta automáticamente antes de llegar al controller y devuelve 400 Bad Request si falla. Esta es la configuración recomendada para APIs REST.
 
@@ -411,15 +411,13 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 // --- OPCIÓN 2: Registrar + Validación automática (RECOMENDADO) ---
 // Añade un filtro que ejecuta FluentValidation automáticamente.
 // Si la validación falla, devuelve 400 Bad Request automáticamente.
-// Esta es la opción recomendada para APIs REST modernas.
 builder.Services.AddValidatorsFromAssemblyContaining<Program>()
-                .AddFluentValidation();
+                .AddFluentValidationAutoValidation();
 
 // --- OPCIÓN 3: Completo (API + validación cliente-side) ---
 // Añade adapters para generar validación JavaScript (para Blazor/MVC).
-// No necesario para APIs REST puras.
 builder.Services.AddValidatorsFromAssemblyContaining<Program>()
-                .AddFluentValidation()
+                .AddFluentValidationAutoValidation()
                 .AddFluentValidationClientsideAdapters();
 
 // =====================================================
@@ -467,7 +465,7 @@ flowchart LR
     style E201 fill:#4CAF50,color:#fff
 ```
 
-> **NOTA PARA EL ALUMNO**: Cuando usas `AddFluentValidation()`, la validación automática ocurre ANTES de que el request llegue al controller. Por tanto, la validación manual en el servicio (`ValidateProductoAsync()`) se convierte en **opcional** - ya no es necesaria porque la validación ya se ejecutó. Se deja la validación manual en el servicio con fines didácticos para mostrar cómo validar manualmente cuando se requiera (por ejemplo, en validaciones complejas que dependan de datos externos).
+> **NOTA PARA EL ALUMNO**: Cuando usas `AddFluentValidationAutoValidation()`, la validación automática ocurre ANTES de que el request llegue al controller. Por tanto, la validación manual en el servicio (`ValidateProductoAsync()`) se convierte en **opcional** - ya no es necesaria porque la validación ya se ejecutó. Se deja la validación manual en el servicio con fines didácticos para mostrar cómo validar manualmente cuando se requiera (por ejemplo, en validaciones complejas que dependan de datos externos).
 
 ### Configuración global de ValidatorOptions
 
@@ -555,7 +553,7 @@ public class ProductosController : ControllerBase
 }
 ```
 
-> **NOTA PARA EL ALUMNO (Validación en Servicios)**: La validación manual en los servicios (llamando a `ValidateProductoAsync()`) es **opcional** cuando usas `AddFluentValidation()`. En TiendaApi se deja esta validación manual con fines didácticos para:
+> **NOTA PARA EL ALUMNO (Validación en Servicios)**: La validación manual en los servicios (llamando a `ValidateProductoAsync()`) es **opcional** cuando usas `AddFluentValidationAutoValidation()`. En TiendaApi se deja esta validación manual con fines didácticos para:
 > - Mostrar cómo validar manualmente en la capa de servicio cuando se requiera
 > - Demostrar el patrón Result para manejar errores de validación
 > - Permitir experimentar deshabilitándola y viendo el comportamiento
