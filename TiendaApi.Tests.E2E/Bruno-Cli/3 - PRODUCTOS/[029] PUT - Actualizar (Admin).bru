@@ -1,0 +1,51 @@
+meta {
+  name: [029] PUT - Actualizar (Admin)
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/api/productos/{{productoId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Laptop HP Test Actualizado",
+      "descripcion": "Nueva descripción",
+      "precio": 899.99,
+      "stock": 40,
+      "categoriaId": 1
+  }
+}
+
+script:post-response {
+  test("Productos Update - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Productos Update - Returns updated producto", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.nombre).to.equal('Laptop HP Test Actualizado');
+      expect(jsonData.precio).to.equal(899.99);
+      expect(jsonData.stock).to.equal(40);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Actualiza producto. Requiere token ADMIN.
+}

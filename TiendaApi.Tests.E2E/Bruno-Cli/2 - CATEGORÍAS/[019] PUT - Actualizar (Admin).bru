@@ -1,0 +1,46 @@
+meta {
+  name: [019] PUT - Actualizar (Admin)
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/api/categorias/{{categoriaId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Electrónica Test Actualizada",
+      "descripcion": "Nueva descripción"
+  }
+}
+
+script:post-response {
+  test("Categorias Update - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Categorias Update - Returns updated categoria", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.nombre).to.equal('Electrónica Test Actualizada');
+      expect(jsonData.descripcion).to.equal('Nueva descripción');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Actualiza categoría existente. Requiere token ADMIN.
+}

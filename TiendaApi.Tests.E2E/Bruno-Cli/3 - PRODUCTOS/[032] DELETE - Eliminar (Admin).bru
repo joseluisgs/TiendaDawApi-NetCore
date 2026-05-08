@@ -1,0 +1,30 @@
+meta {
+  name: [032] DELETE - Eliminar (Admin)
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/api/productos/{{productoId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Productos Delete - Status 204 No Content", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Elimina producto. Requiere token ADMIN. Retorna 204.
+}

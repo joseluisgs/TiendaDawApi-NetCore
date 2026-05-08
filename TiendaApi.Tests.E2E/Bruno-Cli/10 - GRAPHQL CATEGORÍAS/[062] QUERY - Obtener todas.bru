@@ -1,0 +1,47 @@
+meta {
+  name: [062] QUERY - Obtener todas
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query {
+    categorias {
+      id
+      nombre
+    }
+  }
+  
+}
+
+script:post-response {
+  test("GraphQL Categorias - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL Categorias - Has data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data).to.be.an('object');
+      expect(jsonData.data.categorias).to.be.an('array');
+  });
+  
+  test("GraphQL Categorias - No errors", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.undefined;
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  GraphQL: Obtiene todas las categorías (público)
+}

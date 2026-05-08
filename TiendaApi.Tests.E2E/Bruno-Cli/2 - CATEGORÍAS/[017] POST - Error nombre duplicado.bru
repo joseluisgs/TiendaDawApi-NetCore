@@ -1,0 +1,40 @@
+meta {
+  name: [017] POST - Error nombre duplicado
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Electrónica Test",
+      "descripcion": "Duplicada"
+  }
+}
+
+script:post-response {
+  test("Categorias Create Duplicate - Status 409 Conflict", function () {
+      expect(res.getStatus()).to.equal(409);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Crear categoría con nombre existente debe retornar 409
+}

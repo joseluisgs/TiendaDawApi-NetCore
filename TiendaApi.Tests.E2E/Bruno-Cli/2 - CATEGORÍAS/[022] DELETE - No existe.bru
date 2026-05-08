@@ -1,0 +1,29 @@
+meta {
+  name: [022] DELETE - No existe
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{baseUrl}}/api/categorias/999999
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Categorias Delete NotFound - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Eliminar categoría inexistente debe retornar 404
+}

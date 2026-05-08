@@ -1,0 +1,37 @@
+meta {
+  name: [011] GET All (Público)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/categorias
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Categorias GetAll - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Categorias GetAll - Response is array or paged", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.items).to.be.an('array');
+  });
+  
+  test("Categorias GetAll - Has pagination", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.page).to.be.a('number');
+      expect(jsonData.totalItems).to.be.a('number');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene todas las categorías. Endpoint público.
+}
