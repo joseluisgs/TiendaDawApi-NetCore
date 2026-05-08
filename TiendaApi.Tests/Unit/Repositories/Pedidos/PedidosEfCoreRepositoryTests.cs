@@ -10,14 +10,9 @@ using TiendaApi.Api.Repositories.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Repositories.Pedidos;
 
-/// <summary>
-/// Tests unitarios para PedidosEfCoreRepository.
-/// ⚠️ NOTA: Estos tests están marcados como [Explicit] porque MongoDB EF Core
-/// tiene problemas de compatibilidad con mocking (GitHub: EF-272).
-/// Restaurar tests normales cuando el bug esté corregido.
-/// https://github.com/dotnet/efcore/issues/33868
-/// </summary>
-[Explicit]
+[TestFixture]
+[Category("Unit")]
+[Category("Repository")]
 public class PedidosEfCoreRepositoryTests
 {
     #region Constructor Tests

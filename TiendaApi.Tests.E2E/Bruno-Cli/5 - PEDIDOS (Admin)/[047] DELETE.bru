@@ -1,0 +1,30 @@
+meta {
+  name: [047] DELETE
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/api/pedidos/{{pedidoId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Pedidos Delete Admin - Status 204 No Content", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Elimina pedido. Solo ADMIN.
+}

@@ -47,19 +47,22 @@ public record CategoriaDto(
     string Nombre,
 
     /// <summary>
+    /// Descripción de la categoría.
+    /// </summary>
+    string? Descripcion,
+
+    /// <summary>
     /// Fecha y hora de creación del registro en formato UTC.
-    /// Se establece automáticamente al momento de insertar el registro en la base de datos.
-    /// Útil para auditoría y ordenamiento cronológico.
+    /// Asignada automáticamente por el sistema al crear el registro.
     /// </summary>
     /// <example>2024-01-15T10:30:00Z</example>
     DateTime CreatedAt,
 
     /// <summary>
-    /// Fecha y hora de última modificación en formato UTC.
+    /// Fecha y hora de última modificación del registro en formato UTC.
     /// Se actualiza automáticamente cada vez que se modifica el registro.
-    /// Valor inicial igual a CreatedAt si nunca se ha modificado.
     /// </summary>
-    /// <example>2024-01-15T14:45:00Z</example>
+    /// <example>2024-01-15T12:00:00Z</example>
     DateTime UpdatedAt
 );
 
@@ -96,4 +99,10 @@ public record CategoriaRequestDto
     [MinLength(3, ErrorMessage = "El nombre debe tener al menos 3 caracteres")]
     [MaxLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]
     public string Nombre { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Descripción de la categoría.
+    /// </summary>
+    [MaxLength(500, ErrorMessage = "La descripción no puede exceder 500 caracteres")]
+    public string? Descripcion { get; init; }
 }

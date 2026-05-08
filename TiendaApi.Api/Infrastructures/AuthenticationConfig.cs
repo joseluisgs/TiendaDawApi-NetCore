@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -45,8 +46,12 @@ public static class AuthenticationConfig
 
         Log.Information("🛡️ Configurando políticas de autorización...");
         services.AddAuthorizationBuilder()
+            .SetDefaultPolicy(new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                .RequireAuthenticatedUser()
+                .Build())
             .AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRoles.ADMIN))
-            .AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRoles.USER, UserRoles.ADMIN));
+            .AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRoles.USER, UserRoles.ADMIN))
+            .AddPolicy("AdminOnly", policy => policy.RequireRole(UserRoles.ADMIN));
 
         return services;
     }

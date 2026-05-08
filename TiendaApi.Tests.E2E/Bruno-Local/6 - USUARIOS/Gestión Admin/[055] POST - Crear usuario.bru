@@ -1,0 +1,56 @@
+meta {
+  name: [055] POST - Crear usuario
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/users
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "username": "newuser",
+      "email": "newuser@test.com",
+      "password": "User1234",
+      "role": "USER"
+  }
+}
+
+script:post-response {
+  test("Users Create - Status 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Users Create - Returns created user", function () {
+    const jsonData = res.getBody();
+    expect(jsonData.id).to.be.a('number');
+    expect(jsonData.username).to.equal('newuser');
+    expect(jsonData.email).to.equal('newuser@test.com');
+    expect(jsonData.role).to.equal('USER');
+  });
+  
+  // Guardar ID para siguientes tests
+  if (res.getStatus() === 201) {
+    const jsonData = res.getBody();
+    bru.setVar("testUserId", jsonData.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Crea nuevo usuario. Solo ADMIN.
+}

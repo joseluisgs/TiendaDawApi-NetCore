@@ -1,0 +1,53 @@
+meta {
+  name: [066] MUTATION - Crear
+  type: graphql
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:graphql {
+  mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre precio stock } }
+}
+
+body:graphql:vars {
+  {"input": {"nombre": "GraphQL Test Producto", "descripcion": "Producto de prueba desde GraphQL", "precio": 99.99, "stock": 10, "categoriaId": 1}}
+}
+
+script:post-response {
+  test("GraphQL CreateProducto - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL CreateProducto - Returns created producto", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data.createProducto.id).to.be.a('number');
+      expect(jsonData.data.createProducto.nombre).to.equal('GraphQL Test Producto');
+      expect(jsonData.data.createProducto.precio).to.equal(99.99);
+      expect(jsonData.data.createProducto.stock).to.equal(10);
+  });
+  
+  // Guardar ID para siguientes tests
+  if (res.getStatus() === 200) {
+      const jsonData = res.getBody();
+      if (!jsonData.errors) {
+          bru.setVar("graphqlProductoId", jsonData.data.createProducto.id.toString());
+      }
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Crea producto (requiere token ADMIN)
+}

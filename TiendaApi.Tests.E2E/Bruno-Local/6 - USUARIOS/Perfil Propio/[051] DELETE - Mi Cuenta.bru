@@ -1,0 +1,29 @@
+meta {
+  name: [051] DELETE Mi Cuenta
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/users/me/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Users My Delete - Status 204 No Content", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Elimina cuenta propia. Retorna 204.
+}

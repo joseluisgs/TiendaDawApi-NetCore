@@ -1,0 +1,30 @@
+meta {
+  name: [014] GET By Id - No existe
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/categorias/999999
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Categorias GetById NotFound - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+  
+  test("Categorias GetById NotFound - Has error message", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.message).to.not.be.empty;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Categoría inexistente debe retornar 404
+}

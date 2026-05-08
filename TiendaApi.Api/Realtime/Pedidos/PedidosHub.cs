@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using TiendaApi.Api.Realtime.Common;
 
+
 namespace TiendaApi.Api.Realtime.Pedidos;
 
 /// <summary>
@@ -18,19 +19,14 @@ namespace TiendaApi.Api.Realtime.Pedidos;
 /// // Respuesta: {"pedidoId":"PED-001","userId":123,"estado":"Pendiente","tipo":"PEDIDO_CREADO","timestamp":"2025-01-18T10:30:00Z"}
 /// </example>
 [Authorize]
-public class PedidosHub : Hub
-{
-    private readonly ILogger<PedidosHub> _logger;
-
-    public PedidosHub(ILogger<PedidosHub> logger) => _logger = logger;
-
+public class PedidosHub(ILogger<PedidosHub> logger) : Hub {
     /// <summary>Cliente conectado - se suscribe a grupos.</summary>
     public override async Task OnConnectedAsync()
     {
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var isAdmin = Context.User?.IsInRole("Admin") == true;
 
-        _logger.LogInformation("Cliente conectado: {ConnectionId}, UserId: {UserId}, IsAdmin: {IsAdmin}",
+        logger.LogInformation("Cliente conectado: {ConnectionId}, UserId: {UserId}, IsAdmin: {IsAdmin}",
             Context.ConnectionId, userId, isAdmin);
 
         if (userId != null)
@@ -46,9 +42,9 @@ public class PedidosHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         if (exception != null)
-            _logger.LogWarning(exception, "Cliente desconectado: {ConnectionId}", Context.ConnectionId);
+            logger.LogWarning(exception, "Cliente desconectado: {ConnectionId}", Context.ConnectionId);
         else
-            _logger.LogInformation("Cliente desconectado: {ConnectionId}", Context.ConnectionId);
+            logger.LogInformation("Cliente desconectado: {ConnectionId}", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
 

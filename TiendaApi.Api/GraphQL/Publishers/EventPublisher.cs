@@ -1,30 +1,25 @@
 using HotChocolate;
-using HotChocolate.Execution;
-using HotChocolate.Resolvers;
 using HotChocolate.Subscriptions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TiendaApi.Api.GraphQL.Publishers;
 
-/// <summary>
-/// Implementación de IEventPublisher usando HotChocolate Pub/Sub.
-/// </summary>
 public class EventPublisher : IEventPublisher
 {
-    private readonly ITopicEventSender _eventSender;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public EventPublisher(ITopicEventSender eventSender) => _eventSender = eventSender;
+    public EventPublisher(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
 
-    /// <inheritdoc/>
-    public async Task PublishAsync<T>(string topic, T payload) =>
-        await _eventSender.SendAsync(topic, payload);
+    public async Task PublishAsync<T>(string topic, T payload)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ITopicEventSender>();
+        await sender.SendAsync(topic, payload);
+    }
 }
 
-/// <summary>
-/// Extensiones para registro de Pub/Sub en DI.
-/// </summary>
 public static class EventPublisherExtensions
 {
-    /// <summary>Registra servicios de Pub/Sub de GraphQL.</summary>
     public static IServiceCollection AddGraphQLPubSub(this IServiceCollection services)
     {
         services.AddSingleton<IEventPublisher, EventPublisher>();

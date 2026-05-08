@@ -1,0 +1,19 @@
+meta {
+  name: [081] WEBSOCKET - Todos los pedidos (Admin)
+  type: ws
+  seq: 2
+}
+
+ws {
+  url: {{baseWs}}/ws/pedidos?token={{adminToken}}
+  body: ws
+  auth: none
+}
+
+body:ws {
+  name: message 1
+  type: json
+  content: '''
+    {}
+  '''
+}

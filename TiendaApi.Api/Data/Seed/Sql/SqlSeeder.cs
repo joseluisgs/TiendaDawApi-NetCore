@@ -25,12 +25,6 @@ public class SqlSeeder
     {
         try
         {
-            if (await _context.Users.AnyAsync())
-            {
-                _logger.LogInformation("PostgreSQL ya contiene usuarios, omitiendo sembrado");
-                return;
-            }
-
             _logger.LogInformation("Sembrando datos iniciales en PostgreSQL...");
 
             await SeedUsersAsync();
@@ -54,10 +48,9 @@ public class SqlSeeder
         {
             new()
             {
-                Id = 1,
                 Username = "admin",
                 Email = "admin@tienda.com",
-                PasswordHash = "$2a$11$vHqmFyFyRqKtaVJEz0XqFeI/xlPNGOKJbBYGzN0PqnQZQqZm3LzYy", // bcrypt("admin")
+                PasswordHash = "$2a$11$oET21qjcdCsP/5xzDij2QOVHnHF04Ipc5HervdO45pkKnE8lpdCrK",
                 Role = UserRoles.ADMIN,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
@@ -65,10 +58,9 @@ public class SqlSeeder
             },
             new()
             {
-                Id = 2,
                 Username = "userdaw",
                 Email = "userdaw@tienda.com",
-                PasswordHash = "$2a$11$y6x2PMrc.RgbGfXM.UVMReFNNQs6YnmsdAm2S3ieRo/FlWb86gLsi", // bcrypt("userdaw")
+                PasswordHash = "$2a$11$0NFi7iTLKAmHXF5lq18h..zp/KtjzsNUXUsAlpdVtTTG4dpf0nyBe",
                 Role = UserRoles.USER,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
@@ -87,24 +79,24 @@ public class SqlSeeder
         {
             new()
             {
-                Id = 1,
                 Nombre = "Electrónica",
+                Descripcion = "Dispositivos electrónicos y gadgets",
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new()
             {
-                Id = 2,
                 Nombre = "Ropa",
+                Descripcion = "Prendas de vestir para todas las edades",
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new()
             {
-                Id = 3,
                 Nombre = "Libros",
+                Descripcion = "Libros de todos los géneros y temáticas",
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -122,7 +114,6 @@ public class SqlSeeder
         {
             new()
             {
-                Id = 1,
                 Nombre = "Laptop Dell XPS 15",
                 Descripcion = "Laptop de alto rendimiento",
                 Precio = 1299.99m,
@@ -135,7 +126,6 @@ public class SqlSeeder
             },
             new()
             {
-                Id = 2,
                 Nombre = "Camiseta Nike",
                 Descripcion = "Camiseta deportiva",
                 Precio = 29.99m,
@@ -148,7 +138,6 @@ public class SqlSeeder
             },
             new()
             {
-                Id = 3,
                 Nombre = "Clean Code",
                 Descripcion = "Libro de Robert C. Martin",
                 Precio = 42.99m,

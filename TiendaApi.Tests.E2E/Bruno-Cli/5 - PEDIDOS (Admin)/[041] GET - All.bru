@@ -1,0 +1,34 @@
+meta {
+  name: [041] GET All
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Pedidos GetAll Admin - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Pedidos GetAll Admin - Returns array", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('array');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene todos los pedidos. Solo ADMIN.
+}

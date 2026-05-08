@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
 using TiendaApi.Api.Controllers;
@@ -25,7 +26,7 @@ public class PedidosControllerTests
     public PedidosControllerTests()
     {
         _mockService = new Mock<IPedidosService>();
-        _controller = new PedidosController(_mockService.Object);
+        _controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
     }
 
     private static DestinatarioDto CreateValidDestinatario() => new()
@@ -49,7 +50,7 @@ public class PedidosControllerTests
         };
         var identity = new ClaimsIdentity(claims, "Test");
         var claimsPrincipal = new ClaimsPrincipal(identity);
-        _controller = new PedidosController(_mockService.Object)
+        _controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>())
         {
             ControllerContext = new ControllerContext
             {
@@ -341,7 +342,7 @@ public class PedidosControllerTests
     [Test]
     public async Task GetMyPedidos_SinAutenticacion_RetornaUnauthorized()
     {
-        var controller = new PedidosController(_mockService.Object);
+        var controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
 
         var result = await controller.GetMyPedidos();
 
@@ -515,7 +516,7 @@ public class PedidosControllerTests
     [Test]
     public async Task CreateMyPedido_SinAutenticacion_RetornaUnauthorized()
     {
-        var controller = new PedidosController(_mockService.Object);
+        var controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
         var requestDto = new PedidoRequestDto
         {
             Items = new List<PedidoItemRequestDto>
@@ -757,7 +758,7 @@ public class PedidosControllerTests
     [Test]
     public async Task GetMyPedidosPaged_SinAutenticacion_RetornaUnauthorized()
     {
-        var controller = new PedidosController(_mockService.Object);
+        var controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
 
         var result = await controller.GetMyPedidosPaged();
 

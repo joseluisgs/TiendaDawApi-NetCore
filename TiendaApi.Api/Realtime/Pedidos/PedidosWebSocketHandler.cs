@@ -209,16 +209,23 @@ public class PedidosWebSocketHandler
         }
     }
 
-    private object CreateWrapper(PedidoNotificacion notificacion) => new
+    private object CreateWrapper(PedidoNotificacion notificacion)
     {
-        entity = "pedidos",
-        type = notificacion.Tipo,
-        pedidoId = notificacion.PedidoId,
-        userId = notificacion.UserId,
-        estado = notificacion.Estado,
-        data = notificacion.Data,
-        timestamp = DateTime.UtcNow
-    };
+        var wrapper = new Dictionary<string, object?>
+        {
+            ["entity"] = "pedidos",
+            ["type"] = notificacion.Tipo,
+            ["pedidoId"] = notificacion.PedidoId,
+            ["userId"] = notificacion.UserId,
+            ["estado"] = notificacion.Estado,
+            ["timestamp"] = DateTime.UtcNow
+        };
+        
+        if (notificacion.Data != null)
+            wrapper["data"] = notificacion.Data;
+        
+        return wrapper;
+    }
 
     private async Task SendToSocketAsync(WebSocket webSocket, object data)
     {

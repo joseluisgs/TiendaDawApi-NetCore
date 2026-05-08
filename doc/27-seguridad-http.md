@@ -537,7 +537,7 @@ var configuration = builder.Configuration;
 var environment = builder.Environment;
 
 services.AddMvcControllers();
-services.AddFluentValidation();
+services.AddFluentValidationServices();
 services.AddApiVersioningPolicy();
 services.AddSwagger();
 services.AddCorsPolicy(configuration, environment.IsDevelopment());

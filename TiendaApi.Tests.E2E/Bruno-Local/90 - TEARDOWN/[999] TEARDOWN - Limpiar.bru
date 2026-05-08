@@ -1,0 +1,29 @@
+meta {
+  name: [999] TEARDOWN - Limpiar
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: inherit
+}
+
+script:pre-request {
+  // En Bruno las variables se gestionan mejor individualmente o por entornos.
+  // Limpiamos las principales para el siguiente run.
+  bru.setVar("adminToken", null);
+  bru.setVar("userToken", null);
+  bru.setVar("categoriaId", null);
+  bru.setVar("productoId", null);
+  bru.setVar("pedidoId", null);
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Limpia todas las variables de test
+}

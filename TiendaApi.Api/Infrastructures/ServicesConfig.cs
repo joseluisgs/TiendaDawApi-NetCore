@@ -25,7 +25,7 @@ public static class ServicesConfig
             .AddScoped<IProductoService, ProductoService>()
             .AddScoped<IPedidosService, PedidosService>()
             .AddScoped<IJwtService, JwtService>()
-            .AddScoped<IJwtTokenExtractor, JwtTokenExtractor>()
+            .AddTransient<IJwtTokenExtractor, JwtTokenExtractor>()
             .AddScoped<IAuthService, AuthService>()
             .AddScoped<IUserService, UserService>();
     }

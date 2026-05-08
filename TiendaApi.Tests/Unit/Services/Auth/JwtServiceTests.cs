@@ -80,7 +80,7 @@ public class JwtServiceTests
         userIdClaim.Should().NotBeNull();
         userIdClaim!.Value.Should().Be("42");
 
-        var subClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
+        var subClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "username");
         subClaim.Should().NotBeNull();
         subClaim!.Value.Should().Be("testuser");
 

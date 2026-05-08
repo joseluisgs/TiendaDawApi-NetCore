@@ -1,0 +1,38 @@
+meta {
+  name: [053] GET By Id
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/users/{{testUserId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Users GetById - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Users GetById - Returns user data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.id).to.be.a('number');
+      expect(jsonData.username).to.be.a('string');
+      expect(jsonData.email).to.be.a('string');
+      expect(jsonData.role).to.be.a('string');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene usuario por ID. Solo ADMIN.
+}

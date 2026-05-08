@@ -1,0 +1,26 @@
+meta {
+  name: [033] GET By Id - No existe
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/productos/999999
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Productos GetById NotFound - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Producto inexistente debe retornar 404
+}

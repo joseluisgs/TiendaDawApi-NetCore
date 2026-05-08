@@ -1,0 +1,73 @@
+meta {
+  name: [036] POST - Crear pedido
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/pedidos/me
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {
+      "destinatario": {
+          "nombreCompleto": "Juan Perez",
+          "email": "juanperez@test.com",
+          "telefono": "+34123456789",
+          "direccion": {
+              "calle": "Calle Mayor",
+              "numero": "10",
+              "ciudad": "Madrid",
+              "provincia": "Madrid",
+              "pais": "España",
+              "codigoPostal": "28001"
+          }
+      },
+      "items": [
+          {
+              "productoId": 1,
+              "cantidad": 2,
+              "precioUnitario": 999.99
+          }
+      ]
+  }
+}
+
+script:post-response {
+  test("Pedidos My Create - Status 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Pedidos My Create - Returns created pedido", function () {
+    const jsonData = res.getBody();
+    expect(jsonData.id).to.be.a('string');
+    expect(jsonData.estado).to.equal('PENDIENTE');
+    expect(jsonData.destinatario).to.be.an('object');
+    expect(jsonData.items).to.be.an('array');
+    expect(jsonData.total).to.be.a('number');
+  });
+  
+  // Guardar ID para siguientes tests
+  if (res.getStatus() === 201) {
+    const jsonData = res.getBody();
+    bru.setVar("pedidoId", jsonData.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Crea nuevo pedido para el usuario autenticado.
+}

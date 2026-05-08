@@ -1,0 +1,32 @@
+meta {
+  name: [023] GET All (Público)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/productos
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Productos GetAll - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Productos GetAll - Has pagination", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.items).to.be.an('array');
+      expect(jsonData.page).to.be.a('number');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene todos los productos. Endpoint público.
+}

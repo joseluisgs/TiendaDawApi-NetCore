@@ -1,0 +1,43 @@
+meta {
+  name: [070] MUTATION - Actualizar
+  type: graphql
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:graphql {
+  mutation($id: Long!, $input: UpdateProductoInput!) { updateProducto(id: $id, input: $input) { id nombre precio stock } }
+}
+
+body:graphql:vars {
+  {"id": {{graphqlProductoId}}, "input": {"precio": 149.99, "stock": 20}}
+}
+
+script:post-response {
+  test("GraphQL UpdateProducto - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL UpdateProducto - Returns updated producto", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data.updateProducto.precio).to.equal(149.99);
+      expect(jsonData.data.updateProducto.stock).to.equal(20);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Actualiza producto (requiere token ADMIN)
+}

@@ -1,0 +1,36 @@
+meta {
+  name: [010] SIGNIN - Error no existe
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/signin
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "username": "nonexistentuser12345",
+      "password": "Test1234"
+  }
+}
+
+script:post-response {
+  test("Signin not found - Status 401 Unauthorized", function () {
+      expect(res.getStatus()).to.equal(401);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Login con usuario inexistente debe retornar 401
+}

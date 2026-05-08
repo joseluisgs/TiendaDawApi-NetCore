@@ -1,0 +1,35 @@
+meta {
+  name: [035] GET By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/me/{{pedidoId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Pedidos My GetById - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Pedidos My GetById - Returns pedido data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.id).to.equal(bru.getVar("pedidoId"));
+      expect(jsonData).to.be.an('object');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene pedido propio por ID.
+}

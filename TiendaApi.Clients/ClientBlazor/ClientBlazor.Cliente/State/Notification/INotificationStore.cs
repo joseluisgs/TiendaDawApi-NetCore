@@ -24,7 +24,7 @@ public record Notification
     public string Message { get; init; } = "";
     public string? Title { get; init; } = null;
     public DateTime CreatedAt { get; init; } = default;
-    public int DurationMs { get; init; } = 5000;
+    public int DurationMs { get; init; } = 2000;
     public bool Dismissable { get; init; } = true;
 
     public bool IsAutoDismiss => DurationMs > 0 && Dismissable;

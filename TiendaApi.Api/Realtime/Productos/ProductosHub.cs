@@ -18,16 +18,11 @@ namespace TiendaApi.Api.Realtime.Productos;
 /// // Respuesta: {"productoId":123,"nombre":"Nuevo","precio":99.99,"tipo":"PRODUCTO_CREADO","timestamp":"2025-01-18T10:30:00Z"}
 /// </example>
 [AllowAnonymous]
-public class ProductosHub : Hub
-{
-    private readonly ILogger<ProductosHub> _logger;
-
-    public ProductosHub(ILogger<ProductosHub> logger) => _logger = logger;
-
+public class ProductosHub(ILogger<ProductosHub> logger) : Hub {
     /// <summary>Cliente conectado.</summary>
     public override async Task OnConnectedAsync()
     {
-        _logger.LogInformation("Cliente conectado: {ConnectionId}", Context.ConnectionId);
+        logger.LogInformation("Cliente conectado: {ConnectionId}", Context.ConnectionId);
         await base.OnConnectedAsync();
     }
 
@@ -35,9 +30,9 @@ public class ProductosHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         if (exception != null)
-            _logger.LogWarning(exception, "Cliente desconectado: {ConnectionId}", Context.ConnectionId);
+            logger.LogWarning(exception, "Cliente desconectado: {ConnectionId}", Context.ConnectionId);
         else
-            _logger.LogInformation("Cliente desconectado: {ConnectionId}", Context.ConnectionId);
+            logger.LogInformation("Cliente desconectado: {ConnectionId}", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
 

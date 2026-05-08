@@ -68,7 +68,7 @@ public class MapperTests
         var model = new ProductoModel { Id = 1, Nombre = "T", Descripcion = "D", Precio = 10, Stock = 0, Imagen = "foto.png" };
 
         // Assert
-        model.ImagenUrl.Should().Be("http://localhost:5000/storage/foto.png");
+        model.ImagenUrl.Should().Be("http://localhost:5031/storage/foto.png");
     }
 
     /// <summary>

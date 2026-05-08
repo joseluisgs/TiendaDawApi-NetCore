@@ -17,6 +17,7 @@ namespace TiendaApi.Tests.Unit.Services.Auth;
 /// </summary>
 [TestFixture]
 [Category("Unit")]
+[Category("Service")]
 [Category("Auth")]
 public class AuthServiceTests
 {

@@ -145,6 +145,14 @@ namespace TiendaApi.Api.Services.Productos;
     /// Crear un nuevo producto.
     /// Devuelve: Result.Success(ProductoDto) | Result.Failure(Validation/NotFound)
     /// </summary>
+    /// <remarks>
+    /// NOTA PARA EL ALUMNO: Esta validación manual es OPTATIVA.
+    /// Con AddFluentValidationAutoValidation() en el pipeline, la validación
+    /// se ejecuta automáticamente ANTES de llegar al controller (respuesta 400 automática).
+    /// Si se usa validación automática, esta llamada puede supprimirse y el service
+    /// asumir que el DTO ya fue validado. Se deja aquí con fines didácticos para
+    /// mostrar cómo validar manualmente en la capa de servicio cuando se requiera.
+    /// </remarks>
     public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
     {
         logger.LogInformation("Creando producto: {Nombre}", dto.Nombre);
@@ -175,6 +183,10 @@ namespace TiendaApi.Api.Services.Productos;
     /// Actualizar un producto existente.
     /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
+    /// <remarks>
+    /// NOTA PARA EL ALUMNO: Esta validación manual es OPTATIVA.
+    /// Ver comentario en CreateAsync para más detalles.
+    /// </remarks>
     public async Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto)
     {
         logger.LogInformation("Actualizando producto con ID: {Id}", id);
@@ -407,7 +419,7 @@ namespace TiendaApi.Api.Services.Productos;
                     producto.Id,
                     producto
                 ));
-                logger.LogDebug("Notificación WebSocket enviada tras crear producto: {ProductoId}", producto.Id);
+                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto creado ID={ProductoId}", producto.Id);
             }
             catch (Exception ex)
             {
@@ -430,7 +442,7 @@ namespace TiendaApi.Api.Services.Productos;
                     producto.Id,
                     producto
                 ));
-                logger.LogDebug("Notificación WebSocket enviada tras actualizar producto: {ProductoId}", producto.Id);
+                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto actualizado ID={ProductoId}", producto.Id);
             }
             catch (Exception ex)
             {
@@ -453,7 +465,7 @@ namespace TiendaApi.Api.Services.Productos;
                     productoId,
                     null
                 ));
-                logger.LogDebug("Notificación WebSocket enviada tras eliminar producto: {ProductoId}", productoId);
+                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto eliminado ID={ProductoId}", productoId);
             }
             catch (Exception ex)
             {
@@ -488,7 +500,7 @@ namespace TiendaApi.Api.Services.Productos;
                     timestamp = DateTime.UtcNow
                 };
                 await productosHubContext.Clients.All.SendAsync("ProductoCreado", payload);
-                logger.LogDebug("Notificación SignalR enviada tras crear producto: {ProductoId}", producto.Id);
+                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto creado ID={ProductoId}", producto.Id);
             }
             catch (Exception ex)
             {
@@ -519,7 +531,7 @@ namespace TiendaApi.Api.Services.Productos;
                     timestamp = DateTime.UtcNow
                 };
                 await productosHubContext.Clients.All.SendAsync("ProductoActualizado", payload);
-                logger.LogDebug("Notificación SignalR enviada tras actualizar producto: {ProductoId}", producto.Id);
+                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto actualizado ID={ProductoId}", producto.Id);
             }
             catch (Exception ex)
             {
@@ -544,7 +556,7 @@ namespace TiendaApi.Api.Services.Productos;
                     timestamp = DateTime.UtcNow
                 };
                 await productosHubContext.Clients.All.SendAsync("ProductoEliminado", payload);
-                logger.LogDebug("Notificación SignalR enviada tras eliminar producto: {ProductoId}", productoId);
+                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto eliminado ID={ProductoId}", productoId);
             }
             catch (Exception ex)
             {
@@ -650,7 +662,7 @@ namespace TiendaApi.Api.Services.Productos;
                     Stock = producto.Stock,
                     CreatedAt = DateTime.UtcNow
                 });
-                logger.LogDebug("Evento GraphQL Subscription enviado tras crear producto: {ProductoId}", producto.Id);
+                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto creado ID={ProductoId}", producto.Id);
             }
             catch (Exception ex)
             {
@@ -676,7 +688,7 @@ namespace TiendaApi.Api.Services.Productos;
                     Stock = producto.Stock,
                     UpdatedAt = DateTime.UtcNow
                 });
-                logger.LogDebug("Evento GraphQL Subscription enviado tras actualizar producto: {ProductoId}", producto.Id);
+                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto actualizado ID={ProductoId}", producto.Id);
             }
             catch (Exception ex)
             {
@@ -699,7 +711,7 @@ namespace TiendaApi.Api.Services.Productos;
                     ProductoId = productoId,
                     DeletedAt = DateTime.UtcNow
                 });
-                logger.LogDebug("Evento GraphQL Subscription enviado tras eliminar producto: {ProductoId}", productoId);
+                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto eliminado ID={ProductoId}", productoId);
             }
             catch (Exception ex)
             {
@@ -727,7 +739,7 @@ namespace TiendaApi.Api.Services.Productos;
                     UmbralStock = umbralStock,
                     DetectedAt = DateTime.UtcNow
                 });
-                logger.LogDebug("Evento GraphQL Subscription enviado por stock bajo: {ProductoId}, Stock: {Stock}", producto.Id, producto.Stock);
+                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Stock bajo ID={ProductoId}, Stock={Stock}", producto.Id, producto.Stock);
             }
             catch (Exception ex)
             {

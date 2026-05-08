@@ -1,0 +1,45 @@
+meta {
+  name: [049] PUT Actualizar Mi Perfil
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/users/me/profile
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {
+      "email": "userdaw@updated.com"
+  }
+}
+
+script:post-response {
+  test("Users MyProfile Update - Status 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Users MyProfile Update - Returns updated user", function () {
+    const jsonData = res.getBody();
+    expect(jsonData).to.be.an('object');
+    expect(jsonData.email).to.equal('userdaw@updated.com');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Actualiza perfil del usuario autenticado.
+}

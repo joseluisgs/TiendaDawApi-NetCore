@@ -5,6 +5,7 @@ using ClientBlazor.Cliente.Domain.Errors;
 using ClientBlazor.Cliente.State.Auth;
 using ClientBlazor.Cliente.State.Notifications;
 using System.Reactive.Linq;
+using System.Text.Json;
 
 namespace ClientBlazor.Cliente.Services.GraphQL;
 
@@ -61,7 +62,7 @@ public class GraphQLService(
         }
         catch (Exception)
         {
-            notificationStore.Error("Error de conexión al ejecutar mutación", "Error de Red");
+            notificationStore.Error("Error de conexion al ejecutar mutacion", "Error de Red");
             return Result.Failure<T, DomainError>(NetworkErrors.ConnectionFailed);
         }
     }
@@ -70,12 +71,65 @@ public class GraphQLService(
     public IObservable<T> SubscribeAsync<T>(string query)
     {
         var request = new GraphQLRequest { Query = query };
-        return client.CreateSubscriptionStream<T>(request)
-            .Select(response => response.Data);
+        
+        Console.WriteLine($"[GraphQL] Creating subscription: {query}");
+        
+        var stream = client.CreateSubscriptionStream<T>(request);
+        
+        return stream
+            .Do(response =>
+            {
+                Console.WriteLine($"[GraphQL] Raw response: {response}");
+                if (response.Errors?.Any() == true)
+                {
+                    foreach (var err in response.Errors)
+                    {
+                        Console.WriteLine($"[GraphQL] Error: {err.Message}");
+                    }
+                }
+            })
+            .Where(response => response.Errors == null || !response.Errors.Any())
+            .Select(response =>
+            {
+                if (response.Data == null)
+                {
+                    Console.WriteLine("[GraphQL] Data is null");
+                    return default!;
+                }
+                
+                Console.WriteLine($"[GraphQL] Data: {JsonSerializer.Serialize(response.Data)}");
+                return ExtractSubscriptionData<T>(response.Data);
+            })
+            .Where(data => data != null)!;
+    }
+
+    private static T ExtractSubscriptionData<T>(object data)
+    {
+        try
+        {
+            if (data == null)
+                return default!;
+            
+            var json = JsonSerializer.Serialize(data);
+            return JsonSerializer.Deserialize<T>(json) ?? default!;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[GraphQL] Deserialize error: {ex.Message}");
+            
+            try
+            {
+                return (T)data;
+            }
+            catch
+            {
+                return default!;
+            }
+        }
     }
 
     /// <summary>
-    /// Representa un error específico devuelto por el motor GraphQL.
+    /// Representa un error especifico devuelto por el motor GraphQL.
     /// </summary>
     private class GraphQLError(string code, string message) : DomainError(code, message);
 }

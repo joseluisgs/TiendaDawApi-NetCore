@@ -157,18 +157,13 @@ public class AuthService(
     /// </summary>
     private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(RegisterDto dto)
     {
-        var usernameCheckTask = userRepository.FindByUsernameAsync(dto.Username!);
-        var emailCheckTask = userRepository.FindByEmailAsync(dto.Email!);
-
-        await Task.WhenAll(usernameCheckTask, emailCheckTask);
-
-        var existingUser = await usernameCheckTask;
+        var existingUser = await userRepository.FindByUsernameAsync(dto.Username!);
         if (existingUser is not null)
         {
             return UnitResult.Failure<DomainError>(AuthErrors.UsernameExistente(dto.Username!));
         }
 
-        var existingEmail = await emailCheckTask;
+        var existingEmail = await userRepository.FindByEmailAsync(dto.Email!);
         if (existingEmail is not null)
         {
             return UnitResult.Failure<DomainError>(AuthErrors.EmailExistente(dto.Email!));

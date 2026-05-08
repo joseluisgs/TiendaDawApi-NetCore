@@ -22,7 +22,7 @@ public static class CacheConfig
         {
             Log.Information("💾 Configurando caché en memoria (desarrollo local)...");
             services.AddMemoryCache();
-            services.TryAddScoped<ICacheService, MemoryCacheService>();
+            services.TryAddSingleton<ICacheService, MemoryCacheService>();
         }
         else
         {
@@ -32,7 +32,7 @@ public static class CacheConfig
                 options.Configuration = "localhost:6379";
                 options.InstanceName = "TiendaApi:";
             });
-            services.TryAddScoped<ICacheService, RedisCacheService>();
+            services.TryAddSingleton<ICacheService, RedisCacheService>();
         }
 
         return services;

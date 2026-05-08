@@ -21,7 +21,7 @@ public class WebSocketService(IAuthStore authStore, INotificationStore notificat
     public async Task ConnectProductosAsync()
     {
         var url = $"{AppConfig.ApiBaseUrl}/ws/productos".Replace("http", "ws");
-        await ConnectAsync(url);
+        await ConnectAsync(url, "productos");
     }
 
     /// <inheritdoc cref="IWebSocketService.ConnectPedidosAsync" />
@@ -30,20 +30,16 @@ public class WebSocketService(IAuthStore authStore, INotificationStore notificat
         var token = authStore.GetState().Token;
         if (string.IsNullOrEmpty(token))
         {
-            notificationStore.Warning("Inicia sesión para conectar al WebSocket de pedidos");
-            OnMessageReceived?.Invoke("Error: Se requiere autenticación para pedidos");
+            notificationStore.Warning("Inicia sesion para conectar al WebSocket de pedidos");
+            OnMessageReceived?.Invoke("Error: Se requiere autenticacion para pedidos");
             return;
         }
 
         var url = $"{AppConfig.ApiBaseUrl}/ws/pedidos?token={token}".Replace("http", "ws");
-        await ConnectAsync(url);
+        await ConnectAsync(url, "pedidos");
     }
 
-    /// <summary>
-    /// Establece la conexión física con el servidor de sockets.
-    /// </summary>
-    /// <param name="url">URL completa del WebSocket (ws/wss).</param>
-    private async Task ConnectAsync(string url)
+    private async Task ConnectAsync(string url, string tipo)
     {
         if (IsConnected) await DisconnectAsync();
 
@@ -54,13 +50,13 @@ public class WebSocketService(IAuthStore authStore, INotificationStore notificat
         {
             await _webSocket.ConnectAsync(new Uri(url), _cts.Token);
             _ = ReceiveLoopAsync(_cts.Token);
-            notificationStore.Success("Conexión WebSocket establecida");
-            OnMessageReceived?.Invoke($"Conectado a {url}");
+            notificationStore.Success("Conexion WebSocket establecida");
+            OnMessageReceived?.Invoke($"Conectado a WebSocket ({tipo})");
         }
         catch (Exception ex)
         {
-            notificationStore.Error($"Fallo al conectar WebSocket: {ex.Message}", "Error de Conexión");
-            OnMessageReceived?.Invoke($"Error de conexión: {ex.Message}");
+            notificationStore.Error($"Fallo al conectar WebSocket: {ex.Message}", "Error de Conexion");
+            OnMessageReceived?.Invoke($"Error de conexion: {ex.Message}");
             _webSocket?.Dispose();
             _webSocket = null;
         }
@@ -78,17 +74,13 @@ public class WebSocketService(IAuthStore authStore, INotificationStore notificat
         finally
         {
             _cts?.Cancel();
-            _webSocket.Dispose();
+            _webSocket?.Dispose();
             _webSocket = null;
             notificationStore.Info("WebSocket desconectado");
             OnMessageReceived?.Invoke("Desconectado del servidor");
         }
     }
 
-    /// <summary>
-    /// Bucle infinito de recepción de mensajes asíncronos.
-    /// </summary>
-    /// <param name="ct">Token para detener el bucle.</param>
     private async Task ReceiveLoopAsync(CancellationToken ct)
     {
         var buffer = new byte[1024 * 4];
@@ -107,15 +99,12 @@ public class WebSocketService(IAuthStore authStore, INotificationStore notificat
         }
         catch (Exception ex)
         {
-            notificationStore.Error("Se ha perdido la conexión WebSocket", "Desconexión Inesperada");
-            OnMessageReceived?.Invoke($"Error en recepción: {ex.Message}");
+            notificationStore.Error("Se ha perdido la conexion WebSocket", "Desconexion Inesperada");
+            OnMessageReceived?.Invoke($"Error en recepcion: {ex.Message}");
             await DisconnectAsync();
         }
     }
 
-    /// <summary>
-    /// Libera los recursos del sistema.
-    /// </summary>
     public void Dispose()
     {
         _cts?.Cancel();

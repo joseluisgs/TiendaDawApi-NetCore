@@ -1,0 +1,40 @@
+meta {
+  name: [020] PUT - No existe
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/api/categorias/999999
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Test",
+      "descripcion": "Test"
+  }
+}
+
+script:post-response {
+  test("Categorias Update NotFound - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Actualizar categoría inexistente debe retornar 404
+}

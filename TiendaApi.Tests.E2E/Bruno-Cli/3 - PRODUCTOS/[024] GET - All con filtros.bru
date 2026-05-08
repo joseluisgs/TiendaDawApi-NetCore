@@ -1,0 +1,36 @@
+meta {
+  name: [024] GET All con filtros
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/productos?nombre=Laptop&precioMax=1500&stockMin=5&page=0&size=10&sortBy=precio&direction=desc
+  body: none
+  auth: inherit
+}
+
+params:query {
+  nombre: Laptop
+  precioMax: 1500
+  stockMin: 5
+}
+
+script:post-response {
+  test("Productos GetAll filters - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Productos filters - Returns filtered results", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene productos con múltiples filtros.
+}

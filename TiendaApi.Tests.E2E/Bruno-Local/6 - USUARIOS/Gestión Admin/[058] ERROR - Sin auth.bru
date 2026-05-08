@@ -1,0 +1,25 @@
+meta {
+  name: [058] ERROR - Sin auth
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/users
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Users GetAll NoAuth - Status 401 Unauthorized", function () {
+      expect(res.getStatus()).to.equal(401);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Acceder a gestión de usuarios sin auth debe retornar 401
+}

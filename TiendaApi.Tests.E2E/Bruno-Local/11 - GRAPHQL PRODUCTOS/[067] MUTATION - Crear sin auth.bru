@@ -1,0 +1,35 @@
+meta {
+  name: [067] MUTATION - Crear sin auth
+  type: graphql
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }
+}
+
+body:graphql:vars {
+  {"input": {"nombre": "Test", "precio": 99, "stock": 10, "categoriaId": 1}}
+}
+
+script:post-response {
+  test("GraphQL CreateProducto NoAuth - Returns error", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.an('array');
+      expect(jsonData.errors[0].message).to.include('Unauthorized');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Crear producto sin token debe fallar
+}

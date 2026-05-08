@@ -1,0 +1,35 @@
+meta {
+  name: [052] GET All
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/users
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Users GetAll - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Users GetAll - Has pagination", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.items).to.be.an('array');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene todos los usuarios. Solo ADMIN.
+}

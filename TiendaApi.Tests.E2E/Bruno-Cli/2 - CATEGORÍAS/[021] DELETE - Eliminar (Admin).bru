@@ -1,0 +1,29 @@
+meta {
+  name: [021] DELETE - Eliminar (Admin)
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/api/categorias/{{categoriaId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Categorias Delete - Status 204 No Content", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Elimina categoría. Requiere token ADMIN. Retorna 204.
+}

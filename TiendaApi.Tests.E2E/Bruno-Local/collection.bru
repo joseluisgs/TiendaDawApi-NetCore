@@ -1,0 +1,66 @@
+meta {
+  name: TiendaApi.NET - Tests E2E Colección
+  description: Colección de tests E2E para la API de TiendaApi.NET.
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+vars:pre-request {
+  baseUrl: http://localhost:5031
+  wsBaseUrl: ws://localhost:5031
+  adminUsername: admin
+  adminPassword: admin
+  userUsername: userdaw
+  userPassword: userdaw
+  token: 
+  adminToken: 
+  userToken: 
+  testUsername: 
+  testUserId: 
+  categoriaId: 
+  productoId: 
+  pedidoId: 
+}
+
+script:pre-request {
+  // Script global de pre-request
+  console.log('Ejecutando pre-request para: Tienda Api');
+}
+
+script:post-response {
+  // Script global de test
+  if (res.getStatus() >= 400) {
+    const requestName = bru.getRequestName ? bru.getRequestName() : 'Request';
+    console.log('Error en: ' + requestName + ' - Status: ' + res.getStatus());
+    console.log('Response: ' + JSON.stringify(res.getBody()));
+  }
+}
+
+docs {
+  Colección completa de tests E2E para TiendaApi.NET
+  
+  Incluye:
+  - Tests happy path para todos los endpoints
+  - Tests de validación y errores (400, 401, 403, 404, 409)
+  - Tests de autenticación y autorización
+  - Tests de subida de archivos
+  - Scripts automatizados con Bruno
+  
+  ## Uso con Bruno:
+  ```bash
+  bru run collection.bru -env .env
+  ```
+  
+  ## Variables requeridas:
+  - {{baseUrl}}: URL base de la API
+  - {{adminUsername}}: Usuario administrador
+  - {{adminPassword}}: Contraseña admin
+  - {{userUsername}}: Usuario normal
+  - {{userPassword}}: Contraseña usuario
+}

@@ -1,0 +1,44 @@
+meta {
+  name: [028] POST - Error
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/productos
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Test",
+      "descripcion": "Test",
+      "precio": 100,
+      "stock": 10,
+      "categoriaId": 999999
+  }
+}
+
+script:post-response {
+  test("Productos Create InvalidCategoria - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Crear producto con categoría inexistente debe retornar 404
+}

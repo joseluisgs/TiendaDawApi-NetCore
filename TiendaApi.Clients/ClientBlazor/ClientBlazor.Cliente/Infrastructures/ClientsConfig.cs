@@ -9,15 +9,15 @@ using Refit;
 namespace ClientBlazor.Cliente.Infrastructures;
 
 /// <summary>
-/// Contiene métodos de extensión para el registro de clientes de comunicación con la API.
+/// Contiene metodos de extension para el registro de clientes de comunicacion con la API.
 /// </summary>
 public static class ClientsConfig
 {
     /// <summary>
     /// Configura y registra el cliente Refit para REST y el cliente para GraphQL en el contenedor de dependencias.
     /// </summary>
-    /// <param name="services">Colección de servicios de la aplicación.</param>
-    /// <returns>La colección de servicios para configuración fluida.</returns>
+    /// <param name="services">Coleccion de servicios de la aplicacion.</param>
+    /// <returns>La coleccion de servicios para configuracion fluida.</returns>
     public static IServiceCollection AddApiClients(this IServiceCollection services)
     {
         // Registro de Refit con interceptor de token JWT
@@ -25,20 +25,21 @@ public static class ClientsConfig
             .ConfigureHttpClient(c => c.BaseAddress = new Uri(AppConfig.ApiBaseUrl))
             .AddHttpMessageHandler<AuthHeaderHandler>();
 
-        // Registro de GraphQL con inyección dinámica de token en el payload del WebSocket
+        // Registro de GraphQL con suscripciones WebSocket
         services.AddScoped(sp =>
         {
             var authStore = sp.GetRequiredService<IAuthStore>();
             var options = new GraphQLHttpClientOptions
             {
                 EndPoint = new Uri($"{AppConfig.ApiBaseUrl}/graphql"),
-                WebSocketEndPoint = new Uri($"{AppConfig.ApiBaseUrl}/graphql".Replace("http", "ws")),
+                WebSocketProtocol = "graphql-transport-ws",
                 ConfigureWebSocketConnectionInitPayload = (opts) =>
                 {
                     var token = authStore.GetState().Token;
-                    return new { Authorization = string.IsNullOrEmpty(token) ? "" : $"Bearer {token}" };
+                    return new { authorization = string.IsNullOrEmpty(token) ? "" : $"Bearer {token}" };
                 }
             };
+            
             var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("GraphQLClient");
             return new GraphQLHttpClient(options, new SystemTextJsonSerializer(), httpClient);
         });

@@ -15,7 +15,9 @@ public static class StorageInitializationExtensions
     /// </summary>
     public static void InitializeStorage(this WebApplication app, bool isDevelopment)
     {
-        var storagePath = System.IO.Path.Combine(app.Environment.WebRootPath, "uploads");
+        // WebRootPath puede ser null si no está configurado explícitamente. Usamos ContentRootPath como respaldo.
+        var rootPath = app.Environment.WebRootPath ?? app.Environment.ContentRootPath;
+        var storagePath = System.IO.Path.Combine(rootPath, "wwwroot", "uploads");
         var storageDirectory = new System.IO.DirectoryInfo(storagePath);
 
         if (isDevelopment)

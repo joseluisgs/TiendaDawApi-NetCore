@@ -42,7 +42,9 @@ public class TiendaDbContext : DbContext
         {
             entity.ToTable("categorias");
             entity.HasKey(c => c.Id);
+            entity.Property(c => c.Id).UseIdentityAlwaysColumn();
             entity.Property(c => c.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(c => c.Descripcion).HasMaxLength(500);
             entity.HasIndex(c => c.Nombre).IsUnique();
             entity.Property(c => c.IsDeleted).HasDefaultValue(false);
             entity.ConfigureTimestamps();
@@ -53,6 +55,7 @@ public class TiendaDbContext : DbContext
         {
             entity.ToTable("productos");
             entity.HasKey(p => p.Id);
+            entity.Property(p => p.Id).UseIdentityAlwaysColumn();
             entity.Property(p => p.Nombre).IsRequired().HasMaxLength(200);
             entity.Property(p => p.Descripcion).HasMaxLength(1000);
             entity.Property(p => p.Precio).HasPrecision(10, 2);
@@ -71,6 +74,7 @@ public class TiendaDbContext : DbContext
         {
             entity.ToTable("users");
             entity.HasKey(u => u.Id);
+            entity.Property(u => u.Id).UseIdentityAlwaysColumn();
             entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
             entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
             entity.Property(u => u.PasswordHash).IsRequired();

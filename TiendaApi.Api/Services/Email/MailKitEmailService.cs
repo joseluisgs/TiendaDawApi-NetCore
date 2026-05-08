@@ -33,9 +33,9 @@ public class MailKitEmailService(
             var fromEmail = _configuration["Smtp:FromEmail"] ?? smtpUser;
             var fromName = _configuration["Smtp:FromName"] ?? "TiendaApi";
 
-            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpUser))
+            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPassword) || string.IsNullOrEmpty(fromEmail))
             {
-                _logger.LogWarning("SMTP no configurado, omitiendo envío de email");
+                _logger.LogWarning("SMTP no configurado correctamente, omitiendo envío de email");
                 return;
             }
 

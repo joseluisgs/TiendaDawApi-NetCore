@@ -1,3 +1,4 @@
+using System.Text;
 using Serilog;
 using Serilog.Extensions.Logging;
 using TiendaApi.Api;
@@ -5,6 +6,8 @@ using TiendaApi.Api.Data;
 using TiendaApi.Api.Data.Seed.Mongo;
 using TiendaApi.Api.Infrastructures;
 using TiendaApi.Api.Middleware;
+
+Console.OutputEncoding = Encoding.UTF8;
 
 // Configuración de Serilog (antes del builder)
 Log.Logger = SerilogConfig.Configure().CreateLogger();
@@ -27,7 +30,7 @@ var environment = builder.Environment;
 
 // Core - Controllers
 services.AddMvcControllers();
-services.AddFluentValidation();
+services.AddFluentValidationServices();
 
 // API
 services.AddApiVersioningPolicy();
@@ -75,7 +78,6 @@ Log.Information("✅ Aplicación construida");
 // ============================================================================
 
 app.UseSwaggerUI(isDevelopment);
-app.UseGraphiQL();
 app.UseGlobalExceptionHandler();
 
 // Security Headers - Siempre activo (no afecta funcionalidad)
@@ -102,7 +104,7 @@ app.MapWebSocketEndpoints();
 app.MapSignalRHubs();
 app.UseStaticFiles();
 app.MapControllers();
-app.MapGraphQL();
+app.MapGraphQLEndpoints();
 
 // ============================================================================
 // 🗄️ INICIALIZACIÓN DE DATOS
@@ -151,8 +153,11 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     Log.Information("=================================================================");
     Log.Information("TiendaApi - API REST Educativa");
     Log.Information("=================================================================");
+    Log.Information("DOCUMENTACIÓN:");
     Log.Information("Documentacion Swagger:  {BaseUrl}/", baseUrl);
-    Log.Information("GraphiQL UI:            {BaseUrl}/graphiql", baseUrl);
+    Log.Information("=================================================================");
+    Log.Information("GRAPHQL:");
+    Log.Information("GraphQL UI:            {BaseUrl}/graphql", baseUrl);
     Log.Information("=================================================================");
     Log.Information("WEBSOCKETS:");
     Log.Information("  Productos (publico):  ws://{Host}:{Port}/ws/productos", host, port);
@@ -170,14 +175,14 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     Log.Information("  Usuarios:   GET/POST/PUT/DELETE {BaseUrl}/api/users", baseUrl);
     Log.Information("=================================================================");
     Log.Information("DATOS SEMBRADOS (Seed):");
-    Log.Information("  PostgreSQL: admin (admin@tienda.com/admin), userdaw (userdaw@tienda.com/userdaw)");
+    Log.Information("  PostgreSQL: admin (admin/admin), userdaw (userdaw/userdaw)");
     Log.Information("              Categorias: Electronica, Ropa, Libros");
     Log.Information("              Productos: Laptop Dell XPS 15, Camiseta Nike, Clean Code");
     Log.Information("  MongoDB:    3 pedidos de ejemplo");
     Log.Information("=================================================================");
     Log.Information("CREDENCIALES DE PRUEBA:");
-    Log.Information("  Admin:   admin@tienda.com / admin (ROLE_ADMIN)");
-    Log.Information("  Usuario: userdaw@tienda.com / userdaw (ROLE_USER)");
+    Log.Information("  Admin:   admin / admin (ROLE_ADMIN)");
+    Log.Information("  Usuario: userdaw / userdaw (ROLE_USER)");
     Log.Information("=================================================================");
     Log.Information("🚀 Aplicacion iniciada correctamente en {BaseUrl} ({Mode})",
         baseUrl, mode);

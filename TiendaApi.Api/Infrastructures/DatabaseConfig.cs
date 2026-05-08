@@ -40,6 +40,12 @@ public static class DatabaseConfig
                 var client = sp.GetRequiredService<IMongoClient>();
                 return client.GetDatabase(mongoDatabaseName);
             });
+            
+            services.AddSingleton(sp =>
+            {
+                var database = sp.GetRequiredService<IMongoDatabase>();
+                return database.GetCollection<Models.Pedido>("pedidos");
+            });
         }
         else
         {
@@ -53,7 +59,14 @@ public static class DatabaseConfig
         }
 
         Log.Information("Registrando seeders...");
-        services.AddScoped<Data.Seed.Mongo.MongoDbSeeder>();
+        if (mongoImpl == "MongoDbNative")
+        {
+            services.AddScoped<Data.Seed.Mongo.MongoDbSeeder>();
+        }
+        else
+        {
+            services.AddScoped<Data.Seed.Mongo.MongoDbEfCoreSeeder>();
+        }
         services.AddScoped<Data.Seed.Sql.SqlSeeder>();
 
         return services;

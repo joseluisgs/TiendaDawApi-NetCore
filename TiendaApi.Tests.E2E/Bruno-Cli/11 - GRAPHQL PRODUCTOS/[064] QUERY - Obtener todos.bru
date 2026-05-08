@@ -1,0 +1,41 @@
+meta {
+  name: [064] QUERY - Obtener todos
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query { productos { id nombre precio stock } }
+}
+
+script:post-response {
+  test("GraphQL Productos - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL Productos - Has data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data).to.be.an('object');
+      expect(jsonData.data.productos).to.be.an('array');
+  });
+  
+  test("GraphQL Productos - No errors", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.undefined;
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  GraphQL: Obtiene todos los productos (público)
+}
