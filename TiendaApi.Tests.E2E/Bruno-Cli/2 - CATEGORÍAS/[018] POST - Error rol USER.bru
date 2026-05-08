@@ -1,0 +1,40 @@
+meta {
+  name: [018] POST - Error rol USER
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {
+      "nombre": "Test",
+      "descripcion": "Test"
+  }
+}
+
+script:post-response {
+  test("Categorias Create Forbidden - Status 403 Forbidden", function () {
+      expect(res.getStatus()).to.equal(403);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Crear categoría con rol USER debe retornar 403
+}

@@ -1,0 +1,30 @@
+meta {
+  name: [045] GET By Id - No existe
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/999999999999999999999999
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Pedidos GetById NotFound - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Pedido inexistente debe retornar 404
+}

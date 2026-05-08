@@ -1,0 +1,94 @@
+{
+  "name": "TiendaApi .NET - Environment",
+  "variables": [
+    {
+      "name": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "adminUsername",
+      "value": "admin",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "adminPassword",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": true
+    },
+    {
+      "name": "userUsername",
+      "value": "user",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "userPassword",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": true
+    },
+    {
+      "name": "adminToken",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "userToken",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "testUsername",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "testUserId",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "categoriaId",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "productoId",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "pedidoId",
+      "value": "",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    }
+  ],
+  "info": {
+    "type": "bruno-environment",
+    "exportedAt": "2026-05-06T13:42:25.087Z",
+    "exportedUsing": "Bruno/v3.3.0"
+  }
+}

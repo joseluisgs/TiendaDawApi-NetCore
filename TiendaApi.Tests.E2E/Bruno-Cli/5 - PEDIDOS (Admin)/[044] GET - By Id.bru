@@ -1,0 +1,39 @@
+meta {
+  name: [044] GET By Id
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/{{pedidoId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Pedidos GetById Admin - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Pedidos GetById Admin - Returns pedido data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.id).to.be.a('string');
+      expect(jsonData.estado).to.be.a('string');
+      expect(jsonData.cliente).to.be.an('object');
+      expect(jsonData.lineasPedido).to.be.an('array');
+      expect(jsonData.total).to.be.a('number');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene pedido por ID. Solo ADMIN.
+}

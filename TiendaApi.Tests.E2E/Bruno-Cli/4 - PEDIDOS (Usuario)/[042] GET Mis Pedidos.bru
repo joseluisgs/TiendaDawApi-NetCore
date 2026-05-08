@@ -1,0 +1,34 @@
+meta {
+  name: [042] GET Mis Pedidos
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Pedidos My GetAll - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Pedidos My GetAll - Returns array", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('array');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene pedidos del usuario autenticado.
+}

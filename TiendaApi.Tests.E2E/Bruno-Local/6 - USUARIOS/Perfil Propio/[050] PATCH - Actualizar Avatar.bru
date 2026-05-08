@@ -1,0 +1,44 @@
+meta {
+  name: [050] PATCH Actualizar Avatar
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/users/me/profile/avatar
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {
+      "avatarUrl": "https://ejemplo.com/avatar.jpg"
+  }
+}
+
+script:post-response {
+  test("Users Avatar Update - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Users Avatar Update - Returns user with avatar", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.avatarUrl).to.not.be.empty;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Actualiza avatar del usuario autenticado.
+}

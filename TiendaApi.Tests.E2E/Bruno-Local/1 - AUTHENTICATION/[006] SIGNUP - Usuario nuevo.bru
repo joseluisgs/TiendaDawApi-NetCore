@@ -1,0 +1,63 @@
+meta {
+  name: [006] SIGNUP - Usuario nuevo
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/signup
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "username": "{{testUsername}}",
+      "email": "{{testUsername}}@test.com",
+      "password": "Test1234"
+  }
+}
+
+script:pre-request {
+  // Generar nombre de usuario único
+  const timestamp = Date.now();
+  const testUsername = `testuser_${timestamp}`;
+  bru.setVar("testUsername", testUsername);
+}
+
+script:post-response {
+  test("Signup - Status 201 Created", function () {
+      expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Signup - Response has user data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.user).to.be.an('object');
+      expect(jsonData.user.username).to.not.be.empty;
+      expect(jsonData.token).to.not.be.empty;
+  });
+  
+  test("Signup - User role is USER", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.user.role).to.equal('USER');
+  });
+  
+  // Guardar token del nuevo usuario
+  if (res.getStatus() === 201) {
+      const jsonData = res.getBody();
+      bru.setVar("userToken", jsonData.token);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Registra un nuevo usuario. Happy path.
+}

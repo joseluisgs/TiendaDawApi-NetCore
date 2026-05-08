@@ -1,0 +1,38 @@
+meta {
+  name: [012] GET All con filtros
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/categorias?nombre=Elec&page=0&size=10&sortBy=id&direction=asc
+  body: none
+  auth: inherit
+}
+
+params:query {
+  nombre: Elec
+  page: 0
+  size: 10
+  sortBy: id
+  direction: asc
+}
+
+script:post-response {
+  test("Categorias GetAll filters - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Categorias GetAll filters - Returns filtered results", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene categorías con filtros y paginación.
+}

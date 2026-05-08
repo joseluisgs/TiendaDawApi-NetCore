@@ -1,0 +1,47 @@
+meta {
+  name: [030] PATCH - Actualizar parcial
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/productos/{{productoId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "precio": 799.99,
+      "stock": 30
+  }
+}
+
+script:post-response {
+  test("Productos Patch - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Productos Patch - Only updates provided fields", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.precio).to.equal(799.99);
+      expect(jsonData.stock).to.equal(30);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Actualiza solo precio y stock. Requiere token ADMIN.
+}

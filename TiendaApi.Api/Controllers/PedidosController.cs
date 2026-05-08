@@ -18,7 +18,7 @@ namespace TiendaApi.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
-public class PedidosController(IPedidosService service) : ControllerBase
+public class PedidosController(IPedidosService service, ILogger<PedidosController> logger) : ControllerBase
 {
     #region ========== ENDPOINTS DE ADMINISTRADORES ==========
 
@@ -199,10 +199,14 @@ public class PedidosController(IPedidosService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyPedidos()
     {
+        logger.LogInformation("GetMyPedidos - User: {User}", User?.Identity?.Name);
+        logger.LogInformation("GetMyPedidos - IsAuthenticated: {IsAuth}", User?.Identity?.IsAuthenticated);
+        
         if (User?.Identity == null || !User.Identity.IsAuthenticated)
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        logger.LogInformation("GetMyPedidos - NameIdentifier claim: {Claim}", userIdClaim);
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });

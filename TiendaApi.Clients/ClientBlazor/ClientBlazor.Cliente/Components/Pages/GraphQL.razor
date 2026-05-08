@@ -8,6 +8,7 @@
 @using CSharpFunctionalExtensions
 @using System.Text.Json
 @using System.Reactive.Linq
+@using System.Collections.Generic
 
 @inject IGraphQLService GraphQLService
 @inject INotificationStore NotificationStore
@@ -71,7 +72,7 @@
     <h3 class="section-title">GraphQL Subscriptions</h3>
     <p style="color: var(--hk-red); margin-bottom: 15px;">Suscripciones en tiempo real reales</p>
     <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch; margin-bottom: 15px;">
-        <select @bind="subscriptionType" style="min-width: 200px; height: 50px; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white; box-sizing: border-box;">
+        <select @bind="subscriptionType" @bind:after="OnSubscriptionTypeChanged" style="min-width: 200px; height: 50px; padding: 12px 15px; border: 3px solid var(--hk-light-pink); border-radius: 25px; font-size: 1em; font-family: 'Balsamiq Sans', cursive; background: white; box-sizing: border-box;">
             <option value="OnProductoCreado">🔔 OnProductoCreado</option>
             <option value="OnProductoActualizado">🔔 OnProductoActualizado</option>
             <option value="OnProductoEliminado">🔔 OnProductoEliminado</option>
@@ -83,11 +84,11 @@
     </div>
 </div>
 
-@if (!string.IsNullOrEmpty(subscriptionEvents)) {
+@if (subscriptionRunning || !string.IsNullOrEmpty(subscriptionEvents)) {
     <div class="response-section">
         <h3 class="section-title">Subscription Events</h3>
         <div class="response-display">
-            <pre style="white-space: pre-wrap; font-family: 'Balsamiq Sans', cursive; max-height: 300px; overflow-y: auto;">@subscriptionEvents</pre>
+            <pre style="white-space: pre-wrap; font-family: 'Balsamiq Sans', cursive; max-height: 300px; overflow-y: auto;">@(string.IsNullOrEmpty(subscriptionEvents) ? "Esperando eventos..." : subscriptionEvents)</pre>
         </div>
     </div>
 }
@@ -123,9 +124,10 @@
 
     protected override void OnInitialized() => GenerateQuery();
 
-    private void OnTipoChanged() { operacion = (tipo == "query") ? "productos" : "createProducto"; id = 1; GenerateQuery(); }
+    private void OnTipoChanged() { operacion = (tipo == "query") ? "productos" : "createProducto"; id = 1; responseText = ""; GenerateQuery(); }
     private void OnIdChanged() => GenerateQuery();
-    private void OnOperacionChanged() { id = (operacion == "producto" || operacion == "categoria" || operacion == "updateProducto" || operacion == "deleteProducto") ? 1 : 0; GenerateQuery(); }
+    private void OnOperacionChanged() { id = (operacion == "producto" || operacion == "categoria" || operacion == "updateProducto" || operacion == "deleteProducto") ? 1 : 0; responseText = ""; GenerateQuery(); }
+    private void OnSubscriptionTypeChanged() { StopSubscription(); if (subscriptionEvents != "") subscriptionEvents += "[" + DateTime.Now.ToString("HH:mm:ss") + "] Desconectado de GraphQL\n"; StateHasChanged(); }
     private bool NeedsId() => (tipo == "query" && (operacion == "producto" || operacion == "categoria")) || (tipo == "mutation" && (operacion == "updateProducto" || operacion == "deleteProducto"));
 
     /// <summary>Genera la cadena de consulta GraphQL formateada según la selección actual.</summary>
@@ -164,19 +166,28 @@
     private async Task StartSubscriptionAsync()
     {
         if (subscriptionRunning) return;
+        
+        subscription?.Dispose();
         subscriptionRunning = true;
-        subscriptionEvents = "[" + DateTime.Now.ToString("HH:mm:ss") + "] Iniciada: " + subscriptionType + "\n";
+        subscriptionEvents = "[" + DateTime.Now.ToString("HH:mm:ss") + "] Conectado a GraphQL (" + subscriptionType + ")\n";
         StateHasChanged();
         try {
             string q = "";
-            if (subscriptionType == "OnProductoCreado") q = "subscription { onProductoCreado { producto { id nombre } } }";
-            else if (subscriptionType == "OnProductoActualizado") q = "subscription { onProductoActualizado { producto { id nombre } } }";
+            if (subscriptionType == "OnProductoCreado") q = "subscription { onProductoCreado { productoId nombre } }";
+            else if (subscriptionType == "OnProductoActualizado") q = "subscription { onProductoActualizado { productoId nombre } }";
             else if (subscriptionType == "OnProductoEliminado") q = "subscription { onProductoEliminado { productoId } }";
             else if (subscriptionType == "OnStockBajo") q = "subscription { onStockBajo { productoId stockActual } }";
 
-            var observable = GraphQLService.SubscribeAsync<object>(q);
+            subscriptionEvents += "[" + DateTime.Now.ToString("HH:mm:ss") + "] Query: " + q + "\n";
+
+            var observable = GraphQLService.SubscribeAsync<Dictionary<string, object>>(q);
             subscription = observable.Subscribe(evento => {
-                subscriptionEvents += "[" + DateTime.Now.ToString("HH:mm:ss") + "] Evento: " + JsonSerializer.Serialize(evento) + "\n";
+                var formatted = evento != null ? JsonSerializer.Serialize(evento, new JsonSerializerOptions { WriteIndented = true }) : "null";
+                subscriptionEvents += "[" + DateTime.Now.ToString("HH:mm:ss") + "] Evento: " + formatted + "\n";
+                InvokeAsync(StateHasChanged);
+            }, ex => {
+                subscriptionEvents += "[" + DateTime.Now.ToString("HH:mm:ss") + "] Error: " + ex.Message + "\n";
+                subscriptionRunning = false;
                 InvokeAsync(StateHasChanged);
             });
         } catch (Exception ex) { subscriptionEvents += "Error: " + ex.Message + "\n"; subscriptionRunning = false; }

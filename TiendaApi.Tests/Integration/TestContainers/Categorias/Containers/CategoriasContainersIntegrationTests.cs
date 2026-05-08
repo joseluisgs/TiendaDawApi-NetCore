@@ -14,6 +14,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Containers;
 /// Verifica la conectividad y configuración de containers Docker (PostgreSQL, MongoDB).
 /// </summary>
 [TestFixture]
+[Category("Integration")]
 public class CategoriasContainersIntegrationTests
 {
     private MongoDbContainer? _mongoContainer;

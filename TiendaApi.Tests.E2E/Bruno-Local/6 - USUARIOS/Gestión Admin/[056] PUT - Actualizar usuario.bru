@@ -1,0 +1,45 @@
+meta {
+  name: [056] PUT - Actualizar usuario
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/api/users/{{testUserId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "email": "updated@test.com"
+  }
+}
+
+script:post-response {
+  test("Users Update - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Users Update - Returns updated user", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.username).to.equal('updateduser');
+      expect(jsonData.email).to.equal('updated@test.com');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Actualiza usuario. Solo ADMIN.
+}

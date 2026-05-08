@@ -1,0 +1,37 @@
+meta {
+  name: [016] POST - Error sin auth
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "nombre": "Test",
+      "descripcion": "Test"
+  }
+}
+
+script:post-response {
+  test("Categorias Create NoAuth - Status 401 Unauthorized", function () {
+      expect(res.getStatus()).to.equal(401);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Crear categoría sin token debe retornar 401
+}

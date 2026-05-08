@@ -1,0 +1,30 @@
+meta {
+  name: [002] Limpiar datos
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/categorias
+  body: none
+  auth: inherit
+}
+
+script:pre-request {
+  // Limpiar variables de test
+  bru.setVar("testUsername", null);
+  bru.setVar("testUserId", null);
+  bru.setVar("categoriaId", null);
+  bru.setVar("productoId", null);
+  bru.setVar("pedidoId", null);
+  bru.setVar("adminToken", null);
+  bru.setVar("userToken", null);
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Endpoint público para verificar conectividad
+}

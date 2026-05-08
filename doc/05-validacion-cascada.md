@@ -384,7 +384,18 @@ public class ProductoCreateDtoValidator : AbstractValidator<ProductoCreateDto>
 
 ## 5.4. Integración de FluentValidation con Controladores
 
-Para que FluentValidation se ejecute automáticamente en cada petición, debes configurarlo en Program.cs y opcionalmente crear un filtro o usar la integración automática con ASP.NET Core. La forma más común es usar `AddFluentValidation` con la opción de configurar `ValidatorOptions` globalmente.
+Para que FluentValidation se ejecute automáticamente en cada petición, debes configurarlo en Program.cs usando `AddFluentValidationAutoValidation()`. Esto registra los validadores y activa la validación automática en el pipeline.
+
+> **NOTA PARA EL ALUMNO**: La configuración de FluentValidation tiene dos partes:
+> - `AddValidatorsFromAssemblyContaining<Program>()` → Registra los validadores en el contenedor DI (necesario)
+> - `AddFluentValidationAutoValidation()` → Activa la validación automática en el pipeline
+>
+> Si solo usas la primera parte, la validación debe llamarse manualmente desde los servicios. Si usas ambas, la validación se ejecuta automáticamente antes de llegar al controller y devuelve 400 Bad Request si falla. Esta es la configuración recomendada para APIs REST.
+
+> **NOTA PARA EL ALUMNO**: Data Annotations y FluentValidation son complementarios:
+> - **Data Annotations** → Valida formato básico (requerido, rango, email, formato). Se define en el propio DTO.
+> - **FluentValidation** → Valida reglas de negocio complejas (condicionales, múltiples campos, mensajes personalizados). Se define en clases separadas.
+> - Ambos se ejecutan **antes** del controller. Si las reglas son simples (solo formato), no es necesario añadir FluentValidation; si hay reglas de negocio complejas, es muy recomendable.
 
 ### Configuración básica
 
@@ -393,23 +404,73 @@ using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Registrar FluentValidation
-builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddFluentValidationClientsideAdapters();
+// =====================================================
+// OPCIONES DE CONFIGURACIÓN DE FLUENTVALIDATION
+// =====================================================
 
-// Registrar validadores del assembly
+// --- OPCIÓN 1: Solo registrar validadores (sin ejecución automática) ---
+// Los validadores se registran pero NO se ejecutan automáticamente.
+// Debes llamar manualmente a validator.ValidateAsync() en el service.
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-// O registrar específicamente
-builder.Services.AddValidatorsFromAssembly(typeof(ProductoCreateDto).Assembly);
+
+// --- OPCIÓN 2: Registrar + Validación automática (RECOMENDADO) ---
+// Añade un filtro que ejecuta FluentValidation automáticamente.
+// Si la validación falla, devuelve 400 Bad Request automáticamente.
+builder.Services.AddValidatorsFromAssemblyContaining<Program>()
+                .AddFluentValidationAutoValidation();
+
+// --- OPCIÓN 3: Completo (API + validación cliente-side) ---
+// Añade adapters para generar validación JavaScript (para Blazor/MVC).
+builder.Services.AddValidatorsFromAssemblyContaining<Program>()
+                .AddFluentValidationAutoValidation()
+                .AddFluentValidationClientsideAdapters();
+
+// =====================================================
 
 var app = builder.Build();
-
-// Habilitar validación automática
-app.UseValidationMiddleware();  // Opcional si no usa AddFluentValidationAutoValidation
 
 app.MapControllers();
 app.Run();
 ```
+
+### Diagrama de flujo de validación
+
+```mermaid
+flowchart LR
+    subgraph Request["Request HTTP"]
+        R["POST /api/productos<br/>{ categoriaId: 0 }"]
+    end
+    
+    subgraph Pipeline["Pipeline de validación"]
+        DA["Data Annotations<br/>[Range(1,)]"]
+        FV["FluentValidation<br/>GreaterThan(0)"]
+    end
+    
+    subgraph Service["Servicio (manual)"]
+        SM["ValidateProductoAsync()<br/>Validación opcional"]
+    end
+    
+    subgraph Respuestas
+        E400["400 Bad Request"]
+        E201["201 Created"]
+    end
+    
+    R --> DA
+    DA -->|Falla| E400
+    DA -->|Pasa| FV
+    FV -->|Falla| E400
+    FV -->|Pasa| SM
+    SM -->|Falla| E400
+    SM -->|Pasa| E201
+    
+    style DA fill:#E57373,color:#fff
+    style FV fill:#FF9800,color:#fff
+    style SM fill:#4CAF50,color:#fff
+    style E400 fill:#f44336,color:#fff
+    style E201 fill:#4CAF50,color:#fff
+```
+
+> **NOTA PARA EL ALUMNO**: Cuando usas `AddFluentValidationAutoValidation()`, la validación automática ocurre ANTES de que el request llegue al controller. Por tanto, la validación manual en el servicio (`ValidateProductoAsync()`) se convierte en **opcional** - ya no es necesaria porque la validación ya se ejecutó. Se deja la validación manual en el servicio con fines didácticos para mostrar cómo validar manualmente cuando se requiera (por ejemplo, en validaciones complejas que dependan de datos externos).
 
 ### Configuración global de ValidatorOptions
 
@@ -496,6 +557,13 @@ public class ProductosController : ControllerBase
     }
 }
 ```
+
+> **NOTA PARA EL ALUMNO (Validación en Servicios)**: La validación manual en los servicios (llamando a `ValidateProductoAsync()`) es **opcional** cuando usas `AddFluentValidationAutoValidation()`. En TiendaApi se deja esta validación manual con fines didácticos para:
+> - Mostrar cómo validar manualmente en la capa de servicio cuando se requiera
+> - Demostrar el patrón Result para manejar errores de validación
+> - Permitir experimentar deshabilitándola y viendo el comportamiento
+>
+> Si decides usar validación automática, puedes eliminar las llamadas a `ValidateProductoAsync()` en los servicios y asumir que los DTOs ya fueron validados.
 
 ### Validación manual cuando es necesaria
 

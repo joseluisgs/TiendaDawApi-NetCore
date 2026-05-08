@@ -1,0 +1,31 @@
+meta {
+  name: [026] GET By Categoria
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/productos/categoria/1
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Productos ByCategoria - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Productos ByCategoria - Returns array", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('array');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Obtiene productos por categoría.
+}

@@ -1,0 +1,45 @@
+meta {
+  name: [045] PUT - Actualizar estado
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/pedidos/{{pedidoId}}/estado
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "Estado": "ENVIADO"
+  }
+}
+
+script:post-response {
+  test("Pedidos Update Estado - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Pedidos Update Estado - Estado actualizado", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.estado).to.equal('ENVIADO');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Actualiza estado del pedido. Solo ADMIN.
+}

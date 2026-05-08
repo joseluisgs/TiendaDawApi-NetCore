@@ -1,0 +1,40 @@
+meta {
+  name: [042] GET All paginated
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/paged?page=1&size=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 1
+  size: 10
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Pedidos GetAll Paged - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Pedidos GetAll Paged - Has pagination", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.items).to.be.an('array');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene pedidos paginados. Solo ADMIN.
+}

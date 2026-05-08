@@ -46,7 +46,7 @@ builder.Host.UseSerilog();
 
 // Controllers
 builder.Services.AddControllers();
-builder.Services.AddFluentValidation();
+builder.Services.AddFluentValidationServices();
 
 // API Versioning
 builder.Services.AddApiVersioning(options =>
@@ -647,7 +647,7 @@ var environment = builder.Environment;
 
 // === CONFIGURACIÓN DE SERVICIOS ===
 services.AddMvcControllers();
-services.AddFluentValidation();
+services.AddFluentValidationServices();
 
 services.AddApiVersioningPolicy();
 services.AddSwagger();

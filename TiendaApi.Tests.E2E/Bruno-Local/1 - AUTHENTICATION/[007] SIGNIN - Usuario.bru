@@ -1,0 +1,54 @@
+meta {
+  name: [007] SIGNIN - Usuario
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/signin
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "username": "{{userUsername}}",
+      "password": "{{userPassword}}"
+  }
+}
+
+script:post-response {
+  test("Signin User - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Signin User - Has token", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.token).to.not.be.empty;
+      expect(jsonData.user).to.be.an('object');
+  });
+  
+  test("Signin User - Role is USER", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.user.role).to.equal('USER');
+  });
+  
+  // Guardar token de usuario
+  if (res.getStatus() === 200) {
+      const jsonData = res.getBody();
+      bru.setVar("userToken", jsonData.token);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Login de usuario normal. Happy path.
+}

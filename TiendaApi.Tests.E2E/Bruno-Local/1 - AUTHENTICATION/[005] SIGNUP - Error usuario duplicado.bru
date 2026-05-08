@@ -1,0 +1,43 @@
+meta {
+  name: [005] SIGNUP - Error duplicado
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/signup
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "username": "{{adminUsername}}",
+      "email": "otro@test.com",
+      "password": "Test1234"
+  }
+}
+
+script:post-response {
+  test("Signup duplicate - Status 409 Conflict", function () {
+      expect(res.getStatus()).to.equal(409);
+  });
+  
+  test("Signup duplicate - Has conflict message", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.message).to.not.be.empty;
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Signup con username existente debe retornar 409
+}

@@ -20,6 +20,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 /// Usa solo PostgreSQL para simplificar.
 /// </summary>
 [TestFixture]
+[Category("Integration")]
 public class ProductoConcurrencyIntegrationTests
 {
     private static readonly ActivitySource ActivitySource = new("ProductoConcurrencyTests");

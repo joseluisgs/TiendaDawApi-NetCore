@@ -1,0 +1,60 @@
+meta {
+  name: [027] POST - Crear (Admin)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/productos
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Laptop HP Test",
+      "descripcion": "Laptop profesional para testing E2E",
+      "precio": 999.99,
+      "stock": 50,
+      "categoriaId": 1,
+      "imagenUrl": "https://ejemplo.com/laptop-test.jpg"
+  }
+}
+
+script:post-response {
+  test("Productos Create - Status 201 Created", function () {
+      expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Productos Create - Returns created producto", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.id).to.be.a('number');
+      expect(jsonData.nombre).to.equal('Laptop HP Test');
+      expect(jsonData.precio).to.equal(999.99);
+      expect(jsonData.stock).to.equal(50);
+      expect(jsonData.categoriaId).to.equal(1);
+  });
+  
+  // Guardar ID para siguientes tests
+  if (res.getStatus() === 201) {
+      const jsonData = res.getBody();
+      bru.setVar("productoId", jsonData.id.toString());
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Crea nuevo producto. Requiere token ADMIN.
+}

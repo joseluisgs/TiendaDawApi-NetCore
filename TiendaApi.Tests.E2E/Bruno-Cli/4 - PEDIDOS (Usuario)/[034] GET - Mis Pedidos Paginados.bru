@@ -1,0 +1,43 @@
+meta {
+  name: [034] GET Mis Pedidos Paginados
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/me/paged?page=1&size=5
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 1
+  size: 5
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Pedidos My GetAll Paged - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Pedidos My GetAll Paged - Has pagination", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.items).to.be.an('array');
+      expect(jsonData.page).to.be.a('number');
+      expect(jsonData.totalItems).to.be.a('number');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Obtiene pedidos propios paginados.
+}

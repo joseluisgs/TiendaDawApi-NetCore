@@ -1,0 +1,60 @@
+meta {
+  name: [063] QUERY - Obtener por ID
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query($id: Long!) { categoria(id: $id) { id nombre } }
+}
+
+body:graphql:vars {
+  {"id": 1}
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "query": "query($id: Long!) { categoria(id: $id) { id nombre } }",
+    "variables": {
+      "id": 1
+    }
+  }
+}
+
+script:post-response {
+  test("GraphQL CategoriaById - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL CategoriaById - Returns categoria", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data.categoria).to.be.an('object');
+      expect(jsonData.data.categoria.id).to.be.a('number');
+      expect(jsonData.data.categoria.nombre).to.be.a('string');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  GraphQL: Obtiene categoría por ID (público)
+}

@@ -1,0 +1,46 @@
+meta {
+  name: [046] PUT - Actualizar completo
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/pedidos/{{pedidoId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "Estado": "ENTREGADO",
+      "direccionEnvio": "Pedido actualizado por administrador"
+  }
+}
+
+script:post-response {
+  test("Pedidos Update Admin - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Pedidos Update Admin - Returns updated pedido", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Actualiza pedido completo. Solo ADMIN.
+}

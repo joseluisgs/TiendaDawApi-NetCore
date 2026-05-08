@@ -1,0 +1,58 @@
+meta {
+  name: [037] POST - Error
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/pedidos/me
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {
+      "destinatario": {
+          "nombreCompleto": "Test",
+          "email": "test@test.com",
+          "telefono": "+34123456789",
+          "direccion": {
+              "calle": "Calle Test",
+              "numero": "1",
+              "ciudad": "Test",
+              "provincia": "Test",
+              "pais": "Test",
+              "codigoPostal": "12345"
+          }
+      },
+      "items": [
+{
+              "productoId": 999999,
+              "cantidad": 1,
+              "precioUnitario": 100
+          }
+      ]
+  }
+}
+
+script:post-response {
+  test("Pedidos My Create Invalid - Status 404 Bad Request", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Crear pedido con producto inexistente debe retornar 404
+}

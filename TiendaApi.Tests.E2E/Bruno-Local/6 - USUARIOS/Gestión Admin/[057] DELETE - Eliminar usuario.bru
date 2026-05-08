@@ -1,0 +1,29 @@
+meta {
+  name: [057] DELETE - Eliminar usuario
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/api/users/{{testUserId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Users Delete - Status 204 No Content", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Elimina usuario. Solo ADMIN. Retorna 204.
+}

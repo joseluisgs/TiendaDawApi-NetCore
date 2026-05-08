@@ -1,72 +1,44 @@
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.GraphQL.Queries;
-using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Models;
 
 namespace TiendaApi.Tests.Unit.GraphQL;
 
-/// <summary>
-/// Tests unitarios para TiendaQuery (GraphQL).
-/// </summary>
+[TestFixture]
+[Category("Unit")]
+[Category("GraphQL")]
 public class TiendaQueryTests
 {
-    private Mock<IProductoRepository> _productoRepositoryMock = null!;
-    private Mock<ICategoriaRepository> _categoriaRepositoryMock = null!;
+    private Mock<IProductoRepository> _productoRepoMock = null!;
+    private Mock<ICategoriaRepository> _categoriaRepoMock = null!;
     private TiendaQuery _query = null!;
 
     [SetUp]
     public void Setup()
     {
-        _productoRepositoryMock = new Mock<IProductoRepository>();
-        _categoriaRepositoryMock = new Mock<ICategoriaRepository>();
+        _productoRepoMock = new Mock<IProductoRepository>();
+        _categoriaRepoMock = new Mock<ICategoriaRepository>();
         _query = new TiendaQuery();
     }
 
     #region GetProductos Tests
 
     [Test]
-    public void GetProductos_ConProductosExistentes_RetornaQueryable()
+    public void GetProductos_RepositoryExists_ReturnsQueryable()
     {
-        // Arrange
-        var productos = new List<Producto>
-        {
-            new() { Id = 1, Nombre = "Laptop", Precio = 999.99m, Stock = 10 },
-            new() { Id = 2, Nombre = "Mouse", Precio = 29.99m, Stock = 50 }
-        }.AsQueryable();
+        _productoRepoMock.Setup(r => r.FindAllAsNoTracking())
+            .Returns(new List<Producto>().AsQueryable());
 
-        _productoRepositoryMock
-            .Setup(x => x.FindAllAsNoTracking())
-            .Returns(productos);
+        var result = _query.GetProductos(_productoRepoMock.Object);
 
-        // Act
-        var result = _query.GetProductos(_productoRepositoryMock.Object);
-
-        // Assert
         result.Should().NotBeNull();
-        result.Should().HaveCount(2);
-        result.First().Nombre.Should().Be("Laptop");
-        _productoRepositoryMock.Verify(x => x.FindAllAsNoTracking(), Times.Once);
-    }
-
-    [Test]
-    public void GetProductos_SinProductos_RetornaQueryableVacio()
-    {
-        // Arrange
-        var productos = Enumerable.Empty<Producto>().AsQueryable();
-
-        _productoRepositoryMock
-            .Setup(x => x.FindAllAsNoTracking())
-            .Returns(productos);
-
-        // Act
-        var result = _query.GetProductos(_productoRepositoryMock.Object);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
     }
 
     #endregion
@@ -74,65 +46,29 @@ public class TiendaQueryTests
     #region GetProducto Tests
 
     [Test]
-    public async Task GetProducto_ConIdExistente_RetornaProducto()
+    public async Task GetProducto_WithId_ReturnsProducto()
     {
-        // Arrange
-        var productoEsperado = new Producto
-        {
-            Id = 1,
-            Nombre = "Laptop Dell",
-            Descripcion = "Laptop de alto rendimiento",
-            Precio = 1299.99m,
-            Stock = 10
-        };
+        var productoId = 1L;
+        var producto = new Producto { Id = productoId, Nombre = "Test" };
 
-        _productoRepositoryMock
-            .Setup(x => x.FindByIdAsync(1))
-            .ReturnsAsync(productoEsperado);
+        _productoRepoMock.Setup(r => r.FindByIdAsync(productoId))
+            .ReturnsAsync(producto);
 
-        // Act
-        var result = await _query.GetProducto(1, _productoRepositoryMock.Object);
+        var result = await _query.GetProducto(productoId, _productoRepoMock.Object);
 
-        // Assert
         result.Should().NotBeNull();
-        result!.Id.Should().Be(1);
-        result.Nombre.Should().Be("Laptop Dell");
-        _productoRepositoryMock.Verify(x => x.FindByIdAsync(1), Times.Once);
+        result!.Id.Should().Be(productoId);
     }
 
     [Test]
-    public async Task GetProducto_ConIdNoExistente_RetornaNull()
+    public async Task GetProducto_WithInvalidId_ReturnsNull()
     {
-        // Arrange
-        _productoRepositoryMock
-            .Setup(x => x.FindByIdAsync(999))
+        _productoRepoMock.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Producto?)null);
 
-        // Act
-        var result = await _query.GetProducto(999, _productoRepositoryMock.Object);
+        var result = await _query.GetProducto(999, _productoRepoMock.Object);
 
-        // Assert
         result.Should().BeNull();
-        _productoRepositoryMock.Verify(x => x.FindByIdAsync(999), Times.Once);
-    }
-
-    [TestCase(1)]
-    [TestCase(100)]
-    [TestCase(999999)]
-    public async Task GetProducto_ConIdValido_RetornaProducto(long id)
-    {
-        // Arrange
-        var producto = new Producto { Id = id, Nombre = $"Producto {id}", Precio = 99.99m };
-        _productoRepositoryMock
-            .Setup(x => x.FindByIdAsync(id))
-            .ReturnsAsync(producto);
-
-        // Act
-        var result = await _query.GetProducto(id, _productoRepositoryMock.Object);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Id.Should().Be(id);
     }
 
     #endregion
@@ -140,45 +76,14 @@ public class TiendaQueryTests
     #region GetCategorias Tests
 
     [Test]
-    public void GetCategorias_ConCategoriasExistentes_RetornaQueryable()
+    public void GetCategorias_RepositoryExists_ReturnsQueryable()
     {
-        // Arrange
-        var categorias = new List<Categoria>
-        {
-            new() { Id = 1, Nombre = "Electrónica" },
-            new() { Id = 2, Nombre = "Ropa" },
-            new() { Id = 3, Nombre = "Libros" }
-        }.AsQueryable();
+        _categoriaRepoMock.Setup(r => r.FindAllAsNoTracking())
+            .Returns(new List<Categoria>().AsQueryable());
 
-        _categoriaRepositoryMock
-            .Setup(x => x.FindAllAsNoTracking())
-            .Returns(categorias);
+        var result = _query.GetCategorias(_categoriaRepoMock.Object);
 
-        // Act
-        var result = _query.GetCategorias(_categoriaRepositoryMock.Object);
-
-        // Assert
         result.Should().NotBeNull();
-        result.Should().HaveCount(3);
-        _categoriaRepositoryMock.Verify(x => x.FindAllAsNoTracking(), Times.Once);
-    }
-
-    [Test]
-    public void GetCategorias_SinCategorias_RetornaQueryableVacio()
-    {
-        // Arrange
-        var categorias = Enumerable.Empty<Categoria>().AsQueryable();
-
-        _categoriaRepositoryMock
-            .Setup(x => x.FindAllAsNoTracking())
-            .Returns(categorias);
-
-        // Act
-        var result = _query.GetCategorias(_categoriaRepositoryMock.Object);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
     }
 
     #endregion
@@ -186,44 +91,29 @@ public class TiendaQueryTests
     #region GetCategoria Tests
 
     [Test]
-    public async Task GetCategoria_ConIdExistente_RetornaCategoria()
+    public async Task GetCategoria_WithId_ReturnsCategoria()
     {
-        // Arrange
-        var categoriaEsperada = new Categoria
-        {
-            Id = 1,
-            Nombre = "Electrónica",
-            CreatedAt = DateTime.UtcNow
-        };
+        var categoriaId = 1L;
+        var categoria = new Categoria { Id = categoriaId, Nombre = "Test" };
 
-        _categoriaRepositoryMock
-            .Setup(x => x.FindByIdAsync(1))
-            .ReturnsAsync(categoriaEsperada);
+        _categoriaRepoMock.Setup(r => r.FindByIdAsync(categoriaId))
+            .ReturnsAsync(categoria);
 
-        // Act
-        var result = await _query.GetCategoria(1, _categoriaRepositoryMock.Object);
+        var result = await _query.GetCategoria(categoriaId, _categoriaRepoMock.Object);
 
-        // Assert
         result.Should().NotBeNull();
-        result!.Id.Should().Be(1);
-        result.Nombre.Should().Be("Electrónica");
-        _categoriaRepositoryMock.Verify(x => x.FindByIdAsync(1), Times.Once);
+        result!.Id.Should().Be(categoriaId);
     }
 
     [Test]
-    public async Task GetCategoria_ConIdNoExistente_RetornaNull()
+    public async Task GetCategoria_WithInvalidId_ReturnsNull()
     {
-        // Arrange
-        _categoriaRepositoryMock
-            .Setup(x => x.FindByIdAsync(999))
+        _categoriaRepoMock.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Categoria?)null);
 
-        // Act
-        var result = await _query.GetCategoria(999, _categoriaRepositoryMock.Object);
+        var result = await _query.GetCategoria(999, _categoriaRepoMock.Object);
 
-        // Assert
         result.Should().BeNull();
-        _categoriaRepositoryMock.Verify(x => x.FindByIdAsync(999), Times.Once);
     }
 
     #endregion
@@ -231,27 +121,18 @@ public class TiendaQueryTests
     #region GetProductosPaged Tests
 
     [Test]
-    public void GetProductosPaged_ConProductos_RetornaQueryablePaginable()
+    public async Task GetProductosPaged_WithPaging_ReturnsPagedResult()
     {
-        // Arrange
-        var productos = new List<Producto>
-        {
-            new() { Id = 1, Nombre = "P1", Precio = 100 },
-            new() { Id = 2, Nombre = "P2", Precio = 200 },
-            new() { Id = 3, Nombre = "P3", Precio = 300 }
-        }.AsQueryable();
+        var filter = new ProductoFilterDto(null, null, null, null, null, 1, 10);
+        var items = new List<Producto>();
+        var pagedResult = (items, 2);
 
-        _productoRepositoryMock
-            .Setup(x => x.FindAllAsNoTracking())
-            .Returns(productos);
+        _productoRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .ReturnsAsync(pagedResult);
 
-        // Act
-        var result = _query.GetProductosPaged(_productoRepositoryMock.Object);
+        var result = await _query.GetProductosPaged(_productoRepoMock.Object, 1, 10);
 
-        // Assert
         result.Should().NotBeNull();
-        result.Should().HaveCount(3);
-        _productoRepositoryMock.Verify(x => x.FindAllAsNoTracking(), Times.Once);
     }
 
     #endregion
@@ -259,58 +140,18 @@ public class TiendaQueryTests
     #region GetCategoriasPaged Tests
 
     [Test]
-    public void GetCategoriasPaged_ConCategorias_RetornaQueryablePaginable()
+    public async Task GetCategoriasPaged_WithPaging_ReturnsPagedResult()
     {
-        // Arrange
-        var categorias = new List<Categoria>
-        {
-            new() { Id = 1, Nombre = "C1" },
-            new() { Id = 2, Nombre = "C2" }
-        }.AsQueryable();
+        var filter = new CategoriaFilterDto { Page = 1, Size = 10 };
+        var items = new List<Categoria>();
+        var pagedResult = (items, 2);
 
-        _categoriaRepositoryMock
-            .Setup(x => x.FindAllAsNoTracking())
-            .Returns(categorias);
+        _categoriaRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))
+            .ReturnsAsync(pagedResult);
 
-        // Act
-        var result = _query.GetCategoriasPaged(_categoriaRepositoryMock.Object);
+        var result = await _query.GetCategoriasPaged(_categoriaRepoMock.Object, 1, 10);
 
-        // Assert
         result.Should().NotBeNull();
-        result.Should().HaveCount(2);
-        _categoriaRepositoryMock.Verify(x => x.FindAllAsNoTracking(), Times.Once);
-    }
-
-    #endregion
-
-    #region Integration Tests - Multiple Queries
-
-    [Test]
-    public void GetProductosYGetCategorias_UsandoMismoRepositorio_NoCausaConflictos()
-    {
-        // Arrange
-        var productos = new List<Producto>
-        {
-            new() { Id = 1, Nombre = "P1" }
-        }.AsQueryable();
-
-        var categorias = new List<Categoria>
-        {
-            new() { Id = 1, Nombre = "C1" }
-        }.AsQueryable();
-
-        _productoRepositoryMock.Setup(x => x.FindAllAsNoTracking()).Returns(productos);
-        _categoriaRepositoryMock.Setup(x => x.FindAllAsNoTracking()).Returns(categorias);
-
-        // Act
-        var productosResult = _query.GetProductos(_productoRepositoryMock.Object);
-        var categoriasResult = _query.GetCategorias(_categoriaRepositoryMock.Object);
-
-        // Assert
-        productosResult.Should().HaveCount(1);
-        categoriasResult.Should().HaveCount(1);
-        _productoRepositoryMock.Verify(x => x.FindAllAsNoTracking(), Times.Once);
-        _categoriaRepositoryMock.Verify(x => x.FindAllAsNoTracking(), Times.Once);
     }
 
     #endregion

@@ -1,0 +1,29 @@
+meta {
+  name: [054] GET By Id - No existe
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/users/999999
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Users GetById NotFound - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Usuario inexistente debe retornar 404
+}

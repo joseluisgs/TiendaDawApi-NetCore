@@ -22,7 +22,7 @@ public record ProductoModel
     /// </summary>
     public string ImagenUrl => string.IsNullOrEmpty(Imagen) 
         ? "/images/placeholder.png" 
-        : (Imagen.StartsWith("http") ? Imagen : $"http://localhost:5000/storage/{Imagen}");
+        : (Imagen.StartsWith("http") ? Imagen : $"http://localhost:5031/storage/{Imagen}");
 
     /// <summary>
     /// Devuelve el precio del producto formateado como moneda local.

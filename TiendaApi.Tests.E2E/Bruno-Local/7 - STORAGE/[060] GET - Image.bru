@@ -1,0 +1,32 @@
+meta {
+  name: [060] GET Image
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}//images/uploads/productos/20260506170337_e22e6e55_test_image.png
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Storage Image - Status 200 or 404", function () {
+      expect([200, 404]).to.include(res.getStatus());
+  });
+  
+  test("Storage Image - Content-Type is image", function () {
+      if (res.getStatus() === 200) {
+          expect(res.getHeader('Content-Type')).to.match(/^image\//);
+      }
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Obtiene imagen del almacenamiento.
+}

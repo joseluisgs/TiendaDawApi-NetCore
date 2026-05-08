@@ -33,6 +33,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Productos.Services;
 /// Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
 [TestFixture]
+[Category("Integration")]
 [NonParallelizable]
 public class ProductoServiceIntegrationTests
 {

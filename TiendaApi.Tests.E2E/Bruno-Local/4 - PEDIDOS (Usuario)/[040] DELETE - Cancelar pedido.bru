@@ -1,0 +1,30 @@
+meta {
+  name: [040] DELETE - Cancelar pedido
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/api/pedidos/me/{{pedidoId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Pedidos My Delete - Status 204 No Content", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Cancela pedido propio. Retorna 204.
+}

@@ -6,8 +6,6 @@ using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Models;
-using TiendaApi.Api.Services.Pedidos;
-using TiendaApi.Api.Services.Storage;
 using TiendaApi.Api.Services.Users;
 using TiendaApi.Api.Helpers.Pagination;
 
@@ -320,5 +318,39 @@ public class UsersController(
             NotFoundError => NotFound(new { message = error.Message }),
             _ => StatusCode(500, new { message = error.Message })
         };
+    }
+
+    /// <summary>
+    /// Actualiza el avatar del usuario autenticado.
+    /// </summary>
+    /// <param name="dto">URL del nuevo avatar.</param>
+    /// <returns>200 OK con el usuario actualizado, o 400/404 si hay errores.</returns>
+    [HttpPatch("me/profile/avatar")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateMyAvatar([FromBody] AvatarUpdateDto dto)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        logger.LogInformation("Usuario {UserId} actualizando su avatar", userId);
+
+        var resultado = await service.UpdateAvatarAsync(userId, dto.AvatarUrl);
+
+        return resultado.Match(
+            onSuccess: usuario => Ok(usuario),
+            onFailure: error => error switch
+            {
+                NotFoundError => NotFound(new { message = error.Message }),
+                ValidationError => BadRequest(new { message = error.Message }),
+                _ => StatusCode(500, new { message = error.Message })
+            }
+        );
     }
 }

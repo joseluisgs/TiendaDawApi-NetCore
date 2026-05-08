@@ -1,0 +1,42 @@
+meta {
+  name: [071] MUTATION - Eliminar
+  type: graphql
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:graphql {
+  mutation($id: Long!) { deleteProducto(id: $id) }
+}
+
+body:graphql:vars {
+  {"id": {{graphqlProductoId}}}
+}
+
+script:post-response {
+  test("GraphQL DeleteProducto - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("GraphQL DeleteProducto - Returns true", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.data.deleteProducto).to.equal(true);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GraphQL: Elimina producto (requiere token ADMIN)
+}

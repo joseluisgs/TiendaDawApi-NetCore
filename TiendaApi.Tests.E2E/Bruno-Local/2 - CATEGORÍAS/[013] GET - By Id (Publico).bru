@@ -1,0 +1,32 @@
+meta {
+  name: [013] GET By Id (Público)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/categorias/1
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Categorias GetById - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Categorias GetById - Returns categoria data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.id).to.be.a('number');
+      expect(jsonData.nombre).to.be.a('string');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene categoría por ID. Endpoint público.
+}

@@ -1,0 +1,30 @@
+meta {
+  name: [061] GET Image - No existe
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/storage/uploads/productos/no-existe.png
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Storage Image NotFound - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+  
+  test("Storage Image NotFound - Has error message", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.error).to.equal('Archivo no encontrado');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Imagen inexistente debe retornar 404
+}

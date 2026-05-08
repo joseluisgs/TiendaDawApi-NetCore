@@ -1,0 +1,40 @@
+meta {
+  name: [039] PUT - Error no es mío
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/pedidos/me/999999999999999999999999
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {
+      "direccionEnvio": "Test"
+  }
+}
+
+script:post-response {
+  test("Pedidos My Update Forbidden - Status 403 Forbidden", function () {
+      expect(res.getStatus()).to.equal(403);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Actualizar pedido de otro usuario debe retornar 403
+}

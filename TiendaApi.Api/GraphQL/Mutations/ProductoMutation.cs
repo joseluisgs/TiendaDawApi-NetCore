@@ -24,7 +24,7 @@ public class ProductoMutation
     /// <param name="service">Servicio de productos.</param>
     /// <returns>Producto creado o error.</returns>
     [Authorize(policy: "AdminOnly")]
-    public async Task<Result<ProductoDto, DomainError>> CreateProducto(
+    public async Task<ProductoDto?> CreateProducto(
         CreateProductoInput input,
         [Service] IProductoService service)
     {
@@ -37,7 +37,8 @@ public class ProductoMutation
             Imagen = input.Imagen,
             CategoriaId = input.CategoriaId
         };
-        return await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto);
+        return result.IsSuccess ? result.Value : null;
     }
 
     /// <summary>Actualiza un producto existente.</summary>
@@ -46,14 +47,14 @@ public class ProductoMutation
     /// <param name="service">Servicio de productos.</param>
     /// <returns>Producto actualizado o error.</returns>
     [Authorize(policy: "AdminOnly")]
-    public async Task<Result<ProductoDto, DomainError>> UpdateProducto(
+    public async Task<ProductoDto?> UpdateProducto(
         long id,
         UpdateProductoInput input,
         [Service] IProductoService service)
     {
         var existingResult = await service.FindByIdAsync(id);
         if (existingResult.IsFailure)
-            return existingResult;
+            return null;
 
         var dto = new ProductoRequestDto
         {
@@ -64,7 +65,8 @@ public class ProductoMutation
             Imagen = input.Imagen ?? existingResult.Value.Imagen,
             CategoriaId = input.CategoriaId ?? existingResult.Value.CategoriaId
         };
-        return await service.UpdateAsync(id, dto);
+        var result = await service.UpdateAsync(id, dto);
+        return result.IsSuccess ? result.Value : null;
     }
 
     /// <summary>Elimina un producto (soft delete).</summary>
@@ -72,7 +74,11 @@ public class ProductoMutation
     /// <param name="service">Servicio de productos.</param>
     /// <returns>Éxito o error.</returns>
     [Authorize(policy: "AdminOnly")]
-    public async Task<UnitResult<DomainError>> DeleteProducto(
+    public async Task<bool> DeleteProducto(
         long id,
-        [Service] IProductoService service) => await service.DeleteAsync(id);
+        [Service] IProductoService service)
+    {
+        var result = await service.DeleteAsync(id);
+        return result.IsSuccess;
+    }
 }

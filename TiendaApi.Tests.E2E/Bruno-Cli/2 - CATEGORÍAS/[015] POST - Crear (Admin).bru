@@ -1,0 +1,53 @@
+meta {
+  name: [015] POST - Crear (Admin)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/categorias
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Electrónica Test",
+      "descripcion": "Categoría de prueba para E2E"
+  }
+}
+
+script:post-response {
+  test("Categorias Create - Status 201 Created", function () {
+      expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Categorias Create - Returns created categoria", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.id).to.be.a('number');
+      expect(jsonData.nombre).to.equal('Electrónica Test');
+      expect(jsonData.descripcion).to.equal('Categoría de prueba para E2E');
+  });
+  
+  // Guardar ID para siguientes tests
+  if (res.getStatus() === 201) {
+      const jsonData = res.getBody();
+      bru.setVar("categoriaId", jsonData.id.toString());
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Crea nueva categoría. Requiere token ADMIN.
+}

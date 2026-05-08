@@ -1,0 +1,36 @@
+meta {
+  name: [048] GET Mi Perfil
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/users/me/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Users MyProfile - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Users MyProfile - Returns user data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.username).to.equal(bru.getVar("userUsername"));
+      expect(jsonData.role).to.be.a('string');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene perfil del usuario autenticado.
+}

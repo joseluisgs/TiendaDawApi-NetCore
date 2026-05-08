@@ -14,6 +14,9 @@ public class Categoria : ITimestamped
     /// <summary>Nombre descriptivo de la categoría (3-100 caracteres, único).</summary>
     public string Nombre { get; set; } = string.Empty;
 
+    /// <summary>Descripción de la categoría.</summary>
+    public string? Descripcion { get; set; }
+
     /// <summary>Indica si la categoría está eliminada (soft-delete).</summary>
     public bool IsDeleted { get; set; }
 

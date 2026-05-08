@@ -1,0 +1,39 @@
+meta {
+  name: [031] PATCH - Subir imagen
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/productos/{{productoId}}/imagen
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:multipart-form {
+  image: @file(C:\Users\joseluisgs\Projects\Tienda\TiendaDawApi-NetCore\TiendaApi.Tests.E2E\Bruno-Local\assets\test-image.png)
+}
+
+script:post-response {
+  test("Productos UploadImage - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Productos UploadImage - Returns producto with imagenUrl", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.imagenUrl).to.not.be.empty;
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Sube imagen de producto. Requiere token ADMIN.
+}

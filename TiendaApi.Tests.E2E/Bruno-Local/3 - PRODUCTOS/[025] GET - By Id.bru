@@ -1,0 +1,35 @@
+meta {
+  name: [025] GET By Id (Público)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/productos/1
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Productos GetById - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Productos GetById - Returns producto data", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('object');
+      expect(jsonData.id).to.be.a('number');
+      expect(jsonData.nombre).to.be.a('string');
+      expect(jsonData.precio).to.be.a('number');
+      expect(jsonData.stock).to.be.a('number');
+      expect(jsonData.categoriaId).to.be.a('number');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Obtiene producto por ID. Endpoint público.
+}

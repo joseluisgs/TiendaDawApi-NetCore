@@ -34,6 +34,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 /// los tests funcionan correctamente con el driver nativo (a diferencia de EF Core).
 /// </summary>
 [TestFixture]
+[Category("Integration")]
 [NonParallelizable]
 public class PedidosNativeServiceIntegrationTests
 {

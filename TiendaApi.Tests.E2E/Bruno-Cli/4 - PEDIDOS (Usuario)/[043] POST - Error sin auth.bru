@@ -1,0 +1,54 @@
+meta {
+  name: [043] POST - Error sin auth
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/pedidos/me
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "destinatario": {
+          "nombreCompleto": "Test",
+          "email": "test@test.com",
+          "telefono": "+34123456789",
+          "direccion": {
+              "calle": "Calle Test",
+              "numero": "1",
+              "ciudad": "Test",
+              "provincia": "Test",
+              "pais": "Test",
+              "codigoPostal": "12345"
+          }
+      },
+      "items": [
+{
+              "productoId": 1,
+              "cantidad": 1,
+              "precioUnitario": 100
+          }
+      ]
+  }
+}
+
+script:post-response {
+  test("Pedidos My Create NoAuth - Status 401 Unauthorized", function () {
+      expect(res.getStatus()).to.equal(401);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Crear pedido sin auth debe retornar 401
+}

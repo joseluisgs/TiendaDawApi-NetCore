@@ -1,0 +1,29 @@
+meta {
+  name: [001] Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Health check - Status code is 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Health check - Response is OK", function () {
+      expect(JSON.stringify(res.getBody())).to.include("OK");
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Verifica que la API esté funcionando
+}

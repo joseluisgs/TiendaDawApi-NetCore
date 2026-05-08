@@ -1,8 +1,10 @@
 <Solution>
-  <SolutionName>ClientBlazor</SolutionName>
-  <SolutionItems>
-    <SolutionItem Path="ClientBlazor.Cliente/ClientBlazor.Cliente.csproj" />
-    <SolutionItem Path="ClientBlazor.Tests/ClientBlazor.Tests.csproj" />
-  </SolutionItems>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="ClientBlazor.Cliente/ClientBlazor.Cliente.csproj" />
+  <Project Path="ClientBlazor.Tests/ClientBlazor.Tests.csproj" />
   <Project Path="ClientBlazor.E2E/ClientBlazor.E2E.csproj" />
 </Solution>
