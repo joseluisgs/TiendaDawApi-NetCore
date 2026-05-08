@@ -582,7 +582,7 @@
           <div class="input-group">
             <label for="email">📧 Email</label>
             <span class="input-icon">📧</span>
-            <input type="email" id="email" placeholder="tu@email.com" value="admin@tienda.com">
+            <input type="text" id="email" placeholder="admin" value="admin">
           </div>
           <div class="input-group">
             <label for="password">🔑 Password</label>
@@ -594,10 +594,10 @@
           </button>
         </div>
         <div class="demo-users">
-          <div class="demo-user" onclick="fillDemo('admin@tienda.com', 'admin')">
+          <div class="demo-user" onclick="fillDemo('admin', 'admin')">
             👑 Admin<br><span class="role">ADMIN</span>
           </div>
-          <div class="demo-user" onclick="fillDemo('userdaw@tienda.com', 'userdaw')">
+          <div class="demo-user" onclick="fillDemo('userdaw', 'userdaw')">
             👤 User<br><span class="role">USER</span>
           </div>
         </div>
@@ -618,7 +618,7 @@
         <div class="hub-form">
           <div class="hub-group">
             <label for="hubUrl">📡 Hub URL:</label>
-            <input type="text" id="hubUrl" placeholder="http://localhost:5000/hubs/pedidos">
+            <input type="text" id="hubUrl" placeholder="http://localhost:5031/hubs/productos">
           </div>
           <button id="btnConnect" class="btn-connect" onclick="connectSignalR()">
             🔌 Conectar
@@ -639,6 +639,12 @@
           </div>
           <div class="sub-item" id="subProductoCreado">
             📦 OnProductoCreado
+          </div>
+          <div class="sub-item" id="subProductoActualizado">
+            🔄 OnProductoActualizado
+          </div>
+          <div class="sub-item" id="subProductoEliminado">
+            ❌ OnProductoEliminado
           </div>
           <div class="sub-item" id="subStockBajo">
             ⚠️ OnStockBajo
@@ -665,7 +671,7 @@ Conecta a un Hub y espera a que el servidor envíe eventos en tiempo real.</div>
     </div>
 
     <script>
-      const API_URL = 'http://localhost:5000';
+      const API_URL = 'http://localhost:5031';
       let connection = null;
       let reconnectAttempts = 0;
       const maxReconnectAttempts = 3;
@@ -695,7 +701,7 @@ Conecta a un Hub y espera a que el servidor envíe eventos en tiempo real.</div>
           const response = await fetch(`${API_URL}/api/v1/auth/signin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ username: email, password })
           });
 
           const data = await response.json();
@@ -738,10 +744,13 @@ Conecta a un Hub y espera a que el servidor envíe eventos en tiempo real.</div>
           btnConnect.disabled = true;
 
           // Crear conexión SignalR con accessTokenFactory
+          const options = {};
+          if (token) {
+            options.accessTokenFactory = () => token;
+          }
+          
           connection = new signalR.HubConnectionBuilder()
-            .withUrl(hubUrl, {
-              accessTokenFactory: () => token  // ← Aquí se pasa el token
-            })
+            .withUrl(hubUrl, options)
             .withAutomaticReconnect([0, 1000, 5000, 10000])
             .configureLogging(signalR.LogLevel.Information)
             .build();
@@ -764,6 +773,16 @@ Conecta a un Hub y espera a que el servidor envíe eventos en tiempo real.</div>
 
           connection.on('ProductoCreado', (data) => {
             addMessage('📦 PRODUCTO_CREADO', JSON.stringify(data, null, 2), 'received');
+            markSubActive('subProductoCreado');
+          });
+
+          connection.on('ProductoActualizado', (data) => {
+            addMessage('🔄 PRODUCTO_ACTUALIZADO', JSON.stringify(data, null, 2), 'received');
+            markSubActive('subProductoCreado');
+          });
+
+          connection.on('ProductoEliminado', (data) => {
+            addMessage('❌ PRODUCTO_ELIMINADO', JSON.stringify(data, null, 2), 'received');
             markSubActive('subProductoCreado');
           });
 
@@ -859,7 +878,7 @@ Conecta a un Hub y espera a que el servidor envíe eventos en tiempo real.</div>
       }
 
       // Inicializar URL por defecto
-      document.getElementById('hubUrl').value = 'http://localhost:5000/hubs/pedidos';
+      document.getElementById('hubUrl').value = 'http://localhost:5031/hubs/productos';
     </script>
   </body>
 </html>
