@@ -35,8 +35,8 @@ public static class ControllersConfig
     {
         Log.Information("✓ Configurando FluentValidation...");
         return services
-            .AddValidatorsFromAssemblyContaining<Program>()
-            .AddFluentValidationAutoValidation()
-            .AddFluentValidationClientsideAdapters();
+            .AddValidatorsFromAssemblyContaining<Program>()  // Busca validadores en el ensamblado
+            .AddFluentValidationAutoValidation()            // Auto-evalúa en cada request (ahorra validación manual en servicio)
+            .AddFluentValidationClientsideAdapters();         // Genera scripts JS para cliente (opcional para REST)
     }
 }
