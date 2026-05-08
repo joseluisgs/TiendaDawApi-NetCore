@@ -145,6 +145,14 @@ namespace TiendaApi.Api.Services.Productos;
     /// Crear un nuevo producto.
     /// Devuelve: Result.Success(ProductoDto) | Result.Failure(Validation/NotFound)
     /// </summary>
+    /// <remarks>
+    /// NOTA PARA EL ALUMNO: Esta validación manual es OPTATIVA.
+    /// Con AddFluentValidationAutoValidation() en el pipeline, la validación
+    /// se ejecuta automáticamente ANTES de llegar al controller (respuesta 400 automática).
+    /// Si se usa validación automática, esta llamada puede supprimirse y el service
+    /// asumir que el DTO ya fue validado. Se deja aquí con fines didácticos para
+    /// mostrar cómo validar manualmente en la capa de servicio cuando se requiera.
+    /// </remarks>
     public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
     {
         logger.LogInformation("Creando producto: {Nombre}", dto.Nombre);
@@ -175,6 +183,10 @@ namespace TiendaApi.Api.Services.Productos;
     /// Actualizar un producto existente.
     /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
+    /// <remarks>
+    /// NOTA PARA EL ALUMNO: Esta validación manual es OPTATIVA.
+    /// Ver comentario en CreateAsync para más detalles.
+    /// </remarks>
     public async Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto)
     {
         logger.LogInformation("Actualizando producto con ID: {Id}", id);

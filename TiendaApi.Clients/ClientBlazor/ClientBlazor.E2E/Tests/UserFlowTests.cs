@@ -15,7 +15,7 @@ public class UserFlowTests : PageTest
         return new BrowserNewContextOptions
         {
             // URL base donde corre la app
-            BaseURL = "http://localhost:5400",
+            BaseURL = "http://localhost:5234",
             
             // Grabación de video
             RecordVideoDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, "videos"),
@@ -187,7 +187,6 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    [Ignore("El servidor devuelve 500 en la operación PUT de productos, fuera del alcance del cliente")]
     public async Task Admin_Should_Perform_Full_Rest_Crud_Cycle()
     {
         // 1. Login como Admin (necesario para POST/PUT/DELETE)
@@ -202,32 +201,28 @@ public class UserFlowTests : PageTest
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // 3. CREATE
-        // Seleccionamos la operación POST (segundo select de la página)
         await Page.Locator(".form-group select").Nth(1).SelectOptionAsync("post");
         await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
         
-        // Esperamos que aparezca el ID en el área de respuesta
         var responseArea = Page.Locator(".response-display");
         await Expect(responseArea).ToContainTextAsync("\"Id\":", new() { Timeout = 10000 });
         
-        // Obtener el ID del producto creado
         var responseText = await responseArea.Locator("pre").InnerTextAsync();
         var idMatch = System.Text.RegularExpressions.Regex.Match(responseText, @"""Id"":\s*(\d+)");
         Assert.That(idMatch.Success, Is.True, "No se encontró el ID en la respuesta");
         var productId = idMatch.Groups[1].Value;
 
-        // 4. UPDATE
-        // El select de la UI solo tiene 'put', no 'patch'
+        // 4. UPDATE (Enviando JSON completo para evitar error 500 de validación)
         await Page.Locator(".form-group select").Nth(1).SelectOptionAsync("put");
         await Page.Locator("input[type='number']").FillAsync(productId);
         
-        await Task.Delay(1000); // Esperar a que Blazor genere el JSON de ejemplo
+        // Modificamos el JSON del body para que sea completo y válido
+        var validJson = "{\n  \"Nombre\": \"Producto E2E Actualizado\",\n  \"Descripcion\": \"Actualizado desde Playwright\",\n  \"Precio\": 150.0,\n  \"Stock\": 25,\n  \"CategoriaId\": 1\n}";
+        await Page.Locator("textarea").FillAsync(validJson);
+        
         await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
         
-        // Verificamos que la respuesta contenga el nombre actualizado o al menos no sea un error fatal
-        await Expect(responseArea).ToContainTextAsync("\"Nombre\":", new() { Timeout = 10000 });
-        var updateText = await responseArea.InnerTextAsync();
-        Assert.That(updateText, Does.Not.Contain("ERROR"), $"Error en PUT: {updateText}");
+        await Expect(responseArea).ToContainTextAsync("\"Nombre\": \"Producto E2E Actualizado\"", new() { Timeout = 10000 });
 
         // 5. DELETE
         await Page.Locator(".form-group select").Nth(1).SelectOptionAsync("delete");
@@ -235,6 +230,87 @@ public class UserFlowTests : PageTest
         await Expect(responseArea).ToContainTextAsync("null", new() { Timeout = 10000 });
 
         await Page.ScreenshotAsync(new() { Path = "screenshots/rest-crud-success.png" });
+    }
+
+    [Test]
+    public async Task Admin_Should_Perform_GraphQL_Mutation_Successfully()
+    {
+        // 1. Login como Admin
+        await Page.GotoAsync("/");
+        await Page.TestId("email-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("login-btn").ClickAsync();
+
+        // 2. Ir a GraphQL
+        await Page.GotoAsync("/graphql");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // 3. Cambiar a Mutation
+        await Page.Locator(".form-group").Filter(new() { HasText = "Tipo" }).Locator("select").SelectOptionAsync("mutation");
+        
+        // 4. Seleccionar "createProducto"
+        await Page.Locator(".form-group").Filter(new() { HasText = "Operacion" }).Locator("select").SelectOptionAsync("createProducto");
+        
+        // 5. Ejecutar
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
+
+        // 6. Verificar respuesta (JSON con el nuevo producto)
+        var responseArea = Page.Locator(".response-section").Nth(0).Locator(".response-display");
+        await Expect(responseArea).ToContainTextAsync("\"id\":", new() { Timeout = 10000 });
+        await Expect(responseArea).ToContainTextAsync("\"createProducto\":", new() { Timeout = 10000 });
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/graphql-mutation-success.png" });
+    }
+
+    [Test]
+    public async Task Admin_Should_Connect_To_Pedidos_SignalR_Hub()
+    {
+        // 1. Login como Admin
+        await Page.GotoAsync("/");
+        await Page.TestId("email-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("login-btn").ClickAsync();
+
+        // 2. Ir a SignalR
+        await Page.GotoAsync("/signalr");
+        
+        // 3. Seleccionar Hub de Pedidos
+        await Page.Locator("select").Nth(0).SelectOptionAsync("pedidos");
+        
+        // 4. Conectar
+        await Page.GetByRole(AriaRole.Button, new() { Name = "▶️ Conectar Hub" }).ClickAsync();
+
+        // 5. Verificar conexión exitosa
+        var statusLocator = Page.Locator(".response-display").Filter(new() { HasText = "Estado:" });
+        await Expect(statusLocator).ToContainTextAsync("🟢 Hub Conectado", new() { Timeout = 10000 });
+        await Expect(statusLocator).ToContainTextAsync("TIPO: PEDIDOS");
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/signalr-pedidos-admin.png" });
+    }
+
+    [Test]
+    public async Task Rest_Page_Invalid_Id_Should_Show_NotFound_Error()
+    {
+        // 1. Ir a REST
+        await Page.GotoAsync("/rest");
+        
+        // 2. Operación GET por ID (ya seleccionada por defecto normalmente, pero aseguramos)
+        await Page.Locator(".form-group").Filter(new() { HasText = "Operación" }).Locator("select").SelectOptionAsync("get-by-id");
+
+        // 3. ID inexistente
+        await Page.Locator("input[type='number']").FillAsync("999999");
+
+        // 4. Ejecutar
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
+
+        // 5. Verificar error
+        var responseArea = Page.Locator(".response-display");
+        await Expect(responseArea).ToContainTextAsync("ERROR: Producto con ID 999999 no encontrado", new() { Timeout = 10000 });
+        
+        // Verificar que salió notificación de advertencia/error
+        await Expect(Page.Locator(".toast-container")).ToBeVisibleAsync();
+
+        await Page.ScreenshotAsync(new() { Path = "screenshots/rest-notfound-error.png" });
     }
 
     [Test]
