@@ -1,21 +1,21 @@
-# 22. Mapeadores: AutoMapper vs Funciones de Extensión
+# 14. Mapeadores: AutoMapper vs Funciones de Extensión
 
 ## Índice
 
-[22. Mapeadores: AutoMapper vs Funciones de Extensión](#22-mapeadores-automapper-vs-funciones-de-extensión)
-  - [22.1. ¿Por Qué Usar Mapeadores?](#221-por-qué-usar-mapeadores)
-  - [22.2. AutoMapper](#222-automapper)
-  - [22.3. Funciones de Extensión (Alternativa)](#223-funciones-de-extensión-alternativa)
-  - [22.4. Comparación AutoMapper vs Extensiones](#224-comparación-automapper-vs-extensiones)
-  - [22.5. Benchmarks de Rendimiento](#225-benchmarks-de-rendimiento)
-  - [22.6. Cuándo Usar Cada Enfoque](#226-cuándo-usar-cada-enfoque)
-  - [22.7. Patrón Híbrido](#227-patrón-híbrido)
-  - [22.8. Errores Comunes](#228-errores-comunes)
-  - [22.9. Resumen](#229-resumen)
+[14. Mapeadores: AutoMapper vs Funciones de Extensión](#14-mapeadores-automapper-vs-funciones-de-extensión)
+  - [14.1. ¿Por Qué Usar Mapeadores?](#141-por-qué-usar-mapeadores)
+  - [14.2. AutoMapper](#142-automapper)
+  - [14.3. Funciones de Extensión (Alternativa)](#143-funciones-de-extensión-alternativa)
+  - [14.4. Comparación AutoMapper vs Extensiones](#144-comparación-automapper-vs-extensiones)
+  - [14.5. Benchmarks de Rendimiento](#145-benchmarks-de-rendimiento)
+  - [14.6. Cuándo Usar Cada Enfoque](#146-cuándo-usar-cada-enfoque)
+  - [14.7. Patrón Híbrido](#147-patrón-híbrido)
+  - [14.8. Errores Comunes](#148-errores-comunes)
+  - [14.9. Resumen](#149-resumen)
 
 ---
 
-## 22.1. ¿Por Qué Usar Mapeadores?
+## 14.1. ¿Por Qué Usar Mapeadores?
 
 En arquitecturas limpias, las **entidades** (modelos de dominio) y los **DTOs** (Data Transfer Objects) suelen tener estructuras diferentes. Los mapeadores facilitan la conversión entre ambos sin duplicar lógica.
 
@@ -55,7 +55,7 @@ flowchart LR
 
 ---
 
-## 22.2. AutoMapper
+## 14.2. AutoMapper
 
 ### Instalación
 
@@ -194,7 +194,7 @@ public class ProductoService
 
 ---
 
-## 22.3. Funciones de Extensión (Alternativa)
+## 14.3. Funciones de Extensión (Alternativa)
 
 ### Implementación con Extensiones
 
@@ -291,7 +291,7 @@ public static class PedidoExtensions
 
 ---
 
-## 22.4. Comparación AutoMapper vs Extensiones
+## 14.4. Comparación AutoMapper vs Extensiones
 
 ```mermaid
 flowchart TD
@@ -365,7 +365,7 @@ flowchart TD
 
 ---
 
-## 22.5. Benchmarks de Rendimiento
+## 14.5. Benchmarks de Rendimiento
 
 ```csharp
 // Benchmark comparativo (ejemplo de resultado típico)
@@ -421,7 +421,7 @@ public class MappersBenchmarks
 
 ---
 
-## 22.6. Cuándo Usar Cada Enfoque
+## 14.6. Cuándo Usar Cada Enfoque
 
 ```mermaid
 flowchart TD
@@ -450,7 +450,7 @@ flowchart TD
 
 ---
 
-## 22.7. Patrón Híbrido
+## 14.7. Patrón Híbrido
 
 Combinar ambos enfoques según necesidad:
 
@@ -496,7 +496,7 @@ public static class ProductoExtensions
 
 ---
 
-## 22.8. Errores Comunes
+## 14.8. Errores Comunes
 
 ### AutoMapper: Miembro no mapeado
 
@@ -521,7 +521,7 @@ public static string GetCategoriaNombre(this Producto producto)
 
 ---
 
-## 22.9. Resumen
+## 14.9. Resumen
 
 ### Arquitectura de Mapeo
 

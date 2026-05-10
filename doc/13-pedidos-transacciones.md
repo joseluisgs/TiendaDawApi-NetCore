@@ -1,21 +1,21 @@
-# 15. Pedidos: Transacciones y Control de Concurrencia
+# 13. Pedidos: Transacciones y Control de Concurrencia
 
 ## Índice
 
-[15. Pedidos: Transacciones y Control de Concurrencia](#15-pedidos-transacciones-y-control-de-concurrencia)
-  - [15.1. El Problema de la Concurrencia en Pedidos](#151-el-problema-de-la-concurrencia-en-pedidos)
-  - [15.2. Transacciones con EF Core](#152-transacciones-con-ef-core)
-  - [15.3. Enfoque Optimista](#153-enfoque-optimista)
-  - [15.4. Enfoque Pesimista](#154-enfoque-pesimista)
-  - [15.5. Enfoque Mixto (Usado en el Proyecto)](#155-enfoque-mixto-usado-en-el-proyecto)
-  - [15.6. Comparación de Enfoques](#156-comparación-de-enfoques)
-  - [15.7. Errores de Dominio](#157-errores-de-dominio)
-  - [15.8. Controller](#158-controller)
-  - [15.9. Resumen](#159-resumen)
+[13. Pedidos: Transacciones y Control de Concurrencia](#13-pedidos-transacciones-y-control-de-concurrencia)
+  - [13.1. El Problema de la Concurrencia en Pedidos](#131-el-problema-de-la-concurrencia-en-pedidos)
+  - [13.2. Transacciones con EF Core](#132-transacciones-con-ef-core)
+  - [13.3. Enfoque Optimista](#133-enfoque-optimista)
+  - [13.4. Enfoque Pesimista](#134-enfoque-pesimista)
+  - [13.5. Enfoque Mixto (Usado en el Proyecto)](#135-enfoque-mixto-usado-en-el-proyecto)
+  - [13.6. Comparación de Enfoques](#136-comparación-de-enfoques)
+  - [13.7. Errores de Dominio](#137-errores-de-dominio)
+  - [13.8. Controller](#138-controller)
+  - [13.9. Resumen](#139-resumen)
 
 ---
 
-## 15.1. El Problema de la Concurrencia en Pedidos
+## 13.1. El Problema de la Concurrencia en Pedidos
 
 Cuando múltiples usuarios intentan comprar el mismo producto simultáneamente, surgen problemas de concurrencia que pueden llevar a inconsistencias en el inventario. Sin mecanismos adecuados, podríamos vender más productos de los que realmente tenemos en stock.
 
@@ -61,7 +61,7 @@ El resultado es que vendemos 2 productos cuando solo teníamos 1 en stock.
 
 ---
 
-## 15.2. Transacciones con EF Core
+## 13.2. Transacciones con EF Core
 
 ### Conceptos de Transacciones
 
@@ -187,7 +187,7 @@ public class PedidoService
 
 ---
 
-## 15.3. Enfoque Optimista
+## 13.3. Enfoque Optimista
 
 El **control de concurrencia optimista** asume que los conflictos son raros y permite que las transacciones procedan sin bloqueos. Los cambios se validan al final, y si otro proceso ha modificado los datos, se rechaza la transacción.
 
@@ -399,7 +399,7 @@ public class PedidoService
 
 ---
 
-## 15.4. Enfoque Pesimista
+## 13.4. Enfoque Pesimista
 
 El **control de concurrencia pesimista** asume que los conflictos son frecuentes y utiliza bloqueos para prevenir que otros procesos accedan a los datos modificados. Los datos se bloquean al leerlos y se mantienen bloqueados hasta que la transacción termina.
 
@@ -574,7 +574,7 @@ public async Task<Result<Pedido, Error>> CreatePedidoSerializableAsync(
 
 ---
 
-## 15.5. Enfoque Mixto (Usado en el Proyecto)
+## 13.5. Enfoque Mixto (Usado en el Proyecto)
 
 El **enfoque mixto** combina las ventajas de ambos métodos: usa operaciones atómicas para el decremento de stock (pesimista) y optimistic locking para la validación general. Este es el enfoque recomendado para sistemas de inventario.
 
@@ -785,7 +785,7 @@ sequenceDiagram
 
 ---
 
-## 15.6. Comparación de Enfoques
+## 13.6. Comparación de Enfoques
 
 ### Tabla Comparativa
 
@@ -830,7 +830,7 @@ flowchart TD
 
 ---
 
-## 15.7. Errores de Dominio
+## 13.7. Errores de Dominio
 
 ```csharp
 public static class Errors
@@ -861,7 +861,7 @@ public static class Errors
 
 ---
 
-## 15.8. Controller
+## 13.8. Controller
 
 ```csharp
 [ApiController]
@@ -932,7 +932,7 @@ public class PedidosController : ControllerBase
 
 ---
 
-## 15.9. Resumen
+## 13.9. Resumen
 
 ### Arquitectura de Concurrencia
 

@@ -1,19 +1,19 @@
-# 25. Optimización de Rendimiento
+# 27. Optimización de Rendimiento
 
 ## Índice
 
-[25. Optimización de Rendimiento](#25-optimización-de-rendimiento)
-  - [25.1. ¿Por qué Optimizar?](#251-por-qué-optimizar)
-  - [25.2. Optimización de Endpoints](#252-optimización-de-endpoints)
-  - [25.3. Optimización de Base de Datos](#253-optimización-de-base-de-datos)
-  - [25.4. Caching Avanzado](#254-caching-avanzado)
-  - [25.5. Optimización de Entity Framework Core](#255-optimización-de-entity-framework-core)
-  - [25.6. Benchmarking](#256-benchmarking)
-  - [25.7. Resumen y Buenas Prácticas](#257-resumen-y-buenas-prácticas)
+[27. Optimización de Rendimiento](#27-optimización-de-rendimiento)
+  - [27.1. ¿Por qué Optimizar?](#271-por-qué-optimizar)
+  - [27.2. Optimización de Endpoints](#272-optimización-de-endpoints)
+  - [27.3. Optimización de Base de Datos](#273-optimización-de-base-de-datos)
+  - [27.4. Caching Avanzado](#274-caching-avanzado)
+  - [27.5. Optimización de Entity Framework Core](#275-optimización-de-entity-framework-core)
+  - [27.6. Benchmarking](#276-benchmarking)
+  - [27.7. Resumen y Buenas Prácticas](#277-resumen-y-buenas-prácticas)
 
 ---
 
-## 25.1. ¿Por qué Optimizar?
+## 27.1. ¿Por qué Optimizar?
 
 El rendimiento de una API afecta directamente la experiencia del usuario y los costos de infraestructura.
 
@@ -49,7 +49,7 @@ flowchart LR
 
 ---
 
-## 25.2. Optimización de Endpoints
+## 27.2. Optimización de Endpoints
 
 ### Response Compression
 
@@ -140,7 +140,7 @@ app.UseIpRateLimiting();
 
 ---
 
-## 25.3. Optimización de Base de Datos
+## 27.3. Optimización de Base de Datos
 
 ### Select N+1 Prevention
 
@@ -242,7 +242,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 ---
 
-## 25.4. Caching Avanzado
+## 27.4. Caching Avanzado
 
 ### Cache-Aside con Redis
 
@@ -403,7 +403,7 @@ public class MultiLevelCacheService
 
 ---
 
-## 25.5. Optimización de Entity Framework Core
+## 27.5. Optimización de Entity Framework Core
 
 ### Compiled Queries
 
@@ -465,7 +465,7 @@ public class ProductoRepository
 
 ---
 
-## 25.6. Benchmarking
+## 27.6. Benchmarking
 
 ### Instalación
 
@@ -554,7 +554,7 @@ public class RepositoryBenchmark
 
 ---
 
-## 25.7. Resumen y Buenas Prácticas
+## 27.7. Resumen y Buenas Prácticas
 
 ### Checklist de Optimización
 

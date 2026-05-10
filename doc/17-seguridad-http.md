@@ -1,21 +1,21 @@
-# 27. Seguridad HTTP: HSTS, HTTPS y Security Headers
+# 17. Seguridad HTTP: HSTS, HTTPS y Security Headers
 
 ## Índice
 
-[27. Seguridad HTTP](#27-seguridad-http)
-  - [27.1. Por Qué HTTPS es Obligatorio](#271-por-qué-https-es-obligatorio)
-  - [27.2. HTTP Strict Transport Security (HSTS)](#272-http-strict-transport-security-hsts)
-  - [27.3. Redirección HTTP a HTTPS](#273-redirección-http-a-https)
-  - [27.4. Security Headers](#274-security-headers)
-  - [27.5. Configuración en Desarrollo vs Producción](#275-configuración-en-desarrollo-vs-producción)
-  - [27.6. Implementación en Program.cs](#276-implementación-en-programcs)
-  - [27.7. Verificación de Seguridad](#277-verificación-de-seguridad)
-  - [27.8. Resumen y Buenas Prácticas](#278-resumen-y-buenas-prácticas)
-  - [27.9. Rate Limiting](#279-rate-limiting)
+[17. Seguridad HTTP](#17-seguridad-http)
+  - [17.1. Por Qué HTTPS es Obligatorio](#171-por-qué-https-es-obligatorio)
+  - [17.2. HTTP Strict Transport Security (HSTS)](#172-http-strict-transport-security-hsts)
+  - [17.3. Redirección HTTP a HTTPS](#173-redirección-http-a-https)
+  - [17.4. Security Headers](#174-security-headers)
+  - [17.5. Configuración en Desarrollo vs Producción](#175-configuración-en-desarrollo-vs-producción)
+  - [17.6. Implementación en Program.cs](#176-implementación-en-programcs)
+  - [17.7. Verificación de Seguridad](#177-verificación-de-seguridad)
+  - [17.8. Resumen y Buenas Prácticas](#178-resumen-y-buenas-prácticas)
+  - [17.9. Rate Limiting](#179-rate-limiting)
 
 ---
 
-## 27.1. Por qué HTTPS es Obligatorio
+## 17.1. Por qué HTTPS es Obligatorio
 
 ### El Problema con HTTP
 
@@ -73,7 +73,7 @@ flowchart LR
 
 ---
 
-## 27.2. HTTP Strict Transport Security (HSTS)
+## 17.2. HTTP Strict Transport Security (HSTS)
 
 ### ¿Qué es HSTS?
 
@@ -128,7 +128,7 @@ Los sitios con `preload=true` pueden ser incluidos en las listas de preload de n
 
 ---
 
-## 27.3. Redirección HTTP a HTTPS
+## 17.3. Redirección HTTP a HTTPS
 
 ### Redirección 301 (Permanente)
 
@@ -168,7 +168,7 @@ builder.Services.AddHttpsRedirection(options =>
 
 ---
 
-## 27.4. Security Headers
+## 17.4. Security Headers
 
 ### ¿Por Qué Security Headers?
 
@@ -235,7 +235,7 @@ public static class SecurityHeadersMiddlewareExtensions
 }
 ```
 
-### 27.4.1. Vulnerabilidades y Ataques Comunes
+### 17.4.1. Vulnerabilidades y Ataques Comunes
 
 A continuación se explican las principales vulnerabilidades que los security headers mitigan:
 
@@ -457,7 +457,7 @@ graph TD
 
 ---
 
-## 27.5. Configuración en Desarrollo vs Producción
+## 17.5. Configuración en Desarrollo vs Producción
 
 ### Estrategia de Configuración
 
@@ -511,7 +511,7 @@ else
 
 ---
 
-## 27.6. Implementación en Program.cs
+## 17.6. Implementación en Program.cs
 
 ### Configuración Completa
 
@@ -645,7 +645,7 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
 
 ---
 
-## 27.7. Verificación de Seguridad
+## 17.7. Verificación de Seguridad
 
 ### Verificar Headers con curl
 
@@ -703,7 +703,7 @@ graph TD
 
 ---
 
-## 27.8. Resumen y Buenas Prácticas
+## 17.8. Resumen y Buenas Prácticas
 
 ### Configuración Recomendada
 
@@ -764,7 +764,7 @@ graph LR
     style G fill:#27ae60,color:#fff
 ```
 
-## 27.9. Rate Limiting (Protección contra Abuso)
+## 17.9. Rate Limiting (Protección contra Abuso)
 
 ### ¿Qué es Rate Limiting?
 

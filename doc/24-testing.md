@@ -1,26 +1,26 @@
-# 21. Testing con NUnit
+# 24. Testing con NUnit
 
 ## Índice
 
-[21. Testing con NUnit](#21-testing-con-nunit)
-  - [21.1. ¿Qué es Testing?](#211-qué-es-testing)
-  - [21.2. Tipos de Tests](#212-tipos-de-tests)
-  - [21.3. Frameworks de Testing en .NET](#213-frameworks-de-testing-en-net)
-  - [21.4. Estructura del Proyecto de Tests](#214-estructura-del-proyecto-de-tests)
-  - [21.5. Tests en Paralelo vs Secuenciales](#215-tests-en-paralelo-vs-secuenciales)
-  - [21.6. TestContainers](#216-testcontainers)
-  - [21.7. Anatomy de un Test Unitario](#217-anatomy-de-un-test-unitario)
-  - [21.8. NUnit Basics](#218-nunit-basics)
-  - [21.9. FluentAssertions](#219-fluentassertions)
-  - [21.10. Moq - Creando Mocks](#2110-moq---creando-mocks)
-  - [21.11. Tests de Controladores](#2111-tests-de-controladores)
-  - [21.12. Resumen y Buenas Prácticas](#2112-resumen-y-buenas-prácticas)
-  - [21.13. Testing E2E con Postman y Newman](#2113-testing-e2e-con-postman-y-newman)
-  - [21.14. Testing E2E con Bruno CLI](#2114-testing-e2e-con-bruno-cli)
+[24. Testing con NUnit](#24-testing-con-nunit)
+  - [24.1. ¿Qué es Testing?](#241-qué-es-testing)
+  - [24.2. Tipos de Tests](#242-tipos-de-tests)
+  - [24.3. Frameworks de Testing en .NET](#243-frameworks-de-testing-en-net)
+  - [24.4. Estructura del Proyecto de Tests](#244-estructura-del-proyecto-de-tests)
+  - [24.5. Tests en Paralelo vs Secuenciales](#245-tests-en-paralelo-vs-secuenciales)
+  - [24.6. TestContainers](#246-testcontainers)
+  - [24.7. Anatomy de un Test Unitario](#247-anatomy-de-un-test-unitario)
+  - [24.8. NUnit Basics](#248-nunit-basics)
+  - [24.9. FluentAssertions](#249-fluentassertions)
+  - [24.10. Moq - Creando Mocks](#2410-moq---creando-mocks)
+  - [24.11. Tests de Controladores](#2411-tests-de-controladores)
+  - [24.12. Resumen y Buenas Prácticas](#2412-resumen-y-buenas-prácticas)
+  - [24.13. Testing E2E con Postman y Newman](#2413-testing-e2e-con-postman-y-newman)
+  - [24.14. Testing E2E con Bruno CLI](#2414-testing-e2e-con-bruno-cli)
 
 ---
 
-## 21.1. ¿Qué es Testing?
+## 24.1. ¿Qué es Testing?
 
 **Testing** es el proceso de verificar que el código funciona correctamente. En lugar de esperar a que los usuarios encuentren errores, los tests automatizados detectan problemas antes de llegar a producción.
 
@@ -51,7 +51,7 @@ flowchart LR
 
 ---
 
-## 21.2. Tipos de Tests
+## 24.2. Tipos de Tests
 
 No todos los tests son iguales. Cada tipo tiene un propósito diferente:
 
@@ -99,7 +99,7 @@ Un test unitario verifica que una **única unidad** de código funciona correcta
 
 ---
 
-## 21.3. Frameworks de Testing en .NET
+## 24.3. Frameworks de Testing en .NET
 
 .NET tiene tres frameworks principales de testing:
 
@@ -123,7 +123,7 @@ En este proyecto usamos **NUnit** por su sintaxis clara y atributos descriptivos
 
 ---
 
-## 21.4. Estructura del Proyecto de Tests
+## 24.4. Estructura del Proyecto de Tests
 
 ```
 TiendaApi.Tests/
@@ -192,7 +192,7 @@ TiendaApi.Tests/
 
 ---
 
-## 21.5. Tests en Paralelo vs Secuenciales
+## 24.5. Tests en Paralelo vs Secuenciales
 
 NUnit puede ejecutar tests en paralelo para acelerar el tiempo de ejecución.
 
@@ -329,7 +329,7 @@ public class SequentialIntegrationTests
 
 ---
 
-## 21.6. TestContainers
+## 24.6. TestContainers
 
 **TestContainers** es una librería que permite crear contenedores Docker durante los tests de integración. Esto proporciona bases de datos reales y otros servicios en entornos aislados.
 
@@ -648,7 +648,7 @@ public class GlobalTestFixture
 
 ---
 
-## 21.7. Anatomy de un Test Unitario
+## 24.7. Anatomy de un Test Unitario
 
 Un test unitario sigue el patrón **Arrange-Act-Assert**:
 
@@ -731,7 +731,7 @@ flowchart TD
 
 ---
 
-## 21.8. NUnit Basics
+## 24.8. NUnit Basics
 
 ### Atributos Principales
 
@@ -838,7 +838,7 @@ public class ProductoServiceTests
 
 ---
 
-## 21.9. FluentAssertions
+## 24.9. FluentAssertions
 
 **FluentAssertions** permite escribir assertions de forma más legible y con mensajes de error claros.
 
@@ -930,7 +930,7 @@ public class FluentAssertionsExamples
 
 ---
 
-## 21.10. Moq - Creando Mocks
+## 24.10. Moq - Creando Mocks
 
 **Moq** es una librería que permite crear objetos falsos (mocks) para aislar el código bajo test.
 
@@ -1076,7 +1076,7 @@ public class MoqExamples
 
 ---
 
-## 21.11. Tests de Controladores
+## 24.11. Tests de Controladores
 
 Los tests de controladores verifican que los endpoints de la API funcionan correctamente usando `HttpClient` para simular requests.
 
@@ -1547,7 +1547,7 @@ public class ProductosControllerTests
 
 ---
 
-## 21.12. Resumen y Buenas Prácticas
+## 24.12. Resumen y Buenas Prácticas
 
 ### Estructura de un Buen Test
 
@@ -1661,7 +1661,7 @@ Con testing dominado, tienes todas las herramientas para crear APIs robustas en 
 
 ---
 
-## 21.13. Testing E2E con Postman y Newman
+## 24.13. Testing E2E con Postman y Newman
 
 Los tests **End-to-End (E2E)** verifican que la API completa funciona correctamente desde la perspectiva del cliente, incluyendo autenticación, validación y flujos de negocio completos.
 
@@ -2300,7 +2300,7 @@ newman run collection.json \
 
 ---
 
-## 21.14. Testing E2E con Bruno CLI
+## 24.14. Testing E2E con Bruno CLI
 
 **Bruno** es una alternativa open source a Postman que permite crear y ejecutar tests de API desde archivos de texto plano (`.bru`), ideal para control de versiones y CI/CD.
 

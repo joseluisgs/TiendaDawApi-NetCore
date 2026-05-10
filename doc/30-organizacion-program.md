@@ -2,7 +2,7 @@
 
 ## Índice
 
-[30. Organización de Program.cs y Formas de Estructurar el Startup](#27-organización-de-programcs-y-formas-de-estructurar-el-startup)
+[30. Organización de Program.cs y Formas de Estructurar el Startup](#30-organización-de-programcs-y-formas-de-estructurar-el-startup)
   - [30.1. El Problema del Program.cs Monolítico](#301-el-problema-del-programcs-monolítico)
   - [30.2. Patrón de Extension Methods para Configuración](#302-patrón-de-extension-methods-para-configuración)
   - [30.3. Estructura de Carpetas: Infrastructures/](#303-estructura-de-carpetas-infrastructures)

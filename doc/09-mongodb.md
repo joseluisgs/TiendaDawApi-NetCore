@@ -1,21 +1,21 @@
-# 10. MongoDB con EF Core y Driver Nativo
+# 9. MongoDB con EF Core y Driver Nativo
 
 ## Índice
 
-[10. MongoDB con EF Core y Driver Nativo](#10-mongodb-con-ef-core-y-driver-nativo)
-  - [10.1. EF Core para MongoDB vs MongoDB Driver](#101-ef-core-para-mongodb-vs-mongodb-driver)
-  - [10.2. EF Core para MongoDB](#102-ef-core-para-mongodb)
-  - [10.3. MongoDB Driver Nativo](#103-mongodb-driver-nativo)
-  - [10.4. Repositorios con EF Core para MongoDB](#104-repositorios-con-ef-core-para-mongodb)
-  - [10.5. Repositorios con MongoDB Driver](#105-repositorios-con-mongodb-driver)
-  - [10.6. Aggregation Pipeline con MongoDB Driver](#106-aggregation-pipeline-con-mongodb-driver)
-  - [10.7. Seed de Datos en MongoDB](#107-seed-de-datos-en-mongodb)
-  - [10.8. Comparación: Cuándo Usar Cada Enfoque](#108-comparación-cuando-usar-cada-enfoque)
-  - [10.9. Resumen y Buenas Prácticas](#109-resumen-y-buenas-prácticas)
+[9. MongoDB con EF Core y Driver Nativo](#9-mongodb-con-ef-core-y-driver-nativo)
+  - [9.1. EF Core para MongoDB vs MongoDB Driver](#91-ef-core-para-mongodb-vs-mongodb-driver)
+  - [9.2. EF Core para MongoDB](#92-ef-core-para-mongodb)
+  - [9.3. MongoDB Driver Nativo](#93-mongodb-driver-nativo)
+  - [9.4. Repositorios con EF Core para MongoDB](#94-repositorios-con-ef-core-para-mongodb)
+  - [9.5. Repositorios con MongoDB Driver](#95-repositorios-con-mongodb-driver)
+  - [9.6. Aggregation Pipeline con MongoDB Driver](#96-aggregation-pipeline-con-mongodb-driver)
+  - [9.7. Seed de Datos en MongoDB](#97-seed-de-datos-en-mongodb)
+  - [9.8. Comparación: Cuándo Usar Cada Enfoque](#98-comparación-cuándo-usar-cada-enfoque)
+  - [9.9. Resumen y Buenas Prácticas](#99-resumen-y-buenas-prácticas)
 
 ---
 
-## 10.1. EF Core para MongoDB vs MongoDB Driver
+## 9.1. EF Core para MongoDB vs MongoDB Driver
 
 El proyecto TiendaApi usa ambos enfoques. EF Core para MongoDB proporciona una experiencia similar a PostgreSQL, mientras que el MongoDB Driver nativo ofrece más control para operaciones específicas.
 
@@ -54,7 +54,7 @@ flowchart TB
 
 ---
 
-## 10.2. EF Core para MongoDB
+## 9.2. EF Core para MongoDB
 
 EF Core para MongoDB permite usar el mismo patrón que PostgreSQL: DbContext, configuraciones Fluent API, y repositories con el mismo Result Pattern.
 
@@ -212,7 +212,7 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
 
 ---
 
-## 10.3. MongoDB Driver Nativo
+## 9.3. MongoDB Driver Nativo
 
 Para operaciones específicas o cuando necesitas más control, puedes usar el MongoDB Driver nativo con IMongoClient.
 
@@ -308,7 +308,7 @@ public class AuditLogDocument
 
 ---
 
-## 10.4. Repositorios con EF Core para MongoDB
+## 9.4. Repositorios con EF Core para MongoDB
 
 Los repositorios usan el mismo patrón que PostgreSQL, facilitando la consistencia en el código.
 
@@ -391,7 +391,7 @@ public class AuditLogRepository(
 
 ---
 
-## 10.5. Repositorios con MongoDB Driver
+## 9.5. Repositorios con MongoDB Driver
 
 Para operaciones que requieren el aggregation pipeline o mayor control:
 
@@ -474,7 +474,7 @@ public class AuditLogMongoRepository : IAuditLogRepository
 
 ---
 
-## 10.6. Aggregation Pipeline con MongoDB Driver
+## 9.6. Aggregation Pipeline con MongoDB Driver
 
 El aggregation pipeline es powerful para análisis y reportes:
 
@@ -556,7 +556,7 @@ public class TopEntity
 
 ---
 
-## 10.7. Seed de Datos en MongoDB
+## 9.7. Seed de Datos en MongoDB
 
 MongoDB no tiene migraciones como PostgreSQL, pero puedes poblar datos iniciales de varias formas.
 
@@ -785,7 +785,7 @@ using (var scope = app.Services.CreateScope())
 
 ---
 
-## 10.8. Comparación: Cuándo Usar Cada Enfoque
+## 9.8. Comparación: Cuándo Usar Cada Enfoque
 
 ```mermaid
 flowchart TB
@@ -821,7 +821,7 @@ flowchart TB
 
 ---
 
-## 10.9. Resumen y Buenas Prácticas
+## 9.9. Resumen y Buenas Prácticas
 
 ### Puntos clave del módulo
 

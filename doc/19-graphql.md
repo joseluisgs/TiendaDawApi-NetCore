@@ -1,32 +1,32 @@
-# 20. GraphQL con HotChocolate
+# 19. GraphQL con HotChocolate
 
 ## Índice
 
-[20. GraphQL con HotChocolate](#20-graphql-con-hotchocolate)
-  - [20.1. ¿Qué es GraphQL?](#201-qué-es-graphql)
-  - [20.2. Instalación de HotChocolate](#202-instalación-de-hotchocolate)
-  - [20.3. Configuración en Program.cs](#203-configuración-en-programcs)
-  - [20.3.1. Autenticación y Autorización con HotChocolate](#2031-autenticación-y-autorización-con-hotchocolate)
-  - [20.4. Conceptos de Queries](#204-conceptos-de-queries)
-  - [20.5. TiendaQuery: Consultas del Proyecto](#205-tiendaquery-consultas-del-proyecto)
-  - [20.6. Tipos de GraphQL](#206-tipos-de-graphql)
-  - [20.7. Tipos de Datos en GraphQL](#207-tipos-de-datos-en-graphql)
-  - [20.8. GraphiQL: Herramienta de Desarrollo](#208-graphiql-herramienta-de-desarrollo)
-  - [20.9. Consultas de Ejemplo](#209-consultas-de-ejemplo)
-  - [20.10. Mutations](#2010-mutations)
-  - [20.11. Subscriptions](#2011-subscriptions)
-  - [20.12. Comparación REST vs GraphQL](#2012-comparación-rest-vs-graphql)
-  - [20.13. Input Types](#2013-input-types)
-  - [20.14. Events: Payloads de Eventos](#2014-events-payloads-de-eventos)
-  - [20.15. Publishers: Sistema Pub/Sub](#2015-publishers-sistema-pubsub)
-  - [20.16. Estructura de Carpetas GraphQL](#2016-estructura-de-carpetas-graphql)
-  - [20.17. Patrones Utilizados](#2017-patrones-utilizados)
-  - [20.18. Estado Actual del Proyecto](#2018-estado-actual-del-proyecto)
-  - [20.19. Resumen Completo](#2019-resumen-completo)
+[19. GraphQL con HotChocolate](#19-graphql-con-hotchocolate)
+  - [19.1. ¿Qué es GraphQL?](#191-qué-es-graphql)
+  - [19.2. Instalación de HotChocolate](#192-instalación-de-hotchocolate)
+  - [19.3. Configuración en Program.cs](#193-configuración-en-programcs)
+  - [19.3.1. Autenticación y Autorización con HotChocolate](#1931-autenticación-y-autorización-con-hotchocolate)
+  - [19.4. Conceptos de Queries](#194-conceptos-de-queries)
+  - [19.5. TiendaQuery: Consultas del Proyecto](#195-tiendaquery-consultas-del-proyecto)
+  - [19.6. Tipos de GraphQL](#196-tipos-de-graphql)
+  - [19.7. Tipos de Datos en GraphQL](#197-tipos-de-datos-en-graphql)
+  - [19.8. GraphiQL: Herramienta de Desarrollo](#198-graphiql-herramienta-de-desarrollo)
+  - [19.9. Consultas de Ejemplo](#199-consultas-de-ejemplo)
+  - [19.10. Mutations](#1910-mutations)
+  - [19.11. Subscriptions](#1911-subscriptions)
+  - [19.12. Comparación REST vs GraphQL](#1912-comparación-rest-vs-graphql)
+  - [19.13. Input Types](#1913-input-types)
+  - [19.14. Events: Payloads de Eventos](#1914-events-payloads-de-eventos)
+  - [19.15. Publishers: Sistema Pub/Sub](#1915-publishers-sistema-pubsub)
+  - [19.16. Estructura de Carpetas GraphQL](#1916-estructura-de-carpetas-graphql)
+  - [19.17. Patrones Utilizados](#1917-patrones-utilizados)
+  - [19.18. Estado Actual del Proyecto](#1918-estado-actual-del-proyecto)
+  - [19.19. Resumen Completo](#1919-resumen-completo)
 
 ---
 
-## 20.1. ¿Qué es GraphQL?
+## 19.1. ¿Qué es GraphQL?
 
 **GraphQL** es un lenguaje de consulta para APIs desarrollado por Facebook. A diferencia de REST, GraphQL permite al cliente especificar exactamente qué datos necesita, evitando el over-fetching y under-fetching.
 
@@ -58,7 +58,7 @@ flowchart LR
 
 ---
 
-## 20.2. Instalación de HotChocolate
+## 19.2. Instalación de HotChocolate
 
 ### Paquetes Necesarios
 
@@ -96,7 +96,7 @@ app.MapGraphQL();
 
 ---
 
-## 20.3. Configuración en Program.cs
+## 19.3. Configuración en Program.cs
 
 ### Configuración Básica
 
@@ -149,7 +149,7 @@ builder.Services
 
 ---
 
-## 20.3.1. Autenticación y Autorización con HotChocolate
+## 19.3.1. Autenticación y Autorización con HotChocolate
 
 HotChocolate se integra de forma **transparente** con el sistema de autenticación y autorización de ASP.NET Core (Identity, JWT, Claims). Esto significa que puedes usar los mismos atributos y políticas de autorización que en los controladores REST.
 
@@ -449,7 +449,7 @@ builder.Services
 
 ---
 
-## 20.4. Conceptos de Queries
+## 19.4. Conceptos de Queries
 
 Las **Queries** (consultas) son el mecanismo principal para **leer datos** en GraphQL. Son el equivalente a las operaciones GET en REST, pero con una diferencia fundamental: el cliente define exactamente qué campos quiere recibir.
 
@@ -594,7 +594,7 @@ flowchart TD
 
 ---
 
-## 20.5. TiendaQuery: Consultas del Proyecto
+## 19.5. TiendaQuery: Consultas del Proyecto
 
 Del archivo `TiendaQuery.cs`:
 
@@ -671,7 +671,7 @@ public class TiendaQuery
 
 ---
 
-## 20.6. Tipos de GraphQL
+## 19.6. Tipos de GraphQL
 
 ### ProductoType
 
@@ -781,7 +781,7 @@ public class CategoriaType : ObjectType<Categoria>
 
 ---
 
-## 20.7. Tipos de Datos en GraphQL
+## 19.7. Tipos de Datos en GraphQL
 
 ### Escalares
 
@@ -809,7 +809,7 @@ descriptor.Field(p => p.Descripcion)
 
 ---
 
-## 20.8. GraphiQL: Herramienta de Desarrollo
+## 19.8. GraphiQL: Herramienta de Desarrollo
 
 El proyecto incluye una interfaz GraphiQL para probar las consultas:
 
@@ -850,7 +850,7 @@ Producción: http://tu-dominio/graphiql
 
 ---
 
-## 20.9. Consultas de Ejemplo
+## 19.9. Consultas de Ejemplo
 
 ### Obtener Todos los Productos
 
@@ -926,7 +926,7 @@ query {
 
 ---
 
-## 20.10. Mutations (Crear, Actualizar, Eliminar)
+## 19.10. Mutations (Crear, Actualizar, Eliminar)
 
 Las mutations son operaciones que modifican datos en el servidor. Son el equivalente a los métodos POST, PUT, PATCH y DELETE en REST. En GraphQL, las mutations se definen en una clase separada llamada `Mutation` y se registran en el esquema.
 
@@ -1133,7 +1133,7 @@ mutation DeleteProducto($id: Long!) {
 
 ---
 
-## 20.11. Subscriptions (Tiempo Real)
+## 19.11. Subscriptions (Tiempo Real)
 
 Las subscriptions permiten recibir actualizaciones en tiempo real cuando ocurren eventos en el servidor. Son ideales para notificaciones, dashboards en vivo, y aplicaciones que requieren datos actualizados instantáneamente. HotChocolate usa WebSockets para implementar subscriptions.
 
@@ -1270,7 +1270,7 @@ subscription OnPedidoUpdate($userId: Long!) {
 
 ---
 
-## 20.12. Comparación REST vs GraphQL
+## 19.12. Comparación REST vs GraphQL
 
 ```mermaid
 flowchart TD
@@ -1308,7 +1308,7 @@ flowchart TD
 
 ---
 
-## 20.13. Input Types: Estructuras de Entrada
+## 19.13. Input Types: Estructuras de Entrada
 
 Los **Input Types** son objetos que agrupan los parámetros de entrada para mutations. Son equivalentes a los DTOs en REST y permiten mantener las mutations organizadas y evolutivas.
 
@@ -1382,7 +1382,7 @@ input UpdateProductoInput {
 
 ---
 
-## 20.14. Events: Payloads de Eventos
+## 19.14. Events: Payloads de Eventos
 
 Los **Events** son los payloads que se publican cuando ocurre algo en el sistema. Son necesarios para las subscriptions y permiten que los clientes reciban datos estructurados.
 
@@ -1467,7 +1467,7 @@ public record ProductoStockBajoEvent
 
 ---
 
-## 20.15. Publishers: Sistema Pub/Sub
+## 19.15. Publishers: Sistema Pub/Sub
 
 Los **Publishers** son el mecanismo que conecta los eventos con las subscriptions. HotChocolate incluye un sistema de Pub/Sub integrado.
 
@@ -1569,7 +1569,7 @@ builder.Services
 
 ---
 
-## 20.16. Estructura de Carpetas GraphQL
+## 19.16. Estructura de Carpetas GraphQL
 
 ```
 GraphQL/
@@ -1612,7 +1612,7 @@ GraphQL/
 
 ---
 
-## 20.17. Patrones Utilizados
+## 19.17. Patrones Utilizados
 
 ### 1. Result Pattern
 
@@ -1671,7 +1671,7 @@ public async Task<Producto?> GetProducto(
 
 ---
 
-## 20.18. Estado Actual del Proyecto ✅
+## 19.18. Estado Actual del Proyecto ✅
 
 ### Queries Implementadas ✅
 
@@ -1744,7 +1744,7 @@ flowchart TD
 
 ---
 
-## 20.19. Resumen Completo
+## 19.19. Resumen Completo
 
 ### Arquitectura GraphQL
 

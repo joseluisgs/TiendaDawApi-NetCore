@@ -1,22 +1,22 @@
-# 16. File Storage: Almacenamiento de Archivos
+# 20. File Storage: Almacenamiento de Archivos
 
 ## Índice
 
-[16. File Storage: Almacenamiento de Archivos](#16-file-storage-almacenamiento-de-archivos)
-  - [16.1. Conceptos Fundamentales de Archivos Estáticos](#161-conceptos-fundamentales-de-archivos-estáticos)
-  - [16.2. Configuración de wwwroot en Program.cs](#162-configuración-de-wwwroot-en-programcs)
-  - [16.3. UseStaticFiles: Configuración Avanzada](#163-usestaticfiles-configuración-avanzada)
-  - [16.4. IStorageService: Interfaz del Proyecto](#164-istorageservice-interfaz-del-proyecto)
-  - [16.5. FileSystemStorageService: Implementación](#165-filesystemstorageservice-implementación)
-  - [16.6. Controlador de Archivos](#166-controlador-de-archivos)
-  - [16.7. Controlador de Productos con Imágenes](#167-controlador-de-productos-con-imágenes)
-  - [16.8. Seguridad: Path Traversal](#168-seguridad-path-traversal)
-  - [16.9. Configuración de Producción](#169-configuración-de-producción)
-  - [16.10. Resumen](#1610-resumen)
+[20. File Storage: Almacenamiento de Archivos](#20-file-storage-almacenamiento-de-archivos)
+  - [20.1. Conceptos Fundamentales de Archivos Estáticos](#201-conceptos-fundamentales-de-archivos-estáticos)
+  - [20.2. Configuración de wwwroot en Program.cs](#202-configuración-de-wwwroot-en-programcs)
+  - [20.3. UseStaticFiles: Configuración Avanzada](#203-usestaticfiles-configuración-avanzada)
+  - [20.4. IStorageService: Interfaz del Proyecto](#204-istorageservice-interfaz-del-proyecto)
+  - [20.5. FileSystemStorageService: Implementación](#205-filesystemstorageservice-implementación)
+  - [20.6. Controlador de Archivos](#206-controlador-de-archivos)
+  - [20.7. Controlador de Productos con Imágenes](#207-controlador-de-productos-con-imágenes)
+  - [20.8. Seguridad: Path Traversal](#208-seguridad-path-traversal)
+  - [20.9. Configuración de Producción](#209-configuración-de-producción)
+  - [20.10. Resumen](#2010-resumen)
 
 ---
 
-## 16.1. Conceptos Fundamentales de Archivos Estáticos
+## 20.1. Conceptos Fundamentales de Archivos Estáticos
 
 En ASP.NET Core, los **archivos estáticos** son aquellos que se sirven directamente al cliente sin procesamiento adicional: imágenes, CSS, JavaScript, archivos subidos por usuarios, etc. El middleware `UseStaticFiles` permite servir estos archivos desde el directorio `wwwroot`.
 
@@ -65,7 +65,7 @@ sequenceDiagram
 
 ---
 
-## 16.2. Configuración de wwwroot en Program.cs
+## 20.2. Configuración de wwwroot en Program.cs
 
 El directorio `wwwroot` es el directorio predeterminado para archivos estáticos en ASP.NET Core. Se configura automáticamente cuando creas un proyecto web.
 
@@ -136,7 +136,7 @@ else
 
 ---
 
-## 16.3. UseStaticFiles: Configuración Avanzada
+## 20.3. UseStaticFiles: Configuración Avanzada
 
 ### Configuración Básica
 
@@ -205,7 +205,7 @@ Console.WriteLine($"ContentRootPath: {app.Environment.ContentRootPath}");
 
 ---
 
-## 16.4. IStorageService: Interfaz del Proyecto
+## 20.4. IStorageService: Interfaz del Proyecto
 
 Del archivo `IStorageService.cs`:
 
@@ -244,7 +244,7 @@ wwwroot/uploads/
 
 ---
 
-## 16.5. FileSystemStorageService: Implementación
+## 20.5. FileSystemStorageService: Implementación
 
 Del archivo `FileSystemStorageService.cs`:
 
@@ -418,7 +418,7 @@ private UnitResult<DomainError> ValidateFile(IFormFile file)
 
 ---
 
-## 16.6. Controlador de Archivos
+## 20.6. Controlador de Archivos
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -473,7 +473,7 @@ public class FilesController : ControllerBase
 
 ---
 
-## 16.7. Controlador de Productos con Imágenes
+## 20.7. Controlador de Productos con Imágenes
 
 ```csharp
 [ApiController]
@@ -542,7 +542,7 @@ public class ProductosController : ControllerBase
 
 ---
 
-## 16.8. Seguridad: Path Traversal
+## 20.8. Seguridad: Path Traversal
 
 El **path traversal** es un ataque donde un usuario malintencionado intenta acceder a archivos fuera del directorio permitido.
 
@@ -588,7 +588,7 @@ public string GetFullPath(string filename)
 
 ---
 
-## 16.9. Configuración de Producción
+## 20.9. Configuración de Producción
 
 ### docker-compose.local.yml (Relevante)
 
@@ -614,7 +614,7 @@ services:
 
 ---
 
-## 16.10. Resumen
+## 20.10. Resumen
 
 ### Arquitectura de Archivos en el Proyecto
 
