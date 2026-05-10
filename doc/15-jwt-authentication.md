@@ -1,26 +1,26 @@
-# 12. JWT Authentication con ASP.NET Core Identity y Metodo Personalizado
+# 15. JWT Authentication con ASP.NET Core Identity y Metodo Personalizado
 
 ## Indice
 
-[12. JWT Authentication](#12-jwt-authentication)
-  - [12.1. Concepto de Autenticacion Stateless](#121-concepto-de-autenticacion-stateless)
-  - [12.2. JWT en Profundidad](#122-jwt-en-profundidad)
-  - [12.3. ASP.NET Core Identity](#123-aspnet-core-identity)
-  - [12.4. Configuracion de Identity en Program.cs](#124-configuracion-de-identity-en-programcs)
-  - [12.5. Custom UserClaimsPrincipalFactory](#125-custom-userclaimsprincipalfactory)
-  - [12.6. JwtService - Generacion de Tokens](#126-jwtservice---generacion-de-tokens)
-  - [12.7. Errores de Autenticacion](#127-errores-de-autenticacion)
-  - [12.8. AuthController - Endpoints de Autenticacion](#128-authcontroller---endpoints-de-autenticacion)
-  - [12.9. DTOs de Autenticacion](#129-dtos-de-autenticacion)
-  - [12.10. Configuracion de appsettings.json](#1210-configuracion-de-appsettingsjson)
-  - [12.11. Resumen y Buenas Practicas](#1211-resumen-y-buenas-practicas)
-  - [12.12. Enfoque Personalizado - Nuestra Implementacion](#1212-enfoque-personalizado---nuestra-implementacion)
-  - [12.13. Comparacion del Middleware](#1213-comparacion-del-middleware)
+[15. JWT Authentication](#15-jwt-authentication)
+  - [15.1. Concepto de Autenticacion Stateless](#151-concepto-de-autenticacion-stateless)
+  - [15.2. JWT en Profundidad](#152-jwt-en-profundidad)
+  - [15.3. ASP.NET Core Identity](#153-aspnet-core-identity)
+  - [15.4. Configuracion de Identity en Program.cs](#154-configuracion-de-identity-en-programcs)
+  - [15.5. Custom UserClaimsPrincipalFactory](#155-custom-userclaimsprincipalfactory)
+  - [15.6. JwtService - Generacion de Tokens](#156-jwtservice---generacion-de-tokens)
+  - [15.7. Errores de Autenticacion](#157-errores-de-autenticacion)
+  - [15.8. AuthController - Endpoints de Autenticacion](#158-authcontroller---endpoints-de-autenticacion)
+  - [15.9. DTOs de Autenticacion](#159-dtos-de-autenticacion)
+  - [15.10. Configuracion de appsettings.json](#1510-configuracion-de-appsettingsjson)
+  - [15.11. Resumen y Buenas Practicas](#1511-resumen-y-buenas-practicas)
+  - [15.12. Enfoque Personalizado - Nuestra Implementacion](#1512-enfoque-personalizado---nuestra-implementacion)
+  - [15.13. Comparacion del Middleware](#1513-comparacion-del-middleware)
 
 ---
 
 
-## 12.1. Concepto de Autenticación Stateless
+## 15.1. Concepto de Autenticación Stateless
 
 ### ¿Qué significa Stateless (Sin Estado)?
 
@@ -69,7 +69,7 @@ flowchart LR
 
 ---
 
-## 12.2. JWT (JSON Web Token) en Profundidad
+## 15.2. JWT (JSON Web Token) en Profundidad
 
 ### Estructura del JWT
 
@@ -175,7 +175,7 @@ var token = new JwtSecurityToken(
 
 ---
 
-## 12.3. ASP.NET Core Identity
+## 15.3. ASP.NET Core Identity
 
 ### ¿Qué es ASP.NET Core Identity?
 
@@ -337,7 +337,7 @@ public class TiendaDbContext : IdentityDbContext<User, Role, long>
 
 ---
 
-## 12.4. Configuración de Identity en Program.cs
+## 15.4. Configuración de Identity en Program.cs
 
 ```csharp
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -548,7 +548,7 @@ async Task InitializeRolesAndAdminAsync(
 
 ---
 
-## 12.5. Custom UserClaimsPrincipalFactory
+## 15.5. Custom UserClaimsPrincipalFactory
 
 ```csharp
 using Microsoft.AspNetCore.Identity;
@@ -603,7 +603,7 @@ public class CustomUserClaimsPrincipalFactory :
 
 ---
 
-## 12.6. JwtService - Generación de Tokens
+## 15.6. JwtService - Generación de Tokens
 
 ```csharp
 using System.IdentityModel.Tokens.Jwt;
@@ -856,7 +856,7 @@ public class TokenResponse
 
 ---
 
-## 12.7. Errores de Autenticación
+## 15.7. Errores de Autenticación
 
 ```csharp
 namespace TiendaApi.Core.Models.Errors;
@@ -917,7 +917,7 @@ public static partial class Errors
 
 ---
 
-## 12.8. AuthController - Endpoints de Autenticación
+## 15.8. AuthController - Endpoints de Autenticación
 
 ```csharp
 using Microsoft.AspNetCore.Identity;
@@ -1215,7 +1215,7 @@ public class AuthController : ControllerBase
 
 ---
 
-## 12.9. DTOs de Autenticación
+## 15.9. DTOs de Autenticación
 
 ```csharp
 using System.ComponentModel.DataAnnotations;
@@ -1345,7 +1345,7 @@ public class ApiResponse
 
 ---
 
-## 12.10. Configuración de appsettings.json
+## 15.10. Configuración de appsettings.json
 
 ```json
 {
@@ -1367,7 +1367,7 @@ public class ApiResponse
 
 ---
 
-## 12.11. Resumen y Buenas Prácticas
+## 15.11. Resumen y Buenas Prácticas
 
 ### Puntos Clave del Módulo
 
@@ -1463,7 +1463,7 @@ Con JWT dominado, el siguiente paso es aprender sobre autorización y roles.
 
 ---
 
-## 12.12. Enfoque Personalizado: Nuestra Implementacion
+## 15.12. Enfoque Personalizado: Nuestra Implementacion
 
 ### Por Que No Usamos ASP.NET Core Identity en TiendaDawApi
 

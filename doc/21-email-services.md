@@ -1,22 +1,22 @@
-# 17. Email Services: Envío de Correos Electrónicos
+# 21. Email Services: Envío de Correos Electrónicos
 
 ## Índice
 
-[17. Email Services: Envío de Correos Electrónicos](#17-email-services-envío-de-correos-electrónicos)
-  - [17.1. ¿Por Qué un Sistema de Emails Robusto?](#171-por-qué-un-sistema-de-emails-robusto)
-  - [17.2. Interfaz IEmailService](#172-interfaz-iemailservice)
-  - [17.3. Implementación con MailKit](#173-implementación-con-mailkit)
-  - [17.4. Servicio de Desarrollo (MemoryEmailService)](#174-servicio-de-desarrollo-memoryemailservice)
-  - [17.5. Sistema de Plantillas](#175-sistema-de-plantillas)
-  - [17.6. Cola de Emails con BackgroundService](#176-cola-de-emails-con-backgroundservice)
-  - [17.7. Envío de Emails desde Servicios de Negocio](#177-envío-de-emails-desde-servicios-de-negocio)
-  - [17.8. Configuración](#178-configuración)
-  - [17.9. docker-compose para Testing de Emails](#179-docker-compose-para-testing-de-emails)
-  - [17.10. Resumen y Buenas Prácticas](#1710-resumen-y-buenas-prácticas)
+[21. Email Services: Envío de Correos Electrónicos](#21-email-services-envío-de-correos-electrónicos)
+  - [21.1. ¿Por Qué un Sistema de Emails Robusto?](#211-por-qué-un-sistema-de-emails-robusto)
+  - [21.2. Interfaz IEmailService](#212-interfaz-iemailservice)
+  - [21.3. Implementación con MailKit](#213-implementación-con-mailkit)
+  - [21.4. Servicio de Desarrollo (MemoryEmailService)](#214-servicio-de-desarrollo-memoryemailservice)
+  - [21.5. Sistema de Plantillas](#215-sistema-de-plantillas)
+  - [21.6. Cola de Emails con BackgroundService](#216-cola-de-emails-con-backgroundservice)
+  - [21.7. Envío de Emails desde Servicios de Negocio](#217-envío-de-emails-desde-servicios-de-negocio)
+  - [21.8. Configuración](#218-configuración)
+  - [21.9. docker-compose para Testing de Emails](#219-docker-compose-para-testing-de-emails)
+  - [21.10. Resumen y Buenas Prácticas](#2110-resumen-y-buenas-prácticas)
 
 ---
 
-## 17.1. ¿Por Qué un Sistema de Emails Robusto?
+## 21.1. ¿Por Qué un Sistema de Emails Robusto?
 
 El envío de emails es fundamental para la comunicación con usuarios: confirmaciones de pedidos, restablecimiento de contraseñas, notificaciones y marketing. Un sistema bien diseñado debe ser confiable, eficiente y fácil de probar.
 
@@ -92,7 +92,7 @@ flowchart LR
 
 ---
 
-## 17.2. Interfaz IEmailService
+## 21.2. Interfaz IEmailService
 
 ```csharp
 namespace TiendaApi.Core.Interfaces;
@@ -136,7 +136,7 @@ public class EmailTemplate
 
 ---
 
-## 17.3. Implementación con MailKit
+## 21.3. Implementación con MailKit
 
 ### MailKitEmailService
 
@@ -344,7 +344,7 @@ public class MailKitEmailService : IEmailService
 
 ---
 
-## 17.4. Servicio de Desarrollo (MemoryEmailService)
+## 21.4. Servicio de Desarrollo (MemoryEmailService)
 
 ```csharp
 using Microsoft.Extensions.Logging;
@@ -431,7 +431,7 @@ public record FailedEmail
 
 ---
 
-## 17.5. Sistema de Plantillas
+## 21.5. Sistema de Plantillas
 
 ### ITemplateService e Implementación
 
@@ -615,7 +615,7 @@ Tu pedido #{{PedidoId}} ha sido confirmado - {{NombreTienda}}
 
 ---
 
-## 17.6. Cola de Emails con BackgroundService
+## 21.6. Cola de Emails con BackgroundService
 
 ### Cola Persistente con Redis
 
@@ -795,7 +795,7 @@ public class EmailBackgroundService : BackgroundService
 
 ---
 
-## 17.7. Envío de Emails desde Servicios de Negocio
+## 21.7. Envío de Emails desde Servicios de Negocio
 
 ### PedidoService con Notificaciones por Email
 
@@ -886,7 +886,7 @@ public class PedidoService
 
 ---
 
-## 17.8. Configuración
+## 21.8. Configuración
 
 ### appsettings.json
 
@@ -930,7 +930,7 @@ public class PedidoService
 
 ---
 
-## 17.9. docker-compose para Testing de Emails
+## 21.9. docker-compose para Testing de Emails
 
 ```yaml
 version: '3.8'
@@ -948,7 +948,7 @@ services:
 
 ---
 
-## 17.10. Resumen y Buenas Prácticas
+## 21.10. Resumen y Buenas Prácticas
 
 ### Arquitectura de Emails
 

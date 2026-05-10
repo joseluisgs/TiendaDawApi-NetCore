@@ -57,7 +57,6 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
     - [Servicios Externos](#servicios-externos)
     - [Tareas en Segundo Plano](#tareas-en-segundo-plano)
     - [Documentación](#documentación)
-    - [Servicios Externos](#servicios-externos-1)
     - [Testing y Calidad](#testing-y-calidad)
     - [DevOps y Producción](#devops-y-producción)
     - [Arquitectura](#arquitectura)
@@ -322,90 +321,82 @@ bru run TiendaApi.ApiTests/Bruno \
 Para una comprensión profunda de la arquitectura y las tecnologías utilizadas, consulta los documentos en la carpeta [`doc/`](doc/):
 
 ### Fundamentos y Configuración
-| #   | Documento                                                          | Descripción                    |
-| --- | ------------------------------------------------------------------ | ------------------------------ |
-| 01  | [Configuración proyectos .NET](doc/01-configuracion-proyectos.md)  | IDEs, estructura, herramientas |
-| 02  | [Arquitectura Pipeline HTTP](doc/02-arquitectura-pipeline-http.md) | Middlewares, Request/Response  |
-| 03  | [Inyección Dependencias](doc/03-inyeccion-dependencias.md)         | DI Containers, Scopes          |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 01 | [01-configuracion-proyectos-dotnet.md](doc/01-configuracion-proyectos-dotnet.md) | Configuración proyectos .NET |
+| 02 | [02-arquitectura-pipeline-http.md](doc/02-arquitectura-pipeline-http.md) | Arquitectura Pipeline HTTP |
+| 03 | [03-inyeccion-dependencias.md](doc/03-inyeccion-dependencias.md) | Inyección Dependencias |
 
 ### API y Controllers
-| #   | Documento                                             | Descripción                     |
-| --- | ----------------------------------------------------- | ------------------------------- |
-| 04  | [Controladores REST](doc/04-controladores-rest.md)    | Routing, Model Binding, Actions |
-| 05  | [Validación en Cascada](doc/05-validacion-cascada.md) | Data Annotations, validaciones  |
-| 18  | [REST Best Practices](doc/18-rest-best-practices.md)  | Convenciones REST               |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 04 | [04-controladores-rest.md](doc/04-controladores-rest.md) | Controladores REST |
+| 05 | [05-validacion-cascada.md](doc/05-validacion-cascada.md) | Validación en Cascada |
+| 06 | [06-rest-best-practices.md](doc/06-rest-best-practices.md) | REST Best Practices |
 
 ### Persistencia de Datos
-| #   | Documento                                          | Descripción          |
-| --- | -------------------------------------------------- | -------------------- |
-| 07  | [Repository Pattern](doc/07-repository-pattern.md) | Abstracción de datos |
-| 09  | [EF Core PostgreSQL](doc/09-ef-core-postgresql.md) | ORM relacional       |
-| 10  | [MongoDB](doc/10-mongodb.md)                       | Base de documentos   |
-| 11  | [Redis Caching](doc/11-redis-caching.md)           | Cache-Aside pattern  |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 07 | [07-repository-pattern.md](doc/07-repository-pattern.md) | Repository Pattern |
+| 08 | [08-ef-core-postgresql.md](doc/08-ef-core-postgresql.md) | EF Core PostgreSQL |
+| 09 | [09-mongodb.md](doc/09-mongodb.md) | MongoDB |
+| 10 | [10-redis-caching.md](doc/10-redis-caching.md) | Redis Caching |
 
 ### Lógica de Negocio
-| #   | Documento                                                  | Descripción                       |
-| --- | ---------------------------------------------------------- | --------------------------------- |
-| 06  | [Patrón Result](doc/06-patron-result.md)                   | Railway Oriented Programming      |
-| 08  | [Servicios de Negocio](doc/08-servicios-negocio.md)        | Capa de servicios                 |
-| 15  | [Pedidos y Transacciones](doc/15-pedidos-transacciones.md) | Transacciones optimista/pesimista |
-| 22  | [Mapeadores](doc/22-mapeadores.md)                         | AutoMapper vs extensiones         |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 11 | [11-patron-result.md](doc/11-patron-result.md) | Patrón Result |
+| 12 | [12-servicios-negocio.md](doc/12-servicios-negocio.md) | Servicios de Negocio |
+| 13 | [13-pedidos-transacciones.md](doc/13-pedidos-transacciones.md) | Pedidos y Transacciones |
+| 14 | [14-mapeadores.md](doc/14-mapeadores.md) | Mapeadores |
 
 ### Seguridad
-| #   | Documento                                          | Descripción              |
-| --- | -------------------------------------------------- | ------------------------ |
-| 12  | [JWT Authentication](doc/12-jwt-authentication.md) | Tokens, Claims           |
-| 13  | [Autorización Roles](doc/13-autorizacion-roles.md) | Policies, Roles          |
-| 27  | [Seguridad HTTP](doc/27-seguridad-http.md)         | HSTS, HTTPS, Headers     |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 15 | [15-jwt-authentication.md](doc/15-jwt-authentication.md) | JWT Authentication |
+| 16 | [16-autorizacion-roles.md](doc/16-autorizacion-roles.md) | Autorización Roles |
+| 17 | [17-seguridad-http.md](doc/17-seguridad-http.md) | Seguridad HTTP |
 
 ### APIs Avanzadas
-| #   | Documento                          | Descripción  |
-| --- | ---------------------------------- | ------------ |
-| 14  | [WebSockets](doc/14-websockets.md) | Tiempo real  |
-| 20  | [GraphQL](doc/20-graphql.md)       | HotChocolate |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 18 | [18-websockets.md](doc/18-websockets.md) | WebSockets |
+| 19 | [19-graphql.md](doc/19-graphql.md) | GraphQL |
 
 ### Servicios Externos
-| #   | Documento                                  | Descripción          |
-| --- | ------------------------------------------ | -------------------- |
-| 16  | [File Storage](doc/16-file-storage.md)     | Almacenamiento local |
-| 17  | [Email Services](doc/17-email-services.md) | MailKit              |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 20 | [20-file-storage.md](doc/20-file-storage.md) | File Storage |
+| 21 | [21-email-services.md](doc/21-email-services.md) | Email Services |
 
 ### Tareas en Segundo Plano
-| #   | Documento                                    | Descripción        |
-| --- | -------------------------------------------- | ------------------ |
-| 25  | [Background Jobs](doc/25-background-jobs.md) | Tareas programadas |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 22 | [22-background-jobs.md](doc/22-background-jobs.md) | Background Jobs |
 
 ### Documentación
-| #   | Documento                                        | Descripción         |
-| --- | ------------------------------------------------ | ------------------- |
-| 19  | [Documentación API](doc/19-documentacion-api.md) | Swagger, Versionado |
-
-### Servicios Externos
-| #   | Documento                                  | Descripción          |
-| --- | ------------------------------------------ | -------------------- |
-| 16  | [File Storage](doc/16-file-storage.md)     | Almacenamiento local |
-| 17  | [Email Services](doc/17-email-services.md) | MailKit              |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 23 | [23-documentacion.md](doc/23-documentacion.md) | Documentación API |
 
 ### Testing y Calidad
-| #   | Documento                    | Descripción            |
-| --- | ---------------------------- | ---------------------- |
-| 21  | [Testing](doc/21-testing.md) | Unit, Integración, E2E |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 24 | [24-testing.md](doc/24-testing.md) | Testing |
 
 ### DevOps y Producción
-| #   | Documento                                    | Descripción              |
-| --- | -------------------------------------------- | ------------------------ |
-| 23  | [Docker](doc/23-docker-ci-cd.md)       | Contenedores, pipelines  |
-| 24  | [Logging](doc/24-logging.md)                 | Serilog, trazabilidad    |
-| 25  | [Background Jobs](doc/25-background-jobs.md) | Tareas programadas       |
-| 26  | [Optimización](doc/26-optimizacion.md)       | Rendimiento              |
-| 27  | [Seguridad HTTP](doc/27-seguridad-http.md)  | HSTS, HTTPS, Headers    |
-| 28  | [CI/CD con GitHub Actions](doc/28-ci-cd.md) | Pipelines, automatización |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 25 | [25-docker.md](doc/25-docker.md) | Docker |
+| 26 | [26-logging.md](doc/26-logging.md) | Logging |
+| 27 | [27-optimizacion.md](doc/27-optimizacion.md) | Optimización |
+| 28 | [28-ci-cd.md](doc/28-ci-cd.md) | CI/CD |
 
 ### Arquitectura
-| #   | Documento                                                 | Descripción                       |
-| --- | --------------------------------------------------------- | --------------------------------- |
-| 29  | [Clean Architecture](doc/29-clean-architecture.md)        | Capas, estructura                 |
-| 30  | [Organización Program.cs](doc/30-organizacion-program.md) | Extension Methods, modularización |
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 29 | [29-clean-architecture.md](doc/29-clean-architecture.md) | Clean Architecture |
+| 30 | [30-organizacion-program.md](doc/30-organizacion-program.md) | Organización Program.cs |
 
 ## ⚒️ Diagrama de Clases del Dominio
 
@@ -1023,7 +1014,7 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 - ✅ **HTTPS + HSTS**: Redirección HTTP→HTTPS y HSTS con max-age 365 días
 - ✅ **Security Headers**: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
 
-> **Ver más:** [Seguridad HTTP](doc/27-seguridad-http.md)
+> **Ver más:** [Seguridad HTTP](doc/17-seguridad-http.md)
 
 ## 📡 Endpoints
 
