@@ -1,20 +1,20 @@
-# 6. Patrón Result con CSharpFunctionalExtensions
+# 11. Patrón Result con CSharpFunctionalExtensions
 
 ## Índice
 
-[6. Patrón Result con CSharpFunctionalExtensions](#6-patrón-result-con-csharpextensions)
-  - [6.1. Por Qué Excepciones No Son Para Errores de Negocio](#61-por-qué-excepciones-no-son-para-errores-de-negocio)
-  - [6.2. CSharpFunctionalExtensions: Result<T, Error>](#62-csharpextensions-resultt-error)
-  - [6.3. DomainError y ErrorType Enum](#63-domainerror-y-errortype-enum)
-  - [6.4. Result.Match() en Servicios](#64-resultmatch-en-servicios)
-  - [6.5. UnitResult para Operaciones Sin Retorno](#65-unitresult-para-operaciones-sin-retorno)
-  - [6.6. Integración Result + Controladores](#66-integración-result--controladores)
-  - [6.7. Ventajas del Patrón Result](#67-ventajas-del-patrón-result)
-  - [6.8. Resumen y Buenas Prácticas](#68-resumen-y-buenas-prácticas)
+[11. Patrón Result con CSharpFunctionalExtensions](#11-patrón-result-con-csharpfunctionalextensions)
+  - [11.1. Por Qué Excepciones No Son Para Errores de Negocio](#111-por-qué-excepciones-no-son-para-errores-de-negocio)
+  - [11.2. CSharpFunctionalExtensions: Result<T, Error>](#112-csharpfunctionalextensions-resultt-error)
+  - [11.3. DomainError y ErrorType Enum](#113-domainerror-y-errortype-enum)
+  - [11.4. Result.Match() en Servicios](#114-resultmatch-en-servicios)
+  - [11.5. UnitResult para Operaciones Sin Retorno](#115-unitresult-para-operaciones-sin-retorno)
+  - [11.6. Integración Result + Controladores](#116-integración-result--controladores)
+  - [11.7. Ventajas del Patrón Result](#117-ventajas-del-patrón-result)
+  - [11.8. Resumen y Buenas Prácticas](#118-resumen-y-buenas-prácticas)
 
 ---
 
-## 6.1. Por Qué Excepciones No Son Para Errores de Negocio
+## 11.1. Por Qué Excepciones No Son Para Errores de Negocio
 
 Las excepciones están diseñadas para situaciones excepcionales e inesperadas: un archivo que no existe, una conexión a base de datos que falla, un error de programación. Sin embargo, en una API de negocio, muchas situaciones que los clientes consideran "normales" requieren devolver un error: credenciales inválidas, recurso no encontrado, datos duplicados. Usar excepciones para estos casos hace el código más lento, más difícil de seguir, y oculta el flujo de control.
 
@@ -181,7 +181,7 @@ flowchart TB
 
 ---
 
-## 6.2. CSharpFunctionalExtensions: Result<T, Error>
+## 11.2. CSharpFunctionalExtensions: Result<T, Error>
 
 CSharpFunctionalExtensions es una librería que proporciona tipos funcionales como `Result`, `Maybe`, y `Either`. La librería maneja la complejidad de implementar el patrón Result manualmente y proporciona métodos útiles como `Map`, `Bind`, y `Match` para encadenar operaciones de forma funcional.
 
@@ -319,7 +319,7 @@ var finalResult = Result.FirstFailureOrSuccess(result1, result2, result3);
 
 ---
 
-## 6.3. DomainError: Factory + Fachada + Herencia
+## 11.3. DomainError: Factory + Fachada + Herencia
 
 ### Árbol de Herencia
 
@@ -664,7 +664,7 @@ flowchart TB
 
 ---
 
-## 6.4. Result.Match() en Servicios
+## 11.4. Result.Match() en Servicios
 
 El método `Match` es la forma principal de trabajar con Results. Permite ejecutar código diferente dependiendo de si el Result fue éxito o fracaso, de forma similar a cómo funcionan las expresiones switch pero para Results. Match fuerza al desarrollador a manejar ambos casos, haciendo el código más seguro.
 
@@ -750,7 +750,7 @@ public IActionResult GetById(long id)
 
 ---
 
-## 6.5. UnitResult para Operaciones Sin Retorno
+## 11.5. UnitResult para Operaciones Sin Retorno
 
 UnitResult es la versión de Result para operaciones que no devuelven un valor significativo, como operaciones de delete o update donde solo te importa si tuvieron éxito. Es análogo a usar `void` pero con soporte para errores.
 
@@ -813,7 +813,7 @@ public class ProductoService
 
 ---
 
-## 6.6. Integración Result + Controladores
+## 11.6. Integración Result + Controladores
 
 La integración del patrón Result con controladores es natural una vez que entiendes cómo usar Match. El patrón típico es que los servicios devuelven Result, y los controladores usan Match para convertir esos Results en respuestas HTTP apropiadas.
 
@@ -946,7 +946,7 @@ private IActionResult GetHttpResult(DomainError error)
 
 ---
 
-## 6.7. Ventajas del Patrón Result
+## 11.7. Ventajas del Patrón Result
 
 El patrón Result proporciona múltiples ventajas sobre el uso de excepciones para errores de negocio, desde rendimiento hasta mantenibilidad del código.
 
@@ -1031,7 +1031,7 @@ El Result no tiene el overhead de las excepciones: no stack trace, no búsqueda 
 
 ---
 
-## 6.8. Resumen y Buenas Prácticas
+## 11.8. Resumen y Buenas Prácticas
 
 A lo largo de este documento hemos explorado el patrón Result como alternativa a las excepciones para errores de negocio.
 

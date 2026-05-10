@@ -1,24 +1,24 @@
-# 25. Background Jobs y Tareas Programadas
+# 22. Background Jobs y Tareas Programadas
 
 ## Índice
 
-[25. Background Jobs y Tareas Programadas](#25-background-jobs-y-tareas-programadas)
-  - [25.1. ¿Qué son Background Jobs?](#251-qué-son-background-jobs)
-  - [25.2. Arquitectura de Background Jobs](#252-arquitectura-de-background-jobs)
-  - [25.3. Implementación del Job de Reporte de Productos](#253-implementación-del-job-de-reporte-de-productos)
-  - [25.4. Background Service Orchestrator](#254-background-service-orchestrator)
-  - [25.5. Configuración DI con Extension Methods](#255-configuración-di-con-extension-methods)
-  - [25.6. Configuración en appsettings.json](#256-configuración-en-appsettingsjson)
-  - [25.7. Métodos de Repositorio](#257-métodos-de-repositorio)
-  - [25.8. Flujo de Ejecución](#258-flujo-de-ejecución)
-  - [25.9. Pruebas Unitarias](#259-pruebas-unitarias)
-  - [25.10. Beneficios y Consideraciones](#2510-beneficios-y-consideraciones)
-  - [25.11. Comparación con Otras Soluciones](#2511-comparación-con-otras-soluciones)
-  - [25.12. Resumen](#2512-resumen)
+[22. Background Jobs y Tareas Programadas](#22-background-jobs-y-tareas-programadas)
+  - [22.1. ¿Qué son Background Jobs?](#221-qué-son-background-jobs)
+  - [22.2. Arquitectura de Background Jobs](#222-arquitectura-de-background-jobs)
+  - [22.3. Implementación del Job de Reporte de Productos](#223-implementación-del-job-de-reporte-de-productos)
+  - [22.4. Background Service Orchestrator](#224-background-service-orchestrator)
+  - [22.5. Configuración DI con Extension Methods](#225-configuración-di-con-extension-methods)
+  - [22.6. Configuración en appsettings.json](#226-configuración-en-appsettingsjson)
+  - [22.7. Métodos de Repositorio](#227-métodos-de-repositorio)
+  - [22.8. Flujo de Ejecución](#228-flujo-de-ejecución)
+  - [22.9. Pruebas Unitarias](#229-pruebas-unitarias)
+  - [22.10. Beneficios y Consideraciones](#2210-beneficios-y-consideraciones)
+  - [22.11. Comparación con Otras Soluciones](#2211-comparación-con-otras-soluciones)
+  - [22.12. Resumen](#2212-resumen)
 
 ---
 
-## 25.1. ¿Qué son Background Jobs?
+## 22.1. ¿Qué son Background Jobs?
 
 Los **background jobs** son tareas que se ejecutan fuera del flujo principal de las solicitudes HTTP, permitiendo operaciones largas sin bloquear la respuesta al usuario.
 
@@ -72,7 +72,7 @@ flowchart TB
 
 ---
 
-## 25.2. Arquitectura de Background Jobs
+## 22.2. Arquitectura de Background Jobs
 
 ### Estructura del Proyecto
 
@@ -121,7 +121,7 @@ classDiagram
 
 ---
 
-## 25.3. Implementación del Job de Reporte de Productos
+## 22.3. Implementación del Job de Reporte de Productos
 
 ### Interfaz del Job
 
@@ -280,7 +280,7 @@ public class ProductoReportTask(
 
 ---
 
-## 25.4. Background Service Orchestrator
+## 22.4. Background Service Orchestrator
 
 ### Implementación del Host
 
@@ -353,7 +353,7 @@ public class BackgroundJobService(
 
 ---
 
-## 25.5. Configuración DI con Extension Methods
+## 22.5. Configuración DI con Extension Methods
 
 ### BackgroundJobsConfig.cs
 
@@ -398,7 +398,7 @@ services.AddBackgroundJobs();  // ← Registrar aquí
 
 ---
 
-## 25.6. Configuración en appsettings.json
+## 22.6. Configuración en appsettings.json
 
 ### appsettings.json (Base)
 
@@ -450,7 +450,7 @@ services.AddBackgroundJobs();  // ← Registrar aquí
 
 ---
 
-## 25.7. Métodos de Repositorio
+## 22.7. Métodos de Repositorio
 
 ### GetRecentlyCreatedAsync en IProductoRepository
 
@@ -504,7 +504,7 @@ public async Task<IEnumerable<User>> GetActiveUsersAsync()
 
 ---
 
-## 25.8. Flujo de Ejecución
+## 22.8. Flujo de Ejecución
 
 ```mermaid
 sequenceDiagram
@@ -533,7 +533,7 @@ sequenceDiagram
 
 ---
 
-## 25.9. Pruebas Unitarias
+## 22.9. Pruebas Unitarias
 
 ### Tests de GetRecentlyCreatedAsync
 
@@ -585,7 +585,7 @@ public async Task GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados()
 
 ---
 
-## 25.10. Beneficios y Consideraciones
+## 22.10. Beneficios y Consideraciones
 
 ### Beneficios
 
@@ -607,7 +607,7 @@ public async Task GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados()
 
 ---
 
-## 25.11. Comparación con Otras Soluciones
+## 22.11. Comparación con Otras Soluciones
 
 | Solución | Pros | Contras |
 |----------|------|---------|
@@ -620,7 +620,7 @@ Para este proyecto usamos **BackgroundService nativo** por su simplicidad y falt
 
 ---
 
-## 25.12. Resumen
+## 22.12. Resumen
 
 Los background jobs son esenciales para operaciones que no deben bloquear solicitudes HTTP. La arquitectura implementada:
 

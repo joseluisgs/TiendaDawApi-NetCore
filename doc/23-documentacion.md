@@ -1,18 +1,18 @@
-# 19. Documentación y Versionado de APIs
+# 23. Documentación y Versionado de APIs
 
 ## Índice
 
-[19. Documentación y Versionado de APIs](#19-documentación-y-versionado-de-apis)
-  - [19.1. ¿Por qué Documentar y Versionar APIs?](#191-por-qué-documentar-y-versionar-apis)
-  - [19.2. Swagger/OpenAPI](#192-swaggeropenapi)
-  - [19.3. Anotaciones Swagger](#193-anotaciones-swagger)
-  - [19.4. Versionado de APIs](#194-versionado-de-apis)
-  - [19.5. OpenAPI Avanzado](#195-openapi-avanzado)
-  - [19.6. Resumen y Buenas Prácticas](#196-resumen-y-buenas-prácticas)
+[23. Documentación y Versionado de APIs](#23-documentación-y-versionado-de-apis)
+  - [23.1. ¿Por qué Documentar y Versionar APIs?](#231-por-qué-documentar-y-versionar-apis)
+  - [23.2. Swagger/OpenAPI](#232-swaggeropenapi)
+  - [23.3. Anotaciones Swagger](#233-anotaciones-swagger)
+  - [23.4. Versionado de APIs](#234-versionado-de-apis)
+  - [23.5. OpenAPI Avanzado](#235-openapi-avanzado)
+  - [23.6. Resumen y Buenas Prácticas](#236-resumen-y-buenas-prácticas)
 
 ---
 
-## 19.1. ¿Por qué Documentar y Versionar APIs?
+## 23.1. ¿Por qué Documentar y Versionar APIs?
 
 ### Importancia de la Documentación
 
@@ -42,7 +42,7 @@ flowchart LR
 
 ---
 
-## 19.2. Swagger/OpenAPI
+## 23.2. Swagger/OpenAPI
 
 ### Instalación
 
@@ -135,7 +135,7 @@ app.Run();
 
 ---
 
-## 19.3. Anotaciones Swagger
+## 23.3. Anotaciones Swagger
 
 ### Documentación de Endpoints
 
@@ -368,7 +368,7 @@ public class PagedResponse<T>
 
 ---
 
-## 19.4. Versionado de APIs
+## 23.4. Versionado de APIs
 
 ### Estrategias de Versionado
 
@@ -521,7 +521,7 @@ app.UseSwaggerUI(options =>
 
 ---
 
-## 19.5. OpenAPI Avanzado
+## 23.5. OpenAPI Avanzado
 
 ### Schemas Personalizados
 
@@ -619,7 +619,7 @@ public class ErrorDetail
 
 ---
 
-## 19.6. Resumen y Buenas Prácticas
+## 23.6. Resumen y Buenas Prácticas
 
 ### Documentación
 

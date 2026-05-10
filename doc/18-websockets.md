@@ -1,28 +1,28 @@
-# 14. WebSockets y Comunicación en Tiempo Real
+# 18. WebSockets y Comunicación en Tiempo Real
 
 ## Índice
 
-[14. WebSockets y Comunicación en Tiempo Real](#14-websockets-y-comunicación-en-tiempo-real)
-  - [14.1. ¿Qué es la Comunicación en Tiempo Real?](#141-qué-es-la-comunicación-en-tiempo-real)
-  - [14.2. WebSocket vs SignalR - Comparación](#142-websocket-vs-signalr---comparación)
-  - [14.3. Conceptos Básicos](#143-conceptos-básicos)
-  - [14.4. WebSocket Nativo en ASP.NET Core](#144-websocket-nativo-en-aspnet-core)
-  - [14.5. Connection Manager](#145-connection-manager)
-  - [14.6. WebSocket Handler](#146-websocket-handler)
-  - [14.7. Servicio de Notificaciones WebSocket](#147-servicio-de-notificaciones-websocket)
-  - [14.8. Integración con Servicios de Negocio](#148-integración-con-servicios-de-negocio)
-  - [14.9. Cliente JavaScript WebSocket](#149-cliente-javascript-websocket)
-  - [14.10. SignalR como Alternativa](#1410-signalr-como-alternativa)
-  - [14.11. SignalR: Conceptos Fundamentales](#1411-signalr-conceptos-fundamentales)
-  - [14.12. SignalR: Servicio de Notificaciones](#1412-signalr-servicio-de-notificaciones)
-  - [14.13. SignalR: Integración con Servicios de Negocio](#1413-signalr-integración-con-servicios-de-negocio)
-  - [14.14. SignalR: Cliente JavaScript](#1414-signalr-cliente-javascript)
-  - [14.15. SignalR + Identity](#1415-signalr--identity)
-  - [14.16. Resumen y Buenas Prácticas](#1416-resumen-y-buenas-prácticas)
+[18. WebSockets y Comunicación en Tiempo Real](#18-websockets-y-comunicación-en-tiempo-real)
+  - [18.1. ¿Qué es la Comunicación en Tiempo Real?](#181-qué-es-la-comunicación-en-tiempo-real)
+  - [18.2. WebSocket vs SignalR - Comparación](#182-websocket-vs-signalr---comparación)
+  - [18.3. Conceptos Básicos](#183-conceptos-básicos)
+  - [18.4. WebSocket Nativo en ASP.NET Core](#184-websocket-nativo-en-aspnet-core)
+  - [18.5. Connection Manager](#185-connection-manager)
+  - [18.6. WebSocket Handler](#186-websocket-handler)
+  - [18.7. Servicio de Notificaciones WebSocket](#187-servicio-de-notificaciones-websocket)
+  - [18.8. Integración con Servicios de Negocio](#188-integración-con-servicios-de-negocio)
+  - [18.9. Cliente JavaScript WebSocket](#189-cliente-javascript-websocket)
+  - [18.10. SignalR como Alternativa](#1810-signalr-como-alternativa)
+  - [18.11. SignalR: Conceptos Fundamentales](#1811-signalr-conceptos-fundamentales)
+  - [18.12. SignalR: Servicio de Notificaciones](#1812-signalr-servicio-de-notificaciones)
+  - [18.13. SignalR: Integración con Servicios de Negocio](#1813-signalr-integración-con-servicios-de-negocio)
+  - [18.14. SignalR: Cliente JavaScript](#1814-signalr-cliente-javascript)
+  - [18.15. SignalR + Identity](#1815-signalr--identity)
+  - [18.16. Resumen y Buenas Prácticas](#1816-resumen-y-buenas-prácticas)
 
 ---
 
-## 14.1. ¿Qué es la Comunicación en Tiempo Real?
+## 18.1. ¿Qué es la Comunicación en Tiempo Real?
 
 La comunicación en tiempo real permite que el servidor envíe datos a los clientes sin que estos lo soliciten, eliminando el patrón tradicional de request-response.
 
@@ -55,7 +55,7 @@ flowchart LR
 
 ---
 
-## 14.2. WebSocket vs SignalR - Comparación
+## 18.2. WebSocket vs SignalR - Comparación
 
 ### Diferencias Fundamentales
 
@@ -134,11 +134,11 @@ flowchart TD
 
 ---
 
-## 14.3. Conceptos Básicos
+## 18.3. Conceptos Básicos
 
 Antes de implementar, entendamos los conceptos fundamentales:
 
-### 14.3.1. WebSocket Handler
+### 18.3.1. WebSocket Handler
 
 Un **Handler** es una clase que gestiona la conexión WebSocket y el intercambio de mensajes.
 
@@ -189,7 +189,7 @@ public class EchoWebSocketHandler
 }
 ```
 
-### 14.3.2. SignalR Hub
+### 18.3.2. SignalR Hub
 
 Un **Hub** es una abstracción de nivel superior que SignalR proporciona sobre WebSocket.
 
@@ -223,7 +223,7 @@ public class ChatHub : Hub
 }
 ```
 
-### 14.3.3. Comparación Conceptual
+### 18.3.3. Comparación Conceptual
 
 ```mermaid
 flowchart TB
@@ -247,7 +247,7 @@ flowchart TB
 
 ---
 
-## 14.4. WebSocket Nativo en ASP.NET Core
+## 18.4. WebSocket Nativo en ASP.NET Core
 
 ### Configuración de WebSockets
 
@@ -296,7 +296,7 @@ app.Run();
 
 ---
 
-## 14.5. Connection Manager
+## 18.5. Connection Manager
 
 ```csharp
 using System.Collections.Concurrent;
@@ -387,7 +387,7 @@ public class WebSocketMessage
 
 ---
 
-## 14.6. WebSocket Handler
+## 18.6. WebSocket Handler
 
 ```csharp
 public class WebSocketHandler
@@ -534,7 +534,7 @@ public class WebSocketHandler
 
 ---
 
-## 14.7. Servicio de Notificaciones WebSocket
+## 18.7. Servicio de Notificaciones WebSocket
 
 ```csharp
 namespace TiendaApi.Core.Services;
@@ -606,7 +606,7 @@ public class WebSocketNotificationService : IWebSocketNotificationService
 
 ---
 
-## 14.8. Integración con Servicios de Negocio
+## 18.8. Integración con Servicios de Negocio
 
 ```csharp
 public class PedidoService(
@@ -672,7 +672,7 @@ public class PedidoService(
 
 ---
 
-## 14.9. Cliente JavaScript WebSocket
+## 18.9. Cliente JavaScript WebSocket
 
 ```html
 <script>
@@ -799,7 +799,7 @@ wsClient.connect();
 
 ---
 
-## 14.10. SignalR como Alternativa
+## 18.10. SignalR como Alternativa
 
 SignalR proporciona una abstracción con características adicionales:
 
@@ -847,7 +847,7 @@ flowchart TD
 
 ---
 
-## 14.11. SignalR: Conceptos Fundamentales
+## 18.11. SignalR: Conceptos Fundamentales
 
 SignalR proporciona una abstracción sobre WebSocket con características adicionales:
 
@@ -1039,7 +1039,7 @@ app.Run();
 
 ---
 
-## 14.11. SignalR: Servicio de Notificaciones
+## 18.11. SignalR: Servicio de Notificaciones
 
 En lugar de crear un servicio de notificaciones separado, en nuestro proyecto usamos `IHubContext` directamente inyectado en los servicios de negocio. Esto es más simple y directo:
 
@@ -1233,7 +1233,7 @@ public class MiServicio
 
 ---
 
-## 14.12. SignalR: Integración con Servicios de Negocio
+## 18.12. SignalR: Integración con Servicios de Negocio
 
 ```csharp
 public class PedidoService(
@@ -1306,7 +1306,7 @@ public class PedidoService(
 
 ---
 
-## 14.13. SignalR: Cliente JavaScript
+## 18.13. SignalR: Cliente JavaScript
 
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
@@ -1432,7 +1432,7 @@ client.connect();
 
 ---
 
-## 14.14. SignalR + Identity: Autenticación y Autorización
+## 18.14. SignalR + Identity: Autenticación y Autorización
 
 SignalR se integra nativamente con el sistema de autenticación de ASP.NET Core Identity, permitiendo proteger los hubs y endpoints con JWT.
 
@@ -1666,7 +1666,7 @@ flowchart TD
 
 ---
 
-## 14.15. SignalR: Persistencia y Escalabilidad
+## 18.15. SignalR: Persistencia y Escalabilidad
 
 Para escalar SignalR en múltiples instancias, usar Redis Backplane:
 
@@ -1735,7 +1735,7 @@ flowchart TD
 
 ---
 
-## 14.16. Resumen y Buenas Prácticas
+## 18.16. Resumen y Buenas Prácticas
 
 ### Cuándo Usar Qué
 

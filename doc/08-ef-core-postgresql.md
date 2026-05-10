@@ -1,21 +1,21 @@
-# 9. Entity Framework Core con PostgreSQL
+# 8. Entity Framework Core con PostgreSQL
 
 ## Índice
 
-[9. Entity Framework Core con PostgreSQL](#9-entity-framework-core-con-postgresql)
-  - [9.1. DbContext y Configuración de Entidades](#91-dbcontext-y-configuración-de-entidades)
-  - [9.2. Configuración de Entidades: Data Annotations vs Fluent API](#92-configuración-de-entidades-data-annotations-vs-fluent-api)
-  - [9.3. Tipos de Relaciones en EF Core](#93-tipos-de-relaciones-en-ef-core)
-  - [9.4. Timestamps Automáticos: CreatedAt y UpdatedAt](#94-timestamps-automáticos-createdat-y-updatedat)
-  - [9.5. Migraciones de Base de Datos](#95-migraciones-de-base-de-datos)
-  - [9.6. Seed Data: Datos Iniciales](#96-seed-data-datos-iniciales)
-  - [9.7. SaveChanges y Transacciones](#97-savechanges-y-transacciones)
-  - [9.8. Shadow Properties y Global Query Filters](#98-shadow-properties-y-global-query-filters)
-  - [9.9. Resumen y Buenas Prácticas](#99-resumen-y-buenas-prácticas)
+[8. Entity Framework Core con PostgreSQL](#8-entity-framework-core-con-postgresql)
+  - [8.1. DbContext y Configuración de Entidades](#81-dbcontext-y-configuración-de-entidades)
+  - [8.2. Configuración de Entidades: Data Annotations vs Fluent API](#82-configuración-de-entidades-data-annotations-vs-fluent-api)
+  - [8.3. Tipos de Relaciones en EF Core](#83-tipos-de-relaciones-en-ef-core)
+  - [8.4. Timestamps Automáticos: CreatedAt y UpdatedAt](#84-timestamps-automáticos-createdat-y-updatedat)
+  - [8.5. Migraciones de Base de Datos](#85-migraciones-de-base-de-datos)
+  - [8.6. Seed Data: Datos Iniciales](#86-seed-data-datos-iniciales)
+  - [8.7. SaveChanges y Transacciones](#87-savechanges-y-transacciones)
+  - [8.8. Shadow Properties y Global Query Filters](#88-shadow-properties-y-global-query-filters)
+  - [8.9. Resumen y Buenas Prácticas](#89-resumen-y-buenas-prácticas)
 
 ---
 
-## 9.1. DbContext y Configuración de Entidades
+## 8.1. DbContext y Configuración de Entidades
 
 El DbContext es la clase central de EF Core que representa una sesión con la base de datos. Es responsable de consultar entidades, guardar cambios, y gestionar relaciones.
 
@@ -89,7 +89,7 @@ var app = builder.Build();
 
 ---
 
-## 9.2. Configuración de Entidades: Data Annotations vs Fluent API
+## 8.2. Configuración de Entidades: Data Annotations vs Fluent API
 
 EF Core soporta dos formas de configurar entidades: Data Annotations (atributos en las clases) y Fluent API (configuración mediante código).
 
@@ -221,7 +221,7 @@ flowchart TB
 
 ---
 
-## 9.3. Tipos de Relaciones en EF Core
+## 8.3. Tipos de Relaciones en EF Core
 
 EF Core soporta cuatro tipos de relaciones: One-to-One, One-to-Many, Many-to-One, y Many-to-Many. Puedes configurar las relaciones usando **Data Annotations** o **Fluent API**.
 
@@ -604,7 +604,7 @@ erDiagram
 
 ---
 
-## 9.4. Timestamps Automáticos: CreatedAt y UpdatedAt
+## 8.4. Timestamps Automáticos: CreatedAt y UpdatedAt
 
 Mantener fechas de creación y actualización es esencial para la auditoría.
 
@@ -700,7 +700,7 @@ builder.Services.AddDbContext<TiendaDbContext>(options =>
 
 ---
 
-## 9.5. Migraciones de Base de Datos
+## 8.5. Migraciones de Base de Datos
 
 Las migraciones versionan cambios del esquema de la base de datos.
 
@@ -760,7 +760,7 @@ dotnet ef database update PreviousMigrationName
 
 ---
 
-## 9.6. Seed Data: Datos Iniciales
+## 8.6. Seed Data: Datos Iniciales
 
 Puedes poblar la base de datos con datos iniciales de varias formas.
 
@@ -873,7 +873,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 ---
 
-## 9.7. SaveChanges y Transacciones
+## 8.7. SaveChanges y Transacciones
 
 El método SaveChanges() persiste todos los cambios pendientes.
 
@@ -932,7 +932,7 @@ public async Task<bool> TransferirStock(long productoOrigen, long productoDestin
 
 ---
 
-## 9.8. Shadow Properties y Global Query Filters
+## 8.8. Shadow Properties y Global Query Filters
 
 ### Shadow Properties
 
@@ -974,7 +974,7 @@ var eliminados = await context.Productos
 
 ---
 
-## 9.9. Resumen y Buenas Prácticas
+## 8.9. Resumen y Buenas Prácticas
 
 ```mermaid
 flowchart TB

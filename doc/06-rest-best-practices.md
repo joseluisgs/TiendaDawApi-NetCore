@@ -1,20 +1,20 @@
-# 18. REST Best Practices
+# 6. REST Best Practices
 
 ## Índice
 
-[18. REST Best Practices](#18-rest-best-practices)
-  - [18.1. Principios Fundamentales de REST](#181-principios-fundamentales-de-rest)
-  - [18.2. Versionado de API](#182-versionado-de-api)
-  - [18.3. Paginación](#183-paginación)
-  - [18.4. HATEOAS](#184-hateoas)
-  - [18.5. Response Envelopes](#185-response-envelopes)
-  - [18.6. Query Strings y Filtrado](#186-query-strings-y-filtrado)
-  - [18.7. ETag para Cacheo](#187-etag-para-cacheo)
-  - [18.8. Resumen](#188-resumen)
+[6. REST Best Practices](#6-rest-best-practices)
+  - [6.1. Principios Fundamentales de REST](#61-principios-fundamentales-de-rest)
+  - [6.2. Versionado de API](#62-versionado-de-api)
+  - [6.3. Paginación](#63-paginación)
+  - [6.4. HATEOAS](#64-hateoas)
+  - [6.5. Response Envelopes](#65-response-envelopes)
+  - [6.6. Query Strings y Filtrado](#66-query-strings-y-filtrado)
+  - [6.7. ETag para Cacheo](#67-etag-para-cacheo)
+  - [6.8. Resumen](#68-resumen)
 
 ---
 
-## 18.1. Principios Fundamentales de REST
+## 6.1. Principios Fundamentales de REST
 
 REST (Representational State Transfer) es un estilo arquitectónico que usa HTTP de manera semántica. Una API REST bien diseñada es intuitiva, consistente y fácil de usar.
 
@@ -58,7 +58,7 @@ flowchart LR
 
 ---
 
-## 18.2. Versionado de API
+## 6.2. Versionado de API
 
 El versionado permite evolucionar la API sin romper clientes existentes. Existen varias estrategias.
 
@@ -167,7 +167,7 @@ app.MapGet("/api/productos", () => Results.Ok(new { }))
 
 ---
 
-## 18.3. Paginación
+## 6.3. Paginación
 
 La paginación es esencial para APIs que devuelven grandes conjuntos de datos.
 
@@ -351,7 +351,7 @@ public static class PaginationLinksHelper
 
 ---
 
-## 18.4. HATEOAS (Hypermedia as the Engine of Application State)
+## 6.4. HATEOAS (Hypermedia as the Engine of Application State)
 
 HATEOAS permite que los clientes descubcan las acciones disponibles a través de enlaces hypermedia.
 
@@ -484,7 +484,7 @@ public record PedidoResponseWithActions(
 
 ---
 
-## 18.5. Response Envelopes
+## 6.5. Response Envelopes
 
 Los response envelopes estandarizan todas las respuestas de la API.
 
@@ -636,7 +636,7 @@ public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest r
 
 ---
 
-## 18.6. Query Strings y Filtrado
+## 6.6. Query Strings y Filtrado
 
 ### Parámetros de Filtrado
 
@@ -758,7 +758,7 @@ public class ProductFilterSpecification : Specification<Producto>
 
 ---
 
-## 18.7. ETag para Cacheo
+## 6.7. ETag para Cacheo
 
 ```csharp
 [HttpGet("{id:long}")]
@@ -789,7 +789,7 @@ public async Task<IActionResult> GetProduct(long id)
 
 ---
 
-## 18.8. Resumen
+## 6.8. Resumen
 
 ### Arquitectura de API REST
 
