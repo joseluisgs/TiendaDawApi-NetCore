@@ -12,6 +12,9 @@
 
 Una API de comercio electrónico con arquitectura profesional, múltiples bases de datos, cacheo con Redis, GraphQL, WebSockets para notificaciones y versionado de API.
 
+Este proyecto asienta las para el desarrollo de distintos servicios backend: Rest, GraphQL, WebSockets, SignalR. Este proyecto sirve como punto de partida de su proyecto avanzando [TiendaDawApi-Cqrs-MediatR-NetCore](https://github.com/joseluisgs/TiendaDawApi-Cqrs-MediatR-NetCore), donde se ha refactorizado completamente la arquitectura para implementar el patrón CQRS utilizando MediatR como mediator, separando claramente las operaciones de escritura (Commands) de las de lectura (Queries) y utilizando Notifications para eventos asíncronos.
+
+
 ## 🎯 Descripción
 
 TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET Core y C# 14 que implementa una API RESTful completa para una tienda en línea, además usa GraphQL y WebSockets. El proyecto está diseñado con una arquitectura en capas utilizando múltiples bases de datos (PostgreSQL, MongoDB y Redis) para diferentes propósitos educativos para la formación de Desarrollo Web en Entornos Servidor (DAW).
