@@ -285,7 +285,11 @@ public class UserService(
 
         logger.LogInformation("Usuario eliminado lógicamente con id: {Id}", id);
 
-        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"));
+        _ = Task.Run(() =>
+        {
+            try { InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"); }
+            catch (Exception ex) { logger.LogError(ex, "Error inesperado al invalidar caché de usuario: {Id}", id); }
+        });
 
         return UnitResult.Success<DomainError>();
     }

@@ -45,7 +45,7 @@
 
 ---
 
-## Fase 1 — Rápido y de bajo riesgo
+## Fase 1 — Rápido y de bajo riesgo ✅ COMPLETADA (24/09/2026)
 
 ### 1A · Health Checks (#10)
 
@@ -74,6 +74,16 @@
 | FF.1 | Inventario de ~30 `_ = Task.Run(...)` | grep |
 | FF.2 | Interior con `try { ... } catch (Exception ex) { logger.LogError(ex, "..."); }` — **sin await, sin WhenAll** | `ProductoService` (~13), `PedidosService` (~11), `CategoriaService` (2), `UserService` (3) |
 | FF.3 | Verificar | Build; crear producto → HTTP rápido + logs sin excepciones en background |
+
+### ✅ Verificación Fase 1 (24/09/2026)
+
+| # | Resultado |
+|---|-----------|
+| 1A | `Infrastructures/HealthChecksConfig.cs` nuevo: `AddHealthChecks(environment)` → PG (`CanConnectAsync`), Mongo (ping con tope de 5 s), Redis (vía `IDistributedCache`, solo fuera de dev). `MapHealthEndpoint()` → `GET /health` con JSON `{status, totalDuration, checks[{name, status, duration, description, error}]}` (semáforo `OK`/`DEGRADED`/`ERROR`). `DatabaseConfig` además registra `IMongoClient` en modo EF; `Program.cs` registra servicios + endpoint. **Sin paquetes NuGet nuevos.** |
+| 10.4 | **En vivo:** `GET /health` → **200** `{"status":"OK",...}` (cumple el contrato de Bruno `[001]`); con `docker stop tienda-local-mongodb` → **503** `{"status":"ERROR"}` (mongodb en ERROR, postgresql sigue OK); restaurar contenedor → 200. |
+| 1B | Índices añadidos en `TiendaDbContext.OnModelCreating`: `productos(CategoriaId)`, `productos(CategoriaId, Precio)`, `productos(CreatedAt)`, `productos(IsDeleted)`, `users(Role)`; los índices únicos existentes intactos (solo añadir). En BD viva se materializarán con la migración de la **Fase 8**; en dev el drop+create ya los crea. |
+| 1C | Inventario: **29** `_ = Task.Run` (Pedidos 11 · Producto 13 · User 3 · Categoría 2). 28 ya tenían `try/catch (Exception)` + log interior (caché/WS/SignalR/email/eventos = `LogWarning`; fallo en el flujo de creación de pedido = `LogError`); endurecido el único lambda sin guarda (`UserService`, invalidación de caché) con `try/catch + LogError`. **Sin `await`, sin `WhenAll`.** |
+| FF.3 | Build **0/0** · **1034 tests unitarios** verdes (E2E completo → Fase 7). |
 
 ---
 

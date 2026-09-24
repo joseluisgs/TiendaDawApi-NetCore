@@ -55,6 +55,9 @@ services.AddStorage();
 services.AddWebSockets();
 services.AddBackgroundJobs();
 
+// Health Checks (sondeo de dependencias en /health)
+services.AddHealthChecks(environment);
+
 // SignalR (Realtime)
 services.AddRealtimeSignalR();
 
@@ -105,6 +108,9 @@ app.MapSignalRHubs();
 app.UseStaticFiles();
 app.MapControllers();
 app.MapGraphQLEndpoints();
+
+// Health Check (GET /health → JSON: 200 OK, 503 si alguna dependencia cae)
+app.MapHealthEndpoint();
 
 // ============================================================================
 // 🗄️ INICIALIZACIÓN DE DATOS
