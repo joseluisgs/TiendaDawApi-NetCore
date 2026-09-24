@@ -174,7 +174,7 @@ public class MemoryCacheServiceTests
             x => x.Log(
                 LogLevel.Debug,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("RemoveByPattern")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("RemoveByPattern")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);

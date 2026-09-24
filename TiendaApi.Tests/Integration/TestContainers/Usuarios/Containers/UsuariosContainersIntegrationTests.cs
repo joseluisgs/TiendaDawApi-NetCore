@@ -23,15 +23,13 @@ public class UsuariosContainersIntegrationTests
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
-        _mongoContainer = new MongoDbBuilder()
-            .WithImage("mongo:7.0")
+        _mongoContainer = new MongoDbBuilder("mongo:7.0")
             .WithPortBinding(27017, true)
             .Build();
 
         await _mongoContainer.StartAsync();
 
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
+        _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
             .WithDatabase("tienda_test")
             .WithUsername("test")
             .WithPassword("test")

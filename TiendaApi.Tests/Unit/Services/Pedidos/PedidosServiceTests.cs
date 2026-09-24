@@ -1107,7 +1107,7 @@ public class PedidosServiceTests
             l => l.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Maximos reintentos alcanzados")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Maximos reintentos alcanzados")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
