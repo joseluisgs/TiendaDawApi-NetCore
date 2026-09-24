@@ -44,7 +44,7 @@ public class CategoriaServiceIntegrationTests
 
         await _mongoContainer.StartAsync();
 
-        _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
+        _postgresContainer = new PostgreSqlBuilder("postgres:17-alpine")
             .WithDatabase("tienda_test")
             .WithUsername("test")
             .WithPassword("test")

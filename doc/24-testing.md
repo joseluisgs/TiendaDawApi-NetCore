@@ -301,7 +301,7 @@ public class SequentialIntegrationTests
             if (_sharedContainer == null)
             {
                 _sharedContainer = new PostgreSqlBuilder()
-                    .WithImage("postgres:15-alpine")
+                    .WithImage("postgres:17-alpine")
                     .WithDatabase("TestDb")
                     .WithUsername("test")
                     .WithPassword("test")
@@ -386,7 +386,7 @@ public class TestContainersFixture : IDisposable
     {
         // Iniciar PostgreSQL
         PostgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
+            .WithImage("postgres:17-alpine")
             .WithDatabase("tiendadb_test")
             .WithUsername("test")
             .WithPassword("test")
@@ -434,7 +434,7 @@ public class IntegrationTestBase : IDisposable
     {
         // Crear contenedor para cada test
         _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
+            .WithImage("postgres:17-alpine")
             .WithDatabase("tiendadb_test")
             .WithUsername("test")
             .WithPassword("test")
@@ -616,7 +616,7 @@ public class GlobalTestFixture
     {
         // Crear contenedores compartidos para todos los tests
         SharedPostgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
+            .WithImage("postgres:17-alpine")
             .WithDatabase("tiendadb_global")
             .WithUsername("test")
             .WithPassword("test")
@@ -2180,7 +2180,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_USER: admin
           POSTGRES_PASSWORD: admin123
@@ -2584,7 +2584,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_USER: admin
           POSTGRES_PASSWORD: admin123

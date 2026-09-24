@@ -507,7 +507,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     environment:
       - POSTGRES_DB=TiendaDb
       - POSTGRES_USER=postgres
