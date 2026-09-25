@@ -1,33 +1,33 @@
-version: '3.8'
-
 services:
   newman:
     image: postman/newman:alpine
     container_name: tienda-api-postman-tests
     working_dir: /etc/newman
     volumes:
-      - ./TiendaApi.NetCore.postman_collection.json:/etc/newman/collections/TiendaApi.NetCore.postman_collection.json:ro
-      - ./TiendaApi.NetCore.postman_environment.json:/etc/newman/environments/TiendaApi.NetCore.postman_environment.json:ro
+      # Colección y environment en el working dir (newman resuelve los paths
+      # relativos al cwd; antes estaban en /collections y el run fallaba).
+      - ./TiendaApi.NetCore.postman_collection.json:/etc/newman/TiendaApi.NetCore.postman_collection.json:ro
+      - ./TiendaApi.NetCore.postman_environment.json:/etc/newman/TiendaApi.NetCore.postman_environment.json:ro
       - ./test-image.png:/etc/newman/test-image.png:ro
       - ./reports:/etc/newman/reports
     environment:
       - BASE_URL=${BASE_URL:-http://host.docker.internal:5031}
-      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
-      - USER_USERNAME=${USER_USERNAME:-userdaw}
-      - USER_PASSWORD=${USER_PASSWORD:-userdaw}
     command: >
       run TiendaApi.NetCore.postman_collection.json
       -e TiendaApi.NetCore.postman_environment.json
+      --env-var baseUrl=${BASE_URL:-http://host.docker.internal:5031}
       --reporters cli,junit,html,json
       --reporter-junit-export /etc/newman/reports/junit-report.xml
       --reporter-html-export /etc/newman/reports/report.html
       --reporter-json-export /etc/newman/reports/report.json
       --timeout-request 30000
       --timeout-script 5000
+      --delay-request 3200
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    restart: on-failure
+    # Rate limit de la API (RateLimitConfig.cs): POST:* 20/min -> --delay-request
+    # evita los 429. Si la API no está aún, reintenta (máx 3).
+    restart: on-failure:3
 
 networks:
   default:

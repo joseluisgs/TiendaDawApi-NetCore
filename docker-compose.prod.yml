@@ -15,6 +15,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
     networks:
       - tienda-network
@@ -33,7 +34,7 @@ services:
         max-file: "3"
 
   mongodb:
-    image: mongo:7
+    image: mongo:7.0
     container_name: tienda-mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
@@ -48,6 +49,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
     networks:
       - tienda-network
@@ -84,6 +86,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
     networks:
       - tienda-network
@@ -113,16 +116,16 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-tienda};Username=${POSTGRES_USER:-admin};Password=${POSTGRES_PASSWORD:-admin123}
-      - ConnectionStrings__MongoDB=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin
+      - ConnectionStrings__MongoDB=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin&retryWrites=true&retryReads=true
       - ConnectionStrings__Redis=redis:6379
       - Jwt__Key=${JWT_KEY:-ChangeThisToASecureKeyAtLeast32CharactersLong}
       - Jwt__Issuer=${JWT_ISSUER:-TiendaApi}
       - Jwt__Audience=${JWT_AUDIENCE:-TiendaApi}
       - Jwt__ExpireMinutes=${JWT_EXPIRE_MINUTES:-30}
-      - MongoDbSettings__ConnectionString=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin
-       - MongoDbSettings__DatabaseName=${MONGO_DB:-tienda}
-       - MongoDbSettings__PedidosCollection=${MONGO_PEDIDOS_COLLECTION:-pedidos}
-       - Pedidos__RepositoryType=${PEDIDOS_REPOSITORY_TYPE:-MongoDbNative}
+      - MongoDbSettings__ConnectionString=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin&retryWrites=true&retryReads=true
+      - MongoDbSettings__DatabaseName=${MONGO_DB:-tienda}
+      - MongoDbSettings__PedidosCollection=${MONGO_PEDIDOS_COLLECTION:-pedidos}
+      - Pedidos__RepositoryType=${PEDIDOS_REPOSITORY_TYPE:-MongoDbNative}
       - Smtp__Host=${SMTP_HOST:-smtp.gmail.com}
       - Smtp__Port=${SMTP_PORT:-587}
       - Smtp__Username=${SMTP_USERNAME:-}

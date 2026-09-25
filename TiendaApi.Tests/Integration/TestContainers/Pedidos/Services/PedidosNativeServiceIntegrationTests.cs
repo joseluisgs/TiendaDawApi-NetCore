@@ -50,13 +50,13 @@ public class PedidosNativeServiceIntegrationTests
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
-        _mongoContainer = new MongoDbBuilder("mongo:7.0")
+        _mongoContainer = new MongoDbBuilder(TestContainerImages.Mongo)
             .WithPortBinding(27017, true)
             .Build();
 
         await _mongoContainer.StartAsync();
 
-        _postgresContainer = new PostgreSqlBuilder("postgres:17-alpine")
+        _postgresContainer = new PostgreSqlBuilder(TestContainerImages.Postgres)
             .WithDatabase("tienda_test")
             .WithUsername("test")
             .WithPassword("test")

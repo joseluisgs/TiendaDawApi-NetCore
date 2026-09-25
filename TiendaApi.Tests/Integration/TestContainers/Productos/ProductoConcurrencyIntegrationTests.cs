@@ -33,7 +33,7 @@ public class ProductoConcurrencyIntegrationTests
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
-        _postgresContainer = new PostgreSqlBuilder("postgres:17-alpine")
+        _postgresContainer = new PostgreSqlBuilder(TestContainerImages.Postgres)
             .WithDatabase("tienda_test")
             .WithUsername("test")
             .WithPassword("test")
