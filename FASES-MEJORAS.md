@@ -452,6 +452,7 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 
 | Fase | Impacto | Dificultad | Riesgo |
 |------|---------|------------|--------|
+| 0 Baseline | 🟡 Fundación | 🟢 Muy baja | 🟢 |
 | 10 Health | 🟡 Ops | 🟢 Muy baja | 🟢 |
 | 2 Índices (modelo) | 🟢 Alto | 🟢 Muy baja | 🟢 |
 | FF Task.Run | 🟡 Calidad | 🟢 Baja | 🟢 |
@@ -462,7 +463,20 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 | 7 Automation | 🟢 Muy alto (QA) | 🟡 Media | 🟢 |
 | 9 ToHttpResult | 🟢 Mantenibilidad | 🟢 Baja | 🟡 |
 | 6 Polly | 🟡 Educativo | 🟢 Baja | 🟢 |
+| 5 Verificación global | 🟡 QA (E2E en vivo) | 🟡 Media | 🟢 |
+| 10 Documentación didáctica | 🟡 Doc | 🟡 Media | 🟢 |
+| 11 Docker/imágenes | 🟡 Ops | 🟡 Media | 🟡 |
 | 12 README | 🟡 Doc/DAQ | 🟢 Muy baja | 🟢 |
+
+---
+
+## Verificador de consistencia (`scripts/check-docs.mjs`)
+
+```bash
+node scripts/check-docs.mjs
+```
+
+Comprueba de forma repetible: índice de `BITACORA.md` ↔ secciones (mismo orden y hashes), que **todos los hashes citados existen en `git log`**, que las fases **0-12 están completadas en ambos documentos**, que el texto de "Fases pendientes" coincide con el conteo real y que el **TOC del README** resuelve a headings. Sale con código `1` si algo falla.
 
 ---
 

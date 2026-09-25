@@ -17,10 +17,10 @@
 | 4 · OutputCache + ETag | `b16c29e` | Caché HTTP 60s con tags + revalidación 304 | ✅ |
 | 9 · ToHttpResult | `a7352de` | 31 `error switch` → 1 extensión (Opción C) | ✅ |
 | 8 · Migraciones EF | `ee65489` | `InitialCreate` + `AddOptimizationIndexes` + baseline | ✅ |
-| 5 · Verificación global | `131ec3c` | Build 0/0 · 1034 unit · integración 161 · E2E 95/95 · smoke | ✅ |
-| 11 · Infra Docker saludable + imágenes | `6f4cfce` | healthchecks, `mongo:7.0` único, composes E2E oficiales, `retryWrites` | ✅ |
+| 7 · Automation E2E (Node) | `227cb9d` (+`d5b8172` docs) | `test-runner.mjs` de todos los controladores (55/55) | ✅ |
+| 5 · Verificación global | `131ec3c` (+`aa5bfcf`, `1780ef6`, `8d1d5d9`, `ae53f15`) | Build 0/0 · 1034 unit · integración 161 · E2E 95/95 · fix `Descripcion` · Bruno 64/64 · smoke | ✅ |
+| 11 · Infra Docker saludable + imágenes | `6f4cfce` (+`4d4d048` docs) | healthchecks, `mongo:7.0` único, composes E2E oficiales, `retryWrites` | ✅ |
 | 6 · Polly educativa | `fc0ee21` (+`70eb1d0` docs) | Retry + CircuitBreaker + Timeout en email | ✅ |
-| 7 · Automation E2E (Node) | `227cb9d` | `test-runner.mjs` de todos los controladores (55/55) | ✅ |
 | 10 · Documentación didáctica | `f6acd04` (+`79e857b` docs) | Secciones en `doc/NN-*.md` existentes | ✅ |
 | 12 · README | `afe3862` | README: 5 errores, comandos E2E reales, estructura, estado actual | ✅ |
 
@@ -464,6 +464,8 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 ## Fases pendientes
 
 **Ninguna — las 13 fases del plan (0-12) están completadas y documentadas.**
+
+> **Consistencia automática:** `node scripts/check-docs.mjs` valida índice↔secciones, hashes de esta bitácora contra `git log`, fases 0-12 en ambos documentos y el TOC del README.
 
 ---
 
