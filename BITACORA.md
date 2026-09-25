@@ -21,7 +21,7 @@
 | 11 · Infra Docker saludable + imágenes | `6f4cfce` | healthchecks, `mongo:7.0` único, composes E2E oficiales, `retryWrites` | ✅ |
 | 6 · Polly educativa | `fc0ee21` | Retry + CircuitBreaker + Timeout en email | ⬜ |
 | 7 · Automation E2E (Node) | `227cb9d` | `test-runner.mjs` de todos los controladores (55/55) | ✅ |
-| 10 · Documentación didáctica | — | Secciones en `doc/NN-*.md` existentes (última fase) | ⬜ |
+| 10 · Documentación didáctica | `f6acd04` | Secciones en `doc/NN-*.md` existentes (última fase) | ⬜ |
 
 ---
 
@@ -416,11 +416,29 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 
 ---
 
-## Fases pendientes (se documentarán aquí tras su commit)
+## Fase 10 — Documentación didáctica (`f6acd04`) ✅
 
-| Fase | Qué se documentará |
-|------|--------------------|
-| **10 · Documentación didáctica** | Secciones insertadas en cada `doc/NN-*.md` existente (nada nuevo creado) |
+- **Regla cumplida:** **0 documentos nuevos**; 9 ficheros `doc/NN-*.md` modificados (**730 líneas añadidas**) con código real del proyecto y TOC actualizado en todos.
+- **10.1** → `doc/11` 11.6: subsección *Opción C aplicada: `ToHttpResult()`* (el `DomainErrorExtensions` real, 31 call sites en 5 controladores, tabla de enfoques).
+- **10.2** → `doc/10`: nueva **10.10 "Caché HTTP con OutputCache y ETag"** (Resumen → 10.11): `OutputCacheConfig`, `[OutputCache(60, tags)]`, `EvictByTagAsync` de `ProductoService`/`CategoriaService`, flujo mermaid 200→304 y tabla frente a cache-aside Redis.
+- **10.3/10.4** → `doc/06`: 6.7 subsección *Patrón real (Fase 4)*; 6.3 subsección *Paginación real (Fase 3)* con `Skip/Take` (EF) y `Skip/Limit` (Mongo) reales.
+- **10.5** → `doc/08` 8.5: subsecciones *factory design-time* (`TiendaDbContextFactory`), *migraciones reales* (`InitialCreate` + `AddOptimizationIndexes`), *baseline en BD existente* (el `ApplyPendingMigrationsAsync` real) y *dev vs prod*.
+- **10.6** → `doc/27`: 27.3 subsección *Índices reales (Fase 1)* (los 9 `HasIndex` del `TiendaDbContext`); 27.5 subsección *AsNoTracking selectivo (Fase 2)* (9 sitios + los que NO se tocan y por qué).
+- **10.7** → `doc/22`: nueva **22.12 "Fire & Forget Endurecido"** (Resumen → 22.13): patrón, inventario real (29 `Task.Run`), 3 reglas y tabla de cuándo NO usarlo.
+- **10.8** → `doc/13` 13.3 subsección *Polly: dónde está y dónde NO* (loop a mano de `PedidosService`, por qué no `EnableRetryOnFailure`, tabla por I/O) + `doc/21`: nueva **21.10 "Resiliencia con Polly (Fase 6)"** (Resumen → 21.11).
+- **10.9** → `doc/24`: nueva **24.15 "Automation E2E con Node"** (tras 24.14): modos auto/externo, tabla de los 55 checks, pirámide de testing (mermaid).
+- **10.10 Verificación:** TOC↔headings coherentes en los **9** docs (script) · `git status` → **0 ficheros nuevos** · build **0/0** · unit **1039/1039**.
+
+### Replicar en CQRS
+
+1. **Copiar los 9 doc/ tal cual** si CQRS mantiene la misma arquitectura; si MediatR cambia algún código/contrato, ajustar solo los snippets (los docs citan ficheros reales: revisar rutas de CQRS).
+2. Verificar TOC tras cualquier renumeración (las secciones nuevas renumeraron el Resumen en 10, 21 y 22).
+
+---
+
+## Fases pendientes
+
+**Ninguna — las 12 fases del plan (0-11) están completadas y documentadas.**
 
 ---
 
