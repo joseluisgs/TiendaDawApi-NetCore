@@ -17,6 +17,7 @@
 | Caché HTTP | **Opción A: OutputCache + ETag + 304** (no ResponseCaching en los mismos endpoints) |
 | Polly | Solo **fase educativa** aditiva (email); no hay `HttpClient` saliente real en la API |
 | Migraciones | Sí: salir de `EnsureCreated` puro para que **los índices se apliquen en BD existente** |
+| Integración Result→HTTP | **Opción C: extensión `ToHttpResult()`** (doc UD02 §7) — 31 `error switch` → 1 extensión; **preservar códigos actuales** |
 
 ---
 
@@ -87,13 +88,21 @@
 
 ---
 
-## Fase 2 — Consultas (`AsNoTracking`)
+## Fase 2 — Consultas (`AsNoTracking`) ✅ COMPLETADA (25/09/2026)
 
 | # | Tarea | Detalle |
 |---|-------|---------|
 | 1.1 | Sí | `FindAllAsync`, `FindAllPagedAsync`, `FindByCategoriaIdAsync`, `GetRecentlyCreatedAsync`, listados de `User` |
 | 1.2 | **No tocar** | `FindByIdAsync`, `DeleteAsync` (soft-delete depende de tracking), rutas de `Update` |
 | 1.3 | Verificar | GETs OK; **PUT/DELETE** producto/categoría/user OK (E2E) |
+
+### ✅ Verificación Fase 2 (25/09/2026)
+
+| # | Resultado |
+|---|-----------|
+| 1.1 | `.AsNoTracking()` en **9 sitios de solo lectura**: `CategoriaRepository` (FindAllAsync, items de FindAllPagedAsync) · `UserRepository` (FindAllAsync, items de FindAllPagedAsync, GetActiveUsersAsync) · `ProductoRepository` (FindAllAsync con Include, items de FindAllPagedAsync, FindByCategoriaIdAsync, GetRecentlyCreatedAsync) |
+| 1.2 | **No tocados:** `FindByIdAsync` (producto/categoría/user), `FindByUsernameAsync`, `FindByEmailAsync`, `DeleteAsync` y rutas de `Update` (siguen con tracking) |
+| 1.3 | Build **0/0** · **1034 unit tests** verdes · **en vivo 23/23 OK** (PG 17 + Mongo): listados GET categorías/productos/by-categoría/users/pedidos → 200 · round-trips POST→PUT→DELETE de producto, categoría y usuario → 201/200/204 · GET tras DELETE → 404 (soft-delete con tracking intacto) |
 
 ---
 
@@ -212,6 +221,25 @@
 
 ---
 
+## Fase 9 — Integración Result→HTTP · **Opción C** (`ToHttpResult`)
+
+> **Fuente:** doc UD02 §7 *Excepciones y patrón Result* (`UD02/07-excepciones-patron-result.md`) + ejemplo `UD02/ejemplos/07-ProductosResult/Extensions/DomainErrorExtensions.cs`.  
+> **Viabilidad:** ✅ **ALTA** — todos los prerrequisitos ya existen en la API: `DomainError` tipado (`NotFoundError`, `ValidationError`, `BusinessRuleError`, `ConflictError`, `UnauthorizedError`, `ForbiddenError`, `InternalError`), fábricas de error por dominio (`ProductoError`, `CategoriaError`, `UsuarioError`, `AuthError`, `PedidoError`, `StorageError`), `Result<T, DomainError>` + `Match` en los controladores y CSharpFunctionalExtensions 3.7.0.  
+> **Situación actual:** **31 `error switch` inline** repetidos en 5 controladores (Users 9 · Pedidos 8 · Productos 7 · Categorías 5 · Auth 2).  
+> **Por qué Opción C y no B** (§7.8.3): con 5+ controladores, la extensión única es la recomendada por el doc.
+
+| # | Tarea | Detalle |
+|---|-------|---------|
+| 9.1 | Nuevo `Extensions/DomainErrorExtensions.cs` | `public static IActionResult ToHttpResult(this DomainError error)` con switch tipado. **Mapeo = códigos actuales** para no romper E2E: `NotFoundError`→404 · `ValidationError`→400 (+ `ValidationErrors`) · `ConflictError`→409 · `BusinessRuleError`→400 (según XML docs del proyecto) · `UnauthorizedError`→401 · `ForbiddenError`→403 · `InternalError`/default→500 (mensaje `error.Message`, igual que hoy) |
+| 9.2 | Sustituir los 31 switches | `onFailure: error => error switch {...}` → `onFailure: error => error.ToHttpResult()` en los 5 controladores; conservar `Match`/`IsSuccess` en flujos simples (ej. DELETE) |
+| 9.3 | Auditar mapeos divergentes | Switches actuales que no siguen la matriz (p. ej. `BusinessRuleError` hoy cae a 500 en algunos endpoints → con `ToHttpResult` pasaría a 400): anotar como mejora, decisión explícita |
+| 9.4 | Tests | Actualizar aserciones de controlador afectadas (tipos `StatusCodeResult`/objetos) |
+| 9.5 | Verificar | Build 0/0 · unit · Bruno/Newman (400/401/403/404/409) — ideal **tras la Fase 7**, que cubre todos los códigos |
+
+**Riesgo:** 🟡 bajo — solo capa de presentación; obligatorio preservar códigos y shape `{message, ...}` de cada respuesta.
+
+---
+
 ## Fuera de alcance (confirmado)
 
 | Tema | Motivo |
@@ -229,11 +257,13 @@
 
 ```
 0.1 → 10 → 2 → FF → 1 (AsNoTracking) → 4 (pedidos paged)
-   → 6-OutputCache → 8 (migraciones/índices)
+   → 6-OutputCache → 9 (ToHttpResult)
+   → 8 (migraciones/índices)
    → 7 (Automation) → 5.x (verificación global) → 6-Polly
 ```
 
 > **Nota:** Fase 8 antes que 7 para que el Automation valide una BD con índices reales.  
+> **Fase 9** va tras OutputCache y antes de 7: la Automation valida los códigos HTTP de la refactorización.  
 > Las “6” son distintas: **Fase 4 = OutputCache (#6 del análisis)**; **Fase 6 = Polly**.
 
 ---
@@ -250,6 +280,7 @@
 | 4 OutputCache | 🟡 Medio | 🟢 Baja | 🟡 |
 | 8 Migraciones | 🟢 Alto (prod) | 🟡 Media | 🟡 |
 | 7 Automation | 🟢 Muy alto (QA) | 🟡 Media | 🟢 |
+| 9 ToHttpResult | 🟢 Mantenibilidad | 🟢 Baja | 🟡 |
 | 6 Polly | 🟡 Educativo | 🟢 Baja | 🟢 |
 
 ---
