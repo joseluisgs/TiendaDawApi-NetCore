@@ -240,6 +240,35 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 }
 ```
 
+### Índices reales del proyecto (Fase 1)
+
+Los de arriba son de ejemplo; estos son los que definen el `TiendaDbContext` real del proyecto (la migración `AddOptimizationIndexes` los versiona para las BDs existentes):
+
+```csharp
+// TiendaDbContext.cs — OnModelCreating (solo los índices)
+modelBuilder.Entity<Categoria>(entity =>
+{
+    entity.HasIndex(c => c.Nombre).IsUnique();                 // búsqueda por nombre, sin duplicados
+});
+
+modelBuilder.Entity<Producto>(entity =>
+{
+    entity.HasIndex(p => p.CategoriaId);                       // JOINs/filtros por categoría
+    entity.HasIndex(p => new { p.CategoriaId, p.Precio });     // compuesto: catálogo filtrado+ordenado por precio
+    entity.HasIndex(p => p.CreatedAt);                         // orden por fecha (listados y "recién creados")
+    entity.HasIndex(p => p.IsDeleted);                         // soft-delete: casi todos los SELECT lo filtran
+});
+
+modelBuilder.Entity<Usuario>(entity =>
+{
+    entity.HasIndex(u => u.Username).IsUnique();               // login
+    entity.HasIndex(u => u.Email).IsUnique();                  // registro/recuperación
+    entity.HasIndex(u => u.Role);                              // listados por rol (admin)
+});
+```
+
+**Cómo elegirlos**: mira el `WHERE`/`ORDER BY` de los listados reales de la API (los mismos que la Automation E2E ejercita): categoría+precio, `IsDeleted`, `CreatedAt`, `Username`/`Email` únicos. Un índice que no corresponde a ninguna consulta es solo coste de escritura. Compuestos → **orden de columnas importa**: `(CategoriaId, Precio)` sirve para filtrar por categoría *y* ordenar por precio; el inverso no.
+
 ---
 
 ## 27.4. Caching Avanzado
@@ -462,6 +491,38 @@ public class ProductoRepository
     }
 }
 ```
+
+### AsNoTracking selectivo (Fase 2)
+
+`AsNoTracking()` le dice a EF que **no** cargue el Change Tracker con las entidades: menos memoria y menos trabajo por fila. Solo es válido donde la entidad **no va a guardarse después** — y ahí el proyecto aplica el cambio de la Fase 2 en **9 sitios de solo lectura**:
+
+```csharp
+// ProductoRepository.cs — FindAllAsync (con Include) y variantes
+public async Task<IEnumerable<Producto>> FindAllAsync()
+{
+    logger.LogDebug("Buscando todos los productos");
+    return await context.Productos
+        .Include(p => p.Categoria)
+        .OrderBy(p => p.Nombre)
+        .AsNoTracking()          // ← la lectura nunca hará SaveChanges
+        .ToListAsync();
+}
+
+// También expuesto como IQueryable para composición (Fase 2)
+public IQueryable<Producto> FindAllAsNoTracking()
+{
+    return context.Productos
+        .Include(p => p.Categoria)
+        .OrderBy(p => p.Nombre)
+        .AsNoTracking();
+}
+```
+
+Aplicado en: `CategoriaRepository` (FindAllAsync, items de FindAllPagedAsync) · `ProductoRepository` (FindAllAsync con Include, items de FindAllPagedAsync, FindByCategoriaIdAsync, GetRecentlyCreatedAsync) · `UserRepository` (FindAllAsync, items de FindAllPagedAsync, GetActiveUsersAsync).
+
+**Lo que NO se toca** (y por qué): `FindByIdAsync` de producto/categoría/usuario, `FindByUsernameAsync`, `FindByEmailAsync`, `DeleteAsync` y las rutas de `Update` **siguen con tracking** — esos métodos devuelven la entidad para modificarla o borrarla, y sin tracking el `SaveChanges` no tendría nada que guardar. Pista de diseño: si el nombre del método es `Find*Async` y su resultado alimenta un PUT/DELETE, déjalo trackeando.
+
+> **Medido en la Fase 2**: build 0/0 · 1034 tests unit · 23/23 endpoints en vivo OK (listados y round-trips POST→PUT→DELETE). Es una optimización de perfil "casi gratis", pero solo si respetas la línea de "no escribo después".
 
 ---
 

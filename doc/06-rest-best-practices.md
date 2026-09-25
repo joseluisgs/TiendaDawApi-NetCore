@@ -349,6 +349,42 @@ public static class PaginationLinksHelper
 }
 ```
 
+### Paginación real en el proyecto (Fase 3)
+
+Antes de la **Fase 3** los endpoints paginados (`GET /api/pedidos`) cargaban **toda** la colección con `FindAllAsync()` y recortaban en memoria con `.Skip().Take()`: coste proporcional a la tabla completa, trabajo desperdiciado y un `totalCount` también calculado sobre la lista entera. La paginación real se empuja a la BD, **una vez por backend**:
+
+```csharp
+// EF Core + PostgreSQL (PedidosEfCoreRepository.cs)
+var items = await query
+    .Skip(page * size)   // OFFSET page*size  (page empieza en 0)
+    .Take(size)          // LIMIT size
+    .ToListAsync();
+
+// MongoDB nativo (PedidosNativeRepository.cs) — misma semántica, API distinta
+var items = await coleccion
+    .Find(filtro)
+    .Skip(page * size)
+    .Limit(size)
+    .ToListAsync(cancellationToken);
+```
+
+El servicio devuelve el resultado tipado (índice base-1 en `Page`, coherente con la Offset Paginación de arriba):
+
+```csharp
+// PedidosService.cs — FindAllPagedAsync
+var (items, totalCount) = await pedidosRepository.FindAllPagedAsync(page, size);
+var dtos = items.ToDtoList();
+return Result.Success<PagedResult<PedidoDto>, DomainError>(new PagedResult<PedidoDto>
+{
+    Items = dtos,
+    TotalCount = totalCount,   // COUNT aparte, no sobre los items cargados
+    Page = page + 1,           // 1..N hacia el cliente
+    PageSize = size
+});
+```
+
+**Claves**: el `TotalCount` se calcula con un conteo aparte (no deserializando todos los documentos), cada backend aplica su propia sintaxis (`Skip/Take` en EF, `Skip/Limit` en MongoDB) y los tests de integración (`PedidosServiceIntegrationTests`) fijan las páginas esperadas para que un cambio de orden o de límite salga en verde/rojo inmediatamente.
+
 ---
 
 ## 6.4. HATEOAS (Hypermedia as the Engine of Application State)
@@ -786,6 +822,30 @@ public async Task<IActionResult> GetProduct(long id)
     return Ok(dto);
 }
 ```
+
+### Patrón real del proyecto (Fase 4): OutputCache + ETag + 304
+
+Este proyecto combina la caché de salida con revalidación ETag en **dos capas**. La decisión de diseño es importante: **cada GET cacheable declara su propia política en el atributo**, no hay un TTL global oculto:
+
+```csharp
+// ProductosController.cs — GET, GET {id} y GET paged
+[HttpGet]
+[OutputCache(Duration = 60, Tags = new[] { "productos" })]
+[ProducesResponseType(typeof(PagedResult<ProductoDto>), StatusCodes.Status200OK)]
+public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int size = 10)
+{
+    // ...servicio...
+    Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";   // ETag por respuesta
+    return Ok(dto);
+}
+```
+
+- **`Duration = 60`**: durante 60 s las peticiones idénticas se sirven desde la caché de salida (middleware `OutputCache`, registrado en `Infrastructures/OutputCacheConfig.cs` y activado con `app.UseOutputCacheConfig()` **antes** de `MapControllers`).
+- **`Tags = { "productos" }`**: invalidación selectiva. Tras cualquier CUD, los servicios llaman a `IOutputCacheStore.EvictByTagAsync("productos", ...)` — incluido el alta desde **GraphQL**, que también muta productos. Sin tags, los 60 s de TTL dejarían datos viejos tras un PUT/DELETE.
+- **ETag + `304`**: si el cliente revalida (`If-None-Match`) y el middleware no está devolviendo ya la respuesta cacheada, el controlador responde `304 Not Modified` sin cuerpo. Verificado en el smoke de la Fase 4: segundo `GET /api/productos` → **304**.
+- **Qué NO se cachea**: endpoints autenticados o mutaciones (`POST/PUT/DELETE`), que dependen de `Authorization`.
+
+> Regla práctica: **TTL para lo que cambia "con el tiempo"** (listados públicos) y **tags para lo que cambia "por eventos"** (cualquier CUD). Las dos conviven: el tag siempre "gana" porque permite invalidar antes de que venza el TTL.
 
 ---
 

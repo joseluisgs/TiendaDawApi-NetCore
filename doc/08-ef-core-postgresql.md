@@ -758,6 +758,102 @@ dotnet ef database update
 dotnet ef database update PreviousMigrationName
 ```
 
+### Factory design-time: `TiendaDbContextFactory` (Fase 8)
+
+Las herramientas `dotnet ef` necesitan crear el `DbContext` **sin ejecutar la API**. Si no se les da un factory, ejecutan `Program.cs`… y en desarrollo este proyecto arranca con `EnsureDeleted + EnsureCreated`, de modo que **cada `dotnet ef migrations add` estaría destruyendo la BD**. La solución es el factory design-time:
+
+```csharp
+// TiendaApi.Api/Data/TiendaDbContextFactory.cs
+public class TiendaDbContextFactory : IDesignTimeDbContextFactory<TiendaDbContext>
+{
+    public TiendaDbContext CreateDbContext(string[] args)
+    {
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)          // el appsettings copiado al bin
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+            .Build();
+
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? "Host=localhost;Database=tienda;Username=admin;Password=admin123";
+
+        var options = new DbContextOptionsBuilder<TiendaDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+
+        return new TiendaDbContext(options);
+    }
+}
+```
+
+### Migraciones reales del proyecto (Fase 8)
+
+| Migración | Qué hace | Por qué |
+|---|---|---|
+| `..._InitialCreate` | Crea el esquema completo (tablas, FKs, índices básicos) | Baseline de EF Core |
+| `..._AddOptimizationIndexes` | Solo añade índices de optimización (Fase 1: búsqueda, fechas, claves foráneas) | **No toca datos**: segura en BDs vivas |
+
+```bash
+dotnet ef migrations add AddOptimizationIndexes
+dotnet ef database update
+```
+
+### Baseline en una BD existente (el caso difícil)
+
+Las BDs creadas antes de las migraciones (con `EnsureCreated`) **tienen las tablas pero no la tabla `__EFMigrationsHistory`**. Si `Migrate()` intentara ejecutar `InitialCreate`, fallaría con *"la tabla ya existe"*. El proyecto lo resuelve en `Infrastructures/DatabaseInitializationExtensions.cs`: si hay migraciones pendientes, la tabla `categorias` existe y **no** hay historial, se registra `InitialCreate` como aplicada **sin ejecutarla** (baseline) y `Migrate()` se queda con las futuras:
+
+```csharp
+private static async Task ApplyPendingMigrationsAsync(TiendaDbContext context, ILogger logger)
+{
+    var pending = (await context.Database.GetPendingMigrationsAsync()).ToList();
+
+    if (pending.Count > 0 && await CategoriasTableExistsAsync(context))
+    {
+        var initial = pending.FirstOrDefault(m => m.EndsWith("_InitialCreate", StringComparison.Ordinal));
+        if (initial is not null)
+        {
+            await context.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" ( ... );
+                """);
+            await context.Database.ExecuteSqlAsync(
+                $"INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") " +
+                $"VALUES ({initial}, {ProductInfo.GetVersion()}) ON CONFLICT DO NOTHING;");
+            logger.LogWarning(
+                "🗄️ [PRODUCCIÓN] BD preexistente sin historial: '{Initial}' marcada como aplicada (baseline, sin ejecutar)",
+                initial);
+        }
+    }
+
+    await context.Database.MigrateAsync();   // solo lo realmente pendiente
+}
+```
+
+La detección de "esta BD es mía" consulta `information_schema` por la tabla `categorias` — no basta con que exista *alguna* tabla.
+
+### Dev vs Producción: dos políticas distintas
+
+```csharp
+if (isDevelopment)
+{
+    context.Database.EnsureDeleted();    // DESTRUYE y recrea en cada arranque
+    context.Database.EnsureCreated();
+    await sqlSeeder.SeedAsync();          // datos semilla
+}
+else
+{
+    await ApplyPendingMigrationsAsync(context, logger);  // Migrate() + baseline
+}
+```
+
+| | Desarrollo | Producción |
+|---|---|---|
+| Mecanismo | `EnsureDeleted + EnsureCreated` | `Migrate()` (+ baseline) |
+| Esquema | Siempre el del modelo actual | Versionado por migraciones |
+| Datos | Se pierden y re-siembran | **Nunca** se pierden |
+| `__EFMigrationsHistory` | No se usa | Sí (o baseline si no existía) |
+
+> **Regla**: `EnsureCreated` es cómodo para prototipos y **incompatible con migraciones** (no escribe el historial). En cuanto existe una BD que importa, el camino es: factory design-time → migraciones → `Migrate()`.
+
 ---
 
 ## 8.6. Seed Data: Datos Iniciales

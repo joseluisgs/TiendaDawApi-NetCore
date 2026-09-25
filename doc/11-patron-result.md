@@ -944,6 +944,63 @@ private IActionResult GetHttpResult(DomainError error)
 }
 ```
 
+### Opción C aplicada en el proyecto: `ToHttpResult()` (Fase 9)
+
+Los dos ejemplos de arriba repiten el `error switch` **dentro de cada controlador**: 31 repeticiones (una por endpoint que devuelve `Result<T, DomainError>`) repartidas en 5 controladores. Si mañana un `ValidationError` pasa a devolver `422` en vez de `400`, hay que tocar los 31 sitios y los tests E2E son el único aviso.
+
+La **Fase 9 (Opción C)** centraliza ese mapeo en **una única extensión** — `TiendaApi.Api/Extensions/DomainErrorExtensions.cs`:
+
+```csharp
+public static class DomainErrorExtensions
+{
+    /// <summary>
+    /// Convierte un error de dominio en su respuesta HTTP equivalente.
+    /// </summary>
+    public static IActionResult ToHttpResult(this DomainError error) => error switch
+    {
+        NotFoundError e => new NotFoundObjectResult(new { message = e.Message }),
+        ValidationError e => new BadRequestObjectResult(new { message = e.Message, errors = e.ValidationErrors }),
+        ConflictError e => new ConflictObjectResult(new { message = e.Message }),
+        BusinessRuleError e => new BadRequestObjectResult(new { message = e.Message }),
+        UnauthorizedError e => new UnauthorizedObjectResult(new { message = e.Message }),
+        ForbiddenError e => new ObjectResult(new { message = e.Message }) { StatusCode = StatusCodes.Status403Forbidden },
+        _ => new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
+    };
+}
+```
+
+Y los controladores pasan de ~10 líneas de `switch` a una:
+
+```csharp
+// Antes (en cada endpoint):
+var resultado = await service.CreateAsync(dto);
+if (resultado.IsFailure)
+    return resultado.Error switch
+    {
+        NotFoundError e => NotFound(new { message = e.Message }),
+        // ...8 ramas más...
+        _ => StatusCode(500, ...)
+    };
+
+// Después (AuthController.cs, CategoriasController.cs, PedidosController.cs, ...):
+error => error.ToHttpResult()
+
+// También como llamada directa cuando no hay helper onFailure:
+return resultado.Error.ToHttpResult();
+```
+
+**Resultados de la Fase 9**: 31 `error switch` → 1 extensión + 31 call sites de una línea, mismos códigos HTTP y mismo shape `{message, ...}` (los tests E2E de la Fase 5/7 — 95+55 asserts — pasaron sin tocarlos, que es exactamente el objetivo: refactor sin cambiar contrato).
+
+**Comparación de enfoques:**
+
+| Enfoque | Dónde vive el mapeo | Coste de cambiar un código |
+|---|---|---|
+| `switch` en cada controlador | N sitios (aquí, 31) | Recorrer todos |
+| Helper privado por controlador | 1 por controlador (aquí, 5) | 5 sitios |
+| **`ToHttpResult()` (elegido)** | 1 extensión | 1 sitio |
+
+> El `switch` sigue siendo **exhaustivo por tipos** (`NotFoundError`, `ValidationError`…): añadir un error de dominio nuevo obliga a añadir su rama y el compilador ayuda con la exhaustividad del `default` explícito.
+
 ---
 
 ## 11.7. Ventajas del Patrón Result

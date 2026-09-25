@@ -334,7 +334,7 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 
 ---
 
-## Fase 10 — Documentación didáctica (insertar en los docs existentes)
+## Fase 10 — Documentación didáctica ✅ COMPLETADA (25/09/2026)
 
 > **Regla:** **NO** crear documentos nuevos. Insertar secciones explicativas en el `doc/NN-*.md` **oportuno** para cada tema, con el estilo del resto del documento (código real del proyecto) y **actualizando su Índice**. Cubre **todas** las fases del plan, estén completas (✅) o previstas.
 
@@ -348,8 +348,10 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 | 10.6 | `AsNoTracking` en consultas de solo lectura · índices de optimización | 2 ✅ · 1 ✅ | `doc/27-optimizacion.md` → 27.5 EF Core · 27.3 Índices |
 | 10.7 | Fire & forget endurecido (`Task.Run` + try/catch) | FF ✅ | `doc/22-background-jobs.md` |
 | 10.8 | Polly educativa (Retry + CircuitBreaker + Timeout en email) | 6 ✅ | `doc/13-pedidos-transacciones.md` → 13.3 · `doc/21-email-services.md` |
-| 10.9 | Automation E2E en Node (runner de todas las fases) | 7 prevista | `doc/24-testing.md` → tras 24.14 |
-| 10.10 | Verificar | — | Build 0/0 · 1034 unit · Índices (TOC) de cada doc actualizados |
+| 10.9 | Automation E2E en Node (runner de todas las fases) | 7 ✅ | `doc/24-testing.md` → 24.15 (tras 24.14) |
+| 10.10 | Verificar | ✅ | **9 documentos modificados, 0 creados** · TOC↔headings coherentes en los 9 · build 0/0 · **1039 unit** (1034 + 5 de Polly) |
+
+**Detalle de inserciones:** 11.6 → subsección "Opción C aplicada en el proyecto: `ToHttpResult()` (Fase 9)" (31 call sites en 5 controladores) · 10 → nueva **10.10 "Caché HTTP con OutputCache y ETag"** (Resumen → 10.11) · 06 → 6.3 subsección "Paginación real (Fase 3)" + 6.7 subsección "Patrón real (Fase 4)" · 08 → 8.5 subsecciones factory/baseline/dev-vs-prod · 27 → 27.3 subsección "Índices reales (Fase 1)" + 27.5 subsección "AsNoTracking selectivo (Fase 2)" · 22 → nueva **22.12 "Fire & Forget Endurecido"** (Resumen → 22.13) · 13 → 13.3 subsección "Polly en este proyecto: dónde está y dónde NO" + 21 → nueva **21.10 "Resiliencia con Polly (Fase 6)"** (Resumen → 21.11) · 24 → nueva **24.15 "Automation E2E con Node"**.
 
 ---
 

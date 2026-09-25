@@ -17,6 +17,7 @@
   - [24.12. Resumen y Buenas Prácticas](#2412-resumen-y-buenas-prácticas)
   - [24.13. Testing E2E con Postman y Newman](#2413-testing-e2e-con-postman-y-newman)
   - [24.14. Testing E2E con Bruno CLI](#2414-testing-e2e-con-bruno-cli)
+  - [24.15. Automation E2E con Node (test-runner.mjs)](#2415-automation-e2e-con-node-test-runnermjs)
 
 ---
 
@@ -2678,3 +2679,76 @@ Con testing E2E dominado (tanto Postman como Bruno), tienes un arsenal completo 
 | **Controller Tests** | WebApplicationFactory | Probar endpoints HTTP |
 | **E2E Tests** | Postman + Newman | Probar flujos completos de usuario |
 | **E2E Tests** | Bruno CLI | Probar API con archivos de texto versionables |
+
+---
+
+## 24.15. Automation E2E con Node (test-runner.mjs)
+
+Newman y Bruno prueban **colecciones HTTP**. La **Fase 7** añadió una tercera capa: un runner en **Node nativo, sin `npm install`**, que lleva la API de cero a verde en un solo comando y sirve de red de seguridad para el resto de fases (y de comando de CI).
+
+**Uso:**
+
+```bash
+# Desde la raíz del repo (API apagada o encendida da igual)
+node TiendaApi.Tests.E2E/Automation/test-runner.mjs
+
+# Modo externo: solo la suite, contra una API ya levantada
+BASE_URL=http://localhost:5031 node TiendaApi.Tests.E2E/Automation/test-runner.mjs
+```
+
+**Diseño** (cabecera del propio fichero):
+
+```javascript
+/**
+ * Automation E2E — TiendaApi .NET (Fase 7 del plan FASES-MEJORAS.md)
+ *
+ * Estilo UD02 ejemplos/<nn>-ProductosX/automation/test-runner.mjs:
+ * Node nativo, SIN npm install.
+ *
+ * Modos:
+ *   - Auto (default): levanta infra (postgres+mongodb en Docker si hace falta),
+ *     hace restore/build de la API, la arranca en Development y ejecuta la suite.
+ *   - Externo: BASE_URL=... → solo ejecuta la suite contra una API ya levantada.
+ *
+ * Diseño:
+ *   - NO ejecuta `docker compose down -v` al final: solo para los servicios de BD
+ *     que ÉL haya levantado (si ya estaban corriendo, no se tocan).
+ *   - Fallback: si `dotnet run` no responde, intenta `docker compose up -d --build`.
+ *   - Rate limit awareness: helper st() → falla CLARO si la API devuelve 429
+ *     (100/15s general · 10/min auth · 20/min POST · 200/min graphql).
+ *   - Sale con código 0 si todo OK, 1 si algo falla (listo para CI).
+ */
+
+const CONFIG = {
+  baseUrl: process.env.BASE_URL || "http://localhost:5031",
+  healthPaths: ["/health", "/swagger", "/api/productos"],
+  env: { ASPNETCORE_ENVIRONMENT: "Development", ASPNETCORE_URLS: "http://localhost:5031" },
+  dbServices: ["postgres", "mongodb"],
+  composeFile: "docker-compose.local.yml",
+  admin: { username: "admin", password: "admin" },
+  user:  { username: "userdaw", password: "userdaw" },
+};
+```
+
+**Qué cubre (55/55 checks)** — todos los controladores, happy path **y** errores/autorización:
+
+| Bloque | Ejemplos de checks |
+|---|---|
+| Health | `GET /health → 200` con JSON `status` |
+| Auth | signup 201 · signup inválido 400 · signin admin/user 200 con token · password mal 401 |
+| Categorías | GET paged · GET /1 · GET /999999 → 404 · POST sin token → 401 · POST rol USER → 403 · POST 201 · PUT 200 · DELETE 204 · DELETE inexistente 404 |
+| Productos | paged + filtros (`precioMax`) · GET /1 · 404 · por categoría · POST sin token 401 · precio 0 → 400 · CRUD 201/200/204 · PATCH parcial |
+| Pedidos | `POST /me` sin auth 401 · con token 201 · paginación y detalle |
+| GraphQL / WebSocket / ETag | consultas del esquema real, ETag→304 |
+
+**Por qué "falla claro" en 429:** el runner conoce el rate limit (`RateLimitConfig.cs`) y distingue *rotura* de *límite de tráfico* — si un check recibe 429, el mensaje lo dice explícitamente en vez de un 400 genérico.
+
+**Resultado actual:** `Total: 55 · OK: 55 · KO: 0` con exit code 0 — verificado tras cada fase (Fases 5, 6, 7 y 11). Junto con los tests unit (1039), de integración (161) y las colecciones E2E (Newman 95 · Bruno 108), completa la pirámide de testing del proyecto:
+
+```mermaid
+flowchart TD
+    U["Unit (NUnit, 1039)"] --> I["Integración (TestContainers, 161)"]
+    I --> C["Controller (WebApplicationFactory)"]
+    C --> A["Automation E2E Node (55)"]
+    A --> E["Colecciones: Newman (95) + Bruno (108)"]
+```
