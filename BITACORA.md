@@ -19,7 +19,7 @@
 | 8 · Migraciones EF | `ee65489` | `InitialCreate` + `AddOptimizationIndexes` + baseline | ✅ |
 | 5 · Verificación global | `131ec3c` | Build 0/0 · 1034 unit · integración 161 · E2E 95/95 · smoke | ✅ |
 | 11 · Infra Docker saludable + imágenes | `6f4cfce` | healthchecks, `mongo:7.0` único, composes E2E oficiales, `retryWrites` | ✅ |
-| 6 · Polly educativa | — | Retry + CircuitBreaker + Timeout en email | ⬜ |
+| 6 · Polly educativa | `fc0ee21` | Retry + CircuitBreaker + Timeout en email | ⬜ |
 | 7 · Automation E2E (Node) | `227cb9d` | `test-runner.mjs` de todos los controladores (55/55) | ✅ |
 | 10 · Documentación didáctica | — | Secciones en `doc/NN-*.md` existentes (última fase) | ⬜ |
 
@@ -64,8 +64,7 @@ dotnet list TiendaApi.slnx package --vulnerable --include-transitive
 | Swashbuckle.AspNetCore | 7.3.0 | **10.2.3** | Microsoft.OpenApi 2.x |
 | Serilog.AspNetCore | 8.0.3 | **10.0.0** | alineado con .NET 10 |
 | Serilog.Extensions.Logging | 8.0.0 | **10.0.0** | ídem |
-| Serilog.Sinks.Console | 6.0.0 | **6.1.1** | patch |
-| StackExchange.Redis | 2.8.16 | **3.3.1** | major (compatible con caching 10.0.12: `>= 2.7.27`) |
+| Serilog.Sinks.Console | 6.0.0 | StackExchange.Redis | 2.8.16 | **3.3.1** | major (compatible con caching 10.0.12: `>= 2.7.27`) |
 | Microsoft.AspNetCore.Authentication.JwtBearer | 10.0.0 | **10.0.12** | patch |
 | Microsoft.Extensions.Caching.StackExchangeRedis | 10.0.4 | **10.0.12** | patch |
 | Npgsql.EntityFrameworkCore.PostgreSQL | 10.0.1 | **10.0.3** | patch |
@@ -397,11 +396,30 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 
 ---
 
+## Fase 6 — Polly educativa (`fc0ee21`) ✅
+
+- **Paquete:** `Polly` **8.8.0** (v8, `ResiliencePipeline`). `Microsoft.Extensions.Http.Polly` **NO**: solo aporta policies para `HttpClient` y la API no tiene llamadas salientes reales (coherente con "Fuera de alcance").
+- **`Infrastructures/PollyConfig.cs`:** pipeline del email = **Retry(3, backoff exponencial 2^n → 1s/2s/4s) → CircuitBreaker(ratio 100%, mínimo 3 fallos, abierto 30s) → Timeout(10s por intento)** con logs Serilog en cada transición (`OnRetry`, `OnOpened`, `OnClosed`, `OnHalfOpened`; en Polly 8.8 esos son los nombres reales, no `OnBreak`/`OnReset`). Builders públicos (`EmailRetryOptions`, `EmailCircuitBreakerOptions`, `BuildEmailPipeline`) para poder testear con `delay: TimeSpan.Zero`.
+- **`MailKitEmailService`:** el bloque SMTP (`Connect → Auth → Send → Disconnect`) va dentro del callback de `ExecuteAsync` — un `SmtpClient` por intento —. El pipeline se registra como singleton en `EmailConfig.AddEmail` (rama prod/MailKit) y entra por el constructor **opcional** → los 11 call sites de los tests existentes no tuvieron que cambiar.
+- **Fallback (6.4):** circuito abierto → `LogWarning` + `BrokenCircuitException` relanzada; timeout → `LogWarning`; el caller es `EmailBackgroundService` (try/catch) → **el request HTTP nunca falla por email**.
+- **Comparación con el reintento a mano (6.5):** `PedidosService.cs:40` (`MaxRetries = 3` + bucle `for` + `Task.Delay`) frente al pipeline declarativo, testeable por partes y con backoff/cortacircuitos/timeout.
+- **Tests (+5 → unit 1039):** `Unit/Infrastructures/PollyConfigTests.cs` — falla 2× y al 3º OK (3 intentos) · siempre falla → 4 intentos (1 original + 3 reintentos) y propaga · CB: 3 fallos abren y la 4ª llamada no ejecuta el callback (`BrokenCircuitException`) · pipeline completo: el retry no insiste con el circuito abierto.
+- **6.7 (endpoint demo `GET /api/demo/polly`):** no realizado (era opcional) — no existe controlador demo y añadiría superficie HTTP solo con fines didácticos; los 5 tests cubren el comportamiento.
+- **Verificado (6.8):** build **0/0** · unit **1039/1039** · integración **161/0/32** · runner **55/55** · smoke: health OK, Swagger 200, ETag→304 · logs **0 excepciones / 0 ERR**.
+
+### Replicar en CQRS
+
+1. Copiar `Infrastructures/PollyConfig.cs`, `PollyConfigTests.cs`, el `MailKitEmailService` y el registro del singleton en `EmailConfig`.
+2. Añadir `<PackageReference Include="Polly" Version="8.8.0" />` al csproj de la API CQRS.
+3. Regla: el pipeline de email **nunca** se invoca dentro del request HTTP — que el envío siga vía background service (o añadirlo si CQRS no lo tiene).
+4. Verificar: build 0/0 · unit (+5) · runner E2E 55/55.
+
+---
+
 ## Fases pendientes (se documentarán aquí tras su commit)
 
 | Fase | Qué se documentará |
 |------|--------------------|
-| **6 · Polly educativa** | Paquetes, `Infrastructures/PollyConfig.cs` (Retry/CircuitBreaker/Timeout), envoltura de `MailKitEmailService`, comparación con `MaxRetries` a mano |
 | **10 · Documentación didáctica** | Secciones insertadas en cada `doc/NN-*.md` existente (nada nuevo creado) |
 
 ---

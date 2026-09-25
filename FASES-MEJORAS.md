@@ -209,20 +209,18 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 
 ---
 
-## Fase 6 — Polly educativa
+## Fase 6 — Polly educativa ✅ COMPLETADA (25/09/2026)
 
-| # | Tarea | Detalle |
-|---|-------|---------|
-| 6.1 | Paquetes | `Polly` + `Microsoft.Extensions.Http.Polly` |
-| 6.2 | `Infrastructures/PollyConfig.cs` | Retry(3, backoff 2^n) + CircuitBreaker(3, 30s) + Timeout(10s) con `Wrap` + logs Serilog |
-| 6.3 | Envolver email | `ExecuteAsync` en `MailKitEmailService.SendEmailAsync` (reintentos **en background**) |
-| 6.4 | Fallback | Agota reintentos → `Log.Warning`; el request HTTP **no falla** |
-| 6.5 | Doc/comentario | Comparar con `MaxRetries` a mano (`PedidosService.cs:40`) |
-| 6.6 | Test | Mock falla 2× y al 3º OK → assert intentos |
-| 6.7 | *(opt.)* | Endpoint demo `GET /api/demo/polly` |
-| 6.8 | Verificar | Build + test; email caído no rompe POST de pedido/producto |
-
-**No aplica:** Retry sobre EF/BD (ya hay `EnableRetryOnFailure`), HttpClient real (no hay llamadas salientes).
+| # | Tarea | Detalle | Estado |
+|---|-------|---------|--------|
+| 6.1 | Paquetes | `Polly` **8.8.0** en `TiendaApi.csproj`. **`Microsoft.Extensions.Http.Polly` NO**: solo aporta policies para `HttpClient` y la API no tiene llamadas salientes reales (decisión coherente con "No aplica" más abajo) | ✅ |
+| 6.2 | `Infrastructures/PollyConfig.cs` | `ResiliencePipeline` v8: **Retry(3, backoff exponencial 2^n → 1s/2s/4s)** → **CircuitBreaker(ratio 100%, mínimo 3 fallos, ventana 30s, abierto 30s)** → **Timeout(10s por intento)**, con logs Serilog en `OnRetry`/`OnOpened`/`OnClosed`/`OnHalfOpened`. Los builders (`EmailRetryOptions`, `EmailCircuitBreakerOptions`, `BuildEmailPipeline`) son públicos para poder testear con `delay: TimeSpan.Zero` | ✅ |
+| 6.3 | Envolver email | `MailKitEmailService.SendEmailAsync`: el bloque SMTP (`Connect→Auth→Send→Disconnect`, ahora dentro del callback para crear un `SmtpClient` por intento) va bajo `await _emailPipeline.ExecuteAsync(...)`. El pipeline se inyecta desde DI (singleton en `EmailConfig.AddEmail`) con parámetro opcional para los tests existentes | ✅ |
+| 6.4 | Fallback | Agota reintentos o circuito abierto → `LogWarning`/`LogError` en el servicio y el error se relanza… pero el caller es `EmailBackgroundService` (try/catch) → **el request HTTP nunca falla por email** | ✅ |
+| 6.5 | Doc/comentario | Comentario XML en `PollyConfig` comparándolo con el reintento a mano de `PedidosService.cs:40` (`MaxRetries = 3` + bucle `for` + `Task.Delay`): aquí backoff, cortacircuitos y timeout declarativos y testeables | ✅ |
+| 6.6 | Test | 5 tests nuevos en `Unit/Infrastructures/PollyConfigTests.cs`: falla 2× y al 3º OK (3 intentos) · agota reintentos (1+3=4 y propaga) · CB abre a los 3 y la 4ª llamada no ejecuta el callback (`BrokenCircuitException`) · pipeline completo: el retry no insiste con el circuito abierto | ✅ |
+| 6.7 | *(opt.)* Endpoint demo `GET /api/demo/polly` | **No realizado**: la API no tiene carpeta/controllador demo y añadiría superficie HTTP nueva solo con fines didácticos; los 5 tests unitarios cubren el comportamiento | — |
+| 6.8 | Verificar | build **0/0** · unit **1039/1039** (+5) · integración **161/0/32** · runner **55/55** · smoke: health OK, Swagger 200, ETag→304 · logs **0 excepciones / 0 ERR** | ✅ |
 
 ---
 
@@ -349,7 +347,7 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 | 10.5 | Migraciones EF Core: factory design-time, `InitialCreate`/`AddOptimizationIndexes`, baseline en BD existente, dev vs prod | 8 ✅ | `doc/08-ef-core-postgresql.md` → 8.5 Migraciones |
 | 10.6 | `AsNoTracking` en consultas de solo lectura · índices de optimización | 2 ✅ · 1 ✅ | `doc/27-optimizacion.md` → 27.5 EF Core · 27.3 Índices |
 | 10.7 | Fire & forget endurecido (`Task.Run` + try/catch) | FF ✅ | `doc/22-background-jobs.md` |
-| 10.8 | Polly educativa (Retry + CircuitBreaker + Timeout en email) | 6 prevista | `doc/13-pedidos-transacciones.md` → 13.3 · `doc/21-email-services.md` |
+| 10.8 | Polly educativa (Retry + CircuitBreaker + Timeout en email) | 6 ✅ | `doc/13-pedidos-transacciones.md` → 13.3 · `doc/21-email-services.md` |
 | 10.9 | Automation E2E en Node (runner de todas las fases) | 7 prevista | `doc/24-testing.md` → tras 24.14 |
 | 10.10 | Verificar | — | Build 0/0 · 1034 unit · Índices (TOC) de cada doc actualizados |
 
