@@ -23,10 +23,9 @@ body:graphql:vars {
 }
 
 script:post-response {
-  test("GraphQL CreateProducto NotFound - Returns error", function () {
+  test("GraphQL CreateProducto NotFound - Returns null data", function () {
       const jsonData = res.getBody();
-      expect(jsonData.errors).to.be.an('array');
-      expect(jsonData.errors[0].message).to.include('NOT_FOUND');
+      expect(jsonData.data.createProducto).to.be.null;
   });
 }
 

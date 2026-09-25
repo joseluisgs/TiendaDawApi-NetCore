@@ -24,8 +24,8 @@ script:post-response {
       expect(jsonData).to.be.an('object');
       expect(jsonData.id).to.be.a('string');
       expect(jsonData.estado).to.be.a('string');
-      expect(jsonData.cliente).to.be.an('object');
-      expect(jsonData.lineasPedido).to.be.an('array');
+      expect(jsonData.destinatario).to.be.an('object');
+      expect(jsonData.items).to.be.an('array');
       expect(jsonData.total).to.be.a('number');
   });
 }

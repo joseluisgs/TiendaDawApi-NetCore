@@ -24,7 +24,7 @@ script:post-response {
   test("Categorias GetAll - Has pagination", function () {
       const jsonData = res.getBody();
       expect(jsonData.page).to.be.a('number');
-      expect(jsonData.totalItems).to.be.a('number');
+      expect(jsonData.totalCount).to.be.a('number');
   });
 }
 

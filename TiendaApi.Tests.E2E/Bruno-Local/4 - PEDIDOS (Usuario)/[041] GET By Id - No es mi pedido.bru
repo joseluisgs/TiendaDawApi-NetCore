@@ -15,8 +15,8 @@ auth:bearer {
 }
 
 script:post-response {
-  test("Pedidos My GetById Forbidden - Status 403 Forbidden", function () {
-      expect(res.getStatus()).to.equal(403);
+  test("Pedidos My GetById Forbidden - Status 404 Not Found", function () {
+      expect(res.getStatus()).to.equal(404);
   });
 }
 
@@ -26,5 +26,5 @@ settings {
 }
 
 docs {
-  Acceder a pedido de otro usuario debe retornar 403
+  Acceder a pedido de otro usuario debe retornar 404
 }

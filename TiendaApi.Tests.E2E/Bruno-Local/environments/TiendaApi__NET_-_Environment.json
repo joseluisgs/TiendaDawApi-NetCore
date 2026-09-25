@@ -3,7 +3,7 @@
   "variables": [
     {
       "name": "baseUrl",
-      "value": "http://localhost:5000",
+      "value": "http://localhost:5031",
       "type": "text",
       "enabled": true,
       "secret": false
@@ -17,21 +17,21 @@
     },
     {
       "name": "adminPassword",
-      "value": "",
+      "value": "admin",
       "type": "text",
       "enabled": true,
       "secret": true
     },
     {
       "name": "userUsername",
-      "value": "user",
+      "value": "userdaw",
       "type": "text",
       "enabled": true,
       "secret": false
     },
     {
       "name": "userPassword",
-      "value": "",
+      "value": "userdaw",
       "type": "text",
       "enabled": true,
       "secret": true
