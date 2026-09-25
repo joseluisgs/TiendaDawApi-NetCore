@@ -35,7 +35,7 @@ public class UserRepository(
     /// <inheritdoc/>
     public async Task<IEnumerable<User>> FindAllAsync()
     {
-        return await context.Users.ToListAsync();
+        return await context.Users.AsNoTracking().ToListAsync();
     }
 
     /// <inheritdoc/>
@@ -60,6 +60,7 @@ public class UserRepository(
         query = ApplySorting(query, filter.SortBy, filter.Direction);
 
         var items = await query
+            .AsNoTracking()
             .Skip(filter.Page * filter.Size)
             .Take(filter.Size)
             .ToListAsync();
@@ -104,6 +105,7 @@ public class UserRepository(
         return await context.Users
             .Where(u => !u.IsDeleted)
             .OrderBy(u => u.Email)
+            .AsNoTracking()
             .ToListAsync();
     }
 
