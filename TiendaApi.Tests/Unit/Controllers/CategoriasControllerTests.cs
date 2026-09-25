@@ -393,7 +393,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task Delete_CategoriaConProductos_Retorna500()
+    public async Task Delete_CategoriaConProductos_RetornaBadRequest()
     {
         var error = new BusinessRuleError("No se puede eliminar una categoría con productos asociados");
 
@@ -402,8 +402,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Delete(1);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
-        objectResult.StatusCode.Should().Be(500);
+        result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     #endregion

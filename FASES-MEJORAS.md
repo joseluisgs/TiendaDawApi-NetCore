@@ -240,7 +240,7 @@
 
 ---
 
-## Fase 9 — Integración Result→HTTP · **Opción C** (`ToHttpResult`)
+## Fase 9 — Integración Result→HTTP · **Opción C** (`ToHttpResult`) ✅ COMPLETADA (25/09/2026)
 
 > **Fuente:** doc UD02 §7 *Excepciones y patrón Result* (`UD02/07-excepciones-patron-result.md`) + ejemplo `UD02/ejemplos/07-ProductosResult/Extensions/DomainErrorExtensions.cs`.  
 > **Viabilidad:** ✅ **ALTA** — todos los prerrequisitos ya existen en la API: `DomainError` tipado (`NotFoundError`, `ValidationError`, `BusinessRuleError`, `ConflictError`, `UnauthorizedError`, `ForbiddenError`, `InternalError`), fábricas de error por dominio (`ProductoError`, `CategoriaError`, `UsuarioError`, `AuthError`, `PedidoError`, `StorageError`), `Result<T, DomainError>` + `Match` en los controladores y CSharpFunctionalExtensions 3.7.0.  
@@ -256,6 +256,16 @@
 | 9.5 | Verificar | Build 0/0 · unit · Bruno/Newman (400/401/403/404/409) — ideal **tras la Fase 7**, que cubre todos los códigos |
 
 **Riesgo:** 🟡 bajo — solo capa de presentación; obligatorio preservar códigos y shape `{message, ...}` de cada respuesta.
+
+### ✅ Verificación Fase 9 (25/09/2026)
+
+| # | Resultado |
+|---|-----------|
+| 9.1 | Nuevo `TiendaApi.Api/Extensions/DomainErrorExtensions.cs`: `ToHttpResult(this DomainError)` con la matriz del plan (404/400+errors/409/400/401/403/500). Tipos `*ObjectResult` **idénticos** a los que producían los switches → aserciones de tipo intactas |
+| 9.2 | Los **31 `error switch` eliminados** (grep en `Controllers/` → 0): `error => error.ToHttpResult()` en `Match` y `return resultado.Error.ToHttpResult()` en los flujos `IsSuccess`/DELETE (Auth 2 · Users 9 · Pedidos 8 · Productos 7 · Categorías 5). `using TiendaApi.Api.Extensions` en los 5 controladores |
+| 9.3 | **Divergencias auditadas (decisiones explícitas):** ① `BusinessRuleError` **500 → 400** donde no había rama (matriz del plan + XML docs "HTTP 400/422") — verificado en: *Delete categoría con productos* y *Update conflicto de stock* (este test ya se llamaba `...RetornaBadRequest` pero asertaba 500: asentaba el bug). ② `ValidationError` unificado a `{message, errors}`: 9 endpoints ya lo incluían, 8 mandaban solo `{message}` → ahora todos con `errors` (códigos sin cambio). ③ Tipos sin rama en algún switch (p. ej. `ForbiddenError` en Users Create) pasan de 500 a su código real (403/401) — hoy inalcanzables por `Authorize` previo |
+| 9.4 | 2 tests actualizados: `Delete_CategoriaConProductos_RetornaBadRequest` (renombrado, ahora `BadRequestObjectResult`) · `Update_ConflictoDeStock_RetornaBadRequest` (aserción coherente con su nombre) |
+| 9.5 | Build **0/0** · **1034 unit** verdes · **en vivo 15/15**: **401** users sin token · **403** rol USER en `/api/users` · **404** producto/categoría/pedido inexistentes + `DELETE` (con `{message}`) · **400** signup inválido · **409** signup duplicado (con `{message}`) · regresiones 200 en users/productos/categorías/pedidos |
 
 ---
 

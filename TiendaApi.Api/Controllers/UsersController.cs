@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
+using TiendaApi.Api.Extensions;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Services.Users;
 using TiendaApi.Api.Helpers.Pagination;
@@ -93,11 +94,7 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -121,12 +118,7 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => CreatedAtAction(nameof(GetById), new { id = usuario.Id }, usuario),
-            onFailure: error => error switch
-            {
-                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
-                ConflictError => Conflict(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -152,13 +144,7 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
-                ConflictError => Conflict(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -192,12 +178,7 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError => BadRequest(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -221,12 +202,7 @@ public class UsersController(
         if (resultado.IsSuccess)
             return NoContent();
 
-        var error = resultado.Error;
-        return error switch
-        {
-            NotFoundError => NotFound(new { message = error.Message }),
-            _ => StatusCode(500, new { message = error.Message })
-        };
+        return resultado.Error.ToHttpResult();
     }
 
     /// <summary>
@@ -248,11 +224,7 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -280,13 +252,7 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
-                ConflictError => Conflict(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -312,12 +278,7 @@ public class UsersController(
         if (resultado.IsSuccess)
             return NoContent();
 
-        var error = resultado.Error;
-        return error switch
-        {
-            NotFoundError => NotFound(new { message = error.Message }),
-            _ => StatusCode(500, new { message = error.Message })
-        };
+        return resultado.Error.ToHttpResult();
     }
 
     /// <summary>
@@ -345,12 +306,7 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => Ok(usuario),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError => BadRequest(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 }

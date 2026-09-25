@@ -567,8 +567,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
-        objectResult.StatusCode.Should().Be(500);
+        result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
