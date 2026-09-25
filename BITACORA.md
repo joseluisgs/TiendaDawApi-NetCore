@@ -19,9 +19,10 @@
 | 8 · Migraciones EF | `ee65489` | `InitialCreate` + `AddOptimizationIndexes` + baseline | ✅ |
 | 5 · Verificación global | `131ec3c` | Build 0/0 · 1034 unit · integración 161 · E2E 95/95 · smoke | ✅ |
 | 11 · Infra Docker saludable + imágenes | `6f4cfce` | healthchecks, `mongo:7.0` único, composes E2E oficiales, `retryWrites` | ✅ |
-| 6 · Polly educativa | `fc0ee21` | Retry + CircuitBreaker + Timeout en email | ⬜ |
+| 6 · Polly educativa | `fc0ee21` (+`70eb1d0` docs) | Retry + CircuitBreaker + Timeout en email | ✅ |
 | 7 · Automation E2E (Node) | `227cb9d` | `test-runner.mjs` de todos los controladores (55/55) | ✅ |
-| 10 · Documentación didáctica | `f6acd04` | Secciones en `doc/NN-*.md` existentes (última fase) | ⬜ |
+| 10 · Documentación didáctica | `f6acd04` (+`79e857b` docs) | Secciones en `doc/NN-*.md` existentes | ✅ |
+| 12 · README | `afe3862` | README: 5 errores, comandos E2E reales, estructura, estado actual | ✅ |
 
 ---
 
@@ -436,9 +437,33 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 
 ---
 
+## Fase 12 — README al día con las fases 0-11 (`afe3862`) ✅
+
+- **Alcance:** solo `README.md` (+116/−84), **sin código**. Cierra la deuda del README frente a las 12 fases anteriores.
+- **5 errores corregidos:**
+  - `dotnet run --project TiendaApi.Apis` → **`TiendaApi.Api`** (el proyecto citado no existe).
+  - Acceso dev `localhost:5000` → **`localhost:5031`** (launchSettings real; 5000 es prod, `API_PORT`); añadido `GET /health`.
+  - Tecnologías: `PostgreSQL 15` → **17** (`postgres:17-alpine`).
+  - Rutas E2E `TiendaApi.ApiTests/{Postman,Bruno}` (carpeta **inexistente**) → **`TiendaApi.Tests.E2E/{Postman-Cli,Bruno-Cli,Bruno-Local,Automation}`**.
+  - `bru run … --env <fichero>` → **`--env-file`** + `--delay 3200` (rate limit `POST:*` 20/min); `docker-compose` (v1) → `docker compose`; prod: `cp .env.prod.example .env`.
+- **Actualizado al estado real:** pirámide con cifras (**1039 unit · 161 integración · 95 Newman · 108 Bruno · 55 runner**); +5 características (health, OutputCache+ETag/304, Polly, paginación real, `ToHttpResult`); **Polly 8** en tecnologías; nueva subsección **Automation (Node)** (auto/externo); árbol de proyecto real (retirado `docker-compose.yml` de raíz que **no existía**; subárbol E2E con `Automation/`, `Postman-Cli/`, `Bruno-Local/`, `Bruno-Cli/`; `FASES-MEJORAS.md`/`BITACORA.md`/`.env*`; `Services/Users` + `Cache/` + `Extensions/`; tabla con `StorageController` y fila **Extensions**); endpoints de ejemplo (`imagen` GraphQL y `WS ws://…`) → `5031`.
+- **Hallazgos (verificados en vivo):**
+  1. **`bru run .` en `Bruno-Local` falla**: arrastra `12 - WEBSOCKETS` (la CLI no soporta WS y `basews` no está en el env). README documenta la **lista explícita de 10 carpetas**, validada con `@usebruno/cli` 4.2.0 → **64 requests** (mismo conteo que la Fase 5). `6 - USUARIOS` está vacía (PASS con 0).
+  2. **`--env-file` acepta `.json`** según el `--help` de la CLI 4.2.0 → el environment JSON de `Bruno-Local` es válido.
+  3. Los composes E2E **no levantan la API** (apuntan a `host.docker.internal:5031`) → ahora es requisito explícito en la sección.
+- **Verificación:** TOC **66/66** anclas resueltas (script, algoritmo GitHub) · **18 paths** citados existen en disco · **0 restos** de referencias viejas · sin cambios de código (build/tests intactos).
+
+### Replicar en CQRS
+
+1. Revisar el README del repo CQRS con la misma lista: nombre de proyecto (`TiendaApi.Api` o el real), puerto dev, rutas E2E y comandos de compose.
+2. Las cifras de la pirámide de tests **son las de este repo**; en CQRS habrá que poner las suyas (unit/integración/E2E propios).
+3. Si CQRS usa las mismas colecciones (`Postman-Cli`, `Bruno-*`), hereda el comando de las 10 carpetas del Bruno Local.
+
+---
+
 ## Fases pendientes
 
-**Ninguna — las 12 fases del plan (0-11) están completadas y documentadas.**
+**Ninguna — las 13 fases del plan (0-12) están completadas y documentadas.**
 
 ---
 

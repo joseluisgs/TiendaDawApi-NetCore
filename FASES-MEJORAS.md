@@ -382,6 +382,39 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 
 ---
 
+## Fase 12 — Corrección y actualización del README ✅ COMPLETADA (25/09/2026)
+
+> **Alcance:** solo `README.md` (+112/−84 líneas). **Sin cambios de código.** Cierra la deuda documentada de la fase 10 con el README raíz.
+
+### Tareas
+
+| # | Tarea | Detalle | Estado |
+|---|-------|---------|--------|
+| 12.1 | Errores de comandos y puertos | `dotnet run --project TiendaApi.Apis` → **`TiendaApi.Api`** (no existía); acceso dev `localhost:5000` → **`localhost:5031`** (launchSettings real; 5000 es prod vía `API_PORT`); añadido `GET /health` al bloque de inicio; `docker-compose` (v1) → **`docker compose`**; `cp .env.example` → `cp .env.prod.example .env` en el bloque prod | ✅ |
+| 12.2 | Versión de BD | Tecnologías: `PostgreSQL 15` → **`PostgreSQL 17`** (`postgres:17-alpine`) | ✅ |
+| 12.3 | Rutas E2E inexistentes | `TiendaApi.ApiTests/{Postman,Bruno}` (carpeta que **no existe**) → **`TiendaApi.Tests.E2E/{Postman-Cli,Bruno-Cli,Bruno-Local,Automation}`** | ✅ |
+| 12.4 | Comandos E2E reescritos | Newman/Bruno con rutas reales, `--delay-request 3200` / `--delay 3200` (rate limit `POST:*` 20/min), `bru run … --env-file <fichero.json>` (`.json` soportado según `--help` de la CLI), requisito "API en :5031" y nota de los informes en `reports/` (gitignored) | ✅ |
+| 12.5 | Estado actual de las fases | Nueva subsección **Automation (Node)** (`test-runner.mjs`, auto/externo); pirámide de tests con cifras (**1039 unit · 161 integración · 95 Newman · 108 Bruno · 55 runner**); +5 características (`/health`, OutputCache+ETag/304, Polly, paginación real, `ToHttpResult`); **Polly 8** en tecnologías; typo `Tescontainers` | ✅ |
+| 12.6 | Estructura del proyecto | Retirado `docker-compose.yml` de raíz (**no existe**); subárbol E2E real (`Automation/`, `Postman-Cli/`, `Bruno-Local/`, `Bruno-Cli/`); añadidos `FASES-MEJORAS.md`, `BITACORA.md`, `.env.development`, `.env.prod.example`; `Services/Usuarios` → **`Services/Users`** (+ `Auth/`, `Cache/`), `Extensions/`; tabla: `StorageController`, `PedidosService`, `MailKitEmailService`, fila **Extensions** (`ToHttpResult()`) | ✅ |
+| 12.7 | Coherencia interna | TOC ↔ headings verificados con el algoritmo de anclas de GitHub (script): **66/66** · endpoints de ejemplo `localhost:5000` → `5031` (imagen GraphQL y WS) | ✅ |
+
+### Hallazgos y decisiones
+
+1. **Bruno Local debe excluir `12 - WEBSOCKETS`**: verificado en vivo con `@usebruno/cli` **4.2.0** (temp) — `bru run .` arrastra esa carpeta y falla porque la variable `basews` no está en el environment. Se documenta la **lista explícita de 10 carpetas** → **64 requests** (idéntico al conteo de la Fase 5). `6 - USUARIOS` está vacía (PASS con 0 requests).
+2. **`--env-file` acepta `.json`**: confirmado en `bru run --help` ("Path to environment file (.bru or .json)"), así que el environment JSON de `Bruno-Local` es válido para la CLI.
+3. **Los composes E2E no levantan la API**: apuntan a `host.docker.internal:5031` → el README ahora lo declara como requisito de la sección.
+4. El automation sí levanta su propia API (modo auto), por eso es el comando más cómodo para clase.
+
+### ✅ Verificación Fase 12 (25/09/2026)
+
+- **18 paths/rutas** citados en el README → existentes en disco (script).
+- **TOC 66 anclas** resueltas · 0 headings huérfanos (script, algoritmo GitHub).
+- **0 restos** de referencias viejas (`TiendaApi.ApiTests`, `TiendaApi.Apis`, `PostgreSQL 15`, `docker-compose ` v1, `localhost:5000` en contexto dev).
+- Bruno Local: comando con las 10 carpetas parseado por la CLI real → 64 requests (API apagada → `ECONNREFUSED` esperado en la prueba de sintaxis).
+- Sin cambios de código → build/tests intactos (última verificación: build 0/0 · unit 1039 · runner 55/55).
+
+---
+
 ## Fuera de alcance (confirmado)
 
 | Tema | Motivo |
@@ -404,12 +437,14 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
    → 7 (Automation) → 5.x (verificación global) → 11 (Docker/imágenes)
    → 6-Polly
    → 10 (documentación didáctica de todas las fases)
+   → 12 (README al día con todas las anteriores)
 ```
 
 > **Nota:** Fase 8 antes que 7 para que el Automation valide una BD con índices reales.  
 > **Fase 9** va tras OutputCache y antes de 7: la Automation valida los códigos HTTP de la refactorización.  
 > **Fase 11** (Docker/imágenes) ejecutada antes que 6, aunque numerada al final.  
-> Las “6” son distintas: **Fase 4 = OutputCache (#6 del análisis)**; **Fase 6 = Polly**.
+> Las “6” son distintas: **Fase 4 = OutputCache (#6 del análisis)**; **Fase 6 = Polly**.  
+> **Fase 12** (README) es la última: recoge el estado real de todas las anteriores.
 
 ---
 
@@ -427,6 +462,7 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 | 7 Automation | 🟢 Muy alto (QA) | 🟡 Media | 🟢 |
 | 9 ToHttpResult | 🟢 Mantenibilidad | 🟢 Baja | 🟡 |
 | 6 Polly | 🟡 Educativo | 🟢 Baja | 🟢 |
+| 12 README | 🟡 Doc/DAQ | 🟢 Muy baja | 🟢 |
 
 ---
 
@@ -437,7 +473,7 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 node TiendaApi.Tests.E2E/Automation/test-runner.mjs
 
 # Contra una API ya levantada
-BASE_URL=http://localhost:5000 node TiendaApi.Tests.E2E/Automation/test-runner.mjs
+BASE_URL=http://localhost:5031 node TiendaApi.Tests.E2E/Automation/test-runner.mjs
 ```
 
 Salir con código `0` si todo OK, `1` si algún test falla (listo para CI).
