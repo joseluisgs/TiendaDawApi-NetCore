@@ -19,7 +19,7 @@
 | 8 · Migraciones EF | `ee65489` | `InitialCreate` + `AddOptimizationIndexes` + baseline | ✅ |
 | 5 · Verificación global | — | Build + unit + integración + E2E + smoke | ⬜ |
 | 6 · Polly educativa | — | Retry + CircuitBreaker + Timeout en email | ⬜ |
-| 7 · Automation E2E (Node) | — | `test-runner.mjs` de todos los controladores | ⬜ |
+| 7 · Automation E2E (Node) | `227cb9d` | `test-runner.mjs` de todos los controladores (55/55) | ✅ |
 | 10 · Documentación didáctica | — | Secciones en `doc/NN-*.md` existentes (última fase) | ⬜ |
 
 ---
@@ -318,13 +318,38 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 
 ---
 
+## Fase 7 — Automation E2E en Node (`227cb9d`) ✅
+
+- **Nuevo:** `TiendaApi.Tests.E2E/Automation/test-runner.mjs` (~660 líneas, **Node nativo, sin npm install**), al estilo del runner de referencia UD02.
+- **Qué hace una ejecución** (`node TiendaApi.Tests.E2E/Automation/test-runner.mjs` desde la raíz):
+  1. Lee `BASE_URL` (por defecto `http://localhost:5031`) y comprueba si la API ya responde en `/health` → `/swagger` → `/api/productos`.
+  2. Si no responde: `docker compose -f docker-compose.local.yml up -d` **solo de los servicios parados** (`postgres`, `mongodb`) — nunca `down -v`; si no hay Docker o compose, continúa y avisa.
+  3. `dotnet restore` + `dotnet build TiendaApi.slnx` + `dotnet run --project TiendaApi.Api --no-launch-profile` con `ASPNETCORE_ENVIRONMENT=Development` y `ASPNETCORE_URLS=http://localhost:5031` (fondo), esperando `/health` → 200 (máx. 60 s).
+  4. Ejecuta la suite HTTP y, al terminar, **mata la API** y hace `stop` **solo** de los servicios que él mismo levantó (si la API/infra ya estaban, no los toca). Fallback: si `dotnet run` no arranca, intenta `docker compose up -d --build`.
+- **Suite: 55 tests, 11 bloques** — Health (1) · Auth (5: signup 201/400, signin admin/user 200, 401) · Categorías (9) · Productos (11: incluye filtros `precioMax`, `GET /categoria/{id}`, PATCH) · Pedidos usuario (6) · Pedidos admin (7: 401/403/200, header `Link`, `PUT estado`, DELETE) · Users admin (7) · Users perfil (3) · Storage (404) · GraphQL (4: queries `productos`/`categorias`/`producto(id)` + mutation sin auth → error) · Limpieza (borra el usuario de signup).
+- **Rate-limit aware:** la suite entera usa **18 `POST`** (< límite `POST:*` 20/min); auth usa 5 (< 10/min); helper `st()` convierte cualquier 429 en **FAIL explícito** con el aviso de esperar 1 min.
+- **Aserciones con semilla:** `admin/admin` · `userdaw/userdaw`; los datos creados llevan `auto_<timestamp>` y se borran al final (idempotente entre ejecuciones).
+- **Resultado en vivo (25/09/2026):** **Total 55 · OK 55 · KO 0**. Ajuste tras la 1ª pasada: `producto.id` de GraphQL puede venir como `string` (aceptado) y el mensaje de autorización es *"not authorized"* (substring `authoriz`). Build **0/0** · **1034 unit** verdes.
+- **Fuera del runner HTTP (sin npm):** WebSockets/SignalR y subidas de fichero → siguen en Bruno.
+
+### Replicar en CQRS
+
+1. Copiar el archivo `TiendaApi.Tests.E2E/Automation/test-runner.mjs` **y ajustar**:
+   - `CONFIG.project` → el `.csproj` de la API CQRS y `CONFIG.baseUrl` si cambia el puerto.
+   - Rutas: en CQRS los endpoints pueden diferir (MediatR/otros controllers) → revisar cada `req()` contra los controllers CQRS; mantener los mismos bloques y códigos esperados (201/400/401/403/404/204).
+   - Los `assert` de body (`items`, `totalCount`, `token`, `message`) son el **contrato** que debe preservar la API CQRS.
+2. Mantener la misma filosofía de seguridad: solo `stop` de BDs que el runner levante, nunca `down -v`; esperar siempre `/health` (Fase 1) antes de la suite.
+3. Ejecutar tras replicar cada fase CQRS: es el "**¿sigue todo en verde?**" de 55 puntos antes de pasar a la siguiente.
+4. CI (opcional, pendiente): job de GitHub Actions con Docker services (PG+Mongo), Node y .NET SDK corriendo este mismo script.
+
+---
+
 ## Fases pendientes (se documentarán aquí tras su commit)
 
 | Fase | Qué se documentará |
 |------|--------------------|
 | **5 · Verificación global** | Resultado de build + unit + integración + E2E Bruno/Newman + smoke (`/health`, `/swagger`, GraphQL, 304, logs Task.Run) |
 | **6 · Polly educativa** | Paquetes, `Infrastructures/PollyConfig.cs` (Retry/CircuitBreaker/Timeout), envoltura de `MailKitEmailService`, comparación con `MaxRetries` a mano |
-| **7 · Automation E2E (Node)** | `TiendaApi.Tests.E2E/Automation/test-runner.mjs`: diseño, cobertura por controlador, rate-limit awareness, ejecución en CI |
 | **10 · Documentación didáctica** | Secciones insertadas en cada `doc/NN-*.md` existente (nada nuevo creado) |
 
 ---
