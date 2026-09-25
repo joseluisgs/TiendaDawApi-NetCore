@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -68,7 +69,8 @@ public class ErrorHandlingComparisonTests
             _mockCategoriaLogger.Object,
             _mockCategoriaValidator.Object,
             mockCategoriaCacheService.Object,
-            mockCategoriaConfiguration.Object
+            mockCategoriaConfiguration.Object,
+            Mock.Of<IOutputCacheStore>()
         );
 
         var mockWebSocketHandler = new Mock<ProductosWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductosWebSocketHandler>>());
@@ -90,7 +92,8 @@ public class ErrorHandlingComparisonTests
             mockConfiguration.Object,
             _mockProductoValidator.Object,
             mockStorageService.Object,
-            mockEventPublisher.Object
+            mockEventPublisher.Object,
+            Mock.Of<IOutputCacheStore>()
         );
     }
 
@@ -256,7 +259,8 @@ public class ErrorHandlingComparisonTests
             mockConfiguration.Object,
             _mockProductoValidator.Object,
             mockStorageService.Object,
-            mockEventPublisher.Object
+            mockEventPublisher.Object,
+            Mock.Of<IOutputCacheStore>()
         );
 
         // Act

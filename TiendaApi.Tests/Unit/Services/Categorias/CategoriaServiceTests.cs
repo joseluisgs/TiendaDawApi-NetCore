@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -34,7 +35,8 @@ public class CategoriaServiceTests
             _mockLogger.Object,
             _mockValidator.Object,
             _mockCacheService.Object,
-            _mockConfiguration.Object);
+            _mockConfiguration.Object,
+            Mock.Of<IOutputCacheStore>());
     }
 
     [SetUp]
@@ -178,7 +180,8 @@ public class CategoriaServiceTests
             _mockLogger.Object,
             _mockValidator.Object,
             _mockCacheService.Object,
-            _mockConfiguration.Object);
+            _mockConfiguration.Object,
+            Mock.Of<IOutputCacheStore>());
 
         // Act
         var result = await _service.CreateAsync(dto);

@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Errors;
@@ -33,6 +34,7 @@ public class CategoriasController(
     /// <param name="direction">Dirección (asc, desc).</param>
     /// <returns>200 OK con lista paginada de categorías.</returns>
     [HttpGet]
+    [OutputCache(Duration = 60, Tags = new[] { "categorias" })]
     [ProducesResponseType(typeof(PagedResult<CategoriaDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
     public async Task<IActionResult> GetAll(
@@ -60,6 +62,7 @@ public class CategoriasController(
         return resultado.Match(
             onSuccess: categorias =>
             {
+                Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(categorias, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
@@ -81,6 +84,7 @@ public class CategoriasController(
     /// <param name="id">ID de la categoría.</param>
     /// <returns>200 OK con la categoría, o 404 si no existe.</returns>
     [HttpGet("{id}")]
+    [OutputCache(Duration = 60, Tags = new[] { "categorias" })]
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
@@ -91,7 +95,11 @@ public class CategoriasController(
         var resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: categoria => Ok(categoria),
+            onSuccess: categoria =>
+            {
+                Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
+                return Ok(categoria);
+            },
             onFailure: error => error switch
             {
                 NotFoundError => NotFound(new { message = error.Message }),

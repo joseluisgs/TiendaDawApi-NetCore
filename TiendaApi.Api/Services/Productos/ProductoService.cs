@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
@@ -34,7 +35,8 @@ namespace TiendaApi.Api.Services.Productos;
     IConfiguration configuration,
     IValidator<ProductoRequestDto> productoValidator,
     IStorageService storageService,
-    IEventPublisher eventPublisher
+    IEventPublisher eventPublisher,
+    IOutputCacheStore outputCacheStore
 ) : IProductoService
 {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
@@ -382,6 +384,8 @@ namespace TiendaApi.Api.Services.Productos;
 
     /// <summary>
     /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
+    /// También invalida la tag de OutputCache "productos" (en memoria: síncrono,
+    /// para que el siguiente GET no sirva datos obsoletos).
     /// </summary>
     private void InvalidarCacheProducto(params string[] keys)
     {
@@ -399,6 +403,15 @@ namespace TiendaApi.Api.Services.Productos;
                 }
             }
         });
+
+        try
+        {
+            _ = outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Output cache invalidation error: Tag=productos");
+        }
     }
 
     #endregion

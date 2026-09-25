@@ -2,6 +2,7 @@ using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -74,7 +75,8 @@ public class ProductoServiceTests
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
-            _mockEventPublisher.Object
+            _mockEventPublisher.Object,
+            Mock.Of<IOutputCacheStore>()
         );
     }
 
@@ -289,7 +291,8 @@ public class ProductoServiceTests
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
-            _mockEventPublisher.Object
+            _mockEventPublisher.Object,
+            Mock.Of<IOutputCacheStore>()
         );
     }
 

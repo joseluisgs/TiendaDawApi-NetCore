@@ -23,7 +23,10 @@ public class ProductosControllerTests
     {
         _mockService = new Mock<IProductoService>();
         var mockLogger = new Mock<ILogger<ProductosController>>();
-        _controller = new ProductosController(_mockService.Object, mockLogger.Object);
+        _controller = new ProductosController(_mockService.Object, mockLogger.Object)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
     }
 
     #region GetAll Tests

@@ -128,7 +128,7 @@
 
 ---
 
-## Fase 4 — Caché HTTP · **Opción A** (OutputCache + ETag)
+## Fase 4 — Caché HTTP · **Opción A** (OutputCache + ETag) ✅ COMPLETADA (25/09/2026)
 
 | # | Tarea | Archivos |
 |---|-------|----------|
@@ -138,6 +138,16 @@
 | 6.4 | Invalidación por tag tras CUD (`IOutputCacheStore.EvictByTag`) | services/controllers |
 | 6.5 | **Excluir** pedidos, users, auth, GraphQL autenticado | — |
 | 6.6 | Verificar | 2º GET → **304**; tras POST/PUT → tag invalidado → 200 con cuerpo nuevo |
+
+### ✅ Verificación Fase 4 (25/09/2026)
+
+| # | Resultado |
+|---|-----------|
+| 6.1-6.2 | `Infrastructures/OutputCacheConfig.cs` (`AddOutputCacheConfig` + `UseOutputCacheConfig`) registrado en `Program.cs` antes de `MapControllers`; **solo** los endpoints declarados se cachean |
+| 6.3 | `[OutputCache(Duration = 60, Tags = ...)]` en los **5 GET anónimos**: productos GetAll/GetById/GetByCategoria + categorías GetAll/GetById. **ETag** fijado en la acción (`Response.Headers.ETag`, patrón doc oficial de MS) → el middleware devuelve **304** con `If-None-Match` |
+| 6.4 | `ProductoService`/`CategoriaService` inyectan `IOutputCacheStore` y ejecutan `EvictByTagAsync("productos"/"categorias")` en `InvalidarCache*` (try/catch, background) → cubierto CUD **REST + GraphQL** |
+| 6.5 | Pedidos/users/auth sin `[OutputCache]` → sin ETag (verificado en vivo) |
+| 6.6 | Build **0/0** · **1034 unit** verdes (2 constructores de tests de controller inicializan `HttpContext` con `DefaultHttpContext`, requerido por `Response.Headers.ETag`) · **en vivo 26/26**: HIT demostrado (2º GET con **misma ETag**) · `If-None-Match` → **304** en list, `/1` y categorías · invalidación tag verificada: Create (3→4), Update (nombre nuevo visible), Delete (4→3) en productos **y** categorías · pedidos/users **sin** ETag |
 
 ---
 

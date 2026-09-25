@@ -58,6 +58,9 @@ services.AddBackgroundJobs();
 // Health Checks (sondeo de dependencias en /health)
 services.AddHealthChecks(environment);
 
+// Caché HTTP (OutputCache + ETag + 304) — solo endpoints con [OutputCache]
+services.AddOutputCacheConfig();
+
 // SignalR (Realtime)
 services.AddRealtimeSignalR();
 
@@ -106,6 +109,9 @@ app.UseWebSockets();
 app.MapWebSocketEndpoints();
 app.MapSignalRHubs();
 app.UseStaticFiles();
+
+// Caché HTTP: antes de MapControllers; solo afecta a los endpoints con [OutputCache]
+app.UseOutputCacheConfig();
 app.MapControllers();
 app.MapGraphQLEndpoints();
 

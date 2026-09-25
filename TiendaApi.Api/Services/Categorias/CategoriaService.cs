@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
+using Microsoft.AspNetCore.OutputCaching;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Errors;
@@ -20,7 +21,8 @@ public class CategoriaService(
     ILogger<CategoriaService> logger,
     IValidator<CategoriaRequestDto> categoriaValidator,
     ICacheService cacheService,
-    IConfiguration configuration
+    IConfiguration configuration,
+    IOutputCacheStore outputCacheStore
 ) : ICategoriaService
 {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
@@ -176,6 +178,15 @@ public class CategoriaService(
                 catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
             }
         });
+
+        try
+        {
+            _ = outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Output cache invalidation error: Tag=categorias");
+        }
     }
 
     private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto)

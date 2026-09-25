@@ -1,5 +1,6 @@
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -86,6 +87,7 @@ public class CategoriaServiceIntegrationTests
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddMemoryCache();
+        services.AddOutputCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
         services.AddLogging(builder =>

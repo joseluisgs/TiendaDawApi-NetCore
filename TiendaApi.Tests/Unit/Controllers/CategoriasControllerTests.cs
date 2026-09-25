@@ -21,7 +21,10 @@ public class CategoriasControllerTests
     {
         _mockService = new Mock<ICategoriaService>();
         var mockLogger = new Mock<ILogger<CategoriasController>>();
-        _controller = new CategoriasController(_mockService.Object, mockLogger.Object);
+        _controller = new CategoriasController(_mockService.Object, mockLogger.Object)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
     }
 
     #region GetAll Tests

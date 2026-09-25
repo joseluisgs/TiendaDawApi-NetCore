@@ -2,6 +2,7 @@ using FluentAssertions;
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -95,6 +96,7 @@ public class ProductoServiceIntegrationTests
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddMemoryCache();
+        services.AddOutputCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
         services.AddLogging(builder =>

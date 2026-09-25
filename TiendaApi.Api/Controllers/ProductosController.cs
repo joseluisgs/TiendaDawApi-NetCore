@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
@@ -35,6 +36,7 @@ public class ProductosController(
     /// <param name="direction">Dirección (asc, desc).</param>
     /// <returns>200 OK con lista paginada de productos.</returns>
     [HttpGet]
+    [OutputCache(Duration = 60, Tags = new[] { "productos" })]
     [ProducesResponseType(typeof(PagedResult<ProductoDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
     public async Task<IActionResult> GetAll(
@@ -57,6 +59,7 @@ public class ProductosController(
         return resultado.Match(
             onSuccess: productos =>
             {
+                Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(productos, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
@@ -72,6 +75,7 @@ public class ProductosController(
     /// <param name="id">ID del producto.</param>
     /// <returns>200 OK con el producto, o 404 si no existe.</returns>
     [HttpGet("{id}")]
+    [OutputCache(Duration = 60, Tags = new[] { "productos" })]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
@@ -82,7 +86,11 @@ public class ProductosController(
         var resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: producto => Ok(producto),
+            onSuccess: producto =>
+            {
+                Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
+                return Ok(producto);
+            },
             onFailure: error => error switch
             {
                 NotFoundError => NotFound(new { message = error.Message }),
@@ -97,6 +105,7 @@ public class ProductosController(
     /// <param name="categoriaId">ID de la categoría.</param>
     /// <returns>200 OK con lista de productos, o 404 si la categoría no existe.</returns>
     [HttpGet("categoria/{categoriaId}")]
+    [OutputCache(Duration = 60, Tags = new[] { "productos" })]
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
@@ -107,7 +116,11 @@ public class ProductosController(
         var resultado = await service.FindByCategoriaIdAsync(categoriaId);
 
         return resultado.Match(
-            onSuccess: productos => Ok(productos),
+            onSuccess: productos =>
+            {
+                Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
+                return Ok(productos);
+            },
             onFailure: error => error switch
             {
                 NotFoundError => NotFound(new { message = error.Message }),
