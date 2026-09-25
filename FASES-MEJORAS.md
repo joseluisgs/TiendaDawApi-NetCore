@@ -106,7 +106,7 @@
 
 ---
 
-## Fase 3 — Paginación real de pedidos (#4)
+## Fase 3 — Paginación real de pedidos (#4) ✅ COMPLETADA (25/09/2026)
 
 | # | Tarea | Archivos |
 |---|-------|----------|
@@ -116,6 +116,15 @@
 | 4.4 | Servicio delega al repo; **borrar** paginación en memoria (`PedidosService.cs:65-69`) | `PedidosService.cs` |
 | 4.5 | Misma firma de servicio → controller intacto | — |
 | 4.6 | Verificar | `GET /api/pedidos/paged` devuelve solo `size` |
+
+### ✅ Verificación Fase 3 (25/09/2026)
+
+| # | Resultado |
+|---|-----------|
+| 4.1-4.3 | `IPedidosRepository.FindAllPagedAsync(page, size)` (base 0) añadido a las 2 implementaciones: **Mongo** (`Filter.Empty` + `CountDocumentsAsync` + `SortByDescending(CreatedAt)` + `Skip/Limit`) · **EF** (`OrderByDescending(CreatedAt)` + `CountAsync` + `Skip/Take`). Mismo orden y misma inclusión de registros que `FindAllAsync` (comportamiento idéntico, sin cambios semánticos) |
+| 4.4 | `PedidosService.FindAllPagedAsync` delega al repo; eliminada la paginación en memoria (`FindAllAsync` + `Skip/Take` sobre la lista). `FindMyPedidosAsync` ya delegaba en `FindByUserIdPagedAsync` (intacto) |
+| 4.5 | Firmas de servicio y controller **sin cambios**; actualizados los 3 mocks de `PedidosServiceTests` (de `FindAllAsync` a `FindAllPagedAsync`) |
+| 4.6 | Build **0/0** · **1034 unit** verdes · **integración pedidos 64 OK** (32 omitidos = EF-272 conocido) · **en vivo 14/14**: `GET /api/pedidos/paged?page=1&size=2` → 200 con **2 items** y `totalCount:3` · página 2 → 1 item · defaults OK · header `Link` (rel=next/last) presente · `me/paged` → 200 |
 
 ---
 

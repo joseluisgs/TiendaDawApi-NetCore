@@ -1127,8 +1127,9 @@ public class PedidosServiceTests
             new() { UserId = 3, Total = 300 }
         };
 
-        _mockPedidosRepo.Setup(r => r.FindAllAsync())
-            .ReturnsAsync(pedidos);
+        (IEnumerable<Pedido> Items, int TotalCount) paged = (pedidos.Take(2), 3);
+        _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(0, 2))
+            .ReturnsAsync(paged);
 
         var result = await _service.FindAllPagedAsync(0, 2);
 
@@ -1149,8 +1150,9 @@ public class PedidosServiceTests
             new() { UserId = 3, Total = 300 }
         };
 
-        _mockPedidosRepo.Setup(r => r.FindAllAsync())
-            .ReturnsAsync(pedidos);
+        (IEnumerable<Pedido> Items, int TotalCount) paged = (pedidos.Skip(2), 3);
+        _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(1, 2))
+            .ReturnsAsync(paged);
 
         var result = await _service.FindAllPagedAsync(1, 2);
 
@@ -1162,8 +1164,9 @@ public class PedidosServiceTests
     [Test]
     public async Task FindAllPagedAsync_SinPedidos_RetornaListaVacia()
     {
-        _mockPedidosRepo.Setup(r => r.FindAllAsync())
-            .ReturnsAsync(new List<Pedido>());
+        (IEnumerable<Pedido> Items, int TotalCount) paged = (new List<Pedido>(), 0);
+        _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(0, 10))
+            .ReturnsAsync(paged);
 
         var result = await _service.FindAllPagedAsync(0, 10);
 

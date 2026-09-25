@@ -25,6 +25,23 @@ public class PedidosNativeRepository(
     }
 
     /// <inheritdoc/>
+    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size)
+    {
+        logger.LogDebug("Buscando pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
+        var filter = Builders<Pedido>.Filter.Empty;
+        var totalCount = await _collection.CountDocumentsAsync(filter);
+
+        var items = await _collection
+            .Find(filter)
+            .SortByDescending(p => p.CreatedAt)
+            .Skip(page * size)
+            .Limit(size)
+            .ToListAsync();
+
+        return (items, (int)totalCount);
+    }
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<Pedido>> FindByUserIdAsync(long userId)
     {
         logger.LogDebug("Buscando pedidos para usuario: {UserId}", userId);

@@ -62,15 +62,11 @@ namespace TiendaApi.Api.Services.Pedidos;
     {
         logger.LogInformation("Obteniendo pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
 
-        var pedidos = await pedidosRepository.FindAllAsync();
-        var pedidosList = pedidos.ToList();
-
-        var totalCount = pedidosList.Count;
-        var pagedPedidos = pedidosList.Skip(page * size).Take(size);
+        var (pedidos, totalCount) = await pedidosRepository.FindAllPagedAsync(page, size);
 
         var pagedResult = new PagedResult<PedidoDto>
         {
-            Items = pagedPedidos.ToDtoList(),
+            Items = pedidos.ToDtoList(),
             TotalCount = totalCount,
             Page = page + 1,
             PageSize = size
