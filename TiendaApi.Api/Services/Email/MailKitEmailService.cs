@@ -1,22 +1,30 @@
 using System.Threading.Channels;
 using MailKit.Net.Smtp;
 using MimeKit;
+using Polly;
+using Polly.CircuitBreaker;
+using TiendaApi.Api.Infrastructures;
 
 namespace TiendaApi.Api.Services.Email;
 
 /// <summary>
 /// Servicio de email usando MailKit.
 /// Envía emails a través de SMTP.
+/// Fase 6: el envío va envuelto en el pipeline de resiliencia de
+/// <see cref="PollyConfig"/> (Retry 3 + CircuitBreaker + Timeout 10s).
 /// </summary>
 public class MailKitEmailService(
     IConfiguration configuration,
     ILogger<MailKitEmailService> logger,
-    Channel<EmailMessage> emailChannel
+    Channel<EmailMessage> emailChannel,
+    ResiliencePipeline? emailPipeline = null
 ) : IEmailService
 {
     private readonly IConfiguration _configuration = configuration;
     private readonly ILogger<MailKitEmailService> _logger = logger;
     private readonly Channel<EmailMessage> _emailChannel = emailChannel;
+    private readonly ResiliencePipeline _emailPipeline =
+        emailPipeline ?? PollyConfig.BuildEmailPipeline(logger);
 
     /// <summary>
     /// Envía un email inmediatamente usando SMTP.
@@ -55,13 +63,31 @@ public class MailKitEmailService(
             }
             mimeMessage.Body = bodyBuilder.ToMessageBody();
 
-            using var client = new SmtpClient();
-            await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(smtpUser, smtpPassword);
-            await client.SendAsync(mimeMessage);
-            await client.DisconnectAsync(true);
+            // Fase 6 — Polly: cada intento tiene Timeout(10s); hasta 3 reintentos con
+            // backoff 2^n; si hay 3 fallos seguidos el CircuitBreaker abre 30s y el
+            // envío se omite (BrokenCircuitException) sin agotar los reintentos.
+            await _emailPipeline.ExecuteAsync(async _ =>
+            {
+                using var client = new SmtpClient();
+                await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(smtpUser, smtpPassword);
+                await client.SendAsync(mimeMessage);
+                await client.DisconnectAsync(true);
+            }, CancellationToken.None);
 
             _logger.LogInformation("Email enviado exitosamente a: {To}", message.To);
+        }
+        catch (BrokenCircuitException ex)
+        {
+            // CircuitBreaker abierto: no se reintenta más; solo se avisa.
+            // El caller es EmailBackgroundService → el request HTTP nunca falla por email.
+            _logger.LogWarning(ex, "Circuito de email abierto (3 fallos seguidos), envío omitido a: {To}", message.To);
+            throw;
+        }
+        catch (TimeoutException ex)
+        {
+            _logger.LogWarning(ex, "Timeout de 10s de Polly agotado enviando email a: {To}", message.To);
+            throw;
         }
         catch (Exception ex)
         {

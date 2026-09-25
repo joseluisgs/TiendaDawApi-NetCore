@@ -1,6 +1,7 @@
 using System.Threading.Channels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using TiendaApi.Api.Services.Email;
 
@@ -28,6 +29,11 @@ public static class EmailConfig
         else
         {
             Log.Information("📧 Configurando servicio de email con MailKit (producción)...");
+            // Fase 6 — Pipeline de resiliencia (Polly) compartido por todos los
+            // MailKitEmailService: Retry 3 + CircuitBreaker(3, 30s) + Timeout 10s.
+            services.AddSingleton(static sp =>
+                PollyConfig.BuildEmailPipeline(
+                    sp.GetRequiredService<ILoggerFactory>().CreateLogger("Polly.Email")));
             services.TryAddScoped<IEmailService, MailKitEmailService>();
             services.AddHostedService<EmailBackgroundService>();
         }
