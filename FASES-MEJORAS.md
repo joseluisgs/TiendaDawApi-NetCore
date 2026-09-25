@@ -280,6 +280,25 @@
 
 ---
 
+## Fase 10 — Documentación didáctica (insertar en los docs existentes)
+
+> **Regla:** **NO** crear documentos nuevos. Insertar secciones explicativas en el `doc/NN-*.md` **oportuno** para cada tema, con el estilo del resto del documento (código real del proyecto) y **actualizando su Índice**. Cubre **todas** las fases del plan, estén completas (✅) o previstas.
+
+| # | Tema | Fase(s) | Documento → sección |
+|---|------|---------|---------------------|
+| 10.1 | Result → HTTP con `ToHttpResult()` (Opción C) | 9 ✅ | `doc/11-patron-result.md` → 11.6 Integración Result + Controladores |
+| 10.2 | Caché de salida: `OutputCache` + invalidación por tags | 4 ✅ | `doc/10-redis-caching.md` → nueva sección (antes del resumen) |
+| 10.3 | `ETag` + revalidación `304` (patrón real del proyecto) | 4 ✅ | `doc/06-rest-best-practices.md` → 6.7 ETag para Cacheo |
+| 10.4 | Paginación real en BD (`Skip/Limit`, no en memoria) | 3 ✅ | `doc/06-rest-best-practices.md` → 6.3 Paginación |
+| 10.5 | Migraciones EF Core: factory design-time, `InitialCreate`/`AddOptimizationIndexes`, baseline en BD existente, dev vs prod | 8 ✅ | `doc/08-ef-core-postgresql.md` → 8.5 Migraciones |
+| 10.6 | `AsNoTracking` en consultas de solo lectura · índices de optimización | 2 ✅ · 1 ✅ | `doc/27-optimizacion.md` → 27.5 EF Core · 27.3 Índices |
+| 10.7 | Fire & forget endurecido (`Task.Run` + try/catch) | FF ✅ | `doc/22-background-jobs.md` |
+| 10.8 | Polly educativa (Retry + CircuitBreaker + Timeout en email) | 6 prevista | `doc/13-pedidos-transacciones.md` → 13.3 · `doc/21-email-services.md` |
+| 10.9 | Automation E2E en Node (runner de todas las fases) | 7 prevista | `doc/24-testing.md` → tras 24.14 |
+| 10.10 | Verificar | — | Build 0/0 · 1034 unit · Índices (TOC) de cada doc actualizados |
+
+---
+
 ## Fuera de alcance (confirmado)
 
 | Tema | Motivo |
@@ -300,6 +319,7 @@
    → 6-OutputCache → 9 (ToHttpResult)
    → 8 (migraciones/índices)
    → 7 (Automation) → 5.x (verificación global) → 6-Polly
+   → 10 (documentación didáctica de todas las fases)
 ```
 
 > **Nota:** Fase 8 antes que 7 para que el Automation valide una BD con índices reales.  
