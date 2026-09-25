@@ -220,7 +220,7 @@
 
 ---
 
-## Fase 8 — Migraciones EF Core (índices y esquema en BD existente)
+## Fase 8 — Migraciones EF Core (índices y esquema en BD existente) ✅ COMPLETADA (25/09/2026)
 
 > **Problema:** hoy `EnsureCreated` **no** altera BDs ya creadas → los índices de la Fase 1B **no se aplican** en producción ni en volúmenes Docker persistentes.  
 > **Objetivo:** introducir **EF Core Migrations** sin romper el flujo de desarrollo.
@@ -237,6 +237,17 @@
 | 8.8 | Verificar | En BD ya creada sin índices → arranque → `\di` en PG muestra los índices nuevos; E2E en verde |
 
 **Orden recomendado:** Fase 1B (definir índices en modelo) → **Fase 8** (migración que los materializa) → Fase 7 Automation valida todo.
+
+### ✅ Verificación Fase 8 (25/09/2026)
+
+| # | Resultado |
+|---|-----------|
+| 8.1 | `Microsoft.EntityFrameworkCore.Design` 10.0.12 ya presente + **nuevo** `Data/TiendaDbContextFactory.cs` (`IDesignTimeDbContextFactory`): lee la connection de `appsettings.json` y **evita ejecutar `Program.cs` en design-time** — sin ella, cada `dotnet ef` ejecutaría `EnsureDeleted + EnsureCreated` en desarrollo. `dotnet-ef` global actualizado 10.0.7 → 10.0.12 |
+| 8.2-8.3 | **Dos migraciones** en `TiendaApi.Api/Migrations/`: `InitialCreate` (tablas `categorias`/`users`/`productos` + FK + los **3 índices únicos preexistentes**: `Nombre`, `Email`, `Username`) y `AddOptimizationIndexes` (**los 5 índices de Fase 1B**: `productos(CategoriaId)`, `(CategoriaId, Precio)`, `CreatedAt`, `IsDeleted`, `users(Role)`, con su `Down` → `DropIndex`). Generadas editando a mano el `InitialCreate` + `ModelSnapshot` (quitando los5 `HasIndex`) para que la segunda migración materialice solo los índices nuevos · `has-pending-model-changes` → **"No changes"** |
+| 8.4 | **Decisión:** Producción → `Migrate()` vía `ApplyPendingMigrationsAsync` (con **baseline**, ver 8.5); **Desarrollo → se mantiene `EnsureDeleted + EnsureCreated`** (drop+create ya funciona y es más rápido; anotado como decisión explícita) |
+| 8.5 | **Baseline implementado:** si `InitialCreate` está pendiente **y** la tabla `categorias` ya existe (BD creada con `EnsureCreated` y sin `__EFMigrationsHistory`), se crea la tabla de historial y se marca `InitialCreate` como aplicada **sin ejecutarla** → `Migrate()` solo corre las migraciones futuras. Verificado con datos: usuarios/categorías/productos **intactos** tras migrar |
+| 8.6-8.7 | Arranque prod sobre BD con volumen persistente aplica lo pendiente (mismo camino verificado en vivo) · `Reset-Database.ps1` **sin cambios** |
+| 8.8 | **En vivo:** BD local → `DROP INDEX` de los5 (simula BD pre-Fase 1B) → arranque con `ASPNETCORE_ENVIRONMENT=Production` (**`--no-launch-profile`**: `Properties/launchSettings.json` fuerza `Development` y anula la env var) → logs: *"'…_InitialCreate' marcada como aplicada (baseline, sin ejecutar)"* + *"Migraciones aplicadas — pendientes antes: [InitialCreate, AddOptimizationIndexes]"* → psql `\di`: **los8 índices** (5 recreados + 3 únicos) · `SELECT` de `__EFMigrationsHistory`: **2 filas** · **datos preservados** (2 users / 3 categorías / 3 productos). Build **0/0** · **1034 unit** verdes |
 
 ---
 
