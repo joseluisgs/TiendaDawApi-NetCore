@@ -18,6 +18,7 @@
 | 9 · ToHttpResult | `a7352de` | 31 `error switch` → 1 extensión (Opción C) | ✅ |
 | 8 · Migraciones EF | `ee65489` | `InitialCreate` + `AddOptimizationIndexes` + baseline | ✅ |
 | 5 · Verificación global | `131ec3c` | Build 0/0 · 1034 unit · integración 161 · E2E 95/95 · smoke | ✅ |
+| 11 · Infra Docker saludable + imágenes | `6f4cfce` | healthchecks, `mongo:7.0` único, composes E2E oficiales, `retryWrites` | ✅ |
 | 6 · Polly educativa | — | Retry + CircuitBreaker + Timeout en email | ⬜ |
 | 7 · Automation E2E (Node) | `227cb9d` | `test-runner.mjs` de todos los controladores (55/55) | ✅ |
 | 10 · Documentación didáctica | — | Secciones en `doc/NN-*.md` existentes (última fase) | ⬜ |
@@ -369,6 +370,30 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 4. Rate limit: Newman → tandas + espera 61 s; **Bruno → corrida única con `--delay 3200`** (nunca por tandas: se pierden los `bru.setVar`). Mientras `RateLimitConfig.cs` tenga `POST:*` 20/min, recalcular si cambian las reglas (Postman: 29 POST · Bruno: 64 requests).
 5. Reproducir en CQRS el **fix de `CategoriaService`** (`Descripcion` en el PUT) o comprobar que CQRS lo hereda desde el inicio.
 6. Documentar en esta bitácora los resultados de CQRS con el mismo formato de tabla.
+
+---
+
+## Fase 11 — Infra Docker saludable + unificación de imágenes (`6f4cfce`) ✅
+
+> Ejecutada **antes de la Fase 6** (Polly) por petición explícita, aunque numerada al final (el plan 0-10 ya estaba cerrado). Detalle completo en `FASES-MEJORAS.md` → "Fase 11".
+
+- **Imagen única:** `mongo:7` → `mongo:7.0` en `docker-compose.local.yml` y `docker-compose.prod.yml`; literales de test centralizados en la nueva constante `TestContainerImages.cs` (10 ficheros, 18 llamadas a `MongoDbBuilder`/`PostgreSqlBuilder`); tag legacy `mongo:7` eliminada de Docker. Resultado: **una sola tag por base de datos** en `docker images` (`mongo:7.0` + `postgres:17-alpine`), sin duplicados.
+- **Compose local:** `start_period: 30s` en healthchecks de postgres y mongo; `depends_on: condition: service_healthy` en adminer y mongo-express (antes esperaban solo a que el contenedor arrancara, no a que estuviera sano).
+- **Compose prod:** **fix de indentación YAML** — 3 líneas del `environment` de `api` tenían 7 espacios en vez de 6 (`MongoDbSettings__DatabaseName`, `MongoDbSettings__PedidosCollection`, `Pedidos__RepositoryType`); `start_period: 30s` en los healthchecks (postgres/mongo/redis). Requiere un `.env` local (está en `.gitignore`): para validar, copiar temporalmente desde `.env.prod.example` y borrar.
+- **Compose E2E `Bruno-Cli`:** reescrito con la **imagen oficial `usebruno/cli`** (entrypoint `bru`, workdir `/bruno`; verificada en el registry con `docker manifest inspect`) — antes usaba `node:20-alpine` + `@usebruno/cli@1.4.0` antiguo y un comando inválido. Ahora: `run . --env-file environments/local.bru --delay 3200`, reporters nativos (json/junit/html → `/reports`), `extra_hosts: host.docker.internal:host-gateway`, `restart: on-failure:3`, colección montada `:ro`.
+- **Compose E2E `Postman-Cli`:** la colección y el environment estaban montados en `/etc/newman/collections` mientras el `working_dir`/`run` los buscaba en la raíz (**el compose no funcionaba**); además Newman no lee la env `BASE_URL` → añadido `--env-var baseUrl=…`, `--delay-request 3200` (rate limit `POST:*` 20/min) y `restart: on-failure:3`.
+- **Mongo, reconexión a nivel de driver:** `&retryWrites=true&retryReads=true` en las **12 connection strings** `mongodb://` de 6 ficheros (`appsettings.json`/`Development`/`Production`, `.env.development`, `.env.example`, `docker-compose.prod.yml`).
+- **EF Core `EnableRetryOnFailure`: NO se activa (decisión, no olvido):** `PedidosService.cs:458` usa `BeginTransactionAsync` (transacción explícita) y con *retrying strategy* EF lanza `InvalidOperationException`. El patrón oficial (`CreateExecutionStrategy().ExecuteAsync(...)`) tocaría el flujo central de `POST /api/pedidos/me` → riesgo alto fuera de alcance.
+- **`.gitignore`:** carpetas `TiendaApi.Tests.E2E/**/reports/` (informes generados por los compose).
+- **Verificado:** `docker compose config` **4/4 OK** · `docker compose -f docker-compose.local.yml up -d` → postgres y mongo **healthy** con la nueva tag · `docker images` sin duplicados · build **0/0** · unit **1034/1034** · integración **161/0/32** (con `TestContainerImages` en vivo).
+
+### Replicar en CQRS
+
+1. Copiar los 4 compose (`docker-compose.local.yml`, `docker-compose.prod.yml`, `Bruno-Cli/`, `Postman-Cli/`) y ajustar solo las connection strings propias de CQRS.
+2. Copiar `TiendaApi.Tests/Integration/TestContainers/TestContainerImages.cs` y sustituir los literales de imagen de `MongoDbBuilder`/`PostgreSqlBuilder` en los tests de integración.
+3. Añadir `retryWrites=true&retryReads=true` a las connection strings Mongo de CQRS (appsettings + `.env*` + prod).
+4. **No** activar `EnableRetryOnFailure` mientras haya transacciones explícitas (mismo motivo: `BeginTransactionAsync`).
+5. Validar: `docker compose config` ×4 → `up -d` → health → `docker images` sin `mongo:7` suelto.
 
 ---
 

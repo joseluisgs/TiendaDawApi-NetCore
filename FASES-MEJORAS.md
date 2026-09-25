@@ -355,6 +355,33 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 
 ---
 
+## Fase 11 — Infra Docker saludable + unificación de imágenes ✅ COMPLETADA (25/09/2026)
+
+> **Nota de orden:** ejecutada **antes de la Fase 6** (Polly) por petición explícita. Va al final de la numeración porque el plan 0-10 ya estaba cerrado; el orden de ejecución real no es secuencial (9, 8, 7 antes que 5). Aplicable también al destino **CQRS**.
+
+### Tareas
+
+| # | Tarea | Detalle | Estado |
+|---|-------|---------|--------|
+| 11.1 | Unificar imágenes Docker | `mongo:7` → `mongo:7.0` en `docker-compose.local.yml` y `docker-compose.prod.yml`; literales de test centralizados en la nueva constante `TiendaApi.Tests/Integration/TestContainers/TestContainerImages.cs` (10 ficheros, 18 llamadas). Etiquetas finales únicas: `mongo:7.0` + `postgres:17-alpine` (tag legacy `mongo:7` eliminada de Docker) | ✅ |
+| 11.2 | Compose local: salud y orden de arranque | `start_period: 30s` en healthchecks de postgres y mongo; `depends_on: condition: service_healthy` en adminer y mongo-express | ✅ |
+| 11.3 | Compose prod: YAML roto + salud | **Fix indentación:** 3 líneas del `environment` de `api` tenían 7 espacios en vez de 6 (`MongoDbSettings__DatabaseName`, `MongoDbSettings__PedidosCollection`, `Pedidos__RepositoryType`); `start_period: 30s` en healthchecks (postgres/mongo/redis) | ✅ |
+| 11.4 | Compose E2E Bruno-Cli al patrón oficial | Reescrito con la imagen oficial `usebruno/cli` (entrypoint `bru`, workdir `/bruno`, verificada en el registry); `command: run . --env-file environments/local.bru --delay 3200` + reporters nativos (json/junit/html → `/reports`); `extra_hosts: host.docker.internal:host-gateway`; `restart: on-failure:3`; colección montada `:ro` | ✅ |
+| 11.5 | Compose E2E Postman-Cli | Colección y environment montados en el `working_dir` (antes estaban en `/etc/newman/collections` y el `run` no las encontraba); `--env-var baseUrl` (el env `BASE_URL` no lo leía Newman); `--delay-request 3200`; `restart: on-failure:3` | ✅ |
+| 11.6 | Reconexión a nivel de driver (Mongo) | `&retryWrites=true&retryReads=true` añadidos a las 12 connection strings `mongodb://` de 6 ficheros (`appsettings.json`/`Development`/`Production`, `.env.development`, `.env.example`, `docker-compose.prod.yml`) | ✅ |
+| 11.7 | `.gitignore` | Carpetas `TiendaApi.Tests.E2E/**/reports/` (informes generados por los compose) | ✅ |
+| 11.8 | Verificación | `docker compose config` 4/4 OK · stack local `up -d` → postgres y mongo **healthy** · `docker images` sin duplicados · build 0/0 · unit 1034/1034 · integración 161/0/32 (con `TestContainerImages`) | ✅ |
+
+### Hallazgos y decisiones
+
+1. **`docker images` acumulaba `mongo:7` y `mongo:7.0`** con el mismo ID: el compose usaba `mongo:7` y los tests `mongo:7.0`. Ahora un solo tag en todos lados.
+2. **Defaults de Testcontainers 4.15.0** son `mongo:6.0` y `postgres:15.1` (irrelevantes: todos los builders pasaban imagen explícita, pero ahora salen de una única constante).
+3. **`EnableRetryOnFailure` de EF Core: NO se activa, deliberadamente.** `PedidosService.cs:458` usa `BeginTransactionAsync` (transacción explícita) y con *retrying strategy* EF lanza `InvalidOperationException`. El patrón oficial (`CreateExecutionStrategy().ExecuteAsync(...)`) tocaría el flujo central de `POST /api/pedidos/me` = riesgo alto fuera de alcance. La reconexión a nivel de driver de Mongo (11.6) sí aplica.
+4. **Bruno por CLI:** no se puede ejecutar por tandas (`bru.setVar` no sobrevive entre invocaciones) → corrida única con `--delay 3200` (rate limit `POST:*` = 20/min).
+5. `docker-compose.prod.yml` requiere un `.env` local (está en `.gitignore`); se valida con un temporal copiado desde `.env.prod.example`.
+
+---
+
 ## Fuera de alcance (confirmado)
 
 | Tema | Motivo |
@@ -374,12 +401,14 @@ El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `C
 0.1 → 10 → 2 → FF → 1 (AsNoTracking) → 4 (pedidos paged)
    → 6-OutputCache → 9 (ToHttpResult)
    → 8 (migraciones/índices)
-   → 7 (Automation) → 5.x (verificación global) → 6-Polly
+   → 7 (Automation) → 5.x (verificación global) → 11 (Docker/imágenes)
+   → 6-Polly
    → 10 (documentación didáctica de todas las fases)
 ```
 
 > **Nota:** Fase 8 antes que 7 para que el Automation valide una BD con índices reales.  
 > **Fase 9** va tras OutputCache y antes de 7: la Automation valida los códigos HTTP de la refactorización.  
+> **Fase 11** (Docker/imágenes) ejecutada antes que 6, aunque numerada al final.  
 > Las “6” son distintas: **Fase 4 = OutputCache (#6 del análisis)**; **Fase 6 = Polly**.
 
 ---
