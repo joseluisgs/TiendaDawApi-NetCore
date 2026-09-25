@@ -17,7 +17,7 @@
 | 4 · OutputCache + ETag | `b16c29e` | Caché HTTP 60s con tags + revalidación 304 | ✅ |
 | 9 · ToHttpResult | `a7352de` | 31 `error switch` → 1 extensión (Opción C) | ✅ |
 | 8 · Migraciones EF | `ee65489` | `InitialCreate` + `AddOptimizationIndexes` + baseline | ✅ |
-| 5 · Verificación global | — | Build + unit + integración + E2E + smoke | ⬜ |
+| 5 · Verificación global | `131ec3c` | Build 0/0 · 1034 unit · integración 161 · E2E 95/95 · smoke | ✅ |
 | 6 · Polly educativa | — | Retry + CircuitBreaker + Timeout en email | ⬜ |
 | 7 · Automation E2E (Node) | `227cb9d` | `test-runner.mjs` de todos los controladores (55/55) | ✅ |
 | 10 · Documentación didáctica | — | Secciones en `doc/NN-*.md` existentes (última fase) | ⬜ |
@@ -344,11 +344,33 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 
 ---
 
+## Fase 5 — Verificación global (`131ec3c`) ✅
+
+- **Qué se verificó (todo en vivo, 25/09/2026):**
+  - Build `dotnet build TiendaApi.slnx -c Debug` → **0 errores / 0 warnings**.
+  - Unit `--filter "FullyQualifiedName~Unit"` → **1034/1034** (cobertura Api 62.09% líneas).
+  - Integración con Testcontainers → **161 OK · 0 errores · 32 omitidos** (EF-272 conocido).
+  - **E2E con Newman** sobre `TiendaApi.Tests.E2E/Postman-Cli` → **95 assertions, 0 fallos**, en **4 tandas** (exit 0 cada una) separadas por **61 s** para respetar `POST:*` 20/min y auth 10/min (la colección hace 29 POST). Newman corrió de temp (`npm i newman --prefix …`, sin instalación global) vía `node …\newman\bin\newman.js`, con `--delay-request 200` y `--export-environment` entre tandas (los tokens/ids viajan en el environment).
+  - Smoke: `/health` 200 · Swagger en `/` (200) + `/swagger/v1/swagger.json` 200 · GraphQL 200 · **ETag 2º GET → 304** · logs: **0 excepciones / 0 ERR**, stderr vacío.
+  - Automation de la Fase 7 → 55/55.
+- **Sin cambios de código C#**: la fase es solo verificación (el único cambio de repo es la colección Postman reparada).
+- **Colección Postman arreglada** (8 puntos, detalle en `FASES-MEJORAS.md` → "Arreglos aplicados a la colección"): JSON inválido (3 items), variables de colección pisadas por el environment (unificar en `pm.environment.*`), **auth raíz heredada** (`Bearer {{adminToken}}` → `noauth` en los tests "sin auth"), GraphQL al esquema actual (**HotChocolate 16**: `Long!`, `create/update/deleteProducto`, `Create/UpdateProductoInput`), orden de carpetas (crear antes de consultar; `[043b]` admin crea su pedido; `[051]` borrar cuenta al final), códigos reales (pedido inexistente **404**, `categoriaId` inválida **400**), `pm.response.code`, `--delay-request`.
+- **Bruno:** no hay CLI instalado (`bruno`/`newman` no estaban en el equipo) → la vía ejecutable es **Newman** con la colección Postman; las colecciones `.bru` (Bruno-Local/Bruno-Cli) quedan para uso manual/IDE.
+
+### Replicar en CQRS
+
+1. Ejecutar **las mismas 6 comprobaciones** contra la API CQRS (build, unit, integración, Newman, smoke, automation) — son la **condición de "sigue en verde"** tras replicar cada fase.
+2. **Copiar la colección `Postman-Cli` ya arreglada** (está alineada con la API actual: rutas, GraphQL, códigos) y revisar solo lo que cambie en CQRS (si MediatR altera algún código de error o el esquema GraphQL).
+3. El runner de la **Fase 7** (`test-runner.mjs`) es el equivalente rápido sin dependencias: mantener ambos.
+4. Rate limit: misma estrategia (tandas + espera 61 s) mientras `RateLimitConfig.cs` tenga `POST:*` 20/min; si en CQRS cambian las reglas, recalcular las tandas (29 POST en total).
+5. Documentar en esta bitácora los resultados de CQRS con el mismo formato de tabla.
+
+---
+
 ## Fases pendientes (se documentarán aquí tras su commit)
 
 | Fase | Qué se documentará |
 |------|--------------------|
-| **5 · Verificación global** | Resultado de build + unit + integración + E2E Bruno/Newman + smoke (`/health`, `/swagger`, GraphQL, 304, logs Task.Run) |
 | **6 · Polly educativa** | Paquetes, `Infrastructures/PollyConfig.cs` (Retry/CircuitBreaker/Timeout), envoltura de `MailKitEmailService`, comparación con `MaxRetries` a mano |
 | **10 · Documentación didáctica** | Secciones insertadas en cada `doc/NN-*.md` existente (nada nuevo creado) |
 
