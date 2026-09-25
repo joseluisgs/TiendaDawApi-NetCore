@@ -27,7 +27,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets y SignalR para notificaciones en tiempo real
 - ⏰ **Background Jobs**: Tareas programadas con BackgroundService para reportes y sincronización
 - 📊 **Versionado de API**: Control de versiones por URL.
-- 🧪 **Testing**: Tests con NUnit, Moq, Tescontainers y Newman.
+- 🧪 **Testing**: Tests con NUnit, Moq, Testcontainers, Newman/Bruno y Automation en Node.
 
 ## 📑 Tabla de Contenidos
 
@@ -44,7 +44,8 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
       - [Comandos específicos por tipo de test](#comandos-específicos-por-tipo-de-test)
       - [Con coverage](#con-coverage)
       - [Configuración de tests](#configuración-de-tests)
-    - [Tests E2E con Newman (Postman) y Bruno](#tests-e2e-con-newman-postman-y-bruno)
+    - [Tests E2E con Newman (Postman), Bruno y Automation](#tests-e2e-con-newman-postman-bruno-y-automation)
+      - [Automation (Node)](#automation-node)
       - [Postman (Newman)](#postman-newman)
       - [Bruno (CLI)](#bruno-cli)
   - [📚 Documentación](#-documentación)
@@ -112,7 +113,12 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 📈 **Versionado de API**: Control de versiones por URL
 - ✅ **Validaciones**: FluentValidation declarativo
 - 🛡️ **Exception Handling**: Middleware global de errores
-- 🧪 **Testing**: Unit tests con NUnit y Moq
+- 🏥 **Health Checks**: `GET /health` con sondeo de PostgreSQL y MongoDB (200 OK / 503)
+- ⚡ **Caché HTTP**: `OutputCache` 60s con invalidación por tags + revalidación `ETag`/`304`
+- 🛡️ **Resiliencia con Polly**: Retry + CircuitBreaker + Timeout en el envío de emails
+- 📄 **Paginación real en BD**: `Skip/Take` (EF) y `Skip/Limit` (Mongo) con metadatos
+- 🔁 **Result → HTTP**: extensión central `ToHttpResult()` para los errores de dominio
+- 🧪 **Testing**: Unit (NUnit + Moq), integración (Testcontainers) y E2E (Newman/Bruno/Automation)
 - 📊 **Code Coverage**: Métricas con Coverlet
 - 🐳 **Docker**: Contenedores para desarrollo y producción
 
@@ -121,7 +127,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **.NET 10 con C# 14** - Plataforma principal
 - **ASP.NET Core Web API** - Framework REST
 - **EF Core 10** - ORM con PostgreSQL y MongoDB
-- **PostgreSQL 15** - Base de datos relacional
+- **PostgreSQL 17** - Base de datos relacional
 - **MongoDB 7.0** - Base de datos de documentos
 - **Redis** - Cache distribuido
 - **JWT** - Autenticación basada en tokens
@@ -130,12 +136,13 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **Websockets/SignalR** - WebSockets en tiempo real puros y usando SignalR
 - **HotChocolate** - GraphQL server
 - **NUnit + Moq** - Testing unitario
+- **Polly 8** - Resiliencia (Retry, CircuitBreaker, Timeout) en el envío de emails
 - **CSharpFunctionalExtensions** - Railway Oriented Programming
 - **Testcontainers** - Tests con bases de datos reales
 - **Swashbuckle/Swagger** - Documentación automática de API
 - **Coverlet** - Métricas de coverage
 - **Docker** - Containerización
-- **Newman/Bruno** - Pruebas de API
+- **Newman/Bruno/Node** - Pruebas de API (colecciones + Automation runner)
 - **BackgroundService** - Tareas programadas y jobs en segundo plano
 - **Security Headers** - X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy
 
@@ -152,19 +159,22 @@ cd TiendaDawApi-NetCore
 dotnet restore
 
 # Iniciar servicios (PostgreSQL y MongoDB, la cache con Redis es opcional, usa en memoria si no está)
-docker-compose -f docker-compose.local.yml up -d
+docker compose -f docker-compose.local.yml up -d
 
 # Ejecutar aplicación en modo desarrollo
-dotnet run --project TiendaApi.Apis
+dotnet run --project TiendaApi.Api
 
 # O con Hot Reload
-dotnet watch run --project TiendaApi.Apis
+dotnet watch run --project TiendaApi.Api
 
 # Acceso a la API (Desarrollo - HTTP)
-open http://localhost:5000
+start http://localhost:5031
 
 # Acceso a Swagger UI (Desarrollo - HTTP)
-open http://localhost:5000/swagger
+start http://localhost:5031/swagger
+
+# Health check (200 OK / 503 si alguna dependencia cae)
+start http://localhost:5031/health
 
 > **Nota:** En producción, la API usa HTTPS obligatorio con HSTS.
 ```
@@ -175,23 +185,23 @@ Para desplegar en producción, usa `docker-compose.prod.yml` que incluye todos l
 
 ```bash
 # Crear archivo .env con tus variables de producción
-cp .env.example .env
+cp .env.prod.example .env
 # Edita .env con tus contraseñas y configuración segura
 
 # Construir y ejecutar todos los servicios
-docker-compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 
 # Ver logs de la API
-docker-compose -f docker-compose.prod.yml logs -f api
+docker compose -f docker-compose.prod.yml logs -f api
 
 # Ver logs de todos los servicios
-docker-compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.prod.yml logs -f
 
 # Detener servicios
-docker-compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml down
 
 # Detener y eliminar volúmenes
-docker-compose -f docker-compose.prod.yml down -v
+docker compose -f docker-compose.prod.yml down -v
 ```
 
 **Servicios incluidos:**
@@ -220,12 +230,12 @@ API_PORT=5000
 
 ## 🧪 Estrategia de Testing
 
-TiendaDawApi implementa una pirámide de pruebas profesional:
+TiendaDawApi implementa una pirámide de pruebas profesional (estado actual):
 
-- **Unit Tests**: Validación de servicios, repositorios y lógica de negocio 
-- **Integration Tests**: Tests con bases de datos reales usando Testcontainers
+- **Unit Tests**: Validación de servicios, repositorios y lógica de negocio — **1039 tests**
+- **Integration Tests**: Bases de datos reales con Testcontainers (PostgreSQL + MongoDB) — **161 tests**
+- **E2E**: colecciones **Newman** (95 assertions) y **Bruno** (108 tests) + **Automation** en Node (55 checks)
 - **Coverage**: Indicadores de cobertura con Coverlet
-- **Newman o Bruno**: Pruebas de API automatizadas
 
 ### Ejecución de Tests
 
@@ -261,32 +271,45 @@ open coverage/index.html
   - Job `test`: Unit tests siempre (parallel)
   - Job `test-integration`: Solo bajo demanda con `workflow_dispatch` en main
 
-### Tests E2E con Newman (Postman) y Bruno
+### Tests E2E con Newman (Postman), Bruno y Automation
 
-Pruebas end-to-end de la API usando Newman y Bruno CLI:
+Pruebas end-to-end de la API. **Requisito:** la API levantada en `http://localhost:5031`
+(rate limit `POST:*` = 20/min → los comandos llevan `--delay 3200` / `--delay-request 3200`).
+
+#### Automation (Node)
+
+```bash
+# 55 checks de todos los controladores; sin instalar nada (Node 18+)
+# Si no hay API levantada, el runner la levanta y la para él solo
+node TiendaApi.Tests.E2E/Automation/test-runner.mjs
+
+# Modo externo: solo la suite, contra una API ya corriendo
+BASE_URL=http://localhost:5031 node TiendaApi.Tests.E2E/Automation/test-runner.mjs
+```
+
+Sale con código `0` si todo OK, `1` si algo falla (listo para CI).
 
 #### Postman (Newman)
 
 ```bash
-# Opción 1: Con Docker (recomendado)
-cd TiendaApi.ApiTests/Postman
-docker-compose up --build
+# Opción 1: Con Docker (recomendado; informes en reports/)
+cd TiendaApi.Tests.E2E/Postman-Cli
+docker compose up --build
+start reports/report.html
 
-# Ver informes generados
-open reports/report.html
-
-# Opción 2: Con Newman local
+# Opción 2: Con Newman local (API ya levantada en :5031)
 npm install -g newman
-newman run TiendaApi.ApiTests/Postman/TiendaApi.NetCore.postman_collection.json \
-  -e TiendaApi.ApiTests/Postman/TiendaApi.NetCore.postman_environment.json \
-  -r html,json,junit --reporter-html-export report.html \
+newman run TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_collection.json \
+  -e TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_environment.json \
+  --delay-request 3200 \
+  -r cli,html,json,junit --reporter-html-export report.html \
   --reporter-json-export report.json \
   --reporter-junit-export junit-report.xml
 ```
 
-**Colección disponible en:** `TiendaApi.ApiTests/Postman/TiendaApi.NetCore.postman_collection.json`
+**Colección disponible en:** `TiendaApi.Tests.E2E/Postman-Cli/`
 
-**Informes generados:**
+**Informes generados** (carpeta `reports/`, ignorada por git):
 - `report.html` - Informe visual
 - `report.json` - Datos estructurados
 - `junit-report.xml` - Para CI/CD
@@ -294,22 +317,23 @@ newman run TiendaApi.ApiTests/Postman/TiendaApi.NetCore.postman_collection.json 
 #### Bruno (CLI)
 
 ```bash
-# Opción 1: Con Docker (recomendado)
-cd TiendaApi.ApiTests/Bruno
-docker-compose up --build
+# Opción 1: Con Docker (imagen oficial usebruno/cli; informes en reports/)
+cd TiendaApi.Tests.E2E/Bruno-Cli
+docker compose up --build
+start reports/report.html
 
-# Ver informes generados
-open reports/report.html
-
-# Opción 2: Con Bruno CLI local
+# Opción 2: Con Bruno CLI local — corrida única (los tokens NO sobreviven entre tandas)
 npm install -g @usebruno/cli
-bru run TiendaApi.ApiTests/Bruno \
-  --env TiendaApi.ApiTests/Bruno/environments/local.bru \
-  --output reports/report.json \
-  --format json
+cd TiendaApi.Tests.E2E/Bruno-Local
+bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
+  "4 - PEDIDOS (Usuario)" "5 - PEDIDOS (Admin)" "7 - STORAGE" \
+  "10 - GRAPHQL CATEGORÍAS" "11 - GRAPHQL PRODUCTOS" "90 - TEARDOWN" \
+  --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 3200
+# 64 requests / 108 tests. Fuera del run: "6 - USUARIOS" (vacía) y
+# "12 - WEBSOCKETS" (la CLI no soporta WS; la variable basews no existe en el env)
 ```
 
-**Tests disponibles en:** `TiendaApi.ApiTests/Bruno/`
+**Tests disponibles en:** `TiendaApi.Tests.E2E/{Bruno-Cli, Bruno-Local}/`
 
 **Informes generados:**
 - `report.html` - Informe visual
@@ -603,22 +627,27 @@ erDiagram
 ```
 TiendaDawApi-NetCore/
 ├── TiendaApi.slnx                    # Solución global de .NET (formato moderno)
-├── docker-compose.yml                # Orquestación por defecto
-├── docker-compose.local.yml          # Desarrollo local (PostgreSQL, MongoDB)
-├── docker-compose.prod.yml           # Producción (con API containerizada)
-├── .env.example                      # Variables de entorno de ejemplo
+├── docker-compose.local.yml          # Desarrollo local (PostgreSQL, MongoDB, Adminer, Mongo Express)
+├── docker-compose.prod.yml           # Producción (API + PostgreSQL + MongoDB + Redis containerizados)
+├── .env.example                      # Variables de entorno de ejemplo (producción)
+├── .env.prod.example                 # Alternativa para docker-compose.prod.yml
+├── .env.development                  # Variables para desarrollo local
+├── FASES-MEJORAS.md                  # Plan de fases de mejora (0-11) con verificaciones
+├── BITACORA.md                       # Bitácora por fase (commits + checklist "Replicar en CQRS")
 │
 ├── TiendaApi.Api/                    # Proyecto Principal (ASP.NET Core 10)
 │   ├── Program.cs                    # Configuración de Pipeline, DI y Middlewares
-│   ├── Controllers/                  # Controladores REST (Auth, Categorias, Productos, Pedidos, Users)
+│   ├── Controllers/                  # Controladores REST (Auth, Categorias, Productos, Pedidos, Users, Storage)
 │   ├── Services/                     # Lógica de negocio (Auth, Categorias, Productos, Users)
+│   │   ├── Auth/                     # Servicios de autenticación
 │   │   ├── Background/               # Background Jobs y tareas programadas
+│   │   ├── Cache/                    # Servicios de caché (Redis / memoria)
 │   │   ├── Categorias/               # Servicios de categorías
-│   │   ├── Email/                    # Servicio de email (MailKit)
+│   │   ├── Email/                    # Servicio de email (MailKit + pipeline Polly)
 │   │   ├── Pedidos/                  # Servicios de pedidos
 │   │   ├── Productos/                # Servicios de productos
 │   │   ├── Storage/                  # Servicios de almacenamiento
-│   │   └── Usuarios/                 # Servicios de usuarios
+│   │   └── Users/                    # Servicios de usuarios
 │   ├── Repositories/                 # Acceso a datos (Categoria, Producto, User, Pedidos)
 │   ├── Models/                       # Modelos de dominio (User, Producto, Categoria, Pedido)
 │   ├── Dtos/                         # Data Transfer Objects (Request/Response)
@@ -626,13 +655,14 @@ TiendaDawApi-NetCore/
 │   ├── Mappers/                      # Mapeadores (Modelos <-> DTO)
 │   ├── Validators/                   # Validadores FluentValidation
 │   ├── Middleware/                   # Manejo global de excepciones
+│   ├── Extensions/                   # Extensiones de dominio (DomainErrorExtensions, ToHttpResult)
 │   ├── GraphQL/                      # Schema y tipos HotChocolate
 │   ├── Realtime/                     # WebSockets nativo y SignalR Hubs
 │   ├── Helpers/                      # Utilidades y extensiones
 │   ├── Errors/                       # Errores personalizados de dominio
 │   ├── Exceptions/                   # Excepciones personalizadas
-│   ├── Infrastructures/              # Extension Methods (DI, Pipeline, Bases de datos, Cache, SignalR, WebSockets, etc.)
-│   ├── Properties/                   # Configuración de lanzamiento
+│   ├── Infrastructures/              # Extension Methods (DI, Pipeline, Bases de datos, Cache, OutputCache, Polly, SignalR, WebSockets, etc.)
+│   ├── Properties/                   # Configuración de lanzamiento (puertos 5031/7161)
 │   ├── wwwroot/                      # Archivos estáticos (uploads, imágenes)
 │   ├── appsettings.json              # Configuración general
 │   ├── appsettings.Development.json  # Desarrollo (conexiones locales)
@@ -640,31 +670,32 @@ TiendaDawApi-NetCore/
 │   └── Dockerfile                    # Multi-stage build para producción
 │
 ├── TiendaApi.Tests/                  # Pruebas Unitarias y de Integración
-│   ├── Unit/                         # Tests unitarios (Services, Controllers, Repositories)
-│   ├── Integration/                  # Tests de integración con bases de datos reales
+│   ├── Unit/                         # Tests unitarios (Services, Controllers, Repositories, Infrastructures)
+│   ├── Integration/                  # Tests de integración con Testcontainers (PostgreSQL + MongoDB)
 │   └── coverage/                     # Reporte de cobertura de código
 │
-├── TiendaApi.Tests.E2E/              # Tests E2E (Postman + Bruno)
-│   ├── Postman/                      # Colección Postman + Newman
+├── TiendaApi.Tests.E2E/              # Tests E2E (Postman + Bruno + Automation)
+│   ├── Automation/                   # Runner Node sin dependencias (test-runner.mjs, 55 checks)
+│   ├── Postman-Cli/                  # Colección Postman + compose Newman
 │   │   ├── TiendaApi.NetCore.postman_collection.json
 │   │   ├── TiendaApi.NetCore.postman_environment.json
-│   │   ├── test-image.png
 │   │   ├── docker-compose.yml
-│   │   └── reports/
-│   │
-│   ├── Bruno/                        # Tests Bruno CLI
-│   │   ├── 00-Setup/ a 13-Teardown/  # Tests organizados por carpeta
-│   │   ├── environments/local.bru    # Variables de entorno
-│   │   ├── assets/test-image.png
-│   │   ├── docker-compose.yml
-│   │   └── reports/
+│   │   └── reports/                  # Informes generados (gitignored)
+│   ├── Bruno-Local/                  # Colección Bruno para ejecución local (CLI)
+│   │   ├── 0 - SETUP/ … 90 - TEARDOWN/
+│   │   ├── environments/
+│   │   └── assets/test-image.png
+│   └── Bruno-Cli/                    # Misma colección optimizada para Docker (usebruno/cli)
+│       ├── docker-compose.yml
+│       ├── environments/local.bru
+│       └── reports/                  # Informes generados (gitignored)
 │
 ├── TiendaApi.Clients/                # Clientes frontend de ejemplo
 │   ├── signalr-client-js/            # Cliente SignalR en JavaScript
 │   ├── websocket-client-js/          # Cliente WebSocket en JavaScript
 │   └── graphql-client-js/            # Cliente GraphQL en JavaScript
 │
-├── doc/                              # Documentación técnica
+├── doc/                              # Documentación técnica (30 guías)
 └── README.md                         # Este archivo
 ```
 
@@ -672,19 +703,20 @@ TiendaDawApi-NetCore/
 
 | Carpeta               | Propósito                  | Contenido                                                                                     |
 | --------------------- | -------------------------- | --------------------------------------------------------------------------------------------- |
-| **Controllers**       | Entry points HTTP          | AuthController, CategoriasController, ProductosController, PedidosController, UsersController |
-| **Services**          | Lógica de negocio          | AuthService, CategoriaService, ProductoService, UserService                                   |
-| **Background**        | Tareas programadas         | BackgroundJobService, ProductoReportTask para reportes                                        |
-| **Repositories**      | Abstracción de datos       | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                    |
-| **Models**            | Modelos de dominio         | User, Producto, Categoria, Pedido, Direccion, Destinatario                                    |
-| **Dtos**              | Transferencia de datos     | Request/Response para API                                                                     |
-| **Mappers**           | Modelos <-> DTO            | AutoMapper y Funciones de Extensión                                                           |
-| **Validators**        | Validación de entrada      | FluentValidation rules                                                                        |
-| **Middleware**        | Manejo de errores          | GlobalExceptionHandler                                                                        |
-| **GraphQL**           | Queries, Mutations, Subs   | Schema HotChocolate                                                                           |
-| **Realtime**          | Tiempo real (WS + SignalR) | WebSocket Handlers y SignalR Hubs para notificaciones por usuario/rol                         |
-| **Infrastructures**   | Configuración modular      | Extension Methods para DI, Pipeline, SignalR, WebSockets, Middlewares                         |
-| **TiendaApi.Clients** | Clientes frontend          | signalr-client-js, websocket-client-js, graphql-client-js                                     |
+| **Controllers**       | Entry points HTTP          | AuthController, CategoriasController, ProductosController, PedidosController, UsersController, StorageController |
+| **Services**          | Lógica de negocio          | AuthService, CategoriaService, ProductoService, PedidosService, UserService, MailKitEmailService               |
+| **Background**        | Tareas programadas         | BackgroundJobService, EmailBackgroundService, ProductoReportTask para reportes                                |
+| **Repositories**      | Abstracción de datos       | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                                    |
+| **Models**            | Modelos de dominio         | User, Producto, Categoria, Pedido, Direccion, Destinatario                                                    |
+| **Dtos**              | Transferencia de datos     | Request/Response para API                                                                                     |
+| **Mappers**           | Modelos <-> DTO            | AutoMapper y Funciones de Extensión                                                                           |
+| **Validators**        | Validación de entrada      | FluentValidation rules                                                                                        |
+| **Extensions**        | Patrón Result → HTTP       | `DomainErrorExtensions.ToHttpResult()` (31 call sites en 5 controladores)                                     |
+| **Middleware**        | Manejo de errores          | GlobalExceptionHandler                                                                                        |
+| **GraphQL**           | Queries, Mutations, Subs   | Schema HotChocolate                                                                                           |
+| **Realtime**          | Tiempo real (WS + SignalR) | WebSocket Handlers y SignalR Hubs para notificaciones por usuario/rol                                         |
+| **Infrastructures**   | Configuración modular      | Extension Methods para DI, Pipeline, OutputCache, Polly, SignalR, WebSockets, Middlewares                      |
+| **TiendaApi.Clients** | Clientes frontend          | signalr-client-js, websocket-client-js, graphql-client-js                                                     |
 
 ## 🏗️ Arquitectura Híbrida Onion-Like
 
@@ -1196,7 +1228,7 @@ query ObtenerProductoConCategoria($id: Long!) {
       "descripcion": "Portátil de alta gama con procesador Intel Core i7",
       "precio": 1299.99,
       "stock": 10,
-      "imagen": "https://localhost:5000/storage/productos/laptop-dell-xps-15.jpg",
+      "imagen": "http://localhost:5031/storage/productos/laptop-dell-xps-15.jpg",
       "categoria": {
         "nombre": "Electrónica"
       }
@@ -1336,7 +1368,7 @@ subscription {
 
 **Conexión Subscripción:**
 ```
-WS ws://localhost:5000/graphql
+WS ws://localhost:5031/graphql
 
 # Enviar:
 {"type": "subscribe", "payload": {"query": "subscription { onProductoCreado { productoId nombre } }"}}
