@@ -217,9 +217,9 @@ public class CategoriaServiceTests
     public async Task UpdateAsync_ConDatosValidos_RetornaCategoriaActualizada()
     {
         // Arrange
-        var dto = new CategoriaRequestDto { Nombre = "Updated Category" };
-        var categoriaExistente = new Categoria { Id = 1, Nombre = "Old Category" };
-        var categoriaActualizada = new Categoria { Id = 1, Nombre = dto.Nombre };
+        var dto = new CategoriaRequestDto { Nombre = "Updated Category", Descripcion = "Updated Description" };
+        var categoriaExistente = new Categoria { Id = 1, Nombre = "Old Category", Descripcion = "Old Description" };
+        var categoriaActualizada = new Categoria { Id = 1, Nombre = dto.Nombre, Descripcion = dto.Descripcion };
 
         _mockRepository.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(categoriaExistente);
@@ -234,6 +234,8 @@ public class CategoriaServiceTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Nombre.Should().Be("Updated Category");
+        result.Value.Descripcion.Should().Be("Updated Description");
+        categoriaExistente.Descripcion.Should().Be("Updated Description");
     }
 
     [Test]

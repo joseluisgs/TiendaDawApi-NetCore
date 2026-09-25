@@ -131,6 +131,7 @@ public class CategoriaService(
             return Result.Failure<CategoriaDto, DomainError>(duplicateCheck.Error);
 
         categoria.Nombre = dto.Nombre;
+        categoria.Descripcion = dto.Descripcion;
         var updated = await repository.UpdateAsync(categoria);
         var result = updated.ToDto();
 
