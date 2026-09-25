@@ -151,7 +151,7 @@
 
 ---
 
-## Fase 5 — Verificación global
+## Fase 5 — Verificación global ✅ COMPLETADA (25/09/2026)
 
 | # | Tarea |
 |---|-------|
@@ -161,6 +161,34 @@
 | 5.4 | E2E Bruno/Newman: auth, productos C/R/U/D, pedidos paged, categorías |
 | 5.5 | Smoke: `/health`, `/swagger`, GraphQL, 2º GET → 304, logs Task.Run limpios |
 | 5.6 | **Automation Node** (Fase 7) en verde |
+
+### ✅ Verificación Fase 5 (25/09/2026)
+
+| # | Resultado |
+|---|-----------|
+| 5.1 | `dotnet build TiendaApi.slnx -c Debug` → **0 errores / 0 warnings** (`TreatWarningsAsErrors`) |
+| 5.2 | Unit: **1034/1034** en verde (0 con error, 0 omitidos) · cobertura Api: 62.09% líneas / 59.85% ramas / 78.16% métodos |
+| 5.3 | Integration (Testcontainers, Docker): **161 OK · 0 errores · 32 omitidos** (EF-272 conocido) · 193 totales · 1 m 11 s |
+| 5.4 | **E2E con Newman** (colección Postman) → **95 assertions, 0 fallos, 77 requests** en **4 tandas exit 0**. Ejecutado en tandas con **61 s de espera** entre ellas para respetar el rate limit (`POST:*` 20/min · auth 10/min; la colección hace 29 POST). Newman (temp, sin instalación global) con `--delay-request 200`. **Bruno/bruno-cli no está instalado** → se ejecuta la vía Newman (misma colección Postman); la colección `.bru` queda para uso manual/IDE. |
+| 5.5 | Smoke en vivo: `GET /health` → **200** `{"status":"OK", checks[...]}` · Swagger en `/` → **200** (HTML) + `/swagger/v1/swagger.json` → 200 · `POST /graphql` → **200** con `data.productos` · **ETag → 304**: 1er GET `ETag: "1cce9ade…"` + `If-None-Match` → **304** · **logs limpios**: 330 líneas, **0 excepciones / 0 ERR/FTL**, stderr vacío (fire & forget sin ruido) |
+| 5.6 | Automation Node (Fase 7) → **55/55** verde |
+
+### Arreglos aplicados a la colección `Postman-Cli` durante la verificación
+
+La colección estaba **desactualizada/rota** respecto a la API actual; sin estos arreglos no podía ejecutarse (6 iteraciones de depuración):
+
+| # | Problema | Arreglo |
+|---|----------|---------|
+| A | **JSON inválido** (3 items de categorías sin cerrar su objeto `request`) → `newman` ni siquiera parseaba | Cerrado el balance de llaves de los 3 items |
+| B | **Variables de colección pisadas**: newman prioriza `environment` sobre `collectionVariables` → tokens/ids llegaban vacíos (401 en cadena) | `pm.collectionVariables.*` → `pm.environment.*` (20 sitios), un solo scope de variables |
+| C | **Auth raíz heredada**: la colección declara `auth: Bearer {{adminToken}}` a nivel raíz → los tests "sin auth" recibían el token real y devolvían 201/200 | `"auth": {"type":"noauth"}` en `[016]`, `[043]`, `[058]`, `[067]` |
+| D | **GraphQL obsoleto** (HotChocolate 16): `Int!` → `Long!` (`categoria`/`producto`), `crearProducto`→`createProducto`, `actualizarProducto`→`updateProducto`, `eliminarProducto`→`deleteProducto`, `ProductoInput`→`Create/UpdateProductoInput` | 8 queries/mutations reescritas al esquema actual (introspección `__schema`) |
+| E | **Orden de ejecución**: `[035]` leía `pedidoId` antes de crearlo; la carpeta admin reutilizaba el pedido borrado por el usuario; `[053]` leía `testUserId` antes de `[055]`; `[051]` borraba `userdaw` antes de `[059]` | Reordenados: `[035]` tras `[036]`, `[051]` al final de la carpeta 6, **nuevo `[043b]`** (admin crea su propio pedido al entrar en la carpeta 5) |
+| F | **Códigos esperados incorrectos**: ids inexistentes de pedido devuelven **404** (no 403) y `categoriaId` inexistente en producto devuelve **400** (validación), no 404 | Ajustados los asserts de `[039]`, `[041]`, `[028]` al comportamiento real de la API (verificado con curl) |
+| G | `pm.response.status` es **string** en newman (rompía `[060]`) | `pm.response.code` |
+| H | `--delay` no existe en newman 7 | `--delay-request` |
+
+*Re-ejecución final (BD reiniciada con semilla): **4/4 tandas exit 0**, 0 fallos.*
 
 ---
 
