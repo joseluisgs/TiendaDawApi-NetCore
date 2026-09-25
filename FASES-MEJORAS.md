@@ -181,7 +181,7 @@
 
 ---
 
-## Fase 7 — Automation E2E en Node (todos los controladores)
+## Fase 7 — Automation E2E en Node (todos los controladores) ✅ COMPLETADA (25/09/2026)
 
 > Estilo UD02 `ejemplos/*/automation/test-runner.mjs` (Node nativo, sin npm install).  
 > **Directorio:** `TiendaApi.Tests.E2E/Automation/`
@@ -217,6 +217,17 @@
 - **No** usa `docker compose down -v` al final: solo `stop` de servicios BD para no romper el entorno de desarrollo.
 - Fallback: si `dotnet run` no responde, intenta `docker compose up -d --build`.
 - Compatible con Fase 1: espera `/health` primero; si aún no existe, acepta `/swagger` o `/api/productos`.
+
+### ✅ Verificación Fase 7 (25/09/2026)
+
+| # | Resultado |
+|---|-----------|
+| 7.1-7.2 | `TiendaApi.Tests.E2E/Automation/test-runner.mjs` creado (**~660 líneas**, Node nativo, sin npm): helpers (`run`/`spawnApi`/`waitForApi`/`req`/`st`/asserts) + suite de **55 tests** sobre **los 11 bloques de la tabla de cobertura** (Health · Auth · Categorías · Productos · Pedidos user · Pedidos admin · Users admin · Users perfil · Storage · GraphQL · Limpieza) |
+| 7.3 | Helper `st()` marca **FAIL explícito en 429**; la suite se diseñó con **18 POSTs** (< límite 20/min) y las URLs con `page` respetan los límites |
+| 7.4 | Usa seed `admin/admin` · `userdaw/userdaw`; crea/borra usuarios con nombres únicos (`auto_<timestamp>`) para no chocar con el seed ni entre ejecuciones |
+| 7.5 | `node TiendaApi.Tests.E2E/Automation/test-runner.mjs` desde la raíz: detecta infra corriendo (**no la toca**), `restore → build → dotnet run --no-launch-profile` (`ASPNETCORE_ENVIRONMENT=Development`, `ASPNETCORE_URLS=http://localhost:5031`) → espera `/health` → suite → **kill API** + `stop` solo de los servicios de BD que **él** levantó (nunca `down -v`) |
+| 7.6 | CI pendiente (opcional, fuera del alcance de esta fase) |
+| Resultado | **Total: 55 · OK: 55 · KO: 0** en vivo (2 aserciones relajadas en la 1ª pasada: `producto.id` puede venir como string en GraphQL y el mensaje de auth es *"not authorized"*). Build **0/0** · **1034 unit** verdes |
 
 ---
 
