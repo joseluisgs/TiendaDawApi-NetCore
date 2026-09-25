@@ -353,17 +353,22 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
   - **E2E con Newman** sobre `TiendaApi.Tests.E2E/Postman-Cli` → **95 assertions, 0 fallos**, en **4 tandas** (exit 0 cada una) separadas por **61 s** para respetar `POST:*` 20/min y auth 10/min (la colección hace 29 POST). Newman corrió de temp (`npm i newman --prefix …`, sin instalación global) vía `node …\newman\bin\newman.js`, con `--delay-request 200` y `--export-environment` entre tandas (los tokens/ids viajan en el environment).
   - Smoke: `/health` 200 · Swagger en `/` (200) + `/swagger/v1/swagger.json` 200 · GraphQL 200 · **ETag 2º GET → 304** · logs: **0 excepciones / 0 ERR**, stderr vacío.
   - Automation de la Fase 7 → 55/55.
-- **Sin cambios de código C#**: la fase es solo verificación (el único cambio de repo es la colección Postman reparada).
+- **E2E con Bruno** (ampliación, commits `1780ef6` + `8d1d5d9`): `@usebruno/cli` **4.2.0** instalado en temp (`npm i --prefix …`, sin global), ejecución sobre `Bruno-Local` → **64/64 requests · 108/108 tests · 0 fallos** en **corrida única** con `--delay 3200` (≤20 POST por ventana de 60 s). Ojo: **no se puede ejecutar por tandas** — `bru.setVar` no sobrevive entre invocaciones de `bru run`, así que al partir la colección los tokens se pierden y todo cae en 401/405. Fuera del run: `6 - USUARIOS` (carpeta **vacía**) y `12 - WEBSOCKETS` (sin soporte WS en la CLI).
+- **BUG HALLADO Y CORREGIDO (`1780ef6`):** el test Bruno `[019] PUT - Actualizar (Admin)` demostró que `CategoriaService.UpdateAsync` **ignoraba `dto.Descripcion`** (solo copiaba `Nombre`) → `200 OK` con la descripción vieja. Fix: `categoria.Descripcion = dto.Descripcion;` + test unit que ahora cubre ambos campos. Verificado: build 0/0, unit 1034, integración 161/0/32.
+- **Colecciones Bruno arregladas** (`8d1d5d9`, Local + Cli, detalle en `FASES-MEJORAS.md` → "Arreglos aplicados a las colecciones Bruno"): environment `5000`→`5031`/`user`→`userdaw`/passwords, `graphqlProductoId` declarada (sin ella `[070]`/`[071]` no parseaban), 10 tests con shape/código antiguo (`errors` RFC 9457, `totalCount`, `imagen`, `destinatario`/`items`, id string, substring `authoriz`, `data null`), mismos códigos que Postman (`[028]`→400, `[039]`/`[041]`→404), orden de la carpeta 4 (`[035]` tras `[036]`).
 - **Colección Postman arreglada** (8 puntos, detalle en `FASES-MEJORAS.md` → "Arreglos aplicados a la colección"): JSON inválido (3 items), variables de colección pisadas por el environment (unificar en `pm.environment.*`), **auth raíz heredada** (`Bearer {{adminToken}}` → `noauth` en los tests "sin auth"), GraphQL al esquema actual (**HotChocolate 16**: `Long!`, `create/update/deleteProducto`, `Create/UpdateProductoInput`), orden de carpetas (crear antes de consultar; `[043b]` admin crea su pedido; `[051]` borrar cuenta al final), códigos reales (pedido inexistente **404**, `categoriaId` inválida **400**), `pm.response.code`, `--delay-request`.
 - **Bruno:** no hay CLI instalado (`bruno`/`newman` no estaban en el equipo) → la vía ejecutable es **Newman** con la colección Postman; las colecciones `.bru` (Bruno-Local/Bruno-Cli) quedan para uso manual/IDE.
 
+- **Bruno (ejecutable):** CLI `@usebruno/cli` 4.2.0 en temp + colecciones `.bru` ya alineadas (ver arriba). Newman sigue siendo la vía para la colección Postman.
+
 ### Replicar en CQRS
 
-1. Ejecutar **las mismas 6 comprobaciones** contra la API CQRS (build, unit, integración, Newman, smoke, automation) — son la **condición de "sigue en verde"** tras replicar cada fase.
-2. **Copiar la colección `Postman-Cli` ya arreglada** (está alineada con la API actual: rutas, GraphQL, códigos) y revisar solo lo que cambie en CQRS (si MediatR altera algún código de error o el esquema GraphQL).
+1. Ejecutar **las mismas comprobaciones** contra la API CQRS (build, unit, integración, **Newman**, **Bruno**, smoke, automation) — son la **condición de "sigue en verde"** tras replicar cada fase.
+2. **Copiar las colecciones ya arregladas** (`Postman-Cli`, `Bruno-Local`, `Bruno-Cli`): están alineadas con la API actual (rutas, GraphQL, códigos, shapes) y revisar solo lo que cambie en CQRS (si MediatR altera algún código de error o el esquema GraphQL).
 3. El runner de la **Fase 7** (`test-runner.mjs`) es el equivalente rápido sin dependencias: mantener ambos.
-4. Rate limit: misma estrategia (tandas + espera 61 s) mientras `RateLimitConfig.cs` tenga `POST:*` 20/min; si en CQRS cambian las reglas, recalcular las tandas (29 POST en total).
-5. Documentar en esta bitácora los resultados de CQRS con el mismo formato de tabla.
+4. Rate limit: Newman → tandas + espera 61 s; **Bruno → corrida única con `--delay 3200`** (nunca por tandas: se pierden los `bru.setVar`). Mientras `RateLimitConfig.cs` tenga `POST:*` 20/min, recalcular si cambian las reglas (Postman: 29 POST · Bruno: 64 requests).
+5. Reproducir en CQRS el **fix de `CategoriaService`** (`Descripcion` en el PUT) o comprobar que CQRS lo hereda desde el inicio.
+6. Documentar en esta bitácora los resultados de CQRS con el mismo formato de tabla.
 
 ---
 

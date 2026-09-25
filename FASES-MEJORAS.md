@@ -169,7 +169,7 @@
 | 5.1 | `dotnet build TiendaApi.slnx -c Debug` → **0 errores / 0 warnings** (`TreatWarningsAsErrors`) |
 | 5.2 | Unit: **1034/1034** en verde (0 con error, 0 omitidos) · cobertura Api: 62.09% líneas / 59.85% ramas / 78.16% métodos |
 | 5.3 | Integration (Testcontainers, Docker): **161 OK · 0 errores · 32 omitidos** (EF-272 conocido) · 193 totales · 1 m 11 s |
-| 5.4 | **E2E con Newman** (colección Postman) → **95 assertions, 0 fallos, 77 requests** en **4 tandas exit 0**. Ejecutado en tandas con **61 s de espera** entre ellas para respetar el rate limit (`POST:*` 20/min · auth 10/min; la colección hace 29 POST). Newman (temp, sin instalación global) con `--delay-request 200`. **Bruno/bruno-cli no está instalado** → se ejecuta la vía Newman (misma colección Postman); la colección `.bru` queda para uso manual/IDE. |
+| 5.4 | **E2E con Newman** (colección Postman) → **95 assertions, 0 fallos, 77 requests** en **4 tandas exit 0** (esperas de 61 s por rate limit `POST:*` 20/min · auth 10/min; 29 POST en la colección; `--delay-request 200`) · **E2E con Bruno** (`@usebruno/cli` 4.2.0 instalado en temp, colección `Bruno-Local`) → **64/64 requests · 108/108 tests · 0 fallos** en **corrida única** con `--delay 3200` (los `bru.setVar` no sobreviven entre invocaciones, así que no se puede ejecutar por tandas: perdería los tokens y saltaría 401/405 en cadena) |
 | 5.5 | Smoke en vivo: `GET /health` → **200** `{"status":"OK", checks[...]}` · Swagger en `/` → **200** (HTML) + `/swagger/v1/swagger.json` → 200 · `POST /graphql` → **200** con `data.productos` · **ETag → 304**: 1er GET `ETag: "1cce9ade…"` + `If-None-Match` → **304** · **logs limpios**: 330 líneas, **0 excepciones / 0 ERR/FTL**, stderr vacío (fire & forget sin ruido) |
 | 5.6 | Automation Node (Fase 7) → **55/55** verde |
 
@@ -189,6 +189,23 @@ La colección estaba **desactualizada/rota** respecto a la API actual; sin estos
 | H | `--delay` no existe en newman 7 | `--delay-request` |
 
 *Re-ejecución final (BD reiniciada con semilla): **4/4 tandas exit 0**, 0 fallos.*
+
+### Arreglos aplicados a las colecciones Bruno (`Bruno-Local` + `Bruno-Cli`)
+
+Ejecución: `bru run <carpetas> --env-file environments/… --delay 3200 -o results.json --format json` (CLI en temp; sin instalar globalmente). Carpetas fuera del run: `6 - USUARIOS` (**vacía**, sin requests) y `12 - WEBSOCKETS` (bru CLI no soporta WS).
+
+| # | Problema | Arreglo |
+|---|----------|---------|
+| I | **Environment desactualizado**: `baseUrl:5000` (pisa la `5031` de `collection.bru`), `userUsername:user` (real: `userdaw`), passwords vacíos | Corregido en `Bruno-Local/environments/*.json`; `Bruno-Cli/local.bru` (Docker, `host.docker.internal`) se conserva y se pasa por `--env-var` si se ejecuta desde el host |
+| J | **`graphqlProductoId` sin declarar** en `vars:pre-request` → quedaba `{{…}}` literal y `body:graphql:vars` de `[070]`/`[071]` no parseaba (`Expected property name…`) | Declarada con valor inicial `1` en `collection.bru` (ambas colecciones) |
+| K | **Tests con shape/código antiguo**: `[003]` esperaba `message` (real: `errors` RFC 9457), `[011]`/`[034]` `totalItems` (real: **`totalCount`**), `[031]` `imagenUrl` (real: **`imagen`**), `[044]` `cliente`/`lineasPedido` (real: **`destinatario`**/**`items`**), `[063]`/`[065]`/`[066]` id `number` (real: **string**), `[067]`/`[068]` mensajes `Unauthorized`/`forbidden` (real: *"The current user is not authorized…"* → substring `authoriz`), `[069]` esperaba array `errors` (real: `data.createProducto: null` sin `errors`) | 10 tests ajustados al comportamiento verificado en vivo |
+| L | **Códigos reales** (idéntico a Postman): `[028]` 404→**400**, `[039]`/`[041]` 403→**404** | Asserts corregidos |
+| M | **Orden**: `[035]` (lee `pedidoId`) se ejecutaba antes de `[036]` (lo crea) | `seq` reordenados en la carpeta 4 |
+| N | **Ejecución por tandas rompe los tokens** (`bru.setVar` vive solo en la sesión del proceso) | Corrida única de las 10 carpetas con `--delay 3200` (≤20 POST por ventana de 60 s) |
+
+### 🐛 Hallazgo en la API (corregido en esta fase)
+
+El test **`[019] PUT - Actualizar (Admin)`** de Bruno descubrió un bug real: `CategoriaService.UpdateAsync` solo copiaba `Nombre` y **ignoraba `dto.Descripcion`** → `200 OK` con la descripción antigua. Corregido (`categoria.Descripcion = dto.Descripcion;`) + test unit ampliado; verificado con build 0/0, unit 1034 y integration 161/0/32. Commits `1780ef6` (fix) y `8d1d5d9` (colecciones Bruno).
 
 ---
 
