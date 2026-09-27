@@ -13,6 +13,9 @@ namespace TiendaApi.Api.Mappers;
 /// </summary>
 public class MappingProfile : Profile
 {
+    /// <summary>
+    /// Registra los mapeos entre entidades y DTOs de la API.
+    /// </summary>
     public MappingProfile()
     {
         // Mapeos de categoría

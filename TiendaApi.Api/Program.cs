@@ -146,11 +146,11 @@ finally
 }
 
 
-/// <summary>
-/// Imprime en los logs la información de inicio de la aplicación.
-/// </summary>
-/// <param name="isDevelopment">Indica si el entorno es de desarrollo.</param>
-/// <param name="configuration">La configuración de la aplicación.</param>
+// <summary>
+// Imprime en los logs la información de inicio de la aplicación.
+// </summary>
+// <param name="isDevelopment">Indica si el entorno es de desarrollo.</param>
+// <param name="configuration">La configuración de la aplicación.</param>
 static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
 {
     var urls = configuration["ASPNETCORE_URLS"]?.Split(';') ?? new[] { "http://localhost:5000" };

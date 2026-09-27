@@ -41,102 +41,102 @@ namespace TiendaApi.Api.Dtos.Productos;
 /// </code>
 /// </example>
 public record ProductoDto(
-    /// <summary>
-    /// Identificador único del producto en el sistema.
-    /// Clave primaria generada automáticamente por la base de datos.
-    /// Valor único e incremental que identifica inequívocamente al producto.
-    /// </summary>
-    /// <example>101</example>
+    // <summary>
+    // Identificador único del producto en el sistema.
+    // Clave primaria generada automáticamente por la base de datos.
+    // Valor único e incremental que identifica inequívocamente al producto.
+    // </summary>
+    // <example>101</example>
     long Id,
 
-    /// <summary>
-    /// Nombre comercial del producto.
-    /// Texto visible que identifica el producto en catálogos y búsquedas.
-    /// Optimizado para SEO y reconocimiento del usuario.
-    /// </summary>
-    /// <example>iPhone 15 Pro Max</example>
+    // <summary>
+    // Nombre comercial del producto.
+    // Texto visible que identifica el producto en catálogos y búsquedas.
+    // Optimizado para SEO y reconocimiento del usuario.
+    // </summary>
+    // <example>iPhone 15 Pro Max</example>
     string Nombre,
 
-    /// <summary>
-    /// Descripción detallada del producto.
-    /// Proporciona información adicional sobre características,
-    /// especificaciones técnicas, materiales, dimensiones y más.
-    /// </summary>
-    /// <example>Pantalla Super Retina XDR de 6.7 pulgadas con tecnología ProMotion.</example>
+    // <summary>
+    // Descripción detallada del producto.
+    // Proporciona información adicional sobre características,
+    // especificaciones técnicas, materiales, dimensiones y más.
+    // </summary>
+    // <example>Pantalla Super Retina XDR de 6.7 pulgadas con tecnología ProMotion.</example>
     string Descripcion,
 
-    /// <summary>
-    /// Precio unitario del producto en la moneda base del sistema.
-    /// Valor decimal con precisión monetaria (2 decimales típicamente).
-    /// Puede incluir descuentos aplicados según promociones activas.
-    /// </summary>
-    /// <remarks>
-    /// Consideraciones:
-    /// - El precio se muestra con formato monetario en la interfaz
-    /// - Puede haber precios diferentes por variante de producto
-    /// - Los impuestos se calculan aparte en el checkout
-    /// </remarks>
-    /// <example>1199.99</example>
+    // <summary>
+    // Precio unitario del producto en la moneda base del sistema.
+    // Valor decimal con precisión monetaria (2 decimales típicamente).
+    // Puede incluir descuentos aplicados según promociones activas.
+    // </summary>
+    // <remarks>
+    // Consideraciones:
+    // - El precio se muestra con formato monetario en la interfaz
+    // - Puede haber precios diferentes por variante de producto
+    // - Los impuestos se calculan aparte en el checkout
+    // </remarks>
+    // <example>1199.99</example>
     decimal Precio,
 
-    /// <summary>
-    /// Cantidad de unidades disponibles en inventario.
-    /// Controla la disponibilidad del producto para venta.
-    /// Valor cero indica producto agotado temporalmente.
-    /// </summary>
-    /// <remarks>
-    /// Comportamiento:
-    /// - Productos con stock = 0 pueden mostrarse como "Agotado"
-    /// - Se recomienda hide o deshabilitar botón de compra cuando stock = 0
-    /// - Stock negativo no debería ocurrir en operación normal
-    /// </remarks>
-    /// <example>50</example>
+    // <summary>
+    // Cantidad de unidades disponibles en inventario.
+    // Controla la disponibilidad del producto para venta.
+    // Valor cero indica producto agotado temporalmente.
+    // </summary>
+    // <remarks>
+    // Comportamiento:
+    // - Productos con stock = 0 pueden mostrarse como "Agotado"
+    // - Se recomienda hide o deshabilitar botón de compra cuando stock = 0
+    // - Stock negativo no debería ocurrir en operación normal
+    // </remarks>
+    // <example>50</example>
     int Stock,
 
-    /// <summary>
-    /// URL de la imagen representativa del producto.
-    /// Enlace a recursos multimedia almacenados en el servidor o CDN.
-    /// Valor nulo cuando no hay imagen configurada.
-    /// </summary>
-    /// <remarks>
-    /// Formatos recomendados:
-    /// - JPG, PNG, WebP para fotos de producto
-    /// - SVG para logotipos e iconos
-    /// - Tamaño máximo: 2MB por imagen
-    /// </remarks>
-    /// <example>https://ejemplo.com/imagenes/iphone15-pro-max.jpg</example>
+    // <summary>
+    // URL de la imagen representativa del producto.
+    // Enlace a recursos multimedia almacenados en el servidor o CDN.
+    // Valor nulo cuando no hay imagen configurada.
+    // </summary>
+    // <remarks>
+    // Formatos recomendados:
+    // - JPG, PNG, WebP para fotos de producto
+    // - SVG para logotipos e iconos
+    // - Tamaño máximo: 2MB por imagen
+    // </remarks>
+    // <example>https://ejemplo.com/imagenes/iphone15-pro-max.jpg</example>
     string? Imagen,
 
-    /// <summary>
-    /// Identificador de la categoría a la que pertenece el producto.
-    /// Clave foránea que relaciona el producto con su categoría.
-    /// Útil para filtrados y organización jerárquica.
-    /// </summary>
-    /// <example>1</example>
+    // <summary>
+    // Identificador de la categoría a la que pertenece el producto.
+    // Clave foránea que relaciona el producto con su categoría.
+    // Útil para filtrados y organización jerárquica.
+    // </summary>
+    // <example>1</example>
     long CategoriaId,
 
-    /// <summary>
-    /// Nombre de la categoría del producto (desnormalizado).
-    /// Repetido aquí para evitar consulta adicional a la tabla de categorías.
-    /// Mejora el rendimiento en listados y reduce llamadas al servidor.
-    /// </summary>
-    /// <example>Electrónica</example>
+    // <summary>
+    // Nombre de la categoría del producto (desnormalizado).
+    // Repetido aquí para evitar consulta adicional a la tabla de categorías.
+    // Mejora el rendimiento en listados y reduce llamadas al servidor.
+    // </summary>
+    // <example>Electrónica</example>
     string CategoriaNombre,
 
-    /// <summary>
-    /// Fecha y hora de creación del registro en formato UTC.
-    /// Establecida automáticamente por el sistema al insertar el producto.
-    /// Utilizado para auditoría, ordenamiento y cálculo de antiguedad.
-    /// </summary>
-    /// <example>2024-01-10T08:00:00Z</example>
+    // <summary>
+    // Fecha y hora de creación del registro en formato UTC.
+    // Establecida automáticamente por el sistema al insertar el producto.
+    // Utilizado para auditoría, ordenamiento y cálculo de antiguedad.
+    // </summary>
+    // <example>2024-01-10T08:00:00Z</example>
     DateTime CreatedAt,
 
-    /// <summary>
-    /// Fecha y hora de última modificación en formato UTC.
-    /// Actualizada automáticamente cada vez que se guarda el producto.
-    /// Permite detectar cambios recientes y sincronización de cachés.
-    /// </summary>
-    /// <example>2024-01-15T12:30:00Z</example>
+    // <summary>
+    // Fecha y hora de última modificación en formato UTC.
+    // Actualizada automáticamente cada vez que se guarda el producto.
+    // Permite detectar cambios recientes y sincronización de cachés.
+    // </summary>
+    // <example>2024-01-15T12:30:00Z</example>
     DateTime UpdatedAt
 );
 
@@ -259,6 +259,7 @@ public record ProductoRequestDto
 /// DTO para actualización parcial de producto (método PATCH).
 /// Objeto especializado para operaciones de actualización incremental.
 /// Permite modificar campos específicos sin enviar todos los datos del producto.
+/// </summary>
 ///
 /// <remarks>
 /// Características distintivas:

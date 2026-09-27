@@ -10,6 +10,9 @@ namespace TiendaApi.Api.Mappers;
 /// </summary>
 public class PedidoProfile : Profile
 {
+    /// <summary>
+    /// Registra los mapeos de la entidad Pedido y sus ítems con sus DTOs.
+    /// </summary>
     public PedidoProfile()
     {
         // Mapeos de entidad Pedido a DTO

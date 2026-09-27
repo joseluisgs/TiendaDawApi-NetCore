@@ -13,6 +13,11 @@ public class MemoryCacheService : ICacheService
     private readonly IMemoryCache _cache;
     private readonly ILogger<MemoryCacheService> _logger;
 
+    /// <summary>
+    /// Crea una instancia del servicio de caché en memoria.
+    /// </summary>
+    /// <param name="cache">Caché en memoria.</param>
+    /// <param name="logger">Logger de la instancia.</param>
     public MemoryCacheService(IMemoryCache cache, ILogger<MemoryCacheService> logger)
     {
         _cache = cache;

@@ -18,6 +18,10 @@ public class GlobalExceptionHandler(
     private readonly RequestDelegate _next = next;
     private readonly ILogger<GlobalExceptionHandler> _logger = logger;
 
+    /// <summary>
+    /// Ejecuta la petición y, si se produce una excepción, devuelve una respuesta HTTP de error JSON.
+    /// </summary>
+    /// <param name="context">Contexto HTTP de la petición en curso.</param>
     public async Task InvokeAsync(HttpContext context)
     {
         try

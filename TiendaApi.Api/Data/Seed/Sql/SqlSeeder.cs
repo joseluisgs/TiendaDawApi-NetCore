@@ -12,6 +12,11 @@ public class SqlSeeder
     private readonly TiendaDbContext _context;
     private readonly ILogger<SqlSeeder> _logger;
 
+    /// <summary>
+    /// Crea una instancia del seeder de PostgreSQL.
+    /// </summary>
+    /// <param name="context">Contexto de base de datos.</param>
+    /// <param name="logger">Logger de la instancia.</param>
     public SqlSeeder(TiendaDbContext context, ILogger<SqlSeeder> logger)
     {
         _context = context;

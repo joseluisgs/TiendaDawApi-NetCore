@@ -8,6 +8,10 @@ namespace TiendaApi.Api.GraphQL.Types;
 /// </summary>
 public class ProductoType : ObjectType<Producto>
 {
+    /// <summary>
+    /// Configura los campos y descripciones del tipo GraphQL de Producto.
+    /// </summary>
+    /// <param name="descriptor">Descriptor del tipo de objeto.</param>
     protected override void Configure(IObjectTypeDescriptor<Producto> descriptor)
     {
         descriptor.Name("Producto");

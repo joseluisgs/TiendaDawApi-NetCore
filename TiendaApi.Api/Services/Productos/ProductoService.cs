@@ -365,7 +365,7 @@ IOutputCacheStore outputCacheStore
     #region Métodos Privados - Cache
 
     /// <summary>
-    /// Añade un elemento a la caché de forma asíncrona (fire & forget).
+    /// Añade un elemento a la caché de forma asíncrona (fire &amp; forget).
     /// </summary>
     private void AñadirCacheProducto<T>(string key, T value)
     {
@@ -383,7 +383,7 @@ IOutputCacheStore outputCacheStore
     }
 
     /// <summary>
-    /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
+    /// Invalida las claves de caché especificadas de forma asíncrona (fire &amp; forget).
     /// También invalida la tag de OutputCache "productos" (en memoria: síncrono,
     /// para que el siguiente GET no sirva datos obsoletos).
     /// </summary>

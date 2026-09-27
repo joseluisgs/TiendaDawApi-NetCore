@@ -12,6 +12,10 @@ public class JwtTokenExtractor : IJwtTokenExtractor
 {
     private readonly ILogger<JwtTokenExtractor> _logger;
 
+    /// <summary>
+    /// Crea una instancia del extractor de tokens JWT.
+    /// </summary>
+    /// <param name="logger">Logger de la instancia.</param>
     public JwtTokenExtractor(ILogger<JwtTokenExtractor> logger)
     {
         _logger = logger;

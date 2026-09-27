@@ -44,6 +44,13 @@ public class PedidosWebSocketHandler
     private readonly ICacheService _cacheService;
     private readonly TimeSpan _roleCacheTTL;
 
+    /// <summary>
+    /// Crea una instancia del handler de WebSocket de pedidos.
+    /// </summary>
+    /// <param name="logger">Logger de la instancia.</param>
+    /// <param name="tokenExtractor">Extractor de datos del token JWT.</param>
+    /// <param name="cacheService">Servicio de caché para roles.</param>
+    /// <param name="configuration">Configuración de la aplicación.</param>
     public PedidosWebSocketHandler(
         ILogger<PedidosWebSocketHandler> logger,
         IJwtTokenExtractor tokenExtractor,

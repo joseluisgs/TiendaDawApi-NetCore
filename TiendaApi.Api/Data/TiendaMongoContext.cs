@@ -21,6 +21,10 @@ public class TiendaMongoContext : DbContext
     /// <summary>DbSet de Pedidos.</summary>
     public DbSet<Pedido> Pedidos { get; set; } = null!;
 
+    /// <summary>
+    /// Define el modelo de la colección de Pedidos de MongoDB.
+    /// </summary>
+    /// <param name="modelBuilder">Constructor del modelo.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

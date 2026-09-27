@@ -28,12 +28,20 @@ public class TiendaDbContext : DbContext
     /// <summary>DbSet de Usuarios.</summary>
     public DbSet<User> Users { get; set; } = null!;
 
+    /// <summary>
+    /// Configura el contexto (interceptores de marcas de tiempo).
+    /// </summary>
+    /// <param name="optionsBuilder">Constructor de opciones del contexto.</param>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
         optionsBuilder.AddInterceptors(_timestampInterceptor);
     }
 
+    /// <summary>
+    /// Define el modelo del esquema: entidades, relaciones, índices y filtros globales.
+    /// </summary>
+    /// <param name="modelBuilder">Constructor del modelo.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
