@@ -1,10 +1,12 @@
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 using System.Diagnostics;
 using System.Threading.Channels;
@@ -16,6 +18,7 @@ using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Pedidos;
@@ -164,6 +167,18 @@ public class PedidosServiceIntegrationTests
 
     private static void RegisterServices(IServiceCollection services)
     {
+        // Mock para IJwtTokenExtractor (requerido por PedidosWebSocketHandler)
+        var mockJwtExtractor = new Mock<IJwtTokenExtractor>();
+        mockJwtExtractor.Setup(x => x.ExtractUserId(It.IsAny<string>())).Returns(1L);
+        services.AddSingleton<IJwtTokenExtractor>(mockJwtExtractor.Object);
+
+        // Mock para IHubContext (requerido por PedidosService)
+        var mockClients = new Mock<IHubClients>();
+        mockClients.Setup(c => c.All).Returns(Mock.Of<IClientProxy>());
+        var mockHubContext = new Mock<IHubContext<PedidosHub>>();
+        mockHubContext.Setup(c => c.Clients).Returns(mockClients.Object);
+        services.AddSingleton<IHubContext<PedidosHub>>(mockHubContext.Object);
+
         services.AddScoped<ILogger<PedidosService>, Logger<PedidosService>>();
         services.AddScoped<PedidosWebSocketHandler>();
         services.AddScoped<IEmailService, MemoryEmailService>();
@@ -174,7 +189,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task FindAllAsync_SinPedidos_RetornaListaVacia()
     {
         var result = await _pedidosService!.FindAllAsync();
@@ -183,7 +197,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia()
     {
         var result = await _pedidosService!.FindByUserIdAsync(_userId);
@@ -192,7 +205,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task FindByIdAsync_SinPedidos_RetornaNotFound()
     {
         var result = await _pedidosService!.FindByIdAsync("507f1f77bcf86cd799439011");
@@ -200,7 +212,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_ConItemsValidos_RetornaPedidoCreado()
     {
         var dto = new PedidoRequestDto
@@ -231,7 +242,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task CreateAsync_ConItemsVacios_RetornaError()
     {
         var dto = new PedidoRequestDto
@@ -249,7 +259,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task CreateAsync_ConProductoNoExistente_RetornaError()
     {
         var dto = new PedidoRequestDto
@@ -270,7 +279,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task CreateAsync_ConStockCero_RetornaErrorDeStock()
     {
         await SetProductoStock(_productoId, 0);
@@ -294,7 +302,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task CreateAsync_ConStockInsuficiente_RetornaErrorDeStock()
     {
         await SetProductoStock(_productoId, 5);
@@ -318,7 +325,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_ConStockSuficiente_DecrementaStockCorrectamente()
     {
         var stockInicial = 50;
@@ -346,7 +352,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_CantidadExactaStock_PermitePedido()
     {
         var stockInicial = 10;
@@ -374,7 +379,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_CantidadMayorStock_RechazaPedido()
     {
         var stockInicial = 10;
@@ -402,7 +406,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Se necesita librería MongoDB.EntityFrameworkCore compatible con EF Core 10 - bug EF-272")]
     public async Task CreateAsync_UsuarioNoExistente_RetornaError()
     {
         var dto = new PedidoRequestDto
@@ -418,7 +421,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task DecrementStockAsync_StockInsuficiente_NoDecrementa()
     {
         var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
@@ -435,7 +437,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - probando en PedidosNativeServiceIntegrationTests")]
     public async Task DecrementStockAsync_StockSuficiente_Decrementa()
     {
         var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
@@ -454,7 +455,6 @@ public class PedidosServiceIntegrationTests
     #region ========== TESTS ADICIONALES - MÉTODOS DE ADMINISTRADOR (IGNORADOS - BUG EF-272) ==========
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindAllPagedAsync_ConPaginacion_RetornaPedidosPaginados()
     {
         var page = 0;
@@ -466,7 +466,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta()
     {
         var page = 1;
@@ -478,7 +477,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateAdminAsync_ConDireccion_ActualizaPedido()
     {
         var dto = new PedidoRequestDto
@@ -504,7 +502,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound()
     {
         var updateDto = new UpdatePedidoDto { Estado = "ENVIADO" };
@@ -513,7 +510,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateEstadoAsync_EstadoValido_ActualizaEstado()
     {
         var dto = new PedidoRequestDto
@@ -537,7 +533,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateEstadoAsync_EstadoInvalido_RetornaError()
     {
         var pedidoId = "507f1f77bcf86cd799439011";
@@ -546,7 +541,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteAdminAsync_PedidoExistente_MarcaComoEliminado()
     {
         var dto = new PedidoRequestDto
@@ -569,7 +563,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound()
     {
         var result = await _pedidosService!.DeleteAdminAsync("507f1f77bcf86cd799439011");
@@ -581,7 +574,6 @@ public class PedidosServiceIntegrationTests
     #region ========== TESTS ADICIONALES - MÉTODOS DE USUARIO (IGNORADOS - BUG EF-272) ==========
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidosAsync_ConPedidos_RetornaPedidosDelUsuario()
     {
         var dto = new PedidoRequestDto
@@ -604,7 +596,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidosAsync_SinPedidos_RetornaListaVacia()
     {
         var nuevoUserId = 999999L;
@@ -614,7 +605,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidosPagedAsync_ConPaginacion_RetornaPedidosPaginados()
     {
         var page = 0;
@@ -626,7 +616,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidoAsync_PedidoPropio_RetornaPedido()
     {
         var dto = new PedidoRequestDto
@@ -650,7 +639,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task FindMyPedidoAsync_PedidoAjeno_RetornaError()
     {
         var pedidoId = "507f1f77bcf86cd799439011";
@@ -660,7 +648,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateMyPedidoAsync_EstadoPendiente_ActualizaDireccion()
     {
         var dto = new PedidoRequestDto
@@ -686,7 +673,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task UpdateMyPedidoAsync_EstadoNoPendiente_RetornaError()
     {
         var dto = new PedidoRequestDto
@@ -713,7 +699,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteMyPedidoAsync_EstadoPendiente_MarcaEliminado()
     {
         var dto = new PedidoRequestDto
@@ -736,7 +721,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteMyPedidoAsync_EstadoNoPendiente_RetornaError()
     {
         var dto = new PedidoRequestDto
@@ -761,7 +745,6 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    [Ignore("Bug EF-272 - requiere MongoDB.EntityFrameworkCore compatible con EF Core 10")]
     public async Task DeleteMyPedidoAsync_PedidoAjeno_RetornaError()
     {
         var pedidoId = "507f1f77bcf86cd799439011";
