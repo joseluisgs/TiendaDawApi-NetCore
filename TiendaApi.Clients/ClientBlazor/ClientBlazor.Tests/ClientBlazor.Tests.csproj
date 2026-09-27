@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <!-- Versiones centralizadas en Directory.Packages.props -->
+    <PackageReference Include="AngleSharp" />
     <PackageReference Include="bunit" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NUnit" />

@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <NoWarn>$(NoWarn);NU1903</NoWarn>
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <!-- HotChocolate 16 inyecta HotChocolate.Types.Composite (clase 'Is') que colisiona con NUnit.Framework.Is -->

@@ -15,6 +15,7 @@ public static class AutoMapperConfig
     public static IServiceCollection AddAutoMapper(this IServiceCollection services)
     {
         Log.Information("🔄 Configurando AutoMapper...");
-        return services.AddAutoMapper(typeof(MappingProfile), typeof(PedidoProfile));
+        services.AddAutoMapper(cfg => cfg.AddMaps(typeof(MappingProfile).Assembly));
+        return services;
     }
 }
