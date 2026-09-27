@@ -3,6 +3,7 @@ using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Services.Auth;
@@ -355,6 +356,39 @@ public class JwtServiceTests
         var username = _jwtService.ValidateToken(token);
 
         username.Should().Be("regularuser");
+    }
+
+    #endregion
+
+    #region TimeProvider Tests
+
+    /// <summary>
+    /// Verifica que el token generado con FakeTimeProvider usa la fecha controlada.
+    /// </summary>
+    [Test]
+    public void GenerateToken_ConFakeTimeProvider_DebeUsarFechaControlada()
+    {
+        var fakeTime = new FakeTimeProvider(new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero));
+        var mockLogger = new Mock<ILogger<JwtService>>();
+        var jwtService = new JwtService(_configuration, mockLogger.Object, fakeTime);
+
+        var user = new User
+        {
+            Id = 1,
+            Username = "testuser",
+            Email = "test@example.com",
+            Role = UserRoles.USER
+        };
+
+        var token = jwtService.GenerateToken(user);
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        var expClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "exp");
+        expClaim.Should().NotBeNull();
+
+        var expDateTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expClaim!.Value));
+        expDateTime.Should().BeCloseTo(fakeTime.GetUtcNow().AddMinutes(60), TimeSpan.FromSeconds(5));
     }
 
     #endregion

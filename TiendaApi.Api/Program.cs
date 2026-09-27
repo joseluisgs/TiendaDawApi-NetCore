@@ -32,6 +32,12 @@ var environment = builder.Environment;
 services.AddMvcControllers();
 services.AddFluentValidationServices();
 
+// Compresión HTTP (Brotli + Gzip)
+services.AddResponseCompressionConfig();
+
+// TimeProvider global (inyectable, testable con FakeTimeProvider)
+services.AddSingleton(TimeProvider.System);
+
 // API
 services.AddApiVersioningPolicy();
 services.AddSwagger();
@@ -84,6 +90,7 @@ Log.Information("✅ Aplicación construida");
 // ============================================================================
 
 app.UseSwaggerUI(isDevelopment);
+app.UseResponseCompression();
 app.UseGlobalExceptionHandler();
 
 // Security Headers - Siempre activo (no afecta funcionalidad)
@@ -117,6 +124,9 @@ app.MapGraphQLEndpoints();
 
 // Health Check (GET /health → JSON: 200 OK, 503 si alguna dependencia cae)
 app.MapHealthEndpoint();
+
+// Versión de la API (GET /version)
+app.MapVersionEndpoint();
 
 // ============================================================================
 // 🗄️ INICIALIZACIÓN DE DATOS

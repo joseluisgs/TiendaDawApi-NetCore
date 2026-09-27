@@ -28,27 +28,40 @@ public static class HealthChecksConfig
 
         var builder = services.AddHealthChecks();
 
-        builder.AddCheck<PostgresHealthCheck>("postgresql");
-        builder.AddCheck<MongoHealthCheck>("mongodb");
+        builder.AddCheck<PostgresHealthCheck>("postgresql", tags: ["ready"]);
+        builder.AddCheck<MongoHealthCheck>("mongodb", tags: ["ready"]);
 
         // Redis solo existe como caché distribuida fuera de desarrollo (ver CacheConfig.AddCache)
         if (!environment.IsDevelopment())
         {
-            builder.AddCheck<RedisHealthCheck>("redis");
+            builder.AddCheck<RedisHealthCheck>("redis", tags: ["ready"]);
         }
 
         return services;
     }
 
     /// <summary>
-    /// Expone GET /health con respuesta JSON: 200 si todo está OK, 503 si alguna dependencia cae.
+    /// Expone endpoints de salud: /health, /health/ready, /health/live.
     /// </summary>
-    /// <param name="endpoints">Constructor de endpoints.</param>
-    /// <returns>IEndpointRouteBuilder para encadenar.</returns>
     public static IEndpointRouteBuilder MapHealthEndpoint(this IEndpointRouteBuilder endpoints)
     {
+        // /health — todos los checks ( PostgreSQL + MongoDB + Redis en prod)
         endpoints.MapHealthChecks("/health", new HealthCheckOptions
         {
+            ResponseWriter = WriteHealthReportAsync
+        });
+
+        // /health/live — liveness: solo responde OK si el proceso está vivo
+        endpoints.MapHealthChecks("/health/live", new HealthCheckOptions
+        {
+            Predicate = _ => false,
+            ResponseWriter = WriteHealthReportAsync
+        });
+
+        // /health/ready — readiness: PostgreSQL + MongoDB (+ Redis en prod)
+        endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready"),
             ResponseWriter = WriteHealthReportAsync
         });
 
