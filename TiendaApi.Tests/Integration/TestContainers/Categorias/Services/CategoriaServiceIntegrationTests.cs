@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using FluentAssertions;
 using FluentValidation;
 using Microsoft.AspNetCore.OutputCaching;
@@ -6,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
@@ -16,8 +16,8 @@ using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Categorias;
-using TiendaApi.Api.Validators.Categorias;
 using TiendaApi.Api.Services.Email;
+using TiendaApi.Api.Validators.Categorias;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Services;
 

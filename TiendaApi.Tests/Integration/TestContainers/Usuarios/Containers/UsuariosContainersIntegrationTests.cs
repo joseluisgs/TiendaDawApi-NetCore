@@ -1,7 +1,7 @@
+using System.Threading.Channels;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 using TiendaApi.Api.Services.Cache;

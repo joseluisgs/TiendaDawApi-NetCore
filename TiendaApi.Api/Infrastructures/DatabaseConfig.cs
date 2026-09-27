@@ -40,7 +40,7 @@ public static class DatabaseConfig
                 var client = sp.GetRequiredService<IMongoClient>();
                 return client.GetDatabase(mongoDatabaseName);
             });
-            
+
             services.AddSingleton(sp =>
             {
                 var database = sp.GetRequiredService<IMongoDatabase>();

@@ -56,9 +56,9 @@ public class JwtService(
         );
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        
+
         _logger.LogInformation("Token JWT generado para usuario: {Username}", user.Username);
-        
+
         return tokenString;
     }
 

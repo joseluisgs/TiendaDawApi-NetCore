@@ -5,9 +5,9 @@ using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.GraphQL.Queries;
+using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
-using TiendaApi.Api.Models;
 
 namespace TiendaApi.Tests.Unit.GraphQL;
 

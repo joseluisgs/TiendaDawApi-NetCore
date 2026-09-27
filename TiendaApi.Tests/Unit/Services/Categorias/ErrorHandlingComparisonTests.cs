@@ -11,6 +11,7 @@ using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.GraphQL.Publishers;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
@@ -19,7 +20,6 @@ using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Services.Storage;
 using TiendaApi.Api.Validators.Categorias;
 using TiendaApi.Api.Validators.Productos;
-using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 

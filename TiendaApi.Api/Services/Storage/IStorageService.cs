@@ -1,6 +1,6 @@
+using System;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Http;
-using System;
 using TiendaApi.Api.Errors;
 
 namespace TiendaApi.Api.Services.Storage;

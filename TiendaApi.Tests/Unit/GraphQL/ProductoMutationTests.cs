@@ -1,13 +1,13 @@
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
-using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.GraphQL.Inputs;
 using TiendaApi.Api.GraphQL.Mutations;
 using TiendaApi.Api.Services.Productos;
-using CSharpFunctionalExtensions;
 
 namespace TiendaApi.Tests.Unit.GraphQL;
 

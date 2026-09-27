@@ -22,19 +22,19 @@ using TiendaApi.Api.Validators.Pedidos;
 namespace TiendaApi.Api.Services.Pedidos;
 
 /// <summary>
-    /// Servicio de pedidos que implementa el patrón Service Layer.
-    /// </summary>
-    public class PedidosService(
-    IPedidosRepository pedidosRepository,
-    IProductoRepository productoRepository,
-    ILogger<PedidosService> logger,
-    ICacheService cacheService,
-    IEmailService emailService,
-    IConfiguration configuration,
-    PedidosWebSocketHandler webSocketHandler,
-    IHubContext<PedidosHub> pedidosHubContext,
-    IValidator<PedidoRequestDto> pedidoValidator,
-    IValidator<PedidoItemRequestDto> pedidoItemValidator
+/// Servicio de pedidos que implementa el patrón Service Layer.
+/// </summary>
+public class PedidosService(
+IPedidosRepository pedidosRepository,
+IProductoRepository productoRepository,
+ILogger<PedidosService> logger,
+ICacheService cacheService,
+IEmailService emailService,
+IConfiguration configuration,
+PedidosWebSocketHandler webSocketHandler,
+IHubContext<PedidosHub> pedidosHubContext,
+IValidator<PedidoRequestDto> pedidoValidator,
+IValidator<PedidoItemRequestDto> pedidoItemValidator
 ) : IPedidosService
 {
     private const int MaxRetries = 3;

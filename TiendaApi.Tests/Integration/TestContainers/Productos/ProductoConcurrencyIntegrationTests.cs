@@ -1,10 +1,10 @@
+using System.Diagnostics;
+using System.Threading.Channels;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Threading.Channels;
 using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Models;

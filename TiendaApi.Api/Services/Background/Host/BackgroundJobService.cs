@@ -6,12 +6,12 @@ using TiendaApi.Api.Services.Background.Jobs;
 namespace TiendaApi.Api.Services.Background.Host;
 
 /// <summary>
-    /// Servicio de fondo que ejecuta tareas programadas.
-    /// </summary>
-    public class BackgroundJobService(
-    IServiceProvider serviceProvider,
-    ILogger<BackgroundJobService> logger,
-    IConfiguration configuration
+/// Servicio de fondo que ejecuta tareas programadas.
+/// </summary>
+public class BackgroundJobService(
+IServiceProvider serviceProvider,
+ILogger<BackgroundJobService> logger,
+IConfiguration configuration
 ) : BackgroundService
 {
     private readonly bool _isDevelopment = configuration.GetValue<bool>("IsDevelopment");
@@ -23,7 +23,7 @@ namespace TiendaApi.Api.Services.Background.Host;
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("BackgroundJobService iniciado - Modo: {Modo}", 
+        logger.LogInformation("BackgroundJobService iniciado - Modo: {Modo}",
             _isDevelopment ? "DESARROLLO" : "PRODUCCION");
 
         var interval = _isDevelopment

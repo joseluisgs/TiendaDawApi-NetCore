@@ -4,24 +4,24 @@ using System.Text.Json.Serialization;
 namespace TiendaApi.Api.Dtos.Pedidos;
 
 /// <summary>
-    /// DTO de destinatario para pedidos.
-    /// </summary>
-    /// <example>
-    /// {
-    ///   "nombreCompleto": "María García López",
-    ///   "email": "maria.garcia@email.com",
-    ///   "telefono": "+34612345678",
-    ///   "direccion": {
-    ///     "calle": "Gran Vía",
-    ///     "numero": "42",
-    ///     "ciudad": "Madrid",
-    ///     "provincia": "Madrid",
-    ///     "pais": "España",
-    ///     "codigoPostal": "28013"
-    ///   }
-    /// }
-    /// </example>
-    public class DestinatarioDto
+/// DTO de destinatario para pedidos.
+/// </summary>
+/// <example>
+/// {
+///   "nombreCompleto": "María García López",
+///   "email": "maria.garcia@email.com",
+///   "telefono": "+34612345678",
+///   "direccion": {
+///     "calle": "Gran Vía",
+///     "numero": "42",
+///     "ciudad": "Madrid",
+///     "provincia": "Madrid",
+///     "pais": "España",
+///     "codigoPostal": "28013"
+///   }
+/// }
+/// </example>
+public class DestinatarioDto
 {
     /// <summary>
     /// Nombre completo del destinatario.

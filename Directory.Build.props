@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    Props de compilación comunes a todos los proyectos del repo (P1 · PLAN-MEJORAS-24).
+    Los proyectos pueden sobreescribir (p. ej. ClientBlazor.Tests/E2E fijan TreatWarningsAsErrors=false).
+  -->
+  <PropertyGroup>
+    <LangVersion>14</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

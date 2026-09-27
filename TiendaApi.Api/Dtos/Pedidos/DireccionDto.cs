@@ -4,19 +4,19 @@ using System.Text.Json.Serialization;
 namespace TiendaApi.Api.Dtos.Pedidos;
 
 /// <summary>
-    /// DTO de dirección postal para envíos.
-    /// </summary>
-    /// <example>
-    /// {
-    ///   "calle": "Gran Vía",
-    ///   "numero": "42",
-    ///   "ciudad": "Madrid",
-    ///   "provincia": "Madrid",
-    ///   "pais": "España",
-    ///   "codigoPostal": "28013"
-    /// }
-    /// </example>
-    public class DireccionDto
+/// DTO de dirección postal para envíos.
+/// </summary>
+/// <example>
+/// {
+///   "calle": "Gran Vía",
+///   "numero": "42",
+///   "ciudad": "Madrid",
+///   "provincia": "Madrid",
+///   "pais": "España",
+///   "codigoPostal": "28013"
+/// }
+/// </example>
+public class DireccionDto
 {
     /// <summary>
     /// Nombre de la calle, avenida, plaza o vía pública.

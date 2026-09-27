@@ -5,9 +5,9 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Mappers;
 
 /// <summary>
-    /// Mapper para convertir entre entidades de Pedido y DTOs.
-    /// </summary>
-    public static class PedidoMapper
+/// Mapper para convertir entre entidades de Pedido y DTOs.
+/// </summary>
+public static class PedidoMapper
 {
     /// <summary>
     /// Convierte una entidad Pedido a DTO.

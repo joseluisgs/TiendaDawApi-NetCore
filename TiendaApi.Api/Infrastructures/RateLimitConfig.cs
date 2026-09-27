@@ -19,7 +19,7 @@ public static class RateLimitConfig
             options.EnableEndpointRateLimiting = true;
             options.HttpStatusCode = 429;
             options.QuotaExceededMessage = "Demasiadas solicitudes. Por favor, intente más tarde.";
-            
+
             options.GeneralRules = new List<RateLimitRule>
             {
                 // API General: 100 requests por 15 segundos
@@ -57,7 +57,7 @@ public static class RateLimitConfig
         services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
         services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
         services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
-        
+
         return services;
     }
 

@@ -22,21 +22,21 @@ using TiendaApi.Api.Validators.Productos;
 namespace TiendaApi.Api.Services.Productos;
 
 /// <summary>
-    /// Servicio de productos usando Patrón Result.
-    /// </summary>
-    public class ProductoService(
-    IProductoRepository productoRepository,
-    ICategoriaRepository categoriaRepository,
-    ILogger<ProductoService> logger,
-    ICacheService cacheService,
-    ProductosWebSocketHandler webSocketHandler,
-    IHubContext<ProductosHub> productosHubContext,
-    IEmailService emailService,
-    IConfiguration configuration,
-    IValidator<ProductoRequestDto> productoValidator,
-    IStorageService storageService,
-    IEventPublisher eventPublisher,
-    IOutputCacheStore outputCacheStore
+/// Servicio de productos usando Patrón Result.
+/// </summary>
+public class ProductoService(
+IProductoRepository productoRepository,
+ICategoriaRepository categoriaRepository,
+ILogger<ProductoService> logger,
+ICacheService cacheService,
+ProductosWebSocketHandler webSocketHandler,
+IHubContext<ProductosHub> productosHubContext,
+IEmailService emailService,
+IConfiguration configuration,
+IValidator<ProductoRequestDto> productoValidator,
+IStorageService storageService,
+IEventPublisher eventPublisher,
+IOutputCacheStore outputCacheStore
 ) : IProductoService
 {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(

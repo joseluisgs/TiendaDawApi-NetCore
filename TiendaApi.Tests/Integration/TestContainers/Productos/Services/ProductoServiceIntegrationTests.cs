@@ -1,15 +1,16 @@
-using FluentAssertions;
+using System.Threading.Channels;
 using CSharpFunctionalExtensions;
+using FluentAssertions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
@@ -17,15 +18,14 @@ using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.GraphQL.Publishers;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
-using TiendaApi.Api.Services.Productos;
-using TiendaApi.Api.Validators.Productos;
-using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Services.Email;
+using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Services.Storage;
-using Microsoft.AspNetCore.SignalR;
-using TiendaApi.Api.Realtime.Productos;
+using TiendaApi.Api.Validators.Productos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Productos.Services;
 

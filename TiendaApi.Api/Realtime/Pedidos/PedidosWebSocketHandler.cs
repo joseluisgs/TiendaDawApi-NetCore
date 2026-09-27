@@ -173,7 +173,7 @@ public class PedidosWebSocketHandler
     {
         var cacheKey = $"{ADMIN_CACHE_KEY_PREFIX}{userId}";
         var cachedValue = await _cacheService.GetAsync<bool?>(cacheKey);
-        
+
         if (cachedValue.HasValue)
             return cachedValue.Value;
 
@@ -220,10 +220,10 @@ public class PedidosWebSocketHandler
             ["estado"] = notificacion.Estado,
             ["timestamp"] = DateTime.UtcNow
         };
-        
+
         if (notificacion.Data != null)
             wrapper["data"] = notificacion.Data;
-        
+
         return wrapper;
     }
 

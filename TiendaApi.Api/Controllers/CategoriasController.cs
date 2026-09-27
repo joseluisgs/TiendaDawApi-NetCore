@@ -6,9 +6,9 @@ using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Extensions;
+using TiendaApi.Api.Helpers.Pagination;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Services.Categorias;
-using TiendaApi.Api.Helpers.Pagination;
 
 namespace TiendaApi.Api.Controllers;
 

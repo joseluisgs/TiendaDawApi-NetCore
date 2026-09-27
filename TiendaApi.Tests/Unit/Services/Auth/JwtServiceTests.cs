@@ -1,9 +1,9 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Services.Auth;
 

@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
 using TiendaApi.Api.Services.Auth;
 
@@ -438,7 +438,7 @@ public class JwtTokenExtractorTests
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddHours(1)
         };
-        
+
         var token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }
@@ -454,7 +454,7 @@ public class JwtTokenExtractorTests
             }),
             Expires = DateTime.UtcNow.AddHours(1)
         };
-        
+
         var token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }

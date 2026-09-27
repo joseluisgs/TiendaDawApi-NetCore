@@ -3,8 +3,8 @@ using FluentAssertions;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Moq;
 using MimeKit;
+using Moq;
 using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Unit.Services.Email;

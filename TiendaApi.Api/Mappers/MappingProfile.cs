@@ -1,8 +1,8 @@
 using AutoMapper;
 using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Dtos.Usuarios;
-using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Api.Mappers;

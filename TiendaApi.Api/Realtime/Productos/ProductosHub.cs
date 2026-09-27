@@ -18,7 +18,8 @@ namespace TiendaApi.Api.Realtime.Productos;
 /// // Respuesta: {"productoId":123,"nombre":"Nuevo","precio":99.99,"tipo":"PRODUCTO_CREADO","timestamp":"2025-01-18T10:30:00Z"}
 /// </example>
 [AllowAnonymous]
-public class ProductosHub(ILogger<ProductosHub> logger) : Hub {
+public class ProductosHub(ILogger<ProductosHub> logger) : Hub
+{
     /// <summary>Cliente conectado.</summary>
     public override async Task OnConnectedAsync()
     {

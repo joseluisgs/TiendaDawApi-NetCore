@@ -6,8 +6,8 @@ using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Extensions;
-using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Helpers.Pagination;
+using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Api.Controllers;
 

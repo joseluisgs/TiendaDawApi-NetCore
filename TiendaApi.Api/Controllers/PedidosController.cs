@@ -6,9 +6,9 @@ using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Extensions;
+using TiendaApi.Api.Helpers.Pagination;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Services.Pedidos;
-using TiendaApi.Api.Helpers.Pagination;
 
 namespace TiendaApi.Api.Controllers;
 
@@ -179,7 +179,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     {
         logger.LogInformation("GetMyPedidos - User: {User}", User?.Identity?.Name);
         logger.LogInformation("GetMyPedidos - IsAuthenticated: {IsAuth}", User?.Identity?.IsAuthenticated);
-        
+
         if (User?.Identity == null || !User.Identity.IsAuthenticated)
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 

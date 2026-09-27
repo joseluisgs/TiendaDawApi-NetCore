@@ -1,8 +1,8 @@
+using System.IO;
 using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.IO;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Errors.StorageErrors;
 using TiendaApi.Api.Models;

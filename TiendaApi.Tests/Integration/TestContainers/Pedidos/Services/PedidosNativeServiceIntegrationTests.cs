@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Threading.Channels;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
@@ -9,13 +11,12 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Moq;
 using NUnit.Framework;
-using System.Diagnostics;
-using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Realtime.Pedidos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
@@ -24,7 +25,6 @@ using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Pedidos;
 using TiendaApi.Api.Validators.Pedidos;
-using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 
@@ -187,7 +187,7 @@ public class PedidosNativeServiceIntegrationTests
         var mockJwtExtractor = new Mock<IJwtTokenExtractor>();
         mockJwtExtractor.Setup(x => x.ExtractUserId(It.IsAny<string>())).Returns(1L);
         services.AddSingleton<IJwtTokenExtractor>(mockJwtExtractor.Object);
-        
+
         // Mock para IHubContext (requerido por PedidosService)
         // Nota: SendAsync es un método de extensión, no se puede mockear directamente
         // El mock simplemente evita NullReferenceException
@@ -196,7 +196,7 @@ public class PedidosNativeServiceIntegrationTests
         var mockHubContext = new Mock<IHubContext<PedidosHub>>();
         mockHubContext.Setup(c => c.Clients).Returns(mockClients.Object);
         services.AddSingleton<IHubContext<PedidosHub>>(mockHubContext.Object);
-        
+
         services.AddScoped<ILogger<PedidosService>, Logger<PedidosService>>();
         services.AddScoped<PedidosWebSocketHandler>();
         services.AddScoped<IEmailService, MemoryEmailService>();

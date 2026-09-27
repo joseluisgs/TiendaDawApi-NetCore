@@ -2,10 +2,10 @@ using CSharpFunctionalExtensions;
 using FluentValidation;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
-using AuthErrors = TiendaApi.Api.Errors.Auth.AuthError;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Usuarios;
 using TiendaApi.Api.Validators.Usuarios;
+using AuthErrors = TiendaApi.Api.Errors.Auth.AuthError;
 
 namespace TiendaApi.Api.Services.Auth;
 

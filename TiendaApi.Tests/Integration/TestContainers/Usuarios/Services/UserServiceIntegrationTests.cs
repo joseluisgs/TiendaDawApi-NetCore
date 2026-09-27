@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using FluentAssertions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -5,12 +6,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
-using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Usuarios;
 using TiendaApi.Api.Services.Cache;

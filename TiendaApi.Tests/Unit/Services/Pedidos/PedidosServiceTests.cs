@@ -1,10 +1,10 @@
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
-using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
@@ -15,14 +15,14 @@ using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Exceptions;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Realtime.Pedidos;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
-using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Pedidos;
 using TiendaApi.Api.Validators.Pedidos;
-using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.Pedidos;
 

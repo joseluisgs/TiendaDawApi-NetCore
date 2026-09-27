@@ -1,12 +1,11 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Data.Seed.Mongo;
-
 using TiendaApi.Api.Data.Seed.Sql;
 
 namespace TiendaApi.Api.Infrastructures;
@@ -36,11 +35,11 @@ public static class DatabaseInitializationExtensions
             logger.LogWarning("🗄️ [DESARROLLO] Eliminando y recreando base de datos...");
             context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
-            
+
             // Seed PostgreSQL
             var sqlSeeder = scope.ServiceProvider.GetRequiredService<SqlSeeder>();
             await sqlSeeder.SeedAsync();
-            
+
             logger.LogInformation("✅ Base de datos recreada con datos semilla");
         }
         else
@@ -54,7 +53,7 @@ public static class DatabaseInitializationExtensions
         if (isDevelopment)
         {
             var mongoImpl = configuration["Pedidos:RepositoryType"] ?? "MongoDbNative";
-            
+
             if (mongoImpl == "MongoDbNative")
             {
                 var mongoSeeder = scope.ServiceProvider.GetService<Data.Seed.Mongo.MongoDbSeeder>();

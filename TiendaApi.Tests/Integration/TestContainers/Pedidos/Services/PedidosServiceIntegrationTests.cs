@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Threading.Channels;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
@@ -8,13 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using System.Diagnostics;
-using System.Threading.Channels;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Realtime.Pedidos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
@@ -23,7 +24,6 @@ using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Pedidos;
 using TiendaApi.Api.Validators.Pedidos;
-using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 

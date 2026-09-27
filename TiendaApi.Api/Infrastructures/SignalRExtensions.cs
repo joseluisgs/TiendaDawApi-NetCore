@@ -43,7 +43,7 @@ public static class SignalRExtensions
     public static IApplicationBuilder MapSignalRHubs(this IApplicationBuilder app)
     {
         var webApp = (WebApplication)app;
-        
+
         webApp.MapHub<ProductosHub>("/hubs/productos");
         webApp.MapHub<PedidosHub>("/hubs/pedidos");
 

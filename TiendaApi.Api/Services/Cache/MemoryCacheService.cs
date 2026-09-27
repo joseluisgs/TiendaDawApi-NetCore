@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace TiendaApi.Api.Services.Cache;
 
@@ -82,7 +82,7 @@ public class MemoryCacheService : ICacheService
         {
             _logger.LogDebug(
                 "RemoveByPattern no soportado en MemoryCache. " +
-                "En producción, use Redis. Patrón: {Pattern}", 
+                "En producción, use Redis. Patrón: {Pattern}",
                 pattern
             );
             return Task.CompletedTask;
