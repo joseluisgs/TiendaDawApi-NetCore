@@ -491,3 +491,11 @@ BASE_URL=http://localhost:5031 node TiendaApi.Tests.E2E/Automation/test-runner.m
 ```
 
 Salir con código `0` si todo OK, `1` si algún test falla (listo para CI).
+
+---
+
+## Nota de mantenimiento — Tests EF-272 reactivados (27/09/2026)
+
+Los 32 tests de integración de `PedidosServiceIntegrationTests.cs` (modo `PedidosEfCoreRepository`) estaban con `[Ignore]` por **EF-272** (`MongoConventionSetBuilder.CreateConventionSet()` fallaba con `MongoDB.EntityFrameworkCore 9.0.3` + EF Core 10). El issue está **Closed/Done, Fix Version 10.0.0** (05/02/2026) y el repo va en **10.0.4 + EF Core 10.0.12**, así que se eliminaron los `[Ignore]` (commit `2f62302`) y se actualizó la DI del fixture (mocks `IJwtTokenExtractor`/`IHubContext`, al estilo del fixture Native).
+
+**Resultado:** build 0/0 · **1232/1232, 0 fallos, 0 omitidos** (antes 1200 + 32 omit) · `check-docs.mjs` TODO OK. Las cifras «32 omitidos (EF-272)» de las fases 4/5/6/11/14 son históricas (estado de la suite en esas fechas). Detalle en `BITACORA.md` → *Mantenimiento — Reactivación tests EF-272*.

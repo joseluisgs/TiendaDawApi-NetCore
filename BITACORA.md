@@ -23,6 +23,7 @@
 | 6 · Polly educativa | `fc0ee21` (+`70eb1d0` docs) | Retry + CircuitBreaker + Timeout en email | ✅ |
 | 10 · Documentación didáctica | `f6acd04` (+`79e857b` docs) | Secciones en `doc/NN-*.md` existentes | ✅ |
 | 12 · README | `afe3862` | README: 5 errores, comandos E2E reales, estructura, estado actual | ✅ |
+| Mantenimiento · EF-272 | `2f62302` | Reactivación de los 32 tests `[Ignore]` de Pedidos (EF-272 fixeado en MongoDB.EF 10.0.0) — 0 omitidos | ✅ |
 
 ---
 
@@ -458,6 +459,17 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 1. Revisar el README del repo CQRS con la misma lista: nombre de proyecto (`TiendaApi.Api` o el real), puerto dev, rutas E2E y comandos de compose.
 2. Las cifras de la pirámide de tests **son las de este repo**; en CQRS habrá que poner las suyas (unit/integración/E2E propios).
 3. Si CQRS usa las mismas colecciones (`Postman-Cli`, `Bruno-*`), hereda el comando de las 10 carpetas del Bruno Local.
+
+---
+
+## Mantenimiento — Reactivación tests EF-272 (`2f62302`) ✅
+
+> **Fecha:** 27/09/2026 · **Objetivo:** volver a ejecutar los 32 tests de integración de Pedidos (modo `PedidosEfCoreRepository`) que estaban con `[Ignore]`.
+
+- **Causa original:** EF-272 (`jira.mongodb.org/browse/EF-272`) — `MongoDB.EntityFrameworkCore 9.0.3` incompatible con EF Core 10: `MongoConventionSetBuilder.CreateConventionSet()` fallaba al crear el modelo de MongoDB. Se marcaron en `e92e559` (Fase 4).
+- **Estado upstream:** EF-272 *Closed/Done*, Fix Version **10.0.0** (05/02/2026). Este repo ya usa `MongoDB.EntityFrameworkCore 10.0.4` + EF Core 10.0.12 (últimas disponibles) → el bug ya no aplica.
+- **Cambio:** eliminados los 32 `[Ignore]` de `PedidosServiceIntegrationTests.cs` y actualizada su DI (mocks `IJwtTokenExtractor` + `IHubContext<PedidosHub>` como en el fixture Native; `PedidosWebSocketHandler` los requiere desde fases posteriores).
+- **Verificación:** build **0/0** · fixture **32/32** · suite **1232/1232, 0 fallos, 0 omitidos** (antes 1200 + 32 omit) · `check-docs.mjs` **TODO OK** · sin cambios en código de producto (E2E sin cambios). Los cierres de fases 4/5/6/11/14 mantienen sus cifras de época.
 
 ---
 
