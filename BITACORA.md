@@ -24,6 +24,7 @@
 | 10 · Documentación didáctica | `f6acd04` (+`79e857b` docs) | Secciones en `doc/NN-*.md` existentes | ✅ |
 | 12 · README | `afe3862` | README: 5 errores, comandos E2E reales, estructura, estado actual | ✅ |
 | Mantenimiento · EF-272 | `2f62302` | Reactivación de los 32 tests `[Ignore]` de Pedidos (EF-272 fixeado en MongoDB.EF 10.0.0) — 0 omitidos | ✅ |
+| Mantenimiento · Paridad E2E | `f483de6` | Colecciones E2E alineadas entre repos: Newman 103 (8 JSON-Schema), Automation 63 (+8), Bruno-Cli 77/129, check-parity | ✅ |
 
 ---
 
@@ -470,6 +471,20 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 - **Estado upstream:** EF-272 *Closed/Done*, Fix Version **10.0.0** (05/02/2026). Este repo ya usa `MongoDB.EntityFrameworkCore 10.0.4` + EF Core 10.0.12 (últimas disponibles) → el bug ya no aplica.
 - **Cambio:** eliminados los 32 `[Ignore]` de `PedidosServiceIntegrationTests.cs` y actualizada su DI (mocks `IJwtTokenExtractor` + `IHubContext<PedidosHub>` como en el fixture Native; `PedidosWebSocketHandler` los requiere desde fases posteriores).
 - **Verificación:** build **0/0** · fixture **32/32** · suite **1232/1232, 0 fallos, 0 omitidos** (antes 1200 + 32 omit) · `check-docs.mjs` **TODO OK** · sin cambios en código de producto (E2E sin cambios). Los cierres de fases 4/5/6/11/14 mantienen sus cifras de época.
+
+---
+
+## Mantenimiento — Paridad colecciones E2E (`f483de6`) ✅
+
+> **Fecha:** 27/09/2026 · **Objetivo:** alinear las colecciones E2E (Newman, Bruno-Cli, Bruno-Local, Automation) entre ambos repos y cerrar las brechas detectadas en el análisis de conteos (Newman 95 · Bruno 127 · Automation 55).
+
+- **Análisis:** las diferencias de conteo eran por unidades incompatibles (assertion vs test vs flujo), historia por fases y alcance — no por cobertura faltante. Brecha real: a Bruno-Cli le faltaba `[043b]` (76 vs 77) y la carpeta `12 - WEBSOCKETS`.
+- **Newman 95 → 103 assertions:** +8 tests `jsonSchema` (AuthResponse, Categoría ×2, Producto, Pedido ×2, User ×2); soportado por el sandbox de Newman 6.2.2.
+- **Automation 55 → 63 flows:** +8 tests (imagen de producto sin archivo → 400 `errors.image`, subida `FormData` → 200, `GET` storage de la imagen subida → 200, avatares `PATCH /{id}/avatar` y `/me/profile/avatar` → 200, `DELETE /me/profile` con cuenta dedicada → 204, `DELETE /pedidos/me/{id}` → 204, `PUT /pedidos/{id}` admin → 200); `req()` adaptado para `FormData` (sin `Content-Type` manual).
+- **Bruno-Cli 76 → 77 peticiones / 129 tests:** añadidos `[043b] POST - Crear pedido (Admin)` (paridad total Newman = Bruno = 77 por carpeta) y la carpeta `12 - WEBSOCKETS`; `environments/local.bru` reescrito al formato bru v2 (antes estilo `.env` plano, ilegible para bru CLI — Bruno-Cli no era ejecutable) y `baseWs` definido en ambos environments (antes `{{baseWs}}` sin definir → `ENOTFOUND` en los WS).
+- **Alineación:** `[048]`, `[055]`, `[056]` (orden `seq` y asserts) y `[050]` (campo `avatar`, no `avatarUrl`) unificados en las 4 colecciones sobre la versión verificada (Bruno-Local del CQRS, 127/127).
+- **`scripts/check-parity.mjs` (nuevo en ambos repos):** 24 rutas de API idénticas, Newman = Bruno-Cli por carpeta (77 = 77) y 203 ficheros de colección byte-idénticos entre repos → **TODO OK**.
+- **Verificación E2E (BD nueva por grupo, ambos repos):** Automation **63/63**, Newman **4/4 tandas**, Bruno-Cli **77/77 peticiones · 129/129 tests**; suites **1232/1232** (origen) y **1069/1069** (CQRS) sin omitidos; build 0/0; `check-docs.mjs` **TODO OK**.
 
 ---
 
