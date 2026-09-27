@@ -121,13 +121,14 @@ async function waitForApi(timeoutMs = 30000) {
 }
 async function req(method, urlPath, { body, headers = {}, token, ifNoneMatch } = {}) {
   const h = { ...headers };
-  if (body !== undefined) h["Content-Type"] = h["Content-Type"] || "application/json";
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isForm) h["Content-Type"] = h["Content-Type"] || "application/json";
   if (token) h.Authorization = `Bearer ${token}`;
   if (ifNoneMatch) h["If-None-Match"] = ifNoneMatch;
   const res = await fetch(CONFIG.baseUrl + urlPath, {
     method,
     headers: h,
-    body: body !== undefined ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined,
+    body: body === undefined ? undefined : isForm ? body : typeof body === "string" ? body : JSON.stringify(body),
   });
   let text = "";
   try { text = await res.text(); } catch { }
@@ -180,6 +181,7 @@ async function runSuite() {
   let pedidoId = null;
   let userIdCreado = null;
   let userIdSignup = null;
+let imagenProductoUrl = null;
 
   // ============================ HEALTH ============================
   await test("Health: GET /health → 200 con JSON status", async () => {
@@ -377,6 +379,25 @@ async function runSuite() {
     assertEq(r.json?.stock, 3, "stock");
   });
 
+  await test("Productos: PATCH /{id}/imagen sin archivo → 400", async () => {
+    const r = await req("PATCH", `/api/productos/${productoId}/imagen`, { token: adminToken });
+    assertEq(st(r), 400, "status");
+    assert(r.json?.errors?.image || r.json?.title, "falta errors.image/title");
+  });
+
+  await test("Productos: PATCH /{id}/imagen con archivo → 200", async () => {
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    const fd = new FormData();
+    fd.append("image", new Blob([png], { type: "image/png" }), `auto_${ts}.png`);
+    const r = await req("PATCH", `/api/productos/${productoId}/imagen`, { body: fd, token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(r.json?.imagen, "falta campo imagen");
+    imagenProductoUrl = r.json.imagen;
+  });
+
   await test("Productos: DELETE /{id} → 204", async () => {
     const r = await req("DELETE", `/api/productos/${productoId}`, { token: adminToken });
     assertEq(st(r), 204, "status");
@@ -430,6 +451,17 @@ async function runSuite() {
     assertEq(r.json?.estado, "PENDIENTE", "estado");
   });
 
+  await test("Pedidos user: DELETE /me/{id} (pedido extra) → 204", async () => {
+    const post = await req("POST", "/api/pedidos/me", {
+      token: userToken,
+      body: { destinatario: dest("cancel"), items: [{ productoId: 1, cantidad: 1, precioUnitario: 99.99 }] },
+    });
+    assertEq(st(post), 201, "POST extra");
+    assert(post.json?.id, "falta id del pedido extra");
+    const r = await req("DELETE", `/api/pedidos/me/${post.json.id}`, { token: userToken });
+    assertEq(st(r), 204, "status");
+  });
+
   // ============================ PEDIDOS (ADMIN) ============================
   await test("Pedidos admin: GET / sin token → 401", async () => {
     const r = await req("GET", "/api/pedidos");
@@ -467,6 +499,15 @@ async function runSuite() {
     });
     assertEq(st(r), 200, "status");
     assertEq(r.json?.estado, "ENVIADO", "estado");
+  });
+
+  await test("Pedidos admin: PUT /{id} → 200 (actualizar completo)", async () => {
+    const r = await req("PUT", `/api/pedidos/${pedidoId}`, {
+      token: adminToken,
+      body: { estado: "ENTREGADO", direccionEnvio: "Actualizado completo desde automation" },
+    });
+    assertEq(st(r), 200, "status");
+    assertEq(r.json?.estado, "ENTREGADO", "estado");
   });
 
   await test("Pedidos admin: DELETE /{id} → 204", async () => {
@@ -517,6 +558,15 @@ async function runSuite() {
     assertEq(r.json?.email, `autoemp_upd_${ts}@test.com`, "email");
   });
 
+  await test("Users admin: PATCH /{id}/avatar → 200", async () => {
+    const r = await req("PATCH", `/api/users/${userIdCreado}/avatar`, {
+      token: adminToken,
+      body: { avatarUrl: "https://ejemplo.com/avatar.jpg" },
+    });
+    assertEq(st(r), 200, "status");
+    assertEq(r.json?.avatar, "https://ejemplo.com/avatar.jpg", "avatar");
+  });
+
   await test("Users admin: DELETE /{id} → 204", async () => {
     const r = await req("DELETE", `/api/users/${userIdCreado}`, { token: adminToken });
     assertEq(st(r), 204, "status");
@@ -545,10 +595,36 @@ async function runSuite() {
     assertEq(st(r), 401, "status");
   });
 
+  await test("Users perfil: PATCH /me/profile/avatar → 200", async () => {
+    const r = await req("PATCH", "/api/users/me/profile/avatar", {
+      token: userToken,
+      body: { avatarUrl: "https://ejemplo.com/mi-avatar.jpg" },
+    });
+    assertEq(st(r), 200, "status");
+    assertEq(r.json?.avatar, "https://ejemplo.com/mi-avatar.jpg", "avatar");
+  });
+
+  await test("Users perfil: DELETE /me/profile (cuenta dedicada) → 204", async () => {
+    const su = await req("POST", "/api/v1/auth/signup", {
+      body: { username: `del_${ts}`, email: `del_${ts}@test.com`, password: "Test1234" },
+    });
+    assertEq(st(su), 201, "signup dedicada");
+    assert(su.json?.token, "falta token de la cuenta dedicada");
+    const r = await req("DELETE", "/api/users/me/profile", { token: su.json.token });
+    assertEq(st(r), 204, "status");
+  });
+
   // ============================ STORAGE ============================
   await test("Storage: GET /storage/productos/no-existe.png → 404", async () => {
     const r = await req("GET", "/storage/productos/no-existe.png");
     assertEq(st(r), 404, "status");
+  });
+
+  await test("Storage: GET imagen subida → 200", async () => {
+    assert(imagenProductoUrl, "sin imagen subida (ejecuta el upload antes)");
+    const url = imagenProductoUrl.startsWith("http") ? imagenProductoUrl.replace(CONFIG.baseUrl, "") : imagenProductoUrl;
+    const r = await req("GET", url);
+    assertEq(st(r), 200, "status");
   });
 
   // ============================ GRAPHQL ============================

@@ -31,7 +31,7 @@ script:post-response {
   
   test("Users Avatar Update - Returns user with avatar", function () {
       const jsonData = res.getBody();
-      expect(jsonData.avatarUrl).to.not.be.empty;
+      expect(jsonData.avatar).to.not.be.empty;
   });
 }
 

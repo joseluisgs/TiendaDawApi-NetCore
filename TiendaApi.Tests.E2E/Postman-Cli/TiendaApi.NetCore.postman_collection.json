@@ -332,7 +332,27 @@
                   "pm.test('Signin User - Status 200 OK', function () { pm.response.to.have.status(200); });",
                   "pm.test('Signin User - Has token', function () { const jsonData = pm.response.json(); pm.expect(jsonData.token).to.not.be.empty; });",
                   "pm.test('Signin User - Role is USER', function () { const jsonData = pm.response.json(); pm.expect(jsonData.user.role).to.equal('USER'); });",
-                  "if (pm.response.code === 200) { const jsonData = pm.response.json(); pm.environment.set('userToken', jsonData.token); }"
+                  "if (pm.response.code === 200) { const jsonData = pm.response.json(); pm.environment.set('userToken', jsonData.token); }",
+                  "",
+                  "pm.test(\"Schema - AuthResponse\", function () {",
+                  "  pm.response.to.have.jsonSchema({",
+                  "    type: \"object\",",
+                  "    required: [\"token\", \"user\"],",
+                  "    properties: {",
+                  "      token: { type: \"string\" },",
+                  "      user: {",
+                  "        type: \"object\",",
+                  "        required: [\"id\", \"username\", \"email\", \"role\"],",
+                  "        properties: {",
+                  "          id: { type: \"integer\" },",
+                  "          username: { type: \"string\" },",
+                  "          email: { type: \"string\" },",
+                  "          role: { type: \"string\" }",
+                  "        }",
+                  "      }",
+                  "    }",
+                  "  });",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -502,7 +522,21 @@
                 "exec": [
                   "pm.test('Categorias GetAll - Status 200 OK', function () { pm.response.to.have.status(200); });",
                   "pm.test('Categorias GetAll - Response is array or paged', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('object'); pm.expect(jsonData.items).to.be.an('array'); });",
-                  "pm.test('Categorias GetAll - Has pagination', function () { const jsonData = pm.response.json(); pm.expect(jsonData.page).to.be.a('number'); });"
+                  "pm.test('Categorias GetAll - Has pagination', function () { const jsonData = pm.response.json(); pm.expect(jsonData.page).to.be.a('number'); });",
+                  "",
+                  "pm.test(\"Schema - Categoria\", function () {",
+                  "  const jsonData = pm.response.json();",
+                  "  const obj = jsonData.items ? jsonData.items[0] : jsonData;",
+                  "  pm.expect(obj).to.be.jsonSchema({",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"nombre\"],",
+                  "    properties: {",
+                  "      id: { type: \"integer\" },",
+                  "      nombre: { type: \"string\" },",
+                  "      descripcion: { type: [\"string\", \"null\"] }",
+                  "    }",
+                  "  });",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -582,7 +616,19 @@
               "script": {
                 "exec": [
                   "pm.test('Categorias GetById - Status 200 OK', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Categorias GetById - Returns categoria data', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('object'); pm.expect(jsonData.id).to.be.a('number'); });"
+                  "pm.test('Categorias GetById - Returns categoria data', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('object'); pm.expect(jsonData.id).to.be.a('number'); });",
+                  "",
+                  "pm.test(\"Schema - Categoria By Id\", function () {",
+                  "  pm.response.to.have.jsonSchema({",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"nombre\"],",
+                  "    properties: {",
+                  "      id: { type: \"integer\" },",
+                  "      nombre: { type: \"string\" },",
+                  "      descripcion: { type: [\"string\", \"null\"] }",
+                  "    }",
+                  "  });",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -1080,7 +1126,23 @@
               "script": {
                 "exec": [
                   "pm.test('Productos GetById - Status 200 OK', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Productos GetById - Returns producto data', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('object'); pm.expect(jsonData.id).to.be.a('number'); });"
+                  "pm.test('Productos GetById - Returns producto data', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('object'); pm.expect(jsonData.id).to.be.a('number'); });",
+                  "",
+                  "pm.test(\"Schema - Producto\", function () {",
+                  "  pm.response.to.have.jsonSchema({",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"nombre\", \"precio\", \"stock\", \"categoriaId\"],",
+                  "    properties: {",
+                  "      id: { type: \"integer\" },",
+                  "      nombre: { type: \"string\" },",
+                  "      descripcion: { type: \"string\" },",
+                  "      precio: { type: \"number\" },",
+                  "      stock: { type: \"integer\" },",
+                  "      imagen: { type: [\"string\", \"null\"] },",
+                  "      categoriaId: { type: \"integer\" }",
+                  "    }",
+                  "  });",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -1560,7 +1622,23 @@
                 "exec": [
                   "pm.test('Pedidos My Create - Status 201 Created', function () { pm.response.to.have.status(201); });",
                   "pm.test('Pedidos My Create - Returns created pedido', function () { const jsonData = pm.response.json(); pm.expect(jsonData.id).to.be.a('string'); pm.expect(jsonData.estado).to.equal('PENDIENTE'); });",
-                  "if (pm.response.code === 201) { const jsonData = pm.response.json(); pm.environment.set('pedidoId', jsonData.id); }"
+                  "if (pm.response.code === 201) { const jsonData = pm.response.json(); pm.environment.set('pedidoId', jsonData.id); }",
+                  "",
+                  "pm.test(\"Schema - Pedido\", function () {",
+                  "  pm.response.to.have.jsonSchema({",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"userId\", \"destinatario\", \"items\", \"total\", \"estado\", \"createdAt\"],",
+                  "    properties: {",
+                  "      id: { type: \"string\" },",
+                  "      userId: { type: \"integer\" },",
+                  "      destinatario: { type: \"object\" },",
+                  "      items: { type: \"array\" },",
+                  "      total: { type: \"number\" },",
+                  "      estado: { type: \"string\" },",
+                  "      createdAt: { type: \"string\" }",
+                  "    }",
+                  "  });",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -1966,7 +2044,23 @@
                 "exec": [
                   "pm.test('Pedidos My Create - Status 201 Created', function () { pm.response.to.have.status(201); });",
                   "pm.test('Pedidos My Create - Returns created pedido', function () { const jsonData = pm.response.json(); pm.expect(jsonData.id).to.be.a('string'); pm.expect(jsonData.estado).to.equal('PENDIENTE'); });",
-                  "if (pm.response.code === 201) { const jsonData = pm.response.json(); pm.environment.set('pedidoId', jsonData.id); }"
+                  "if (pm.response.code === 201) { const jsonData = pm.response.json(); pm.environment.set('pedidoId', jsonData.id); }",
+                  "",
+                  "pm.test(\"Schema - Pedido Admin\", function () {",
+                  "  pm.response.to.have.jsonSchema({",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"userId\", \"destinatario\", \"items\", \"total\", \"estado\", \"createdAt\"],",
+                  "    properties: {",
+                  "      id: { type: \"string\" },",
+                  "      userId: { type: \"integer\" },",
+                  "      destinatario: { type: \"object\" },",
+                  "      items: { type: \"array\" },",
+                  "      total: { type: \"number\" },",
+                  "      estado: { type: \"string\" },",
+                  "      createdAt: { type: \"string\" }",
+                  "    }",
+                  "  });",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -2414,7 +2508,21 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Users Avatar Update - Status 200 OK', function () { pm.response.to.have.status(200); });"
+                  "pm.test('Users Avatar Update - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test(\"Schema - User (Avatar)\", function () {",
+                  "  pm.response.to.have.jsonSchema({",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"username\", \"email\", \"role\"],",
+                  "    properties: {",
+                  "      id: { type: \"integer\" },",
+                  "      username: { type: \"string\" },",
+                  "      email: { type: \"string\" },",
+                  "      avatar: { type: [\"string\", \"null\"] },",
+                  "      role: { type: \"string\" }",
+                  "    }",
+                  "  });",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -2506,7 +2614,21 @@
                 "exec": [
                   "pm.test('Users Create - Status 201 Created', function () { pm.response.to.have.status(201); });",
                   "pm.test('Users Create - Returns created user', function () { const jsonData = pm.response.json(); pm.expect(jsonData.id).to.be.a('number'); });",
-                  "if (pm.response.code === 201) { const jsonData = pm.response.json(); pm.environment.set('testUserId', jsonData.id.toString()); }"
+                  "if (pm.response.code === 201) { const jsonData = pm.response.json(); pm.environment.set('testUserId', jsonData.id.toString()); }",
+                  "",
+                  "pm.test(\"Schema - User (Admin Create)\", function () {",
+                  "  pm.response.to.have.jsonSchema({",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"username\", \"email\", \"role\"],",
+                  "    properties: {",
+                  "      id: { type: \"integer\" },",
+                  "      username: { type: \"string\" },",
+                  "      email: { type: \"string\" },",
+                  "      avatar: { type: [\"string\", \"null\"] },",
+                  "      role: { type: \"string\" }",
+                  "    }",
+                  "  });",
+                  "});"
                 ],
                 "type": "text/javascript"
               }

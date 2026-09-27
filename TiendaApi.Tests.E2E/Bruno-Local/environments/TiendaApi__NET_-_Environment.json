@@ -7,6 +7,13 @@
       "type": "text",
       "enabled": true,
       "secret": false
+    }
+    ,{
+      "name": "baseWs",
+      "value": "ws://localhost:5031",
+      "type": "text",
+      "enabled": true,
+      "secret": false
     },
     {
       "name": "adminUsername",
