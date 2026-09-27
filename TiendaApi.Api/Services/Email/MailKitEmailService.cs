@@ -10,7 +10,7 @@ namespace TiendaApi.Api.Services.Email;
 /// <summary>
 /// Servicio de email usando MailKit.
 /// Envía emails a través de SMTP.
-/// Fase 6: el envío va envuelto en el pipeline de resiliencia de
+/// El envío va envuelto en el pipeline de resiliencia de
 /// <see cref="PollyConfig"/> (Retry 3 + CircuitBreaker + Timeout 10s).
 /// </summary>
 public class MailKitEmailService(
@@ -63,7 +63,7 @@ public class MailKitEmailService(
             }
             mimeMessage.Body = bodyBuilder.ToMessageBody();
 
-            // Fase 6 — Polly: cada intento tiene Timeout(10s); hasta 3 reintentos con
+            // Polly: cada intento tiene Timeout(10s); hasta 3 reintentos con
             // backoff 2^n; si hay 3 fallos seguidos el CircuitBreaker abre 30s y el
             // envío se omite (BrokenCircuitException) sin agotar los reintentos.
             await _emailPipeline.ExecuteAsync(async _ =>

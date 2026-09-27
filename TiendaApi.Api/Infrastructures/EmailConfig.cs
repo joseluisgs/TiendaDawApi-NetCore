@@ -29,7 +29,7 @@ public static class EmailConfig
         else
         {
             Log.Information("📧 Configurando servicio de email con MailKit (producción)...");
-            // Fase 6 — Pipeline de resiliencia (Polly) compartido por todos los
+            // Pipeline de resiliencia (Polly) compartido por todos los
             // MailKitEmailService: Retry 3 + CircuitBreaker(3, 30s) + Timeout 10s.
             services.AddSingleton(static sp =>
                 PollyConfig.BuildEmailPipeline(

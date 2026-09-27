@@ -5,7 +5,7 @@ using Polly.Retry;
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Fase 6 — Políticas de resiliencia con Polly v8 (ResiliencePipeline) sobre el
+/// Políticas de resiliencia con Polly v8 (ResiliencePipeline) sobre el
 /// único I/O externo real de la API: el envío de email por SMTP.
 ///
 /// Comparación con el reintento "a mano" de <c>PedidosService.cs</c>
