@@ -230,11 +230,11 @@ API_PORT=5000
 
 ## 🧪 Estrategia de Testing
 
-TiendaDawApi implementa una pirámide de pruebas profesional (estado actual):
+TiendaDawApi implementa una pirámide de pruebas profesional:
 
-- **Unit Tests**: Validación de servicios, repositorios y lógica de negocio — **1039 tests**
-- **Integration Tests**: Bases de datos reales con Testcontainers (PostgreSQL + MongoDB) — **161 tests**
-- **E2E**: colecciones **Newman** (95 assertions) y **Bruno** (108 tests) + **Automation** en Node (55 checks)
+- **Unit Tests**: Validación de servicios, repositorios y lógica de negocio — NUnit + Moq
+- **Integration Tests**: Bases de datos reales con Testcontainers (PostgreSQL + MongoDB)
+- **E2E**: Colecciones **Newman** (Postman) y **Bruno** + runner **Automation** en Node contra la API en `:5031`
 - **Coverage**: Indicadores de cobertura con Coverlet
 
 ### Ejecución de Tests
@@ -279,7 +279,7 @@ Pruebas end-to-end de la API. **Requisito:** la API levantada en `http://localho
 #### Automation (Node)
 
 ```bash
-# 55 checks de todos los controladores; sin instalar nada (Node 18+)
+# Chequea todos los controladores; sin instalar nada (Node 18+)
 # Si no hay API levantada, el runner la levanta y la para él solo
 node TiendaApi.Tests.E2E/Automation/test-runner.mjs
 
@@ -329,7 +329,7 @@ bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
   "4 - PEDIDOS (Usuario)" "5 - PEDIDOS (Admin)" "7 - STORAGE" \
   "10 - GRAPHQL CATEGORÍAS" "11 - GRAPHQL PRODUCTOS" "90 - TEARDOWN" \
   --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 3200
-# 64 requests / 108 tests. Fuera del run: "6 - USUARIOS" (vacía) y
+# Corrida sin fallos. Fuera del run: "6 - USUARIOS" (no incluida) y
 # "12 - WEBSOCKETS" (la CLI no soporta WS; la variable basews no existe en el env)
 ```
 
@@ -539,10 +539,20 @@ classDiagram
 
 ## 🗄️ Entidades por Base de Datos
 
+> **Sin separación CQRS en este proyecto**: commands y queries usan las mismas
+> bases de datos (PostgreSQL y MongoDB con escritura y lectura en el mismo sitio).
+> El read model separado (escrituras en PostgreSQL → queries en MongoDB `productos_read`)
+> vive en el repo avanzado
+> [TiendaDawApi-Cqrs-MediatR-NetCore](https://github.com/joseluisgs/TiendaDawApi-Cqrs-MediatR-NetCore).
+
+**Distribución por entidad:**
+- ✍️📖 **PostgreSQL** → User, Categoria, Producto (commands y queries)
+- ✍️📖 **MongoDB** → Pedido, PedidoItem, Destinatario, Direccion (commands y queries)
+- ⚡ **Redis** → caché de lectura (Cache-Aside)
+
 ### 🐘 PostgreSQL (Datos Maestros)
 ```mermaid
 erDiagram
-    USER ||--o{ PEDIDO : "referencia"
     CATEGORIA ||--o{ PRODUCTO : "tiene"
     
     USER {
@@ -615,10 +625,11 @@ erDiagram
 ```
 
 **Resumen:**
-| Base de Datos    | Entidades                                   | Tipo                 |
-| ---------------- | ------------------------------------------- | -------------------- |
-| **🐘 PostgreSQL** | User, Categoria, Producto                   | Relacional (FK)      |
-| **🍃 MongoDB**    | Pedido, PedidoItem, Destinatario, Direccion | Documentos embebidos |
+| Base de Datos    | Rol                                       | Entidades                                   | Tipo                 |
+| ---------------- | ----------------------------------------- | ------------------------------------------- | -------------------- |
+| **🐘 PostgreSQL** | Escritura y lectura (datos maestros)      | User, Categoria, Producto                   | Relacional (FK)      |
+| **🍃 MongoDB**    | Escritura y lectura (pedidos embebidos)   | Pedido, PedidoItem, Destinatario, Direccion | Documentos embebidos |
+| **🔴 Redis**      | Caché de lectura (Cache-Aside)            | Sessions, consultas frecuentes              | Key-value            |
 
 
 
@@ -675,7 +686,7 @@ TiendaDawApi-NetCore/
 │   └── coverage/                     # Reporte de cobertura de código
 │
 ├── TiendaApi.Tests.E2E/              # Tests E2E (Postman + Bruno + Automation)
-│   ├── Automation/                   # Runner Node sin dependencias (test-runner.mjs, 55 checks)
+│   ├── Automation/                   # Runner Node sin dependencias (test-runner.mjs)
 │   ├── Postman-Cli/                  # Colección Postman + compose Newman
 │   │   ├── TiendaApi.NetCore.postman_collection.json
 │   │   ├── TiendaApi.NetCore.postman_environment.json
@@ -795,9 +806,9 @@ graph TB
     end
 
     subgraph "💾 Data Stores"
-        PG[(🐘 PostgreSQL<br/>Users, Categorias,<br/>Productos)]
-        MONGO_DB[(🍃 MongoDB<br/>Pedidos, Items<br/>Embebidos)]
-        REDIS_DB[(🔴 Redis<br/>Cache, Sessions)]
+        PG[(🐘 PostgreSQL<br/>Users, Categorias,<br/>Productos<br/>commands y queries)]
+        MONGO_DB[(🍃 MongoDB<br/>Pedidos, Items<br/>Embebidos<br/>commands y queries)]
+        REDIS_DB[(🔴 Redis<br/>Caché de lectura<br/>Cache-Aside)]
     end
 
     %% Flujo de datos
@@ -885,7 +896,7 @@ graph TB
 
     subgraph "🔴 Infrastructure"
         DA["💾 Data Access<br/>Repositories, EF Core<br/>MongoDB, Redis"]
-        DS["🗄️ Data Stores<br/>PostgreSQL, MongoDB<br/>Redis Cache"]
+        DS["🗄️ Data Stores<br/>PostgreSQL y MongoDB (commands y queries)<br/>Redis (caché de lectura)"]
         SEC["🔐 Security<br/>JWT, BCrypt, Claims<br/>Roles, Policies"]
         EXT["📧 External Services<br/>SMTP, File System<br/>HTTP Clients, Background Jobs"]
     end
@@ -1021,9 +1032,9 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 
 | Base de Datos    | Uso                                  | Entidades                                   | Tecnologías                                         |
 | ---------------- | ------------------------------------ | ------------------------------------------- | --------------------------------------------------- |
-| **🐘 PostgreSQL** | Datos maestros relacionales          | User, Categoria, Producto                   | EF Core SQL (System.ComponentModel.DataAnnotations) |
-| **🍃 MongoDB**    | Documentos transaccionales embebidos | Pedido, PedidoItem, Destinatario, Direccion | EF Core MongoDB (Con documentos anidados)           |
-| **🔴 Redis**      | Cache distribuido                    | Sessions, consultas frecuentes              | StackExchange.Redis (Cache-Aside)                   |
+| **🐘 PostgreSQL** | Escritura y lectura (datos maestros) | User, Categoria, Producto                   | EF Core SQL (System.ComponentModel.DataAnnotations) |
+| **🍃 MongoDB**    | Escritura y lectura (pedidos)        | Pedido, PedidoItem, Destinatario, Direccion | EF Core MongoDB (Con documentos anidados)           |
+| **🔴 Redis**      | Caché de lectura distribuida         | Sessions, consultas frecuentes              | StackExchange.Redis (Cache-Aside)                   |
 
 **Patrón de datos:**
 - PostgreSQL: Entidades normalizadas con Foreign Keys
