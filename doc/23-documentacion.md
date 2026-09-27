@@ -8,7 +8,9 @@
   - [23.3. Anotaciones Swagger](#233-anotaciones-swagger)
   - [23.4. Versionado de APIs](#234-versionado-de-apis)
   - [23.5. OpenAPI Avanzado](#235-openapi-avanzado)
-  - [23.6. Resumen y Buenas Prácticas](#236-resumen-y-buenas-prácticas)
+  - [23.6. Documentación XML en el Código Fuente](#236-documentación-xml-en-el-código-fuente)
+  - [23.7. Integración de Documentación XML con Swagger (IncludeXmlComments)](#237-integración-de-documentación-xml-con-swagger-includexmlcomments)
+  - [23.8. Resumen y Buenas Prácticas](#238-resumen-y-buenas-prácticas)
 
 ---
 
@@ -619,7 +621,94 @@ public class ErrorDetail
 
 ---
 
-## 23.6. Resumen y Buenas Prácticas
+## 23.6. Documentación XML en el Código Fuente
+
+C# permite añadir comentarios XML directamente en el código fuente usando las etiquetas `///`. Estos comentarios se compilan en un fichero `.xml` que herramientas como Swagger pueden leer para generar documentación enriquecida de la API.
+
+### Etiquetas principales
+
+| Etiqueta | Uso | Ejemplo |
+|----------|-----|---------|
+| `/// <summary>` | Descripción del elemento | Resumen de qué hace un método |
+| `/// <param>` | Descripción de un parámetro | Qué representa cada argumento |
+| `/// <returns>` | Descripción del valor de retorno | Qué devuelve el método |
+| `/// <example>` | Ejemplo de uso | Código de ejemplo para el consumidor |
+
+### Ejemplo práctico
+
+```csharp
+/// <summary>
+/// Obtiene un producto por su identificador único.
+/// </summary>
+/// <param name="id">El identificador numérico del producto.</param>
+/// <returns>El producto encontrado con sus datos completos.</returns>
+/// <example>
+/// GET /api/productos/1
+/// Response: { "id": 1, "nombre": "Laptop", "precio": 999.99 }
+/// </example>
+[HttpGet("{id:long}")]
+public async Task<IActionResult> GetById(long id)
+{
+    // ...
+}
+```
+
+### Habilitar la generación del fichero XML
+
+Para que el compilador genere el fichero `.xml`, el proyecto debe incluir la propiedad `<GenerateDocumentationFile>true</GenerateDocumentationFile>` en su `.csproj`:
+
+```xml
+<PropertyGroup>
+  <TargetFramework>net8.0</TargetFramework>
+  <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  <NoWarn>$(NoWarn);CS1591</NoWarn>
+</PropertyGroup>
+```
+
+Las advertencias **CS1591** (miembro público sin documentación XML) y **CS1570** (sintaxis XML incorrecta) ayudan a mantener la documentación completa y correcta. Se pueden suprimir con `<NoWarn>` si se prefiere no forzar documentación en todos los miembros públicos.
+
+---
+
+## 23.7. Integración de Documentación XML con Swagger (IncludeXmlComments)
+
+Swashbuckle (el generador de documentación OpenAPI) puede leer el fichero `.xml` generado y incluir los summaries, parámetros y ejemplos en la documentación de la API. Para ello, se configura con `options.IncludeXmlComments(path)` dentro del método `AddSwaggerGen()`.
+
+### Configuración
+
+```csharp
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "TiendaApi",
+        Version = "v1"
+    });
+
+    // Incluir documentación XML en Swagger
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+});
+```
+
+### Qué aparece en Swagger UI
+
+Una vez configurado, cada endpoint en Swagger UI muestra:
+
+- **Summary**: el contenido del `<summary>` del comentario XML
+- **Description**: la descripción detallada del método
+- **Parameters**: las descripciones de cada `<param>`
+- **Response** documentada: el contenido de `<returns>`
+- **Ejemplos**: las etiquetas `<example>` aparecen como ejemplos en la UI
+
+Esto permite que los consumidores de la API vean documentación completa directamente en Swagger sin necesidad de consultar código fuente adicional.
+
+---
+
+## 23.8. Resumen y Buenas Prácticas
 
 ### Documentación
 

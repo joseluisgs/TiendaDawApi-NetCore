@@ -11,7 +11,8 @@
   - [14.6. Cuándo Usar Cada Enfoque](#146-cuándo-usar-cada-enfoque)
   - [14.7. Patrón Híbrido](#147-patrón-híbrido)
   - [14.8. Errores Comunes](#148-errores-comunes)
-  - [14.9. Resumen](#149-resumen)
+  - [14.9. Configuración de AutoMapper con el Paquete Core](#149-configuración-de-automapper-con-el-paquete-core)
+  - [14.10. Resumen](#1410-resumen)
 
 ---
 
@@ -521,7 +522,55 @@ public static string GetCategoriaNombre(this Producto producto)
 
 ---
 
-## 14.9. Resumen
+## 14.9. Configuración de AutoMapper con el Paquete Core
+
+AutoMapper se puede configurar de dos formas principales. Conocer ambas es importante porque una de ellas está obsoleta.
+
+### Opción 1: Paquete de extensión (obsoleta)
+
+La forma original usaba el paquete `AutoMapper.Extensions.Microsoft.DependencyInjection`:
+
+```bash
+dotnet add package AutoMapper.Extensions.Microsoft.DependencyInjection
+```
+
+```csharp
+// Configuración con el paquete de extensión (OBSOLETO)
+builder.Services.AddAutoMapper(typeof(MappingProfile), typeof(PedidoProfile));
+```
+
+Este paquete está **obsoleto** desde AutoMapper 12.x. Aunque aún funciona, ya no recibe actualizaciones y puede causar conflictos con versiones futuras de .NET.
+
+### Opción 2: Paquete core (recomendada)
+
+El paquete `AutoMapper` a partir de la versión 12.x ya incluye la integración con DI a través de `Microsoft.Extensions.Options`. No necesita paquetes adicionales:
+
+```bash
+dotnet add package AutoMapper
+```
+
+```csharp
+// Configuración con el paquete core (RECOMENDADA)
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(typeof(MappingProfile).Assembly);
+});
+```
+
+La configuración lambda permite un control más fino del mapeo: se puede acceder al `IMapperConfigurationExpression` para añadir filtros, configurar convenciones, o registrar perfiles específicos.
+
+### Comparación
+
+| Aspecto | Paquete de extensión (obsoleto) | Paquete core (recomendada) |
+|---------|--------------------------------|---------------------------|
+| Paquete adicional | `AutoMapper.Extensions.Microsoft.DependencyInjection` | Ninguno (viene en `AutoMapper`) |
+| Sintaxis | `AddAutoMapper(assemblies)` | `AddAutoMapper(cfg => cfg.AddMaps(...))` |
+| Mantenimiento | Obsoleto, sin actualizaciones | Activo, soportado |
+| Control | Limitado | Configuración lambda completa |
+
+---
+
+## 14.10. Resumen
 
 ### Arquitectura de Mapeo
 

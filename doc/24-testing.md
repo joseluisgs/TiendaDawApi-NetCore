@@ -15,7 +15,8 @@
   - [24.10. Moq - Creando Mocks](#2410-moq---creando-mocks)
   - [24.11. Tests de Controladores](#2411-tests-de-controladores)
   - [24.12. Resumen y Buenas Prácticas](#2412-resumen-y-buenas-prácticas)
-  - [24.13. Testing E2E con Postman y Newman](#2413-testing-e2e-con-postman-y-newman)
+  - [24.13. Scripts de Verificación Automatizada](#2413-scripts-de-verificación-automatizada)
+  - [24.14. Testing E2E con Postman y Newman](#2414-testing-e2e-con-postman-y-newman)
   - [24.14. Testing E2E con Bruno CLI](#2414-testing-e2e-con-bruno-cli)
   - [24.15. Automation E2E con Node (test-runner.mjs)](#2415-automation-e2e-con-node-test-runnermjs)
 
@@ -1662,7 +1663,46 @@ Con testing dominado, tienes todas las herramientas para crear APIs robustas en 
 
 ---
 
-## 24.13. Testing E2E con Postman y Newman
+## 24.13. Scripts de Verificación Automatizada
+
+Los scripts automatizados son herramientas que verifican automáticamente la calidad del código ejecutándose como parte del pipeline de verificación, junto con la compilación y los tests.
+
+### check-style — Verificación de formato de código
+
+Este script verifica que los ficheros cumplan las reglas de formato definidas en `.editorconfig`: charset (UTF-8), newline final, encoding correcto, y otras convenciones de estilo. Se ejecuta tras cada cambio para detectar problemas de formato antes de commit.
+
+```bash
+# Ejecutar verificación de estilo
+powershell -ExecutionPolicy Bypass -File scripts\check-style.ps1
+```
+
+Si el script encuentra algún fichero que no cumple las reglas, indica cuáles son los problemas y la ejecución falla, lo que obliga a corregir el formato antes de continuar.
+
+### check-audit — Auditoría de seguridad de paquetes
+
+Este script ejecuta `dotnet list package --vulnerable` para detectar paquetes NuGet con vulnerabilidades conocidas (CVE). Si encuentra vulnerabilidades clasificadas como **Críticas** o **Altas**, la ejecución falla automáticamente.
+
+```bash
+# Ejecutar auditoría de vulnerabilidades
+node scripts/check-audit.mjs
+```
+
+Esto actúa como una barrera de seguridad automatizada: impide que código con dependencias vulnerables llegue al repositorio.
+
+### Pipeline de verificación
+
+Ambos scripts se ejecutan como parte del flujo de verificación del proyecto:
+
+| Paso | Qué verifica |
+|------|-------------|
+| `dotnet build` | Compilación correcta del código |
+| `dotnet test` | Tests unitarios pasan |
+| `check-style.ps1` | Formato y encoding de ficheros |
+| `check-audit.mjs` | Ausencia de vulnerabilidades en paquetes |
+
+---
+
+## 24.14. Testing E2E con Postman y Newman
 
 Los tests **End-to-End (E2E)** verifican que la API completa funciona correctamente desde la perspectiva del cliente, incluyendo autenticación, validación y flujos de negocio completos.
 
