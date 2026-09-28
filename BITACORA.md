@@ -25,6 +25,9 @@
 | 12 · README | `afe3862` | README: 5 errores, comandos E2E reales, estructura, estado actual | ✅ |
 | Mantenimiento · EF-272 | `2f62302` | Reactivación de los 32 tests `[Ignore]` de Pedidos (EF-272 fixeado en MongoDB.EF 10.0.0) — 0 omitidos | ✅ |
 | Mantenimiento · Paridad E2E | `f483de6` | Colecciones E2E alineadas entre repos: Newman 103 (8 JSON-Schema), Automation 63 (+8), Bruno-Cli 77/129, check-parity | ✅ |
+| Mantenimiento · Tests fixture + forma de errores | `dece32b` | `AssemblyContainerFixture` (2 arranques/suite) + `ErrorShapeApiTests` (10 tests): suite 1241 → 1251 | ✅ |
+| Mantenimiento · Plan 24 mejoras (P1-P8) | `7a4a205` → `a33c351` | Pipeline, dependencias, XML/Swagger, runtime, rate limiting nativo, contrato/Docker, tests y didáctica en ambos repos | ✅ |
+| Mantenimiento · Serialización source-gen (15) | `e7b03df` | `AppJsonContext` conectada en 7 puntos con fallback a reflexión + sección didáctica | ✅ |
 
 ---
 
@@ -489,12 +492,34 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 
 ---
 
-## Mantenimiento — Tests: fixture compartido y forma de errores ✅
+## Mantenimiento — Tests: fixture compartido y forma de errores (`dece32b`) ✅
 
 - **Fixture por assembly:** `AssemblyContainerFixture` (nuevo `[SetUpFixture]` en `Integration/TestContainers`) arranca **1 PostgreSQL + 1 MongoDB** por suite; `CreatePostgresDatabaseAsync(dbName)` crea la BD con nombre por clase y `DropPostgresDatabaseAsync` la elimina con `DROP DATABASE ... WITH (FORCE)`; MongoDB usa nombre único + `DropDatabase`. Los contenedores se detienen al terminar el assembly.
 - **Clases migradas (10):** 9 con PG+Mongo (los `*ContainersIntegrationTests` y los `*ServiceIntegrationTests`) y `ProductoConcurrencyIntegrationTests` solo PG. BDs por clase: `it_categoria_containers`, `it_categoria_service`, `it_pedidos_containers`, `it_pedidos_native_service`, `it_pedidos_service`, `it_producto_containers`, `it_producto_service`, `it_producto_concurrency`, `it_usuario_containers`, `it_usuario_service`. Arranques de contenedores por suite: **19 → 2**.
 - **Forma de errores:** nuevo `ErrorShapeApiTests` (10 tests, `WebApplicationFactory<Program>` sobre los contenedores compartidos + `public partial class Program`): `/version` (200 con metadatos), `/health`, `/health/live` y `/health/ready` (200 con `status: OK` y checks `postgresql`/`mongodb`), 400 con problem details de `[ApiController]`, 401 de challenge JWT (`WWW-Authenticate: Bearer`), 401 de dominio (`{message}`), 404 y 409 de dominio (`{message}`), y 429 de rate limiting (`errorType: RateLimitError`, `limit: 10`, `window: 1m`, `Retry-After` y `RateLimit-Limit/Remaining/Reset`) usando `X-Forwarded-For` propio para aislar el contador. Sin cambios en las colecciones E2E.
 - **Medición antes/después:** suite de integración **193 → 203** tests y **88,3 s → 23 s**; dos pasadas sin fallos; suite completa **1241 → 1251**; build 0/0; `check-style` · `check-parity` · `check-audit` · `check-docs` **TODO OK**.
+
+---
+
+## Mantenimiento — Plan 24 mejoras (P1-P9) ✅
+
+> **Fecha:** 27-28/09/2026 · **Objetivo:** aplicar las 24 mejoras del `PLAN-MEJORAS-24.md` (código + didácticas) en ambos repos, con build y suites tras cada fase y commit por fase y por repo bajo permiso expreso.
+
+| Fase | Mejoras | Commits (este repo) |
+| --- | --- | --- |
+| P1 — Fundamentos | 1-5: `.editorconfig` + `check-style`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, locales fuera | `7a4a205` |
+| P2 — Dependencias | 6-9: fuera `NU1605`/`NU1903`, sin GraphiQL, AutoMapper arreglado, `check-audit.mjs` | `5db8fa2` |
+| P3 — XML docs + Swagger | 24,18: CS1591/CS1570/CS1587 al día, `IncludeXmlComments`, ejemplos XML | `fcf8745` (+`cca7d04`) |
+| Docs P1-P4 | Secciones didácticas en `doc/` de los conceptos implementados | `1ee872c` |
+| P4 — Runtime aditivo | 10,11,14,16 y arranque de 15: `TimeProvider`, compresión, `/health/ready\|live`, `AppJsonContext`, `GET /version` | `94aa2ce` |
+| P5 — Rate limiting | 13,12: middleware nativo con las 4 reglas, headers `RateLimit-*`, cuerpo 429 JSON | `f219cec` |
+| P6 — Contrato + Docker | 17,21: `check-openapi.mjs`, `.dockerignore` ×2, `HEALTHCHECK` + `curl` | `a5e7dce` |
+| P7 — Tests | 19,20: fixtures de contenedor compartidos + `ErrorShapeApiTests` | `dece32b` |
+| P8 — Didáctico | 22,23: `doc/adr/` (plantilla + 10 ADRs), `doc/http/` (7 ficheros), filas README | `a33c351` |
+| P9 — Final | 15 completada: `AppJsonContext` conectada en 7 puntos con fallback + sección `doc/27.7` | `e7b03df` |
+
+- **Verificación final (28/09/2026):** build `0/0` ×2 · suites **1251/1251** (origen) y **1088/1088** (CQRS) ×2, sin omitidos · **Automation E2E 63/63 ×2 por repo con BD nueva antes de cada corrida** (en P9 se ejecutó solo Automation por decisión 28/09; Newman y Bruno corren cada uno con BD propia — al compartir, los datos creados por Newman colisionan con los de Bruno) · `check-docs` · `check-parity` · `check-openapi` (22 rutas · 39 operaciones · 0 diferencias) · `check-style` · `check-audit` → **TODO OK** en ambos repos.
+- **Réplica CQRS:** mismos mensajes de commit en la variante CQRS con los hashes de su propia rama (detalle en su `BITACORA.md`).
 
 ---
 

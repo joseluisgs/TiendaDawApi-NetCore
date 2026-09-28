@@ -48,6 +48,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
       - [Automation (Node)](#automation-node)
       - [Postman (Newman)](#postman-newman)
       - [Bruno (CLI)](#bruno-cli)
+    - [Verificación de consistencia (scripts)](#verificación-de-consistencia-scripts)
   - [📚 Documentación](#-documentación)
     - [Fundamentos y Configuración](#fundamentos-y-configuración)
     - [API y Controllers](#api-y-controllers)
@@ -341,6 +342,20 @@ bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
 - `report.html` - Informe visual
 - `report.json` - Datos estructurados
 - `junit-report.xml` - Para CI/CD
+
+### Verificación de consistencia (scripts)
+
+Comprobaciones automáticas que sostienen la calidad del repo (Node 18+; `check-style` vía PowerShell):
+
+| Script | Comando | Qué valida |
+| --- | --- | --- |
+| `check-docs.mjs` | `node scripts/check-docs.mjs` | Índice ↔ secciones de la bitácora, hashes contra `git log`, fases completadas y TOC de este README |
+| `check-parity.mjs` | `node scripts/check-parity.mjs` | Rutas de API y colecciones E2E idénticas respecto a la variante CQRS |
+| `check-openapi.mjs` | `node scripts/check-openapi.mjs` | Contrato `swagger.json` idéntico entre ambos repos (arranca las dos APIs) |
+| `check-style.ps1` | `powershell -ExecutionPolicy Bypass -File scripts\check-style.ps1` | Formato con `dotnet format` (whitespace + style) |
+| `check-audit.mjs` | `node scripts/check-audit.mjs` | Sin vulnerabilidades NuGet Critical/High (API + cliente) |
+
+Las corridas E2E se ejecutan con **BD nueva antes de cada herramienta** (`reset-seeds*.ps1`): cada colección parte de semillas frescas y así no hereda el estado de la anterior.
 
 ## 📚 Documentación
 
