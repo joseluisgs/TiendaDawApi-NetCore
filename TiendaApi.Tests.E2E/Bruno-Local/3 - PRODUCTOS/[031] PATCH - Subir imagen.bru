@@ -25,7 +25,7 @@ script:post-response {
   
   test("Productos UploadImage - Returns producto with imagenUrl", function () {
       const jsonData = res.getBody();
-      expect(jsonData.imagenUrl).to.not.be.empty;
+      expect(jsonData.imagen).to.not.be.empty;
   });
 }
 

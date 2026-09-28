@@ -29,7 +29,17 @@ public record Notificacion<T>
     public string CreatedAt { get; init; } = string.Empty;
 
     /// <summary>Tipos de operación soportados.</summary>
-    public enum Tipo { CREATE, UPDATE, DELETE }
+    public enum Tipo
+    {
+        /// <summary>Creación de una entidad nueva.</summary>
+        CREATE,
+
+        /// <summary>Modificación de una entidad existente.</summary>
+        UPDATE,
+
+        /// <summary>Eliminación de una entidad.</summary>
+        DELETE
+    }
 
     /// <summary>Crea una nueva notificación.</summary>
     /// <param name="entity">Nombre de la entidad.</param>

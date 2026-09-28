@@ -78,7 +78,7 @@ public class MongoDbSeederTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("ya contiene")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("ya contiene")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -108,7 +108,7 @@ public class MongoDbSeederTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Error")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -138,7 +138,7 @@ public class MongoDbSeederTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Sembrando")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Sembrando")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -147,7 +147,7 @@ public class MongoDbSeederTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Insertados")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Insertados")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);

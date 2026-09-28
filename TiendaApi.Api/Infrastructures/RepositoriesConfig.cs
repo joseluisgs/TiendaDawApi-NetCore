@@ -2,8 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using TiendaApi.Api.Repositories.Categorias;
-using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Repositories.Pedidos;
+using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Repositories.Usuarios;
 
 namespace TiendaApi.Api.Infrastructures;

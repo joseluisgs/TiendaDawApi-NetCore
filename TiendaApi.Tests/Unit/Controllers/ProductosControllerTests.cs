@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Api.Controllers;
-using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Services.Productos;
 
@@ -23,7 +23,10 @@ public class ProductosControllerTests
     {
         _mockService = new Mock<IProductoService>();
         var mockLogger = new Mock<ILogger<ProductosController>>();
-        _controller = new ProductosController(_mockService.Object, mockLogger.Object);
+        _controller = new ProductosController(_mockService.Object, mockLogger.Object)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
     }
 
     #region GetAll Tests
@@ -564,8 +567,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
-        objectResult.StatusCode.Should().Be(500);
+        result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]

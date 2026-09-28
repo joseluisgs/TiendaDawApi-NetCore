@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,7 @@ using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.GraphQL.Publishers;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
@@ -18,7 +20,6 @@ using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Services.Storage;
 using TiendaApi.Api.Validators.Categorias;
 using TiendaApi.Api.Validators.Productos;
-using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 
@@ -68,7 +69,8 @@ public class ErrorHandlingComparisonTests
             _mockCategoriaLogger.Object,
             _mockCategoriaValidator.Object,
             mockCategoriaCacheService.Object,
-            mockCategoriaConfiguration.Object
+            mockCategoriaConfiguration.Object,
+            Mock.Of<IOutputCacheStore>()
         );
 
         var mockWebSocketHandler = new Mock<ProductosWebSocketHandler>(MockBehavior.Loose, Mock.Of<ILogger<ProductosWebSocketHandler>>());
@@ -90,7 +92,8 @@ public class ErrorHandlingComparisonTests
             mockConfiguration.Object,
             _mockProductoValidator.Object,
             mockStorageService.Object,
-            mockEventPublisher.Object
+            mockEventPublisher.Object,
+            Mock.Of<IOutputCacheStore>()
         );
     }
 
@@ -256,7 +259,8 @@ public class ErrorHandlingComparisonTests
             mockConfiguration.Object,
             _mockProductoValidator.Object,
             mockStorageService.Object,
-            mockEventPublisher.Object
+            mockEventPublisher.Object,
+            Mock.Of<IOutputCacheStore>()
         );
 
         // Act

@@ -2,6 +2,7 @@ using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,7 @@ using TiendaApi.Api.Errors;
 using TiendaApi.Api.Errors.Productos;
 using TiendaApi.Api.GraphQL.Publishers;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
@@ -18,7 +20,6 @@ using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Services.Storage;
 using TiendaApi.Api.Validators.Productos;
-using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Productos;
 
@@ -74,7 +75,8 @@ public class ProductoServiceTests
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
-            _mockEventPublisher.Object
+            _mockEventPublisher.Object,
+            Mock.Of<IOutputCacheStore>()
         );
     }
 
@@ -289,7 +291,8 @@ public class ProductoServiceTests
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
-            _mockEventPublisher.Object
+            _mockEventPublisher.Object,
+            Mock.Of<IOutputCacheStore>()
         );
     }
 

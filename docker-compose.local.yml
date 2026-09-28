@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: tienda-local-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
@@ -15,12 +15,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
     networks:
       - tienda-local-network
 
   mongodb:
-    image: mongo:7
+    image: mongo:7.0
     container_name: tienda-local-mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
@@ -35,6 +36,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
     networks:
       - tienda-local-network
@@ -46,7 +48,8 @@ services:
       - "${ADMINER_PORT:-8080}:8080"
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - tienda-local-network
 
@@ -65,7 +68,8 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-admin}
     restart: unless-stopped
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - tienda-local-network
 

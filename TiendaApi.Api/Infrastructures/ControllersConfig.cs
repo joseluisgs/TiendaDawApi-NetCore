@@ -1,6 +1,6 @@
+using System.Text.Json.Serialization.Metadata;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -17,10 +17,14 @@ public static class ControllersConfig
     public static IMvcBuilder AddMvcControllers(this IServiceCollection services)
     {
         Log.Information("📦 Configurando controladores MVC...");
-        return services.AddControllers(options => {
+        return services.AddControllers(options =>
+        {
             options.RespectBrowserAcceptHeader = true;
             options.ReturnHttpNotAcceptable = true;
-        });
+        })
+        // Serialización con source-gen (AppJsonContext) + fallback a reflexión
+        .AddJsonOptions(options => options.JsonSerializerOptions.TypeInfoResolver =
+            JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver()));
         //.AddXmlSerializerFormatters()
         //.AddXmlDataContractSerializerFormatters();
     }

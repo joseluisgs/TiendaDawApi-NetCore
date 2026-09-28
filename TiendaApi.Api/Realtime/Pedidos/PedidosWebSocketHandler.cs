@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TiendaApi.Api.Realtime.Common;
@@ -44,6 +45,13 @@ public class PedidosWebSocketHandler
     private readonly ICacheService _cacheService;
     private readonly TimeSpan _roleCacheTTL;
 
+    /// <summary>
+    /// Crea una instancia del handler de WebSocket de pedidos.
+    /// </summary>
+    /// <param name="logger">Logger de la instancia.</param>
+    /// <param name="tokenExtractor">Extractor de datos del token JWT.</param>
+    /// <param name="cacheService">Servicio de caché para roles.</param>
+    /// <param name="configuration">Configuración de la aplicación.</param>
     public PedidosWebSocketHandler(
         ILogger<PedidosWebSocketHandler> logger,
         IJwtTokenExtractor tokenExtractor,
@@ -55,7 +63,12 @@ public class PedidosWebSocketHandler
         _cacheService = cacheService;
         var ttlMinutes = configuration.GetValue<int>("WebSocket:RoleCacheTTLMinutes", 5);
         _roleCacheTTL = TimeSpan.FromMinutes(ttlMinutes);
-        _jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            // Source-gen (AppJsonContext) + fallback a reflexión
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
+        };
         _logger.LogInformation("PedidosWebSocketHandler inicializado con TTL: {TTL} minutos", ttlMinutes);
     }
 
@@ -173,7 +186,7 @@ public class PedidosWebSocketHandler
     {
         var cacheKey = $"{ADMIN_CACHE_KEY_PREFIX}{userId}";
         var cachedValue = await _cacheService.GetAsync<bool?>(cacheKey);
-        
+
         if (cachedValue.HasValue)
             return cachedValue.Value;
 
@@ -220,10 +233,10 @@ public class PedidosWebSocketHandler
             ["estado"] = notificacion.Estado,
             ["timestamp"] = DateTime.UtcNow
         };
-        
+
         if (notificacion.Data != null)
             wrapper["data"] = notificacion.Data;
-        
+
         return wrapper;
     }
 

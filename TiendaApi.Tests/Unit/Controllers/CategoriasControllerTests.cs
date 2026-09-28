@@ -21,7 +21,10 @@ public class CategoriasControllerTests
     {
         _mockService = new Mock<ICategoriaService>();
         var mockLogger = new Mock<ILogger<CategoriasController>>();
-        _controller = new CategoriasController(_mockService.Object, mockLogger.Object);
+        _controller = new CategoriasController(_mockService.Object, mockLogger.Object)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
     }
 
     #region GetAll Tests
@@ -390,7 +393,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task Delete_CategoriaConProductos_Retorna500()
+    public async Task Delete_CategoriaConProductos_RetornaBadRequest()
     {
         var error = new BusinessRuleError("No se puede eliminar una categoría con productos asociados");
 
@@ -399,8 +402,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Delete(1);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
-        objectResult.StatusCode.Should().Be(500);
+        result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     #endregion

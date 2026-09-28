@@ -1,6 +1,6 @@
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace TiendaApi.Api.Services.Email;
 
@@ -11,6 +11,10 @@ public class MemoryEmailService : IEmailService
 {
     private readonly ILogger<MemoryEmailService> _logger;
 
+    /// <summary>
+    /// Crea una instancia del servicio de emails en memoria.
+    /// </summary>
+    /// <param name="logger">Logger de la instancia.</param>
     public MemoryEmailService(ILogger<MemoryEmailService> logger)
     {
         _logger = logger;

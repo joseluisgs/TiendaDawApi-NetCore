@@ -128,7 +128,7 @@ public class MailKitEmailServiceEdgeTests
         var emailMessage = new EmailMessage
         {
             To = "test@example.com",
-            Subject = "Asunto con caracteres Unicode: áéíóú ñü 中文",
+            Subject = "Asunto con caracteres Unicode: áéíóú ñü 🎉",
             Body = "Test Body",
             IsHtml = false
         };
@@ -137,7 +137,7 @@ public class MailKitEmailServiceEdgeTests
 
         var canRead = _emailChannel.Reader.TryRead(out var message);
         canRead.Should().BeTrue();
-        message!.Subject.Should().Contain("中文");
+        message!.Subject.Should().Contain("🎉");
     }
 
     [Test]

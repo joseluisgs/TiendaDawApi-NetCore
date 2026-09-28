@@ -14,7 +14,8 @@
   - [22.9. Pruebas Unitarias](#229-pruebas-unitarias)
   - [22.10. Beneficios y Consideraciones](#2210-beneficios-y-consideraciones)
   - [22.11. Comparación con Otras Soluciones](#2211-comparación-con-otras-soluciones)
-  - [22.12. Resumen](#2212-resumen)
+  - [22.12. Fire & Forget Endurecido (Task.Run + try/catch)](#2212-fire--forget-endurecido-taskrun--trycatch)
+  - [22.13. Resumen](#2213-resumen)
 
 ---
 
@@ -620,7 +621,96 @@ Para este proyecto usamos **BackgroundService nativo** por su simplicidad y falt
 
 ---
 
-## 22.12. Resumen
+## 22.12. Fire & Forget Endurecido (Task.Run + try/catch)
+
+No todo efecto secundario merece un `BackgroundService` con canal y cola (22.4). Para operaciones **baratas y no críticas** — escribir en caché, firmar un ETag, avisar por WebSocket — el proyecto usa **fire & forget** directo desde el propio request:
+
+```csharp
+// Patrón general: se lanza y NO se espera (el caller no puede reintentarlo,
+// y la respuesta HTTP no debe esperar a un caché/Redis/SMTP).
+_ = Task.Run(async () =>
+{
+    try
+    {
+        await cacheService.SetAsync(key, value, _cacheTTL);
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Error adding to cache: Key={Key}", key);
+    }
+});
+```
+
+### Ejemplos reales del proyecto
+
+```csharp
+// ProductoService.cs — InvalidarCacheProducto (tras Create/Update/Delete)
+private void InvalidarCacheProducto(params string[] keys)
+{
+    _ = Task.Run(async () =>
+    {
+        foreach (var key in keys)
+        {
+            try
+            {
+                await cacheService.RemoveAsync(key);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
+            }
+        }
+    });
+
+    // La invalidación de OutputCache (in-memory) es síncrona y barata: va fuera
+    // del Task.Run, pero también protegida y sin esperar.
+    try
+    {
+        _ = outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Output cache invalidation error: Tag=productos");
+    }
+}
+
+// CategoriaService.cs — AñadirCacheCategoria
+_ = Task.Run(async () =>
+{
+    try { await cacheService.SetAsync(key, value, _cacheTTL); }
+    catch (Exception ex) { logger.LogWarning(ex, "Error adding to cache: Key={Key}", key); }
+});
+```
+
+### Inventario y reglas (fase FF del plan)
+
+| Dato | Valor |
+|---|---|
+| Sitios `_ = Task.Run(...)` | **29** (Pedidos 11 · Producto 13 · User 3 · Categoría 2) |
+| Ya endurecidos | 28 con `try/catch` + log en el interior (caché/WS/SignalR) |
+| Endurecidos en la fase | 1 (faltaba el `catch` interior) |
+| Verificación | build 0/0 · 1034 unit · crear producto → HTTP rápido + logs sin excepciones |
+
+**Reglas (las tres, siempre juntas):**
+
+1. **`_ = Task.Run(...)` y no `await`** — si esperas, no es fire & forget: la respuesta HTTP se atasca con Redis/SMTP.
+2. **`try/catch (Exception)` en el interior del lambda** — un `Task.Run` sin `catch` es una excepción *unobserved*: en .NET moderno no crashea, pero **nadie se entera** de que dejó de funcionar. Con el `catch` + log, el problema aparece en Serilog.
+3. **Nunca `await Task.WhenAll(...)` con esto** — rechazado explícitamente en el plan: `WhenAll` vuelve a bloquear la respuesta.
+
+### ¿Cuándo NO usarlo (y qué usar entonces)?
+
+| Escenario | Alternativa |
+|---|---|
+| Caché, ETag, avisos WebSocket no críticos | ✅ Fire & forget endurecido |
+| Emails que deben salir sí o sí y toleran reintentos (SMTP caído) | **Cola + `BackgroundService`** (22.6) + reintentos de Polly |
+| Trabajo con estado, reintentos o garantía de entrega | `BackgroundService` con `Channel` (22.4) |
+| Debe sobrevivir reinicios | Cola persistente (Redis) |
+
+> **Regla práctica**: si al perder ese trabajo el usuario no se entera (o hay TTL/otro camino), fire & forget; si se entera, necesita cola.
+
+---
+
+## 22.13. Resumen
 
 Los background jobs son esenciales para operaciones que no deben bloquear solicitudes HTTP. La arquitectura implementada:
 

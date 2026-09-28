@@ -23,7 +23,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
@@ -42,7 +42,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
@@ -62,7 +62,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
@@ -82,7 +82,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
@@ -98,7 +98,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
@@ -119,7 +119,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
@@ -139,7 +139,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
@@ -159,7 +159,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
@@ -179,7 +179,7 @@ public class PedidosEfCoreRepositoryTests
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
-        
+
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 

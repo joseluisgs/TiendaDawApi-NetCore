@@ -9,7 +9,8 @@
   - [3.4. Registro de Servicios en Program.cs](#34-registro-de-servicios-en-programcs)
   - [3.5. Estructura del Proyecto: Controllers, Services, Repositories](#35-estructura-del-proyecto-controllers-services-repositories)
   - [3.6. Interfaces y Abstracciones](#36-interfaces-y-abstracciones)
-  - [3.7. Resumen y Buenas Prácticas](#37-resumen-y-buenas-prácticas)
+  - [3.7. TimeProvider — Abstracción del Tiempo para Testabilidad](#37-timeprovider--abstracción-del-tiempo-para-testabilidad)
+  - [3.8. Resumen y Buenas Prácticas](#38-resumen-y-buenas-prácticas)
 
 ---
 
@@ -878,7 +879,86 @@ flowchart TB
 
 ---
 
-## 3.7. Resumen y Buenas Prácticas
+## 3.7. TimeProvider — Abstracción del Tiempo para Testabilidad
+
+En .NET 8+, `TimeProvider` es una abstracción del sistema de tiempo que permite inyectar un proveedor de tiempo en los servicios. En producción se usa `TimeProvider.System` (que devuelve la hora real del sistema), pero en tests se puede inyectar un `FakeTimeProvider` con tiempo controlado.
+
+### ¿Por qué abstraer el tiempo?
+
+Mucha lógica de negocio depende del reloj del sistema: expiración de tokens JWT, timeouts, contraseñas con caducidad, etc. Sin una abstracción, testear esta lógica es extremadamente difícil porque no puedes controlar "qué hora es" en el test. Con `TimeProvider`, puedes avanzar el tiempo artificialmente y verificar que la lógica de expiración funciona correctamente.
+
+### Registro en el contenedor DI
+
+```csharp
+// Program.cs — en producción
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+```
+
+### Uso en servicios
+
+```csharp
+public class TokenService(TimeProvider timeProvider)
+{
+    public bool IsTokenExpired(DateTime expirationDate)
+    {
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        return now > expirationDate;
+    }
+
+    public DateTime GetTokenCreationDate()
+    {
+        return timeProvider.GetUtcNow().UtcDateTime;
+    }
+}
+```
+
+### Test con FakeTimeProvider
+
+```csharp
+[Test]
+public void IsTokenExpired_DespuesDeExpiracion_ReturnsTrue()
+{
+    // Arrange
+    var fakeTime = new FakeTimeProvider();
+    var service = new TokenService(fakeTime);
+
+    var creationDate = new DateTime(2024, 1, 1, 10, 0, 0, DateTimeKind.Utc);
+    var expirationDate = creationDate.AddHours(1);
+
+    // Simular que "ahora" es justo después de la creación
+    fakeTime.SetUtcNow(creationDate.AddMinutes(30));
+
+    // Act & Assert — el token NO está expirado todavía
+    service.IsTokenExpired(expirationDate).Should().BeFalse();
+
+    // Avanzar el tiempo 31 minutos más (total: 61 minutos desde creación)
+    fakeTime.Advance(TimeSpan.FromMinutes(31));
+
+    // Ahora el token SÍ está expirado
+    service.IsTokenExpired(expirationDate).Should().BeTrue();
+}
+```
+
+### Resumen
+
+| Escenario | TimeProvider a usar |
+|-----------|-------------------|
+| Producción | `TimeProvider.System` (valor por defecto) |
+| Tests unitarios | `FakeTimeProvider` (tiempo controlado) |
+| Tests de integración | `FakeTimeProvider` o `TimeProvider.System` según el caso |
+
+El parámetro `TimeProvider` se define como **opcional con valor por defecto**, lo que permite que los servicios funcionen sin inyección explícita:
+
+```csharp
+public class TokenService(TimeProvider? timeProvider = null)
+{
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+}
+```
+
+---
+
+## 3.8. Resumen y Buenas Prácticas
 
 A lo largo de este documento hemos explorado la inyección de dependencias, los tiempos de vida de servicios, los constructores primarios de C#, y cómo estructurar el proyecto con interfaces y abstracciones.
 

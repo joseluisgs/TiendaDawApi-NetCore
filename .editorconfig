@@ -1,0 +1,58 @@
+# EditorConfig universal — https://editorconfig.org
+# Estilo canónico del repo; verificación: scripts/check-style.ps1 (dotnet format).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{json,yml,yaml,js,mjs}]
+indent_size = 2
+
+[*.md]
+# Los .md de este repo van sin BOM; se admiten dobles espacios finales de párrafo
+charset = utf-8
+trim_trailing_whitespace = false
+
+[*.cs]
+# Espacios en blanco (los aplica el whitespace formatter de dotnet format)
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = true
+csharp_new_line_between_query_expression_clauses = true
+csharp_preserve_single_line_blocks = true
+csharp_preserve_single_line_statements = true
+
+# Namespaces en fichero único (estilo ya usado en todo el repo)
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Orden de imports (informativo, no altera el build)
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Uso de var: el repo mezcla estilos a propósito; solo sugerencia, sin forzar
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Cualificación this.: solo cuando se necesita
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+
+# Preferencias de expresiones (informativas)
+dotnet_style_object_initializer = true:suggestion
+dotnet_style_collection_initializer = true:suggestion
+dotnet_style_coalesce_expression = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
+csharp_prefer_braces = true:suggestion
+csharp_prefer_simple_default_expression = true:suggestion

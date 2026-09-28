@@ -1,11 +1,13 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
-using TiendaApi.Api.Services.Productos;
+using TiendaApi.Api.Extensions;
 using TiendaApi.Api.Helpers.Pagination;
+using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Api.Controllers;
 
@@ -35,6 +37,7 @@ public class ProductosController(
     /// <param name="direction">Dirección (asc, desc).</param>
     /// <returns>200 OK con lista paginada de productos.</returns>
     [HttpGet]
+    [OutputCache(Duration = 60, Tags = new[] { "productos" })]
     [ProducesResponseType(typeof(PagedResult<ProductoDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
     public async Task<IActionResult> GetAll(
@@ -57,6 +60,7 @@ public class ProductosController(
         return resultado.Match(
             onSuccess: productos =>
             {
+                Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(productos, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
@@ -72,6 +76,7 @@ public class ProductosController(
     /// <param name="id">ID del producto.</param>
     /// <returns>200 OK con el producto, o 404 si no existe.</returns>
     [HttpGet("{id}")]
+    [OutputCache(Duration = 60, Tags = new[] { "productos" })]
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
@@ -82,12 +87,12 @@ public class ProductosController(
         var resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: producto => Ok(producto),
-            onFailure: error => error switch
+            onSuccess: producto =>
             {
-                NotFoundError => NotFound(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+                Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
+                return Ok(producto);
+            },
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -97,6 +102,7 @@ public class ProductosController(
     /// <param name="categoriaId">ID de la categoría.</param>
     /// <returns>200 OK con lista de productos, o 404 si la categoría no existe.</returns>
     [HttpGet("categoria/{categoriaId}")]
+    [OutputCache(Duration = 60, Tags = new[] { "productos" })]
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
@@ -107,12 +113,12 @@ public class ProductosController(
         var resultado = await service.FindByCategoriaIdAsync(categoriaId);
 
         return resultado.Match(
-            onSuccess: productos => Ok(productos),
-            onFailure: error => error switch
+            onSuccess: productos =>
             {
-                NotFoundError => NotFound(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+                Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
+                return Ok(productos);
+            },
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -136,13 +142,7 @@ public class ProductosController(
 
         return resultado.Match(
             onSuccess: producto => CreatedAtAction(nameof(GetById), new { id = producto.Id }, producto),
-            onFailure: error => error switch
-            {
-                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
-                NotFoundError => NotFound(new { message = error.Message }),
-                ConflictError => Conflict(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -167,12 +167,7 @@ public class ProductosController(
 
         return resultado.Match(
             onSuccess: producto => Ok(producto),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -196,12 +191,7 @@ public class ProductosController(
         if (resultado.IsSuccess)
             return NoContent();
 
-        var error = resultado.Error;
-        return error switch
-        {
-            NotFoundError => NotFound(new { message = error.Message }),
-            _ => StatusCode(500, new { message = error.Message })
-        };
+        return resultado.Error.ToHttpResult();
     }
 
     /// <summary>
@@ -237,12 +227,7 @@ public class ProductosController(
 
         return resultado.Match(
             onSuccess: producto => Ok(producto),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -267,12 +252,7 @@ public class ProductosController(
 
         return resultado.Match(
             onSuccess: producto => Ok(producto),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 }

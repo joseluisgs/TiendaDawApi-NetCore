@@ -1,3 +1,4 @@
+using System.Text;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using System.Text;
 using TiendaApi.Api.Services.Storage;
 
 namespace TiendaApi.Tests.Integration.Services.Storage;
@@ -182,7 +182,7 @@ public class FileSystemStorageServiceIntegrationTests
     {
         // Arrange - just verify the method works without throwing
         var result = _service.FileExists("/uploads/test.jpg");
-        
+
         // Assert - returns false for non-existent file
         result.Should().BeFalse();
     }
@@ -192,7 +192,7 @@ public class FileSystemStorageServiceIntegrationTests
     {
         // Act
         var result = _service.FileExists("");
-        
+
         // Assert
         result.Should().BeFalse();
     }
@@ -202,7 +202,7 @@ public class FileSystemStorageServiceIntegrationTests
     {
         // Act
         var result = _service.FileExists(null!);
-        
+
         // Assert
         result.Should().BeFalse();
     }

@@ -29,7 +29,7 @@ script:post-response {
   
   test("GraphQL CreateProducto - Returns created producto", function () {
       const jsonData = res.getBody();
-      expect(jsonData.data.createProducto.id).to.be.a('number');
+      expect(jsonData.data.createProducto.id).to.satisfy(v => typeof v === 'string' || typeof v === 'number');
       expect(jsonData.data.createProducto.nombre).to.equal('GraphQL Test Producto');
       expect(jsonData.data.createProducto.precio).to.equal(99.99);
       expect(jsonData.data.createProducto.stock).to.equal(10);

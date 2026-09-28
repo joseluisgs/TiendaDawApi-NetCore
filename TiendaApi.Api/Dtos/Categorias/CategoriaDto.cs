@@ -30,39 +30,39 @@ namespace TiendaApi.Api.Dtos.Categorias;
 /// </code>
 /// </example>
 public record CategoriaDto(
-    /// <summary>
-    /// Identificador único de la categoría.
-    /// Generado automáticamente por la base de datos al crear la entidad.
-    /// Valor único e incremental, nunca se reutiliza después de eliminar una categoría.
-    /// </summary>
-    /// <example>1</example>
+    // <summary>
+    // Identificador único de la categoría.
+    // Generado automáticamente por la base de datos al crear la entidad.
+    // Valor único e incremental, nunca se reutiliza después de eliminar una categoría.
+    // </summary>
+    // <example>1</example>
     long Id,
 
-    /// <summary>
-    /// Nombre descriptivo de la categoría.
-    /// Utilizado para identificar la categoría en interfaces de usuario.
-    /// Debe ser único en el sistema para evitar ambigüedades.
-    /// </summary>
-    /// <example>Electrónica</example>
+    // <summary>
+    // Nombre descriptivo de la categoría.
+    // Utilizado para identificar la categoría en interfaces de usuario.
+    // Debe ser único en el sistema para evitar ambigüedades.
+    // </summary>
+    // <example>Electrónica</example>
     string Nombre,
 
-    /// <summary>
-    /// Descripción de la categoría.
-    /// </summary>
+    // <summary>
+    // Descripción de la categoría.
+    // </summary>
     string? Descripcion,
 
-    /// <summary>
-    /// Fecha y hora de creación del registro en formato UTC.
-    /// Asignada automáticamente por el sistema al crear el registro.
-    /// </summary>
-    /// <example>2024-01-15T10:30:00Z</example>
+    // <summary>
+    // Fecha y hora de creación del registro en formato UTC.
+    // Asignada automáticamente por el sistema al crear el registro.
+    // </summary>
+    // <example>2024-01-15T10:30:00Z</example>
     DateTime CreatedAt,
 
-    /// <summary>
-    /// Fecha y hora de última modificación del registro en formato UTC.
-    /// Se actualiza automáticamente cada vez que se modifica el registro.
-    /// </summary>
-    /// <example>2024-01-15T12:00:00Z</example>
+    // <summary>
+    // Fecha y hora de última modificación del registro en formato UTC.
+    // Se actualiza automáticamente cada vez que se modifica el registro.
+    // </summary>
+    // <example>2024-01-15T12:00:00Z</example>
     DateTime UpdatedAt
 );
 

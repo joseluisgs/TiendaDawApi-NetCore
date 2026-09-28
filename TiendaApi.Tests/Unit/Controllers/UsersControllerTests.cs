@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Api.Controllers;
-using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Services.Users;
 

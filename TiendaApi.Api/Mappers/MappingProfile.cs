@@ -1,8 +1,8 @@
 using AutoMapper;
 using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Dtos.Usuarios;
-using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Api.Mappers;
@@ -13,6 +13,9 @@ namespace TiendaApi.Api.Mappers;
 /// </summary>
 public class MappingProfile : Profile
 {
+    /// <summary>
+    /// Registra los mapeos entre entidades y DTOs de la API.
+    /// </summary>
     public MappingProfile()
     {
         // Mapeos de categoría

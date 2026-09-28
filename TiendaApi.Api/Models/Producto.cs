@@ -27,7 +27,7 @@ public class Producto : ITimestamped
     /// <summary>Precio unitario en EUR (decimal con hasta 2 decimales).</summary>
     public decimal Precio { get; set; }
 
-    /// <summary>Stock disponible (0 = sin stock, >0 = disponible, <0 = backorder).</summary>
+    /// <summary>Stock disponible (0 = sin stock, &gt;0 = disponible, &lt;0 = backorder).</summary>
     public int Stock { get; set; }
 
     /// <summary>URL o ruta de la imagen del producto (null = usa IMAGE_DEFAULT).</summary>

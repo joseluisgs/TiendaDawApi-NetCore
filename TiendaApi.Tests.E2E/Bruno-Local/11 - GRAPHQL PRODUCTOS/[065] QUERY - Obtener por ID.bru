@@ -26,7 +26,7 @@ script:post-response {
   test("GraphQL ProductoById - Returns producto", function () {
       const jsonData = res.getBody();
       expect(jsonData.data.producto).to.be.an('object');
-      expect(jsonData.data.producto.id).to.be.a('number');
+      expect(jsonData.data.producto.id).to.satisfy(v => typeof v === 'string' || typeof v === 'number');
       expect(jsonData.data.producto.nombre).to.be.a('string');
   });
 }

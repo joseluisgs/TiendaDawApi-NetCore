@@ -5,6 +5,7 @@ namespace TiendaApi.Api.Dtos.Usuarios;
 /// <summary>
 /// DTO para actualización parcial de usuario (PATCH).
 /// Permite modificar campos específicos sin enviar todos los datos.
+/// </summary>
 ///
 /// <remarks>
 /// Uso típico:

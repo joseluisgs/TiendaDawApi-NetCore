@@ -12,6 +12,10 @@ public class JwtTokenExtractor : IJwtTokenExtractor
 {
     private readonly ILogger<JwtTokenExtractor> _logger;
 
+    /// <summary>
+    /// Crea una instancia del extractor de tokens JWT.
+    /// </summary>
+    /// <param name="logger">Logger de la instancia.</param>
     public JwtTokenExtractor(ILogger<JwtTokenExtractor> logger)
     {
         _logger = logger;
@@ -25,8 +29,8 @@ public class JwtTokenExtractor : IJwtTokenExtractor
             var jwtToken = ReadToken(token);
             if (jwtToken == null) return null;
 
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => 
-                c.Type == ClaimTypes.NameIdentifier || 
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.NameIdentifier ||
                 c.Type == JwtRegisteredClaimNames.Sub ||
                 c.Type == "nameid");
 
@@ -52,8 +56,8 @@ public class JwtTokenExtractor : IJwtTokenExtractor
             var jwtToken = ReadToken(token);
             if (jwtToken == null) return null;
 
-            var roleClaim = jwtToken.Claims.FirstOrDefault(c => 
-                c.Type == ClaimTypes.Role || 
+            var roleClaim = jwtToken.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.Role ||
                 c.Type == "role");
 
             return roleClaim?.Value;
@@ -110,7 +114,7 @@ public class JwtTokenExtractor : IJwtTokenExtractor
                 var root = doc.RootElement;
 
                 claims = new List<Claim>();
-                
+
                 foreach (var prop in root.EnumerateObject())
                 {
                     if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.String)
@@ -118,7 +122,7 @@ public class JwtTokenExtractor : IJwtTokenExtractor
                         var name = prop.Name;
                         var value = prop.Value.GetString() ?? "";
                         var claimType = NormalizeClaimType(name);
-                        
+
                         claims.Add(new Claim(claimType, value));
                     }
                 }
@@ -155,8 +159,8 @@ public class JwtTokenExtractor : IJwtTokenExtractor
             var jwtToken = ReadToken(token);
             if (jwtToken == null) return null;
 
-            var emailClaim = jwtToken.Claims.FirstOrDefault(c => 
-                c.Type == JwtRegisteredClaimNames.Email || 
+            var emailClaim = jwtToken.Claims.FirstOrDefault(c =>
+                c.Type == JwtRegisteredClaimNames.Email ||
                 c.Type == ClaimTypes.Email);
 
             return emailClaim?.Value;
@@ -202,13 +206,13 @@ public class JwtTokenExtractor : IJwtTokenExtractor
     private static string Base64UrlDecode(string input)
     {
         var base64 = input.Replace('-', '+').Replace('_', '/');
-        
+
         switch (base64.Length % 4)
         {
             case 2: base64 += "=="; break;
             case 3: base64 += "="; break;
         }
-        
+
         var bytes = Convert.FromBase64String(base64);
         return Encoding.UTF8.GetString(bytes);
     }

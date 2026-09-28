@@ -9,7 +9,8 @@
   - [27.4. Caching Avanzado](#274-caching-avanzado)
   - [27.5. Optimización de Entity Framework Core](#275-optimización-de-entity-framework-core)
   - [27.6. Benchmarking](#276-benchmarking)
-  - [27.7. Resumen y Buenas Prácticas](#277-resumen-y-buenas-prácticas)
+  - [27.7. Serialización JSON con Source Generation](#277-serialización-json-con-source-generation)
+  - [27.8. Resumen y Buenas Prácticas](#278-resumen-y-buenas-prácticas)
 
 ---
 
@@ -92,51 +93,44 @@ app.UseResponseCompression();
 
 ### Rate Limiting
 
-```bash
-dotnet add package AspNetCoreRateLimit
+Sin paquetes de terceros: se usa la API nativa de .NET `System.Threading.RateLimiting` (ventanas fijas) con un middleware propio que emite las cabeceras `RateLimit-*`:
+
+```csharp
+// RateLimitConfig.cs — registro de reglas
+public static IServiceCollection AddRateLimitingPolicy(this IServiceCollection services)
+{
+    services.AddSingleton<RateLimitingState>(); // particiones (IP + verbo + ruta)
+    return services;
+}
+
+public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
+{
+    app.UseMiddleware<RateLimitMiddleware>();
+    return app;
+}
 ```
 
 ```csharp
-using AspNetCoreRateLimit;
-
-builder.Services.AddMemoryCache();
-builder.Services.Configure<IpRateLimitOptions>(options =>
+// RateLimitMiddleware.cs — limitadores por partición
+var general = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
 {
-    options.EnableEndpointRateLimiting = true;
-    options.StackBlockedRequests = false;
-    options.HttpStatusCode = 429;
-    options.RealIpHeader = "X-Real-IP";
-    options.ClientIdHeader = "X-ClientId";
-    
-    options.GeneralRules = new List<RateLimitRule>
-    {
-        new()
-        {
-            Endpoint = "*",
-            Period = "1m",
-            Limit = 100
-        },
-        new()
-        {
-            Endpoint = "post:*",
-            Period = "1m",
-            Limit = 20
-        }
-    };
-    
-    options.EndpointRules = new List<EndpointRateLimitRule>
-    {
-        new()
-        {
-            Endpoint = "api/auth/login",
-            Period = "1m",
-            Limit = 5
-        }
-    };
+    PermitLimit = RateLimitConfig.GeneralLimit,   // 100
+    Window = RateLimitConfig.GeneralWindow,       // 15 s
+    QueueLimit = 0,                               // sin cola: se rechaza al instante
+    AutoReplenishment = true
 });
 
-app.UseIpRateLimiting();
+// Ventana de un minuto: 10 en /api/v1/auth/*, 20 en cualquier POST
+var minute = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
+{
+    PermitLimit = minuteLimit,
+    Window = RateLimitConfig.MinuteWindow,        // 1 min
+    QueueLimit = 0,
+    AutoReplenishment = true
+});
 ```
+
+Al superar el límite la respuesta es `429 Too Many Requests` con cuerpo JSON y `Retry-After`; las respuestas permitidas incluyen `RateLimit-Limit`, `RateLimit-Remaining` y `RateLimit-Reset`.
 
 ---
 
@@ -239,6 +233,35 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     });
 }
 ```
+
+### Índices reales del proyecto (Fase 1)
+
+Los de arriba son de ejemplo; estos son los que definen el `TiendaDbContext` real del proyecto (la migración `AddOptimizationIndexes` los versiona para las BDs existentes):
+
+```csharp
+// TiendaDbContext.cs — OnModelCreating (solo los índices)
+modelBuilder.Entity<Categoria>(entity =>
+{
+    entity.HasIndex(c => c.Nombre).IsUnique();                 // búsqueda por nombre, sin duplicados
+});
+
+modelBuilder.Entity<Producto>(entity =>
+{
+    entity.HasIndex(p => p.CategoriaId);                       // JOINs/filtros por categoría
+    entity.HasIndex(p => new { p.CategoriaId, p.Precio });     // compuesto: catálogo filtrado+ordenado por precio
+    entity.HasIndex(p => p.CreatedAt);                         // orden por fecha (listados y "recién creados")
+    entity.HasIndex(p => p.IsDeleted);                         // soft-delete: casi todos los SELECT lo filtran
+});
+
+modelBuilder.Entity<Usuario>(entity =>
+{
+    entity.HasIndex(u => u.Username).IsUnique();               // login
+    entity.HasIndex(u => u.Email).IsUnique();                  // registro/recuperación
+    entity.HasIndex(u => u.Role);                              // listados por rol (admin)
+});
+```
+
+**Cómo elegirlos**: mira el `WHERE`/`ORDER BY` de los listados reales de la API (los mismos que la Automation E2E ejercita): categoría+precio, `IsDeleted`, `CreatedAt`, `Username`/`Email` únicos. Un índice que no corresponde a ninguna consulta es solo coste de escritura. Compuestos → **orden de columnas importa**: `(CategoriaId, Precio)` sirve para filtrar por categoría *y* ordenar por precio; el inverso no.
 
 ---
 
@@ -463,6 +486,38 @@ public class ProductoRepository
 }
 ```
 
+### AsNoTracking selectivo (Fase 2)
+
+`AsNoTracking()` le dice a EF que **no** cargue el Change Tracker con las entidades: menos memoria y menos trabajo por fila. Solo es válido donde la entidad **no va a guardarse después** — y ahí el proyecto aplica el cambio de la Fase 2 en **9 sitios de solo lectura**:
+
+```csharp
+// ProductoRepository.cs — FindAllAsync (con Include) y variantes
+public async Task<IEnumerable<Producto>> FindAllAsync()
+{
+    logger.LogDebug("Buscando todos los productos");
+    return await context.Productos
+        .Include(p => p.Categoria)
+        .OrderBy(p => p.Nombre)
+        .AsNoTracking()          // ← la lectura nunca hará SaveChanges
+        .ToListAsync();
+}
+
+// También expuesto como IQueryable para composición (Fase 2)
+public IQueryable<Producto> FindAllAsNoTracking()
+{
+    return context.Productos
+        .Include(p => p.Categoria)
+        .OrderBy(p => p.Nombre)
+        .AsNoTracking();
+}
+```
+
+Aplicado en: `CategoriaRepository` (FindAllAsync, items de FindAllPagedAsync) · `ProductoRepository` (FindAllAsync con Include, items de FindAllPagedAsync, FindByCategoriaIdAsync, GetRecentlyCreatedAsync) · `UserRepository` (FindAllAsync, items de FindAllPagedAsync, GetActiveUsersAsync).
+
+**Lo que NO se toca** (y por qué): `FindByIdAsync` de producto/categoría/usuario, `FindByUsernameAsync`, `FindByEmailAsync`, `DeleteAsync` y las rutas de `Update` **siguen con tracking** — esos métodos devuelven la entidad para modificarla o borrarla, y sin tracking el `SaveChanges` no tendría nada que guardar. Pista de diseño: si el nombre del método es `Find*Async` y su resultado alimenta un PUT/DELETE, déjalo trackeando.
+
+> **Medido en la Fase 2**: build 0/0 · 1034 tests unit · 23/23 endpoints en vivo OK (listados y round-trips POST→PUT→DELETE). Es una optimización de perfil "casi gratis", pero solo si respetas la línea de "no escribo después".
+
 ---
 
 ## 27.6. Benchmarking
@@ -554,7 +609,72 @@ public class RepositoryBenchmark
 
 ---
 
-## 27.7. Resumen y Buenas Prácticas
+## 27.7. Serialización JSON con Source Generation
+
+### Reflexión frente a generación de código
+
+Por defecto, `System.Text.Json` construye el contrato de cada tipo en tiempo
+de ejecución mediante **reflexión**: la primera vez que se serializa un tipo
+se descubren sus propiedades y se cachea el resultado. Con la **source
+generation**, un generador incluido en el SDK produce en compilación el
+código que serializa y deserializa los tipos declarados, de forma que en
+runtime no hace falta descubrir nada.
+
+| | Reflexión | Source generation |
+| --- | --- | --- |
+| Descubrimiento | En runtime, primera vez | En compilación |
+| Arranque | Coste inicial por tipo | Cero (código ya generado) |
+| Publicación AOT/trimmed | Requiere reflexión disponible | Preparado |
+| Tipos admitidos | Todos (incluidos anónimos) | Solo los declarados |
+
+### El contexto del proyecto: `AppJsonContext`
+
+`TiendaApi.Api/AppJsonContext.cs` declara con `[JsonSerializable]` los DTOs de
+la API (entidades, DTOs de petición/respuesta, filtros y resultados
+paginados). El contexto se conecta en **todos los puntos** donde la
+aplicación serializa JSON:
+
+| Punto | Fichero |
+| --- | --- |
+| Entradas/salidas de MVC | `Infrastructures/ControllersConfig.cs` (`AddJsonOptions`) |
+| `/health*`, `/version` | `Program.cs` (`ConfigureHttpJsonOptions`) |
+| Excepciones inesperadas | `Middleware/GlobalExceptionHandler.cs` |
+| Respuesta 429 | `Middleware/RateLimitMiddleware.cs` |
+| WebSockets de productos y pedidos | `Realtime/**` |
+| Caché de Redis | `Services/Cache/RedisCacheService.cs` |
+
+### El fallback es obligatorio
+
+La conexión se hace siempre con **resolución combinada**:
+
+```csharp
+TypeInfoResolver = JsonTypeInfoResolver.Combine(
+    AppJsonContext.Default,
+    new DefaultJsonTypeInfoResolver())
+```
+
+Si el contexto declarado no conoce un tipo (respuestas anónimas como las de
+`/health`, `/version` o el cuerpo del 429, `ProblemDetails`, etc.),
+**`DefaultJsonTypeInfoResolver` lo resuelve por reflexión**. Conectar solo
+`AppJsonContext.Default` lanzaría `JsonSerializerException` en runtime ante
+cualquier tipo no declarado: por eso el fallback no es opcional.
+
+### Cuándo compensa y cómo se mantiene
+
+- **Arranque y primeras peticiones**: menos trabajo de descubrimiento.
+- **AOT y trimming**: es el único camino si algún día se publica la API
+  «trimmable»; la reflexión en runtime no sobrevive al recorte.
+- **Coste real en esta API**: con la carga actual, la reflexión es más que
+  suficiente; el valor inmediato es tener el camino preparado y el contrato
+  de tipos declarado.
+- **Mantenimiento**: cada DTO nuevo conviene añadirlo a `AppJsonContext`
+  aunque el fallback lo cubriría; y cualquier cambio de formato debe
+  verificarse con la suite E2E y con la comprobación de contrato OpenAPI,
+  porque un cambio de nombres de propiedad rompe clientes silenciosamente.
+
+---
+
+## 27.8. Resumen y Buenas Prácticas
 
 ### Checklist de Optimización
 

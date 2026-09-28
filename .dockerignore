@@ -1,0 +1,44 @@
+# .dockerignore — contexto RAÍZ del repo
+# Build: docker build -f TiendaApi.Api/Dockerfile .
+# Reduce el build context y evita copiar bin/obj, IDE y docs a la imagen.
+
+# Control de versiones / IDE
+.git
+.gitattributes
+.gitignore
+.vs
+.vscode
+.idea
+**/*.user
+
+# Artefactos de compilación
+**/bin
+**/obj
+TestResults
+**/TestResults
+*.trx
+
+# Dependencias de JavaScript (cliente / E2E)
+**/node_modules
+
+# Logs
+*.log
+
+# Fuentes que la imagen no necesita
+doc
+scripts
+TiendaApi.Clients
+TiendaApi.Tests.E2E
+docker-compose*.yml
+.env
+.env.*
+Reset-Database.ps1
+*.md
+banner.png
+*.log
+
+# Docker
+Dockerfile
+**/Dockerfile
+.dockerignore
+**/.dockerignore

@@ -1,10 +1,10 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using System.Security.Claims;
 using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Realtime;
@@ -25,8 +25,8 @@ public class ProductosHubTests
             new Claim(ClaimTypes.Name, "testuser")
         }, "TestAuthType");
 
-        _context = Mock.Of<HubCallerContext>(c => 
-            c.ConnectionId == "test-connection-id" && 
+        _context = Mock.Of<HubCallerContext>(c =>
+            c.ConnectionId == "test-connection-id" &&
             c.User == new ClaimsPrincipal(identity));
     }
 
@@ -79,7 +79,7 @@ public class ProductosHubTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente conectado")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Cliente conectado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -91,11 +91,11 @@ public class ProductosHubTests
         var hub1 = new ProductosHub(_loggerMock.Object);
         var hub2 = new ProductosHub(_loggerMock.Object);
 
-        var context1 = Mock.Of<HubCallerContext>(c => 
-            c.ConnectionId == "connection-1" && 
+        var context1 = Mock.Of<HubCallerContext>(c =>
+            c.ConnectionId == "connection-1" &&
             c.User == new ClaimsPrincipal(new ClaimsIdentity()));
-        var context2 = Mock.Of<HubCallerContext>(c => 
-            c.ConnectionId == "connection-2" && 
+        var context2 = Mock.Of<HubCallerContext>(c =>
+            c.ConnectionId == "connection-2" &&
             c.User == new ClaimsPrincipal(new ClaimsIdentity()));
 
         SetupHubContext(hub1, context1);
@@ -124,7 +124,7 @@ public class ProductosHubTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente desconectado")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Cliente desconectado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -143,7 +143,7 @@ public class ProductosHubTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente desconectado")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Cliente desconectado")),
                 exception,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);

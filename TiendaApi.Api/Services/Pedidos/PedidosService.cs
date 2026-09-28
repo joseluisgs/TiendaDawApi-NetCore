@@ -22,19 +22,19 @@ using TiendaApi.Api.Validators.Pedidos;
 namespace TiendaApi.Api.Services.Pedidos;
 
 /// <summary>
-    /// Servicio de pedidos que implementa el patrón Service Layer.
-    /// </summary>
-    public class PedidosService(
-    IPedidosRepository pedidosRepository,
-    IProductoRepository productoRepository,
-    ILogger<PedidosService> logger,
-    ICacheService cacheService,
-    IEmailService emailService,
-    IConfiguration configuration,
-    PedidosWebSocketHandler webSocketHandler,
-    IHubContext<PedidosHub> pedidosHubContext,
-    IValidator<PedidoRequestDto> pedidoValidator,
-    IValidator<PedidoItemRequestDto> pedidoItemValidator
+/// Servicio de pedidos que implementa el patrón Service Layer.
+/// </summary>
+public class PedidosService(
+IPedidosRepository pedidosRepository,
+IProductoRepository productoRepository,
+ILogger<PedidosService> logger,
+ICacheService cacheService,
+IEmailService emailService,
+IConfiguration configuration,
+PedidosWebSocketHandler webSocketHandler,
+IHubContext<PedidosHub> pedidosHubContext,
+IValidator<PedidoRequestDto> pedidoValidator,
+IValidator<PedidoItemRequestDto> pedidoItemValidator
 ) : IPedidosService
 {
     private const int MaxRetries = 3;
@@ -62,15 +62,11 @@ namespace TiendaApi.Api.Services.Pedidos;
     {
         logger.LogInformation("Obteniendo pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
 
-        var pedidos = await pedidosRepository.FindAllAsync();
-        var pedidosList = pedidos.ToList();
-
-        var totalCount = pedidosList.Count;
-        var pagedPedidos = pedidosList.Skip(page * size).Take(size);
+        var (pedidos, totalCount) = await pedidosRepository.FindAllPagedAsync(page, size);
 
         var pagedResult = new PagedResult<PedidoDto>
         {
-            Items = pagedPedidos.ToDtoList(),
+            Items = pedidos.ToDtoList(),
             TotalCount = totalCount,
             Page = page + 1,
             PageSize = size

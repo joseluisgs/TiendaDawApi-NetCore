@@ -15,11 +15,13 @@ namespace TiendaApi.Api.Services.Auth;
 /// </summary>
 public class JwtService(
     IConfiguration configuration,
-    ILogger<JwtService> logger
+    ILogger<JwtService> logger,
+    TimeProvider? timeProvider = null
 ) : IJwtService
 {
     private readonly IConfiguration _configuration = configuration;
     private readonly ILogger<JwtService> _logger = logger;
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <summary>
     /// Genera un token JWT firmado con la información del usuario.
@@ -51,14 +53,14 @@ public class JwtService(
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expireMinutes),
+            expires: _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(expireMinutes),
             signingCredentials: credentials
         );
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        
+
         _logger.LogInformation("Token JWT generado para usuario: {Username}", user.Username);
-        
+
         return tokenString;
     }
 

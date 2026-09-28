@@ -1,5 +1,5 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -16,11 +16,20 @@ public static class ApiVersioningConfig
     public static IServiceCollection AddApiVersioningPolicy(this IServiceCollection services)
     {
         Log.Information("🔢 Configurando API Versioning...");
-        return services.AddApiVersioning(options =>
-        {
-            options.DefaultApiVersion = new ApiVersion(1, 0);
-            options.AssumeDefaultVersionWhenUnspecified = true;
-            options.ReportApiVersions = true;
-        });
+        services
+            .AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+            })
+            .AddApiExplorer(options =>
+            {
+                // "v1" para 1.0: alinea el grupo del ApiExplorer con el SwaggerDoc "v1",
+                // de lo contrario Swashbuckle descarta las operaciones de los controllers.
+                options.GroupNameFormat = "'v'VVV";
+            })
+            .AddMvc();
+        return services;
     }
 }

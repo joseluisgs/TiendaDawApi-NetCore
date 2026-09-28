@@ -10,7 +10,10 @@
   - [30.5. Program.cs Refactorizado](#305-programcs-refactorizado)
   - [30.6. Otras Formas de Estructurar el Startup](#306-otras-formas-de-estructurar-el-startup)
   - [30.7. Buenas Prácticas y Recomendaciones](#307-buenas-prácticas-y-recomendaciones)
-  - [30.8. Resumen](#308-resumen)
+  - [30.8. Compresión HTTP (ResponseCompression)](#308-compresión-http-responsecompression)
+  - [30.9. Health Checks — Liveness y Readiness Probes](#309-health-checks--liveness-y-readiness-probes)
+  - [30.10. Endpoint de Versión (/version)](#310-endpoint-de-versión-version)
+  - [30.11. Resumen](#311-resumen)
 
 ---
 
@@ -962,7 +965,150 @@ public void AddDatabases_ValidConfiguration_RegistersServices()
 
 ---
 
-## 30.8. Resumen
+## 30.8. Compresión HTTP (ResponseCompression)
+
+La compresión HTTP reduce el tamaño de las respuestas (JSON, HTML, CSS, JS) que se envían al cliente, mejorando tiempos de carga y reduciendo el uso de ancho de banda. Los algoritmos estándar son **Brotli** (mejor compresión) y **Gzip** (mayor compatibilidad).
+
+### Configuración
+
+```csharp
+// Program.cs — Registro de servicios
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true; // Habilitar también en conexiones seguras
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
+});
+
+// Pipeline de middlewares
+app.UseResponseCompression(); // Debe ir ANTES de middlewares que generen contenido
+```
+
+### Orden en el pipeline
+
+El orden de `UseResponseCompression()` es importante: debe colocarse **antes** de otros middlewares que generen contenido (como `UseStaticFiles()` o `MapControllers()`). Si se coloca después, el contenido ya se habrá generado sin comprimir.
+
+```mermaid
+flowchart LR
+    A["UseResponseCompression()"] --> B["UseStaticFiles()"] --> C["MapControllers()"]
+```
+
+### Ventajas
+
+| Aspecto | Beneficio |
+|---------|-----------|
+| **Reducción de tamaño** | Las respuestas JSON se comprimen un 60-80% |
+| **Velocidad** | Menor tiempo de transferencia al cliente |
+| **Compatibilidad** | Brotli y Gzip son soportados por todos los navegadores modernos |
+| **HTTPS** | Con `EnableForHttps = true`, funciona también en conexiones seguras |
+
+---
+
+## 30.9. Health Checks — Liveness y Readiness Probes
+
+En arquitecturas de microservicios (o aplicaciones desplegadas en contenedores), es fundamental poder verificar si el servicio está funcionando correctamente. Los **Health Checks** exponen endpoints que los orquestadores (Kubernetes, Docker, Azure) pueden consultar para tomar decisiones automáticas.
+
+### Diferencia entre Liveness y Readiness
+
+| Endpoint | Qué verifica | Qué pasa si falla |
+|----------|-------------|-------------------|
+| **Liveness** (`/health/live`) | ¿El proceso está vivo? | El orquestador **reinicia** el contenedor |
+| **Readiness** (`/health/ready`) | ¿El servicio está listo para recibir tráfico? | El orquestador **deja de enviar peticiones** al servicio |
+| **Health** (`/health`) | Verificación general de todo | Depende de la configuración |
+
+La distinción es importante: un servicio puede estar "vivo" (el proceso corre) pero no "listo" (por ejemplo, si la base de datos no está accesible). En ese caso, se debe reiniciar el contenedor (liveness falla) o dejar de enviarle tráfico (readiness falla).
+
+### Configuración
+
+```csharp
+// Program.cs
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString, name: "postgresql")
+    .AddRedis(redisConnection, name: "redis")
+    .AddMongoDb(mongoConnectionString, name: "mongodb");
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false // No verificar dependencias — solo saber si el proceso está vivo
+});
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready") // Solo checks etiquetados como "ready"
+});
+
+app.MapHealthChecks("/health"); // Endpoint general — verifica todo
+```
+
+### Ejemplo de HealthCheck personalizado
+
+```csharp
+public class DiskSpaceCheck : IHealthCheck
+{
+    public Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default)
+    {
+        var drive = new DriveInfo("C:");
+        var freeSpaceGb = drive.AvailableFreeSpace / (1024.0 * 1024 * 1024);
+
+        if (freeSpaceGb < 1)
+            return Task.FromResult(HealthCheckResult.Unhealthy("Disco casi lleno"));
+
+        return Task.FromResult(HealthCheckResult.Healthy($"Libre: {freeSpaceGb:F1} GB"));
+    }
+}
+```
+
+---
+
+## 30.10. Endpoint de Versión (/version)
+
+Exponer la versión de la API en un endpoint público (`GET /version`) permite al cliente y a herramientas de monitoreo saber qué versión está desplegada en cada momento. Esto es útil para debugging, soporte técnico y auditoría.
+
+### Implementación
+
+```csharp
+// Program.cs o en un endpoint minimal
+app.MapGet("/version", () =>
+{
+    var assembly = Assembly.GetExecutingAssembly();
+    var version = assembly
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+        ?.InformationalVersion ?? "unknown";
+
+    return Results.Json(new
+    {
+        Version = version,
+        Runtime = Environment.Version.ToString(),
+        Framework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
+    });
+});
+```
+
+### Ejemplo de respuesta
+
+```json
+{
+  "version": "1.0.0+abc123def",
+  "runtime": "8.0.0",
+  "framework": ".NET 8.0.0"
+}
+```
+
+### Por qué es útil
+
+| Caso de uso | Beneficio |
+|-------------|-----------|
+| **Debugging en producción** | Saber exactamente qué versión está ejecutándose |
+| **Monitoreo** | Las herramientas de observabilidad pueden registrar la versión de cada request |
+| **Soporte técnico** | El cliente puede reportar la versión que está usando |
+| **CI/CD** | Verificar que el despliegue contiene la versión esperada |
+
+---
+
+## 30.11. Resumen
 
 A lo largo de este documento hemos explorado el problema del `Program.cs` monolítico y presentado soluciones prácticas para organizar el código de configuración de aplicaciones ASP.NET Core.
 

@@ -1,13 +1,12 @@
+using System.Threading.Channels;
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using System.Threading.Channels;
-using Testcontainers.MongoDb;
-using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
@@ -15,8 +14,8 @@ using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Categorias;
-using TiendaApi.Api.Validators.Categorias;
 using TiendaApi.Api.Services.Email;
+using TiendaApi.Api.Validators.Categorias;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Services;
 
@@ -29,8 +28,10 @@ namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Services;
 [NonParallelizable]
 public class CategoriaServiceIntegrationTests
 {
-    private MongoDbContainer? _mongoContainer;
-    private PostgreSqlContainer? _postgresContainer;
+    private const string DatabaseName = "it_categoria_service";
+
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
     private IServiceProvider? _serviceProvider;
     private TiendaDbContext? _dbContext;
     private ICategoriaService? _categoriaService;
@@ -38,49 +39,29 @@ public class CategoriaServiceIntegrationTests
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
-        _mongoContainer = new MongoDbBuilder()
-            .WithImage("mongo:7.0")
-            .WithPortBinding(27017, true)
-            .Build();
-
-        await _mongoContainer.StartAsync();
-
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
-            .WithDatabase("tienda_test")
-            .WithUsername("test")
-            .WithPassword("test")
-            .Build();
-
-        await _postgresContainer.StartAsync();
+        _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
+        _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        if (_mongoContainer != null)
-        {
-            await _mongoContainer.DisposeAsync();
-        }
-
-        if (_postgresContainer != null)
-        {
-            await _postgresContainer.DisposeAsync();
-        }
+        await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
+        AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
     public async Task Setup()
     {
-        var connectionString = _postgresContainer!.GetConnectionString();
-        var mongoConnectionString = _mongoContainer!.GetConnectionString();
+        var connectionString = _connectionString;
+        var mongoConnectionString = _mongoConnectionString;
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
-                { "MongoDbSettings:DatabaseName", "tienda_test" },
+                { "MongoDbSettings:DatabaseName", DatabaseName },
                 { "Cache:CategoriaCacheTTLMinutes", "10" }
             }!)
             .Build();
@@ -88,6 +69,7 @@ public class CategoriaServiceIntegrationTests
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddMemoryCache();
+        services.AddOutputCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
         services.AddLogging(builder =>

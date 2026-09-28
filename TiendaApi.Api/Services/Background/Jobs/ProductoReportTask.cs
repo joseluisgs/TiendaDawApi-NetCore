@@ -11,15 +11,15 @@ using TiendaApi.Api.Services.Email;
 namespace TiendaApi.Api.Services.Background.Jobs;
 
 /// <summary>
-    /// Servicio de reportes de productos.
-    /// Obtiene productos nuevos y envía notificaciones por email.
-    /// </summary>
-    public class ProductoReportTask(
-    IProductoRepository productoRepository,
-    IUserRepository userRepository,
-    IEmailService emailService,
-    ILogger<ProductoReportTask> logger,
-    IConfiguration configuration
+/// Servicio de reportes de productos.
+/// Obtiene productos nuevos y envía notificaciones por email.
+/// </summary>
+public class ProductoReportTask(
+IProductoRepository productoRepository,
+IUserRepository userRepository,
+IEmailService emailService,
+ILogger<ProductoReportTask> logger,
+IConfiguration configuration
 ) : IProductoReportTask
 {
     private readonly int _days = configuration.GetValue<int>("Scheduler:ProductoReportDays", 7);
@@ -31,7 +31,7 @@ namespace TiendaApi.Api.Services.Background.Jobs;
     /// <returns>UnitResult con error en caso de fallo.</returns>
     public async Task<UnitResult<DomainError>> ExecuteAsync()
     {
-        logger.LogInformation("Ejecutando reporte de productos - Modo: {Modo}", 
+        logger.LogInformation("Ejecutando reporte de productos - Modo: {Modo}",
             _isDevelopment ? "DESARROLLO" : "PRODUCCION");
 
         if (_isDevelopment)
@@ -52,7 +52,7 @@ namespace TiendaApi.Api.Services.Background.Jobs;
         logger.LogDebug("Obteniendo productos de los ultimos {Dias} dias", _days);
 
         var productos = await productoRepository.GetRecentlyCreatedAsync(_days);
-        
+
         logger.LogInformation("Encontrados {Cantidad} productos nuevos", productos.Count());
         return Result.Success<IEnumerable<Producto>, DomainError>(productos);
     }

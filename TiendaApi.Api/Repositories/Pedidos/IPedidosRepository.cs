@@ -12,6 +12,12 @@ public interface IPedidosRepository
     /// <returns>Colección de pedidos.</returns>
     Task<IEnumerable<Pedido>> FindAllAsync();
 
+    /// <summary>Obtiene pedidos paginados de todos los usuarios (orden por fecha descendente).</summary>
+    /// <param name="page">Número de página (base 0).</param>
+    /// <param name="size">Elementos por página.</param>
+    /// <returns>Tupla con items y total.</returns>
+    Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size);
+
     /// <summary>Obtiene pedidos por ID de usuario.</summary>
     /// <param name="userId">ID del usuario.</param>
     /// <returns>Colección de pedidos.</returns>

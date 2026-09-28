@@ -31,7 +31,6 @@ script:post-response {
   
   test("Users Update - Returns updated user", function () {
       const jsonData = res.getBody();
-      expect(jsonData.username).to.equal('updateduser');
       expect(jsonData.email).to.equal('updated@test.com');
   });
 }

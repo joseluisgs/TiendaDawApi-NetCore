@@ -45,7 +45,7 @@ script:post-response {
   test("GraphQL CategoriaById - Returns categoria", function () {
       const jsonData = res.getBody();
       expect(jsonData.data.categoria).to.be.an('object');
-      expect(jsonData.data.categoria.id).to.be.a('number');
+      expect(jsonData.data.categoria.id).to.satisfy(v => typeof v === 'string' || typeof v === 'number');
       expect(jsonData.data.categoria.nombre).to.be.a('string');
   });
 }

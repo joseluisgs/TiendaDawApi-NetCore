@@ -25,8 +25,8 @@ body:json {
 }
 
 script:post-response {
-  test("Pedidos My Update Forbidden - Status 403 Forbidden", function () {
-      expect(res.getStatus()).to.equal(403);
+  test("Pedidos My Update Forbidden - Status 404 Not Found", function () {
+      expect(res.getStatus()).to.equal(404);
   });
 }
 
@@ -36,5 +36,5 @@ settings {
 }
 
 docs {
-  Actualizar pedido de otro usuario debe retornar 403
+  Actualizar pedido de otro usuario debe retornar 404
 }

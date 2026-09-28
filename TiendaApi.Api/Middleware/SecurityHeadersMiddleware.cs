@@ -17,6 +17,10 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
         ["Permissions-Policy"] = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
     };
 
+    /// <summary>
+    /// Añade los headers de seguridad a la respuesta y continúa con la petición.
+    /// </summary>
+    /// <param name="context">Contexto HTTP de la petición en curso.</param>
     public async Task InvokeAsync(HttpContext context)
     {
         foreach (var header in SecurityHeaders)
