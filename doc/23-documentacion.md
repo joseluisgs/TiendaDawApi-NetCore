@@ -749,6 +749,8 @@ flowchart TB
 | Versionar temprano | Planificar versiones desde el inicio |
 | Deprecación suave | Advertir antes de eliminar |
 
+**Comprobación automática del contrato.** El esquema OpenAPI también se verifica con un script: `scripts/check-openapi.mjs` arranca las dos variantes del proyecto en sus puertos (5041 y 5042), descarga `/swagger/v1/swagger.json` de cada una y las compara con un deep-diff que solo ignora el orden de listas no semánticas y el puerto en las URLs. Cualquier diferencia de rutas, cuerpos o estados hace fallar la comprobación, de modo que la superficie HTTP de ambas variantes queda fijada por el código.
+
 ### Siguientes Pasos
 
 Con documentación y versionado dominado, el siguiente paso es aprender sobre patrones avanzados de arquitectura.

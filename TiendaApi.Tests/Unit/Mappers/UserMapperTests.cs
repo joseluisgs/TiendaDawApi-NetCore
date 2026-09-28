@@ -683,7 +683,7 @@ public class UserMapperTests
         // Arrange
         var dto = new RegisterDto
         {
-            Username = "üser_名前",
+            Username = "üser_nombre",
             Email = "test@test.com",
             Password = "password"
         };
@@ -692,7 +692,7 @@ public class UserMapperTests
         var entity = dto.ToEntity("hash");
 
         // Assert
-        entity.Username.Should().Be("üser_名前");
+        entity.Username.Should().Be("üser_nombre");
     }
 
     #endregion

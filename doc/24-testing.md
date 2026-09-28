@@ -329,6 +329,8 @@ public class SequentialIntegrationTests
 }
 ```
 
+En este proyecto los contenedores se organizan **una sola vez por ensamblado**: la fixture `Integration/TestContainers/AssemblyContainerFixture.cs` arranca un PostgreSQL y un MongoDB al comenzar la suite y los mantiene vivos hasta el final, porque el arranque de Docker es lo caro. Sobre esos dos contenedores, **cada clase de test crea su propia base de datos** y la elimina al terminar, de modo que las clases quedan aisladas entre sí sin pagar un contenedor por clase.
+
 ---
 
 ## 24.6. TestContainers
@@ -358,7 +360,7 @@ flowchart LR
 | Aspecto | Base de datos en memoria | TestContainers |
 |---------|-------------------------|----------------|
 | **Realismo** | Bajo | Alto |
-| **SQL features** | Limitado | Completo |
+| **Características SQL** | Limitado | Completo |
 | **Migrations** | No testeadas | Testeadas |
 | **Velocidad** | Rápido | Más lento |
 | **Aislamiento** | Por proceso | Por contenedor |

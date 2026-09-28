@@ -19,6 +19,8 @@
 
 Cuando múltiples usuarios intentan comprar el mismo producto simultáneamente, surgen problemas de concurrencia que pueden llevar a inconsistencias en el inventario. Sin mecanismos adecuados, podríamos vender más productos de los que realmente tenemos en stock.
 
+Antes de la concurrencia, conviene fijar qué es un pedido en este proyecto: es un **agregado** —destinatario, dirección de envío y lista de items con su precio congelado al emitirlo— que se guarda en **MongoDB como un único documento embebido**, con destinatario e items anidados dentro del propio pedido. Así se lee y se escribe completo, sin joins con las tablas relacionales, y el precio congelado del item hace que un cambio posterior del producto no altere los pedidos ya emitidos.
+
 ```mermaid
 flowchart TD
     subgraph "Escenario Problemático"

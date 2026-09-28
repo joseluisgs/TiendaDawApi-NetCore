@@ -48,7 +48,6 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
       - [Automation (Node)](#automation-node)
       - [Postman (Newman)](#postman-newman)
       - [Bruno (CLI)](#bruno-cli)
-    - [Verificación de consistencia (scripts)](#verificación-de-consistencia-scripts)
   - [📚 Documentación](#-documentación)
     - [Fundamentos y Configuración](#fundamentos-y-configuración)
     - [API y Controllers](#api-y-controllers)
@@ -62,8 +61,6 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
     - [Testing y Calidad](#testing-y-calidad)
     - [DevOps y Producción](#devops-y-producción)
     - [Arquitectura](#arquitectura)
-    - [Decisiones de Arquitectura (ADR)](#decisiones-de-arquitectura-adr)
-    - [Peticiones HTTP (REST Client)](#peticiones-http-rest-client)
   - [⚒️ Diagrama de Clases del Dominio](#️-diagrama-de-clases-del-dominio)
   - [🗄️ Entidades por Base de Datos](#️-entidades-por-base-de-datos)
     - [🐘 PostgreSQL (Datos Maestros)](#-postgresql-datos-maestros)
@@ -325,14 +322,14 @@ cd TiendaApi.Tests.E2E/Bruno-Cli
 docker compose up --build
 start reports/report.html
 
-# Opción 2: Con Bruno CLI local — corrida única (los tokens NO sobreviven entre tandas)
+# Opción 2: Con Bruno CLI local — ejecución única (los tokens NO sobreviven entre tandas)
 npm install -g @usebruno/cli
 cd TiendaApi.Tests.E2E/Bruno-Local
 bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
   "4 - PEDIDOS (Usuario)" "5 - PEDIDOS (Admin)" "7 - STORAGE" \
   "10 - GRAPHQL CATEGORÍAS" "11 - GRAPHQL PRODUCTOS" "90 - TEARDOWN" \
   --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 3200
-# Corrida sin fallos. Fuera del run: "6 - USUARIOS" (no incluida) y
+# Ejecución sin fallos. Fuera de esta ejecución: "6 - USUARIOS" (no incluida) y
 # "12 - WEBSOCKETS" (la CLI no soporta WS; la variable basews no existe en el env)
 ```
 
@@ -342,20 +339,6 @@ bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
 - `report.html` - Informe visual
 - `report.json` - Datos estructurados
 - `junit-report.xml` - Para CI/CD
-
-### Verificación de consistencia (scripts)
-
-Comprobaciones automáticas que sostienen la calidad del repo (Node 18+; `check-style` vía PowerShell):
-
-| Script | Comando | Qué valida |
-| --- | --- | --- |
-| `check-docs.mjs` | `node scripts/check-docs.mjs` | Índice ↔ secciones de la bitácora, hashes contra `git log`, fases completadas y TOC de este README |
-| `check-parity.mjs` | `node scripts/check-parity.mjs` | Rutas de API y colecciones E2E idénticas respecto a la variante CQRS |
-| `check-openapi.mjs` | `node scripts/check-openapi.mjs` | Contrato `swagger.json` idéntico entre ambos repos (arranca las dos APIs) |
-| `check-style.ps1` | `powershell -ExecutionPolicy Bypass -File scripts\check-style.ps1` | Formato con `dotnet format` (whitespace + style) |
-| `check-audit.mjs` | `node scripts/check-audit.mjs` | Sin vulnerabilidades NuGet Critical/High (API + cliente) |
-
-Las corridas E2E se ejecutan con **BD nueva antes de cada herramienta** (`reset-seeds*.ps1`): cada colección parte de semillas frescas y así no hereda el estado de la anterior.
 
 ## 📚 Documentación
 
@@ -438,34 +421,6 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | --- | --- | --- |
 | 29 | [29-clean-architecture.md](doc/29-clean-architecture.md) | Clean Architecture |
 | 30 | [30-organizacion-program.md](doc/30-organizacion-program.md) | Organización Program.cs |
-
-### Decisiones de Arquitectura (ADR)
-
-| #   | Documento | Descripción |
-| --- | --- | --- |
-| 00 | [00-plantilla.md](doc/adr/00-plantilla.md) | Plantilla para nuevos ADR |
-| 01 | [01-errores-dominio-patron-result.md](doc/adr/01-errores-dominio-patron-result.md) | ADR-0001 · Errores de dominio con patrón Result |
-| 02 | [02-arquitectura-en-capas.md](doc/adr/02-arquitectura-en-capas.md) | ADR-0002 · Arquitectura en capas |
-| 03 | [03-repositorios-ef-core-postgresql.md](doc/adr/03-repositorios-ef-core-postgresql.md) | ADR-0003 · Repositorios con EF Core y PostgreSQL |
-| 04 | [04-mongodb-para-pedidos.md](doc/adr/04-mongodb-para-pedidos.md) | ADR-0004 · Pedidos en MongoDB |
-| 05 | [05-jwt-roles-y-autorizacion.md](doc/adr/05-jwt-roles-y-autorizacion.md) | ADR-0005 · JWT y roles |
-| 06 | [06-validacion-en-cascada.md](doc/adr/06-validacion-en-cascada.md) | ADR-0006 · Validación en cascada |
-| 07 | [07-rate-limiting-nativo.md](doc/adr/07-rate-limiting-nativo.md) | ADR-0007 · Rate limiting nativo |
-| 08 | [08-cache-multinivel.md](doc/adr/08-cache-multinivel.md) | ADR-0008 · Caché multinivel |
-| 09 | [09-testcontainers-para-integracion.md](doc/adr/09-testcontainers-para-integracion.md) | ADR-0009 · Testcontainers para integración |
-| 10 | [10-contrato-openapi-verificado.md](doc/adr/10-contrato-openapi-verificado.md) | ADR-0010 · Contrato OpenAPI verificado |
-
-### Peticiones HTTP (REST Client)
-
-| #   | Documento | Descripción |
-| --- | --- | --- |
-| 00 | [00-base.http](doc/http/00-base.http) | Variables, salud, version y tokens |
-| 01 | [01-auth.http](doc/http/01-auth.http) | Registro y login |
-| 02 | [02-categorias.http](doc/http/02-categorias.http) | CRUD de categorías |
-| 03 | [03-productos.http](doc/http/03-productos.http) | CRUD de productos e imagen |
-| 04 | [04-pedidos.http](doc/http/04-pedidos.http) | Pedidos de usuario y admin |
-| 05 | [05-users.http](doc/http/05-users.http) | Usuarios y perfil propio |
-| 06 | [06-infraestructura.http](doc/http/06-infraestructura.http) | Storage y GraphQL |
 
 ## ⚒️ Diagrama de Clases del Dominio
 
