@@ -1,0 +1,66 @@
+# =====================================================================
+# 01 - AUTH: registro e inicio de sesion (rutas versionadas /api/v1/auth)
+# Sin autenticacion previa. El registro genera usuarios unicos con $guid.
+# =====================================================================
+
+@baseUrl = http://localhost:5031
+
+### [SIGNUP] Registrar usuario nuevo (201) - token como nuevoSignup
+# @name nuevoSignup
+POST {{baseUrl}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "username": "demo_{{$guid}}",
+  "email": "demo_{{$guid}}@test.com",
+  "password": "Test1234"
+}
+
+### [SIGNUP] Error: email invalido (400)
+POST {{baseUrl}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "username": "demo_email_{{$guid}}",
+  "email": "no-es-un-email",
+  "password": "Test1234"
+}
+
+### [SIGNUP] Error: usuario duplicado (409) - repite el nombre del signup anterior
+POST {{baseUrl}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "username": "{{nuevoSignup.response.body.$.user.username}}",
+  "email": "duplicado@test.com",
+  "password": "Test1234"
+}
+
+### [SIGNIN] Login administrador (200) - token como loginAdmin
+# @name loginAdmin
+POST {{baseUrl}}/api/v1/auth/signin
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin"
+}
+
+### [SIGNIN] Login usuario (200) - token como loginUser
+# @name loginUser
+POST {{baseUrl}}/api/v1/auth/signin
+Content-Type: application/json
+
+{
+  "username": "userdaw",
+  "password": "userdaw"
+}
+
+### [SIGNIN] Error: credenciales invalidas (401)
+POST {{baseUrl}}/api/v1/auth/signin
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrongpassword"
+}

@@ -61,6 +61,8 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
     - [Testing y Calidad](#testing-y-calidad)
     - [DevOps y Producción](#devops-y-producción)
     - [Arquitectura](#arquitectura)
+    - [Decisiones de Arquitectura (ADR)](#decisiones-de-arquitectura-adr)
+    - [Peticiones HTTP (REST Client)](#peticiones-http-rest-client)
   - [⚒️ Diagrama de Clases del Dominio](#️-diagrama-de-clases-del-dominio)
   - [🗄️ Entidades por Base de Datos](#️-entidades-por-base-de-datos)
     - [🐘 PostgreSQL (Datos Maestros)](#-postgresql-datos-maestros)
@@ -421,6 +423,34 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | --- | --- | --- |
 | 29 | [29-clean-architecture.md](doc/29-clean-architecture.md) | Clean Architecture |
 | 30 | [30-organizacion-program.md](doc/30-organizacion-program.md) | Organización Program.cs |
+
+### Decisiones de Arquitectura (ADR)
+
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 00 | [00-plantilla.md](doc/adr/00-plantilla.md) | Plantilla para nuevos ADR |
+| 01 | [01-errores-dominio-patron-result.md](doc/adr/01-errores-dominio-patron-result.md) | ADR-0001 · Errores de dominio con patrón Result |
+| 02 | [02-arquitectura-en-capas.md](doc/adr/02-arquitectura-en-capas.md) | ADR-0002 · Arquitectura en capas |
+| 03 | [03-repositorios-ef-core-postgresql.md](doc/adr/03-repositorios-ef-core-postgresql.md) | ADR-0003 · Repositorios con EF Core y PostgreSQL |
+| 04 | [04-mongodb-para-pedidos.md](doc/adr/04-mongodb-para-pedidos.md) | ADR-0004 · Pedidos en MongoDB |
+| 05 | [05-jwt-roles-y-autorizacion.md](doc/adr/05-jwt-roles-y-autorizacion.md) | ADR-0005 · JWT y roles |
+| 06 | [06-validacion-en-cascada.md](doc/adr/06-validacion-en-cascada.md) | ADR-0006 · Validación en cascada |
+| 07 | [07-rate-limiting-nativo.md](doc/adr/07-rate-limiting-nativo.md) | ADR-0007 · Rate limiting nativo |
+| 08 | [08-cache-multinivel.md](doc/adr/08-cache-multinivel.md) | ADR-0008 · Caché multinivel |
+| 09 | [09-testcontainers-para-integracion.md](doc/adr/09-testcontainers-para-integracion.md) | ADR-0009 · Testcontainers para integración |
+| 10 | [10-contrato-openapi-verificado.md](doc/adr/10-contrato-openapi-verificado.md) | ADR-0010 · Contrato OpenAPI verificado |
+
+### Peticiones HTTP (REST Client)
+
+| #   | Documento | Descripción |
+| --- | --- | --- |
+| 00 | [00-base.http](doc/http/00-base.http) | Variables, salud, version y tokens |
+| 01 | [01-auth.http](doc/http/01-auth.http) | Registro y login |
+| 02 | [02-categorias.http](doc/http/02-categorias.http) | CRUD de categorías |
+| 03 | [03-productos.http](doc/http/03-productos.http) | CRUD de productos e imagen |
+| 04 | [04-pedidos.http](doc/http/04-pedidos.http) | Pedidos de usuario y admin |
+| 05 | [05-users.http](doc/http/05-users.http) | Usuarios y perfil propio |
+| 06 | [06-infraestructura.http](doc/http/06-infraestructura.http) | Storage y GraphQL |
 
 ## ⚒️ Diagrama de Clases del Dominio
 

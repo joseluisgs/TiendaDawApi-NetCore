@@ -1,0 +1,35 @@
+# =====================================================================
+# 06 - INFRAESTRUCTURA: storage de imagenes y GraphQL
+# Complementa a 00-base.http (health y /version).
+#
+# Storage existe en dos formas:
+#   - GET /storage/{**path}  -> controlador StorageController (siempre).
+#   - GET /images/...        -> ficheros estaticos de wwwroot (UseStaticFiles).
+# Si la imagen no existe en tu wwwroot, la primera responde 404: sube una
+# desde doc/http/03-productos.http (PATCH imagen) o usa la coleccion E2E.
+# =====================================================================
+
+@baseUrl = http://localhost:5031
+
+### [STORAGE] Obtener imagen existente (200 si esta en wwwroot)
+GET {{baseUrl}}/storage/images/uploads/productos/20260506170337_e22e6e55_test_image.png
+
+### [STORAGE] Error: archivo inexistente (404)
+GET {{baseUrl}}/storage/images/uploads/productos/no-existe.png
+
+### [ESTATICOS] La misma imagen servida por ficheros estaticos (200/404)
+GET {{baseUrl}}/images/uploads/productos/20260506170337_e22e6e55_test_image.png
+
+### [GRAPHQL] Query de categoria por id (200) - alternativa a REST
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query($id: Long!) { categoria(id: $id) { id nombre } }",
+  "variables": { "id": 1 }
+}
+
+### [RATE LIMIT] No hay loop en .http: recarga varias veces la peticion de
+### /api/categorias en menos de 15 segundos para ver las cabeceras
+### RateLimit-Limit/Remaining/Reset; al agotarse la ventana general
+### (100/15s) o la de login (10/min) la API responde 429 con Retry-After.

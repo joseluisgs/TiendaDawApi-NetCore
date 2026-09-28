@@ -1,0 +1,93 @@
+# =====================================================================
+# 02 - CATEGORIAS: CRUD completo (5 rutas)
+# Lecturas publicas; escrituras con rol ADMIN.
+# Los login de este fichero se ejecutan una vez y sus tokens se reutilizan.
+# =====================================================================
+
+@baseUrl = http://localhost:5031
+
+### [LOGIN] Admin (200) - token como loginAdmin
+# @name loginAdmin
+POST {{baseUrl}}/api/v1/auth/signin
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin"
+}
+
+### [LOGIN] Usuario (200) - token como loginUser (para el 403)
+# @name loginUser
+POST {{baseUrl}}/api/v1/auth/signin
+Content-Type: application/json
+
+{
+  "username": "userdaw",
+  "password": "userdaw"
+}
+
+### [GET] Listar todas, publico (200)
+GET {{baseUrl}}/api/categorias
+
+### [GET] Listar con filtros y paginacion (200)
+GET {{baseUrl}}/api/categorias?nombre=Elec&page=0&size=10&sortBy=id&direction=asc
+
+### [GET] Obtener por id (200) - semilla id=1
+GET {{baseUrl}}/api/categorias/1
+
+### [GET] Error: no existe (404)
+GET {{baseUrl}}/api/categorias/999999
+
+### [POST] Crear como admin (201) - id como crearCategoria
+# @name crearCategoria
+POST {{baseUrl}}/api/categorias
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Categoria demo {{$guid}}",
+  "descripcion": "Creada desde doc/http"
+}
+
+### [POST] Error: sin token (401)
+POST {{baseUrl}}/api/categorias
+Content-Type: application/json
+
+{
+  "nombre": "Sin auth",
+  "descripcion": "Falta el token"
+}
+
+### [POST] Error: rol USER (403)
+POST {{baseUrl}}/api/categorias
+Authorization: Bearer {{loginUser.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Rol user",
+  "descripcion": "No puede"
+}
+
+### [POST] Error: nombre duplicado de la semilla "Electronica" (409)
+POST {{baseUrl}}/api/categorias
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Electrónica",
+  "descripcion": "Ya existe en la semilla"
+}
+
+### [PUT] Actualizar la creada (200)
+PUT {{baseUrl}}/api/categorias/{{crearCategoria.response.body.$.id}}
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Categoria demo actualizada",
+  "descripcion": "Renombrada desde doc/http"
+}
+
+### [DELETE] Eliminar la creada (204)
+DELETE {{baseUrl}}/api/categorias/{{crearCategoria.response.body.$.id}}
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
