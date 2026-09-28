@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Logging;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Realtime.Common;
@@ -45,7 +46,12 @@ public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger
 {
     private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
     private readonly ILogger<ProductosWebSocketHandler> _logger = logger;
-    private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    private readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        // Source-gen (AppJsonContext) + fallback a reflexión
+        TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
+    };
 
     /// <summary>Maneja una conexión WebSocket.</summary>
     /// <param name="context">Contexto HTTP.</param>

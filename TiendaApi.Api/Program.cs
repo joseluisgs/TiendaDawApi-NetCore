@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization.Metadata;
 using Serilog;
 using Serilog.Extensions.Logging;
 using TiendaApi.Api;
@@ -30,6 +31,12 @@ var environment = builder.Environment;
 
 // Core - Controllers
 services.AddMvcControllers();
+
+// Serialización JSON con source-gen (AppJsonContext) + fallback a reflexión
+// para los tipos no declarados (anónimos, ProblemDetails, etc.)
+services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolver =
+    JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver()));
+
 services.AddFluentValidationServices();
 
 // Compresión HTTP (Brotli + Gzip)

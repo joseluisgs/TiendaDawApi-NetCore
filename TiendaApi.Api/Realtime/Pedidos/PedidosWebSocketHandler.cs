@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TiendaApi.Api.Realtime.Common;
@@ -62,7 +63,12 @@ public class PedidosWebSocketHandler
         _cacheService = cacheService;
         var ttlMinutes = configuration.GetValue<int>("WebSocket:RoleCacheTTLMinutes", 5);
         _roleCacheTTL = TimeSpan.FromMinutes(ttlMinutes);
-        _jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            // Source-gen (AppJsonContext) + fallback a reflexión
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
+        };
         _logger.LogInformation("PedidosWebSocketHandler inicializado con TTL: {TTL} minutos", ttlMinutes);
     }
 

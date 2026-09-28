@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Api.Exceptions;
 
@@ -120,7 +121,9 @@ public class GlobalExceptionHandler(
         var jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            // Source-gen (AppJsonContext) + fallback a reflexión para tipos anónimos
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
         };
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));

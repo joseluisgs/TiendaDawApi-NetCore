@@ -9,7 +9,8 @@
   - [27.4. Caching Avanzado](#274-caching-avanzado)
   - [27.5. Optimización de Entity Framework Core](#275-optimización-de-entity-framework-core)
   - [27.6. Benchmarking](#276-benchmarking)
-  - [27.7. Resumen y Buenas Prácticas](#277-resumen-y-buenas-prácticas)
+  - [27.7. Serialización JSON con Source Generation](#277-serialización-json-con-source-generation)
+  - [27.8. Resumen y Buenas Prácticas](#278-resumen-y-buenas-prácticas)
 
 ---
 
@@ -608,7 +609,72 @@ public class RepositoryBenchmark
 
 ---
 
-## 27.7. Resumen y Buenas Prácticas
+## 27.7. Serialización JSON con Source Generation
+
+### Reflexión frente a generación de código
+
+Por defecto, `System.Text.Json` construye el contrato de cada tipo en tiempo
+de ejecución mediante **reflexión**: la primera vez que se serializa un tipo
+se descubren sus propiedades y se cachea el resultado. Con la **source
+generation**, un generador incluido en el SDK produce en compilación el
+código que serializa y deserializa los tipos declarados, de forma que en
+runtime no hace falta descubrir nada.
+
+| | Reflexión | Source generation |
+| --- | --- | --- |
+| Descubrimiento | En runtime, primera vez | En compilación |
+| Arranque | Coste inicial por tipo | Cero (código ya generado) |
+| Publicación AOT/trimmed | Requiere reflexión disponible | Preparado |
+| Tipos admitidos | Todos (incluidos anónimos) | Solo los declarados |
+
+### El contexto del proyecto: `AppJsonContext`
+
+`TiendaApi.Api/AppJsonContext.cs` declara con `[JsonSerializable]` los DTOs de
+la API (entidades, DTOs de petición/respuesta, filtros y resultados
+paginados). El contexto se conecta en **todos los puntos** donde la
+aplicación serializa JSON:
+
+| Punto | Fichero |
+| --- | --- |
+| Entradas/salidas de MVC | `Infrastructures/ControllersConfig.cs` (`AddJsonOptions`) |
+| `/health*`, `/version` | `Program.cs` (`ConfigureHttpJsonOptions`) |
+| Excepciones inesperadas | `Middleware/GlobalExceptionHandler.cs` |
+| Respuesta 429 | `Middleware/RateLimitMiddleware.cs` |
+| WebSockets de productos y pedidos | `Realtime/**` |
+| Caché de Redis | `Services/Cache/RedisCacheService.cs` |
+
+### El fallback es obligatorio
+
+La conexión se hace siempre con **resolución combinada**:
+
+```csharp
+TypeInfoResolver = JsonTypeInfoResolver.Combine(
+    AppJsonContext.Default,
+    new DefaultJsonTypeInfoResolver())
+```
+
+Si el contexto declarado no conoce un tipo (respuestas anónimas como las de
+`/health`, `/version` o el cuerpo del 429, `ProblemDetails`, etc.),
+**`DefaultJsonTypeInfoResolver` lo resuelve por reflexión**. Conectar solo
+`AppJsonContext.Default` lanzaría `JsonSerializerException` en runtime ante
+cualquier tipo no declarado: por eso el fallback no es opcional.
+
+### Cuándo compensa y cómo se mantiene
+
+- **Arranque y primeras peticiones**: menos trabajo de descubrimiento.
+- **AOT y trimming**: es el único camino si algún día se publica la API
+  «trimmable»; la reflexión en runtime no sobrevive al recorte.
+- **Coste real en esta API**: con la carga actual, la reflexión es más que
+  suficiente; el valor inmediato es tener el camino preparado y el contrato
+  de tipos declarado.
+- **Mantenimiento**: cada DTO nuevo conviene añadirlo a `AppJsonContext`
+  aunque el fallback lo cubriría; y cualquier cambio de formato debe
+  verificarse con la suite E2E y con la comprobación de contrato OpenAPI,
+  porque un cambio de nombres de propiedad rompe clientes silenciosamente.
+
+---
+
+## 27.8. Resumen y Buenas Prácticas
 
 ### Checklist de Optimización
 

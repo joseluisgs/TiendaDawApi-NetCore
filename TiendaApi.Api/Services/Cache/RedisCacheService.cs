@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace TiendaApi.Api.Services.Cache;
@@ -16,7 +17,9 @@ public class RedisCacheService(
     private readonly ILogger<RedisCacheService> _logger = logger;
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        // Source-gen (AppJsonContext) + fallback a reflexión
+        TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
     };
 
     /// <summary>

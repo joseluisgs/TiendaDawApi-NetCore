@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization.Metadata;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,10 @@ public static class ControllersConfig
         {
             options.RespectBrowserAcceptHeader = true;
             options.ReturnHttpNotAcceptable = true;
-        });
+        })
+        // Serialización con source-gen (AppJsonContext) + fallback a reflexión
+        .AddJsonOptions(options => options.JsonSerializerOptions.TypeInfoResolver =
+            JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver()));
         //.AddXmlSerializerFormatters()
         //.AddXmlDataContractSerializerFormatters();
     }
