@@ -1,72 +1,62 @@
-using AspNetCoreRateLimit;
+using TiendaApi.Api.Middleware;
 
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Extension methods para configurar Rate Limiting.
+/// Extension methods para configurar Rate Limiting con la API nativa de .NET
+/// (<c>System.Threading.RateLimiting</c>), sin dependencias de terceros.
 /// Protege la API contra DDoS, fuerza bruta y abuso.
 /// </summary>
+/// <remarks>
+/// Las reglas aplican por cliente (IP + verbo + ruta), igual que una ventana
+/// de conteo independiente por endpoint:
+/// <list type="bullet">
+/// <item>Todas las peticiones: 100 por 15 segundos.</item>
+/// <item>Autenticación (<c>/api/v1/auth/*</c>): 10 por minuto.</item>
+/// <item>Escritura (POST): 20 por minuto.</item>
+/// </list>
+/// Si dos reglas comparten periodo se aplica la más restrictiva
+/// (p.ej. un POST a autenticación queda en 10/min, no en 20/min).
+/// </remarks>
 public static class RateLimitConfig
 {
+    /// <summary>Límite de peticiones para la ventana general.</summary>
+    public const int GeneralLimit = 100;
+
+    /// <summary>Periodo de la ventana general.</summary>
+    public static readonly TimeSpan GeneralWindow = TimeSpan.FromSeconds(15);
+
+    /// <summary>Límite por minuto para endpoints de autenticación.</summary>
+    public const int AuthLimit = 10;
+
+    /// <summary>Límite por minuto para peticiones de escritura (POST).</summary>
+    public const int WriteLimit = 20;
+
+    /// <summary>Periodo de las ventanas de un minuto.</summary>
+    public static readonly TimeSpan MinuteWindow = TimeSpan.FromMinutes(1);
+
+    /// <summary>Prefijo de ruta que identifica los endpoints de autenticación.</summary>
+    public const string AuthPathPrefix = "/api/v1/auth/";
+
     /// <summary>
-    /// Configura Rate Limiting con reglas por defecto.
+    /// Registra el estado del rate limiting (particiones y limitadores nativos).
     /// </summary>
+    /// <param name="services">Colección de servicios de la aplicación.</param>
+    /// <returns>La misma colección de servicios.</returns>
     public static IServiceCollection AddRateLimitingPolicy(this IServiceCollection services)
     {
-        services.AddMemoryCache();
-        services.Configure<RateLimitOptions>(options =>
-        {
-            options.EnableEndpointRateLimiting = true;
-            options.HttpStatusCode = 429;
-            options.QuotaExceededMessage = "Demasiadas solicitudes. Por favor, intente más tarde.";
-
-            options.GeneralRules = new List<RateLimitRule>
-            {
-                // API General: 100 requests por 15 segundos
-                new RateLimitRule
-                {
-                    Endpoint = "*",
-                    Limit = 100,
-                    Period = "15s"
-                },
-                // Endpoints de autenticación: más estrictos (fuerza bruta)
-                new RateLimitRule
-                {
-                    Endpoint = "*/api/v1/auth/*",
-                    Limit = 10,
-                    Period = "1m"
-                },
-                // Endpoints de escritura: más estrictos
-                new RateLimitRule
-                {
-                    Endpoint = "POST:*",
-                    Limit = 20,
-                    Period = "1m"
-                },
-                // GraphQL: más permisivo para queries
-                new RateLimitRule
-                {
-                    Endpoint = "POST:/graphql",
-                    Limit = 200,
-                    Period = "1m"
-                }
-            };
-        });
-
-        services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
-        services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
-        services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
-        services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
-
+        services.AddSingleton<RateLimitingState>();
         return services;
     }
 
     /// <summary>
     /// Aplica el middleware de Rate Limiting.
     /// </summary>
+    /// <param name="app">Constructor de la aplicación.</param>
+    /// <returns>El mismo constructor de aplicación.</returns>
     public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
     {
-        app.UseIpRateLimiting();
+        app.UseMiddleware<RateLimitMiddleware>();
         return app;
     }
 }

@@ -820,7 +820,7 @@ graph TD
 
 ### Configuración de Rate Limiting en TiendaApi
 
-La API implementa Rate Limiting usando `AspNetCoreRateLimit` con diferentes reglas según el tipo de endpoint:
+La API implementa Rate Limiting con la API nativa de .NET (`System.Threading.RateLimiting`), sin dependencias de terceros, mediante un middleware propio (`RateLimitMiddleware`) con diferentes reglas según el tipo de endpoint:
 
 ```csharp
 // En Program.cs
@@ -830,6 +830,8 @@ services.AddRateLimitingPolicy();
 app.UseRateLimiting();
 ```
 
+Las reglas se evalúan **por cliente**: cada combinación de IP + verbo + ruta tiene su propio contador (una ventana independiente por endpoint). La IP del cliente se resuelve con las cabeceras del proxy inverso (`X-Forwarded-For`, primer salto) y después `X-Real-IP`, con fallback a la IP de conexión directa.
+
 ### Reglas de Rate Limiting Implementadas
 
 | Endpoint | Limite | Periodo | Razon |
@@ -837,79 +839,98 @@ app.UseRateLimiting();
 | `*` (General) | 100 | 15s | Uso general de la API |
 | `*/api/v1/auth/*` | 10 | 1m | Prevenir fuerza bruta en login |
 | `POST:*` | 20 | 1m | Limitar escrituras |
-| `POST:/graphql` | 200 | 1m | Queries GraphQL flexibles |
+
+Cuando dos reglas comparten periodo se aplica siempre la **más restrictiva**: un `POST` a `/api/v1/auth/login` queda en **10/min** (no en 20/min), porque la regla de autenticación gana sobre la de escritura.
 
 ### Respuesta cuando se Excede el Limite
 
 ```json
 {
-    "statusCode": 429,
-    "message": "Too Many Requests",
-    "headers": {
-        "X-RateLimit-Limit": "10",
-        "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Reset": "60",
-        "Retry-After": "60"
-    }
+    "message": "Demasiadas solicitudes. Por favor, intente más tarde.",
+    "errorType": "RateLimitError",
+    "timestamp": "2026-09-28T10:30:00.0000000Z",
+    "path": "/api/v1/productos",
+    "method": "POST",
+    "limit": 20,
+    "window": "1m",
+    "retryAfter": 42
 }
 ```
 
+El mismo formato de error que el resto de fallos de la API (`message` + `errorType`), más la cabecera `Retry-After` con los segundos hasta que se liberen permisos.
+
 ### Cabeceras de Rate Limiting
+
+Se envían las cabeceras estándar `RateLimit-*` (draft IETF) en toda respuesta permitida:
 
 | Cabecera | Descripcion |
 |----------|-------------|
-| `X-RateLimit-Limit` | Limite maximo de solicitudes |
-| `X-RateLimit-Remaining` | Solicitudes restantes |
-| `X-RateLimit-Reset` | Tiempo hasta reset (segundos) |
-| `Retry-After` | Segundos esperados antes de reintentar |
+| `RateLimit-Limit` | Limite maximo de solicitudes de la ventana activa |
+| `RateLimit-Remaining` | Solicitudes restantes |
+| `RateLimit-Reset` | Segundos hasta que se reinicie la ventana |
+| `Retry-After` | Segundos esperados antes de reintentar (solo en 429) |
+
+Las respuestas `200 OK` informan del límite correspondiente a la ventana de periodo más largo (la de un minuto si la ruta tiene esa regla); las respuestas `429` llevan `Retry-After` en lugar de `RateLimit-*`.
 
 ### Implementacion del Middleware
 
 ```csharp
-// RateLimitConfig.cs
+// RateLimitConfig.cs — reglas y registro (API nativa, sin terceros)
+public const int GeneralLimit = 100;                       // 100 peticiones...
+public static readonly TimeSpan GeneralWindow = TimeSpan.FromSeconds(15); // ...por 15 s
+public const int AuthLimit = 10;                           // 10/min en autenticación
+public const int WriteLimit = 20;                          // 20/min en escrituras (POST)
+public const string AuthPathPrefix = "/api/v1/auth/";
+
 public static IServiceCollection AddRateLimitingPolicy(this IServiceCollection services)
 {
-    services.AddMemoryCache();
-    services.Configure<RateLimitOptions>(options =>
-    {
-        options.EnableEndpointRateLimiting = true;
-        options.HttpStatusCode = 429;
-        options.QuotaExceededMessage = "Demasiadas solicitudes. Por favor, intente mas tarde.";
-        
-        options.GeneralRules = new List<RateLimitRule>
-        {
-            new RateLimitRule
-            {
-                Endpoint = "*",
-                Limit = 100,
-                Period = "15s"
-            },
-            new RateLimitRule
-            {
-                Endpoint = "*/api/v1/auth/*",
-                Limit = 10,
-                Period = "1m"
-            }
-        };
-    });
-
-    services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
-    
+    services.AddSingleton<RateLimitingState>(); // particiones (IP + verbo + ruta) en memoria
     return services;
 }
 
 public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
 {
-    app.UseIpRateLimiting();
+    app.UseMiddleware<RateLimitMiddleware>();
     return app;
 }
 ```
+
+```csharp
+// RateLimitMiddleware.cs — extracto
+var partition = _state.GetOrCreate(ResolveClientIp(context), method, path);
+
+// 1) ventana general (100 por 15 s): siempre se comprueba
+using (var generalLease = await partition.General.AcquireAsync(1, context.RequestAborted))
+{
+    if (!generalLease.IsAcquired)
+    {
+        await RejectAsync(context, generalLease, RateLimitConfig.GeneralLimit, RateLimitConfig.GeneralWindow);
+        return;
+    }
+}
+
+// 2) ventana de un minuto (10 autenticación / 20 POST), solo si la ruta la tiene
+if (partition.HasMinuteWindow)
+{
+    using var minuteLease = await partition.Minute!.AcquireAsync(1, context.RequestAborted);
+    if (!minuteLease.IsAcquired)
+    {
+        await RejectAsync(context, minuteLease, partition.MinuteLimit, RateLimitConfig.MinuteWindow);
+        return;
+    }
+}
+
+SetRateLimitHeaders(context, partition); // RateLimit-Limit/Remaining/Reset en la respuesta
+await _next(context);
+```
+
+Los contadores viven en `FixedWindowRateLimiter` (ventana fija con auto-replenishment). Cada partición crea su limitador general y, si corresponde, el de un minuto; `RateLimitingState` es un singleton que limpia las particiones inactivas más de 10 minutos para no crecer sin límite.
 
 ### Consideraciones de Producción
 
 | Aspecto | Recomendacion |
 |---------|---------------|
-| **Almacenamiento** | Usar Redis para multiples instancias |
+| **Almacenamiento** | El estado vive en memoria por instancia; para multiples instancias distribuirlo (Redis u otra estrategia) |
 | **Limites estrictos** | Mas restrictivos en endpoints sensibles |
 | **Whitelist** | Excluir IPs de monitoring |
 | **Logging** | Registrar intentos bloqueados |

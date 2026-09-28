@@ -1,6 +1,6 @@
 <Project>
   <!--
-    Central Package Management (P1 · PLAN-MEJORAS-24).
+    Central Package Management (CPM).
     Las versiones viven aquí; los .csproj solo declaran <PackageReference Include="..." />.
     Fichero idéntico en ambos repos (incluye MediatR aunque solo lo referencie la variante CQRS).
   -->
@@ -9,7 +9,6 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- API -->
-    <PackageVersion Include="AspNetCoreRateLimit" Version="5.0.0" />
     <PackageVersion Include="Asp.Versioning.Mvc" Version="10.2.1" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
     <PackageVersion Include="AutoMapper" Version="16.2.0" />

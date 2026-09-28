@@ -78,7 +78,8 @@ dotnet list TiendaApi.slnx package --vulnerable --include-transitive
 | CSharpFunctionalExtensions | 3.6.0 | **3.7.0** | minor |
 | FluentValidation.AspNetCore | 11.3.0 | **11.3.1** | patch |
 | MailKit | 4.16.0 | **4.18.0** | minor |
-| AspNetCoreRateLimit / GraphiQL | 5.0.0 / 2.0.0 | sin cambio | ya eran latest |
+| AspNetCoreRateLimit | 5.0.0 | **→ eliminado** | sustituido por rate limiting nativo (`System.Threading.RateLimiting`) con middleware propio |
+| GraphiQL | 2.0.0 | sin cambio | ya era latest |
 
 ### TiendaApi.Tests/TiendaApi.Tests.csproj
 

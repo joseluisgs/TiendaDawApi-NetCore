@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <!-- Versiones centralizadas en Directory.Packages.props -->
-    <PackageReference Include="AspNetCoreRateLimit" />
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
     <PackageReference Include="AutoMapper" />

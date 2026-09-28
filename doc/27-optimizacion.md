@@ -92,51 +92,44 @@ app.UseResponseCompression();
 
 ### Rate Limiting
 
-```bash
-dotnet add package AspNetCoreRateLimit
+Sin paquetes de terceros: se usa la API nativa de .NET `System.Threading.RateLimiting` (ventanas fijas) con un middleware propio que emite las cabeceras `RateLimit-*`:
+
+```csharp
+// RateLimitConfig.cs — registro de reglas
+public static IServiceCollection AddRateLimitingPolicy(this IServiceCollection services)
+{
+    services.AddSingleton<RateLimitingState>(); // particiones (IP + verbo + ruta)
+    return services;
+}
+
+public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
+{
+    app.UseMiddleware<RateLimitMiddleware>();
+    return app;
+}
 ```
 
 ```csharp
-using AspNetCoreRateLimit;
-
-builder.Services.AddMemoryCache();
-builder.Services.Configure<IpRateLimitOptions>(options =>
+// RateLimitMiddleware.cs — limitadores por partición
+var general = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
 {
-    options.EnableEndpointRateLimiting = true;
-    options.StackBlockedRequests = false;
-    options.HttpStatusCode = 429;
-    options.RealIpHeader = "X-Real-IP";
-    options.ClientIdHeader = "X-ClientId";
-    
-    options.GeneralRules = new List<RateLimitRule>
-    {
-        new()
-        {
-            Endpoint = "*",
-            Period = "1m",
-            Limit = 100
-        },
-        new()
-        {
-            Endpoint = "post:*",
-            Period = "1m",
-            Limit = 20
-        }
-    };
-    
-    options.EndpointRules = new List<EndpointRateLimitRule>
-    {
-        new()
-        {
-            Endpoint = "api/auth/login",
-            Period = "1m",
-            Limit = 5
-        }
-    };
+    PermitLimit = RateLimitConfig.GeneralLimit,   // 100
+    Window = RateLimitConfig.GeneralWindow,       // 15 s
+    QueueLimit = 0,                               // sin cola: se rechaza al instante
+    AutoReplenishment = true
 });
 
-app.UseIpRateLimiting();
+// Ventana de un minuto: 10 en /api/v1/auth/*, 20 en cualquier POST
+var minute = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
+{
+    PermitLimit = minuteLimit,
+    Window = RateLimitConfig.MinuteWindow,        // 1 min
+    QueueLimit = 0,
+    AutoReplenishment = true
+});
 ```
+
+Al superar el límite la respuesta es `429 Too Many Requests` con cuerpo JSON y `Retry-After`; las respuestas permitidas incluyen `RateLimit-Limit`, `RateLimit-Remaining` y `RateLimit-Reset`.
 
 ---
 
