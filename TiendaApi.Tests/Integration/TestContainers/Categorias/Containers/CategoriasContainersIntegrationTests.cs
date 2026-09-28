@@ -2,8 +2,6 @@ using System.Threading.Channels;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.MongoDb;
-using Testcontainers.PostgreSql;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 
@@ -17,46 +15,28 @@ namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Containers;
 [Category("Integration")]
 public class CategoriasContainersIntegrationTests
 {
-    private MongoDbContainer? _mongoContainer;
-    private PostgreSqlContainer? _postgresContainer;
+    private const string DatabaseName = "it_categoria_containers";
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
 
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
-        _mongoContainer = new MongoDbBuilder(TestContainerImages.Mongo)
-            .WithPortBinding(27017, true)
-            .Build();
-
-        await _mongoContainer.StartAsync();
-
-        _postgresContainer = new PostgreSqlBuilder(TestContainerImages.Postgres)
-            .WithDatabase("tienda_test")
-            .WithUsername("test")
-            .WithPassword("test")
-            .Build();
-
-        await _postgresContainer.StartAsync();
+        _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
+        _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        if (_mongoContainer != null)
-        {
-            await _mongoContainer.DisposeAsync();
-        }
-
-        if (_postgresContainer != null)
-        {
-            await _postgresContainer.DisposeAsync();
-        }
+        await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
+        AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [Test]
     public async Task PostgreSQLContainer_ShouldBeRunning()
     {
-        _postgresContainer.Should().NotBeNull();
-        var connectionString = _postgresContainer!.GetConnectionString();
+        var connectionString = _connectionString;
         connectionString.Should().NotBeNullOrEmpty();
         connectionString.Should().Contain("Host=");
 
@@ -66,10 +46,10 @@ public class CategoriasContainersIntegrationTests
     [Test]
     public async Task PostgreSQLContainer_ConnectionString_IsValid()
     {
-        var connectionString = _postgresContainer!.GetConnectionString();
+        var connectionString = _connectionString;
         connectionString.Should().Contain("Host=");
         connectionString.Should().Contain("Port=");
-        connectionString.Should().Contain("Database=tienda_test");
+        connectionString.Should().Contain($"Database={DatabaseName}");
 
         await Task.CompletedTask;
     }
@@ -77,8 +57,7 @@ public class CategoriasContainersIntegrationTests
     [Test]
     public async Task MongoDBContainer_ShouldBeRunning()
     {
-        _mongoContainer.Should().NotBeNull();
-        var connectionString = _mongoContainer!.GetConnectionString();
+        var connectionString = _mongoConnectionString;
         connectionString.Should().NotBeNullOrEmpty();
         connectionString.Should().Contain("mongodb://");
 
@@ -88,7 +67,7 @@ public class CategoriasContainersIntegrationTests
     [Test]
     public async Task MongoDBContainer_ConnectionString_IsValid()
     {
-        var connectionString = _mongoContainer!.GetConnectionString();
+        var connectionString = _mongoConnectionString;
         connectionString.Should().Contain("mongodb://");
         connectionString.Should().Contain("127.0.0.1");
 
@@ -101,9 +80,9 @@ public class CategoriasContainersIntegrationTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                { "ConnectionStrings:DefaultConnection", _postgresContainer!.GetConnectionString() },
-                { "MongoDbSettings:ConnectionString", _mongoContainer!.GetConnectionString() },
-                { "MongoDbSettings:DatabaseName", "tienda_test" }
+                { "ConnectionStrings:DefaultConnection", _connectionString },
+                { "MongoDbSettings:ConnectionString", _mongoConnectionString },
+                { "MongoDbSettings:DatabaseName", DatabaseName }
             }!)
             .Build();
 
@@ -124,8 +103,8 @@ public class CategoriasContainersIntegrationTests
     [Test]
     public async Task Configuration_CanGetConnectionStrings()
     {
-        var postgresConn = _postgresContainer!.GetConnectionString();
-        var mongoConn = _mongoContainer!.GetConnectionString();
+        var postgresConn = _connectionString;
+        var mongoConn = _mongoConnectionString;
 
         postgresConn.Should().NotBeNullOrEmpty();
         mongoConn.Should().NotBeNullOrEmpty();

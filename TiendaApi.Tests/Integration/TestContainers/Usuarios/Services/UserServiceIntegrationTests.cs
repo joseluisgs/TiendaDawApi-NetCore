@@ -6,8 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using Testcontainers.MongoDb;
-using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Usuarios;
@@ -29,8 +27,9 @@ namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Services;
 [NonParallelizable]
 public class UserServiceIntegrationTests
 {
-    private MongoDbContainer? _mongoContainer;
-    private PostgreSqlContainer? _postgresContainer;
+    private const string DatabaseName = "it_usuario_service";
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
     private IServiceProvider? _serviceProvider;
     private TiendaDbContext? _dbContext;
     private IUserService? _userService;
@@ -38,47 +37,29 @@ public class UserServiceIntegrationTests
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
-        _mongoContainer = new MongoDbBuilder(TestContainerImages.Mongo)
-            .WithPortBinding(27017, true)
-            .Build();
-
-        await _mongoContainer.StartAsync();
-
-        _postgresContainer = new PostgreSqlBuilder(TestContainerImages.Postgres)
-            .WithDatabase("tienda_test")
-            .WithUsername("test")
-            .WithPassword("test")
-            .Build();
-
-        await _postgresContainer.StartAsync();
+        _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
+        _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        if (_mongoContainer != null)
-        {
-            await _mongoContainer.DisposeAsync();
-        }
-
-        if (_postgresContainer != null)
-        {
-            await _postgresContainer.DisposeAsync();
-        }
+        await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
+        AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
     public async Task Setup()
     {
-        var connectionString = _postgresContainer!.GetConnectionString();
-        var mongoConnectionString = _mongoContainer!.GetConnectionString();
+        var connectionString = _connectionString;
+        var mongoConnectionString = _mongoConnectionString;
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
-                { "MongoDbSettings:DatabaseName", "tienda_test" },
+                { "MongoDbSettings:DatabaseName", DatabaseName },
                 { "Cache:UsuarioCacheTTLMinutes", "10" }
             }!)
             .Build();

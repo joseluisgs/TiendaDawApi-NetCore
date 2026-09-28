@@ -489,6 +489,15 @@ Los 5 controladores CQRS (o los handlers que devuelvan `Result`) pueden usar la 
 
 ---
 
+## Mantenimiento — Tests: fixture compartido y forma de errores ✅
+
+- **Fixture por assembly:** `AssemblyContainerFixture` (nuevo `[SetUpFixture]` en `Integration/TestContainers`) arranca **1 PostgreSQL + 1 MongoDB** por suite; `CreatePostgresDatabaseAsync(dbName)` crea la BD con nombre por clase y `DropPostgresDatabaseAsync` la elimina con `DROP DATABASE ... WITH (FORCE)`; MongoDB usa nombre único + `DropDatabase`. Los contenedores se detienen al terminar el assembly.
+- **Clases migradas (10):** 9 con PG+Mongo (los `*ContainersIntegrationTests` y los `*ServiceIntegrationTests`) y `ProductoConcurrencyIntegrationTests` solo PG. BDs por clase: `it_categoria_containers`, `it_categoria_service`, `it_pedidos_containers`, `it_pedidos_native_service`, `it_pedidos_service`, `it_producto_containers`, `it_producto_service`, `it_producto_concurrency`, `it_usuario_containers`, `it_usuario_service`. Arranques de contenedores por suite: **19 → 2**.
+- **Forma de errores:** nuevo `ErrorShapeApiTests` (10 tests, `WebApplicationFactory<Program>` sobre los contenedores compartidos + `public partial class Program`): `/version` (200 con metadatos), `/health`, `/health/live` y `/health/ready` (200 con `status: OK` y checks `postgresql`/`mongodb`), 400 con problem details de `[ApiController]`, 401 de challenge JWT (`WWW-Authenticate: Bearer`), 401 de dominio (`{message}`), 404 y 409 de dominio (`{message}`), y 429 de rate limiting (`errorType: RateLimitError`, `limit: 10`, `window: 1m`, `Retry-After` y `RateLimit-Limit/Remaining/Reset`) usando `X-Forwarded-For` propio para aislar el contador. Sin cambios en las colecciones E2E.
+- **Medición antes/después:** suite de integración **193 → 203** tests y **88,3 s → 23 s**; dos pasadas sin fallos; suite completa **1241 → 1251**; build 0/0; `check-style` · `check-parity` · `check-audit` · `check-docs` **TODO OK**.
+
+---
+
 ## Fases pendientes
 
 **Ninguna — las 13 fases del plan (0-12) están completadas y documentadas.**

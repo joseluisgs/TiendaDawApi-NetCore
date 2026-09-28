@@ -210,3 +210,9 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
         baseUrl, mode);
     Log.Information("=================================================================");
 }
+
+/// <summary>
+/// Declaración parcial del programa para que los tests de integración
+/// puedan crear la aplicación con <c>WebApplicationFactory&lt;Program&gt;</c>.
+/// </summary>
+public partial class Program;
