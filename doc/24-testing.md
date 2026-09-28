@@ -130,26 +130,50 @@ En este proyecto usamos **NUnit** por su sintaxis clara y atributos descriptivos
 ```
 TiendaApi.Tests/
 ├── Unit/
-│   ├── Services/
-│   │   ├── ProductoServiceTests.cs
-│   │   └── CategoriaServiceTests.cs
-│   ├── Validators/
-│   │   └── ProductoValidatorTests.cs
-│   └── Repositories/
-│       └── ProductoRepositoryTests.cs
-├── Integration/
 │   ├── Controllers/
-│   │   └── ProductosControllerTests.cs
+│   │   ├── AuthControllerTests.cs
+│   │   ├── PedidosControllerTests.cs
+│   │   ├── ProductosControllerTests.cs
+│   │   └── ...
+│   ├── Services/
+│   │   ├── Auth/AuthServiceTests.cs
+│   │   ├── Cache/RedisCacheServiceTests.cs
+│   │   ├── Email/EmailServiceTests.cs
+│   │   ├── Pedidos/PedidosServiceTests.cs
+│   │   ├── Productos/ProductoServiceTests.cs
+│   │   └── ...
+│   ├── Validators/
+│   │   ├── Productos/ProductoRequestValidatorTests.cs
+│   │   ├── Usuarios/RegisterValidatorTests.cs
+│   │   └── ...
 │   ├── Repositories/
-│   │   └── ProductoRepositoryIntegrationTests.cs
-│   └── Services/
-│       └── ProductoServiceIntegrationTests.cs
-├── Fixtures/
-│   ├── TiendaApiWebApplicationFactory.cs
-│   └── TestContainersFixture.cs
-├── Helpers/
-│   ├── TestDataFactory.cs
-│   └── AssertionHelpers.cs
+│   │   ├── TiendaDbContextInMemory.cs
+│   │   ├── Productos/ProductoRepositoryTests.cs
+│   │   └── ...
+│   ├── Dtos/
+│   ├── GraphQL/
+│   ├── Infrastructures/
+│   ├── Mappers/
+│   ├── Middleware/
+│   ├── Models/
+│   ├── Realtime/
+│   ├── SignalR/
+│   └── WebSockets/
+├── Integration/
+│   ├── TestContainers/
+│   │   ├── AssemblyContainerFixture.cs    # [SetUpFixture]: 1 PostgreSQL + 1 MongoDB por ensamblado
+│   │   ├── TestContainerImages.cs
+│   │   ├── ErrorShape/ErrorShapeApiTests.cs
+│   │   ├── Categorias/
+│   │   ├── Pedidos/
+│   │   ├── Productos/
+│   │   │   ├── ProductosContainersIntegrationTests.cs
+│   │   │   ├── ProductoConcurrencyIntegrationTests.cs
+│   │   │   ├── Services/ProductoServiceIntegrationTests.cs
+│   │   │   └── Validators/ProductoValidatorsIntegrationTests.cs
+│   │   └── Usuarios/
+│   └── Services/Storage/FileSystemStorageServiceIntegrationTests.cs
+├── TestCategories.cs    # Categorías y atributos NUnit (Unit, Integration, Docker...)
 └── TiendaApi.Tests.csproj
 ```
 
