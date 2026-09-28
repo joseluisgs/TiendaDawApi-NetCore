@@ -183,34 +183,44 @@ TiendaApi.Tests/
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- HotChocolate 16 inyecta HotChocolate.Types.Composite (clase 'Is') que colisiona con NUnit.Framework.Is -->
+    <HotChocolateCompositeImplicitUsings>disable</HotChocolateCompositeImplicitUsings>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverageThreshold>0</CoverageThreshold>
+    <CoverletOutputFormat>json,lcov,opencover</CoverletOutputFormat>
+    <CoverletOutput>./coverage/</CoverletOutput>
   </PropertyGroup>
 
-  <!-- Paquetes de testing -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="NUnit" Version="3.14.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
-    <PackageReference Include="FluentAssertions" Version="6.12.0" />
-    <PackageReference Include="FluentAssertions.Mvc" Version="6.0.0" />
-    <PackageReference Include="Moq" Version="4.20.70" />
-    <PackageReference Include="TestContainers" Version="3.8.0" />
-    <PackageReference Include="TestContainers.PostgreSql" Version="3.8.0" />
-    <PackageReference Include="TestContainers.Redis" Version="3.8.0" />
-    <PackageReference Include="coverlet.collector" Version="6.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+    <!-- Versiones centralizadas en Directory.Packages.props -->
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.msbuild" />
+    <PackageReference Include="CSharpFunctionalExtensions" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="HotChocolate.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit.Analyzers" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Testcontainers.MongoDb" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="MongoDB.Driver" />
   </ItemGroup>
 
-  <!-- Referencia al proyecto principal -->
   <ItemGroup>
-    <ProjectReference Include="..\TiendaApi.Core\TiendaApi.Core.csproj" />
-    <ProjectReference Include="..\TiendaApi.Apis\TiendaApi.Apis.csproj" />
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TiendaApi.Api\TiendaApi.csproj" />
   </ItemGroup>
 
 </Project>

@@ -88,7 +88,8 @@ flowchart TB
     subgraph "Proyecto Tests"
         TESTS["TiendaApi.Tests/"]
         TESTS --> TESTS_CS["TiendaApi.Tests.csproj"]
-        TESTS --> UNIT["UnitTests/"]
+        TESTS --> UNIT["Unit/"]
+        TESTS --> INTEG["Integration/"]
     end
     
     SLN -.-> API
@@ -246,12 +247,31 @@ TiendaApi.sln
 │   └── TiendaApi.Core.csproj
 │
 └── TiendaApi.Tests/                          # Capa de pruebas: unitarias y de integración
-    ├── UnitTests/                            # Tests unitarios
-    │   ├── Services/
+    ├── Unit/                                 # Tests unitarios
     │   ├── Controllers/
-    │   └── Mappers/
-    ├── IntegrationTests/                     # Tests de integración
-    ├── Fixtures/                             # Clases de configuración para tests
+    │   ├── Services/
+    │   ├── Validators/
+    │   ├── Repositories/
+    │   ├── Dtos/
+    │   ├── GraphQL/
+    │   ├── Infrastructures/
+    │   ├── Mappers/
+    │   ├── Middleware/
+    │   ├── Models/
+    │   ├── Realtime/
+    │   ├── SignalR/
+    │   └── WebSockets/
+    ├── Integration/                          # Tests de integración
+    │   ├── TestContainers/
+    │   │   ├── AssemblyContainerFixture.cs   # Fixtures de contenedores (PostgreSQL, MongoDB)
+    │   │   ├── TestContainerImages.cs
+    │   │   ├── ErrorShape/
+    │   │   ├── Categorias/
+    │   │   ├── Pedidos/
+    │   │   ├── Productos/
+    │   │   └── Usuarios/
+    │   └── Services/Storage/
+    ├── TestCategories.cs                     # Categorías y atributos NUnit (Unit, Integration, Docker...)
     └── TiendaApi.Tests.csproj
 ```
 
