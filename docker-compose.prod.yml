@@ -106,8 +106,8 @@ services:
 
   api:
     build:
-      context: ./TiendaApi.Api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: TiendaApi.Api/Dockerfile
       args:
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
     container_name: tienda-api
