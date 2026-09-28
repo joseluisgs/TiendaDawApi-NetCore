@@ -19,7 +19,8 @@ namespace TiendaApi.Api.Realtime.Pedidos;
 /// // Respuesta: {"pedidoId":"PED-001","userId":123,"estado":"Pendiente","tipo":"PEDIDO_CREADO","timestamp":"2025-01-18T10:30:00Z"}
 /// </example>
 [Authorize]
-public class PedidosHub(ILogger<PedidosHub> logger) : Hub {
+public class PedidosHub(ILogger<PedidosHub> logger) : Hub
+{
     /// <summary>Cliente conectado - se suscribe a grupos.</summary>
     public override async Task OnConnectedAsync()
     {

@@ -19,7 +19,7 @@ public static class WebSocketExtensions
     {
         Log.Information("Configurando endpoints WebSocket...");
         var webApp = (WebApplication)app;
-        
+
         webApp.Map("/ws/productos", async context =>
         {
             if (context.WebSockets.IsWebSocketRequest)

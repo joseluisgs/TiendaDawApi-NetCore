@@ -33,6 +33,7 @@ namespace TiendaApi.Api.Dtos.Common;
 /// };
 /// Resultado: 8 páginas totales (150/20 = 7.5 → 8)
 /// </code>
+/// </example>
 ///
 /// <example>
 /// JSON típico devuelto:

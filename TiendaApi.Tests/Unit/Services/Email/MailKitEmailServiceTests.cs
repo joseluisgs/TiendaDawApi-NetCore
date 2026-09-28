@@ -3,8 +3,8 @@ using FluentAssertions;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Moq;
 using MimeKit;
+using Moq;
 using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Unit.Services.Email;
@@ -176,7 +176,7 @@ public class MailKitEmailServiceTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Email encolado")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Email encolado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -211,7 +211,7 @@ public class MailKitEmailServiceTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("SMTP no configurado")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("SMTP no configurado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);

@@ -1,10 +1,10 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using System.Security.Claims;
 using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Realtime;
@@ -48,13 +48,13 @@ public class PedidosHubTests
         _userRegular = new ClaimsPrincipal(regularIdentity);
 
         // Mock del contexto para Admin
-        _contextAdmin = Mock.Of<HubCallerContext>(c => 
-            c.ConnectionId == "admin-connection-id" && 
+        _contextAdmin = Mock.Of<HubCallerContext>(c =>
+            c.ConnectionId == "admin-connection-id" &&
             c.User == _userAdmin);
 
         // Mock del contexto para User Regular
-        _contextRegular = Mock.Of<HubCallerContext>(c => 
-            c.ConnectionId == "user-connection-id" && 
+        _contextRegular = Mock.Of<HubCallerContext>(c =>
+            c.ConnectionId == "user-connection-id" &&
             c.User == _userRegular);
     }
 
@@ -65,7 +65,7 @@ public class PedidosHubTests
     {
         // Arrange
         var hub = new PedidosHub(_loggerMock.Object);
-        
+
         SetupHubContext(hub, _contextAdmin);
         _groupManagerMock
             .Setup(g => g.AddToGroupAsync("admin-connection-id", "user-1", It.IsAny<CancellationToken>()))
@@ -117,8 +117,8 @@ public class PedidosHubTests
             new Claim(ClaimTypes.Name, "anonymous")
         }, "TestAuthType"));
 
-        var contextWithoutId = Mock.Of<HubCallerContext>(c => 
-            c.ConnectionId == "anonymous-connection-id" && 
+        var contextWithoutId = Mock.Of<HubCallerContext>(c =>
+            c.ConnectionId == "anonymous-connection-id" &&
             c.User == userWithoutId);
 
         var hub = new PedidosHub(_loggerMock.Object);
@@ -146,7 +146,7 @@ public class PedidosHubTests
 
         // Act & Assert
         async Task Act() => await hub.OnDisconnectedAsync(null);
-        
+
         // Should not throw
         await Act();
     }
@@ -161,7 +161,7 @@ public class PedidosHubTests
 
         // Act & Assert
         async Task Act() => await hub.OnDisconnectedAsync(exception);
-        
+
         // Should not throw
         await Act();
     }
@@ -182,12 +182,12 @@ public class PedidosHubTests
 
         // Assert
         result.Should().NotBeNull();
-        
+
         var connectionId = result.GetType().GetProperty("connectionId")?.GetValue(result) as string;
         var userId = result.GetType().GetProperty("userId")?.GetValue(result) as string;
         var userName = result.GetType().GetProperty("userName")?.GetValue(result) as string;
         var isAdmin = result.GetType().GetProperty("isAdmin")?.GetValue(result) as bool?;
-        
+
         connectionId.Should().Be("admin-connection-id");
         userId.Should().Be("1");
         userName.Should().Be("admin");
@@ -206,12 +206,12 @@ public class PedidosHubTests
 
         // Assert
         result.Should().NotBeNull();
-        
+
         var connectionId = result.GetType().GetProperty("connectionId")?.GetValue(result) as string;
         var userId = result.GetType().GetProperty("userId")?.GetValue(result) as string;
         var userName = result.GetType().GetProperty("userName")?.GetValue(result) as string;
         var isAdmin = result.GetType().GetProperty("isAdmin")?.GetValue(result) as bool?;
-        
+
         connectionId.Should().Be("user-connection-id");
         userId.Should().Be("2");
         userName.Should().Be("userdaw");

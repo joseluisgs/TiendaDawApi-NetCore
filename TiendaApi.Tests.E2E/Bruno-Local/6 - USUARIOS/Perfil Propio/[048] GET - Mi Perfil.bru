@@ -22,7 +22,7 @@ script:post-response {
   test("Users MyProfile - Returns user data", function () {
       const jsonData = res.getBody();
       expect(jsonData).to.be.an('object');
-      expect(jsonData.username).to.equal(bru.getVar("userUsername"));
+      expect(jsonData.username).to.equal('userdaw');
       expect(jsonData.role).to.be.a('string');
   });
 }

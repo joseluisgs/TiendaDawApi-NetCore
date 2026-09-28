@@ -35,7 +35,7 @@ public class MemoryEmailServiceTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("ENQUEUED")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("ENQUEUED")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -60,7 +60,7 @@ public class MemoryEmailServiceTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("HTML")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("HTML")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -85,7 +85,7 @@ public class MemoryEmailServiceTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Texto")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Texto")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -109,7 +109,7 @@ public class MemoryEmailServiceTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("admin@tienda.com")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("admin@tienda.com")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -132,7 +132,7 @@ public class MemoryEmailServiceTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("SENT")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("SENT")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -156,7 +156,7 @@ public class MemoryEmailServiceTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("🛒 Nuevo Pedido Creado")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("🛒 Nuevo Pedido Creado")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -181,7 +181,7 @@ public class MemoryEmailServiceTests
             x => x.Log(
                 LogLevel.Debug,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cuerpo")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Cuerpo")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);

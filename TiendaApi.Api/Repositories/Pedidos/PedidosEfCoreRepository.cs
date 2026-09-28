@@ -23,6 +23,17 @@ public class PedidosEfCoreRepository(
     }
 
     /// <inheritdoc/>
+    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size)
+    {
+        logger.LogDebug("Buscando pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
+        var query = context.Pedidos.OrderByDescending(p => p.CreatedAt);
+
+        var totalCount = await query.CountAsync();
+        var items = await query.Skip(page * size).Take(size).ToListAsync();
+        return (items, totalCount);
+    }
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<Pedido>> FindByUserIdAsync(long userId)
     {
         logger.LogDebug("Buscando pedidos para usuario: {UserId}", userId);

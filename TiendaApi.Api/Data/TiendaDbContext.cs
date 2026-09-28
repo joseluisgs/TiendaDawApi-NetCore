@@ -28,12 +28,20 @@ public class TiendaDbContext : DbContext
     /// <summary>DbSet de Usuarios.</summary>
     public DbSet<User> Users { get; set; } = null!;
 
+    /// <summary>
+    /// Configura el contexto (interceptores de marcas de tiempo).
+    /// </summary>
+    /// <param name="optionsBuilder">Constructor de opciones del contexto.</param>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
         optionsBuilder.AddInterceptors(_timestampInterceptor);
     }
 
+    /// <summary>
+    /// Define el modelo del esquema: entidades, relaciones, índices y filtros globales.
+    /// </summary>
+    /// <param name="modelBuilder">Constructor del modelo.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -67,6 +75,10 @@ public class TiendaDbContext : DbContext
                 .WithMany(c => c.Productos)
                 .HasForeignKey(p => p.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(p => p.CategoriaId);
+            entity.HasIndex(p => new { p.CategoriaId, p.Precio });
+            entity.HasIndex(p => p.CreatedAt);
+            entity.HasIndex(p => p.IsDeleted);
             entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
@@ -84,6 +96,7 @@ public class TiendaDbContext : DbContext
             entity.ConfigureTimestamps();
             entity.HasIndex(u => u.Username).IsUnique();
             entity.HasIndex(u => u.Email).IsUnique();
+            entity.HasIndex(u => u.Role);
             entity.HasQueryFilter(u => !u.IsDeleted);
         });
     }

@@ -3,30 +3,30 @@ using System.ComponentModel.DataAnnotations;
 namespace TiendaApi.Api.Dtos.Pedidos;
 
 /// <summary>
-    /// DTO para crear un pedido.
-    /// </summary>
-    /// <example>
-    /// {
-    ///   "destinatario": {
-    ///     "nombreCompleto": "María García",
-    ///     "email": "maria@email.com",
-    ///     "telefono": "+34612345678",
-    ///     "direccion": {
-    ///       "calle": "Gran Vía",
-    ///       "numero": "42",
-    ///       "ciudad": "Madrid",
-    ///       "provincia": "Madrid",
-    ///       "pais": "España",
-    ///       "codigoPostal": "28013"
-    ///     }
-    ///   },
-    ///   "items": [
-    ///     { "productoId": 101, "cantidad": 2 },
-    ///     { "productoId": 102, "cantidad": 1 }
-    ///   ]
-    /// }
-    /// </example>
-    public record PedidoRequestDto
+/// DTO para crear un pedido.
+/// </summary>
+/// <example>
+/// {
+///   "destinatario": {
+///     "nombreCompleto": "María García",
+///     "email": "maria@email.com",
+///     "telefono": "+34612345678",
+///     "direccion": {
+///       "calle": "Gran Vía",
+///       "numero": "42",
+///       "ciudad": "Madrid",
+///       "provincia": "Madrid",
+///       "pais": "España",
+///       "codigoPostal": "28013"
+///     }
+///   },
+///   "items": [
+///     { "productoId": 101, "cantidad": 2 },
+///     { "productoId": 102, "cantidad": 1 }
+///   ]
+/// }
+/// </example>
+public record PedidoRequestDto
 {
     /// <summary>
     /// Información del destinatario del pedido.
@@ -67,9 +67,9 @@ namespace TiendaApi.Api.Dtos.Pedidos;
 }
 
 /// <summary>
-    /// DTO de artículo de pedido para solicitudes.
-    /// </summary>
-    public record PedidoItemRequestDto
+/// DTO de artículo de pedido para solicitudes.
+/// </summary>
+public record PedidoItemRequestDto
 {
     /// <summary>
     /// Identificador del producto a incluir en el pedido.
@@ -91,9 +91,9 @@ namespace TiendaApi.Api.Dtos.Pedidos;
 }
 
 /// <summary>
-    /// DTO para actualizar el estado de un pedido.
-    /// </summary>
-    public record UpdateEstadoDto
+/// DTO para actualizar el estado de un pedido.
+/// </summary>
+public record UpdateEstadoDto
 {
     /// <summary>
     /// Nuevo estado para el pedido.
@@ -108,9 +108,9 @@ namespace TiendaApi.Api.Dtos.Pedidos;
 }
 
 /// <summary>
-    /// DTO para actualizar datos de un pedido.
-    /// </summary>
-    public record UpdatePedidoDto
+/// DTO para actualizar datos de un pedido.
+/// </summary>
+public record UpdatePedidoDto
 {
     /// <summary>
     /// Nuevo estado del pedido (opcional).

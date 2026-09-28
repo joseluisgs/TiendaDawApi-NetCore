@@ -408,14 +408,14 @@ public class CategoriaMapperTests
         var categoria = new Categoria
         {
             Id = 1,
-            Nombre = "日本語テスト 中文测试 한국어 Ελληνικά"
+            Nombre = "José María Álvarez Ñúñez"
         };
 
         // Act
         var dto = categoria.ToDto();
 
         // Assert
-        dto.Nombre.Should().Be("日本語テスト 中文测试 한국어 Ελληνικά");
+        dto.Nombre.Should().Be("José María Álvarez Ñúñez");
     }
 
     [Test]

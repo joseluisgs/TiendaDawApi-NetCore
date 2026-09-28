@@ -26,51 +26,52 @@ namespace TiendaApi.Api.Dtos.Usuarios;
 /// </code>
 /// </example>
 public record UserDto(
-    /// <summary>
-    /// Identificador único del usuario.
-    /// Generado automáticamente por la base de datos.
-    /// </summary>
-    /// <example>1</example>
+    // <summary>
+    // Identificador único del usuario.
+    // Generado automáticamente por la base de datos.
+    // </summary>
+    // <example>1</example>
     long Id,
 
-    /// <summary>
-    /// Nombre de usuario único.
-    /// Utilizado para autenticación junto con la contraseña.
-    /// </summary>
-    /// <example>juanperez</example>
+    // <summary>
+    // Nombre de usuario único.
+    // Utilizado para autenticación junto con la contraseña.
+    // </summary>
+    // <example>juanperez</example>
     string Username,
 
-    /// <summary>
-    /// Correo electrónico del usuario.
-    /// Direcciones únicas en el sistema.
-    /// </summary>
-    /// <example>juan@example.com</example>
+    // <summary>
+    // Correo electrónico del usuario.
+    // Direcciones únicas en el sistema.
+    // </summary>
+    // <example>juan@example.com</example>
     string Email,
 
-    /// <summary>
-    /// URL del avatar del usuario.
-    /// Puede ser null si no ha configurado avatar.
-    /// </summary>
-    /// <example>https://ejemplo.com/avatars/juan.jpg</example>
+    // <summary>
+    // URL del avatar del usuario.
+    // Puede ser null si no ha configurado avatar.
+    // </summary>
+    // <example>https://ejemplo.com/avatars/juan.jpg</example>
     string Avatar,
 
-    /// <summary>
-    /// Rol del usuario en el sistema.
-    /// Determina los permisos de acceso.
-    /// </summary>
-    /// <example>USER</example>
+    // <summary>
+    // Rol del usuario en el sistema.
+    // Determina los permisos de acceso.
+    // </summary>
+    // <example>USER</example>
     string Role,
 
-    /// <summary>
-    /// Fecha y hora de creación de la cuenta en formato UTC.
-    /// </summary>
-    /// <example>2024-01-01T00:00:00Z</example>
+    // <summary>
+    // Fecha y hora de creación de la cuenta en formato UTC.
+    // </summary>
+    // <example>2024-01-01T00:00:00Z</example>
     DateTime CreatedAt
 );
 
 /// <summary>
 /// DTO para el registro de nuevos usuarios.
 /// Define los datos necesarios para crear una nueva cuenta.
+/// </summary>
 ///
 /// <remarks>
 /// Validaciones de contraseña:
@@ -120,6 +121,7 @@ public record RegisterDto
 /// <summary>
 /// DTO para el inicio de sesión de usuarios.
 /// Credenciales necesarias para obtener token JWT.
+/// </summary>
 public record LoginDto
 {
     /// <summary>
@@ -142,27 +144,29 @@ public record LoginDto
 /// <summary>
 /// DTO de respuesta de autenticación con JWT.
 /// Devuelto tras login o registro exitoso.
+/// </summary>
 ///
 /// <remarks>
 /// El token JWT debe enviarse en el header Authorization de solicitudes subsecuentes:
 /// Authorization: Bearer &lt;token&gt;
 /// </remarks>
 public record AuthResponseDto(
-    /// <summary>
-    /// Token JWT para autenticación en requests.
-    /// </summary>
-    /// <example>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</example>
+    // <summary>
+    // Token JWT para autenticación en requests.
+    // </summary>
+    // <example>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</example>
     string Token,
 
-    /// <summary>
-    /// Información del usuario autenticado.
-    /// </summary>
+    // <summary>
+    // Información del usuario autenticado.
+    // </summary>
     UserDto User
 );
 
 /// <summary>
 /// DTO para actualizar datos de usuario.
 /// Campos opcionales: solo los presentes se actualizan.
+/// </summary>
 public record UserUpdateDto
 {
     /// <summary>

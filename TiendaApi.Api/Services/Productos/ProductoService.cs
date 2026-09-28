@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
@@ -21,20 +22,21 @@ using TiendaApi.Api.Validators.Productos;
 namespace TiendaApi.Api.Services.Productos;
 
 /// <summary>
-    /// Servicio de productos usando Patrón Result.
-    /// </summary>
-    public class ProductoService(
-    IProductoRepository productoRepository,
-    ICategoriaRepository categoriaRepository,
-    ILogger<ProductoService> logger,
-    ICacheService cacheService,
-    ProductosWebSocketHandler webSocketHandler,
-    IHubContext<ProductosHub> productosHubContext,
-    IEmailService emailService,
-    IConfiguration configuration,
-    IValidator<ProductoRequestDto> productoValidator,
-    IStorageService storageService,
-    IEventPublisher eventPublisher
+/// Servicio de productos usando Patrón Result.
+/// </summary>
+public class ProductoService(
+IProductoRepository productoRepository,
+ICategoriaRepository categoriaRepository,
+ILogger<ProductoService> logger,
+ICacheService cacheService,
+ProductosWebSocketHandler webSocketHandler,
+IHubContext<ProductosHub> productosHubContext,
+IEmailService emailService,
+IConfiguration configuration,
+IValidator<ProductoRequestDto> productoValidator,
+IStorageService storageService,
+IEventPublisher eventPublisher,
+IOutputCacheStore outputCacheStore
 ) : IProductoService
 {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
@@ -363,7 +365,7 @@ namespace TiendaApi.Api.Services.Productos;
     #region Métodos Privados - Cache
 
     /// <summary>
-    /// Añade un elemento a la caché de forma asíncrona (fire & forget).
+    /// Añade un elemento a la caché de forma asíncrona (fire &amp; forget).
     /// </summary>
     private void AñadirCacheProducto<T>(string key, T value)
     {
@@ -381,7 +383,9 @@ namespace TiendaApi.Api.Services.Productos;
     }
 
     /// <summary>
-    /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
+    /// Invalida las claves de caché especificadas de forma asíncrona (fire &amp; forget).
+    /// También invalida la tag de OutputCache "productos" (en memoria: síncrono,
+    /// para que el siguiente GET no sirva datos obsoletos).
     /// </summary>
     private void InvalidarCacheProducto(params string[] keys)
     {
@@ -399,6 +403,15 @@ namespace TiendaApi.Api.Services.Productos;
                 }
             }
         });
+
+        try
+        {
+            _ = outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Output cache invalidation error: Tag=productos");
+        }
     }
 
     #endregion

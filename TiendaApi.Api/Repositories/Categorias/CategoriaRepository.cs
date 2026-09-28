@@ -20,6 +20,7 @@ public class CategoriaRepository(
         logger.LogDebug("Buscando todas las categorías");
         return await context.Categorias
             .OrderBy(c => c.Nombre)
+            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -55,6 +56,7 @@ public class CategoriaRepository(
             : query.OrderBy(GetSortExpression(filter.SortBy));
 
         var items = await orderedQuery
+            .AsNoTracking()
             .Skip(filter.Page * filter.Size)
             .Take(filter.Size)
             .ToListAsync();

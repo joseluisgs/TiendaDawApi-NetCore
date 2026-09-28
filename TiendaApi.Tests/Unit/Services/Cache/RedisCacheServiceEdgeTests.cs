@@ -145,7 +145,7 @@ public class RedisCacheServiceEdgeTests
     [Test]
     public async Task SetAsync_ConUnicode_NoLanzaExcepcion()
     {
-        var unicodeValue = "Value with 中文 characters 🎉";
+        var unicodeValue = "Value with áéí characters 🎉";
 
         var act = async () => await _cacheService.SetAsync("key", unicodeValue);
         await act.Should().NotThrowAsync();

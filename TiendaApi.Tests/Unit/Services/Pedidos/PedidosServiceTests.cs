@@ -1,10 +1,10 @@
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
-using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
@@ -15,14 +15,14 @@ using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Exceptions;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Realtime.Pedidos;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
-using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Pedidos;
 using TiendaApi.Api.Validators.Pedidos;
-using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.Pedidos;
 
@@ -1107,7 +1107,7 @@ public class PedidosServiceTests
             l => l.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Maximos reintentos alcanzados")),
+                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("Maximos reintentos alcanzados")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
             Times.Once);
@@ -1127,8 +1127,9 @@ public class PedidosServiceTests
             new() { UserId = 3, Total = 300 }
         };
 
-        _mockPedidosRepo.Setup(r => r.FindAllAsync())
-            .ReturnsAsync(pedidos);
+        (IEnumerable<Pedido> Items, int TotalCount) paged = (pedidos.Take(2), 3);
+        _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(0, 2))
+            .ReturnsAsync(paged);
 
         var result = await _service.FindAllPagedAsync(0, 2);
 
@@ -1149,8 +1150,9 @@ public class PedidosServiceTests
             new() { UserId = 3, Total = 300 }
         };
 
-        _mockPedidosRepo.Setup(r => r.FindAllAsync())
-            .ReturnsAsync(pedidos);
+        (IEnumerable<Pedido> Items, int TotalCount) paged = (pedidos.Skip(2), 3);
+        _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(1, 2))
+            .ReturnsAsync(paged);
 
         var result = await _service.FindAllPagedAsync(1, 2);
 
@@ -1162,8 +1164,9 @@ public class PedidosServiceTests
     [Test]
     public async Task FindAllPagedAsync_SinPedidos_RetornaListaVacia()
     {
-        _mockPedidosRepo.Setup(r => r.FindAllAsync())
-            .ReturnsAsync(new List<Pedido>());
+        (IEnumerable<Pedido> Items, int TotalCount) paged = (new List<Pedido>(), 0);
+        _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(0, 10))
+            .ReturnsAsync(paged);
 
         var result = await _service.FindAllPagedAsync(0, 10);
 

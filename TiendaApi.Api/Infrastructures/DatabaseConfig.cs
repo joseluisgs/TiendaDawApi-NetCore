@@ -40,7 +40,7 @@ public static class DatabaseConfig
                 var client = sp.GetRequiredService<IMongoClient>();
                 return client.GetDatabase(mongoDatabaseName);
             });
-            
+
             services.AddSingleton(sp =>
             {
                 var database = sp.GetRequiredService<IMongoDatabase>();
@@ -56,6 +56,9 @@ public static class DatabaseConfig
 
             services.AddDbContext<TiendaMongoContext>(options =>
                 options.UseMongoDB(mongoConnectionString, mongoDatabaseName));
+
+            // Cliente compartido (lo usan los health checks para el ping)
+            services.AddSingleton<IMongoClient>(_ => new MongoClient(mongoConnectionString));
         }
 
         Log.Information("Registrando seeders...");

@@ -12,6 +12,9 @@
   - [1.7. Testing con NUnit](#17-testing-con-nunit)
   - [1.8. Hot Reload y dotnet watch run](#18-hot-reload-y-dotnet-watch-run)
   - [1.9. Resumen y Buenas Prácticas](#19-resumen-y-buenas-prácticas)
+  - [1.10. Gestión Centralizada de Paquetes NuGet (CPM)](#110-gestión-centralizada-de-paquetes-nuget-cpm)
+  - [1.11. Configuración de Estilo de Código (.editorconfig)](#111-configuración-de-estilo-de-código-editorconfig)
+  - [1.12. Fijación de Versión del SDK (global.json)](#112-fijación-de-versión-del-sdk-globaljson)
 
 ---
 
@@ -85,7 +88,8 @@ flowchart TB
     subgraph "Proyecto Tests"
         TESTS["TiendaApi.Tests/"]
         TESTS --> TESTS_CS["TiendaApi.Tests.csproj"]
-        TESTS --> UNIT["UnitTests/"]
+        TESTS --> UNIT["Unit/"]
+        TESTS --> INTEG["Integration/"]
     end
     
     SLN -.-> API
@@ -243,12 +247,31 @@ TiendaApi.sln
 │   └── TiendaApi.Core.csproj
 │
 └── TiendaApi.Tests/                          # Capa de pruebas: unitarias y de integración
-    ├── UnitTests/                            # Tests unitarios
-    │   ├── Services/
+    ├── Unit/                                 # Tests unitarios
     │   ├── Controllers/
-    │   └── Mappers/
-    ├── IntegrationTests/                     # Tests de integración
-    ├── Fixtures/                             # Clases de configuración para tests
+    │   ├── Services/
+    │   ├── Validators/
+    │   ├── Repositories/
+    │   ├── Dtos/
+    │   ├── GraphQL/
+    │   ├── Infrastructures/
+    │   ├── Mappers/
+    │   ├── Middleware/
+    │   ├── Models/
+    │   ├── Realtime/
+    │   ├── SignalR/
+    │   └── WebSockets/
+    ├── Integration/                          # Tests de integración
+    │   ├── TestContainers/
+    │   │   ├── AssemblyContainerFixture.cs   # Fixtures de contenedores (PostgreSQL, MongoDB)
+    │   │   ├── TestContainerImages.cs
+    │   │   ├── ErrorShape/
+    │   │   ├── Categorias/
+    │   │   ├── Pedidos/
+    │   │   ├── Productos/
+    │   │   └── Usuarios/
+    │   └── Services/Storage/
+    ├── TestCategories.cs                     # Categorías y atributos NUnit (Unit, Integration, Docker...)
     └── TiendaApi.Tests.csproj
 ```
 
@@ -507,7 +530,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     environment:
       - POSTGRES_DB=TiendaDb
       - POSTGRES_USER=postgres
@@ -1263,3 +1286,144 @@ Con la configuración básica lista, el siguiente paso es entender cómo funcion
 - Documentación de NUnit: https://docs.nunit.org
 - Paquetes NuGet: https://www.nuget.org
 - Hot Reload: https://docs.microsoft.com/dotnet/core/tools/dotnet-watch
+
+---
+
+## 1.10. Gestión Centralizada de Paquetes NuGet (CPM)
+
+En proyectos con múltiples proyectos dentro de una solución, mantener la misma versión de un paquete NuGet en cada archivo `.csproj` es propenso a errores. Por ejemplo, si `TiendaApi.Apis` usa `Swashbuckle.AspNetCore` versión 6.5.0 y `TiendaApi.Core` usa otra versión diferente, pueden surgir comportamientos inesperados en tiempo de ejecución.
+
+**Central Package Management (CPM)** resuelve este problema definiendo la versión de cada paquete en un único fichero: `Directory.Packages.props`. Una vez definida la versión ahí, cada `.csproj` solo necesita referenciar el paquete **sin especificar versión**.
+
+### Cómo funciona
+
+El SDK de .NET gestiona la resolución de versiones automáticamente. El fichero `Directory.Packages.props` se coloca en la raíz de la solución y aplica a todos los proyectos del directorio:
+
+```xml
+<!-- Directory.Packages.props (raíz de la solución) -->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="AutoMapper" Version="13.0.1" />
+    <PackageVersion Include="FluentValidation" Version="11.9.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <!-- ... más paquetes ... -->
+  </ItemGroup>
+</Project>
+```
+
+En cada `.csproj`, la referencia al paquete **no incluye versión**:
+
+```xml
+<!-- TiendaApi.Core.csproj -->
+<ItemGroup>
+  <PackageReference Include="AutoMapper" />
+  <PackageReference Include="FluentValidation" />
+  <PackageReference Include="Microsoft.EntityFrameworkCore" />
+</ItemGroup>
+```
+
+### Ventajas
+
+| Ventaja | Descripción |
+|---------|-------------|
+| **Consistencia** | Todos los proyectos usan exactamente la misma versión de cada paquete |
+| **Actualizaciones centralizadas** | Actualizar la versión de un paquete se hace en un solo sitio |
+| **Menor drift** | Se elimina la posibilidad de que dos proyectos tengan versiones diferentes del mismo paquete |
+| **Visibilidad** | Un solo fichero muestra todos los paquetes y versiones usados en la solución |
+
+---
+
+## 1.11. Configuración de Estilo de Código (.editorconfig)
+
+El fichero `.editorconfig` define reglas de formato (indentación, saltos de línea, charset, espacios) que cualquier IDE o editor respeta. Esto asegura que todo el equipo de desarrollo y las herramientas automatizadas formateen el código de la misma manera.
+
+### Por qué es importante
+
+En un proyecto con múltiples desarrolladores, cada uno puede tener configurado su IDE de forma diferente: uno usa tabs, otro espacios; uno pone 4 espacios de indentación, otro 2. El fichero `.editorconfig` elimina estas diferencias definiendo un estilo único que todos deben seguir.
+
+### Ejemplo de .editorconfig
+
+```ini
+# .editorconfig
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+# Reglas específicas para C#
+csharp_new_line_before_open_brace = all
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+
+[*.{json,xml,csproj}]
+indent_size = 2
+
+[*.{md}]
+trim_trailing_whitespace = false
+```
+
+### Integración con dotnet format
+
+La herramienta `dotnet format` aplica automáticamente las reglas definidas en `.editorconfig`:
+
+```bash
+# Formatear todo el proyecto según .editorconfig
+dotnet format
+
+# Solo verificar sin hacer cambios (dry run)
+dotnet format --verify-no-changes
+
+# Formatear solo la indentación
+dotnet format --include src/TiendaApi.Apis/
+```
+
+Al ejecutar `dotnet format`, el compilador revisa cada fichero contra las reglas del `.editorconfig` y corrige automáticamente las discrepancias. Esto se puede integrar en el pipeline de CI para detectar problemas de formato antes de que lleguen al repositorio.
+
+---
+
+## 1.12. Fijación de Versión del SDK (global.json)
+
+El fichero `global.json` en la raíz del proyecto delimita la versión exacta del SDK de .NET que debe usarse para compilar la solución. Sin él, diferentes desarrolladores (o el servidor de integración continua) podrían usar versiones distintas del SDK, lo que podría causar comportamientos sutiles diferentes en la compilación.
+
+### Ejemplo de global.json
+
+```json
+{
+  "sdk": {
+    "version": "8.0.100",
+    "rollForward": "latestFeature"
+  }
+}
+```
+
+### Propiedades clave
+
+| Propiedad | Descripción |
+|-----------|-------------|
+| `version` | Versión exacta del SDK a usar |
+| `rollForward` | Política cuando la versión exacta no está instalada: `latestFeature` usa la última versión compatible dentro de la misma banda (8.0.x), `latestPatch` usa el último parche, `disable` exige la versión exacta |
+
+### Por qué importa
+
+Si un desarrollador tiene instalado .NET 8.0.400 y otro tiene .NET 8.0.100, ambos podrían compilar el código sin errores pero con comportamientos diferentes en ciertas características del SDK. Con `global.json`, todos los desarrolladores y el CI usan exactamente la misma versión, garantizando consistencia en la compilación.
+
+```bash
+# Ver la versión del SDK instalada
+dotnet --version
+
+# Ver todas las versiones disponibles
+dotnet --list-sdks
+```

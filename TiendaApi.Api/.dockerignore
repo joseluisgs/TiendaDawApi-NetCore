@@ -1,0 +1,24 @@
+# .dockerignore — contexto TiendaApi.Api/
+# Build: docker build ./TiendaApi.Api (o con -f TiendaApi.Api/Dockerfile desde la raíz)
+
+# Artefactos de compilación
+bin
+obj
+**/bin
+**/obj
+TestResults
+**/TestResults
+*.trx
+
+# IDE / usuario
+.vs
+.vscode
+**/*.user
+
+# Datos en tiempo de ejecución y logs
+uploads
+*.log
+
+# Docker
+Dockerfile
+.dockerignore

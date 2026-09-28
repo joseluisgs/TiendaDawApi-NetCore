@@ -29,7 +29,7 @@ script:post-response {
       expect(jsonData).to.be.an('object');
       expect(jsonData.items).to.be.an('array');
       expect(jsonData.page).to.be.a('number');
-      expect(jsonData.totalItems).to.be.a('number');
+      expect(jsonData.totalCount).to.be.a('number');
   });
 }
 

@@ -19,6 +19,8 @@
 
 Cuando múltiples usuarios intentan comprar el mismo producto simultáneamente, surgen problemas de concurrencia que pueden llevar a inconsistencias en el inventario. Sin mecanismos adecuados, podríamos vender más productos de los que realmente tenemos en stock.
 
+Antes de la concurrencia, conviene fijar qué es un pedido en este proyecto: es un **agregado** —destinatario, dirección de envío y lista de items con su precio congelado al emitirlo— que se guarda en **MongoDB como un único documento embebido**, con destinatario e items anidados dentro del propio pedido. Así se lee y se escribe completo, sin joins con las tablas relacionales, y el precio congelado del item hace que un cambio posterior del producto no altere los pedidos ya emitidos.
+
 ```mermaid
 flowchart TD
     subgraph "Escenario Problemático"
@@ -396,6 +398,52 @@ public class PedidoService
     }
 }
 ```
+
+### Polly en este proyecto: dónde está y dónde NO (Fase 6)
+
+El ejemplo de arriba usa la **API clásica de Polly v7** (`Policy.Handle<T>().WaitAndRetryAsync(...)`) con `DbUpdateConcurrencyException`. En este proyecto la realidad es distinta y conviene saber por qué:
+
+**1. Los pedidos NO reintentan con Polly.** El reintento de serialización es **a mano**, con el contador explícito del servicio:
+
+```csharp
+// PedidosService.cs
+private const int MaxRetries = 3;
+
+for (int attempt = 1; attempt <= MaxRetries; attempt++)
+{
+    try
+    {
+        return await CreateWithSerializableTransactionAsync(userId, dto);
+    }
+    catch (SerializationFailureException) { /* ... */ }
+    catch (NpgsqlException ex) when (IsSerializationFailureMessage(ex.Message))
+    {
+        if (attempt == MaxRetries)
+        {
+            logger.LogWarning("Maximos reintentos alcanzados ... para usuario {UserId}", userId);
+            return Result.Failure<PedidoDto, DomainError>(PedidoError.PedidoAdquirido(string.Empty));
+        }
+
+        var delayMs = 50 * attempt;                     // backoff lineal (50, 100, 150 ms)
+        logger.LogDebug("Reintento {Attempt}/{MaxRetries} ... delay: {Delay}ms", attempt, MaxRetries, userId, delayMs);
+        await Task.Delay(delayMs);
+    }
+}
+```
+
+Mismos 3 intentos, mismos logs de reintento… pero sin dependencia de Polly. ¿Por qué no envolverlo?
+
+**2. `EnableRetryOnFailure` de EF Core está deliberadamente OFF.** La transacción explícita de pedidos (`BeginTransactionAsync`, ver 13.2) es **incompatible** con la *retrying strategy* de EF: con retry activo, EF lanza `InvalidOperationException` al abrir una transacción manual. El patrón oficial (`CreateExecutionStrategy().ExecuteAsync(...)`) obligaría a reestructurar el flujo central `POST /api/pedidos/me` — riesgo alto sin beneficio demostrable. Documentado en la Fase 11.
+
+**3. Polly SÍ está, pero sobre el email** (Fase 6, `Infrastructures/PollyConfig.cs`) — el otro I/O externo con fallos transitorios (SMTP). Pipeline v8 `ResiliencePipeline`: Retry(3, 2^n) → CircuitBreaker(3 fallos → 30 s) → Timeout(10 s), todo **en background** vía `EmailBackgroundService`, así que un SMTP caído nunca bloquea ni rompe una respuesta HTTP. Detalle completo en `21-email-services.md`.
+
+| I/O externo | Estrategia elegida | Motivo |
+|---|---|---|
+| PostgreSQL (pedidos) | Reintento a mano + transacción Serializable | Transacción explícita incompatible con retry de EF |
+| SMTP (email) | **Polly v8** (Retry + CircuitBreaker + Timeout) | I/O sin transacción, con fallos transitorios clásicos |
+| MongoDB/Redis | Sin retry extra | Conexiones de larga duración, sin caso de uso |
+
+> **Lección**: Polly (o cualquier librería de resiliencia) es para cuando aporta más de lo que cuesta. Antes de envolver un flujo, comprueba incompatibilidades (transacciones), coste de reintento (¿idempotente?) y si el fallo llega al usuario (aquí no: background).
 
 ---
 

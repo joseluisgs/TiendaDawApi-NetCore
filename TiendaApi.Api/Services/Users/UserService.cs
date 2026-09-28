@@ -15,7 +15,7 @@ namespace TiendaApi.Api.Services.Users;
 /// <summary>
 /// Servicio de usuarios usando Patrón Result.
 /// Maneja las operaciones CRUD de usuarios con Programación Orientada al Resultado.
-/// Las operaciones de caché se ejecutan en Task.Run (fire & forget)
+/// Las operaciones de caché se ejecutan en Task.Run (fire &amp; forget)
 /// para no bloquear el hilo principal. Esto es especialmente importante si:
 /// - La caché está en Redis (latencia de red)
 /// Si la operación de caché falla, se registra un warning pero no afecta a la respuesta.
@@ -285,7 +285,11 @@ public class UserService(
 
         logger.LogInformation("Usuario eliminado lógicamente con id: {Id}", id);
 
-        _ = Task.Run(() => InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"));
+        _ = Task.Run(() =>
+        {
+            try { InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"); }
+            catch (Exception ex) { logger.LogError(ex, "Error inesperado al invalidar caché de usuario: {Id}", id); }
+        });
 
         return UnitResult.Success<DomainError>();
     }
@@ -293,7 +297,7 @@ public class UserService(
     // ========== MÉTODOS PRIVADOS - CACHE ==========
 
     /// <summary>
-    /// Añade un elemento a la caché de forma asíncrona (fire & forget).
+    /// Añade un elemento a la caché de forma asíncrona (fire &amp; forget).
     /// </summary>
     private void AñadirCacheUsuario<T>(string key, T value)
     {
@@ -311,7 +315,7 @@ public class UserService(
     }
 
     /// <summary>
-    /// Invalida las claves de caché especificadas de forma asíncrona (fire & forget).
+    /// Invalida las claves de caché especificadas de forma asíncrona (fire &amp; forget).
     /// </summary>
     private void InvalidarCacheUsuario(params string[] keys)
     {

@@ -29,10 +29,10 @@ public class PedidosNativeRepositoryTests
         _mockDatabase = new Mock<IMongoDatabase>();
         _mockCollection = new Mock<IMongoCollection<Pedido>>();
         _mockLogger = new Mock<ILogger<PedidosNativeRepository>>();
-        
+
         _mockDatabase.Setup(d => d.GetCollection<Pedido>("pedidos", null))
             .Returns(_mockCollection.Object);
-            
+
         _repository = new PedidosNativeRepository(_mockDatabase.Object, _mockLogger.Object);
     }
 

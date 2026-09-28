@@ -12,7 +12,8 @@
   - [10.7. Cache en Servicios de Negocio](#107-cache-en-servicios-de-negocio)
   - [10.8. Invalidación de Cache](#108-invalidación-de-cache)
   - [10.9. Cache de Segundo Nivel (Fallback)](#109-cache-de-segundo-nivel-fallback)
-  - [10.10. Resumen y Buenas Prácticas](#1010-resumen-y-buenas-prácticas)
+  - [10.10. Caché HTTP con OutputCache y ETag](#1010-caché-http-con-outputcache-y-etag)
+  - [10.11. Resumen y Buenas Prácticas](#1011-resumen-y-buenas-prácticas)
 
 ---
 
@@ -1398,7 +1399,124 @@ public class CacheWithFallbackService : ICacheService
 
 ---
 
-## 10.10. Resumen y Buenas Prácticas
+## 10.10. Caché HTTP con OutputCache y ETag
+
+> **Otra capa de caché, otro nivel del stack.** Todo lo visto hasta aquí en este módulo es **caché de datos** (`IMemoryCache`, `IDistributedCache`, cache-aside en los servicios). Esto es **caché de respuestas HTTP**: la guarda y la devuelve el middleware antes de que el controlador se entere. No hay `GetOrSet` en el código de negocio, solo atributos y tags. (Fase 4 del plan.)
+
+### Registro: Infrastructures/OutputCacheConfig.cs
+
+```csharp
+public static class OutputCacheConfig
+{
+    /// <summary>
+    /// Registra el middleware de caché de salida (OutputCache).
+    /// Las políticas concretas (60 s + tag) se declaran por endpoint con
+    /// [OutputCache(Duration = 60, Tags = new[] { ... })].
+    /// </summary>
+    public static IServiceCollection AddOutputCacheConfig(this IServiceCollection services)
+    {
+        services.AddOutputCache();
+        return services;
+    }
+
+    /// <summary>
+    /// Habilita la caché de salida en el pipeline. Debe llamarse antes de MapControllers.
+    /// </summary>
+    public static WebApplication UseOutputCacheConfig(this WebApplication app)
+    {
+        app.UseOutputCache();
+        return app;
+    }
+}
+```
+
+En `Program.cs` se llama en los dos sitios obligatorios:
+
+```csharp
+services.AddOutputCacheConfig();      // ~línea 62: registro
+// ...
+app.UseOutputCacheConfig();           // ~línea 114: ANTES de MapControllers
+app.MapControllers();
+```
+
+### Política declarada por endpoint, no global
+
+Solo se cachea lo que lo declara explícitamente — GET anónimos de Productos y Categorías:
+
+```csharp
+// ProductosController.cs (GET, GET {id} y GET paged)
+[HttpGet]
+[OutputCache(Duration = 60, Tags = new[] { "productos" })]
+public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int size = 10) { ... }
+
+// CategoriasController.cs — mismo patrón con su propia tag
+[OutputCache(Duration = 60, Tags = new[] { "categorias" })]
+```
+
+- **`Duration = 60`**: TTL en segundos.
+- **`Tags = { ... }`**: identificadores de invalidación selectiva.
+- Los endpoints con `Authorization` o mutaciones **no** llevan el atributo → nunca se cachean respuestas de usuario.
+
+### Invalidación por tag tras cada CUD
+
+El TTL solo es el techo: los servicios invalidan "al evento", no esperan 60 s. Como es un `IOutputCacheStore` en memoria, la invalidación es síncrona y barata, pero aun así va protegida y **sin esperar** (fire & forget) para no penalizar la respuesta HTTP:
+
+```csharp
+// ProductoService.cs — InvalidarCacheProducto (llamado tras Create/Update/Delete)
+try
+{
+    _ = outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "Output cache invalidation error: Tag=productos");
+}
+```
+
+`CategoriaService.cs` hace lo propio con la tag `"categorias"` (línea ~185). Las mutaciones de **GraphQL** delegan en los mismos servicios → invalidan lo mismo sin código duplicado.
+
+### ETag y revalidación 304
+
+Cada GET cacheable también firma su respuesta con ETag para que el navegador/proxy pueda revalidar cuando la caché de salida ya no la retiene:
+
+```csharp
+Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";
+```
+
+Flujo verificado en el smoke de la Fase 4:
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant M as Middleware OutputCache
+    participant Ctrl as Controlador
+    C->>M: GET /api/productos
+    alt TTL vigente en caché
+        M-->>C: 200 (respuesta cacheada)
+    else sin caché / revalidación
+        M->>Ctrl: pasa al controlador
+        Ctrl-->>C: 200 + ETag "abc..."
+        C->>M: GET + If-None-Match: "abc..."
+        M-->>C: 304 Not Modified (sin cuerpo)
+    end
+```
+
+Comprobación real: segundo `GET /api/productos` → **304**; en los logs de la API: **0 excepciones**.
+
+### Qué aporta frente a Redis (cache-aside)
+
+| | Cache-aside (Redis, 10.2-10.9) | OutputCache (aquí) |
+|---|---|---|
+| Qué guarda | Entidades/DTOs | Respuesta HTTP completa (headers incluidos) |
+| Dónde se decide | El código de negocio | Atributo del endpoint |
+| Invalidación | Claves calculadas a mano | Tags + TTL |
+| Transporte | Redis compartido | Memoria del middleware (por instancia) |
+
+> **Combinación real de este proyecto**: OutputCache+ETag (60 s) para el listado **público** de respuestas, y cache-aside Redis con TTL 5 min + invalidación por claves para los **datos** que leen los servicios (ver 10.7/10.8). Las dos capas conviven sin solaparse: atacan puntos distintos del viaje de una petición.
+
+---
+
+## 10.11. Resumen y Buenas Prácticas
 
 ### Puntos Clave del Módulo
 

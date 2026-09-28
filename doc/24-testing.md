@@ -15,8 +15,10 @@
   - [24.10. Moq - Creando Mocks](#2410-moq---creando-mocks)
   - [24.11. Tests de Controladores](#2411-tests-de-controladores)
   - [24.12. Resumen y Buenas Prácticas](#2412-resumen-y-buenas-prácticas)
-  - [24.13. Testing E2E con Postman y Newman](#2413-testing-e2e-con-postman-y-newman)
+  - [24.13. Scripts de Verificación Automatizada](#2413-scripts-de-verificación-automatizada)
+  - [24.14. Testing E2E con Postman y Newman](#2414-testing-e2e-con-postman-y-newman)
   - [24.14. Testing E2E con Bruno CLI](#2414-testing-e2e-con-bruno-cli)
+  - [24.15. Automation E2E con Node (test-runner.mjs)](#2415-automation-e2e-con-node-test-runnermjs)
 
 ---
 
@@ -128,26 +130,50 @@ En este proyecto usamos **NUnit** por su sintaxis clara y atributos descriptivos
 ```
 TiendaApi.Tests/
 ├── Unit/
-│   ├── Services/
-│   │   ├── ProductoServiceTests.cs
-│   │   └── CategoriaServiceTests.cs
-│   ├── Validators/
-│   │   └── ProductoValidatorTests.cs
-│   └── Repositories/
-│       └── ProductoRepositoryTests.cs
-├── Integration/
 │   ├── Controllers/
-│   │   └── ProductosControllerTests.cs
+│   │   ├── AuthControllerTests.cs
+│   │   ├── PedidosControllerTests.cs
+│   │   ├── ProductosControllerTests.cs
+│   │   └── ...
+│   ├── Services/
+│   │   ├── Auth/AuthServiceTests.cs
+│   │   ├── Cache/RedisCacheServiceTests.cs
+│   │   ├── Email/EmailServiceTests.cs
+│   │   ├── Pedidos/PedidosServiceTests.cs
+│   │   ├── Productos/ProductoServiceTests.cs
+│   │   └── ...
+│   ├── Validators/
+│   │   ├── Productos/ProductoRequestValidatorTests.cs
+│   │   ├── Usuarios/RegisterValidatorTests.cs
+│   │   └── ...
 │   ├── Repositories/
-│   │   └── ProductoRepositoryIntegrationTests.cs
-│   └── Services/
-│       └── ProductoServiceIntegrationTests.cs
-├── Fixtures/
-│   ├── TiendaApiWebApplicationFactory.cs
-│   └── TestContainersFixture.cs
-├── Helpers/
-│   ├── TestDataFactory.cs
-│   └── AssertionHelpers.cs
+│   │   ├── TiendaDbContextInMemory.cs
+│   │   ├── Productos/ProductoRepositoryTests.cs
+│   │   └── ...
+│   ├── Dtos/
+│   ├── GraphQL/
+│   ├── Infrastructures/
+│   ├── Mappers/
+│   ├── Middleware/
+│   ├── Models/
+│   ├── Realtime/
+│   ├── SignalR/
+│   └── WebSockets/
+├── Integration/
+│   ├── TestContainers/
+│   │   ├── AssemblyContainerFixture.cs    # [SetUpFixture]: 1 PostgreSQL + 1 MongoDB por ensamblado
+│   │   ├── TestContainerImages.cs
+│   │   ├── ErrorShape/ErrorShapeApiTests.cs
+│   │   ├── Categorias/
+│   │   ├── Pedidos/
+│   │   ├── Productos/
+│   │   │   ├── ProductosContainersIntegrationTests.cs
+│   │   │   ├── ProductoConcurrencyIntegrationTests.cs
+│   │   │   ├── Services/ProductoServiceIntegrationTests.cs
+│   │   │   └── Validators/ProductoValidatorsIntegrationTests.cs
+│   │   └── Usuarios/
+│   └── Services/Storage/FileSystemStorageServiceIntegrationTests.cs
+├── TestCategories.cs    # Categorías y atributos NUnit (Unit, Integration, Docker...)
 └── TiendaApi.Tests.csproj
 ```
 
@@ -157,34 +183,44 @@ TiendaApi.Tests/
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- HotChocolate 16 inyecta HotChocolate.Types.Composite (clase 'Is') que colisiona con NUnit.Framework.Is -->
+    <HotChocolateCompositeImplicitUsings>disable</HotChocolateCompositeImplicitUsings>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverageThreshold>0</CoverageThreshold>
+    <CoverletOutputFormat>json,lcov,opencover</CoverletOutputFormat>
+    <CoverletOutput>./coverage/</CoverletOutput>
   </PropertyGroup>
 
-  <!-- Paquetes de testing -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="NUnit" Version="3.14.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
-    <PackageReference Include="FluentAssertions" Version="6.12.0" />
-    <PackageReference Include="FluentAssertions.Mvc" Version="6.0.0" />
-    <PackageReference Include="Moq" Version="4.20.70" />
-    <PackageReference Include="TestContainers" Version="3.8.0" />
-    <PackageReference Include="TestContainers.PostgreSql" Version="3.8.0" />
-    <PackageReference Include="TestContainers.Redis" Version="3.8.0" />
-    <PackageReference Include="coverlet.collector" Version="6.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+    <!-- Versiones centralizadas en Directory.Packages.props -->
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.msbuild" />
+    <PackageReference Include="CSharpFunctionalExtensions" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="HotChocolate.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit.Analyzers" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Testcontainers.MongoDb" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="MongoDB.Driver" />
   </ItemGroup>
 
-  <!-- Referencia al proyecto principal -->
   <ItemGroup>
-    <ProjectReference Include="..\TiendaApi.Core\TiendaApi.Core.csproj" />
-    <ProjectReference Include="..\TiendaApi.Apis\TiendaApi.Apis.csproj" />
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TiendaApi.Api\TiendaApi.csproj" />
   </ItemGroup>
 
 </Project>
@@ -301,7 +337,7 @@ public class SequentialIntegrationTests
             if (_sharedContainer == null)
             {
                 _sharedContainer = new PostgreSqlBuilder()
-                    .WithImage("postgres:15-alpine")
+                    .WithImage("postgres:17-alpine")
                     .WithDatabase("TestDb")
                     .WithUsername("test")
                     .WithPassword("test")
@@ -326,6 +362,8 @@ public class SequentialIntegrationTests
     }
 }
 ```
+
+En este proyecto los contenedores se organizan **una sola vez por ensamblado**: la fixture `Integration/TestContainers/AssemblyContainerFixture.cs` arranca un PostgreSQL y un MongoDB al comenzar la suite y los mantiene vivos hasta el final, porque el arranque de Docker es lo caro. Sobre esos dos contenedores, **cada clase de test crea su propia base de datos** y la elimina al terminar, de modo que las clases quedan aisladas entre sí sin pagar un contenedor por clase.
 
 ---
 
@@ -356,7 +394,7 @@ flowchart LR
 | Aspecto | Base de datos en memoria | TestContainers |
 |---------|-------------------------|----------------|
 | **Realismo** | Bajo | Alto |
-| **SQL features** | Limitado | Completo |
+| **Características SQL** | Limitado | Completo |
 | **Migrations** | No testeadas | Testeadas |
 | **Velocidad** | Rápido | Más lento |
 | **Aislamiento** | Por proceso | Por contenedor |
@@ -386,7 +424,7 @@ public class TestContainersFixture : IDisposable
     {
         // Iniciar PostgreSQL
         PostgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
+            .WithImage("postgres:17-alpine")
             .WithDatabase("tiendadb_test")
             .WithUsername("test")
             .WithPassword("test")
@@ -434,7 +472,7 @@ public class IntegrationTestBase : IDisposable
     {
         // Crear contenedor para cada test
         _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
+            .WithImage("postgres:17-alpine")
             .WithDatabase("tiendadb_test")
             .WithUsername("test")
             .WithPassword("test")
@@ -616,7 +654,7 @@ public class GlobalTestFixture
     {
         // Crear contenedores compartidos para todos los tests
         SharedPostgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
+            .WithImage("postgres:17-alpine")
             .WithDatabase("tiendadb_global")
             .WithUsername("test")
             .WithPassword("test")
@@ -1661,7 +1699,46 @@ Con testing dominado, tienes todas las herramientas para crear APIs robustas en 
 
 ---
 
-## 24.13. Testing E2E con Postman y Newman
+## 24.13. Scripts de Verificación Automatizada
+
+Los scripts automatizados son herramientas que verifican automáticamente la calidad del código ejecutándose como parte del pipeline de verificación, junto con la compilación y los tests.
+
+### check-style — Verificación de formato de código
+
+Este script verifica que los ficheros cumplan las reglas de formato definidas en `.editorconfig`: charset (UTF-8), newline final, encoding correcto, y otras convenciones de estilo. Se ejecuta tras cada cambio para detectar problemas de formato antes de commit.
+
+```bash
+# Ejecutar verificación de estilo
+powershell -ExecutionPolicy Bypass -File scripts\check-style.ps1
+```
+
+Si el script encuentra algún fichero que no cumple las reglas, indica cuáles son los problemas y la ejecución falla, lo que obliga a corregir el formato antes de continuar.
+
+### check-audit — Auditoría de seguridad de paquetes
+
+Este script ejecuta `dotnet list package --vulnerable` para detectar paquetes NuGet con vulnerabilidades conocidas (CVE). Si encuentra vulnerabilidades clasificadas como **Críticas** o **Altas**, la ejecución falla automáticamente.
+
+```bash
+# Ejecutar auditoría de vulnerabilidades
+node scripts/check-audit.mjs
+```
+
+Esto actúa como una barrera de seguridad automatizada: impide que código con dependencias vulnerables llegue al repositorio.
+
+### Pipeline de verificación
+
+Ambos scripts se ejecutan como parte del flujo de verificación del proyecto:
+
+| Paso | Qué verifica |
+|------|-------------|
+| `dotnet build` | Compilación correcta del código |
+| `dotnet test` | Tests unitarios pasan |
+| `check-style.ps1` | Formato y encoding de ficheros |
+| `check-audit.mjs` | Ausencia de vulnerabilidades en paquetes |
+
+---
+
+## 24.14. Testing E2E con Postman y Newman
 
 Los tests **End-to-End (E2E)** verifican que la API completa funciona correctamente desde la perspectiva del cliente, incluyendo autenticación, validación y flujos de negocio completos.
 
@@ -2180,7 +2257,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_USER: admin
           POSTGRES_PASSWORD: admin123
@@ -2584,7 +2661,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_USER: admin
           POSTGRES_PASSWORD: admin123
@@ -2678,3 +2755,76 @@ Con testing E2E dominado (tanto Postman como Bruno), tienes un arsenal completo 
 | **Controller Tests** | WebApplicationFactory | Probar endpoints HTTP |
 | **E2E Tests** | Postman + Newman | Probar flujos completos de usuario |
 | **E2E Tests** | Bruno CLI | Probar API con archivos de texto versionables |
+
+---
+
+## 24.15. Automation E2E con Node (test-runner.mjs)
+
+Newman y Bruno prueban **colecciones HTTP**. La **Fase 7** añadió una tercera capa: un runner en **Node nativo, sin `npm install`**, que lleva la API de cero a verde en un solo comando y sirve de red de seguridad para el resto de fases (y de comando de CI).
+
+**Uso:**
+
+```bash
+# Desde la raíz del repo (API apagada o encendida da igual)
+node TiendaApi.Tests.E2E/Automation/test-runner.mjs
+
+# Modo externo: solo la suite, contra una API ya levantada
+BASE_URL=http://localhost:5031 node TiendaApi.Tests.E2E/Automation/test-runner.mjs
+```
+
+**Diseño** (cabecera del propio fichero):
+
+```javascript
+/**
+ * Automation E2E — TiendaApi .NET (Fase 7 del plan FASES-MEJORAS.md)
+ *
+ * Estilo UD02 ejemplos/<nn>-ProductosX/automation/test-runner.mjs:
+ * Node nativo, SIN npm install.
+ *
+ * Modos:
+ *   - Auto (default): levanta infra (postgres+mongodb en Docker si hace falta),
+ *     hace restore/build de la API, la arranca en Development y ejecuta la suite.
+ *   - Externo: BASE_URL=... → solo ejecuta la suite contra una API ya levantada.
+ *
+ * Diseño:
+ *   - NO ejecuta `docker compose down -v` al final: solo para los servicios de BD
+ *     que ÉL haya levantado (si ya estaban corriendo, no se tocan).
+ *   - Fallback: si `dotnet run` no responde, intenta `docker compose up -d --build`.
+ *   - Rate limit awareness: helper st() → falla CLARO si la API devuelve 429
+ *     (100/15s general · 10/min auth · 20/min POST · 200/min graphql).
+ *   - Sale con código 0 si todo OK, 1 si algo falla (listo para CI).
+ */
+
+const CONFIG = {
+  baseUrl: process.env.BASE_URL || "http://localhost:5031",
+  healthPaths: ["/health", "/swagger", "/api/productos"],
+  env: { ASPNETCORE_ENVIRONMENT: "Development", ASPNETCORE_URLS: "http://localhost:5031" },
+  dbServices: ["postgres", "mongodb"],
+  composeFile: "docker-compose.local.yml",
+  admin: { username: "admin", password: "admin" },
+  user:  { username: "userdaw", password: "userdaw" },
+};
+```
+
+**Qué cubre (55/55 checks)** — todos los controladores, happy path **y** errores/autorización:
+
+| Bloque | Ejemplos de checks |
+|---|---|
+| Health | `GET /health → 200` con JSON `status` |
+| Auth | signup 201 · signup inválido 400 · signin admin/user 200 con token · password mal 401 |
+| Categorías | GET paged · GET /1 · GET /999999 → 404 · POST sin token → 401 · POST rol USER → 403 · POST 201 · PUT 200 · DELETE 204 · DELETE inexistente 404 |
+| Productos | paged + filtros (`precioMax`) · GET /1 · 404 · por categoría · POST sin token 401 · precio 0 → 400 · CRUD 201/200/204 · PATCH parcial |
+| Pedidos | `POST /me` sin auth 401 · con token 201 · paginación y detalle |
+| GraphQL / WebSocket / ETag | consultas del esquema real, ETag→304 |
+
+**Por qué "falla claro" en 429:** el runner conoce el rate limit (`RateLimitConfig.cs`) y distingue *rotura* de *límite de tráfico* — si un check recibe 429, el mensaje lo dice explícitamente en vez de un 400 genérico.
+
+**Resultado actual:** `Total: 55 · OK: 55 · KO: 0` con exit code 0 — verificado tras cada fase (Fases 5, 6, 7 y 11). Junto con los tests unit (1039), de integración (161) y las colecciones E2E (Newman 95 · Bruno 108), completa la pirámide de testing del proyecto:
+
+```mermaid
+flowchart TD
+    U["Unit (NUnit, 1039)"] --> I["Integración (TestContainers, 161)"]
+    I --> C["Controller (WebApplicationFactory)"]
+    C --> A["Automation E2E Node (55)"]
+    A --> E["Colecciones: Newman (95) + Bruno (108)"]
+```

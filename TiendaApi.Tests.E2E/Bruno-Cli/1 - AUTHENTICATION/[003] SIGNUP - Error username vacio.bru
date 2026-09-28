@@ -29,7 +29,7 @@ script:post-response {
   
   test("Signup validation - Has error message", function () {
       const jsonData = res.getBody();
-      expect(jsonData.message).to.not.be.empty;
+      expect(jsonData.errors).to.not.be.empty;
   });
 }
 

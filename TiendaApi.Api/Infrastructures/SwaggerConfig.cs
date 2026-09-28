@@ -1,20 +1,21 @@
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Extensiones de configuración de Swagger/OpenAPI.
+/// Extensiones de configuraci\u00f3n de Swagger/OpenAPI.
 /// </summary>
 public static class SwaggerConfig
 {
     /// <summary>
-    /// Configura Swagger/OpenAPI con documentación completa y seguridad JWT.
+    /// Configura Swagger/OpenAPI con documentaci\u00f3n completa y seguridad JWT.
     /// </summary>
     public static IServiceCollection AddSwagger(this IServiceCollection services)
     {
-        Log.Information("📖 Configurando Swagger/OpenAPI...");
+        Log.Information("\ud83d\udcd6 Configurando Swagger/OpenAPI...");
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
@@ -26,7 +27,7 @@ public static class SwaggerConfig
                 Description = "API REST educativa desarrollada en .NET 10",
                 Contact = new OpenApiContact
                 {
-                    Name = "José Luis González Sánchez",
+                    Name = "Jos\u00e9 Luis Gonz\u00e1lez S\u00e1nchez",
                     Email = "joseluis.gonzalez@iesluisvives.org",
                     Url = new Uri("https://joseluisgs.dev")
                 },
@@ -47,20 +48,16 @@ public static class SwaggerConfig
                 Description = "JWT Authorization header usando el esquema Bearer"
             });
 
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
                 {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    Array.Empty<string>()
+                    new OpenApiSecuritySchemeReference("Bearer", document),
+                    new List<string>()
                 }
             });
+
+            var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            options.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, xmlFilename));
         });
 
         return services;

@@ -1,10 +1,10 @@
+using System.Collections.Generic;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Npgsql;
-using System.Collections.Generic;
 using TiendaApi.Api.Exceptions;
 using TiendaApi.Api.Middleware;
 

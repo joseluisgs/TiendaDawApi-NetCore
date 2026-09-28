@@ -23,6 +23,7 @@ public class ProductoRepository(
         return await context.Productos
             .Include(p => p.Categoria)
             .OrderBy(p => p.Nombre)
+            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -64,6 +65,7 @@ public class ProductoRepository(
         query = ApplySorting(query, filter.SortBy, filter.Direction);
 
         var items = await query
+            .AsNoTracking()
             .Skip(filter.Page * filter.Size)
             .Take(filter.Size)
             .ToListAsync();
@@ -87,6 +89,7 @@ public class ProductoRepository(
             .Include(p => p.Categoria)
             .Where(p => p.CategoriaId == categoriaId)
             .OrderBy(p => p.Nombre)
+            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -177,6 +180,7 @@ public class ProductoRepository(
         return await context.Productos
             .Where(p => p.CreatedAt >= since && !p.IsDeleted)
             .OrderByDescending(p => p.CreatedAt)
+            .AsNoTracking()
             .ToListAsync();
     }
 

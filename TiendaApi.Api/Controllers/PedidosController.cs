@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Errors;
+using TiendaApi.Api.Extensions;
+using TiendaApi.Api.Helpers.Pagination;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Services.Pedidos;
-using TiendaApi.Api.Helpers.Pagination;
 
 namespace TiendaApi.Api.Controllers;
 
@@ -90,11 +91,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -118,13 +115,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError => BadRequest(new { message = error.Message }),
-                ForbiddenError => StatusCode(403, new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -146,13 +137,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         if (resultado.IsSuccess)
             return NoContent();
 
-        var error = resultado.Error;
-        return error switch
-        {
-            NotFoundError => NotFound(new { message = error.Message }),
-            ForbiddenError => StatusCode(403, new { message = error.Message }),
-            _ => StatusCode(500, new { message = error.Message })
-        };
+        return resultado.Error.ToHttpResult();
     }
 
     /// <summary>
@@ -174,14 +159,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError => BadRequest(new { message = error.Message }),
-                BusinessRuleError => BadRequest(new { message = error.Message }),
-                ForbiddenError => StatusCode(403, new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -201,7 +179,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     {
         logger.LogInformation("GetMyPedidos - User: {User}", User?.Identity?.Name);
         logger.LogInformation("GetMyPedidos - IsAuthenticated: {IsAuth}", User?.Identity?.IsAuthenticated);
-        
+
         if (User?.Identity == null || !User.Identity.IsAuthenticated)
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
@@ -288,16 +266,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
             return CreatedAtAction(nameof(GetMyPedidoById), new { id = pedido.Id }, pedido);
         }
 
-        var error = resultado.Error;
-        return error switch
-        {
-            NotFoundError => NotFound(new { message = error.Message }),
-            ValidationError ve => BadRequest(new { message = ve.Message, errors = ve.ValidationErrors }),
-            BusinessRuleError => BadRequest(new { message = error.Message }),
-            ForbiddenError => StatusCode(403, new { message = error.Message }),
-            ConflictError => Conflict(new { message = error.Message }),
-            _ => StatusCode(500, new { message = error.Message })
-        };
+        return resultado.Error.ToHttpResult();
     }
 
     /// <summary>
@@ -325,12 +294,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ForbiddenError => StatusCode(403, new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -362,14 +326,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
 
         return resultado.Match(
             onSuccess: pedido => Ok(pedido),
-            onFailure: error => error switch
-            {
-                NotFoundError => NotFound(new { message = error.Message }),
-                ValidationError => BadRequest(new { message = error.Message }),
-                BusinessRuleError => BadRequest(new { message = error.Message }),
-                ForbiddenError => StatusCode(403, new { message = error.Message }),
-                _ => StatusCode(500, new { message = error.Message })
-            }
+            onFailure: error => error.ToHttpResult()
         );
     }
 
@@ -401,14 +358,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         if (resultado.IsSuccess)
             return NoContent();
 
-        var error = resultado.Error;
-        return error switch
-        {
-            NotFoundError => NotFound(new { message = error.Message }),
-            ValidationError => BadRequest(new { message = error.Message }),
-            ForbiddenError => StatusCode(403, new { message = error.Message }),
-            _ => StatusCode(500, new { message = error.Message })
-        };
+        return resultado.Error.ToHttpResult();
     }
 
     #endregion

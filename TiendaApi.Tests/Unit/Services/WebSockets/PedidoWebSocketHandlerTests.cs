@@ -1,13 +1,13 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
 using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
+using TiendaApi.Api.Realtime.Pedidos;
 using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Cache;
-using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.WebSockets;
 
@@ -335,7 +335,7 @@ public class PedidosWebSocketHandlerTests
             }),
             Expires = DateTime.UtcNow.AddHours(1)
         };
-        
+
         var token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }
@@ -351,7 +351,7 @@ public class PedidosWebSocketHandlerTests
             }),
             Expires = DateTime.UtcNow.AddHours(1)
         };
-        
+
         var token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }
@@ -368,7 +368,7 @@ public class PedidosWebSocketHandlerTests
             }),
             Expires = DateTime.UtcNow.AddHours(1)
         };
-        
+
         var token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }

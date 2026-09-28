@@ -1,11 +1,10 @@
+using System.Diagnostics;
+using System.Threading.Channels;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Threading.Channels;
-using Testcontainers.PostgreSql;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
@@ -24,7 +23,8 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 public class ProductoConcurrencyIntegrationTests
 {
     private static readonly ActivitySource ActivitySource = new("ProductoConcurrencyTests");
-    private PostgreSqlContainer? _postgresContainer;
+    private const string DatabaseName = "it_producto_concurrency";
+    private string _connectionString = string.Empty;
     private IServiceProvider? _serviceProvider;
     private TiendaDbContext? _dbContext;
     private IProductoRepository? _productoRepository;
@@ -33,29 +33,19 @@ public class ProductoConcurrencyIntegrationTests
     [OneTimeSetUp]
     public async Task OneTimeSetup()
     {
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
-            .WithDatabase("tienda_test")
-            .WithUsername("test")
-            .WithPassword("test")
-            .Build();
-
-        await _postgresContainer.StartAsync();
+        _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
     }
 
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        if (_postgresContainer != null)
-        {
-            await _postgresContainer.DisposeAsync();
-        }
+        await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
     }
 
     [SetUp]
     public async Task Setup()
     {
-        var connectionString = _postgresContainer!.GetConnectionString();
+        var connectionString = _connectionString;
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
