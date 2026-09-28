@@ -34,7 +34,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Non-root user: la imagen aspnet:10.0 ya incluye el usuario "app" (UID 1000)
+# Non-root user: la imagen aspnet:10.0 ya incluye el usuario "app" (APP_UID=1654, verificado /etc/passwd)
 USER app
 
 # Copy published application
