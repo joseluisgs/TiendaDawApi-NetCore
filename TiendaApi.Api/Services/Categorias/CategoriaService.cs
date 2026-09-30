@@ -109,7 +109,7 @@ public class CategoriaService(
             .Tap(_ =>
             {
                 logger.LogInformation("Categoría creada: {Id}", saved.Id);
-                InvalidarCacheCategoria("categorias:all", $"categorias:{result.Id}");
+                InvalidarCacheCategoria($"categorias:{result.Id}");
             });
     }
 
@@ -139,7 +139,7 @@ public class CategoriaService(
             .Tap(_ =>
             {
                 logger.LogInformation("Categoría actualizada: {Id}", id);
-                InvalidarCacheCategoria("categorias:all", $"categorias:{id}");
+                InvalidarCacheCategoria($"categorias:{id}");
             });
     }
 
@@ -155,7 +155,7 @@ public class CategoriaService(
         await repository.DeleteAsync(id);
         logger.LogInformation("Categoría eliminada: {Id}", id);
 
-        InvalidarCacheCategoria("categorias:all", $"categorias:{id}");
+        InvalidarCacheCategoria($"categorias:{id}");
 
         return UnitResult.Success<DomainError>();
     }

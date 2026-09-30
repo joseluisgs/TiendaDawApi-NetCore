@@ -160,7 +160,7 @@ public class UserService(
             .Tap(_ =>
             {
                 logger.LogInformation("Usuario creado con id: {Id}", savedUser.Id);
-                InvalidarCacheUsuario("usuarios:all", $"usuarios:{savedUser.Id}");
+                InvalidarCacheUsuario($"usuarios:{savedUser.Id}");
             });
     }
 
@@ -219,7 +219,7 @@ public class UserService(
             .Tap(_ =>
             {
                 logger.LogInformation("Usuario actualizado con id: {Id}", id);
-                InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}");
+                InvalidarCacheUsuario($"usuarios:{id}");
             });
     }
 
@@ -257,7 +257,7 @@ public class UserService(
             .Tap(_ =>
             {
                 logger.LogInformation("Avatar actualizado para usuario con id: {Id}", id);
-                InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}");
+                InvalidarCacheUsuario($"usuarios:{id}");
             });
     }
 
@@ -287,7 +287,7 @@ public class UserService(
 
         _ = Task.Run(() =>
         {
-            try { InvalidarCacheUsuario("usuarios:all", $"usuarios:{id}"); }
+            try { InvalidarCacheUsuario($"usuarios:{id}"); }
             catch (Exception ex) { logger.LogError(ex, "Error inesperado al invalidar caché de usuario: {Id}", id); }
         });
 

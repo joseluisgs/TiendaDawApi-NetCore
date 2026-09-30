@@ -139,7 +139,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por administrador", id);
-                InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}", "pedidos:all");
+                InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}");
                 NotificarWebSocketPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
                 NotificarSignalRPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
                 EnviarEmailPedidoActualizadoAdmin(pedido.Id.ToString(), pedido.Estado ?? "", pedido.Total, pedido.UserId);
@@ -169,7 +169,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
 
         logger.LogInformation("Pedido {Id} eliminado lógicamente por administrador", id);
 
-        InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}", "pedidos:all");
+        InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}");
 
         NotificarSignalRPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "");
         EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
