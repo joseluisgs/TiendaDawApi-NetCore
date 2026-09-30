@@ -5,6 +5,7 @@ using HotChocolate.Types;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.GraphQL.Inputs;
+using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Api.GraphQL.Mutations;
@@ -14,13 +15,22 @@ namespace TiendaApi.Api.GraphQL.Mutations;
 ///
 /// 🎓 GraphQL: en vez de devolver null silencioso, lanzamos excepción
 /// para que el cliente vea el error en el array "errors" de la respuesta.
+///
+/// 🎓 Read-before-write: para hacer merge de campos null, leemos del
+/// modelo de ESCRITURA (PostgreSQL), nunca de la caché. Así evitamos
+/// escribir encima de un dato reciente que aún no se reflejó en caché.
 /// </summary>
 public class ProductoMutation
 {
     private readonly IProductoService _productoService;
+    private readonly IProductoRepository _productoRepository;
 
     /// <summary>Constructor para tests.</summary>
-    public ProductoMutation(IProductoService productoService) => _productoService = productoService;
+    public ProductoMutation(IProductoService productoService, IProductoRepository productoRepository)
+    {
+        _productoService = productoService;
+        _productoRepository = productoRepository;
+    }
 
     /// <summary>Crea un nuevo producto.</summary>
     /// <param name="input">Datos del producto.</param>
@@ -58,18 +68,19 @@ public class ProductoMutation
         UpdateProductoInput input,
         [Service] IProductoService service)
     {
-        var existingResult = await service.FindByIdAsync(id);
-        if (existingResult.IsFailure)
-            throw new Exception(existingResult.Error.Message);
+        // 🎓 Leer del MODELO DE ESCRITURA (PostgreSQL), no de la caché
+        var existing = await _productoRepository.FindByIdAsync(id);
+        if (existing is null)
+            throw new Exception($"Producto con ID {id} no encontrado");
 
         var dto = new ProductoRequestDto
         {
-            Nombre = input.Nombre ?? existingResult.Value.Nombre,
-            Descripcion = input.Descripcion ?? existingResult.Value.Descripcion,
-            Precio = input.Precio ?? existingResult.Value.Precio,
-            Stock = input.Stock ?? existingResult.Value.Stock,
-            Imagen = input.Imagen ?? existingResult.Value.Imagen,
-            CategoriaId = input.CategoriaId ?? existingResult.Value.CategoriaId
+            Nombre = input.Nombre ?? existing.Nombre,
+            Descripcion = input.Descripcion ?? existing.Descripcion,
+            Precio = input.Precio ?? existing.Precio,
+            Stock = input.Stock ?? existing.Stock,
+            Imagen = input.Imagen ?? existing.Imagen,
+            CategoriaId = input.CategoriaId ?? existing.CategoriaId
         };
         var result = await service.UpdateAsync(id, dto);
         if (result.IsFailure)
