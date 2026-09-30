@@ -156,11 +156,12 @@ public class UserService(
         var savedUser = await userRepository.SaveAsync(user);
         var resultDto = savedUser.ToDto();
 
+        await InvalidarCacheUsuarioAsync($"usuarios:{savedUser.Id}");
+
         return Result.Success<UserDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Usuario creado con id: {Id}", savedUser.Id);
-                InvalidarCacheUsuario($"usuarios:{savedUser.Id}");
             });
     }
 
@@ -215,11 +216,12 @@ public class UserService(
         var updated = await userRepository.UpdateAsync(user);
         var resultDto = updated.ToDto();
 
+        await InvalidarCacheUsuarioAsync($"usuarios:{id}");
+
         return Result.Success<UserDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Usuario actualizado con id: {Id}", id);
-                InvalidarCacheUsuario($"usuarios:{id}");
             });
     }
 
@@ -253,11 +255,12 @@ public class UserService(
         var updated = await userRepository.UpdateAsync(user);
         var resultDto = updated.ToDto();
 
+        await InvalidarCacheUsuarioAsync($"usuarios:{id}");
+
         return Result.Success<UserDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Avatar actualizado para usuario con id: {Id}", id);
-                InvalidarCacheUsuario($"usuarios:{id}");
             });
     }
 
@@ -285,11 +288,7 @@ public class UserService(
 
         logger.LogInformation("Usuario eliminado lógicamente con id: {Id}", id);
 
-        _ = Task.Run(() =>
-        {
-            try { InvalidarCacheUsuario($"usuarios:{id}"); }
-            catch (Exception ex) { logger.LogError(ex, "Error inesperado al invalidar caché de usuario: {Id}", id); }
-        });
+        await InvalidarCacheUsuarioAsync($"usuarios:{id}");
 
         return UnitResult.Success<DomainError>();
     }
@@ -317,22 +316,13 @@ public class UserService(
     /// <summary>
     /// Invalida las claves de caché especificadas de forma asíncrona (fire &amp; forget).
     /// </summary>
-    private void InvalidarCacheUsuario(params string[] keys)
+    private async Task InvalidarCacheUsuarioAsync(params string[] keys)
     {
-        _ = Task.Run(async () =>
+        foreach (var key in keys)
         {
-            foreach (var key in keys)
-            {
-                try
-                {
-                    await cacheService.RemoveAsync(key);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
-                }
-            }
-        });
+            try { await cacheService.RemoveAsync(key); }
+            catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
+        }
     }
 
     // ========== VALIDACIÓN ==========
