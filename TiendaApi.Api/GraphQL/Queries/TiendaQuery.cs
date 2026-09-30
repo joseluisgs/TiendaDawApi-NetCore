@@ -29,7 +29,7 @@ public class TiendaQuery
         await productoRepository.FindByIdAsync(id);
 
     /// <summary>Obtiene productos paginados.</summary>
-    /// <param name="page">Número de página.</param>
+    /// <param name="page">Número de página (base 1, contrato GraphQL).</param>
     /// <param name="size">Elementos por página.</param>
     /// <param name="productoRepository">Repositorio de productos.</param>
     /// <returns>Resultado paginado de productos.</returns>
@@ -38,7 +38,16 @@ public class TiendaQuery
         int page = 1,
         int size = 10)
     {
-        var filter = new ProductoFilterDto(null, null, null, null, null, page, size);
+        // GraphQL expone paginación base 1; el repositorio trabaja con base 0 (Skip(Page*Size))
+        var filter = new ProductoFilterDto(
+            Nombre: null,
+            Categoria: null,
+            IsDeleted: null,
+            PrecioMax: null,
+            StockMin: null,
+            Page: Math.Max(page - 1, 0),
+            Size: size);
+
         var result = await productoRepository.FindAllPagedAsync(filter);
         return new PagedResult<ProductoDto>
         {
@@ -65,7 +74,7 @@ public class TiendaQuery
         await categoriaRepository.FindByIdAsync(id);
 
     /// <summary>Obtiene categorías paginadas.</summary>
-    /// <param name="page">Número de página.</param>
+    /// <param name="page">Número de página (base 1, contrato GraphQL).</param>
     /// <param name="size">Elementos por página.</param>
     /// <param name="categoriaRepository">Repositorio de categorías.</param>
     /// <returns>Resultado paginado de categorías.</returns>
@@ -74,7 +83,13 @@ public class TiendaQuery
         int page = 1,
         int size = 10)
     {
-        var filter = new CategoriaFilterDto { Nombre = null, Page = page, Size = size };
+        // GraphQL expone paginación base 1; el repositorio trabaja con base 0 (Skip(Page*Size))
+        var filter = new CategoriaFilterDto
+        {
+            Nombre = null,
+            Page = Math.Max(page - 1, 0),
+            Size = size
+        };
         var result = await categoriaRepository.FindAllPagedAsync(filter);
         return new PagedResult<CategoriaDto>
         {

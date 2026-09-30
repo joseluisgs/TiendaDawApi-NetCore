@@ -121,18 +121,37 @@ public class TiendaQueryTests
     #region GetProductosPaged Tests
 
     [Test]
-    public async Task GetProductosPaged_WithPaging_ReturnsPagedResult()
+    public async Task GetProductosPaged_WithPage1_ConvertsToZeroBasedFilter()
     {
-        var filter = new ProductoFilterDto(null, null, null, null, null, 1, 10);
-        var items = new List<Producto>();
-        var pagedResult = (items, 2);
-
+        // Arrange: capturar el filtro que llega al repositorio
+        ProductoFilterDto? capturedFilter = null;
         _productoRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
-            .ReturnsAsync(pagedResult);
+            .Callback<ProductoFilterDto>(f => capturedFilter = f)
+            .ReturnsAsync((new List<Producto>(), 2));
 
+        // Act: GraphQL page=1 (base 1) → el repositorio debe recibir Page=0 (base 0)
         var result = await _query.GetProductosPaged(_productoRepoMock.Object, 1, 10);
 
+        // Assert
         result.Should().NotBeNull();
+        result.Page.Should().Be(1); // GraphQL devuelve base 1
+        capturedFilter.Should().NotBeNull();
+        capturedFilter!.Page.Should().Be(0); // pero el filtro va en base 0
+        capturedFilter.Size.Should().Be(10);
+    }
+
+    [Test]
+    public async Task GetProductosPaged_WithPage5_ConvertsToFourZeroBased()
+    {
+        ProductoFilterDto? capturedFilter = null;
+        _productoRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
+            .Callback<ProductoFilterDto>(f => capturedFilter = f)
+            .ReturnsAsync((new List<Producto>(), 50));
+
+        var result = await _query.GetProductosPaged(_productoRepoMock.Object, 5, 10);
+
+        result.Page.Should().Be(5);
+        capturedFilter!.Page.Should().Be(4);
     }
 
     #endregion
@@ -140,18 +159,37 @@ public class TiendaQueryTests
     #region GetCategoriasPaged Tests
 
     [Test]
-    public async Task GetCategoriasPaged_WithPaging_ReturnsPagedResult()
+    public async Task GetCategoriasPaged_WithPage1_ConvertsToZeroBasedFilter()
     {
-        var filter = new CategoriaFilterDto { Page = 1, Size = 10 };
-        var items = new List<Categoria>();
-        var pagedResult = (items, 2);
-
+        // Arrange: capturar el filtro que llega al repositorio
+        CategoriaFilterDto? capturedFilter = null;
         _categoriaRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))
-            .ReturnsAsync(pagedResult);
+            .Callback<CategoriaFilterDto>(f => capturedFilter = f)
+            .ReturnsAsync((new List<Categoria>(), 2));
 
+        // Act
         var result = await _query.GetCategoriasPaged(_categoriaRepoMock.Object, 1, 10);
 
+        // Assert
         result.Should().NotBeNull();
+        result.Page.Should().Be(1); // GraphQL devuelve base 1
+        capturedFilter.Should().NotBeNull();
+        capturedFilter!.Page.Should().Be(0); // pero el filtro va en base 0
+        capturedFilter.Size.Should().Be(10);
+    }
+
+    [Test]
+    public async Task GetCategoriasPaged_WithPage3_ConvertsToTwoZeroBased()
+    {
+        CategoriaFilterDto? capturedFilter = null;
+        _categoriaRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))
+            .Callback<CategoriaFilterDto>(f => capturedFilter = f)
+            .ReturnsAsync((new List<Categoria>(), 30));
+
+        var result = await _query.GetCategoriasPaged(_categoriaRepoMock.Object, 3, 10);
+
+        result.Page.Should().Be(3);
+        capturedFilter!.Page.Should().Be(2);
     }
 
     #endregion
