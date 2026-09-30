@@ -4,6 +4,10 @@ namespace TiendaApi.Api.Services.Cache;
 
 /// <summary>
 /// Contrato del servicio de caché.
+///
+/// 🎓 Regla de diseño: la interfaz solo contiene lo que las implementaciones
+/// pueden hacer de forma razonable. No prometemos RemoveByPattern porque
+/// MemoryCache no lo soporta y Redis lo haría con SCAN (costoso).
 /// </summary>
 public interface ICacheService
 {
@@ -23,8 +27,4 @@ public interface ICacheService
     /// <summary>Elimina un valor de la caché.</summary>
     /// <param name="key">Clave a eliminar.</param>
     Task RemoveAsync(string key);
-
-    /// <summary>Elimina valores por patrón.</summary>
-    /// <param name="pattern">Patrón de búsqueda.</param>
-    Task RemoveByPatternAsync(string pattern);
 }

@@ -192,49 +192,6 @@ public class RedisCacheServiceEdgeTests
     }
 
     #endregion
-
-    #region RemoveByPatternAsync Edge Cases
-
-    [Test]
-    public async Task RemoveByPatternAsync_ConPatternVacio_NoLanzaExcepcion()
-    {
-        var act = async () => await _cacheService.RemoveByPatternAsync("");
-        await act.Should().NotThrowAsync();
-    }
-
-    [Test]
-    public async Task RemoveByPatternAsync_ConPatternAsterisco_NoLanzaExcepcion()
-    {
-        var act = async () => await _cacheService.RemoveByPatternAsync("*");
-        await act.Should().NotThrowAsync();
-    }
-
-    [Test]
-    public async Task RemoveByPatternAsync_ConPatternComplejo_NoLanzaExcepcion()
-    {
-        var pattern = "productos:*:categoria:?";
-
-        var act = async () => await _cacheService.RemoveByPatternAsync(pattern);
-        await act.Should().NotThrowAsync();
-    }
-
-    [Test]
-    public async Task RemoveByPatternAsync_ConRegexPattern_NoLanzaExcepcion()
-    {
-        var pattern = "productos:[0-9]+";
-
-        var act = async () => await _cacheService.RemoveByPatternAsync(pattern);
-        await act.Should().NotThrowAsync();
-    }
-
-    [Test]
-    public async Task RemoveByPatternAsync_ConExcepcion_NoLanzaExcepcion()
-    {
-        var act = async () => await _cacheService.RemoveByPatternAsync("pattern:*");
-        await act.Should().NotThrowAsync();
-    }
-
-    #endregion
 }
 
 public class CacheTestData

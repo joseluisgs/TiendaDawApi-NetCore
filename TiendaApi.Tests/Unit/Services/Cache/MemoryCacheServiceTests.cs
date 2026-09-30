@@ -158,29 +158,6 @@ public class MemoryCacheServiceTests
     }
 
     #endregion
-
-    #region RemoveByPatternAsync Tests
-
-    [Test]
-    public async Task RemoveByPatternAsync_SinSoporte_LogueaDebug()
-    {
-        var pattern = "productos:*";
-
-        var act = async () => await _cacheService.RemoveByPatternAsync(pattern);
-
-        await act.Should().NotThrowAsync();
-
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Debug,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v!.ToString()!.Contains("RemoveByPattern")),
-                It.IsAny<Exception>(),
-                It.Is<Func<It.IsAnyType, Exception?, string>>((v, e) => true)),
-            Times.Once);
-    }
-
-    #endregion
 }
 
 /// <summary>

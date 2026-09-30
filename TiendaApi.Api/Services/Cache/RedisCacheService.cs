@@ -88,20 +88,4 @@ public class RedisCacheService(
             _logger.LogError(ex, "Error al eliminar de caché para clave: {Key}", key);
         }
     }
-
-    /// <summary>
-    /// Elimina todas las claves que coincidan con un patrón.
-    /// </summary>
-    public async Task RemoveByPatternAsync(string pattern)
-    {
-        try
-        {
-            _logger.LogDebug("Eliminando entradas de caché que coinciden con patrón: {Pattern}", pattern);
-            await Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al eliminar entradas de caché por patrón: {Pattern}", pattern);
-        }
-    }
 }

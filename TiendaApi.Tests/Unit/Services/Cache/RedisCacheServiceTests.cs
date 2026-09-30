@@ -198,35 +198,6 @@ public class RedisCacheServiceTests
     }
 
     #endregion
-
-    #region Tests RemoveByPatternAsync
-
-    /// <summary>
-    /// Dado un patrón válido, cuando se eliminan coincidencias, entonces completa la tarea.
-    /// Returns: Unit.Success
-    /// </summary>
-    [Test]
-    public async Task RemoveByPatternAsync_ConPatronValido_CompletaTarea()
-    {
-        var pattern = "productos:*";
-
-        await _cacheService.RemoveByPatternAsync(pattern);
-
-        await Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Dado que ocurre una excepción al eliminar por patrón, entonces no lanza excepción.
-    /// Returns: Unit.Success (excepción capturada internamente)
-    /// </summary>
-    [Test]
-    public async Task RemoveByPatternAsync_ConExcepcion_NoLanzaExcepcion()
-    {
-        var act = async () => await _cacheService.RemoveByPatternAsync("pattern:*");
-        await act.Should().NotThrowAsync();
-    }
-
-    #endregion
 }
 
 /// <summary>

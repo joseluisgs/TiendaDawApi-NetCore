@@ -79,23 +79,4 @@ public class MemoryCacheService : ICacheService
             return Task.CompletedTask;
         }
     }
-
-    /// <inheritdoc />
-    public Task RemoveByPatternAsync(string pattern)
-    {
-        try
-        {
-            _logger.LogDebug(
-                "RemoveByPattern no soportado en MemoryCache. " +
-                "En producción, use Redis. Patrón: {Pattern}",
-                pattern
-            );
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error eliminando por patrón. Patrón={Pattern}", pattern);
-            return Task.CompletedTask;
-        }
-    }
 }
