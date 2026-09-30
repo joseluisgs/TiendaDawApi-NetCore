@@ -139,7 +139,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por administrador", id);
-                InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}");
+                InvalidarCachePedido($"pedidos:{id}");
                 NotificarWebSocketPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
                 NotificarSignalRPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
                 EnviarEmailPedidoActualizadoAdmin(pedido.Id.ToString(), pedido.Estado ?? "", pedido.Total, pedido.UserId);
@@ -169,7 +169,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
 
         logger.LogInformation("Pedido {Id} eliminado lógicamente por administrador", id);
 
-        InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}");
+        InvalidarCachePedido($"pedidos:{id}");
 
         NotificarSignalRPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "");
         EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
@@ -212,7 +212,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             .Tap(_ =>
             {
                 logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
-                InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{pedido.UserId}");
+                InvalidarCachePedido($"pedidos:{id}");
                 NotificarWebSocketPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
                 NotificarSignalRPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
                 EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId);
@@ -396,7 +396,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
-                InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{userId}");
+                InvalidarCachePedido($"pedidos:{id}");
                 NotificarWebSocketPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
             });
     }
@@ -440,7 +440,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
         await pedidosRepository.UpdateAsync(pedido);
         logger.LogInformation("Pedido {Id} eliminado lógicamente por usuario {UserId}", id, userId);
 
-        InvalidarCachePedido($"pedidos:{id}", $"pedidos:user:{userId}");
+        InvalidarCachePedido($"pedidos:{id}");
 
         EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
 
@@ -531,7 +531,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
                     NotificarWebSocketPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE);
                     NotificarSignalRPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
                     EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId);
-                    InvalidarCachePedido($"pedidos:user:{userId}");
+                    
                 });
         }
         catch (Exception ex)
