@@ -178,16 +178,16 @@ public class CategoriaService(
                 try { await cacheService.RemoveAsync(key); }
                 catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
             }
-        });
 
-        try
-        {
-            _ = outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Output cache invalidation error: Tag=categorias");
-        }
+            try
+            {
+                await outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Output cache invalidation error: Tag=categorias");
+            }
+        });
     }
 
     private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto)

@@ -402,16 +402,16 @@ IOutputCacheStore outputCacheStore
                     logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
                 }
             }
-        });
 
-        try
-        {
-            _ = outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Output cache invalidation error: Tag=productos");
-        }
+            try
+            {
+                await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Output cache invalidation error: Tag=productos");
+            }
+        });
     }
 
     #endregion
