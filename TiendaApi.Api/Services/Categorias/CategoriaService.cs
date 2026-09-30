@@ -173,7 +173,9 @@ public class CategoriaService(
 
         try
         {
-            await outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
+            // Invalidar caché de categorías Y productos (los DTO de producto llevan categoriaNombre)
+        await outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
+        await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
         }
         catch (Exception ex)
         {
