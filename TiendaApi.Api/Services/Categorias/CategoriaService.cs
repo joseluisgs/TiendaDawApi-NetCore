@@ -105,12 +105,9 @@ public class CategoriaService(
         var saved = await repository.SaveAsync(dto.ToEntity());
         var result = saved.ToDto();
 
-        return Result.Success<CategoriaDto, DomainError>(result)
-            .Tap(_ =>
-            {
-                logger.LogInformation("Categoría creada: {Id}", saved.Id);
-                InvalidarCacheCategoria($"categorias:{result.Id}");
-            });
+        await InvalidarCacheCategoriaAsync($"categorias:{result.Id}");
+
+        return Result.Success<CategoriaDto, DomainError>(result);
     }
 
     /// <inheritdoc/>
@@ -135,12 +132,9 @@ public class CategoriaService(
         var updated = await repository.UpdateAsync(categoria);
         var result = updated.ToDto();
 
-        return Result.Success<CategoriaDto, DomainError>(result)
-            .Tap(_ =>
-            {
-                logger.LogInformation("Categoría actualizada: {Id}", id);
-                InvalidarCacheCategoria($"categorias:{id}");
-            });
+        await InvalidarCacheCategoriaAsync($"categorias:{id}");
+
+        return Result.Success<CategoriaDto, DomainError>(result);
     }
 
     /// <inheritdoc/>
@@ -155,7 +149,7 @@ public class CategoriaService(
         await repository.DeleteAsync(id);
         logger.LogInformation("Categoría eliminada: {Id}", id);
 
-        InvalidarCacheCategoria($"categorias:{id}");
+        await InvalidarCacheCategoriaAsync($"categorias:{id}");
 
         return UnitResult.Success<DomainError>();
     }
@@ -169,25 +163,22 @@ public class CategoriaService(
         });
     }
 
-    private void InvalidarCacheCategoria(params string[] keys)
+    private async Task InvalidarCacheCategoriaAsync(params string[] keys)
     {
-        _ = Task.Run(async () =>
+        foreach (var key in keys)
         {
-            foreach (var key in keys)
-            {
-                try { await cacheService.RemoveAsync(key); }
-                catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
-            }
+            try { await cacheService.RemoveAsync(key); }
+            catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
+        }
 
-            try
-            {
-                await outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Output cache invalidation error: Tag=categorias");
-            }
-        });
+        try
+        {
+            await outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Output cache invalidation error: Tag=categorias");
+        }
     }
 
     private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto)
