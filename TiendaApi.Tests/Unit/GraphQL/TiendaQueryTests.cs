@@ -31,12 +31,12 @@ public class TiendaQueryTests
     #region GetProductos Tests
 
     [Test]
-    public void GetProductos_RepositoryExists_ReturnsQueryable()
+    public async Task GetProductos_RepositoryExists_ReturnsList()
     {
-        _productoRepoMock.Setup(r => r.FindAllAsNoTracking())
-            .Returns(new List<Producto>().AsQueryable());
+        _productoRepoMock.Setup(r => r.FindAllAsync())
+            .ReturnsAsync(new List<Producto>());
 
-        var result = _query.GetProductos(_productoRepoMock.Object);
+        var result = await _query.GetProductos(_productoRepoMock.Object);
 
         result.Should().NotBeNull();
     }
@@ -76,12 +76,12 @@ public class TiendaQueryTests
     #region GetCategorias Tests
 
     [Test]
-    public void GetCategorias_RepositoryExists_ReturnsQueryable()
+    public async Task GetCategorias_RepositoryExists_ReturnsList()
     {
-        _categoriaRepoMock.Setup(r => r.FindAllAsNoTracking())
-            .Returns(new List<Categoria>().AsQueryable());
+        _categoriaRepoMock.Setup(r => r.FindAllAsync())
+            .ReturnsAsync(new List<Categoria>());
 
-        var result = _query.GetCategorias(_categoriaRepoMock.Object);
+        var result = await _query.GetCategorias(_categoriaRepoMock.Object);
 
         result.Should().NotBeNull();
     }
