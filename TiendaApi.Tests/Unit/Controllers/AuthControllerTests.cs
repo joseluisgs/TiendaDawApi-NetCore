@@ -8,6 +8,7 @@ using TiendaApi.Api.Controllers;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Services.Auth;
+using TiendaApi.Api.Services.Cache;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 
@@ -18,14 +19,16 @@ namespace TiendaApi.Tests.Unit.Controllers;
 public class AuthControllerTests
 {
     private readonly Mock<IAuthService> _mockAuthService;
+    private readonly Mock<ICacheService> _mockCacheService;
     private readonly Mock<ILogger<AuthController>> _mockLogger;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
     {
         _mockAuthService = new Mock<IAuthService>();
+        _mockCacheService = new Mock<ICacheService>();
         _mockLogger = new Mock<ILogger<AuthController>>();
-        _controller = new AuthController(_mockAuthService.Object, _mockLogger.Object);
+        _controller = new AuthController(_mockAuthService.Object, _mockCacheService.Object, _mockLogger.Object);
     }
 
     #region SignUp Tests
@@ -317,7 +320,7 @@ public class AuthControllerTests
     public void Constructor_ConDependenciasValidas_CreaControlador()
     {
         // Arrange & Act
-        var controller = new AuthController(_mockAuthService.Object, _mockLogger.Object);
+        var controller = new AuthController(_mockAuthService.Object, _mockCacheService.Object, _mockLogger.Object);
 
         // Assert
         controller.Should().NotBeNull();

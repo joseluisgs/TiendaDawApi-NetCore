@@ -5,6 +5,7 @@ using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Extensions;
 using TiendaApi.Api.Services.Auth;
+using TiendaApi.Api.Services.Cache;
 
 namespace TiendaApi.Api.Controllers;
 
@@ -18,6 +19,7 @@ namespace TiendaApi.Api.Controllers;
 [Produces("application/json")]
 public class AuthController(
     IAuthService authService,
+    ICacheService cacheService,
     ILogger<AuthController> logger
 ) : ControllerBase
 {
@@ -35,6 +37,10 @@ public class AuthController(
         logger.LogInformation("Signup request received for user: {Username}", dto.Username);
 
         var resultado = await authService.SignUpAsync(dto);
+
+        // Invalidar caché de usuarios para que el listado admin se actualice
+        if (resultado.IsSuccess)
+            await cacheService.RemoveAsync($"usuarios:{resultado.Value.User.Id}");
 
         return resultado.Match(
             response => CreatedAtAction(nameof(SignUp), response),
