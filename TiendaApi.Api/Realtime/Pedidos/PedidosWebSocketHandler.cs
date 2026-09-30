@@ -134,7 +134,7 @@ public class PedidosWebSocketHandler
             }
         }
 
-        CleanupDisconnectedConnections(disconnected);
+        await CleanupDisconnectedConnectionsAsync(disconnected);
         _logger.LogDebug("Notificación enviada a {Count} conexiones del usuario {UserId}", sentCount, userId);
     }
 
@@ -168,7 +168,7 @@ public class PedidosWebSocketHandler
             }
         }
 
-        CleanupDisconnectedConnections(disconnected);
+        await CleanupDisconnectedConnectionsAsync(disconnected);
         _logger.LogDebug("Notificación enviada a {Count} administradores", sentCount);
     }
 
@@ -260,14 +260,14 @@ public class PedidosWebSocketHandler
         }
     }
 
-    private void CleanupDisconnectedConnections(List<string> connectionIds)
+    private async Task CleanupDisconnectedConnectionsAsync(List<string> connectionIds)
     {
         foreach (var connectionId in connectionIds)
         {
             if (_connections.TryRemove(connectionId, out var connection))
             {
                 var cacheKey = $"{ADMIN_CACHE_KEY_PREFIX}{connection.UserId}";
-                _cacheService.RemoveAsync(cacheKey).ConfigureAwait(false).GetAwaiter().GetResult();
+                await _cacheService.RemoveAsync(cacheKey);
             }
         }
     }
