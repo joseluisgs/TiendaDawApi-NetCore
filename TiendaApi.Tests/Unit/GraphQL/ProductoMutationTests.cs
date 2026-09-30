@@ -61,7 +61,7 @@ public class ProductoMutationTests
     }
 
     [Test]
-    public async Task CreateProducto_ConErrorValidacion_RetornaNull()
+    public async Task CreateProducto_ConErrorValidacion_LanzaExcepcion()
     {
         var input = new CreateProductoInput
         {
@@ -75,9 +75,10 @@ public class ProductoMutationTests
             .Setup(s => s.CreateAsync(It.IsAny<ProductoRequestDto>()))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(new BusinessRuleError("Error")));
 
-        var result = await _mutation.CreateProducto(input, _productoServiceMock.Object);
+        var act = () => _mutation.CreateProducto(input, _productoServiceMock.Object);
 
-        result.Should().BeNull();
+        await act.Should().ThrowAsync<Exception>()
+            .WithMessage("Error");
     }
 
     #endregion
@@ -114,7 +115,7 @@ public class ProductoMutationTests
     }
 
     [Test]
-    public async Task UpdateProducto_ConProductoNoExistente_RetornaNull()
+    public async Task UpdateProducto_ConProductoNoExistente_LanzaExcepcion()
     {
         long productoId = 999;
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
@@ -122,9 +123,10 @@ public class ProductoMutationTests
         _productoServiceMock.Setup(s => s.FindByIdAsync(productoId))
             .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(new NotFoundError("No encontrado")));
 
-        var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
+        var act = () => _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
 
-        result.Should().BeNull();
+        await act.Should().ThrowAsync<Exception>()
+            .WithMessage("No encontrado");
     }
 
     #endregion
@@ -145,16 +147,17 @@ public class ProductoMutationTests
     }
 
     [Test]
-    public async Task DeleteProducto_ConProductoNoExistente_RetornaFalse()
+    public async Task DeleteProducto_ConProductoNoExistente_LanzaExcepcion()
     {
         long productoId = 999;
 
         _productoServiceMock.Setup(s => s.DeleteAsync(productoId))
             .ReturnsAsync(UnitResult.Failure<DomainError>(new NotFoundError("No encontrado")));
 
-        var result = await _mutation.DeleteProducto(productoId, _productoServiceMock.Object);
+        var act = () => _mutation.DeleteProducto(productoId, _productoServiceMock.Object);
 
-        result.Should().BeFalse();
+        await act.Should().ThrowAsync<Exception>()
+            .WithMessage("No encontrado");
     }
 
     #endregion

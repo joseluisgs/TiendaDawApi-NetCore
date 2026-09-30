@@ -11,6 +11,9 @@ namespace TiendaApi.Api.GraphQL.Mutations;
 
 /// <summary>
 /// Mutations de GraphQL para productos (requiere rol ADMIN).
+///
+/// 🎓 GraphQL: en vez de devolver null silencioso, lanzamos excepción
+/// para que el cliente vea el error en el array "errors" de la respuesta.
 /// </summary>
 public class ProductoMutation
 {
@@ -22,9 +25,9 @@ public class ProductoMutation
     /// <summary>Crea un nuevo producto.</summary>
     /// <param name="input">Datos del producto.</param>
     /// <param name="service">Servicio de productos.</param>
-    /// <returns>Producto creado o error.</returns>
+    /// <returns>Producto creado.</returns>
     [Authorize(policy: "AdminOnly")]
-    public async Task<ProductoDto?> CreateProducto(
+    public async Task<ProductoDto> CreateProducto(
         CreateProductoInput input,
         [Service] IProductoService service)
     {
@@ -38,23 +41,26 @@ public class ProductoMutation
             CategoriaId = input.CategoriaId
         };
         var result = await service.CreateAsync(dto);
-        return result.IsSuccess ? result.Value : null;
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);
+
+        return result.Value;
     }
 
     /// <summary>Actualiza un producto existente.</summary>
     /// <param name="id">ID del producto.</param>
     /// <param name="input">Campos a modificar.</param>
     /// <param name="service">Servicio de productos.</param>
-    /// <returns>Producto actualizado o error.</returns>
+    /// <returns>Producto actualizado.</returns>
     [Authorize(policy: "AdminOnly")]
-    public async Task<ProductoDto?> UpdateProducto(
+    public async Task<ProductoDto> UpdateProducto(
         long id,
         UpdateProductoInput input,
         [Service] IProductoService service)
     {
         var existingResult = await service.FindByIdAsync(id);
         if (existingResult.IsFailure)
-            return null;
+            throw new Exception(existingResult.Error.Message);
 
         var dto = new ProductoRequestDto
         {
@@ -66,19 +72,25 @@ public class ProductoMutation
             CategoriaId = input.CategoriaId ?? existingResult.Value.CategoriaId
         };
         var result = await service.UpdateAsync(id, dto);
-        return result.IsSuccess ? result.Value : null;
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);
+
+        return result.Value;
     }
 
     /// <summary>Elimina un producto (soft delete).</summary>
     /// <param name="id">ID del producto.</param>
     /// <param name="service">Servicio de productos.</param>
-    /// <returns>Éxito o error.</returns>
+    /// <returns>Éxito.</returns>
     [Authorize(policy: "AdminOnly")]
     public async Task<bool> DeleteProducto(
         long id,
         [Service] IProductoService service)
     {
         var result = await service.DeleteAsync(id);
-        return result.IsSuccess;
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);
+
+        return true;
     }
 }
