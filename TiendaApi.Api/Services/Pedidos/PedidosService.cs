@@ -135,11 +135,12 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
         var updated = await pedidosRepository.UpdateAsync(pedido);
         var resultDto = updated.ToDto();
 
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
+
         return Result.Success<PedidoDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por administrador", id);
-                InvalidarCachePedido($"pedidos:{id}");
                 NotificarWebSocketPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
                 NotificarSignalRPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
                 EnviarEmailPedidoActualizadoAdmin(pedido.Id.ToString(), pedido.Estado ?? "", pedido.Total, pedido.UserId);
@@ -169,7 +170,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
 
         logger.LogInformation("Pedido {Id} eliminado lógicamente por administrador", id);
 
-        InvalidarCachePedido($"pedidos:{id}");
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
 
         NotificarSignalRPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "");
         EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
@@ -208,11 +209,12 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
         var updated = await pedidosRepository.UpdateAsync(pedido);
         var resultDto = updated.ToDto();
 
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
+
         return Result.Success<PedidoDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
-                InvalidarCachePedido($"pedidos:{id}");
                 NotificarWebSocketPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
                 NotificarSignalRPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
                 EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId);
@@ -392,11 +394,12 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
         var updated = await pedidosRepository.UpdateAsync(pedido);
         var resultDto = updated.ToDto();
 
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
+
         return Result.Success<PedidoDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
-                InvalidarCachePedido($"pedidos:{id}");
                 NotificarWebSocketPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
             });
     }
@@ -440,7 +443,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
         await pedidosRepository.UpdateAsync(pedido);
         logger.LogInformation("Pedido {Id} eliminado lógicamente por usuario {UserId}", id, userId);
 
-        InvalidarCachePedido($"pedidos:{id}");
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
 
         EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
 
@@ -561,22 +564,13 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
         });
     }
 
-    private void InvalidarCachePedido(params string[] keys)
+    private async Task InvalidarCachePedidoAsync(params string[] keys)
     {
-        _ = Task.Run(async () =>
+        foreach (var key in keys)
         {
-            foreach (var key in keys)
-            {
-                try
-                {
-                    await cacheService.RemoveAsync(key);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
-                }
-            }
-        });
+            try { await cacheService.RemoveAsync(key); }
+            catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
+        }
     }
 
     #endregion
