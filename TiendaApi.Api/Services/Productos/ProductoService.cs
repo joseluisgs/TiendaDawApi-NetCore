@@ -173,7 +173,7 @@ IOutputCacheStore outputCacheStore
             .Tap(dto =>
             {
                 logger.LogInformation("Producto creado con ID: {Id}", dto.Id);
-                InvalidarCacheProducto("productos:all");
+                
                 NotificarWebSocketProductoCreado(dto);
                 NotificarSignalRProductoCreado(dto);
                 EnviarEmailProductoCreado(saved);
@@ -219,15 +219,16 @@ IOutputCacheStore outputCacheStore
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 
+        await InvalidarCacheProductoAsync($"productos:{id}");
+
         return Result.Success<ProductoDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Producto actualizado con ID: {Id}", id);
-                InvalidarCacheProducto($"productos:{id}", "productos:all");
                 NotificarWebSocketProductoActualizado(resultDto);
                 NotificarSignalRProductoActualizado(resultDto);
                 EventoSuscripcionProductoActualizado(resultDto);
-                EventoSuscripcionStockBajo(resultDto, 10); // Umbral de stock bajo = 10
+                EventoSuscripcionStockBajo(resultDto, 10);
             });
     }
 
@@ -261,7 +262,7 @@ IOutputCacheStore outputCacheStore
         await productoRepository.DeleteAsync(id);
         logger.LogInformation("Producto eliminado con ID: {Id}", id);
 
-        InvalidarCacheProducto($"productos:{id}", "productos:all");
+        await InvalidarCacheProductoAsync($"productos:{id}");
         NotificarWebSocketProductoEliminado(id);
         NotificarSignalRProductoEliminado(id);
         EventoSuscripcionProductoEliminado(id);
@@ -304,11 +305,12 @@ IOutputCacheStore outputCacheStore
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 
+        await InvalidarCacheProductoAsync($"productos:{id}");
+
         return Result.Success<ProductoDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Imagen actualizada para producto con ID: {Id}", id);
-                InvalidarCacheProducto($"productos:{id}", "productos:all");
                 NotificarWebSocketProductoActualizado(resultDto);
                 EventoSuscripcionProductoActualizado(resultDto);
             });
@@ -350,11 +352,12 @@ IOutputCacheStore outputCacheStore
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 
+        await InvalidarCacheProductoAsync($"productos:{id}");
+
         return Result.Success<ProductoDto, DomainError>(resultDto)
             .Tap(_ =>
             {
                 logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
-                InvalidarCacheProducto($"productos:{id}", "productos:all");
                 NotificarWebSocketProductoActualizado(resultDto);
                 EventoSuscripcionProductoActualizado(resultDto);
                 if (dto.Stock.HasValue)
@@ -387,31 +390,16 @@ IOutputCacheStore outputCacheStore
     /// También invalida la tag de OutputCache "productos" (en memoria: síncrono,
     /// para que el siguiente GET no sirva datos obsoletos).
     /// </summary>
-    private void InvalidarCacheProducto(params string[] keys)
+    private async Task InvalidarCacheProductoAsync(params string[] keys)
     {
-        _ = Task.Run(async () =>
+        foreach (var key in keys)
         {
-            foreach (var key in keys)
-            {
-                try
-                {
-                    await cacheService.RemoveAsync(key);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
-                }
-            }
+            try { await cacheService.RemoveAsync(key); }
+            catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
+        }
 
-            try
-            {
-                await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Output cache invalidation error: Tag=productos");
-            }
-        });
+        try { await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None); }
+        catch (Exception ex) { logger.LogWarning(ex, "Output cache invalidation error: Tag=productos"); }
     }
 
     #endregion
