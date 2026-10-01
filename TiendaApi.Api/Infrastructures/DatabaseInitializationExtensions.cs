@@ -128,6 +128,8 @@ public static class DatabaseInitializationExtensions
     /// </summary>
     private static async Task<bool> CategoriasTableExistsAsync(TiendaDbContext context)
     {
+        // 🎓 La conexión la gestiona el DbContext (scoped); no disposear aquí.
+        // El warning del analizador es falso positivo en este caso.
         var connection = context.Database.GetDbConnection();
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync();
