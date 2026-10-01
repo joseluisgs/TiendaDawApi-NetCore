@@ -962,7 +962,7 @@ public static class DomainErrorExtensions
         NotFoundError e => new NotFoundObjectResult(new { message = e.Message }),
         ValidationError e => new BadRequestObjectResult(new { message = e.Message, errors = e.ValidationErrors }),
         ConflictError e => new ConflictObjectResult(new { message = e.Message }),
-        BusinessRuleError e => new BadRequestObjectResult(new { message = e.Message }),
+        BusinessRuleError e => new ObjectResult(new { message = e.Message }) { StatusCode = StatusCodes.Status422UnprocessableEntity } // 422(new { message = e.Message }),
         UnauthorizedError e => new UnauthorizedObjectResult(new { message = e.Message }),
         ForbiddenError e => new ObjectResult(new { message = e.Message }) { StatusCode = StatusCodes.Status403Forbidden },
         _ => new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
