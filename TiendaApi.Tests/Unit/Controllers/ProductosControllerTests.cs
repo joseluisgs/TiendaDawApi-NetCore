@@ -56,8 +56,8 @@ public class ProductosControllerTests
 
         var result = await _controller.GetAll();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        var okResult = result.Value;
+        var returnedProductos = okResult.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
         returnedProductos.Items.Should().HaveCount(2);
     }
 
@@ -81,8 +81,8 @@ public class ProductosControllerTests
 
         var result = await _controller.GetAll();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        var okResult = result.Value;
+        var returnedProductos = okResult.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
         returnedProductos.Items.Should().BeEmpty();
     }
 
@@ -110,8 +110,8 @@ public class ProductosControllerTests
 
         var result = await _controller.GetAll(categoria: "Electrónica");
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        var okResult = result.Value;
+        var returnedProductos = okResult.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
         returnedProductos.Items.Should().HaveCount(1);
     }
 
@@ -139,8 +139,8 @@ public class ProductosControllerTests
 
         var result = await _controller.GetAll(precioMax: 100);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        var okResult = result.Value;
+        var returnedProductos = okResult.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
         returnedProductos.Items.Should().HaveCount(1);
     }
 
@@ -168,8 +168,8 @@ public class ProductosControllerTests
 
         var result = await _controller.GetAll(stockMin: 5);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        var okResult = result.Value;
+        var returnedProductos = okResult.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
         returnedProductos.Items.Should().HaveCount(1);
     }
 
@@ -197,8 +197,8 @@ public class ProductosControllerTests
 
         var result = await _controller.GetAll(page: 1, size: 5);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
+        var okResult = result.Value;
+        var returnedProductos = okResult.Should().BeAssignableTo<PagedResult<ProductoDto>>().Subject;
         returnedProductos.Page.Should().Be(2);
         returnedProductos.PageSize.Should().Be(5);
         returnedProductos.TotalCount.Should().Be(15);
@@ -223,8 +223,8 @@ public class ProductosControllerTests
 
         var result = await _controller.GetById(1);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        var okResult = result.Value;
+        var returnedProducto = okResult.Should().BeAssignableTo<ProductoDto>().Subject;
         returnedProducto.Id.Should().Be(1);
         returnedProducto.Nombre.Should().Be("Laptop");
     }
@@ -243,7 +243,7 @@ public class ProductosControllerTests
 
         var result = await _controller.GetById(999);
 
-        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
         notFoundResult.Value.Should().NotBeNull();
     }
 
@@ -268,8 +268,9 @@ public class ProductosControllerTests
 
         var result = await _controller.GetByCategoria(1);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
+        var returnedProductos = okResult!.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
         returnedProductos.Should().HaveCount(1);
     }
 
@@ -287,7 +288,7 @@ public class ProductosControllerTests
 
         var result = await _controller.GetByCategoria(999);
 
-        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
         notFoundResult.Value.Should().NotBeNull();
     }
 
@@ -317,7 +318,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be(nameof(ProductosController.GetById));
         createdResult.RouteValues.Should().ContainKey("id");
         var returnedProducto = createdResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
@@ -344,7 +345,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().NotBeNull();
     }
 
@@ -369,7 +370,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
         notFoundResult.Value.Should().NotBeNull();
     }
 
@@ -398,8 +399,8 @@ public class ProductosControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        var okResult = result.Value;
+        var returnedProducto = okResult.Should().BeAssignableTo<ProductoDto>().Subject;
         returnedProducto.Nombre.Should().Be("Producto Actualizado");
     }
 
@@ -419,7 +420,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
         notFoundResult.Value.Should().NotBeNull();
     }
 
@@ -439,7 +440,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().NotBeNull();
     }
 
@@ -494,7 +495,7 @@ public class ProductosControllerTests
 
         var result = await _controller.GetById(0);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     [Test]
@@ -507,7 +508,7 @@ public class ProductosControllerTests
 
         var result = await _controller.GetById(-1);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     [Test]
@@ -526,7 +527,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().NotBeNull();
     }
 
@@ -547,7 +548,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -567,7 +568,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -586,7 +587,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 
@@ -604,8 +605,9 @@ public class ProductosControllerTests
 
         var result = await _controller.GetByCategoria(1);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
+        var returnedProductos = okResult!.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
         returnedProductos.Should().HaveCount(2);
     }
 
@@ -617,8 +619,9 @@ public class ProductosControllerTests
 
         var result = await _controller.GetByCategoria(999);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProductos = okResult.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
+        var returnedProductos = okResult!.Value.Should().BeAssignableTo<IEnumerable<ProductoDto>>().Subject;
         returnedProductos.Should().BeEmpty();
     }
 
@@ -638,7 +641,7 @@ public class ProductosControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var objectResult = result.Should().BeAssignableTo<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(409);
     }
 
@@ -658,8 +661,8 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdateImage(id, mockFile);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        var okResult = result.Value;
+        var returnedProducto = okResult.Should().BeAssignableTo<ProductoDto>().Subject;
         returnedProducto.Imagen.Should().Contain("test.jpg");
     }
 
@@ -668,7 +671,7 @@ public class ProductosControllerTests
     {
         var result = await _controller.UpdateImage(1, null!);
 
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().NotBeNull();
     }
 
@@ -679,7 +682,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdateImage(1, mockFile);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -689,7 +692,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdateImage(1, mockFile);
 
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().NotBeNull();
     }
 
@@ -705,7 +708,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdateImage(id, mockFile);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     [Test]
@@ -720,7 +723,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdateImage(id, mockFile);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 
@@ -736,7 +739,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdateImage(id, mockFile);
 
-        result.Should().BeOfType<OkObjectResult>();
+        result.Value.Should().NotBeNull();
     }
 
     [Test]
@@ -751,7 +754,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdateImage(id, mockFile);
 
-        result.Should().BeOfType<OkObjectResult>();
+        result.Value.Should().NotBeNull();
     }
 
     [Test]
@@ -766,7 +769,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdateImage(id, mockFile);
 
-        result.Should().BeOfType<OkObjectResult>();
+        result.Value.Should().NotBeNull();
     }
 
     private static IFormFile CreateMockFormFile(string fileName, string contentType, long length)
@@ -795,8 +798,8 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdatePartial(id, patchDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        var okResult = result.Value;
+        var returnedProducto = okResult.Should().BeAssignableTo<ProductoDto>().Subject;
         returnedProducto.Nombre.Should().Be("Nombre Actualizado");
     }
 
@@ -812,8 +815,8 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdatePartial(id, patchDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        var okResult = result.Value;
+        var returnedProducto = okResult.Should().BeAssignableTo<ProductoDto>().Subject;
         returnedProducto.Precio.Should().Be(199.99m);
     }
 
@@ -829,8 +832,8 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdatePartial(id, patchDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        var okResult = result.Value;
+        var returnedProducto = okResult.Should().BeAssignableTo<ProductoDto>().Subject;
         returnedProducto.Stock.Should().Be(50);
     }
 
@@ -846,7 +849,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdatePartial(id, patchDto);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     [Test]
@@ -861,7 +864,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdatePartial(id, patchDto);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -876,7 +879,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdatePartial(id, patchDto);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -891,7 +894,7 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdatePartial(id, patchDto);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 
@@ -913,8 +916,8 @@ public class ProductosControllerTests
 
         var result = await _controller.UpdatePartial(id, patchDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedProducto = okResult.Value.Should().BeAssignableTo<ProductoDto>().Subject;
+        var okResult = result.Value;
+        var returnedProducto = okResult.Should().BeAssignableTo<ProductoDto>().Subject;
         returnedProducto.Nombre.Should().Be("Nuevo Nombre");
         returnedProducto.Precio.Should().Be(299.99m);
     }
@@ -1011,7 +1014,7 @@ public class ProductosControllerTests
 
         var result = await _controller.GetAll();
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 
@@ -1025,7 +1028,7 @@ public class ProductosControllerTests
 
         var result = await _controller.GetById(1);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 
@@ -1039,7 +1042,7 @@ public class ProductosControllerTests
 
         var result = await _controller.GetByCategoria(1);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 

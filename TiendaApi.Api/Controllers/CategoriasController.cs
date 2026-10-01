@@ -38,7 +38,7 @@ public class CategoriasController(
     [OutputCache(Duration = 60, Tags = new[] { "categorias" })]
     [ProducesResponseType(typeof(PagedResult<CategoriaDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll(
+    public async Task<ActionResult<PagedResult<CategoriaDto>>> GetAll(
         [FromQuery] string? nombre = null,
         [FromQuery] bool? isDeleted = null,
         [FromQuery] int page = 0,
@@ -67,9 +67,9 @@ public class CategoriasController(
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(categorias, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
-                return Ok(categorias);
+                return categorias;
             },
-            onFailure: error => error.ToHttpResult()
+            onFailure: error => error.ToHttpResult<PagedResult<CategoriaDto>>()
         );
     }
 
@@ -83,19 +83,15 @@ public class CategoriasController(
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
-    public async Task<IActionResult> GetById(long id)
+    public async Task<ActionResult<CategoriaDto>> GetById(long id)
     {
         logger.LogInformation("Obteniendo categoría con ID: {Id}", id);
 
         var resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: categoria =>
-            {
-                // ETag lo gestiona OutputCache ([OutputCache] attribute)
-                return Ok(categoria);
-            },
-            onFailure: error => error.ToHttpResult()
+            onSuccess: categoria => categoria,
+            onFailure: error => error.ToHttpResult<CategoriaDto>()
         );
     }
 
@@ -111,7 +107,7 @@ public class CategoriasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Create([FromBody] CategoriaRequestDto dto)
+    public async Task<ActionResult<CategoriaDto>> Create([FromBody] CategoriaRequestDto dto)
     {
         logger.LogInformation("Creando nueva categoría: {Nombre}", dto.Nombre);
 
@@ -119,7 +115,7 @@ public class CategoriasController(
 
         return resultado.Match(
             onSuccess: categoria => CreatedAtAction(nameof(GetById), new { id = categoria.Id }, categoria),
-            onFailure: error => error.ToHttpResult()
+            onFailure: error => error.ToHttpResult<CategoriaDto>()
         );
     }
 
@@ -137,15 +133,15 @@ public class CategoriasController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Update(long id, [FromBody] CategoriaRequestDto dto)
+    public async Task<ActionResult<CategoriaDto>> Update(long id, [FromBody] CategoriaRequestDto dto)
     {
         logger.LogInformation("Actualizando categoría con ID: {Id}", id);
 
         var resultado = await service.UpdateAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: categoria => Ok(categoria),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: categoria => categoria,
+            onFailure: error => error.ToHttpResult<CategoriaDto>()
         );
     }
 
@@ -160,7 +156,7 @@ public class CategoriasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(long id)
+    public async Task<ActionResult> Delete(long id)
     {
         logger.LogInformation("Eliminando categoría con ID: {Id}", id);
 
@@ -169,6 +165,14 @@ public class CategoriasController(
         if (resultado.IsSuccess)
             return NoContent();
 
-        return resultado.Error.ToHttpResult();
+        var error = resultado.Error;
+        return error switch
+        {
+            NotFoundError => NotFound(new { message = error.Message }),
+            ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
+            BusinessRuleError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            ValidationError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message })
+        };
     }
 }

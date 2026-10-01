@@ -40,7 +40,7 @@ public class ProductosController(
     [OutputCache(Duration = 60, Tags = new[] { "productos" })]
     [ProducesResponseType(typeof(PagedResult<ProductoDto>), StatusCodes.Status200OK)]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll(
+    public async Task<ActionResult<PagedResult<ProductoDto>>> GetAll(
         [FromQuery] string? nombre = null,
         [FromQuery] string? categoria = null,
         [FromQuery] bool? isDeleted = null,
@@ -64,9 +64,9 @@ public class ProductosController(
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(productos, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
-                return Ok(productos);
+                return (ActionResult<PagedResult<ProductoDto>>)productos;
             },
-            onFailure: error => StatusCode(500, new { message = error.Message })
+            onFailure: error => (ActionResult<PagedResult<ProductoDto>>)new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
         );
     }
 
@@ -80,19 +80,15 @@ public class ProductosController(
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
-    public async Task<IActionResult> GetById(long id)
+    public async Task<ActionResult<ProductoDto>> GetById(long id)
     {
         logger.LogInformation("Obteniendo producto con ID: {Id}", id);
 
         var resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: producto =>
-            {
-                // ETag lo gestiona OutputCache ([OutputCache] attribute)
-                return Ok(producto);
-            },
-            onFailure: error => error.ToHttpResult()
+            onSuccess: producto => producto,
+            onFailure: error => error.ToHttpResult<ProductoDto>()
         );
     }
 
@@ -106,19 +102,15 @@ public class ProductosController(
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
-    public async Task<IActionResult> GetByCategoria(long categoriaId)
+    public async Task<ActionResult<IEnumerable<ProductoDto>>> GetByCategoria(long categoriaId)
     {
         logger.LogInformation("Obteniendo productos de categoría: {CategoriaId}", categoriaId);
 
         var resultado = await service.FindByCategoriaIdAsync(categoriaId);
 
         return resultado.Match(
-            onSuccess: productos =>
-            {
-                // ETag lo gestiona OutputCache ([OutputCache] attribute)
-                return Ok(productos);
-            },
-            onFailure: error => error.ToHttpResult()
+            onSuccess: productos => Ok(productos),
+            onFailure: error => error.ToHttpResult<IEnumerable<ProductoDto>>()
         );
     }
 
@@ -134,7 +126,7 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
+    public async Task<ActionResult<ProductoDto>> Create([FromBody] ProductoRequestDto dto)
     {
         logger.LogInformation("Creando nuevo producto: {Nombre}", dto.Nombre);
 
@@ -142,7 +134,7 @@ public class ProductosController(
 
         return resultado.Match(
             onSuccess: producto => CreatedAtAction(nameof(GetById), new { id = producto.Id }, producto),
-            onFailure: error => error.ToHttpResult()
+            onFailure: error => error.ToHttpResult<ProductoDto>()
         );
     }
 
@@ -159,15 +151,15 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<IActionResult> Update(long id, [FromBody] ProductoRequestDto dto)
+    public async Task<ActionResult<ProductoDto>> Update(long id, [FromBody] ProductoRequestDto dto)
     {
         logger.LogInformation("Actualizando producto con ID: {Id}", id);
 
         var resultado = await service.UpdateAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: producto => Ok(producto),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: producto => producto,
+            onFailure: error => error.ToHttpResult<ProductoDto>()
         );
     }
 
@@ -182,7 +174,7 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<IActionResult> Delete(long id)
+    public async Task<ActionResult> Delete(long id)
     {
         logger.LogInformation("Eliminando producto con ID: {Id}", id);
 
@@ -191,7 +183,15 @@ public class ProductosController(
         if (resultado.IsSuccess)
             return NoContent();
 
-        return resultado.Error.ToHttpResult();
+        var error = resultado.Error;
+        return error switch
+        {
+            NotFoundError => NotFound(new { message = error.Message }),
+            ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
+            BusinessRuleError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            ValidationError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message })
+        };
     }
 
     /// <summary>
@@ -208,7 +208,7 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [RequestSizeLimit(10 * 1024 * 1024)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<IActionResult> UpdateImage(long id, IFormFile image)
+    public async Task<ActionResult<ProductoDto>> UpdateImage(long id, IFormFile image)
     {
         logger.LogInformation("Actualizando imagen de producto con ID: {Id}", id);
 
@@ -226,8 +226,8 @@ public class ProductosController(
         var resultado = await service.UpdateImageAsync(id, image);
 
         return resultado.Match(
-            onSuccess: producto => Ok(producto),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: producto => producto,
+            onFailure: error => error.ToHttpResult<ProductoDto>()
         );
     }
 
@@ -244,15 +244,15 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<IActionResult> UpdatePartial(long id, [FromBody] ProductoPatchDto dto)
+    public async Task<ActionResult<ProductoDto>> UpdatePartial(long id, [FromBody] ProductoPatchDto dto)
     {
         logger.LogInformation("Actualizando parcialmente producto con ID: {Id}", id);
 
         var resultado = await service.UpdatePartialAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: producto => Ok(producto),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: producto => producto,
+            onFailure: error => error.ToHttpResult<ProductoDto>()
         );
     }
 }

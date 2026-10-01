@@ -50,8 +50,8 @@ public class UsersControllerTests
 
         var result = await _controller.GetAll();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedUsers = okResult.Value.Should().BeAssignableTo<PagedResult<UserDto>>().Subject;
+        var okResult = result.Value;
+        var returnedUsers = okResult.Should().BeAssignableTo<PagedResult<UserDto>>().Subject;
         returnedUsers.Items.Should().HaveCount(2);
     }
 
@@ -71,8 +71,8 @@ public class UsersControllerTests
 
         var result = await _controller.GetAll();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedUsers = okResult.Value.Should().BeAssignableTo<PagedResult<UserDto>>().Subject;
+        var okResult = result.Value;
+        var returnedUsers = okResult.Should().BeAssignableTo<PagedResult<UserDto>>().Subject;
         returnedUsers.Items.Should().BeEmpty();
     }
 
@@ -96,8 +96,8 @@ public class UsersControllerTests
 
         var result = await _controller.GetAll(username: "admin");
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.Value.Should().NotBeNull();
+        var okResult = result.Value;
+        okResult.Should().NotBeNull();
     }
 
     #endregion
@@ -114,8 +114,8 @@ public class UsersControllerTests
 
         var result = await _controller.GetById(1);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedUsuario = okResult.Value.Should().BeAssignableTo<UserDto>().Subject;
+        var okResult = result.Value;
+        var returnedUsuario = okResult.Should().BeAssignableTo<UserDto>().Subject;
         returnedUsuario.Id.Should().Be(1);
         returnedUsuario.Username.Should().Be("testuser");
     }
@@ -130,7 +130,7 @@ public class UsersControllerTests
 
         var result = await _controller.GetById(999);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     #endregion
@@ -148,7 +148,7 @@ public class UsersControllerTests
 
         var result = await _controller.Create(registerDto);
 
-        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be(nameof(UsersController.GetById));
         var returnedUsuario = createdResult.Value.Should().BeAssignableTo<UserDto>().Subject;
         returnedUsuario.Username.Should().Be("nuevouser");
@@ -165,7 +165,7 @@ public class UsersControllerTests
 
         var result = await _controller.Create(registerDto);
 
-        result.Should().BeOfType<ConflictObjectResult>();
+        result.Result.Should().BeOfType<ConflictObjectResult>();
     }
 
     [Test]
@@ -182,7 +182,7 @@ public class UsersControllerTests
 
         var result = await _controller.Create(registerDto);
 
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().NotBeNull();
     }
 
@@ -202,8 +202,8 @@ public class UsersControllerTests
 
         var result = await _controller.Update(id, updateDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedUsuario = okResult.Value.Should().BeAssignableTo<UserDto>().Subject;
+        var okResult = result.Value;
+        var returnedUsuario = okResult.Should().BeAssignableTo<UserDto>().Subject;
         returnedUsuario.Email.Should().Be("nuevo@test.com");
     }
 
@@ -219,7 +219,7 @@ public class UsersControllerTests
 
         var result = await _controller.Update(id, updateDto);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     [Test]
@@ -234,7 +234,7 @@ public class UsersControllerTests
 
         var result = await _controller.Update(id, updateDto);
 
-        result.Should().BeOfType<ConflictObjectResult>();
+        result.Result.Should().BeOfType<ConflictObjectResult>();
     }
 
     #endregion
@@ -255,8 +255,8 @@ public class UsersControllerTests
 
         var result = await _controller.UpdateAvatar(id, avatarDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.Value.Should().NotBeNull();
+        var okResult = result.Value;
+        okResult.Should().NotBeNull();
     }
 
     [Test]
@@ -274,7 +274,7 @@ public class UsersControllerTests
 
         var result = await _controller.UpdateAvatar(id, avatarDto);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     #endregion
@@ -322,8 +322,8 @@ public class UsersControllerTests
 
         var result = await _controller.GetMyProfile();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedUsuario = okResult.Value.Should().BeAssignableTo<UserDto>().Subject;
+        var okResult = result.Value;
+        var returnedUsuario = okResult.Should().BeAssignableTo<UserDto>().Subject;
         returnedUsuario.Id.Should().Be(1);
     }
 
@@ -334,7 +334,7 @@ public class UsersControllerTests
 
         var result = await _controller.GetMyProfile();
 
-        result.Should().BeOfType<UnauthorizedObjectResult>();
+        result.Result.Should().BeOfType<UnauthorizedObjectResult>();
     }
 
     #endregion
@@ -355,8 +355,8 @@ public class UsersControllerTests
 
         var result = await _controller.UpdateMyProfile(updateDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.Value.Should().NotBeNull();
+        var okResult = result.Value;
+        okResult.Should().NotBeNull();
     }
 
     [Test]
@@ -373,7 +373,7 @@ public class UsersControllerTests
 
         var result = await _controller.UpdateMyProfile(updateDto);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     #endregion
@@ -425,7 +425,7 @@ public class UsersControllerTests
 
         var result = await _controller.GetAll();
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 
@@ -439,7 +439,7 @@ public class UsersControllerTests
 
         var result = await _controller.GetById(1);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 

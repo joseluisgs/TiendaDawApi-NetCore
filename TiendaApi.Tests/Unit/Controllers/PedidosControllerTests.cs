@@ -78,8 +78,8 @@ public class PedidosControllerTests
 
         var result = await _controller.GetAllPedidos();
 
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().BeEquivalentTo(pedidos);
     }
 
@@ -93,8 +93,8 @@ public class PedidosControllerTests
 
         var result = await _controller.GetAllPedidos();
 
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         (okResult!.Value as IEnumerable<PedidoDto>).Should().BeEmpty();
     }
 
@@ -109,8 +109,8 @@ public class PedidosControllerTests
 
         var result = await _controller.GetAllPedidos();
 
-        result.Should().BeOfType<ObjectResult>();
-        var objectResult = result as ObjectResult;
+        result.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = result.Result as ObjectResult;
         objectResult!.StatusCode.Should().Be(500);
     }
 
@@ -138,9 +138,9 @@ public class PedidosControllerTests
 
         var result = await _controller.GetAllPedidosPaged(1, 10);
 
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
-        okResult!.Value.Should().BeEquivalentTo(pagedResult);
+        result.Value.Should().NotBeNull();
+        var okResult = result.Value;
+        okResult.Should().BeEquivalentTo(pagedResult);
     }
 
     [Test]
@@ -160,7 +160,7 @@ public class PedidosControllerTests
 
         var result = await _controller.GetAllPedidosPaged(5, 20);
 
-        result.Should().BeOfType<OkObjectResult>();
+        result.Value.Should().NotBeNull();
     }
 
     #endregion
@@ -178,8 +178,8 @@ public class PedidosControllerTests
 
         var result = await _controller.GetPedidoById("123");
 
-        result.Should().BeOfType<OkObjectResult>();
-        var returnedPedido = (result as OkObjectResult)!.Value.Should().BeAssignableTo<PedidoDto>().Subject;
+        result.Value.Should().NotBeNull();
+        var returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
         returnedPedido.Id.Should().Be("123");
     }
 
@@ -194,7 +194,7 @@ public class PedidosControllerTests
 
         var result = await _controller.GetPedidoById("999");
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     #endregion
@@ -213,8 +213,8 @@ public class PedidosControllerTests
 
         var result = await _controller.UpdatePedidoAdmin("123", updateDto);
 
-        result.Should().BeOfType<OkObjectResult>();
-        var returnedPedido = (result as OkObjectResult)!.Value.Should().BeAssignableTo<PedidoDto>().Subject;
+        result.Value.Should().NotBeNull();
+        var returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
         returnedPedido.Estado.Should().Be("PROCESANDO");
     }
 
@@ -229,7 +229,7 @@ public class PedidosControllerTests
 
         var result = await _controller.UpdatePedidoAdmin("999", updateDto);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     #endregion
@@ -277,8 +277,8 @@ public class PedidosControllerTests
 
         var result = await _controller.UpdatePedidoEstado("123", new UpdateEstadoDto { Estado = "ENVIADO" });
 
-        result.Should().BeOfType<OkObjectResult>();
-        var returnedPedido = (result as OkObjectResult)!.Value.Should().BeAssignableTo<PedidoDto>().Subject;
+        result.Value.Should().NotBeNull();
+        var returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
         returnedPedido.Estado.Should().Be("ENVIADO");
     }
 
@@ -293,7 +293,7 @@ public class PedidosControllerTests
 
         var result = await _controller.UpdatePedidoEstado("123", new UpdateEstadoDto { Estado = "INVALIDO" });
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     #endregion
@@ -319,8 +319,9 @@ public class PedidosControllerTests
 
         var result = await _controller.GetMyPedidos();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedPedidos = okResult.Value.Should().BeAssignableTo<IEnumerable<PedidoDto>>().Subject;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
+        var returnedPedidos = okResult!.Value.Should().BeAssignableTo<IEnumerable<PedidoDto>>().Subject;
         returnedPedidos.Should().HaveCount(2);
     }
 
@@ -334,8 +335,9 @@ public class PedidosControllerTests
 
         var result = await _controller.GetMyPedidos();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedPedidos = okResult.Value.Should().BeAssignableTo<IEnumerable<PedidoDto>>().Subject;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
+        var returnedPedidos = okResult!.Value.Should().BeAssignableTo<IEnumerable<PedidoDto>>().Subject;
         returnedPedidos.Should().BeEmpty();
     }
 
@@ -346,8 +348,8 @@ public class PedidosControllerTests
 
         var result = await controller.GetMyPedidos();
 
-        result.Should().BeAssignableTo<ObjectResult>();
-        var objectResult = (ObjectResult)result;
+        result.Result.Should().BeAssignableTo<ObjectResult>();
+        var objectResult = (ObjectResult)result.Result!;
         objectResult.StatusCode.Should().Be(401);
     }
 
@@ -375,9 +377,9 @@ public class PedidosControllerTests
 
         var result = await _controller.GetMyPedidosPaged(1, 10);
 
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
-        okResult!.Value.Should().BeEquivalentTo(pagedResult);
+        result.Value.Should().NotBeNull();
+        var okResult = result.Value;
+        okResult.Should().BeEquivalentTo(pagedResult);
     }
 
     [Test]
@@ -397,7 +399,7 @@ public class PedidosControllerTests
 
         var result = await _controller.GetMyPedidosPaged();
 
-        result.Should().BeOfType<OkObjectResult>();
+        result.Value.Should().NotBeNull();
     }
 
     #endregion
@@ -422,7 +424,7 @@ public class PedidosControllerTests
 
         var result = await _controller.CreateMyPedido(requestDto);
 
-        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be("GetMyPedidoById");
     }
 
@@ -474,7 +476,7 @@ public class PedidosControllerTests
 
         var result = await _controller.CreateMyPedido(requestDto);
 
-        result.Should().BeOfType<CreatedAtActionResult>();
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
     }
 
     [Test]
@@ -489,7 +491,7 @@ public class PedidosControllerTests
 
         var result = await _controller.CreateMyPedido(requestDto);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -510,7 +512,7 @@ public class PedidosControllerTests
 
         var result = await _controller.CreateMyPedido(requestDto);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -527,8 +529,8 @@ public class PedidosControllerTests
 
         var result = await controller.CreateMyPedido(requestDto);
 
-        result.Should().BeAssignableTo<ObjectResult>();
-        var objectResult = (ObjectResult)result;
+        result.Result.Should().BeAssignableTo<ObjectResult>();
+        var objectResult = (ObjectResult)result.Result!;
         objectResult.StatusCode.Should().Be(401);
     }
 
@@ -547,8 +549,8 @@ public class PedidosControllerTests
 
         var result = await _controller.GetMyPedidoById("123");
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedPedido = okResult.Value.Should().BeAssignableTo<PedidoDto>().Subject;
+        var okResult = result.Value;
+        var returnedPedido = okResult.Should().BeAssignableTo<PedidoDto>().Subject;
         returnedPedido.Id.Should().Be("123");
     }
 
@@ -563,8 +565,8 @@ public class PedidosControllerTests
 
         var result = await _controller.GetMyPedidoById("123");
 
-        result.Should().BeOfType<ObjectResult>();
-        var objectResult = (ObjectResult)result;
+        result.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = (ObjectResult)result.Result!;
         objectResult.StatusCode.Should().Be(403);
     }
 
@@ -579,7 +581,7 @@ public class PedidosControllerTests
 
         var result = await _controller.GetMyPedidoById("999");
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     #endregion
@@ -598,7 +600,7 @@ public class PedidosControllerTests
 
         var result = await _controller.UpdateMyPedido("123", updateDto);
 
-        result.Should().BeOfType<OkObjectResult>();
+        result.Value.Should().NotBeNull();
     }
 
     [Test]
@@ -612,8 +614,8 @@ public class PedidosControllerTests
 
         var result = await _controller.UpdateMyPedido("123", updateDto);
 
-        result.Should().BeOfType<ObjectResult>();
-        var objectResult = (ObjectResult)result;
+        result.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = (ObjectResult)result.Result!;
         objectResult.StatusCode.Should().Be(403);
     }
 
@@ -629,7 +631,7 @@ public class PedidosControllerTests
 
         var result = await _controller.UpdateMyPedido("123", updateDto);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
@@ -643,7 +645,7 @@ public class PedidosControllerTests
 
         var result = await _controller.UpdateMyPedido("999", updateDto);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     #endregion
@@ -689,7 +691,9 @@ public class PedidosControllerTests
 
         var result = await _controller.DeleteMyPedido("123");
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        // El switch devuelve ObjectResult con StatusCode 400 (ValidationError → default)
+        result.Should().BeOfType<ObjectResult>();
+        ((ObjectResult)result).StatusCode.Should().Be(400);
     }
 
     #endregion
@@ -729,7 +733,8 @@ public class PedidosControllerTests
 
         var result = await _controller.CreateMyPedido(requestDto);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        result.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = (ObjectResult)result.Result!;
         objectResult.StatusCode.Should().Be(500);
     }
 
@@ -752,7 +757,7 @@ public class PedidosControllerTests
 
         var result = await _controller.CreateMyPedido(requestDto);
 
-        result.Should().BeOfType<CreatedAtActionResult>();
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
     }
 
     [Test]
@@ -762,8 +767,8 @@ public class PedidosControllerTests
 
         var result = await controller.GetMyPedidosPaged();
 
-        result.Should().BeAssignableTo<ObjectResult>();
-        var objectResult = (ObjectResult)result;
+        result.Result.Should().BeAssignableTo<ObjectResult>();
+        var objectResult = (ObjectResult)result.Result!;
         objectResult.StatusCode.Should().Be(401);
     }
 

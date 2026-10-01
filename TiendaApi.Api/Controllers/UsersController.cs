@@ -40,7 +40,7 @@ public class UsersController(
     [ProducesResponseType(typeof(PagedResult<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetAll(
+    public async Task<ActionResult<PagedResult<UserDto>>> GetAll(
         [FromQuery] string? username = null,
         [FromQuery] string? email = null,
         [FromQuery] bool? isDeleted = null,
@@ -69,9 +69,9 @@ public class UsersController(
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(pagedResult, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
-                return Ok(pagedResult);
+                return (ActionResult<PagedResult<UserDto>>)pagedResult;
             },
-            onFailure: error => StatusCode(500, new { message = error.Message })
+            onFailure: error => (ActionResult<PagedResult<UserDto>>)new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
         );
     }
 
@@ -86,15 +86,15 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(long id)
+    public async Task<ActionResult<UserDto>> GetById(long id)
     {
         logger.LogInformation("Obteniendo usuario con ID: {Id}", id);
 
         var resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: usuario => usuario,
+            onFailure: error => error.ToHttpResult<UserDto>()
         );
     }
 
@@ -110,7 +110,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Create([FromBody] RegisterDto dto)
+    public async Task<ActionResult<UserDto>> Create([FromBody] RegisterDto dto)
     {
         logger.LogInformation("Creando nuevo usuario: {Username}", dto.Username);
 
@@ -118,7 +118,7 @@ public class UsersController(
 
         return resultado.Match(
             onSuccess: usuario => CreatedAtAction(nameof(GetById), new { id = usuario.Id }, usuario),
-            onFailure: error => error.ToHttpResult()
+            onFailure: error => error.ToHttpResult<UserDto>()
         );
     }
 
@@ -136,15 +136,15 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Update(long id, [FromBody] UserUpdateDto dto)
+    public async Task<ActionResult<UserDto>> Update(long id, [FromBody] UserUpdateDto dto)
     {
         logger.LogInformation("Actualizando usuario con ID: {Id}", id);
 
         var resultado = await service.UpdateAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: usuario => usuario,
+            onFailure: error => error.ToHttpResult<UserDto>()
         );
     }
 
@@ -161,7 +161,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateAvatar(long id, [FromBody] AvatarUpdateDto dto)
+    public async Task<ActionResult<UserDto>> UpdateAvatar(long id, [FromBody] AvatarUpdateDto dto)
     {
         logger.LogInformation("Actualizando avatar de usuario con ID: {Id}", id);
 
@@ -177,8 +177,8 @@ public class UsersController(
         var resultado = await service.UpdateAvatarAsync(id, dto.AvatarUrl);
 
         return resultado.Match(
-            onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: usuario => usuario,
+            onFailure: error => error.ToHttpResult<UserDto>()
         );
     }
 
@@ -193,7 +193,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(long id)
+    public async Task<ActionResult> Delete(long id)
     {
         logger.LogInformation("Eliminando usuario con ID: {Id}", id);
 
@@ -202,7 +202,15 @@ public class UsersController(
         if (resultado.IsSuccess)
             return NoContent();
 
-        return resultado.Error.ToHttpResult();
+        var error = resultado.Error;
+        return error switch
+        {
+            NotFoundError => NotFound(new { message = error.Message }),
+            ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
+            BusinessRuleError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            ValidationError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message })
+        };
     }
 
     /// <summary>
@@ -213,7 +221,7 @@ public class UsersController(
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetMyProfile()
+    public async Task<ActionResult<UserDto>> GetMyProfile()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -223,8 +231,8 @@ public class UsersController(
         var resultado = await service.FindByIdAsync(userId);
 
         return resultado.Match(
-            onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: usuario => usuario,
+            onFailure: error => error.ToHttpResult<UserDto>()
         );
     }
 
@@ -239,7 +247,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateMyProfile([FromBody] UserUpdateDto dto)
+    public async Task<ActionResult<UserDto>> UpdateMyProfile([FromBody] UserUpdateDto dto)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -251,8 +259,8 @@ public class UsersController(
         var resultado = await service.UpdateAsync(userId, dto);
 
         return resultado.Match(
-            onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: usuario => usuario,
+            onFailure: error => error.ToHttpResult<UserDto>()
         );
     }
 
@@ -264,7 +272,7 @@ public class UsersController(
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> DeleteMyProfile()
+    public async Task<ActionResult> DeleteMyProfile()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -278,7 +286,15 @@ public class UsersController(
         if (resultado.IsSuccess)
             return NoContent();
 
-        return resultado.Error.ToHttpResult();
+        var error = resultado.Error;
+        return error switch
+        {
+            NotFoundError => NotFound(new { message = error.Message }),
+            ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
+            BusinessRuleError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            ValidationError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message })
+        };
     }
 
     /// <summary>
@@ -293,7 +309,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateMyAvatar([FromBody] AvatarUpdateDto dto)
+    public async Task<ActionResult<UserDto>> UpdateMyAvatar([FromBody] AvatarUpdateDto dto)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -305,8 +321,8 @@ public class UsersController(
         var resultado = await service.UpdateAvatarAsync(userId, dto.AvatarUrl);
 
         return resultado.Match(
-            onSuccess: usuario => Ok(usuario),
-            onFailure: error => error.ToHttpResult()
+            onSuccess: usuario => usuario,
+            onFailure: error => error.ToHttpResult<UserDto>()
         );
     }
 }

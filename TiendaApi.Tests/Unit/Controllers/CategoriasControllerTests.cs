@@ -54,8 +54,8 @@ public class CategoriasControllerTests
 
         var result = await _controller.GetAll();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedCategorias = okResult.Value.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
+        var okResult = result.Value;
+        var returnedCategorias = okResult.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
         returnedCategorias.Items.Should().HaveCount(2);
     }
 
@@ -79,8 +79,8 @@ public class CategoriasControllerTests
 
         var result = await _controller.GetAll();
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedCategorias = okResult.Value.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
+        var okResult = result.Value;
+        var returnedCategorias = okResult.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
         returnedCategorias.Items.Should().BeEmpty();
     }
 
@@ -108,8 +108,8 @@ public class CategoriasControllerTests
 
         var result = await _controller.GetAll(nombre: "Electrónica");
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedCategorias = okResult.Value.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
+        var okResult = result.Value;
+        var returnedCategorias = okResult.Should().BeAssignableTo<PagedResult<CategoriaDto>>().Subject;
         returnedCategorias.Items.Should().HaveCount(1);
     }
 
@@ -131,8 +131,8 @@ public class CategoriasControllerTests
 
         var result = await _controller.GetById(1);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedCategoria = okResult.Value.Should().BeAssignableTo<CategoriaDto>().Subject;
+        var okResult = result.Value;
+        var returnedCategoria = okResult.Should().BeAssignableTo<CategoriaDto>().Subject;
         returnedCategoria.Id.Should().Be(1);
         returnedCategoria.Nombre.Should().Be("Electrónica");
     }
@@ -151,7 +151,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.GetById(999);
 
-        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
         notFoundResult.Value.Should().NotBeNull();
     }
 
@@ -174,7 +174,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be(nameof(CategoriasController.GetById));
         createdResult.RouteValues.Should().ContainKey("id");
         var returnedCategoria = createdResult.Value.Should().BeAssignableTo<CategoriaDto>().Subject;
@@ -196,7 +196,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().NotBeNull();
     }
 
@@ -215,7 +215,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var conflictResult = result.Should().BeOfType<ConflictObjectResult>().Subject;
+        var conflictResult = result.Result.Should().BeOfType<ConflictObjectResult>().Subject;
         conflictResult.Value.Should().NotBeNull();
     }
 
@@ -239,8 +239,8 @@ public class CategoriasControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedCategoria = okResult.Value.Should().BeAssignableTo<CategoriaDto>().Subject;
+        var okResult = result.Value;
+        var returnedCategoria = okResult.Should().BeAssignableTo<CategoriaDto>().Subject;
         returnedCategoria.Nombre.Should().Be("Actualizada");
     }
 
@@ -260,7 +260,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
         notFoundResult.Value.Should().NotBeNull();
     }
 
@@ -315,7 +315,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.GetById(0);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     [Test]
@@ -328,7 +328,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.GetById(-1);
 
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     [Test]
@@ -343,7 +343,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.Value.Should().NotBeNull();
     }
 
@@ -358,7 +358,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Create(requestDto);
 
-        result.Should().BeOfType<CreatedAtActionResult>();
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
     }
 
     [Test]
@@ -373,7 +373,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        result.Should().BeOfType<ConflictObjectResult>();
+        result.Result.Should().BeOfType<ConflictObjectResult>();
     }
 
     [Test]
@@ -388,7 +388,7 @@ public class CategoriasControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var objectResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(500);
     }
 
@@ -402,7 +402,9 @@ public class CategoriasControllerTests
 
         var result = await _controller.Delete(1);
 
-        result.Should().BeOfType<BadRequestObjectResult>();
+        // El switch devuelve ObjectResult con StatusCode 400 (BusinessRuleError → default)
+        result.Should().BeOfType<ObjectResult>();
+        ((ObjectResult)result).StatusCode.Should().Be(400);
     }
 
     #endregion

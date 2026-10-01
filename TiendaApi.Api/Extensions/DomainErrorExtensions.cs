@@ -14,6 +14,7 @@ public static class DomainErrorExtensions
 {
     /// <summary>
     /// Convierte un error de dominio en su respuesta HTTP equivalente.
+    /// Devuelve <see cref="ActionResult{T}"/> para que los controladores usen el tipo tipado.
     /// </summary>
     /// <param name="error">Error de dominio tipado.</param>
     /// <returns>
@@ -21,7 +22,7 @@ public static class DomainErrorExtensions
     /// 409 <c>ConflictError</c> · 400 <c>BusinessRuleError</c> · 401 <c>UnauthorizedError</c> ·
     /// 403 <c>ForbiddenError</c> · 500 <c>InternalError</c>/desconocidos.
     /// </returns>
-    public static IActionResult ToHttpResult(this DomainError error) => error switch
+    public static ActionResult<T> ToHttpResult<T>(this DomainError error) => error switch
     {
         NotFoundError e => new NotFoundObjectResult(new { message = e.Message }),
         ValidationError e => new BadRequestObjectResult(new { message = e.Message, errors = e.ValidationErrors }),

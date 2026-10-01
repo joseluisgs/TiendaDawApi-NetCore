@@ -31,7 +31,7 @@ public class AuthController(
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> SignUp([FromBody] RegisterDto dto)
+    public async Task<ActionResult<AuthResponseDto>> SignUp([FromBody] RegisterDto dto)
     {
         logger.LogInformation("Signup request received for user: {Username}", dto.Username);
 
@@ -39,7 +39,7 @@ public class AuthController(
 
         return resultado.Match(
             response => CreatedAtAction(nameof(SignUp), response),
-            error => error.ToHttpResult()
+            error => error.ToHttpResult<AuthResponseDto>()
         );
     }
 
@@ -51,15 +51,15 @@ public class AuthController(
     [HttpPost("signin")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> SignIn([FromBody] LoginDto dto)
+    public async Task<ActionResult<AuthResponseDto>> SignIn([FromBody] LoginDto dto)
     {
         logger.LogInformation("Petición de inicio de sesión recibida para usuario: {Username}", dto.Username);
 
         var resultado = await authService.SignInAsync(dto);
 
         return resultado.Match(
-            response => Ok(response),
-            error => error.ToHttpResult()
+            response => response,
+            error => error.ToHttpResult<AuthResponseDto>()
         );
     }
 }

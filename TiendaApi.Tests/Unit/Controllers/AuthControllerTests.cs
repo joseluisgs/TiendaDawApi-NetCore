@@ -57,7 +57,7 @@ public class AuthControllerTests
         var result = await _controller.SignUp(registerDto);
 
         // Assert
-        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be("SignUp");
         var response = createdResult.Value.Should().BeOfType<AuthResponseDto>().Subject;
         response.Token.Should().Be("jwt-token-123");
@@ -87,7 +87,7 @@ public class AuthControllerTests
         var result = await _controller.SignUp(registerDto);
 
         // Assert
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
 
@@ -114,7 +114,7 @@ public class AuthControllerTests
         var result = await _controller.SignUp(registerDto);
 
         // Assert
-        var conflictResult = result.Should().BeAssignableTo<ObjectResult>().Subject;
+        var conflictResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         conflictResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
     }
 
@@ -141,7 +141,7 @@ public class AuthControllerTests
         var result = await _controller.SignUp(registerDto);
 
         // Assert
-        var conflictResult = result.Should().BeAssignableTo<ObjectResult>().Subject;
+        var conflictResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         conflictResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
     }
 
@@ -168,7 +168,7 @@ public class AuthControllerTests
         var result = await _controller.SignUp(registerDto);
 
         // Assert
-        var statusCodeResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var statusCodeResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         statusCodeResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
 
@@ -199,8 +199,8 @@ public class AuthControllerTests
         var result = await _controller.SignIn(loginDto);
 
         // Assert
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var response = okResult.Value.Should().BeOfType<AuthResponseDto>().Subject;
+        var okResult = result.Value;
+        var response = okResult.Should().BeOfType<AuthResponseDto>().Subject;
         response.Token.Should().Be("jwt-token-456");
         response.User.Username.Should().Be("usuariovalido");
     }
@@ -227,7 +227,7 @@ public class AuthControllerTests
         var result = await _controller.SignIn(loginDto);
 
         // Assert
-        var unauthorizedResult = result.Should().BeAssignableTo<ObjectResult>().Subject;
+        var unauthorizedResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         unauthorizedResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
     }
 
@@ -253,7 +253,7 @@ public class AuthControllerTests
         var result = await _controller.SignIn(loginDto);
 
         // Assert
-        var unauthorizedResult = result.Should().BeAssignableTo<ObjectResult>().Subject;
+        var unauthorizedResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         unauthorizedResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
     }
 
@@ -279,7 +279,7 @@ public class AuthControllerTests
         var result = await _controller.SignIn(loginDto);
 
         // Assert
-        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
 
@@ -305,7 +305,7 @@ public class AuthControllerTests
         var result = await _controller.SignIn(loginDto);
 
         // Assert
-        var statusCodeResult = result.Should().BeOfType<ObjectResult>().Subject;
+        var statusCodeResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         statusCodeResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
 
