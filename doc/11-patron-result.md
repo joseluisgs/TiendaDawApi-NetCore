@@ -944,7 +944,7 @@ private IActionResult GetHttpResult(DomainError error)
 }
 ```
 
-### Opción C aplicada en el proyecto: `ToHttpResult()` (Fase 9)
+### Opción C aplicada en el proyecto: `ToHttpResult<T>()` (Fase 9 + refactor ActionResult<T>)
 
 Los dos ejemplos de arriba repiten el `error switch` **dentro de cada controlador**: 31 repeticiones (una por endpoint que devuelve `Result<T, DomainError>`) repartidas en 5 controladores. Si mañana un `ValidationError` pasa a devolver `422` en vez de `400`, hay que tocar los 31 sitios y los tests E2E son el único aviso.
 
@@ -955,8 +955,9 @@ public static class DomainErrorExtensions
 {
     /// <summary>
     /// Convierte un error de dominio en su respuesta HTTP equivalente.
+    /// Devuelve ActionResult{T} para que los controladores usen el tipo tipado.
     /// </summary>
-    public static IActionResult ToHttpResult(this DomainError error) => error switch
+    public static ActionResult<T> ToHttpResult<T>(this DomainError error) => error switch
     {
         NotFoundError e => new NotFoundObjectResult(new { message = e.Message }),
         ValidationError e => new BadRequestObjectResult(new { message = e.Message, errors = e.ValidationErrors }),
@@ -968,6 +969,8 @@ public static class DomainErrorExtensions
     };
 }
 ```
+
+> 🎓 **`ActionResult<T>` en vez de `IActionResult`:** el método es genérico (`ToHttpResult<T>`) y devuelve `ActionResult<T>`, que tiene conversión implícita desde `ActionResult`. Esto permite que los controladores firmen con `ActionResult<ProductoDto>` en vez de `IActionResult`, dando type safety en Swagger y en el código. En los endpoints `Delete` (204 No Content), el switch se hace directamente en el controlador porque `ActionResult` sin genérico no tiene conversión implícita desde `ActionResult<T>`.
 
 Y los controladores pasan de ~10 líneas de `switch` a una:
 
@@ -983,10 +986,19 @@ if (resultado.IsFailure)
     };
 
 // Después (AuthController.cs, CategoriasController.cs, PedidosController.cs, ...):
-error => error.ToHttpResult()
+error => error.ToHttpResult<AuthResponseDto>()
 
 // También como llamada directa cuando no hay helper onFailure:
-return resultado.Error.ToHttpResult();
+return resultado.Error.ToHttpResult<PedidoDto>();
+
+// En Delete (ActionResult sin genérico) — switch directo:
+var error = resultado.Error;
+return error switch
+{
+    NotFoundError => NotFound(new { message = error.Message }),
+    BusinessRuleError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+    _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message })
+};
 ```
 
 **Resultados de la Fase 9**: 31 `error switch` → 1 extensión + 31 call sites de una línea, mismos códigos HTTP y mismo shape `{message, ...}` (los tests E2E de la Fase 5/7 — 95+55 asserts — pasaron sin tocarlos, que es exactamente el objetivo: refactor sin cambiar contrato).
@@ -997,7 +1009,7 @@ return resultado.Error.ToHttpResult();
 |---|---|---|
 | `switch` en cada controlador | N sitios (aquí, 31) | Recorrer todos |
 | Helper privado por controlador | 1 por controlador (aquí, 5) | 5 sitios |
-| **`ToHttpResult()` (elegido)** | 1 extensión | 1 sitio |
+| **`ToHttpResult<T>()` (elegido)** | 1 extensión | 1 sitio |
 
 > El `switch` sigue siendo **exhaustivo por tipos** (`NotFoundError`, `ValidationError`…): añadir un error de dominio nuevo obliga a añadir su rama y el compilador ayuda con la exhaustividad del `default` explícito.
 

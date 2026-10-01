@@ -557,29 +557,38 @@ public async Task<IActionResult> GetById(long id)
 }
 ```
 
-### ActionResult<T> (mezcla de tipos)
+### ActionResult<T> (lo que usa este proyecto)
 
-ActionResult<T> combina IActionResult con un tipo específico, permitiéndote devolver tanto resultados tipados como errores. Es ideal cuando la respuesta exitosa siempre tiene el mismo tipo.
+ActionResult<T> combina IActionResult con un tipo específico, permitiéndote devolver tanto resultados tipados como errores. Es ideal cuando la respuesta exitosa siempre tiene el mismo tipo. **Este proyecto usa `ActionResult<T>` en todos los controladores** — antes usaba `IActionResult`, se refactorizó para dar type safety en Swagger y en el código.
 
 ```csharp
 [HttpGet("{id:long}")]
 public async Task<ActionResult<ProductoDto>> GetById(long id)
 {
-    var resultado = await _service.GetByIdAsync(id);
+    var resultado = await service.FindByIdAsync(id);
     
     return resultado.Match(
-        producto => Ok(producto),  // ActionResult<ProductoDto>
-        error => NotFound(new { error.Message })  // ActionResult<ProductoDto>
+        producto => producto,                    // T → ActionResult<T> (conversión implícita)
+        error => error.ToHttpResult<ProductoDto>()  // ActionResult<T> desde la extensión
     );
 }
 
 [HttpGet]
-public async Task<ActionResult<List<ProductoDto>>> GetAll()
+public async Task<ActionResult<PagedResult<ProductoDto>>> GetAll(/* filtros */)
 {
-    var productos = await _service.GetAllAsync();
-    return Ok(productos);  // ActionResult<List<ProductoDto>>
+    var resultado = await service.FindAllPagedAsync(filter);
+    return resultado.Match(
+        onSuccess: productos =>
+        {
+            // ... headers Link ...
+            return (ActionResult<PagedResult<ProductoDto>>)productos;  // cast explícito en Match con lambda block
+        },
+        onFailure: error => error.ToHttpResult<PagedResult<ProductoDto>>()
+    );
 }
 ```
+
+> 🎓 **Por qué el cast en Match:** cuando `Match` usa una lambda con bloque `{ }`, el compilador no puede inferir el tipo de retorno si las dos ramas devuelven tipos distintos (`T` y `ActionResult<T>`). El cast explícito `(ActionResult<T>)` resuelve la inferencia. En lambdas expresión (sin `{ }`), la conversión implícita funciona sin cast.
 
 ### Typed Results (más conciso, .NET 7+)
 
@@ -651,7 +660,7 @@ flowchart LR
 
 ### Cuándo usar cada uno
 
-Usa IActionResult cuando trabajes con código legacy o cuando necesites máxima flexibilidad para devolver tipos muy diferentes. Usa ActionResult<T> cuando quieras tipado fuerte pero flexibilidad para devolver errores. Usa Typed Results cuando puedas, porque es la sintaxis más limpia y moderna.
+Usa IActionResult cuando trabajes con código legacy o cuando necesites máxima flexibilidad para devolver tipos muy diferentes. Usa ActionResult<T> cuando quieras tipado fuerte pero flexibilidad para devolver errores — **es lo que usa este proyecto en todos sus controladores**. Usa Typed Results cuando puedas, porque es la sintaxis más limpia y moderna.
 
 ---
 
