@@ -42,7 +42,7 @@ public sealed record ValidationError(string Message, Dictionary<string, string[]
 }
 
 /// <summary>
-/// Violación de regla de negocio (HTTP 400/422).
+/// Violación de regla de negocio (HTTP 422).
 /// </summary>
 public sealed record BusinessRuleError(string Message) : DomainError(Message) { }
 

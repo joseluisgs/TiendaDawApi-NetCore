@@ -1,7 +1,7 @@
 namespace TiendaApi.Api.Errors.Categorias;
 
 /// <summary>
-/// Errores del dominio de categorías (HTTP 404, 409, 400).
+/// Errores del dominio de categorías (HTTP 404, 409, 400, 422).
 /// </summary>
 public static class CategoriaError
 {
@@ -20,7 +20,7 @@ public static class CategoriaError
     /// <summary>Crea error si la categoría tiene productos asociados.</summary>
     /// <param name="id">ID de la categoría.</param>
     /// <param name="productosCount">Número de productos asociados.</param>
-    /// <returns>BusinessRuleError (HTTP 400).</returns>
+    /// <returns>BusinessRuleError (HTTP 422).</returns>
     public static BusinessRuleError TieneProductos(long id, int productosCount) =>
         new($"No se puede eliminar la categoría con ID {id} porque tiene {productosCount} productos asociados");
 

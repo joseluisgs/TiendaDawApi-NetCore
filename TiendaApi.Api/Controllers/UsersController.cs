@@ -207,7 +207,7 @@ public class UsersController(
         {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
-            BusinessRuleError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),
             ValidationError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
             _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message })
         };
@@ -291,7 +291,7 @@ public class UsersController(
         {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
-            BusinessRuleError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
+            BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),
             ValidationError => StatusCode(StatusCodes.Status400BadRequest, new { message = error.Message }),
             _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message })
         };

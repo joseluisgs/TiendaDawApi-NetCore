@@ -495,7 +495,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task CreateMyPedido_StockInsuficiente_RetornaBadRequest()
+    public async Task CreateMyPedido_StockInsuficiente_RetornaUnprocessableEntity()
     {
         SetupUserClaims(1);
         var requestDto = new PedidoRequestDto
@@ -512,7 +512,9 @@ public class PedidosControllerTests
 
         var result = await _controller.CreateMyPedido(requestDto);
 
-        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        // BusinessRuleError → 422 Unprocessable Entity (regla de negocio, no malformación)
+        result.Result.Should().BeOfType<ObjectResult>();
+        ((ObjectResult)result.Result!).StatusCode.Should().Be(422);
     }
 
     [Test]

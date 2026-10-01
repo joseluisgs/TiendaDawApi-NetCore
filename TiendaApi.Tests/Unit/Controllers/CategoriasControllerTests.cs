@@ -393,7 +393,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task Delete_CategoriaConProductos_RetornaBadRequest()
+    public async Task Delete_CategoriaConProductos_RetornaUnprocessableEntity()
     {
         var error = new BusinessRuleError("No se puede eliminar una categoría con productos asociados");
 
@@ -402,9 +402,9 @@ public class CategoriasControllerTests
 
         var result = await _controller.Delete(1);
 
-        // El switch devuelve ObjectResult con StatusCode 400 (BusinessRuleError → default)
+        // BusinessRuleError → 422 Unprocessable Entity (regla de negocio, no malformación)
         result.Should().BeOfType<ObjectResult>();
-        ((ObjectResult)result).StatusCode.Should().Be(400);
+        ((ObjectResult)result).StatusCode.Should().Be(422);
     }
 
     #endregion

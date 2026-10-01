@@ -19,7 +19,7 @@ public static class DomainErrorExtensions
     /// <param name="error">Error de dominio tipado.</param>
     /// <returns>
     /// 404 <c>NotFoundError</c> · 400 <c>ValidationError</c> (+ <c>errors</c> por campo) ·
-    /// 409 <c>ConflictError</c> · 400 <c>BusinessRuleError</c> · 401 <c>UnauthorizedError</c> ·
+    /// 409 <c>ConflictError</c> · 422 <c>BusinessRuleError</c> · 401 <c>UnauthorizedError</c> ·
     /// 403 <c>ForbiddenError</c> · 500 <c>InternalError</c>/desconocidos.
     /// </returns>
     public static ActionResult<T> ToHttpResult<T>(this DomainError error) => error switch
@@ -27,7 +27,10 @@ public static class DomainErrorExtensions
         NotFoundError e => new NotFoundObjectResult(new { message = e.Message }),
         ValidationError e => new BadRequestObjectResult(new { message = e.Message, errors = e.ValidationErrors }),
         ConflictError e => new ConflictObjectResult(new { message = e.Message }),
-        BusinessRuleError e => new BadRequestObjectResult(new { message = e.Message }),
+        // 🎓 422 Unprocessable Entity: la petición está bien formada y el servidor
+        // la entiende, pero la rechaza por una regla de negocio (stock insuficiente,
+        // elementos asociados, etc.). Se distingue del 400 (petición malformada).
+        BusinessRuleError e => new ObjectResult(new { message = e.Message }) { StatusCode = StatusCodes.Status422UnprocessableEntity },
         UnauthorizedError e => new UnauthorizedObjectResult(new { message = e.Message }),
         ForbiddenError e => new ObjectResult(new { message = e.Message }) { StatusCode = StatusCodes.Status403Forbidden },
         _ => new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }

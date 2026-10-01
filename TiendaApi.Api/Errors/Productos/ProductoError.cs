@@ -1,7 +1,7 @@
 namespace TiendaApi.Api.Errors.Productos;
 
 /// <summary>
-/// Errores del dominio de productos (HTTP 404, 409, 400).
+/// Errores del dominio de productos (HTTP 404, 409, 400, 422).
 /// </summary>
 public static class ProductoError
 {
@@ -21,13 +21,13 @@ public static class ProductoError
     /// <param name="nombre">Nombre del producto.</param>
     /// <param name="disponible">Stock disponible.</param>
     /// <param name="solicitado">Stock solicitado.</param>
-    /// <returns>BusinessRuleError (HTTP 400).</returns>
+    /// <returns>BusinessRuleError (HTTP 422).</returns>
     public static BusinessRuleError StockInsuficiente(string nombre, int disponible, int solicitado) =>
         new($"Stock insuficiente para el producto '{nombre}'. Disponible: {disponible}, Solicitado: {solicitado}");
 
     /// <summary>Crea error si el producto tiene pedidos asociados.</summary>
     /// <param name="id">ID del producto.</param>
-    /// <returns>BusinessRuleError (HTTP 400).</returns>
+    /// <returns>BusinessRuleError (HTTP 422).</returns>
     public static BusinessRuleError NoSePuedeEliminarConPedidos(long id) =>
         new($"No se puede eliminar el producto con ID {id} porque tiene pedidos asociados");
 

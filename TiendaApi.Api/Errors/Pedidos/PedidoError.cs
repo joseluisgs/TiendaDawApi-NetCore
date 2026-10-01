@@ -1,7 +1,7 @@
 namespace TiendaApi.Api.Errors.Pedidos;
 
 /// <summary>
-/// Errores del dominio de pedidos (HTTP 404, 409, 400, 403).
+/// Errores del dominio de pedidos (HTTP 404, 409, 400, 403, 422).
 /// </summary>
 public static class PedidoError
 {
@@ -41,7 +41,7 @@ public static class PedidoError
     /// <param name="nombreProducto">Nombre del producto.</param>
     /// <param name="disponible">Stock disponible.</param>
     /// <param name="solicitado">Stock solicitado.</param>
-    /// <returns>BusinessRuleError (HTTP 400).</returns>
+    /// <returns>BusinessRuleError (HTTP 422).</returns>
     public static BusinessRuleError StockInsuficiente(string nombreProducto, int disponible, int solicitado) =>
         new($"Stock insuficiente para el producto '{nombreProducto}'. Disponible: {disponible}, Solicitado: {solicitado}");
 

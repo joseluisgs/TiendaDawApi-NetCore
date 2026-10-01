@@ -30,13 +30,13 @@ public static class StorageError
     public static ValidationError NombreArchivoInvalido() =>
         ValidationError.Create("Nombre de archivo inválido");
 
-    /// <summary>Crea error al guardar archivo.</summary>
-    /// <returns>ValidationError (HTTP 400).</returns>
-    public static ValidationError ErrorGuardando() =>
-        ValidationError.Create("Error al guardar archivo");
+    /// <summary>Crea error al guardar archivo (fallo del servidor, no del cliente).</summary>
+    /// <returns>InternalError (HTTP 500).</returns>
+    public static InternalError ErrorGuardando() =>
+        new("Error al guardar archivo");
 
-    /// <summary>Crea error al eliminar archivo.</summary>
-    /// <returns>ValidationError (HTTP 400).</returns>
-    public static ValidationError ErrorEliminando() =>
-        ValidationError.Create("Error al eliminar archivo");
+    /// <summary>Crea error al eliminar archivo (fallo del servidor, no del cliente).</summary>
+    /// <returns>InternalError (HTTP 500).</returns>
+    public static InternalError ErrorEliminando() =>
+        new("Error al eliminar archivo");
 }

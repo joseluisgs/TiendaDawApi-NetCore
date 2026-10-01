@@ -552,7 +552,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task Update_ConflictoDeStock_RetornaBadRequest()
+    public async Task Update_ConflictoDeStock_RetornaUnprocessableEntity()
     {
         var id = 1L;
         var requestDto = new ProductoRequestDto
@@ -568,7 +568,9 @@ public class ProductosControllerTests
 
         var result = await _controller.Update(id, requestDto);
 
-        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        // BusinessRuleError → 422 Unprocessable Entity (regla de negocio, no malformación)
+        result.Result.Should().BeOfType<ObjectResult>();
+        ((ObjectResult)result.Result!).StatusCode.Should().Be(422);
     }
 
     [Test]

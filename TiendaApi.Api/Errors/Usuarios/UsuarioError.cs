@@ -1,7 +1,7 @@
 namespace TiendaApi.Api.Errors.Usuarios;
 
 /// <summary>
-/// Errores del dominio de usuarios (HTTP 404, 409, 401, 400).
+/// Errores del dominio de usuarios (HTTP 404, 409, 401, 400, 422).
 /// </summary>
 public static class UsuarioError
 {
@@ -41,13 +41,13 @@ public static class UsuarioError
 
     /// <summary>Crea error si el usuario tiene pedidos asociados.</summary>
     /// <param name="id">ID del usuario.</param>
-    /// <returns>BusinessRuleError (HTTP 400).</returns>
+    /// <returns>BusinessRuleError (HTTP 422).</returns>
     public static BusinessRuleError NoSePuedeEliminarConPedidos(long id) =>
         new($"No se puede eliminar el usuario con ID {id} porque tiene pedidos asociados");
 
     /// <summary>Crea error si el usuario tiene productos a la venta.</summary>
     /// <param name="id">ID del usuario.</param>
-    /// <returns>BusinessRuleError (HTTP 400).</returns>
+    /// <returns>BusinessRuleError (HTTP 422).</returns>
     public static BusinessRuleError NoSePuedeEliminarConProductos(long id) =>
         new($"No se puede eliminar el usuario con ID {id} porque tiene productos a la venta");
 
