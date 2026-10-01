@@ -42,8 +42,9 @@ services.AddFluentValidationServices();
 // Compresión HTTP (Brotli + Gzip)
 services.AddResponseCompressionConfig();
 
-// TimeProvider global (inyectable, testable con FakeTimeProvider)
-services.AddSingleton(TimeProvider.System);
+// TimeProvider: no se registra en DI porque JwtService lo acepta como
+// parámetro opcional con default TimeProvider.System. FakeTimeProvider
+// se inyecta directamente en los tests que lo necesitan.
 
 // API
 services.AddApiVersioningPolicy();
