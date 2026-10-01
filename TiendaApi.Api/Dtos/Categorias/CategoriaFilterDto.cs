@@ -45,6 +45,7 @@ public record CategoriaFilterDto
     /// </summary>
     /// <value>0 por defecto</value>
     /// <example>0</example>
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
     public int Page { get; init; } = 0;
 
     /// <summary>
@@ -53,11 +54,11 @@ public record CategoriaFilterDto
     /// </summary>
     /// <value>10 por defecto</value>
     /// <remarks>
-    /// Recomendaciones:
-    /// - Valores muy altos pueden afectar rendimiento
-    /// - Valor máximo recomendado: 100
+    /// Límite duro de 100 elementos por página para proteger la memoria
+    /// y evitar consultas masivas que amplifican el coste de la caché.
     /// </remarks>
     /// <example>10</example>
+    [System.ComponentModel.DataAnnotations.Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
     public int Size { get; init; } = 10;
 
     /// <summary>
