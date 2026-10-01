@@ -60,6 +60,11 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
     /// </summary>
     public async Task<Result<PagedResult<PedidoDto>, DomainError>> FindAllPagedAsync(int page, int size)
     {
+        // 🛡️ Clamp defensivo: GraphQL construye la query en código sin pasar
+        // por validación REST. El límite se aplica aquí como única verdad funcional.
+        size = Math.Clamp(size, 1, 100);
+        page = Math.Max(page, 0);
+
         logger.LogInformation("Obteniendo pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
 
         var (pedidos, totalCount) = await pedidosRepository.FindAllPagedAsync(page, size);
@@ -243,6 +248,11 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
     /// </summary>
     public async Task<Result<PagedResult<PedidoDto>, DomainError>> FindMyPedidosAsync(long userId, int page, int size)
     {
+        // 🛡️ Clamp defensivo: GraphQL construye la query en código sin pasar
+        // por validación REST. El límite se aplica aquí como única verdad funcional.
+        size = Math.Clamp(size, 1, 100);
+        page = Math.Max(page, 0);
+
         logger.LogInformation("Obteniendo pedidos paginados del usuario: {UserId}, Página: {Page}, Tamaño: {Size}", userId, page, size);
 
         var (pedidos, totalCount) = await pedidosRepository.FindByUserIdPagedAsync(userId, page, size);
