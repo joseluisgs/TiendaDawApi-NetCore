@@ -77,7 +77,12 @@ public class PedidosWebSocketHandler
     /// <param name="webSocket">Instancia del WebSocket.</param>
     public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket)
     {
-        var token = context.Request.Query["token"].FirstOrDefault();
+        // 🎓 Higiene de seguridad: preferir header Authorization sobre query string.
+        var token = context.Request.Headers["Authorization"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(token) && token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            token = token["Bearer ".Length..];
+        else
+            token = context.Request.Query["token"].FirstOrDefault();
 
         if (string.IsNullOrEmpty(token))
         {
