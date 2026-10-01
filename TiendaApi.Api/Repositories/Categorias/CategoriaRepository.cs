@@ -55,10 +55,15 @@ public class CategoriaRepository(
             ? query.OrderByDescending(GetSortExpression(filter.SortBy))
             : query.OrderBy(GetSortExpression(filter.SortBy));
 
+        // 🛡️ Clamp defensivo: GraphQL construye el DTO en código sin pasar
+        // por validación REST, así que el límite se ap aquí como única verdad funcional.
+        var size = Math.Clamp(filter.Size, 1, 100);
+        var page = Math.Max(filter.Page, 0);
+
         var items = await orderedQuery
             .AsNoTracking()
-            .Skip(filter.Page * filter.Size)
-            .Take(filter.Size)
+            .Skip(page * size)
+            .Take(size)
             .ToListAsync();
 
         return (items, totalCount);

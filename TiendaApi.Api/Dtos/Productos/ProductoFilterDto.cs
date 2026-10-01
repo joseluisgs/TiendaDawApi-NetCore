@@ -52,7 +52,7 @@ public record ProductoFilterDto
     // </summary>
     // <default>0</default>
     // <example>0</example>
-    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
+    [property: System.ComponentModel.DataAnnotations.Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
     int Page = 0,
 
     // <summary>
@@ -60,7 +60,7 @@ public record ProductoFilterDto
     // </summary>
     // <default>10</default>
     // <example>10</example>
-    [System.ComponentModel.DataAnnotations.Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
+    [property: System.ComponentModel.DataAnnotations.Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
     int Size = 10,
 
     // <summary>

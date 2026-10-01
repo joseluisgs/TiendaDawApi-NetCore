@@ -35,14 +35,14 @@ public record UserFilterDto
     // Número de página (base 0).
     // </summary>
     // <default>0</default>
-    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
+    [property: System.ComponentModel.DataAnnotations.Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
     int Page = 0,
 
     // <summary>
     // Cantidad de elementos por página.
     // </summary>
     // <default>10</default>
-    [System.ComponentModel.DataAnnotations.Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
+    [property: System.ComponentModel.DataAnnotations.Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
     int Size = 10,
 
     // <summary>
