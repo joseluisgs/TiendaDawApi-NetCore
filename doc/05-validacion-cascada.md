@@ -511,6 +511,15 @@ var items = await query
 
 > **Regla:** el atributo `[property: Range]` da coherencia declarativa en el contrato; el `Math.Clamp` cierra el camino funcional. Los dos juntos cubren REST y GraphQL.
 
+**Cobertura completa del clamp:**
+
+| Capa | Dónde aplica el clamp |
+|------|----------------------|
+| Repositorios (EF Core) | `ProductoRepository`, `CategoriaRepository`, `UserRepository` |
+| Servicio | `PedidosService.FindAllPagedAsync`, `PedidosService.FindMyPedidosAsync` |
+
+> 🎓 Los endpoints de pedidos exigen autenticación (admin o propietario), pero se les aplica el mismo clamp por consistencia: cualquier entrada de paginación debe estar protegida, esté o no autenticada.
+
 ### Configuración global de ValidatorOptions
 
 ```csharp
