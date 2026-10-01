@@ -133,7 +133,7 @@ builder.Services
     .ModifyRequestOptions(opt => 
         opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())
     
-    // Introspection habilitada por defecto
+    // Introspection habilitada por defecto en desarrollo
     .AddIntrospectionTypes()
     
     // Formateo de errores
@@ -142,6 +142,13 @@ builder.Services
         // Personalizar errores según el entorno
         return error;
     });
+
+// 🛡️ Introspección deshabilitada en producción: impide descubrir
+// el esquema completo (query/mutation names, tipos, argumentos).
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddGraphQLServer().DisableIntrospection();
+}
 ```
 
 ### Diferentes Entornos
