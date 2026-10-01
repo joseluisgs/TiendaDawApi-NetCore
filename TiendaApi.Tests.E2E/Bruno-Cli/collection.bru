@@ -44,6 +44,17 @@ script:post-response {
 }
 
 docs {
+  
+  ## Uso con Bruno CLI (excluye WebSocket):
+  ```bash
+  bru run --exclude-tags=desktop-only
+  ```
+  
+  ## Uso con Bruno Desktop (incluye WebSocket):
+  ```bash
+  bru run
+  ```
+
   Colección completa de tests E2E para TiendaApi.NET
   
   Incluye:
