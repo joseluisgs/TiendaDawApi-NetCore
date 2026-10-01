@@ -311,8 +311,18 @@ public class WebSocketConnectionManager
     private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
     private readonly ConcurrentDictionary<string, HashSet<string>> _userConnections = new();
 
+    // 🛡️ Límite de conexiones simultáneas: evita que un atacante
+    // agote los recursos del servidor con miles de conexiones WS.
+    private const int MaxConnections = 1000;
+
     public string AddConnection(WebSocket webSocket)
     {
+        if (_connections.Count >= MaxConnections)
+        {
+            throw new InvalidOperationException(
+                $"Máximo de {MaxConnections} conexiones WebSocket alcanzado");
+        }
+
         var connectionId = Guid.NewGuid().ToString();
         _connections.TryAdd(connectionId, webSocket);
         return connectionId;

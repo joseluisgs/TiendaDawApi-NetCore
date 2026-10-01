@@ -122,6 +122,13 @@ builder.Services
     .AddMutationType<Mutation>()              // Mutaciones (opcional)
     .AddSubscriptionType<Subscription>()      // Suscripciones (opcional)
     
+    // 🛡️ Límite de profundidad de ejecución: evita queries anidadas
+    // infinitas que consuman memoria/CPU. 10 niveles es más que
+    // suficiente para cualquier consulta legítima de este proyecto.
+    .AddMaxExecutionDepthRule(
+        maxAllowedExecutionDepth: 10,
+        skipIntrospectionFields: true)
+    
     // Configuración de errores
     .ModifyRequestOptions(opt => 
         opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())

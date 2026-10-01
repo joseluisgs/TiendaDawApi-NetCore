@@ -429,13 +429,21 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            // Extraer token del header Authorization: Bearer <token>
+            // 🎓 JWT en header Authorization PRIMERO (estándar).
+            // Query string como fallback solo para WebSocket (?token=JWT),
+            // donde los headers no siempre están disponibles en clientes WS.
             var token = context.Request.Headers["Authorization"]
                 .FirstOrDefault(x => x.StartsWith("Bearer "));
-            
+
             if (!string.IsNullOrEmpty(token))
             {
                 context.Token = token.Substring("Bearer ".Length);
+            }
+            else if (context.Request.Query.TryGetValue("token", out var queryToken)
+                     && !string.IsNullOrEmpty(queryToken))
+            {
+                // Fallback: WebSocket clients que no pueden enviar headers
+                context.Token = queryToken;
             }
 
             return Task.CompletedTask;

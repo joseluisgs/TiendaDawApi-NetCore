@@ -2593,7 +2593,20 @@ bru run /ruta/a/Bruno --output results.json --format json
 
 # Verbose output
 bru run /ruta/a/Bruno --verbose
+
+# Ejecutar solo carpetas específicas (excluyendo WebSocket)
+# Los tests WebSocket (type: ws) están marcados con tag "desktop-only"
+# porque Bruno CLI no soporta el protocolo ws://
+bru run /ruta/a/Bruno --env local \
+  "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" \
+  "3 - PRODUCTOS" "4 - PEDIDOS (Usuario)" "5 - PEDIDOS (Admin)" \
+  "6 - USUARIOS" "7 - STORAGE" "90 - TEARDOWN"
+
+# O alternativamente con --exclude-tags (si el CLI lo soporta)
+bru run /ruta/a/Bruno --env local --exclude-tags=desktop-only
 ```
+
+> ⚠️ **Nota WebSocket**: Los tests WebSocket (`type: ws`) están marcados con `tags: desktop-only` en sus archivos `.bru` porque Bruno CLI no implementa el protocolo `ws://`. Se ejecutan en Bruno Desktop. El `collection.bru` documenta esta restricción.
 
 ### Ejecución con Docker
 

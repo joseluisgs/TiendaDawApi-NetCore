@@ -229,30 +229,10 @@ public class CacheService : ICacheService
         }
     }
 
-    /// <summary>
-    /// Elimina múltiples entradas por patrón
-    /// </summary>
-    public async Task RemoveByPatternAsync(string pattern)
-    {
-        try
-        {
-            // Nota: Redis no tiene búsqueda nativa por patrón en todas las versiones
-            // Usar SCAN o KEYS con precaución
-            var keys = await GetKeysByPatternAsync(pattern);
-            
-            foreach (var key in keys)
-            {
-                await _cache.RemoveAsync(key);
-            }
-            
-            _logger.LogInformation("Eliminados {Count} keys con patrón: {Pattern}", 
-                keys.Count, pattern);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error eliminando por patrón: {Pattern}", pattern);
-        }
-    }
+    // 🎓 Nota: RemoveByPatternAsync fue ELIMINADO de ICacheService.
+    // MemoryCache no lo soporta y Redis lo haría con SCAN (costoso).
+    // La interfaz solo debe contener lo que las implementaciones pueden
+    // hacer de forma razonable.
 
     /// <summary>
     /// Verifica si una clave existe en cache
@@ -779,9 +759,14 @@ public interface ICacheService
     Task<bool> ExistsAsync(string key);
     
     /// <summary>
-    /// Elimina entradas por patrón
+    /// Elimina un valor de la caché por clave.
     /// </summary>
-    Task RemoveByPatternAsync(string pattern);
+    Task RemoveAsync(string key);
+
+    // 🎓 Nota: RemoveByPatternAsync fue ELIMINADO de la interfaz.
+    // MemoryCache no lo soporta y Redis lo haría con SCAN (costoso).
+    // La interfaz solo debe contener lo que las implementaciones pueden
+    // hacer de forma razonable.
 }
 
 /// <summary>
@@ -838,8 +823,10 @@ public class ProductCacheService : IProductCacheService
 
     private const string PRODUCTOS_BY_CATEGORIA_KEY = "productos:categoria:{0}";
     private const string PRODUCTO_KEY = "producto:{0}";
-    private const string PRODUCTOS_ALL_KEY = "productos:all";
-    private const string PRODUCTOS_PATTERN = "productos:*";
+
+    // 🎓 Nota: RemoveByPatternAsync fue ELIMINADO de ICacheService.
+    // MemoryCache no lo soporta y Redis lo haría con SCAN (costoso).
+    // La invalidación se hace con tags de OutputCache + RemoveAsync explícito.
 
     public ProductCacheService(
         ICacheService cacheService,
@@ -874,21 +861,20 @@ public class ProductCacheService : IProductCacheService
     {
         var key = FormatKey(PRODUCTOS_BY_CATEGORIA_KEY, categoriaId);
         await _cacheService.RemoveAsync(key);
-        
-        // También invalidar cache "todos los productos"
-        await InvalidateAllProductsCacheAsync();
     }
 
     public async Task InvalidateAllProductsCacheAsync()
     {
-        await _cacheService.RemoveByPatternAsync(
-            FormatKey(PRODUCTOS_PATTERN));
+        // 🎓 Antes usaba RemoveByPatternAsync("productos:*") — eliminado.
+        // Ahora: OutputCache.EvictByTagAsync("productos") + RemoveAsync explícito
+        // de las claves conocidas. No hay claves muertas que invalidar.
     }
 
     public async Task InvalidateProductoCacheAsync(long productoId)
     {
         var key = FormatKey(PRODUCTO_KEY, productoId);
         await _cacheService.RemoveAsync(key);
+    }
         
         // Invalidar cache de categorías
         await _cacheService.RemoveByPatternAsync(
@@ -1284,7 +1270,7 @@ public class CacheInvalidationService
 | CREATE producto | productos:categoria:{categoriaId} |
 | UPDATE producto | productos:categoria:{categoriaId} + producto:{id} |
 | DELETE producto | productos:categoria:{categoriaId} + producto:{id} |
-| UPDATE categoría | productos:categoria:{id} + productos:* |
+| UPDATE categoría | productos:categoria:{id} (via UpdateCategoriaNombreAsync en Mongo) |
 
 ---
 

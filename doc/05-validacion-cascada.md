@@ -472,6 +472,45 @@ flowchart LR
 
 > **NOTA PARA EL ALUMNO**: Cuando usas `AddFluentValidationAutoValidation()`, la validación automática ocurre ANTES de que el request llegue al controller. Por tanto, la validación manual en el servicio (`ValidateProductoAsync()`) se convierte en **opcional** - ya no es necesaria porque la validación ya se ejecutó. Se deja la validación manual en el servicio con fines didácticos para mostrar cómo validar manualmente cuando se requiera (por ejemplo, en validaciones complejas que dependan de datos externos).
 
+### Paginación con techo: `[property: Range]` + `Math.Clamp`
+
+Los DTOs de paginación (`ProductoFilterDto`, `CategoriaFilterDto`, `UserFilterDto`) limitan `Size` a `[Range(1, 100)]` y `Page` a `[Range(0, int.MaxValue)]`. Hay dos matizes importantes:
+
+**1. Records posicionales necesitan el prefijo `property:`**
+
+En un record con parámetros posicionales, un atributo sin destino explícito se queda en el **parámetro**, no en la propiedad generada. ASP.NET Core valida por propiedades → el atributo no hace nada:
+
+```csharp
+// ❌ NO funciona: el [Range] se queda en el parámetro
+public record ProductoFilterDto(
+    int Page = 0,
+    [Range(1, 100)] int Size = 10  // ← parámetro, no propiedad
+);
+
+// ✅ Funciona: el prefijo property: lo mueve a la propiedad generada
+public record ProductoFilterDto(
+    [property: Range(0, int.MaxValue)] int Page = 0,
+    [property: Range(1, 100)] int Size = 10  // ← propiedad generada
+);
+```
+
+**2. GraphQL construye los DTOs en código — el atributo no basta**
+
+`GetProductosPaged(int page, int size)` crea el `ProductoFilterDto` directamente, sin pasar por la validación de model binding de REST. Por eso los repositorios aplican un **clamp defensivo** como única verdad funcional:
+
+```csharp
+// 🛡️ Clamp defensivo en el repositorio (cubre REST y GraphQL)
+var size = Math.Clamp(filter.Size, 1, 100);
+var page = Math.Max(filter.Page, 0);
+
+var items = await query
+    .Skip(page * size)
+    .Take(size)
+    .ToListAsync();
+```
+
+> **Regla:** el atributo `[property: Range]` da coherencia declarativa en el contrato; el `Math.Clamp` cierra el camino funcional. Los dos juntos cubren REST y GraphQL.
+
 ### Configuración global de ValidatorOptions
 
 ```csharp
