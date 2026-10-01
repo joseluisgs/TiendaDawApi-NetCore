@@ -25,7 +25,7 @@ public static class GraphQLConfig
 
         services.AddGraphQLPubSub();
 
-        return services
+        var builder = services
             .AddGraphQLServer()
             .AddAuthorization()
             .AddQueryType<TiendaQuery>()
@@ -45,6 +45,16 @@ public static class GraphQLConfig
             {
                 opt.IncludeExceptionDetails = environment.IsDevelopment();
             });
+
+        // 🛡️ Introspección: solo en desarrollo. En producción permite
+        // descubrir el esquema completo del API (query/mutation names,
+        // tipos, argumentos), lo que facilita ataques dirigidos.
+        if (!environment.IsDevelopment())
+        {
+            builder.DisableIntrospection();
+        }
+
+        return builder;
     }
 
     /// <summary>
