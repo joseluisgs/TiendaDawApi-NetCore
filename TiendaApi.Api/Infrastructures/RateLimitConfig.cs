@@ -15,12 +15,9 @@ namespace TiendaApi.Api.Infrastructures;
 /// <item>Autenticación (<c>/api/v1/auth/*</c>): 10 por minuto.</item>
 /// <item>Escritura (POST): 20 por minuto.</item>
 /// </list>
-/// <summary>
-/// Configuración de rate limiting para la API.
-/// Reglas por ventana de tiempo: general (100 req/15s) y específicas por tipo de endpoint.
 /// Si dos reglas comparten periodo se aplica la más restrictiva
 /// (p.ej. un POST a autenticación queda en 10/min, no en 20/min).
-/// </summary>
+/// </remarks>
 public static class RateLimitConfig
 {
     /// <summary>Límite de peticiones para la ventana general.</summary>
