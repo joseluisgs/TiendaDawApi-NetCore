@@ -6,10 +6,10 @@
   - [9.1. EF Core para MongoDB vs MongoDB Driver](#91-ef-core-para-mongodb-vs-mongodb-driver)
   - [9.2. EF Core para MongoDB](#92-ef-core-para-mongodb)
   - [9.3. MongoDB Driver Nativo](#93-mongodb-driver-nativo)
-  - [9.4. Repositorios con EF Core para MongoDB](#94-repositorios-con-ef-core-para-mongodb)
-  - [9.5. Repositorios con MongoDB Driver](#95-repositorios-con-mongodb-driver)
-  - [9.6. Aggregation Pipeline con MongoDB Driver](#96-aggregation-pipeline-con-mongodb-driver)
-  - [9.7. Seed de Datos en MongoDB](#97-seed-de-datos-en-mongodb)
+  - [9.4. Embeber vs Referenciar: composición de documentos](#94-embeber-vs-referenciar-composicion-de-documentos)`n  - [9.5. Repositorios con EF Core para MongoDB](#95-repositorios-con-ef-core-para-mongodb)
+  - [9.6. Repositorios con MongoDB Driver](#96-repositorios-con-mongodb-driver)
+  - [9.7. Aggregation Pipeline con MongoDB Driver](#97-aggregation-pipeline-con-mongodb-driver)
+  - [9.8. Seed de Datos en MongoDB](#98-seed-de-datos-en-mongodb)
   - [9.8. Comparación: Cuándo Usar Cada Enfoque](#98-comparación-cuándo-usar-cada-enfoque)
   - [9.9. Resumen y Buenas Prácticas](#99-resumen-y-buenas-prácticas)
 
@@ -308,7 +308,117 @@ public class AuditLogDocument
 
 ---
 
-## 9.4. Repositorios con EF Core para MongoDB
+## 9.4. Embeber vs Referenciar: composición de documentos
+
+En MongoDB no hay JOINs. Cuando necesitas datos de dos entidades, tienes dos opciones: **embeber** (copiar los datos dentro del mismo documento) o **referenciar** (guardar solo el ID y consultar por separado). Esta es **la decisión más importante** al diseñar un esquema NoSQL.
+
+### La tabla de decisión
+
+| Criterio | Embeber | Referenciar |
+|----------|---------|-------------|
+| **Datos que se leen juntos siempre** | ✅ Sí | ❌ No |
+| **Datos que cambian a menudo** | ❌ No | ✅ Sí |
+| **Colección que crece sin límite** | ❌ No | ✅ Sí |
+| **Datos que se consultan independiente** | ❌ No | ✅ Sí |
+
+> 🎓 **Ejemplo real (Netflix):** embebe la lista de "episodios" dentro de cada "serie" porque siempre se ven juntos. Pero usa referencias para los "actores" porque un actor aparece en múltiples series.
+
+### Cómo se aplica en TiendaApi
+
+El proyecto usa **composición** en el read model de productos — `CategoriaRead` se embebe como sub-documento dentro de `ProductoRead`:
+
+```csharp
+public class ProductoRead
+{
+    [BsonId]
+    public long Id { get; set; }
+
+    public string Nombre { get; set; } = string.Empty;
+
+    // 🎓 Composición: la categoría se embebe como sub-documento
+    // para responder "categoria { nombre }" sin join — contrato GraphQL.
+    public CategoriaRead Categoria { get; set; } = new();
+
+    public long CategoriaId { get; set; }  // FK también guardada para filtros
+}
+
+// Sub-documento embebido: solo lo mínimo (id + nombre)
+public class CategoriaRead
+{
+    public long Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+}
+```
+
+**¿Por qué embeber aquí?**
+- GraphQL pide `categoria { nombre }` en cada query de productos → siempre se leen juntos
+- El read model es de solo lectura (CQRS) → el dato cambia poco
+- Evita un segundo lookup a MongoDB en cada request
+
+**⚠️ Conocido:** al renombrar categoría, los documentos cacheados (`productos:{id}`) llevan `nombre` viejo hasta el TTL. Se mitiga invalidando el tag `productos` de OutputCache + TTL de 10 min (ver doc/14 §14.11).
+
+### Entidades Owned en EF Core MongoDB
+
+Cuando usas EF Core para MongoDB, el equivalente a los documentos embebidos son las **Owned Types**:
+
+```csharp
+public class Cliente
+{
+    [BsonId] public long Id { get; set; }
+    public string Nombre { get; set; }
+
+    // OwnsOne: embebe un solo objeto
+    public Direccion Direccion { get; set; }
+}
+
+[Owned]  // ← marca la clase como documento embebido
+public class Direccion
+{
+    public string Calle { get; set; }
+    public string Ciudad { get; set; }
+}
+```
+
+También puedes embeber colecciones con `OwnsMany`:
+
+```csharp
+[Owned]
+public class LineaPedido
+{
+    public string Producto { get; set; }
+    public int Cantidad { get; set; }
+    public decimal PrecioUnitario { get; set; }
+}
+```
+
+> 🎓 **Nota:** TiendaApi usa el **Driver nativo** (no EF Core) para MongoDB, así que la composición se hace directamente con clases POCO — no necesita `[Owned]`. El patrón es el mismo: los sub-documentos son clases normales.
+
+### Referencias manuales (estilo SQL)
+
+Cuando los datos cambian a menudo o se consultan por separado, usa **referencias** — solo guarda el ID:
+
+```csharp
+public class Producto
+{
+    [BsonId] public long Id { get; set; }
+    public string Nombre { get; set; }
+
+    // Referencia: solo el ID, no se embebe
+    public long CategoriaId { get; set; }
+
+    // No hay propiedad Categoria aquí — se consulta aparte
+}
+```
+
+En TiendaApi, `CategoriaId` se guarda **junto con** la categoría embebida — tiene ambos porque los filtros usan el ID y GraphQL necesita el nombre.
+
+### Límite de 16 MB
+
+MongoDB limita cada documento a **16 MB**. No embebas colecciones que crecen sin límite (logs, historiales, listas de eventos). Para esos casos, usa referencias o una colección separada.
+
+---
+
+## 9.5. Repositorios con EF Core para MongoDB
 
 Los repositorios usan el mismo patrón que PostgreSQL, facilitando la consistencia en el código.
 
@@ -391,7 +501,7 @@ public class AuditLogRepository(
 
 ---
 
-## 9.5. Repositorios con MongoDB Driver
+## 9.6. Repositorios con MongoDB Driver
 
 Para operaciones que requieren el aggregation pipeline o mayor control:
 
@@ -474,7 +584,7 @@ public class AuditLogMongoRepository : IAuditLogRepository
 
 ---
 
-## 9.6. Aggregation Pipeline con MongoDB Driver
+## 9.7. Aggregation Pipeline con MongoDB Driver
 
 El aggregation pipeline es powerful para análisis y reportes:
 
@@ -556,7 +666,7 @@ public class TopEntity
 
 ---
 
-## 9.7. Seed de Datos en MongoDB
+## 9.8. Seed de Datos en MongoDB
 
 MongoDB no tiene migraciones como PostgreSQL, pero puedes poblar datos iniciales de varias formas.
 
@@ -785,7 +895,7 @@ using (var scope = app.Services.CreateScope())
 
 ---
 
-## 9.8. Comparación: Cuándo Usar Cada Enfoque
+## 9.9. Comparación: Cuándo Usar Cada Enfoque
 
 ```mermaid
 flowchart TB
@@ -821,7 +931,7 @@ flowchart TB
 
 ---
 
-## 9.9. Resumen y Buenas Prácticas
+## 9.10. Resumen y Buenas Prácticas
 
 ### Puntos clave del módulo
 
