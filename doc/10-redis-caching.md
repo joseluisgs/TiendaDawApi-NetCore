@@ -1549,6 +1549,110 @@ La OutputCache en el controller (tag `productos`, TTL 60s) sí cachea la respues
 | Fail-Open | Si el cache falla, continuar sin él |
 | Invalidación | Estrategias para mantener cache sincronizado |
 
+### 🎓 Guía de Supervivencia: Cache Multinivel
+
+#### ¿Qué es la cache multinivel?
+
+Es una estrategia donde se apilan **múltiples capas de caché** entre el cliente y la base de datos. Cada capa es más rápida pero más cara o limitada que la siguiente.
+
+```mermaid
+flowchart TB
+    Client[Cliente HTTP] --> L1["Layer 1: OutputCache<br/>Respuesta HTTP completa<br/>TTL: 60s"]
+    L1 -->|miss| L2["Layer 2: Cache-Aside Redis<br/>Objetos DTO<br/>TTL: 10min"]
+    L2 -->|miss| DB[(PostgreSQL)]
+
+    style L1 fill:#3498db,color:#fff
+    style L2 fill:#e74c3c,color:#fff
+    style DB fill:#2ecc71,color:#fff
+```
+
+#### ¿Por qué se implementa?
+
+| Motivo | Explicación |
+|--------|-------------|
+| **Rendimiento** | OutputCache devuelve HTML pre-renderizado (ms). Redis devuelve objetos (ms). DB consulta relacional (10-100ms). |
+| **Reducción de carga** | Cada capa absorbe los misses de la anterior. Si OutputCache absorbe el 80%, Redis solo ve el 20% restante. |
+| **Resiliencia** | Si Redis cae, OutputCache sigue funcionando. Si ambos caen, la app funciona sin cache (más lenta). |
+
+#### Flujo completo de una petición
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant OC as OutputCache
+    participant CA as Cache-Aside
+    participant DB as PostgreSQL
+
+    C->>GET /productos?page=1
+    OC->>OC: ¿Tengo la respuesta HTTP?
+    alt Cache Hit
+        OC-->>C: 200 OK (HTML cacheado, 0ms)
+    else Cache Miss
+        OC->>CA: ¿Tengo el objeto DTO?
+        alt Cache Hit
+            CA-->>OC: DTO
+            OC->>OC: Renderizar + cache 60s
+            OC-->>C: 200 OK
+        else Cache Miss
+            CA->>DB: SELECT * FROM productos
+            DB-->>CA: Datos
+            CA->>CA: Cachear DTO (10min)
+            CA-->>OC: DTO
+            OC-->>C: 200 OK
+        end
+    end
+```
+
+#### Ventajas
+
+| Ventaja | Descripción |
+|---------|-------------|
+| **Hit rate acumulado** | Si L1 tiene 70% hit y L2 tiene 80% hit sobre el resto → hit rate total = 70% + (30% × 80%) = 94% |
+| **Invalidación por capas** | Cada capa tiene su estrategia: tags para OutputCache, claves para Redis |
+| **Flexibilidad** | Puedes ajustar TTL por capa (60s vs 10min) según la criticidad |
+| **Aislamiento** | Si una capa falla, la otra sigue funcionando |
+
+#### ⚠️ Problemas y Cómo Sobrevivir
+
+| Problema | Síntoma | Solución |
+|----------|---------|----------|
+| **Datos stale entre capas** | L1 sirve datos viejos tras escritura en L2 | Invalidar **ambas** capas en cada escritura |
+| **Claves huérfanas** | Redis se llena con claves que nadie lee | TTL corto + eviction LRU (`maxmemory-policy allkeys-lru`) |
+| **Invalidación incompleta** | Olvidas invalidar una capa | Regla: **toda escritura invalida OutputCache + cache-aside** |
+| **N+1 de cache** | Cada request consulta 2 cachés antes de DB | TTL diferente por capa (L1 más corto que L2) |
+| **Memoria fragmentada** | Muchas claves pequeñas | Usar prefijos organizados (`productos:{id}`, `productos:paged:{filter}`) |
+
+#### Reglas de Oro del Proyecto
+
+```
+1. Toda escritura (Create/Update/Delete) invalida:
+   - OutputCache: EvictByTagAsync("tag")
+   - Cache-aside: RemoveAsync("clave-específica")
+
+2. Los TTLs deben ser DECRECIENTES:
+   - OutputCache: 60s (respuesta HTTP)
+   - Cache-aside: 10min (objeto DTO)
+   - Nunca L2 > L1 (si no, L1 es inútil)
+
+3. No cachear datos privados:
+   - Pedidos, Usuarios, Auth → NO OutputCache
+   - Solo datos públicos: Productos, Categorías
+
+4. Las claves deben ser predecibles:
+   - "productos:{id}" — por ID
+   - "productos:paged:{filter}" — por combinación
+   - "productos:categoria:{id}" — por categoría
+```
+
+#### ¿Cuándo NO usar cache multinivel?
+
+| Escenario | Alternativa |
+|-----------|-------------|
+| Datos que cambian cada segundo | Sin cache, o TTL < 1s |
+| Datos privados/sensibles | Sin cache o cache por usuario |
+| Pocas consultas al día | Solo DB, sin cache |
+| Memoria limitada | Solo OutputCache (más barato) |
+
 ### Buenas Prácticas
 
 ```mermaid
