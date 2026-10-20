@@ -1500,6 +1500,41 @@ Comprobación real: segundo `GET /api/productos` → **304**; en los logs de la 
 
 > **Combinación real de este proyecto**: OutputCache+ETag (60 s) para el listado **público** de respuestas, y cache-aside Redis con TTL 5 min + invalidación por claves para los **datos** que leen los servicios (ver 10.7/10.8). Las dos capas conviven sin solaparse: atacan puntos distintos del viaje de una petición.
 
+### Estrategia de Dos Capas (Resumen para el Alumno)
+
+El proyecto usa **dos capas de caché independientes** que se complementan:
+
+```mermaid
+flowchart LR
+    Client[Cliente HTTP] --> OC[OutputCache<br/>60s + tag productos]
+    OC -->|miss| SVC[ProductoService]
+    SVC --> CA[Cache-Aside Redis<br/>TTL 10min + claves]
+    CA -->|miss| DB[(PostgreSQL)]
+    
+    style OC fill:#3498db,color:#fff
+    style CA fill:#e74c3c,color:#fff
+```
+
+| Capa | Qué cachea | Invalidación | TTL |
+|------|-----------|--------------|-----|
+| **OutputCache** | Respuesta HTTP completa | `EvictByTagAsync("productos")` | 60 segundos |
+| **Cache-Aside** | Objetos DTO en Redis | `RemoveAsync("productos:{id}")` manual | 10 minutos |
+
+### ⚠️ Nota Didáctica: `FindAllAsync()` es Dead Code
+
+El método `FindAllAsync()` en `ProductoService` es un **ejemplo didáctico** del patrón cache-aside. **Nadie lo llama** — el controller siempre usa `FindAllPagedAsync()`. Está aquí para enseñar el patrón, pero en producción debería eliminarse porque:
+1. Nunca se ejecuta.
+2. Cachea `"productos:all"` que **nunca se invalida** (solo TTL).
+3. Si alguien lo llamara, vería datos stale hasta 10 minutos.
+
+### ⚠️ Nota Didáctica: ¿Por qué no se cachea `FindAllPagedAsync()`?
+
+La paginación tiene **infinitas combinaciones** de filtros (`?page=1&size=10&categoria=X`, `?page=2&size=20&categoria=Y`, etc.). Cada combinación sería una clave de cache distinta que:
+1. **Llenaría la memoria** con claves que casi nunca se reusarían.
+2. Sería **imposible invalidar eficientemente** (habría que adivinar qué combinaciones existen).
+
+La OutputCache en el controller (tag `productos`, TTL 60s) sí cachea la respuesta HTTP y se invalida por tag al escribir. Es suficiente para este caso.
+
 ---
 
 ## 10.11. Resumen y Buenas Prácticas

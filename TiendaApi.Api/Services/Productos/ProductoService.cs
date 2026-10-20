@@ -46,6 +46,15 @@ IOutputCacheStore outputCacheStore
     /// Obtener todos los productos con patrón cache-aside.
     /// Devuelve: Result.Success(List) | Result.Failure nunca
     /// </summary>
+    /// <remarks>
+    /// ⚠️ NOTA PARA EL ALUMNO: Este método es un EJEMPLO DIDÁCTICO de cache-aside.
+    /// En la práctica, NADIE lo llama — el controller siempre usa <see cref="FindAllPagedAsync"/>.
+    /// Este código está aquí para enseñar el patrón. En producción, ELIMINAR este método
+    /// porque:
+    /// 1. Nunca se ejecuta (dead code).
+    /// 2. Cachea "productos:all" que NUNCA se invalida (solo TTL).
+    /// 3. Si alguien lo llamara, vería datos stale hasta 10 minutos tras cada escritura.
+    /// </remarks>
     public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync()
     {
         logger.LogInformation("Obteniendo todos los productos");
@@ -70,6 +79,16 @@ IOutputCacheStore outputCacheStore
     /// Obtener productos paginados con filtros.
     /// Devuelve: Result.Success(PagedResult) | Result.Failure nunca
     /// </summary>
+    /// <remarks>
+    /// 🎓 NOTA PARA EL ALUMNO: Este método NO cachea, a diferencia de <see cref="FindAllAsync"/>.
+    /// ¿Por qué? Porque la paginación tiene INFINITAS combinaciones de filtros:
+    /// ?page=1&amp;size=10&amp;categoria=X, ?page=2&amp;size=20&amp;categoria=Y, etc.
+    /// Cada combinación sería una clave de cache distinta que:
+    /// 1. Llenaría la memoria con claves que casi nunca se reusarían.
+    /// 2. Sería imposible invalidar eficientemente (habría que adivinar qué combinaciones existen).
+    /// La OutputCache en el controller (tag "productos") sí cachea la respuesta HTTP
+    /// con TTL corto (60s) y se invalida por tag al escribir. Es suficiente para este caso.
+    /// </remarks>
     public async Task<Result<PagedResult<ProductoDto>, DomainError>> FindAllPagedAsync(ProductoFilterDto filter)
     {
         logger.LogInformation("Obteniendo productos paginados - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
