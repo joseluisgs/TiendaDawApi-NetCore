@@ -14,6 +14,8 @@
     <PackageVersion Include="AutoMapper" Version="16.2.0" />
     <PackageVersion Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageVersion Include="CSharpFunctionalExtensions" Version="3.7.0" />
+    <!-- Security: forzar versión parchada de Pkcs (transitive, vulnerabilidad GHSA-846f-f764-76mx) -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.1" />
     <PackageVersion Include="HotChocolate.AspNetCore" Version="16.6.7" />
     <PackageVersion Include="HotChocolate.AspNetCore.Authorization" Version="16.6.7" />
