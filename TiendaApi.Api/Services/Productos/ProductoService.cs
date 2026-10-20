@@ -188,6 +188,9 @@ IOutputCacheStore outputCacheStore
         var saved = await productoRepository.SaveAsync(dto.ToEntity());
         var resultDto = saved.ToDto();
 
+        // Invalidar OutputCache tras crear (el listado paginado cambió)
+        await InvalidarCacheProductoAsync();
+
         return Result.Success<ProductoDto, DomainError>(resultDto)
             .Tap(dto =>
             {
