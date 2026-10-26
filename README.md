@@ -6,7 +6,6 @@
 [![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-10-blue)](https://dotnet.microsoft.com/en-us/apps/aspnet)
 [![C#](https://img.shields.io/badge/C%23-14-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![EF Core](https://img.shields.io/badge/EF%20Core-10-blue)](https://docs.microsoft.com/en-us/ef/core/)
-[![OAuth2](https://img.shields.io/badge/OAuth%202.0-Google%20%7C%20GitHub%20%7C%20Microsoft-blue)](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/social/)
 
 
 **Ejemplo educativo de uso de APIS para el desarrollo de servicios backend en .NET 10 ASP.NET Core y C# 14.**
@@ -22,9 +21,9 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - 🏪 **Gestión de Productos y Categorías**: CRUD completo con validaciones
 - 🛒 **Sistema de Pedidos**: Documentos embebidos con MongoDB
-- 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER) + Login externo OAuth 2.0 (Google, GitHub, Microsoft)
+- 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER)
 - 💾 **Multi-Base de Datos**: PostgreSQL (relacional), MongoDB (documentos), Redis (caché)
-- 🔐 **Seguridad**: JWT, OAuth 2.0, validaciones FluentValidation, manejo global de excepciones
+- 🔐 **Seguridad**: JWT, validaciones FluentValidation, manejo global de excepciones
 - 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets y SignalR para notificaciones en tiempo real
 - ⏰ **Background Jobs**: Tareas programadas con BackgroundService para reportes y sincronización
 - 📊 **Versionado de API**: Control de versiones por URL.
@@ -1064,14 +1063,10 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 
 ### Auth (versionado)
 
-| Endpoint                              | Método | Auth | Descripción                                        |
-| ------------------------------------- | ------ | ---- | -------------------------------------------------- |
-| `/api/v1/auth/signup`                | POST   | No   | Registrar nuevo usuario                            |
-| `/api/v1/auth/signin`                | POST   | No   | Iniciar sesión y obtener JWT                       |
-| `/api/v1/auth/external/{provider}`   | GET    | No   | Login externo: redirige a Google/GitHub/Microsoft  |
-| `/api/v1/auth/external-callback`     | GET    | No   | Callback del proveedor → devuelve JWT propio       |
-
-> 🚪 **Login Externo OAuth 2.0**: los proveedores se activan con `Auth:{Provider}:Enabled` en appsettings. Los ClientId/Secret van en user-secrets o variables de entorno, nunca en appsettings.json.
+| Endpoint              | Método | Auth | Descripción                  |
+| --------------------- | ------ | ---- | ---------------------------- |
+| `/api/v1/auth/signup` | POST   | No   | Registrar nuevo usuario      |
+| `/api/v1/auth/signin` | POST   | No   | Iniciar sesión y obtener JWT |
 
 ### Categorías
 

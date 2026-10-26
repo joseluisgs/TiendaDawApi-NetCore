@@ -11,12 +11,9 @@
     <!-- Versiones centralizadas en Directory.Packages.props -->
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
-    <PackageReference Include="AspNet.Security.OAuth.GitHub" />
     <PackageReference Include="AutoMapper" />
     <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="CSharpFunctionalExtensions" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" />
     <!-- Security: forzar versión parchada de Pkcs (transitive, vulnerabilidad GHSA-846f-f764-76mx) -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="FluentValidation.AspNetCore" />

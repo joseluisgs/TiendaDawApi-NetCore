@@ -32,7 +32,6 @@ public class AuthServiceTests
     {
         _authService = new AuthService(
             _mockUserRepository.Object,
-            new Mock<TiendaApi.Api.Repositories.Auth.IUserLoginRepository>().Object,
             _mockJwtService.Object,
             _mockLogger.Object,
             _mockRegisterValidator.Object,

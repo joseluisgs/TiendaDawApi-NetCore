@@ -1,10 +1,8 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
-using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Models;
-using TiendaApi.Api.Repositories.Auth;
 using TiendaApi.Api.Repositories.Usuarios;
 using TiendaApi.Api.Validators.Usuarios;
 using AuthErrors = TiendaApi.Api.Errors.Auth.AuthError;
@@ -17,7 +15,6 @@ namespace TiendaApi.Api.Services.Auth;
 /// </summary>
 public class AuthService(
     IUserRepository userRepository,
-    IUserLoginRepository userLoginRepository,
     IJwtService jwtService,
     ILogger<AuthService> logger,
     IValidator<RegisterDto> registerValidator,
@@ -173,74 +170,6 @@ public class AuthService(
         }
 
         return UnitResult.Success<DomainError>();
-    }
-
-    /// <summary>
-    /// Inicia sesión con un proveedor externo (OAuth 2.0).
-    /// Flujo: buscar vinculación → buscar por email → crear usuario → generar JWT.
-    /// Devuelve: Result.Success(AuthResponseDto) | Result.Failure(BusinessRule)
-    /// </summary>
-    public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(ExternalLoginDto info)
-    {
-        logger.LogInformation("Login externo con {Provider}", info.LoginProvider);
-
-        if (string.IsNullOrWhiteSpace(info.Email))
-        {
-            return Result.Failure<AuthResponseDto, DomainError>(
-                new BusinessRuleError("El proveedor no devolvió email; no se puede identificar al usuario"));
-        }
-
-        // 1. ¿Ya existe una vinculación a este login externo?
-        var userLogin = await userLoginRepository.FindByProviderAsync(
-            info.LoginProvider, info.ProviderKey);
-
-        User? user = null;
-        if (userLogin is not null)
-        {
-            user = await userRepository.FindByIdAsync(userLogin.UserId);
-        }
-
-        // 2. ¿Existe ya un usuario local con ese email? → Vincular en vez de duplicar
-        if (user is null)
-        {
-            user = await userRepository.FindByEmailAsync(info.Email);
-        }
-
-        // 3. Primera vez: se crea la cuenta local, sin contraseña real
-        if (user is null)
-        {
-            var username = info.Name ?? info.Email.Split('@')[0];
-            user = new User
-            {
-                Username = username,
-                Email = info.Email,
-                // Dummy hash: el login normal fallará, pero no hay NullReferenceException
-                PasswordHash = $"OAUTH-{info.LoginProvider}",
-                Avatar = info.Avatar,
-                Role = "USER",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-            await userRepository.SaveAsync(user);
-            logger.LogInformation("Usuario OAuth creado: {Email} ({Provider})", info.Email, info.LoginProvider);
-        }
-
-        // 4. Vincular login externo si no existe
-        if (userLogin is null)
-        {
-            await userLoginRepository.SaveAsync(new UserLogin
-            {
-                UserId = user.Id,
-                LoginProvider = info.LoginProvider,
-                ProviderKey = info.ProviderKey,
-                ProviderDisplayName = info.LoginProvider,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            });
-        }
-
-        // 5. Generar JWT propio (mismo flujo que login normal)
-        return Result.Success<AuthResponseDto, DomainError>(GenerateAuthResponse(user));
     }
 
     /// <summary>

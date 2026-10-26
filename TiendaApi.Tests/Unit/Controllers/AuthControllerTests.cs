@@ -28,11 +28,7 @@ public class AuthControllerTests
         _mockAuthService = new Mock<IAuthService>();
         _mockCacheService = new Mock<ICacheService>();
         _mockLogger = new Mock<ILogger<AuthController>>();
-        _controller = new AuthController(
-            _mockAuthService.Object,
-            new Mock<Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider>().Object,
-            new Mock<Microsoft.AspNetCore.Authentication.IAuthenticationService>().Object,
-            _mockLogger.Object);
+        _controller = new AuthController(_mockAuthService.Object, _mockLogger.Object);
     }
 
     #region SignUp Tests
@@ -324,11 +320,7 @@ public class AuthControllerTests
     public void Constructor_ConDependenciasValidas_CreaControlador()
     {
         // Arrange & Act
-        var controller = new AuthController(
-            _mockAuthService.Object,
-            new Mock<Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider>().Object,
-            new Mock<Microsoft.AspNetCore.Authentication.IAuthenticationService>().Object,
-            _mockLogger.Object);
+        var controller = new AuthController(_mockAuthService.Object, _mockLogger.Object);
 
         // Assert
         controller.Should().NotBeNull();
