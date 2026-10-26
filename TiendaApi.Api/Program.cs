@@ -57,6 +57,7 @@ services.AddDatabases(configuration, environment);
 
 // Auth
 services.AddAuthentication(configuration);
+services.AddOAuthDoors(configuration);
 
 // Business
 services.AddRepositories(configuration);
