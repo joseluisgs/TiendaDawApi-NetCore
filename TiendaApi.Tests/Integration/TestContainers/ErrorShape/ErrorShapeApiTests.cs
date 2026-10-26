@@ -35,6 +35,14 @@ public class ErrorShapeApiTests
         var connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         var mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
 
+        // Forzar connection strings como environment variables ANTES de crear la factory
+        Environment.SetEnvironmentVariable(
+            "ConnectionStrings__DefaultConnection", connectionString);
+        Environment.SetEnvironmentVariable(
+            "MongoDbSettings__ConnectionString", mongoConnectionString);
+        Environment.SetEnvironmentVariable(
+            "MongoDbSettings__DatabaseName", DatabaseName);
+
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Development");
@@ -44,7 +52,11 @@ public class ErrorShapeApiTests
                 {
                     { "ConnectionStrings:DefaultConnection", connectionString },
                     { "MongoDbSettings:ConnectionString", mongoConnectionString },
-                    { "MongoDbSettings:DatabaseName", DatabaseName }
+                    { "MongoDbSettings:DatabaseName", DatabaseName },
+                    // OAuth desactivado en tests (no hay ClientId/Secret)
+                    { "Auth:Google:Enabled", "false" },
+                    { "Auth:GitHub:Enabled", "false" },
+                    { "Auth:Microsoft:Enabled", "false" }
                 });
             });
         });

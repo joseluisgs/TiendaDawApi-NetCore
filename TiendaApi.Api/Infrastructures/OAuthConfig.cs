@@ -33,46 +33,60 @@ public static class OAuthConfig
 
         if (configuration.GetValue<bool>("Auth:Google:Enabled"))
         {
-            auth.AddGoogle(options =>
+            var clientId = configuration["Google:ClientId"];
+            var clientSecret = configuration["Google:ClientSecret"];
+            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
             {
-                options.ClientId = configuration["Google:ClientId"]
-                    ?? throw new InvalidOperationException(
-                        "Google:ClientId no configurado (user-secrets o env var)");
-                options.ClientSecret = configuration["Google:ClientSecret"]
-                    ?? throw new InvalidOperationException(
-                        "Google:ClientSecret no configurado (user-secrets o env var)");
-                options.UsePkce = true;
-            });
-            Log.Information("🚪 Puerta de login externo activa: Google");
+                Log.Warning("🚪 Auth:Google:Enabled=true pero falta ClientId/ClientSecret — puerta Google NO registrada");
+            }
+            else
+            {
+                auth.AddGoogle(options =>
+                {
+                    options.ClientId = clientId;
+                    options.ClientSecret = clientSecret;
+                    options.UsePkce = true;
+                });
+                Log.Information("🚪 Puerta de login externo activa: Google");
+            }
         }
 
         if (configuration.GetValue<bool>("Auth:GitHub:Enabled"))
         {
-            auth.AddGitHub(options =>
+            var clientId = configuration["GitHub:ClientId"];
+            var clientSecret = configuration["GitHub:ClientSecret"];
+            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
             {
-                options.ClientId = configuration["GitHub:ClientId"]
-                    ?? throw new InvalidOperationException(
-                        "GitHub:ClientId no configurado (user-secrets o env var)");
-                options.ClientSecret = configuration["GitHub:ClientSecret"]
-                    ?? throw new InvalidOperationException(
-                        "GitHub:ClientSecret no configurado (user-secrets o env var)");
-            });
-            Log.Information("🚪 Puerta de login externo activa: GitHub");
+                Log.Warning("🚪 Auth:GitHub:Enabled=true pero falta ClientId/ClientSecret — puerta GitHub NO registrada");
+            }
+            else
+            {
+                auth.AddGitHub(options =>
+                {
+                    options.ClientId = clientId;
+                    options.ClientSecret = clientSecret;
+                });
+                Log.Information("🚪 Puerta de login externo activa: GitHub");
+            }
         }
 
         if (configuration.GetValue<bool>("Auth:Microsoft:Enabled"))
         {
-            // AddMicrosoftAccount viene en caja del SDK: no necesita paquete NuGet extra
-            auth.AddMicrosoftAccount(options =>
+            var clientId = configuration["Microsoft:ClientId"];
+            var clientSecret = configuration["Microsoft:ClientSecret"];
+            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
             {
-                options.ClientId = configuration["Microsoft:ClientId"]
-                    ?? throw new InvalidOperationException(
-                        "Microsoft:ClientId no configurado (user-secrets o env var)");
-                options.ClientSecret = configuration["Microsoft:ClientSecret"]
-                    ?? throw new InvalidOperationException(
-                        "Microsoft:ClientSecret no configurado (user-secrets o env var)");
-            });
-            Log.Information("🚪 Puerta de login externo activa: Microsoft");
+                Log.Warning("🚪 Auth:Microsoft:Enabled=true pero falta ClientId/ClientSecret — puerta Microsoft NO registrada");
+            }
+            else
+            {
+                auth.AddMicrosoftAccount(options =>
+                {
+                    options.ClientId = clientId;
+                    options.ClientSecret = clientSecret;
+                });
+                Log.Information("🚪 Puerta de login externo activa: Microsoft");
+            }
         }
 
         return services;

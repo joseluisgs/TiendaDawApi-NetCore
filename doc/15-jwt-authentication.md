@@ -15,7 +15,16 @@
   - [15.10. Configuracion de appsettings.json](#1510-configuracion-de-appsettingsjson)
   - [15.11. Resumen y Buenas Practicas](#1511-resumen-y-buenas-practicas)
   - [15.12. Enfoque Personalizado - Nuestra Implementacion](#1512-enfoque-personalizado---nuestra-implementacion)
-  - [15.13. Comparacion del Middleware](#1513-comparacion-del-middleware)
+  - [15.13. Login Externo con OAuth 2.0](#1513-login-externo-con-oauth-20)
+    - [15.13.1. ¿Qué es OAuth 2.0 y por qué usarlo?](#15131--qués-oauth-20-y-por-qué-usarlo)
+    - [15.13.2. Arquitectura: Puertas Múltiples](#15132-arquitectura-puertas-múltiples)
+    - [15.13.3. Flujo OAuth Paso a Paso](#15133-flujo-oauth-paso-a-paso)
+    - [15.13.4. Arquitectura Interna del Proyecto](#15134-arquitectura-interna-del-proyecto)
+    - [15.13.5. Configuración Completa](#15135-configuración-completa)
+    - [15.13.6. Tabla Comparativa de Proveedores](#15136-tabla-comparativa-de-proveedores)
+    - [15.13.7. Tabla de Datos: UserLogin](#15137-tabla-de-datos-userlogin)
+    - [15.13.8. Puntos Clave para el Alumno](#15138-puntos-clave-para-el-alumno)
+    - [15.13.9. ¿Por qué NO usamos ASP.NET Core Identity?](#15139--por-qué-no-usamos-aspnet-core-identity)
 
 ---
 
@@ -2096,30 +2105,65 @@ Request --> Authentication Middleware --> Authorization Middleware --> Controlle
 
 ## 15.13. Login Externo con OAuth 2.0
 
-### Concepto: Puertas Múltiples
+### 15.13.1. ¿Qué es OAuth 2.0 y por qué usarlo?
 
-OAuth 2.0 añade **puertas de login adicionales** al lado de la puerta principal (JWT). El cliente elige cuál usar:
+OAuth 2.0 es un **estándar de autorización** que permite a un usuario autenticarse con un proveedor externo (Google, GitHub, Microsoft) sin crear una contraseña nueva en nuestra aplicación.
+
+**¿Qué aporta al proyecto?**
+
+| Beneficio | Explicación |
+|-----------|-------------|
+| **UX mejorada** | El usuario no necesita crear ni recordar otra contraseña |
+| **Registro automático** | Primer login crea la cuenta local sin formulario |
+| **Seguridad delegada** | Google/Microsoft gestionan 2FA, detección de phishing, etc. |
+| **Educación** | Los alumnos aprenden un estándar real usado en producción |
+
+**¿Qué NO es OAuth 2.0?**
+
+| Confusión común | Aclaración |
+|----------------|-----------|
+| OAuth ≠ OpenID Connect (OIDC) | OAuth es para autorización; OIDC es para identidad. ASP.NET Core los mezcla en el mismo middleware |
+| OAuth ≠ SAML | SAML es XML-based, usado en empresas. OAuth es JSON/REST |
+| OAuth ≠ API Key | API Key es estático; OAuth usa tokens temporales con flujo de redirect |
+
+### 15.13.2. Arquitectura: Puertas Múltiples
+
+OAuth 2.0 añade **puertas de login adicionales** al lado de la puerta principal (JWT). El cliente elige cuál usar. La clave es que **todas las puertas convergen en el mismo JWT**:
 
 ```mermaid
 flowchart TB
-    Client[Cliente] --> Menu{¿Qué puerta?}
-    Menu -->|Email/Password| JWT[JWT Bearer<br/>POST /auth/signin]
-    Menu -->|Google| Google[Google OAuth<br/>GET /auth/external/Google]
-    Menu -->|GitHub| GitHub[GitHub OAuth<br/>GET /auth/external/GitHub]
-    Menu -->|Microsoft| MS[Microsoft OAuth<br/>GET /auth/external/Microsoft]
-    JWT --> Token[JWT propio]
-    Google -->|redirect + callback| Token
-    GitHub -->|redirect + callback| Token
-    MS -->|redirect + callback| Token
-    Token --> API[Endpoints protegidos]
-    
+    subgraph "Puertas de Login"
+        Client[Cliente HTTP]
+        Client --> Menu{¿Qué puerta?}
+        Menu -->|Email/Password| JWT[JWT Bearer<br/>POST /auth/signin]
+        Menu -->|Google| Google[Google OAuth<br/>GET /auth/external/Google]
+        Menu -->|GitHub| GitHub[GitHub OAuth<br/>GET /auth/external/GitHub]
+        Menu -->|Microsoft| MS[Microsoft OAuth<br/>GET /auth/external/Microsoft]
+    end
+
+    subgraph "Convergencia"
+        JWT --> Token[JWT propio]
+        Google -->|redirect + callback| Token
+        GitHub -->|redirect + callback| Token
+        MS -->|redirect + callback| Token
+    end
+
+    Token --> API[Endpoints protegidos<br/>[Authorize]]
+
     style JWT fill:#2ecc71,color:#fff
     style Token fill:#3498db,color:#fff
+    style API fill:#9b59b6,color:#fff
 ```
 
-**Clave:** El JWT emitido tras OAuth es **idéntico** al del login normal. Los endpoints no notan la diferencia.
+**¿Por qué convergen en el mismo JWT?**
 
-### Flujo OAuth (Challenge → Callback → JWT)
+Porque el middleware de autenticación **no sabe cómo se generó el token**. Solo valida:
+1. Que el JWT sea firmado correctamente
+2. Que tenga los claims necesarios (role, email, etc.)
+
+Da igual si el usuario se logueó con password o con Google — el JWT resultante es **idéntico**.
+
+### 15.13.3. Flujo OAuth Paso a Paso
 
 ```mermaid
 sequenceDiagram
@@ -2127,21 +2171,144 @@ sequenceDiagram
     participant API as API TiendaDaw
     participant G as Google OAuth
 
+    Note over B,G: FASE 1: Challenge (iniciar login)
     B->>GET /api/v1/auth/external/Google
-    API->>B: 302 Redirect a accounts.google.com
-    B->>G: Login en Google
-    G->>B: 302 Redirect a /api/v1/auth/external-callback?code=xxx
-    B->>GET /api/v1/auth/external-callback?code=xxx
-    API->>G: Intercambiar code por tokens
-    G-->>API: Email, Nombre, Avatar
-    API->>API: Buscar vinculación → buscar por email → crear usuario
+    API->>API: Verificar que "Google" está configurado
+    API->>B: 302 Redirect a accounts.google.com/o/oauth2/v2/auth?...
+
+    Note over B,G: FASE 2: Autenticación en el proveedor
+    B->>G: Login con cuenta Google
+    G->>B: 302 Redirect a /api/v1/auth/external-callback?code=4/xxx
+
+    Note over B,G: FASE 3: Callback (procesar respuesta)
+    B->>GET /api/v1/auth/external-callback?code=4/xxx
+    API->>G: POST /token (intercambiar code por access_token)
+    G-->>API: { access_token: "ya29.xxx", id_token: "eyJ..." }
+    API->>G: GET /userinfo (obtener email, nombre, avatar)
+    G-->>API: { email: "user@gmail.com", name: "Juan", picture: "..." }
+
+    Note over API,B: FASE 4: Crear/vincular usuario + JWT
+    API->>API: ¿Existe vinculación Google+ProviderKey?
+    API->>API: ¿Existe usuario con ese email?
+    API->>API: Si no → crear usuario local
     API->>API: Generar JWT propio
-    API-->>B: 200 { token: "jwt...", user: {...} }
+    API-->>B: 200 { token: "eyJhbGci...", user: {...} }
 ```
 
-### Configuración
+### 15.13.4. Arquitectura Interna del Proyecto
 
-**appsettings.json** (Enabled: false por defecto):
+#### Configuración condicional (OAuthConfig.cs)
+
+```csharp
+// Solo se registra el esquema si Auth:{Proveedor}:Enabled = true
+// Con la puerta cerrada, la app ni siquiera conoce al proveedor
+if (configuration.GetValue<bool>("Auth:Google:Enabled"))
+{
+    auth.AddGoogle(options =>
+    {
+        options.ClientId = configuration["Google:ClientId"]
+            ?? throw new InvalidOperationException("Google:ClientId no configurado");
+        options.ClientSecret = configuration["Google:ClientSecret"]
+            ?? throw new InvalidOperationException("Google:ClientSecret no configurado");
+        options.UsePkce = true;  // Protección adicional aunque sea app web
+    });
+}
+```
+
+**¿Por qué condicional?** En producción quizás solo quieras Google. En desarrollo quizás los tres. La configuración decide, no el código.
+
+#### Modelo de datos: UserLogin
+
+```mermaid
+erDiagram
+    USER ||--o{ USER_LOGIN : "vincula"
+    
+    USER {
+        bigint Id PK
+        string Username
+        string Email
+        string PasswordHash
+        string Role
+    }
+    
+    USER_LOGIN {
+        bigint Id PK
+        bigint UserId FK
+        string LoginProvider
+        string ProviderKey
+        string ProviderDisplayName
+    }
+```
+
+**¿Por qué una tabla separada?** Un usuario puede tener múltiples logins externos (Google + GitHub). La unicidad es `(LoginProvider, ProviderKey)` — un proveedor externo solo puede estar vinculado a un usuario local.
+
+#### Lógica de LoginExternalAsync (AuthService.cs)
+
+```csharp
+public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(
+    ExternalLoginDto info)
+{
+    // 1. ¿Ya existe vinculación? → Buscar usuario directamente
+    var userLogin = await userLoginRepository.FindByProviderAsync(
+        info.LoginProvider, info.ProviderKey);
+
+    // 2. ¿Existe usuario con ese email? → Vincular (no duplicar)
+    if (user is null)
+        user = await userRepository.FindByEmailAsync(info.Email);
+
+    // 3. Primera vez → Crear cuenta local sin contraseña real
+    if (user is null)
+    {
+        user = new User
+        {
+            Email = info.Email,
+            PasswordHash = $"OAUTH-{info.LoginProvider}", // Dummy hash
+            Role = "USER"
+        };
+        await userRepository.SaveAsync(user);
+    }
+
+    // 4. Vincular login externo
+    await userLoginRepository.SaveAsync(new UserLogin { ... });
+
+    // 5. Generar JWT propio (mismo flujo que login normal)
+    return Result.Success(GenerateAuthResponse(user));
+}
+```
+
+**¿Por qué dummy hash?** El campo `PasswordHash` es obligatorio (60 chars de BCrypt). Un usuario OAuth no tiene password, pero el campo no puede ser null. Con `"OAUTH-Google"` el login normal fallará (BCrypt no valida), pero no hay `NullReferenceException`.
+
+### 15.13.5. Configuración Completa
+
+#### Paso 1: Crear apps en los proveedores
+
+| Proveedor | Dónde | URL de callback |
+|-----------|-------|-----------------|
+| **Google** | console.cloud.google.com → APIs & Services → Credentials | `http://localhost:5031/api/v1/auth/external-callback` |
+| **GitHub** | github.com → Settings → Developer settings → OAuth Apps | `http://localhost:5031/api/v1/auth/external-callback` |
+| **Microsoft** | entra.microsoft.com → App registrations | `http://localhost:5031/api/v1/auth/external-callback` |
+
+#### Paso 2: Configurar user-secrets
+
+```bash
+cd TiendaApi.Api
+
+# Google
+dotnet user-secrets set "Google:ClientId" "xxxx.apps.googleusercontent.com"
+dotnet user-secrets set "Google:ClientSecret" "GOCSPX-xxxx"
+
+# GitHub
+dotnet user-secrets set "GitHub:ClientId" "Iv1.xxxx"
+dotnet user-secrets set "GitHub:ClientSecret" "xxxx"
+
+# Microsoft
+dotnet user-secrets set "Microsoft:ClientId" "xxxx"
+dotnet user-secrets set "Microsoft:ClientSecret" "xxxx"
+```
+
+#### Paso 3: Activar proveedores
+
+**appsettings.json** (producción — todo apagado):
 ```json
 {
   "Auth": {
@@ -2152,7 +2319,7 @@ sequenceDiagram
 }
 ```
 
-**appsettings.Development.json** (activar proveedores):
+**appsettings.Development.json** (desarrollo — todo activo):
 ```json
 {
   "Auth": {
@@ -2163,25 +2330,26 @@ sequenceDiagram
 }
 ```
 
-**Secretos** (user-secrets, NUNCA en appsettings):
+#### Paso 4: Probar
+
 ```bash
-dotnet user-secrets set "Google:ClientId" "xxxx.apps.googleusercontent.com"
-dotnet user-secrets set "Google:ClientSecret" "GOCSPX-xxxx"
-dotnet user-secrets set "GitHub:ClientId" "Iv1.xxxx"
-dotnet user-secrets set "GitHub:ClientSecret" "xxxx"
-dotnet user-secrets set "Microsoft:ClientId" "xxxx"
-dotnet user-secrets set "Microsoft:ClientSecret" "xxxx"
+# Abrir en navegador (no en Swagger — necesita redirect)
+http://localhost:5031/api/v1/auth/external/Google
 ```
 
-### Tabla de Proveedores
+### 15.13.6. Tabla Comparativa de Proveedores
 
-| Proveedor | Email siempre disponible | Paquete NuGet | En caja del SDK |
-|-----------|:------------------------:|---------------|:---------------:|
-| **Google** | ✅ Sí | `Authentication.Google` | ✅ Sí |
-| **GitHub** | ⚠️ Puede ser null | `AspNet.Security.OAuth.GitHub` | ❌ No |
-| **Microsoft** | ✅ Sí | `Authentication.MicrosoftAccount` | ✅ Sí |
+| Característica | Google | GitHub | Microsoft |
+|---------------|:------:|:------:|:---------:|
+| **Email siempre disponible** | ✅ Sí | ⚠️ Puede ser null | ✅ Sí |
+| **Nombre disponible** | ✅ Sí | ✅ Sí | ✅ Sí |
+| **Avatar disponible** | ✅ Sí | ✅ Sí | ✅ Sí |
+| **PKCE recomendado** | ✅ Sí | No necesario | No necesario |
+| **Paquete NuGet** | En caja SDK | Comunidad | En caja SDK |
+| **Facilidad de setup** | Media (OAuth consent screen) | Fácil (5 min) | Media (entra.microsoft.com) |
+| **Ideal para** | Todos los usuarios | Desarrolladores | Entornos educativos/corporativos |
 
-### Tabla de Datos: UserLogin
+### 15.13.7. Tabla de Datos: UserLogin
 
 ```csharp
 public class UserLogin
@@ -2194,21 +2362,26 @@ public class UserLogin
 }
 ```
 
-### Lógica de LoginExternalAsync
-
-```
-1. ¿Existe vinculación (LoginProvider + ProviderKey)? → Buscar usuario
-2. ¿Existe usuario con ese email? → Vincular (no duplicar)
-3. ¿Es la primera vez? → Crear usuario con dummy hash "OAUTH-{Provider}"
-4. Generar JWT propio (mismo flujo que login normal)
-```
-
-### Puntos Clave para el Alumno
+### 15.13.8. Puntos Clave para el Alumno
 
 | Concepto | Explicación |
 |----------|-------------|
-| **No rompe JWT** | OAuth añade esquemas, no modifica el default |
-| **Dummy hash** | Usuarios OAuth tienen `PasswordHash = "OAUTH-Google"` — el login normal fallará |
+| **No rompe JWT** | OAuth añade esquemas, no modifica el default scheme |
+| **Dummy hash** | `"OAUTH-Google"` en PasswordHash — login normal falla sin crash |
 | **Vinculación por email** | Si el email ya existe, se vincula en vez de crear duplicado |
-| **Configuración condicional** | Solo se registra el esquema si `Auth:{Provider}:Enabled = true` |
+| **Configuración condicional** | Solo se registra si `Auth:{Provider}:Enabled = true` |
 | **GitHub sin email** | Si el perfil es privado, GitHub no devuelve email → error controlado |
+| **PKCE** | Protección contra interceptación del code OAuth (recomendado en Google) |
+| **ExternalLoginDto** | Nuestro DTO propio, sin depender de ASP.NET Core Identity |
+
+### 15.13.9. ¿Por qué NO usamos ASP.NET Core Identity?
+
+| Aspecto | Identity | Nuestro enfoque |
+|---------|----------|-----------------|
+| **Tablas** | 8+ tablas (Users, Roles, Claims, Logins, Tokens...) | 2 tablas (User, UserLogin) |
+| **Complejidad** | Alta — muchas abstracciones | Baja — control total |
+| **Flexibilidad** | Limitada por lo que Identity permite | Total — podemos personalizar todo |
+| **Para OAuth** | Tiene `SignInManager.GetExternalLoginInfoAsync()` | Parseamos los claims manualmente |
+| **Para este proyecto** | Sobredimensionado | Adecuado para una API REST educativa |
+
+**Identity es excelente para apps grandes con múltiples features de auth (2FA, password reset, lockout). Para una API educativa con JWT + OAuth básico, nuestro enfoque es más claro y enseña más.**

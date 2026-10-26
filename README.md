@@ -104,6 +104,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - 🏪 **CRUD Completo**: Productos, Categorías, Pedidos y Usuarios
 - 🔐 **Autenticación JWT**: Token-based con roles y claims
+- 🚪 **Login Externo OAuth 2.0**: Google, GitHub y Microsoft como puertas alternativas al JWT
 - 🔒 **HTTPS + HSTS**: Redirección HTTP→HTTPS, HSTS 365 días, Security Headers
 - 📧 **Notificaciones por Email**: Envío asíncrono con MailKit
 - 📊 **Cacheo con Redis**: Patrón Cache-Aside para mejorar rendimiento
@@ -132,6 +133,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **MongoDB 7.0** - Base de datos de documentos
 - **Redis** - Cache distribuido
 - **JWT** - Autenticación basada en tokens
+- **OAuth 2.0 (Google/GitHub/Microsoft)** - Login externo opcional
 - **FluentValidation** - Validaciones declarativas
 - **AutoMapper** - Mapeo de objetos
 - **Websockets/SignalR** - WebSockets en tiempo real puros y usando SignalR
@@ -177,7 +179,16 @@ start http://localhost:5031/swagger
 # Health check (200 OK / 503 si alguna dependencia cae)
 start http://localhost:5031/health
 
+# Login externo OAuth 2.0 (requiere configurar ClientId/Secret)
+# GET http://localhost:5031/api/v1/auth/external/Google
+# GET http://localhost:5031/api/v1/auth/external/GitHub
+# GET http://localhost:5031/api/v1/auth/external/Microsoft
+
 > **Nota:** En producción, la API usa HTTPS obligatorio con HSTS.
+
+> **OAuth 2.0:** Para activar los logins externos, configura los ClientId/Secret con
+> `dotnet user-secrets` y activa los proveedores en `appsettings.Development.json`
+> (`Auth:{Provider}:Enabled = true`). Ver [doc/15](doc/15-jwt-authentication.md#1513-login-externo-con-oauth-20).
 ```
 
 ### Desarrollo en Producción con Docker
@@ -378,7 +389,7 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 ### Seguridad
 | #   | Documento | Descripción |
 | --- | --- | --- |
-| 15 | [15-jwt-authentication.md](doc/15-jwt-authentication.md) | JWT Authentication |
+| 15 | [15-jwt-authentication.md](doc/15-jwt-authentication.md) | JWT Authentication + OAuth 2.0 Externo |
 | 16 | [16-autorizacion-roles.md](doc/16-autorizacion-roles.md) | Autorización Roles |
 | 17 | [17-seguridad-http.md](doc/17-seguridad-http.md) | Seguridad HTTP |
 
@@ -461,6 +472,15 @@ classDiagram
     +GetAvatarUrl()
   }
 
+  class UserLogin {
+    +long Id
+    +long UserId
+    +string LoginProvider
+    +string ProviderKey
+    +string? ProviderDisplayName
+    +DateTime CreatedAt
+  }
+
   class Categoria {
     +long Id
     +string Nombre
@@ -530,6 +550,7 @@ classDiagram
   User ..> UserRole : "usa rol"
   Pedido ..> PedidoEstado : "usa estado"
   User "1" --> "*" Pedido : "referencia"
+  User "1" --> "*" UserLogin : "vincula"
   Categoria "1" --> "*" Producto : "tiene"
   Producto "*" --> "1" Categoria : "pertenece"
   Pedido "1" *-- "1" Destinatario : "compone"
@@ -565,6 +586,16 @@ erDiagram
         string Role
         bool IsDeleted
     }
+    
+    USER_LOGIN {
+        bigint Id PK
+        bigint UserId FK
+        string LoginProvider
+        string ProviderKey
+        string ProviderDisplayName
+    }
+    
+    USER ||--o{ USER_LOGIN : "vincula"
     
     CATEGORIA {
         bigint Id PK
@@ -660,9 +691,9 @@ TiendaDawApi-NetCore/
 │   │   ├── Productos/                # Servicios de productos
 │   │   ├── Storage/                  # Servicios de almacenamiento
 │   │   └── Users/                    # Servicios de usuarios
-│   ├── Repositories/                 # Acceso a datos (Categoria, Producto, User, Pedidos)
-│   ├── Models/                       # Modelos de dominio (User, Producto, Categoria, Pedido)
-│   ├── Dtos/                         # Data Transfer Objects (Request/Response)
+│   ├── Repositories/                 # Acceso a datos (Categoria, Producto, User, Pedidos, Auth)
+│   ├── Models/                       # Modelos de dominio (User, UserLogin, Producto, Categoria, Pedido)
+│   ├── Dtos/                         # Data Transfer Objects (Request/Response, Auth)
 │   ├── Data/                         # DbContext y configuración de bases de datos
 │   ├── Mappers/                      # Mapeadores (Modelos <-> DTO)
 │   ├── Validators/                   # Validadores FluentValidation
@@ -1044,6 +1075,7 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 ## 🔐 Seguridad
 
 - ✅ **JWT Authentication**: Tokens Bearer con expiración configurable
+- ✅ **OAuth 2.0 Externo**: Login con Google, GitHub y Microsoft (configurable por entorno)
 - ✅ **Role-Based Authorization**: ADMIN y USER roles con políticas granulares
 - ✅ **FluentValidation**: Validaciones declarativas en DTOs
 - ✅ **Global Exception Handler**: Respuestas de error consistentes y centralizadas
@@ -1416,6 +1448,8 @@ WS ws://localhost:5031/graphql
 | userdaw | userdaw@tienda.com | userdaw  | USER  |
 
 **Nota:** Las contraseñas son las mismas que los usernames para facilitar las pruebas.
+
+**Login externo OAuth 2.0:** También puedes iniciar sesión con Google, GitHub o Microsoft. Los usuarios creados vía OAuth tendrán la contraseña dummy `OAUTH-{Provider}` (el login normal fallará para ellos). Ver [doc/15 §15.13](doc/15-jwt-authentication.md#1513-login-externo-con-oauth-20).
 
 ## 📝 Licencia
 
