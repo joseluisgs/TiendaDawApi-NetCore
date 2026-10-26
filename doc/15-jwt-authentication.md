@@ -2091,3 +2091,124 @@ Request --> Authentication Middleware --> Authorization Middleware --> Controlle
 1. Un token JWT valido (lo validamos igual)
 2. Claims con los roles necesarios (los ahadimos igual)
 3. La configuracion de TokenValidationParameters (igual)
+
+---
+
+## 15.13. Login Externo con OAuth 2.0
+
+### Concepto: Puertas Múltiples
+
+OAuth 2.0 añade **puertas de login adicionales** al lado de la puerta principal (JWT). El cliente elige cuál usar:
+
+```mermaid
+flowchart TB
+    Client[Cliente] --> Menu{¿Qué puerta?}
+    Menu -->|Email/Password| JWT[JWT Bearer<br/>POST /auth/signin]
+    Menu -->|Google| Google[Google OAuth<br/>GET /auth/external/Google]
+    Menu -->|GitHub| GitHub[GitHub OAuth<br/>GET /auth/external/GitHub]
+    Menu -->|Microsoft| MS[Microsoft OAuth<br/>GET /auth/external/Microsoft]
+    JWT --> Token[JWT propio]
+    Google -->|redirect + callback| Token
+    GitHub -->|redirect + callback| Token
+    MS -->|redirect + callback| Token
+    Token --> API[Endpoints protegidos]
+    
+    style JWT fill:#2ecc71,color:#fff
+    style Token fill:#3498db,color:#fff
+```
+
+**Clave:** El JWT emitido tras OAuth es **idéntico** al del login normal. Los endpoints no notan la diferencia.
+
+### Flujo OAuth (Challenge → Callback → JWT)
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant API as API TiendaDaw
+    participant G as Google OAuth
+
+    B->>GET /api/v1/auth/external/Google
+    API->>B: 302 Redirect a accounts.google.com
+    B->>G: Login en Google
+    G->>B: 302 Redirect a /api/v1/auth/external-callback?code=xxx
+    B->>GET /api/v1/auth/external-callback?code=xxx
+    API->>G: Intercambiar code por tokens
+    G-->>API: Email, Nombre, Avatar
+    API->>API: Buscar vinculación → buscar por email → crear usuario
+    API->>API: Generar JWT propio
+    API-->>B: 200 { token: "jwt...", user: {...} }
+```
+
+### Configuración
+
+**appsettings.json** (Enabled: false por defecto):
+```json
+{
+  "Auth": {
+    "Google":    { "Enabled": false },
+    "GitHub":    { "Enabled": false },
+    "Microsoft": { "Enabled": false }
+  }
+}
+```
+
+**appsettings.Development.json** (activar proveedores):
+```json
+{
+  "Auth": {
+    "Google":    { "Enabled": true },
+    "GitHub":    { "Enabled": true },
+    "Microsoft": { "Enabled": true }
+  }
+}
+```
+
+**Secretos** (user-secrets, NUNCA en appsettings):
+```bash
+dotnet user-secrets set "Google:ClientId" "xxxx.apps.googleusercontent.com"
+dotnet user-secrets set "Google:ClientSecret" "GOCSPX-xxxx"
+dotnet user-secrets set "GitHub:ClientId" "Iv1.xxxx"
+dotnet user-secrets set "GitHub:ClientSecret" "xxxx"
+dotnet user-secrets set "Microsoft:ClientId" "xxxx"
+dotnet user-secrets set "Microsoft:ClientSecret" "xxxx"
+```
+
+### Tabla de Proveedores
+
+| Proveedor | Email siempre disponible | Paquete NuGet | En caja del SDK |
+|-----------|:------------------------:|---------------|:---------------:|
+| **Google** | ✅ Sí | `Authentication.Google` | ✅ Sí |
+| **GitHub** | ⚠️ Puede ser null | `AspNet.Security.OAuth.GitHub` | ❌ No |
+| **Microsoft** | ✅ Sí | `Authentication.MicrosoftAccount` | ✅ Sí |
+
+### Tabla de Datos: UserLogin
+
+```csharp
+public class UserLogin
+{
+    public long Id { get; set; }
+    public long UserId { get; set; }          // FK a User local
+    public string LoginProvider { get; set; }  // "Google", "GitHub", "Microsoft"
+    public string ProviderKey { get; set; }    // ID único en el proveedor
+    public string? ProviderDisplayName { get; set; }
+}
+```
+
+### Lógica de LoginExternalAsync
+
+```
+1. ¿Existe vinculación (LoginProvider + ProviderKey)? → Buscar usuario
+2. ¿Existe usuario con ese email? → Vincular (no duplicar)
+3. ¿Es la primera vez? → Crear usuario con dummy hash "OAUTH-{Provider}"
+4. Generar JWT propio (mismo flujo que login normal)
+```
+
+### Puntos Clave para el Alumno
+
+| Concepto | Explicación |
+|----------|-------------|
+| **No rompe JWT** | OAuth añade esquemas, no modifica el default |
+| **Dummy hash** | Usuarios OAuth tienen `PasswordHash = "OAUTH-Google"` — el login normal fallará |
+| **Vinculación por email** | Si el email ya existe, se vincula en vez de crear duplicado |
+| **Configuración condicional** | Solo se registra el esquema si `Auth:{Provider}:Enabled = true` |
+| **GitHub sin email** | Si el perfil es privado, GitHub no devuelve email → error controlado |

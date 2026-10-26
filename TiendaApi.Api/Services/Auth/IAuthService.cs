@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 
@@ -18,4 +19,9 @@ public interface IAuthService
     /// <param name="dto">Credenciales de acceso.</param>
     /// <returns>Resultado con respuesta de autenticación.</returns>
     Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto);
+
+    /// <summary>Inicia sesión con un proveedor externo (OAuth 2.0).</summary>
+    /// <param name="info">Información del login externo (Google, GitHub, Microsoft).</param>
+    /// <returns>Resultado con respuesta de autenticación (JWT propio).</returns>
+    Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(ExternalLoginDto info);
 }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using TiendaApi.Api.Repositories.Auth;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
@@ -26,6 +27,7 @@ public static class RepositoriesConfig
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUserLoginRepository, UserLoginRepository>();
 
         var pedidosRepoType = configuration["Pedidos:RepositoryType"] ?? "MongoDbNative";
 

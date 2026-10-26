@@ -28,6 +28,9 @@ public class TiendaDbContext : DbContext
     /// <summary>DbSet de Usuarios.</summary>
     public DbSet<User> Users { get; set; } = null!;
 
+    /// <summary>DbSet de vinculaciones OAuth (logins externos).</summary>
+    public DbSet<UserLogin> UserLogins { get; set; } = null!;
+
     /// <summary>
     /// Configura el contexto (interceptores de marcas de tiempo).
     /// </summary>
