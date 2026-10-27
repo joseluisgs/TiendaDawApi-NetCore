@@ -116,7 +116,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - ✅ **Validaciones**: FluentValidation declarativo
 - 🛡️ **Exception Handling**: Middleware global de errores
 - 🏥 **Health Checks**: `GET /health` con sondeo de PostgreSQL y MongoDB (200 OK / 503)
-- ⚡ **Caché HTTP**: `OutputCache` 60s con invalidación por tags + revalidación `ETag`/`304`
+- ⚡ **Caché HTTP**: `OutputCache` 60s con invalidación por tags ( HIT detectable por header `Age`; ETag/304 no implementado)
 - 🛡️ **Resiliencia con Polly**: Retry + CircuitBreaker + Timeout en el envío de emails
 - 📄 **Paginación real en BD**: `Skip/Take` (EF) y `Skip/Limit` (Mongo) con metadatos
 - 🔁 **Result → HTTP**: extensión central `ToHttpResult()` para los errores de dominio
