@@ -57,6 +57,8 @@ services.AddDatabases(configuration, environment);
 
 // Auth
 services.AddAuthentication(configuration);
+// Puertas OAuth externas (Google/GitHub/Microsoft), activas según Auth:{Proveedor}:Enabled
+services.AddOAuthDoors(configuration);
 
 // Business
 services.AddRepositories(configuration);

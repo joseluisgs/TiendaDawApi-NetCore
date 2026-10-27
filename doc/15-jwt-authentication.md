@@ -1348,7 +1348,7 @@ sequenceDiagram
 
 ## 15.6. OAuth Manual: Nuestra Implementación
 
-> 📁 **Estado en el repo**: `OAuthConfig.cs` (registro condicional de los tres proveedores) y `ExternalLoginDto.cs` están implementados. La **tabla `UserLogin`** y la **lógica `LoginExternalAsync`** de 15.6.2–15.6.3 se muestran como diseño completo de referencia (es el flujo que la versión con Identity de 15.7 implementa con las tablas de Identity).
+> 📁 **Código real del proyecto**: `OAuthConfig.cs` (registro condicional de proveedores), `AuthController.ExternalLogin/ExternalLoginCallback` (challenge + callback), `Models/UserLogin.cs` + `UserLoginRepository` (vinculaciones) y `AuthService.LoginExternalAsync` (vincula por email con dummy hash). En modo Identity, el callback usa `IdentityAuthService.LoginExternalAsync` (sección 15.7).
 
 
 ### 15.6.1. Configuración Condicional (OAuthConfig.cs)

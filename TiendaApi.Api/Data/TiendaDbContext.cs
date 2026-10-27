@@ -31,6 +31,10 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
     /// <summary>DbSet de Usuarios.</summary>
     public new DbSet<User> Users { get; set; } = null!;
 
+    /// <summary>DbSet de vinculaciones OAuth (logins externos). No confundir con
+    /// UserLogins de IdentityDbContext (AspNetUserLogins).</summary>
+    public DbSet<UserLogin> ExternalLogins { get; set; } = null!;
+
     /// <summary>
     /// Configura el contexto (interceptores de marcas de tiempo).
     /// </summary>
@@ -105,6 +109,25 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
             entity.HasIndex(u => u.Email).IsUnique();
             entity.HasIndex(u => u.Role);
             entity.HasQueryFilter(u => !u.IsDeleted);
+        });
+
+        modelBuilder.Entity<UserLogin>(entity =>
+        {
+            entity.ToTable("user_logins");
+            entity.HasKey(ul => ul.Id);
+            entity.Property(ul => ul.Id).UseIdentityAlwaysColumn();
+            entity.Property(ul => ul.LoginProvider).IsRequired().HasMaxLength(100);
+            entity.Property(ul => ul.ProviderKey).IsRequired().HasMaxLength(450);
+            entity.Property(ul => ul.ProviderDisplayName).HasMaxLength(200);
+            entity.ConfigureTimestamps();
+
+            // Un proveedor externo solo puede estar vinculado a un usuario local
+            entity.HasIndex(ul => new { ul.LoginProvider, ul.ProviderKey }).IsUnique();
+
+            entity.HasOne(ul => ul.User)
+                .WithMany()
+                .HasForeignKey(ul => ul.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
