@@ -191,6 +191,31 @@ let imagenProductoUrl = null;
     assert(r.json.status !== undefined, "falta la propiedad status");
   });
 
+  await test("Health: GET /health/live → 200 (liveness, sin dependencias)", async () => {
+    const r = await req("GET", "/health/live");
+    assertEq(st(r), 200, "status");
+  });
+
+  await test("Health: GET /health/ready → 200 (dependencias ready)", async () => {
+    const r = await req("GET", "/health/ready");
+    assertEq(st(r), 200, "status");
+  });
+
+  await test("Info: GET /version → 200 con versión del assembly", async () => {
+    const r = await req("GET", "/version");
+    assertEq(st(r), 200, "status");
+    const v = r.json?.version ?? r.json?.Version;
+    assert(v, `falta version en la respuesta: ${r.text.slice(0, 120)}`);
+  });
+
+  await test("RateLimit: respuestas llevan headers RateLimit-*", async () => {
+    const r = await req("GET", "/version");
+    const limit = r.headers.get("ratelimit-limit");
+    const remaining = r.headers.get("ratelimit-remaining");
+    assert(limit, "falta RateLimit-Limit");
+    assert(remaining !== null && remaining !== undefined, "falta RateLimit-Remaining");
+  });
+
   // ============================ AUTH ============================
   await test("Auth: POST signup usuario único → 201 con token", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
@@ -207,6 +232,14 @@ let imagenProductoUrl = null;
       body: { username: "x", email: `bad_${ts}@test.com`, password: "Test1234" },
     });
     assertEq(st(r), 400, "status");
+  });
+
+  await test("Auth: POST signup username duplicado → 409 Conflict", async () => {
+    // Reintenta el signup del usuario único: username y email ya registrados
+    const r = await req("POST", "/api/v1/auth/signup", {
+      body: { username: `auto_${ts}`, email: `auto_${ts}@test.com`, password: "Test1234" },
+    });
+    assertEq(st(r), 409, "status");
   });
 
   await test("Auth: POST signin admin → 200 con token ADMIN", async () => {
@@ -232,6 +265,25 @@ let imagenProductoUrl = null;
     assertEq(st(r), 401, "status");
   });
 
+  // OAuth externo: en este entorno las puertas están habilitadas en
+  // appsettings.Development.json pero SIN credenciales → 404 (puerta cerrada).
+  // Si algún día se configuran credenciales reales, el 404 pasa a ser 302.
+  await test("Auth ext: GET /auth/external/Google sin credenciales → 404 (puerta cerrada)", async () => {
+    const r = await req("GET", "/api/v1/auth/external/Google");
+    assertEq(st(r), 404, "status");
+    assert(String(r.json ?? r.body ?? "").includes("no está configurado"), "mensaje de proveedor no configurado");
+  });
+
+  await test("Auth ext: GET /auth/external/ProveedorInventado → 404", async () => {
+    const r = await req("GET", "/api/v1/auth/external/ProveedorInventado");
+    assertEq(st(r), 404, "status");
+  });
+
+  await test("Auth ext: GET /auth/external-callback sin autenticar → 400", async () => {
+    const r = await req("GET", "/api/v1/auth/external-callback");
+    assertEq(st(r), 400, "status");
+  });
+
   // ============================ CATEGORÍAS ============================
   await test("Categorías: GET paged → 200 con items y paginación", async () => {
     const r = await req("GET", "/api/categorias?page=0&size=2");
@@ -245,6 +297,19 @@ let imagenProductoUrl = null;
     const r = await req("GET", "/api/categorias/1");
     assertEq(st(r), 200, "status");
     assert(r.json?.id !== undefined, "falta id");
+  });
+
+  await test("Categorías: GET repetido → HIT de OutputCache (header Age)", async () => {
+    // [OutputCache(Duration=60)] cachea el GET anónimo; la 2ª petición sirve
+    // desde caché y lo delata el header Age. (ETag/304 NO está implementado:
+    // el middleware no emite ETag; ver doc/README sección caché HTTP.)
+    const url = "/api/categorias?page=0&size=2";
+    const first = await req("GET", url);
+    assertEq(st(first), 200, "status inicial");
+    const second = await req("GET", url);
+    assertEq(st(second), 200, "status repetido");
+    assert(second.headers.get("age") !== null && second.headers.get("age") !== undefined,
+      "la 2ª petición no trae header Age: no sirvió desde OutputCache");
   });
 
   await test("Categorías: GET /999999 → 404 con message", async () => {
@@ -538,6 +603,13 @@ let imagenProductoUrl = null;
     assertEq(st(r), 404, "status");
   });
 
+  await test("Users admin: GET /{id} → 200 con datos", async () => {
+    assert(userIdSignup, "falta el id del signup automático");
+    const r = await req("GET", `/api/users/${userIdSignup}`, { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assertEq(r.json?.id, userIdSignup, "id");
+  });
+
   await test("Users admin: POST → 201 y guarda id", async () => {
     const r = await req("POST", "/api/users", {
       token: adminToken,
@@ -668,6 +740,25 @@ let imagenProductoUrl = null;
       String(r.json.errors[0]?.message).toLowerCase().includes("authoriz"),
       `mensaje inesperado: ${r.json.errors[0]?.message}`
     );
+  });
+
+  await test("GraphQL: mutation createProducto con admin → 200 y limpia", async () => {
+    const nombre = `GQLOK ${ts}`;
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: {
+        query: "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }",
+        variables: { input: { nombre, precio: 9.99, stock: 1, categoriaId: 1 } },
+      },
+    });
+    assertEq(st(r), 200, "status");
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)}`);
+    const creado = r.json?.data?.createProducto;
+    assert(creado?.id, `falta id en ${JSON.stringify(r.json).slice(0, 200)}`);
+    assertEq(creado.nombre, nombre, "nombre");
+    // Limpieza del producto creado por GraphQL
+    const del = await req("DELETE", `/api/productos/${creado.id}`, { token: adminToken });
+    assert(st(del) === 204 || st(del) === 404, `cleanup status ${del.status}`);
   });
 
   // ============================ LIMPIEZA ============================
