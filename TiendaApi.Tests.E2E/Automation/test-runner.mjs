@@ -162,6 +162,33 @@ function st(r) {
   return r.status;
 }
 
+// Helpers de tiempo real: WebSocket global de Node 22+ (sin npm install).
+// SignalR se habla a mano: handshake JSON + separador de registro (char 30).
+const SEP = String.fromCharCode(30);
+const wsUrl = (p) => CONFIG.baseUrl.replace(/^http/, "ws") + p;
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function wsOpen(url, { timeoutMs = 5000 } = {}) {
+  return new Promise((resolve, reject) => {
+    const sock = new WebSocket(url);
+    const t = setTimeout(() => { try { sock.close(); } catch { } reject(new Error(`timeout abriendo ${url}`)); }, timeoutMs);
+    sock.onopen = () => { clearTimeout(t); resolve(sock); };
+    sock.onerror = () => { clearTimeout(t); reject(new Error(`error WS abriendo ${url}`)); };
+  });
+}
+function wsNextMessage(sock, timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout esperando mensaje WS")), timeoutMs);
+    sock.onmessage = (ev) => { clearTimeout(t); resolve(String(ev.data)); };
+  });
+}
+function wsWaitClose(sock, timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout esperando cierre WS")), timeoutMs);
+    sock.onclose = (ev) => { clearTimeout(t); resolve({ code: ev.code, reason: ev.reason }); };
+  });
+}
+
 const dest = (pref) => ({
   nombreCompleto: `Automation ${pref}`,
   email: `auto_${pref}_${Date.now()}@test.com`,
@@ -759,6 +786,74 @@ let imagenProductoUrl = null;
     // Limpieza del producto creado por GraphQL
     const del = await req("DELETE", `/api/productos/${creado.id}`, { token: adminToken });
     assert(st(del) === 204 || st(del) === 404, `cleanup status ${del.status}`);
+  });
+
+  // ============================ REALTIME (WebSocket + SignalR) ============================
+  // Node 22+ trae cliente WebSocket global (sin npm install, mantiene la filosofía
+  // del runner). SignalR se habla a mano: handshake JSON + separador de registro.
+  await test("Realtime WS: /ws/productos (público) recibe broadcast al crear producto", async () => {
+    const sock = await wsOpen(wsUrl("/ws/productos"));
+    const waiting = wsNextMessage(sock, 6000);
+    const r = await req("POST", "/api/productos", {
+      token: adminToken,
+      body: { nombre: `WS ${ts}`, descripcion: "Broadcast E2E", precio: 7.77, stock: 1, categoriaId: 1 },
+    });
+    assertEq(st(r), 201, "status producto");
+    const msg = await waiting;
+    assert(msg.includes('"entity":"productos"'), `mensaje inesperado: ${msg.slice(0, 150)}`);
+    assert(msg.includes(String(r.json.id)) || msg.includes(`WS ${ts}`),
+      `el broadcast no contiene el producto creado: ${msg.slice(0, 200)}`);
+    const del = await req("DELETE", `/api/productos/${r.json.id}`, { token: adminToken });
+    assertEq(st(del), 204, "cleanup");
+    sock.close();
+  });
+
+  await test("Realtime WS: /ws/pedidos sin token → cierre 1008 (Token requerido)", async () => {
+    const sock = new WebSocket(wsUrl("/ws/pedidos"));
+    const close = await wsWaitClose(sock, 5000);
+    assertEq(close.code, 1008, "close code (PolicyViolation)");
+    assert(String(close.reason).toLowerCase().includes("token"), `razón de cierre: ${close.reason}`);
+  });
+
+  await test("Realtime WS: /ws/pedidos con token admin → conexión estable", async () => {
+    const sock = await wsOpen(`${wsUrl("/ws/pedidos")}?token=${encodeURIComponent(adminToken)}`);
+    await wait(1200);
+    assertEq(sock.readyState, WebSocket.OPEN, "el servidor cerró una conexión autenticada");
+    sock.close();
+  });
+
+  await test("Realtime SignalR: /hubs/productos handshake + invocación ProductoCreado", async () => {
+    const sock = await wsOpen(wsUrl("/hubs/productos"));
+    sock.send(`{"protocol":"json","version":1}${SEP}`);
+    const hs = await wsNextMessage(sock, 5000);
+    assert(hs.includes("{}"), `handshake inesperado: ${hs.slice(0, 120)}`);
+    // Suscripción implícita: el hub emite a Clients.All; esperamos la invocación
+    const waiting = wsNextMessage(sock, 6000);
+    const r = await req("POST", "/api/productos", {
+      token: adminToken,
+      body: { nombre: `SIGNALR ${ts}`, descripcion: "Invocación E2E", precio: 8.88, stock: 1, categoriaId: 1 },
+    });
+    assertEq(st(r), 201, "status producto");
+    const msg = await waiting;
+    assert(msg.includes("ProductoCreado"), `esperaba invocación ProductoCreado: ${msg.slice(0, 200)}`);
+    assert(msg.includes(String(r.json.id)) || msg.includes(`SIGNALR ${ts}`),
+      `la invocación no contiene el producto: ${msg.slice(0, 200)}`);
+    const del = await req("DELETE", `/api/productos/${r.json.id}`, { token: adminToken });
+    assertEq(st(del), 204, "cleanup");
+    sock.close();
+  });
+
+  await test("Realtime SignalR: /hubs/pedidos [Authorize] sin token → rechazo en el upgrade (401)", async () => {
+    // [Authorize]: el servidor rechaza el upgrade HTTP con 401; el WebSocket
+    // ni siquiera llega a abrirse (onerror, no un handshake con error)
+    let rejected = false;
+    try {
+      const sock = await wsOpen(wsUrl("/hubs/pedidos"), { timeoutMs: 4000 });
+      sock.close();
+    } catch {
+      rejected = true;
+    }
+    assert(rejected, "el hub autorizado aceptó una conexión sin token");
   });
 
   // ============================ LIMPIEZA ============================
