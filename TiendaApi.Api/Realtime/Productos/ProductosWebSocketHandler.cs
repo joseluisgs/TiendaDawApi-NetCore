@@ -6,6 +6,7 @@ using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Logging;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Realtime.Common;
+using TiendaApi.Api.Infrastructures;
 
 namespace TiendaApi.Api.Realtime.Productos;
 
@@ -44,7 +45,7 @@ public record ProductoNotificacion(
 /// </example>
 public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger)
 {
-        /// <summary>Máximo de conexiones simultáneas aceptadas.</summary>
+        /// <summary>Mï¿½ximo de conexiones simultï¿½neas aceptadas.</summary>
     private const int MaxConnections = 1000;
 
 private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
@@ -61,11 +62,11 @@ private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
     /// <param name="webSocket">Instancia del WebSocket.</param>
     public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket)
     {
-                // ?? Límite de conexiones: protege contra abuso.
+                // ?? Lï¿½mite de conexiones: protege contra abuso.
         if (_connections.Count >= MaxConnections)
         {
-            _logger.LogWarning("Límite de conexiones WebSocket alcanzado: {Count}/{Max}", _connections.Count, MaxConnections);
-            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Límite de conexiones alcanzado", CancellationToken.None);
+            _logger.LogWarning("Lï¿½mite de conexiones WebSocket alcanzado: {Count}/{Max}", _connections.Count, MaxConnections);
+            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Lï¿½mite de conexiones alcanzado", CancellationToken.None);
             return;
         }
 
