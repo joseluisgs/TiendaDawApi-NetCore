@@ -189,7 +189,7 @@ start http://localhost:5031/health
 
 > **OAuth 2.0:** Para activar los logins externos, configura los ClientId/Secret con
 > `dotnet user-secrets` y activa los proveedores en `appsettings.Development.json`
-> (`Auth:{Provider}:Enabled = true`). Ver [doc/15](doc/15-jwt-authentication.md#1513-login-externo-con-oauth-20).
+> (`Auth:{Provider}:Enabled = true`). Ver [doc/15](doc/15-jwt-authentication.md#155-oauth-20-conceptos-y-arquitectura).
 ```
 
 ### Desarrollo en Producción con Docker
@@ -390,7 +390,7 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 ### Seguridad
 | #   | Documento | Descripción |
 | --- | --- | --- |
-| 15 | [15-jwt-authentication.md](doc/15-jwt-authentication.md) | JWT Authentication + OAuth 2.0 Externo |
+| 15 | [15-jwt-authentication.md](doc/15-jwt-authentication.md) | JWT Authentication: manual e Identity + OAuth 2.0 |
 | 16 | [16-autorizacion-roles.md](doc/16-autorizacion-roles.md) | Autorización Roles |
 | 17 | [17-seguridad-http.md](doc/17-seguridad-http.md) | Seguridad HTTP |
 
@@ -1094,9 +1094,20 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 
 > **Ver más:** [Seguridad HTTP](doc/17-seguridad-http.md)
 
-### 🔁 Auth:Mode — Custom vs Identity
+### 🔁 Auth:Mode - Custom vs Identity
 
-La autenticación se configura con `Auth:Mode` en `appsettings.json`:
+La autenticación se configura con `Auth:Mode` en `appsettings.json`. **ASP.NET Core Identity** es el sistema de autenticación de Microsoft (UserManager/SignInManager, tablas `AspNet*`, PBKDF2): este proyecto lo ofrece como modo alternativo al enfoque manual.
+
+La API soporta **4 modos de funcionamiento**, y todos producen el mismo JWT Bearer:
+
+| # | Modo | Cómo valida la contraseña | Login externo | Implementación |
+|---|------|---------------------------|---------------|----------------|
+| 1 | **JWT manual** (`Auth:Mode=Custom`) | `BCrypt.Verify()` (hash `$2a$11$...`) | — | `AuthService` |
+| 2 | **JWT con Identity** (`Auth:Mode=Identity`) | `SignInManager.CheckPasswordSignInAsync()` (PBKDF2, `AQAAAA...`) | — | `IdentityAuthService` |
+| 3 | **OAuth manual** (Google/GitHub/Microsoft) | — (el proveedor autentica) | Tabla propia `user_logins` + dummy hash | `OAuthConfig` + `AuthService.LoginExternalAsync` |
+| 4 | **OAuth con Identity** | — (el proveedor autentica) | `AspNetUserLogins` + `UserManager.AddLoginAsync()` | `OAuthConfig` + `IdentityAuthService.LoginExternalAsync` |
+
+Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` (y el callback usa el servicio del modo activo). El middleware JWT `[Authorize]` es idéntico en los 4.
 
 | Modo | Descripción | Hash | Servicio |
 | ---- | ----------- | ---- | -------- |
@@ -1117,7 +1128,7 @@ La autenticación se configura con `Auth:Mode` en `appsettings.json`:
 🎓 **En clase**: ambos modos comparten el mismo contrato (`IAuthService`) y producen el mismo JWT. La diferencia es **cómo** se valida la contraseña internamente. Cambiar de modo:
 
 1. Cambiar `Auth:Mode` en `appsettings.json`
-2. Aplicar la migración `AddIdentity` (tablas `AspNetUsers`, `AspNetRoles`, etc.)
+2. Aplicar las migraciones pendientes (`AddIdentity` con tablas `AspNet*` y `AddUserLoginsOAuth` con `user_logins`; en desarrollo se aplican solas al arrancar)
 3. Reiniciar — el seed crea los usuarios con el algoritmo correcto según el modo
 
 > **Contraseñas seed**: en modo Custom los usuarios seed usan `admin` / `userdaw`; en modo Identity usan `Admin123!` / `Admin123!` porque la política de password de Identity exige longitud ≥6, dígito y mayúscula. Ambas quedan en los logs al sembrar.
@@ -1128,10 +1139,12 @@ La autenticación se configura con `Auth:Mode` en `appsettings.json`:
 
 ### Auth (versionado)
 
-| Endpoint              | Método | Auth | Descripción                  |
-| --------------------- | ------ | ---- | ---------------------------- |
-| `/api/v1/auth/signup` | POST   | No   | Registrar nuevo usuario      |
-| `/api/v1/auth/signin` | POST   | No   | Iniciar sesión y obtener JWT |
+| Endpoint                          | Método | Auth | Descripción                                          |
+| --------------------------------- | ------ | ---- | ---------------------------------------------------- |
+| `/api/v1/auth/signup`             | POST   | No   | Registrar nuevo usuario                              |
+| `/api/v1/auth/signin`             | POST   | No   | Iniciar sesión y obtener JWT                         |
+| `/api/v1/auth/external/{provider}`| GET    | No   | Login externo: 302 al proveedor (Google/GitHub/Microsoft) |
+| `/api/v1/auth/external-callback`  | GET    | No   | Callback del proveedor → vincula usuario y devuelve JWT |
 
 ### Categorías
 
@@ -1470,14 +1483,14 @@ WS ws://localhost:5031/graphql
 
 ## 👥 Usuarios Demo
 
-| Usuario | Email              | Password | Rol   |
-| ------- | ------------------ | -------- | ----- |
-| admin   | admin@tienda.com   | admin    | ADMIN |
-| userdaw | userdaw@tienda.com | userdaw  | USER  |
+| Usuario | Email              | Password (Custom) | Password (Identity) | Rol   |
+| ------- | ------------------ | ----------------- | ------------------- | ----- |
+| admin   | admin@tienda.com   | admin             | Admin123!           | ADMIN |
+| userdaw | userdaw@tienda.com | userdaw           | Admin123!           | USER  |
 
-**Nota:** Las contraseñas son las mismas que los usernames para facilitar las pruebas.
+**Nota:** Las contraseñas del modo Custom son las mismas que los usernames para facilitar las pruebas. En modo Identity (`Auth:Mode = "Identity"`) usan `Admin123!` porque la política de password de Identity exige longitud ≥6, dígito y mayúscula. El seed crea los usuarios con el algoritmo correcto según el modo (ver [doc/15 §15.8.4](doc/15-jwt-authentication.md#1584-el-seed-condicional)).
 
-**Login externo OAuth 2.0:** También puedes iniciar sesión con Google, GitHub o Microsoft. Los usuarios creados vía OAuth tendrán la contraseña dummy `OAUTH-{Provider}` (el login normal fallará para ellos). Ver [doc/15 §15.13](doc/15-jwt-authentication.md#1513-login-externo-con-oauth-20).
+**Login externo OAuth 2.0:** También puedes iniciar sesión con Google, GitHub o Microsoft (endpoints `/api/v1/auth/external/{provider}`). Los usuarios creados vía OAuth **no tienen contraseña**: en modo Custom se guarda un dummy hash `OAUTH-{Provider}` (el login normal fallará para ellos) y en modo Identity `PasswordHash` queda null. Ver [doc/15 §15.6](doc/15-jwt-authentication.md#156-oauth-manual-nuestra-implementación) y [§15.7](doc/15-jwt-authentication.md#157-oauth-con-identity-externallogininfo).
 
 ## 📝 Licencia
 
