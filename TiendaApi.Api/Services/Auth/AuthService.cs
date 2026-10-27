@@ -47,7 +47,7 @@ public class AuthService(
 
         var user = new User
         {
-            Username = dto.Username!,
+            UserName = dto.Username!,
             Email = dto.Email!,
             PasswordHash = passwordHash,
             Role = UserRoles.USER,
@@ -182,8 +182,8 @@ public class AuthService(
 
         var userDto = new UserDto(
             user.Id,
-            user.Username,
-            user.Email,
+            user.UserName ?? string.Empty,
+            user.Email ?? string.Empty,
             user.Avatar ?? string.Empty,
             user.Role,
             user.CreatedAt

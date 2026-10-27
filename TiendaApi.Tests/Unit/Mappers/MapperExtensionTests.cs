@@ -199,7 +199,7 @@ public class MapperExtensionTests
         var user = new User
         {
             Id = 1,
-            Username = "johndoe",
+            UserName = "johndoe",
             Email = "john@example.com",
             Role = UserRoles.USER,
             CreatedAt = DateTime.UtcNow
@@ -231,7 +231,7 @@ public class MapperExtensionTests
         var entity = dto.ToEntity(passwordHash);
 
         // Assert
-        entity.Username.Should().Be("janedoe");
+        entity.UserName.Should().Be("janedoe");
         entity.Email.Should().Be("jane@example.com");
         entity.PasswordHash.Should().Be("hashedPassword");
         entity.Role.Should().Be(UserRoles.USER);
@@ -244,8 +244,8 @@ public class MapperExtensionTests
         // Arrange
         var users = new List<User>
         {
-            new() { Id = 1, Username = "user1" },
-            new() { Id = 2, Username = "user2" }
+            new() { Id = 1, UserName = "user1" },
+            new() { Id = 2, UserName = "user2" }
         };
 
         // Act

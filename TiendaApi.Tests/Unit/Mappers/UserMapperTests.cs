@@ -20,7 +20,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 100,
-            Username = "johndoe",
+            UserName = "johndoe",
             Email = "john@example.com",
             PasswordHash = "hashed_password_123",
             Role = UserRoles.USER,
@@ -47,7 +47,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Email = "test@test.com",
             PasswordHash = "super_secret_hash"
         };
@@ -68,7 +68,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "admin",
+            UserName = "admin",
             Email = "admin@example.com",
             Role = UserRoles.ADMIN
         };
@@ -87,7 +87,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "deleted_user",
+            UserName = "deleted_user",
             Email = "deleted@test.com",
             IsDeleted = true
         };
@@ -108,7 +108,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             CreatedAt = createdAt,
             UpdatedAt = new DateTime(2024, 1, 1)
         };
@@ -140,7 +140,7 @@ public class UserMapperTests
         var entity = dto.ToEntity(passwordHash);
 
         // Assert
-        entity.Username.Should().Be("newuser");
+        entity.UserName.Should().Be("newuser");
         entity.Email.Should().Be("newuser@example.com");
         entity.PasswordHash.Should().Be("bcrypt_hashed_password");
         entity.Role.Should().Be(UserRoles.USER);
@@ -227,7 +227,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Email = "old@test.com",
             PasswordHash = "hash",
             UpdatedAt = DateTime.UtcNow.AddHours(-1)
@@ -248,7 +248,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             PasswordHash = "old_hash",
             UpdatedAt = DateTime.UtcNow.AddHours(-1)
         };
@@ -269,7 +269,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Email = "original@test.com"
         };
         var dto = new UserUpdateDto { Email = string.Empty };
@@ -289,7 +289,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             PasswordHash = originalHash
         };
         var dto = new UserUpdateDto { Password = string.Empty };
@@ -305,7 +305,7 @@ public class UserMapperTests
     public void UpdateEntity_NoDebeModificarId()
     {
         // Arrange
-        var user = new User { Id = 999, Username = "test" };
+        var user = new User { Id = 999, UserName = "test" };
         var dto = new UserUpdateDto { Email = "new@test.com" };
 
         // Act
@@ -323,7 +323,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             CreatedAt = originalCreatedAt
         };
         var dto = new UserUpdateDto { Email = "new@test.com" };
@@ -339,14 +339,14 @@ public class UserMapperTests
     public void UpdateEntity_NoDebeModificarUsername()
     {
         // Arrange
-        var user = new User { Id = 1, Username = "original_username" };
+        var user = new User { Id = 1, UserName = "original_username" };
         var dto = new UserUpdateDto { Email = "new@test.com" };
 
         // Act
         dto.UpdateEntity(user);
 
         // Assert
-        user.Username.Should().Be("original_username");
+        user.UserName.Should().Be("original_username");
     }
 
     #endregion
@@ -360,7 +360,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Email = "old@test.com",
             PasswordHash = "hash"
         };
@@ -380,7 +380,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             PasswordHash = "old_hash"
         };
         var dto = new UserPatchDto { Password = "NewSecurePassword123!" };
@@ -400,7 +400,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Avatar = "old_avatar.jpg"
         };
         var dto = new UserPatchDto { Avatar = "https://example.com/new_avatar.png" };
@@ -419,7 +419,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Email = "old@test.com",
             PasswordHash = "old_hash",
             Avatar = "old_avatar.jpg"
@@ -449,7 +449,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Email = originalEmail,
             PasswordHash = originalHash,
             Avatar = "old_avatar.jpg"
@@ -473,7 +473,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Avatar = originalAvatar
         };
         var dto = new UserPatchDto { Email = "new@test.com" };
@@ -492,7 +492,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Email = "original@test.com"
         };
         var dto = new UserPatchDto { Email = string.Empty };
@@ -508,7 +508,7 @@ public class UserMapperTests
     public void UpdateEntity_UserPatchDto_NoDebeModificarId()
     {
         // Arrange
-        var user = new User { Id = 999, Username = "test" };
+        var user = new User { Id = 999, UserName = "test" };
         var dto = new UserPatchDto { Email = "new@test.com", Avatar = "https://example.com/avatar.png" };
 
         // Act
@@ -522,14 +522,14 @@ public class UserMapperTests
     public void UpdateEntity_UserPatchDto_NoDebeModificarUsername()
     {
         // Arrange
-        var user = new User { Id = 1, Username = "original_username" };
+        var user = new User { Id = 1, UserName = "original_username" };
         var dto = new UserPatchDto { Email = "new@test.com" };
 
         // Act
         dto.UpdateEntity(user);
 
         // Assert
-        user.Username.Should().Be("original_username");
+        user.UserName.Should().Be("original_username");
     }
 
     #endregion
@@ -542,9 +542,9 @@ public class UserMapperTests
         // Arrange
         var users = new List<User>
         {
-            new() { Id = 1, Username = "user1" },
-            new() { Id = 2, Username = "user2" },
-            new() { Id = 3, Username = "user3" }
+            new() { Id = 1, UserName = "user1" },
+            new() { Id = 2, UserName = "user2" },
+            new() { Id = 3, UserName = "user3" }
         };
 
         // Act
@@ -576,9 +576,9 @@ public class UserMapperTests
         // Arrange
         var users = new List<User>
         {
-            new() { Id = 3, Username = "Third" },
-            new() { Id = 1, Username = "First" },
-            new() { Id = 2, Username = "Second" }
+            new() { Id = 3, UserName = "Third" },
+            new() { Id = 1, UserName = "First" },
+            new() { Id = 2, UserName = "Second" }
         };
 
         // Act
@@ -601,7 +601,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "roundtrip_test",
+            UserName = "roundtrip_test",
             Email = "roundtrip@test.com",
             Role = UserRoles.USER
         };
@@ -630,7 +630,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = long.MaxValue,
-            Username = "Max ID User"
+            UserName = "Max ID User"
         };
 
         // Act
@@ -648,7 +648,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = longUsername
+            UserName = longUsername
         };
 
         // Act
@@ -666,7 +666,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "test",
+            UserName = "test",
             Email = "user@exämple.com"
         };
 
@@ -692,7 +692,7 @@ public class UserMapperTests
         var entity = dto.ToEntity("hash");
 
         // Assert
-        entity.Username.Should().Be("üser_nombre");
+        entity.UserName.Should().Be("üser_nombre");
     }
 
     #endregion
@@ -706,7 +706,7 @@ public class UserMapperTests
         var user = new User
         {
             Id = 1,
-            Username = "secure_user",
+            UserName = "secure_user",
             Email = "secure@test.com",
             PasswordHash = "$2a$11$verysecretbcrypthash"
         };

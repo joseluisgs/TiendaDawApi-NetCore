@@ -10,7 +10,7 @@ public static class UserMapper
 {
     /// <summary>Convierte User a UserDto.</summary>
     public static UserDto ToDto(this User user) =>
-        new(user.Id, user.Username, user.Email, user.GetAvatarUrl(), user.Role, user.CreatedAt);
+        new(user.Id, user.UserName ?? string.Empty, user.Email ?? string.Empty, user.GetAvatarUrl(), user.Role, user.CreatedAt);
 
     /// <summary>Convierte lista de Users a lista de UserDto.</summary>
     public static IEnumerable<UserDto> ToDtoList(this IEnumerable<User> users) =>
@@ -19,7 +19,7 @@ public static class UserMapper
     /// <summary>Convierte RegisterDto a User.</summary>
     public static User ToEntity(this RegisterDto dto, string passwordHash) => new()
     {
-        Username = dto.Username,
+        UserName = dto.Username,
         Email = dto.Email,
         PasswordHash = passwordHash,
         Role = UserRoles.USER,

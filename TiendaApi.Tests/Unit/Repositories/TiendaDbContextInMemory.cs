@@ -53,13 +53,13 @@ public class TiendaDbContextInMemory : DbContext
         {
             entity.ToTable("users");
             entity.HasKey(u => u.Id);
-            entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
+            entity.Property(u => u.UserName).IsRequired().HasMaxLength(50);
             entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
             entity.Property(u => u.PasswordHash).IsRequired();
             entity.Property(u => u.Role).IsRequired().HasMaxLength(20);
             entity.Property(u => u.IsDeleted).HasDefaultValue(false);
 
-            entity.HasIndex(u => u.Username).IsUnique();
+            entity.HasIndex(u => u.UserName).IsUnique();
             entity.HasIndex(u => u.Email).IsUnique();
 
             entity.HasQueryFilter(u => !u.IsDeleted);

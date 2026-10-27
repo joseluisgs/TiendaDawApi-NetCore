@@ -70,8 +70,8 @@ public class UserServiceTests
         // Arrange
         var users = new List<User>
         {
-            new User { Id = 1, Username = "user1", Email = "user1@test.com", IsDeleted = false },
-            new User { Id = 2, Username = "user2", Email = "user2@test.com", IsDeleted = false },
+            new User { Id = 1, UserName = "user1", Email = "user1@test.com", IsDeleted = false },
+            new User { Id = 2, UserName = "user2", Email = "user2@test.com", IsDeleted = false },
         };
 
         _mockUserRepository.Setup(x => x.FindAllAsync())
@@ -106,8 +106,8 @@ public class UserServiceTests
         // Arrange
         var users = new List<User>
         {
-            new User { Id = 1, Username = "user1", Email = "user1@test.com", IsDeleted = false },
-            new User { Id = 2, Username = "user2", Email = "user2@test.com", IsDeleted = true }, // Deleted
+            new User { Id = 1, UserName = "user1", Email = "user1@test.com", IsDeleted = false },
+            new User { Id = 2, UserName = "user2", Email = "user2@test.com", IsDeleted = true }, // Deleted
         };
 
         _mockUserRepository.Setup(x => x.FindAllAsync())
@@ -132,7 +132,7 @@ public class UserServiceTests
         var users = Enumerable.Range(1, 25).Select(i => new User
         {
             Id = i,
-            Username = $"user{i}",
+            UserName = $"user{i}",
             Email = $"user{i}@test.com",
             IsDeleted = false
         }).ToList();
@@ -163,7 +163,7 @@ public class UserServiceTests
         var users = Enumerable.Range(1, 25).Select(i => new User
         {
             Id = i,
-            Username = $"user{i}",
+            UserName = $"user{i}",
             Email = $"user{i}@test.com",
             IsDeleted = false
         }).ToList();
@@ -192,7 +192,7 @@ public class UserServiceTests
         var users = Enumerable.Range(1, 25).Select(i => new User
         {
             Id = i,
-            Username = $"user{i}",
+            UserName = $"user{i}",
             Email = $"user{i}@test.com",
             IsDeleted = false
         }).ToList();
@@ -242,8 +242,8 @@ public class UserServiceTests
 
         var users = new List<User>
         {
-            new User { Id = 1, Username = "testuser1", Email = "user1@test.com", IsDeleted = false },
-            new User { Id = 2, Username = "testuser2", Email = "user2@test.com", IsDeleted = false },
+            new User { Id = 1, UserName = "testuser1", Email = "user1@test.com", IsDeleted = false },
+            new User { Id = 2, UserName = "testuser2", Email = "user2@test.com", IsDeleted = false },
         };
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
@@ -267,7 +267,7 @@ public class UserServiceTests
         var users = Enumerable.Range(1, 25).Select(i => new User
         {
             Id = i,
-            Username = $"user{i}",
+            UserName = $"user{i}",
             Email = $"user{i}@test.com",
             IsDeleted = false
         }).ToList();
@@ -293,7 +293,7 @@ public class UserServiceTests
         var users = Enumerable.Range(1, 10).Select(i => new User
         {
             Id = i,
-            Username = $"user{i}",
+            UserName = $"user{i}",
             Email = $"user{i}@test.com",
             IsDeleted = false
         }).ToList();
@@ -318,7 +318,7 @@ public class UserServiceTests
         var users = Enumerable.Range(1, 100).Select(i => new User
         {
             Id = i,
-            Username = $"user{i}",
+            UserName = $"user{i}",
             Email = $"user{i}@test.com",
             IsDeleted = false
         }).ToList();
@@ -344,7 +344,7 @@ public class UserServiceTests
         var users = Enumerable.Range(1, 10).Select(i => new User
         {
             Id = i,
-            Username = $"user{i}",
+            UserName = $"user{i}",
             Email = $"user{i}@test.com",
             IsDeleted = false,
             CreatedAt = DateTime.UtcNow.AddDays(-i)
@@ -372,7 +372,7 @@ public class UserServiceTests
         var user = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@test.com",
             IsDeleted = false
         };
@@ -412,7 +412,7 @@ public class UserServiceTests
         var deletedUser = new User
         {
             Id = 1,
-            Username = "deleteduser",
+            UserName = "deleteduser",
             IsDeleted = true
         };
 
@@ -451,7 +451,7 @@ public class UserServiceTests
         var savedUser = new User
         {
             Id = 1,
-            Username = registerDto.Username,
+            UserName = registerDto.Username,
             Email = registerDto.Email,
             PasswordHash = "hashedpassword",
             Role = UserRoles.USER,
@@ -485,7 +485,7 @@ public class UserServiceTests
         var existingUser = new User
         {
             Id = 1,
-            Username = "existinguser",
+            UserName = "existinguser",
             Email = "existing@test.com"
         };
 
@@ -515,7 +515,7 @@ public class UserServiceTests
         var existingUser = new User
         {
             Id = 1,
-            Username = "existinguser",
+            UserName = "existinguser",
             Email = "existing@test.com"
         };
 
@@ -629,7 +629,7 @@ public class UserServiceTests
         var existingUser = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "old@test.com",
             PasswordHash = "oldHash",
             IsDeleted = false
@@ -650,7 +650,7 @@ public class UserServiceTests
         var updatedUser = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "new@test.com",
             PasswordHash = "newHash"
         };
@@ -693,7 +693,7 @@ public class UserServiceTests
         var existingUser = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "old@test.com",
             IsDeleted = false
         };
@@ -701,7 +701,7 @@ public class UserServiceTests
         var otherUser = new User
         {
             Id = 2,
-            Username = "otheruser",
+            UserName = "otheruser",
             Email = "existing@test.com"
         };
 
@@ -732,7 +732,7 @@ public class UserServiceTests
         var existingUser = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "old@test.com",
             IsDeleted = false
         };
@@ -773,7 +773,7 @@ public class UserServiceTests
         var user = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@test.com",
             IsDeleted = false
         };
@@ -814,7 +814,7 @@ public class UserServiceTests
         var deletedUser = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             IsDeleted = true
         };
 

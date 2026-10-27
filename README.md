@@ -21,7 +21,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - 🏪 **Gestión de Productos y Categorías**: CRUD completo con validaciones
 - 🛒 **Sistema de Pedidos**: Documentos embebidos con MongoDB
-- 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER)
+- 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER) — modo Custom (BCrypt) o Identity (UserManager) según `Auth:Mode`
 - 💾 **Multi-Base de Datos**: PostgreSQL (relacional), MongoDB (documentos), Redis (caché)
 - 🔐 **Seguridad**: JWT, validaciones FluentValidation, manejo global de excepciones
 - 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets y SignalR para notificaciones en tiempo real
@@ -103,6 +103,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - 🏪 **CRUD Completo**: Productos, Categorías, Pedidos y Usuarios
 - 🔐 **Autenticación JWT**: Token-based con roles y claims
+- 🔁 **Auth:Mode switchable**: Custom (BCrypt) o Identity (UserManager) vía configuración
 - 🚪 **Login Externo OAuth 2.0**: Google, GitHub y Microsoft como puertas alternativas al JWT
 - 🔒 **HTTPS + HSTS**: Redirección HTTP→HTTPS, HSTS 365 días, Security Headers
 - 📧 **Notificaciones por Email**: Envío asíncrono con MailKit
@@ -127,6 +128,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - **.NET 10 con C# 14** - Plataforma principal
 - **ASP.NET Core Web API** - Framework REST
+- **ASP.NET Core Identity** - Autenticación y autorización alternativa (Auth:Mode=Identity) + OAuth 2.0 externo
 - **EF Core 10** - ORM con PostgreSQL y MongoDB
 - **PostgreSQL 17** - Base de datos relacional
 - **MongoDB 7.0** - Base de datos de documentos
@@ -1074,6 +1076,7 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 ## 🔐 Seguridad
 
 - ✅ **JWT Authentication**: Tokens Bearer con expiración configurable
+- ✅ **Auth:Mode Dual**: Custom (BCrypt manual) o Identity (UserManager/PBKDF2) según `Auth:Mode` en configuración
 - ✅ **OAuth 2.0 Externo**: Login con Google, GitHub y Microsoft (configurable por entorno)
 - ✅ **Role-Based Authorization**: ADMIN y USER roles con políticas granulares
 - ✅ **FluentValidation**: Validaciones declarativas en DTOs
@@ -1090,6 +1093,36 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 - ✅ **Security Headers**: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
 
 > **Ver más:** [Seguridad HTTP](doc/17-seguridad-http.md)
+
+### 🔁 Auth:Mode — Custom vs Identity
+
+La autenticación se configura con `Auth:Mode` en `appsettings.json`:
+
+| Modo | Descripción | Hash | Servicio |
+| ---- | ----------- | ---- | -------- |
+| `Custom` (default) | Enfoque propio: BCrypt manual + JWT Bearer | BCrypt (`$2a$11$...`) | `AuthService` |
+| `Identity` | ASP.NET Core Identity (UserManager/SignInManager) + JWT Bearer | PBKDF2 (`AQAAAAEAACcQ...`) | `IdentityAuthService` |
+
+```json
+{
+  "Auth": {
+    "Mode": "Custom",   // ← "Custom" o "Identity"
+    "Google": { "Enabled": false },
+    "GitHub": { "Enabled": false },
+    "Microsoft": { "Enabled": false }
+  }
+}
+```
+
+🎓 **En clase**: ambos modos comparten el mismo contrato (`IAuthService`) y producen el mismo JWT. La diferencia es **cómo** se valida la contraseña internamente. Cambiar de modo:
+
+1. Cambiar `Auth:Mode` en `appsettings.json`
+2. Aplicar la migración `AddIdentity` (tablas `AspNetUsers`, `AspNetRoles`, etc.)
+3. Reiniciar — el seed crea los usuarios con el algoritmo correcto según el modo
+
+> **Contraseñas seed**: en modo Custom los usuarios seed usan `admin` / `userdaw`; en modo Identity usan `Admin123!` / `Admin123!` porque la política de password de Identity exige longitud ≥6, dígito y mayúscula. Ambas quedan en los logs al sembrar.
+
+> **Nota**: cambiar de modo **no invalida usuarios existentes**, pero los hashes no son intercambiables (un usuario creado en Custom no puede hacer login en Identity y viceversa, salvo que se re-hasheen las contraseñas).
 
 ## 📡 Endpoints
 

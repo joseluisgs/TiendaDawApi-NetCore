@@ -1,33 +1,59 @@
 # 15. JWT Authentication con ASP.NET Core Identity y Metodo Personalizado
 
-## Indice
+## Índice
 
-[15. JWT Authentication](#15-jwt-authentication)
-  - [15.1. Concepto de Autenticacion Stateless](#151-concepto-de-autenticacion-stateless)
-  - [15.2. JWT en Profundidad](#152-jwt-en-profundidad)
-  - [15.3. ASP.NET Core Identity](#153-aspnet-core-identity)
-  - [15.4. Configuracion de Identity en Program.cs](#154-configuracion-de-identity-en-programcs)
-  - [15.5. Custom UserClaimsPrincipalFactory](#155-custom-userclaimsprincipalfactory)
-  - [15.6. JwtService - Generacion de Tokens](#156-jwtservice---generacion-de-tokens)
-  - [15.7. Errores de Autenticacion](#157-errores-de-autenticacion)
-  - [15.8. AuthController - Endpoints de Autenticacion](#158-authcontroller---endpoints-de-autenticacion)
-  - [15.9. DTOs de Autenticacion](#159-dtos-de-autenticacion)
-  - [15.10. Configuracion de appsettings.json](#1510-configuracion-de-appsettingsjson)
-  - [15.11. Resumen y Buenas Practicas](#1511-resumen-y-buenas-practicas)
-  - [15.12. Enfoque Personalizado - Nuestra Implementacion](#1512-enfoque-personalizado---nuestra-implementacion)
-  - [15.13. Login Externo con OAuth 2.0](#1513-login-externo-con-oauth-20)
-    - [15.13.1. ¿Qué es OAuth 2.0 y por qué usarlo?](#15131--qués-oauth-20-y-por-qué-usarlo)
-    - [15.13.2. Arquitectura: Puertas Múltiples](#15132-arquitectura-puertas-múltiples)
-    - [15.13.3. Flujo OAuth Paso a Paso](#15133-flujo-oauth-paso-a-paso)
-    - [15.13.4. Arquitectura Interna del Proyecto](#15134-arquitectura-interna-del-proyecto)
-    - [15.13.5. Configuración Completa](#15135-configuración-completa)
-    - [15.13.6. Tabla Comparativa de Proveedores](#15136-tabla-comparativa-de-proveedores)
-    - [15.13.7. Tabla de Datos: UserLogin](#15137-tabla-de-datos-userlogin)
-    - [15.13.8. Puntos Clave para el Alumno](#15138-puntos-clave-para-el-alumno)
-    - [15.13.9. ¿Por qué NO usamos ASP.NET Core Identity?](#15139--por-qué-no-usamos-aspnet-core-identity)
+[15. JWT Authentication con ASP.NET Core Identity y Metodo Personalizado](#15-jwt-authentication-con-aspnet-core-identity-y-metodo-personalizado)
+  - [15.1. Concepto de Autenticación Stateless](#151-concepto-de-autenticación-stateless)
+  - [15.2. JWT (JSON Web Token) en Profundidad](#152-jwt-json-web-token-en-profundidad)
+  - [15.3. Enfoque Manual: BCrypt + JWT](#153-enfoque-manual-bcrypt--jwt)
+    - [15.3.1. ¿Por Qué un Método Personalizado?](#1531--por-qué-un-método-personalizado)
+    - [15.3.2. BCrypt: Qué Es y Por Qué Lo Usamos](#1532-bcrypt-qué-es-y-por-qué-lo-usamos)
+    - [15.3.3. Flujo de Registro (Signup)](#1533-flujo-de-registro-signup)
+    - [15.3.4. Flujo de Login (Signin)](#1534-flujo-de-login-signin)
+    - [15.3.5. Flujo de Petición Autorizada](#1535-flujo-de-petición-autorizada)
+    - [15.3.6. Arquitectura de Nuestra Autenticación](#1536-arquitectura-de-nuestra-autenticación)
+    - [15.3.7. Tablas: Identity vs Nuestra Tabla](#1537-tablas-identity-vs-nuestra-tabla)
+    - [15.3.8. Implementación del Método Personalizado](#1538-implementación-del-método-personalizado)
+    - [15.3.9. Errores de Autenticación](#1539-errores-de-autenticación)
+    - [15.3.10. Resultados Equivalentes](#15310-resultados-equivalentes)
+    - [15.3.11. El Middleware de Autorización Funciona Igual](#15311-el-middleware-de-autorización-funciona-igual)
+  - [15.4. Enfoque con Identity: UserManager + PBKDF2](#154-enfoque-con-identity-usermanager--pbkdf2)
+    - [15.4.1. ¿Qué es ASP.NET Core Identity?](#1541--qué-es-aspnet-core-identity)
+    - [15.4.2. La Entidad User : IdentityUser](#1542-la-entidad-user--identityuser)
+    - [15.4.3. TiendaDbContext : IdentityDbContext](#1543-tiendadbcontext--identitydbcontext)
+    - [15.4.4. IdentityAuthService](#1544-identityauthservice)
+    - [15.4.5. Configuración: AuthenticationConfig en Modo Identity](#1545-configuración-authenticationconfig-en-modo-identity)
+    - [15.4.6. Flujos: Signup y Signin con Identity](#1546-flujos-signup-y-signin-con-identity)
+    - [15.4.7. Comparativa: Cómo Validan la Contraseña](#1547-comparativa-cómo-validan-la-contraseña)
+    - [15.4.8. Opciones de Identity: Política de Contraseñas](#1548-opciones-de-identity-política-de-contraseñas)
+  - [15.5. OAuth 2.0: Conceptos y Arquitectura](#155-oauth-20-conceptos-y-arquitectura)
+    - [15.5.1. ¿Qué es OAuth 2.0 y Por Qué Usarlo?](#1551--qué-es-oauth-20-y-por-qué-usarlo)
+    - [15.5.2. Arquitectura: Puertas Múltiples](#1552-arquitectura-puertas-múltiples)
+    - [15.5.3. Flujo OAuth Paso a Paso](#1553-flujo-oauth-paso-a-paso)
+    - [15.5.4. Tabla Comparativa de Proveedores](#1554-tabla-comparativa-de-proveedores)
+  - [15.6. OAuth Manual: Nuestra Implementación](#156-oauth-manual-nuestra-implementación)
+    - [15.6.1. Configuración Condicional (OAuthConfig.cs)](#1561-configuración-condicional-oauthconfigcs)
+    - [15.6.2. Modelo de Datos: UserLogin](#1562-modelo-de-datos-userlogin)
+    - [15.6.3. Lógica de LoginExternalAsync](#1563-lógica-de-loginexternalasync)
+    - [15.6.4. Configuración Completa Paso a Paso](#1564-configuración-completa-paso-a-paso)
+    - [15.6.5. Puntos Clave para el Alumno](#1565-puntos-clave-para-el-alumno)
+  - [15.7. OAuth con Identity: ExternalLoginInfo](#157-oauth-con-identity-externallogininfo)
+    - [15.7.1. El Mismo Middleware OAuth, Otra Vinculación](#1571-el-mismo-middleware-oauth-otra-vinculación)
+    - [15.7.2. Tabla AspNetUserLogins : IdentityUserLogin](#1572-tabla-aspnetuserlogins--identityuserlogin)
+    - [15.7.3. LoginExternalAsync con Identity](#1573-loginexternalasync-con-identity)
+    - [15.7.4. Flujo Completo OAuth + Identity](#1574-flujo-completo-oauth--identity)
+    - [15.7.5. Comparativa: OAuth Manual vs OAuth con Identity](#1575-comparativa-oauth-manual-vs-oauth-con-identity)
+  - [15.8. Auth:Mode — Los Cuatro Caminos en el Mismo Proyecto](#158-authmode--los-cuatro-caminos-en-el-mismo-proyecto)
+    - [15.8.1. El Problema que Resuelve](#1581-el-problema-que-resuelve)
+    - [15.8.2. Arquitectura: El Patrón Strategy Detrás del Switch](#1582-arquitectura-el-patrón-strategy-detrás-del-switch)
+    - [15.8.3. El Switch en AuthenticationConfig](#1583-el-switch-en-authenticationconfig)
+    - [15.8.4. El Seed Condicional](#1584-el-seed-condicional)
+    - [15.8.5. Puntos Clave para el Alumno](#1585-puntos-clave-para-el-alumno)
+    - [15.8.6. Estrategia de Testing del Auth:Mode](#1586-estrategia-de-testing-del-authmode)
+  - [15.9. Cuándo Usar Cada Enfoque](#159-cuándo-usar-cada-enfoque)
+  - [15.10. Resumen y Buenas Prácticas](#1510-resumen-y-buenas-prácticas)
 
 ---
-
 
 ## 15.1. Concepto de Autenticación Stateless
 
@@ -184,1305 +210,9 @@ var token = new JwtSecurityToken(
 
 ---
 
-## 15.3. ASP.NET Core Identity
+## 15.3. Enfoque Manual: BCrypt + JWT
 
-### ¿Qué es ASP.NET Core Identity?
-
-ASP.NET Core Identity es un sistema de membership que permite:
-- Registrar/iniciar sesión de usuarios
-- Almacenar usuarios en base de datos
-- Gestionar passwords (hash, complejidad)
-- Roles y autorización
-- Confirmación de email
-- Two-Factor Authentication
-- External logins (Google, Facebook, etc.)
-
-### Entity Framework Core con Identity
-
-```csharp
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-
-namespace TiendaApi.Core.Models;
-
-/// <summary>
-/// Usuario personalizado que hereda de IdentityUser
-/// </summary>
-public class User : IdentityUser<long>
-{
-    /// <summary>
-    /// Nombre del usuario
-    /// </summary>
-    [PersonalData]
-    public string? FirstName { get; set; }
-
-    /// <summary>
-    /// Apellido del usuario
-    /// </summary>
-    [PersonalData]
-    public string? LastName { get; set; }
-
-    /// <summary>
-    /// Fecha de registro
-    /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// Último login
-    /// </summary>
-    public DateTime? LastLoginAt { get; set; }
-
-    /// <summary>
-    /// Indica si está activo
-    /// </summary>
-    public bool IsActive { get; set; } = true;
-
-    /// <summary>
-    /// Refresh token actual
-    /// </summary>
-    public string? RefreshToken { get; set; }
-
-    /// <summary>
-    /// Expiración del refresh token
-    /// </summary>
-    public DateTime? RefreshTokenExpiry { get; set; }
-
-    /// <summary>
-    /// Claims adicionales del usuario
-    /// </summary>
-    public virtual ICollection<UserClaim> Claims { get; set; } = new List<UserClaim>();
-
-    /// <summary>
-    /// Roles del usuario
-    /// </summary>
-    public virtual ICollection<UserRole> Roles { get; set; } = new List<UserRole>();
-
-    /// <summary>
-    /// Logins externos (Google, Facebook, etc.)
-    /// </summary>
-    public virtual ICollection<UserLogin> Logins { get; set; } = new List<UserLogin>();
-
-    /// <summary>
-    /// Tokens de recuperación
-    /// </summary>
-    public virtual ICollection<UserToken> Tokens { get; set; } = new List<UserToken>();
-}
-
-/// <summary>
-/// Rol personalizado
-/// </summary>
-public class Role : IdentityRole<long>
-{
-    /// <summary>
-    /// Descripción del rol
-    /// </summary>
-    public string? Description { get; set; }
-
-    /// <summary>
-    /// Claims del rol
-    /// </summary>
-    public virtual ICollection<RoleClaim> Claims { get; set; } = new List<RoleClaim>();
-}
-
-/// <summary>
-/// DbContext que combina Identity con el resto del modelo
-/// </summary>
-public class TiendaDbContext : IdentityDbContext<User, Role, long>
-{
-    public TiendaDbContext(DbContextOptions<TiendaDbContext> options)
-        : base(options)
-    {
-    }
-
-    public DbSet<Producto> Productos { get; set; } = null!;
-    public DbSet<Categoria> Categorias { get; set; } = null!;
-    public DbSet<Pedido> Pedidos { get; set; } = null!;
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-
-        // Configuración de tablas
-        modelBuilder.Entity<User>().ToTable("users");
-        modelBuilder.Entity<Role>().ToTable("roles");
-        modelBuilder.Entity<IdentityUserClaim<long>>().ToTable("user_claims");
-        modelBuilder.Entity<IdentityUserRole<long>>().ToTable("user_roles");
-        modelBuilder.Entity<IdentityUserLogin<long>>().ToTable("user_logins");
-        modelBuilder.Entity<IdentityUserToken<long>>().ToTable("user_tokens");
-        modelBuilder.Entity<IdentityRoleClaim<long>>().ToTable("role_claims");
-
-        // Índices
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.NormalizedEmail)
-            .HasDatabaseName("IX_Users_Email");
-
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.NormalizedUserName)
-            .HasDatabaseName("IX_Users_Username");
-
-        // Configuración de Producto
-        modelBuilder.Entity<Producto>(entity =>
-        {
-            entity.HasKey(p => p.Id);
-            entity.Property(p => p.Nombre).IsRequired().HasMaxLength(200);
-            entity.Property(p => p.Precio).HasColumnType("decimal(18,2)");
-            
-            entity.HasOne(p => p.Categoria)
-                .WithMany(c => c.Productos)
-                .HasForeignKey(p => p.CategoriaId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        // Configuración de Categoria
-        modelBuilder.Entity<Categoria>(entity =>
-        {
-            entity.HasKey(c => c.Id);
-            entity.Property(c => c.Nombre).IsRequired().HasMaxLength(100);
-        });
-    }
-}
-```
-
----
-
-## 15.4. Configuración de Identity en Program.cs
-
-```csharp
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// 1. Configuración de base de datos
-var connectionString = builder.Configuration.GetConnectionString("PostgreSQL");
-builder.Services.AddDbContext<TiendaDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
-// 2. Configuración de Identity
-builder.Services.AddIdentity<User, Role>(options =>
-{
-    // Configuración de Password
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 8;
-    options.Password.MaxLength = 100;
-
-    // Configuración de Usuario
-    options.User.RequireUniqueEmail = true;
-    options.User.AllowedUserNameCharacters = 
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-
-    // Configuración de Lockout
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.AllowedForNewUsers = true;
-
-    // Configuración de SignIn
-    options.SignIn.RequireConfirmedEmail = false; // Activar para producción
-    options.SignIn.RequireConfirmedAccount = false;
-    options.SignIn.RequireConfirmedPhoneNumber = false;
-
-    // Configuración de Tokens
-    options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
-    options.Tokens.ChangeEmailTokenProvider = TokenOptions.DefaultEmailProvider;
-    options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider;
-})
-.AddEntityFrameworkStores<TiendaDbContext>()
-.AddDefaultTokenProviders()
-.AddErrorDescriber<SpanishIdentityErrorDescriber>();
-
-// 3. Configuración de JWT
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret requerido");
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        // Validación del issuer
-        ValidateIssuer = true,
-        ValidIssuer = jwtSettings["Issuer"],
-
-        // Validación del audience
-        ValidateAudience = true,
-        ValidAudience = jwtSettings["Audience"],
-
-        // Validación de la clave de firma
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(secretKey)),
-
-        // Validación de expiración
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero, // Sin tolerancia - exactamente a la hora de expiración
-
-        // Validación de claims
-        RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
-        NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
-    };
-
-    // Configuración de eventos
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
-        {
-            // 🎓 JWT en header Authorization PRIMERO (estándar).
-            // Query string como fallback solo para WebSocket (?token=JWT),
-            // donde los headers no siempre están disponibles en clientes WS.
-            var token = context.Request.Headers["Authorization"]
-                .FirstOrDefault(x => x.StartsWith("Bearer "));
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                context.Token = token.Substring("Bearer ".Length);
-            }
-            else if (context.Request.Query.TryGetValue("token", out var queryToken)
-                     && !string.IsNullOrEmpty(queryToken))
-            {
-                // Fallback: WebSocket clients que no pueden enviar headers
-                context.Token = queryToken;
-            }
-
-            return Task.CompletedTask;
-        },
-
-        OnTokenValidated = context =>
-        {
-            // Se ejecuta después de validar el token
-            var logger = context.HttpContext.RequestServices
-                .GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("Token validado exitosamente");
-            return Task.CompletedTask;
-        },
-
-        OnAuthenticationFailed = context =>
-        {
-            var logger = context.HttpContext.RequestServices
-                .GetRequiredService<ILogger<Program>>();
-            logger.LogWarning("Fallo de autenticación: {Message}", context.Exception.Message);
-            return Task.CompletedTask;
-        },
-
-        OnForbidden = context =>
-        {
-            var logger = context.HttpContext.RequestServices
-                .GetRequiredService<ILogger<Program>>();
-            logger.LogWarning("Acceso prohibido para: {Path}", context.Request.Path);
-            return Task.CompletedTask;
-        }
-    };
-});
-
-// 4. Autorización
-builder.Services.AddAuthorization();
-
-// 5. Servicios de JWT
-builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<RefreshTokenService>();
-
-// 6. Registro de UserClaimsPrincipalFactory personalizado
-builder.Services.AddScoped<IUserClaimsPrincipalFactory<User>, 
-    CustomUserClaimsPrincipalFactory>();
-
-var app = builder.Build();
-
-// 7. Configuración de pipeline
-app.UseAuthentication();
-app.UseAuthorization();
-
-// 8. Inicializar base de datos con roles
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-
-    await InitializeRolesAndAdminAsync(roleManager, userManager);
-}
-
-app.Run();
-
-async Task InitializeRolesAndAdminAsync(
-    RoleManager<Role> roleManager, 
-    UserManager<User> userManager)
-{
-    // Crear roles si no existen
-    var roles = new[] { "Admin", "Manager", "User" };
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            var newRole = new Role
-            {
-                Name = role,
-                Description = $"Rol de {role}"
-            };
-            await roleManager.CreateAsync(newRole);
-        }
-    }
-
-    // Crear usuario admin si no existe
-    const string adminEmail = "admin@tienda.com";
-    const string adminPassword = "Admin123!";
-    
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-    if (adminUser == null)
-    {
-        var user = new User
-        {
-            Email = adminEmail,
-            UserName = adminEmail,
-            FirstName = "Administrador",
-            LastName = "Sistema",
-            CreatedAt = DateTime.UtcNow,
-            IsActive = true
-        };
-
-        var result = await userManager.CreateAsync(user, adminPassword);
-        if (result.Succeeded)
-        {
-            await userManager.AddToRoleAsync(user, "Admin");
-            Console.WriteLine($"Usuario admin creado: {adminEmail}");
-        }
-        else
-        {
-            Console.WriteLine($"Error creando admin: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-        }
-    }
-}
-```
-
----
-
-## 15.5. Custom UserClaimsPrincipalFactory
-
-```csharp
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
-using System.Security.Claims;
-using TiendaApi.Core.Models;
-
-namespace TiendaApi.Core.Services;
-
-/// <summary>
-/// Genera ClaimsPrincipal con claims personalizados basados en el usuario
-/// </summary>
-public class CustomUserClaimsPrincipalFactory : 
-    UserClaimsPrincipalFactory<User, Role>
-{
-    public CustomUserClaimsPrincipalFactory(
-        UserManager<User> userManager,
-        RoleManager<Role> roleManager,
-        IOptions<IdentityOptions> optionsAccessor)
-        : base(userManager, roleManager, optionsAccessor)
-    {
-    }
-
-    protected override async Task<ClaimsIdentity> GenerateClaimsAsync(User user)
-    {
-        var identity = await base.GenerateClaimsAsync(user);
-
-        // Añadir claims personalizados
-        identity.AddClaim(new Claim("displayName", 
-            $"{user.FirstName} {user.LastName}".Trim()));
-        
-        identity.AddClaim(new Claim("userId", user.Id.ToString()));
-        identity.AddClaim(new Claim("email", user.Email ?? ""));
-        identity.AddClaim(new Claim("createdAt", 
-            user.CreatedAt.ToString("O", CultureInfo.InvariantCulture)));
-        
-        // Claim para indicar si el email está confirmado
-        if (user.EmailConfirmed)
-        {
-            identity.AddClaim(new Claim("emailVerified", "true", 
-                ClaimValueTypes.Boolean));
-        }
-
-        // Claim para estado de la cuenta
-        identity.AddClaim(new Claim("isActive", user.IsActive.ToString(), 
-            ClaimValueTypes.Boolean));
-
-        return identity;
-    }
-}
-```
-
----
-
-## 15.6. JwtService - Generación de Tokens
-
-```csharp
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using TiendaApi.Core.Models;
-
-namespace TiendaApi.Core.Services;
-
-/// <summary>
-/// Servicio para generación y validación de JWT tokens
-/// </summary>
-public class JwtService
-{
-    private readonly UserManager<User> _userManager;
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<JwtService> _logger;
-
-    private readonly string _secretKey;
-    private readonly string _issuer;
-    private readonly string _audience;
-    private readonly int _accessTokenExpiryMinutes;
-    private readonly int _refreshTokenExpiryDays;
-
-    public JwtService(
-        UserManager<User> userManager,
-        IConfiguration configuration,
-        ILogger<JwtService> logger)
-    {
-        _userManager = userManager;
-        _configuration = configuration;
-        _logger = logger;
-
-        // Configuración desde appsettings.json
-        var jwtSection = configuration.GetSection("Jwt");
-        _secretKey = jwtSection["Secret"] ?? 
-            throw new InvalidOperationException("JWT Secret no configurado");
-        _issuer = jwtSection["Issuer"] ?? "TiendaApi";
-        _audience = jwtSection["Audience"] ?? "TiendaApiClients";
-        _accessTokenExpiryMinutes = jwtSection.GetValue<int>("AccessTokenExpiryMinutes", 15);
-        _refreshTokenExpiryDays = jwtSection.GetValue<int>("RefreshTokenExpiryDays", 7);
-    }
-
-    /// <summary>
-    /// Genera access token y refresh token para un usuario
-    /// </summary>
-    public async Task<TokenResponse> GenerateTokensAsync(User user)
-    {
-        // Obtener roles del usuario
-        var roles = await _userManager.GetRolesAsync(user);
-        
-        // Generar access token
-        var accessToken = GenerateAccessToken(user, roles);
-        
-        // Generar refresh token
-        var refreshToken = GenerateRefreshToken();
-        
-        // Guardar refresh token en base de datos
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_refreshTokenExpiryDays);
-        
-        var updateResult = await _userManager.UpdateAsync(user);
-        if (!updateResult.Succeeded)
-        {
-            _logger.LogWarning("Error guardando refresh token: {Errors}", 
-                string.Join(", ", updateResult.Errors.Select(e => e.Description)));
-        }
-
-        _logger.LogInformation("Tokens generados para usuario: {UserId}", user.Id);
-
-        return new TokenResponse
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            TokenType = "Bearer",
-            ExpiresIn = _accessTokenExpiryMinutes * 60,
-            UserId = user.Id.ToString(),
-            Email = user.Email ?? "",
-            Roles = roles.ToList()
-        };
-    }
-
-    /// <summary>
-    /// Genera el access token JWT
-    /// </summary>
-    private string GenerateAccessToken(User user, IList<string> roles)
-    {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new List<Claim>
-        {
-            // Claims registrados estándar
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.Iat, 
-                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), 
-                ClaimValueTypes.Integer64),
-            new(JwtRegisteredClaimNames.Exp, 
-                DateTimeOffset.UtcNow.AddMinutes(_accessTokenExpiryMinutes)
-                    .ToUnixTimeSeconds().ToString(), 
-                ClaimValueTypes.Integer64),
-            new(JwtRegisteredClaimNames.Nbf, 
-                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), 
-                ClaimValueTypes.Integer64),
-            new(JwtRegisteredClaimNames.Iss, _issuer),
-            new(JwtRegisteredClaimNames.Aud, _audience),
-
-            // Claims personalizados
-            new Claim("displayName", $"{user.FirstName} {user.LastName}".Trim()),
-            new Claim("userId", user.Id.ToString()),
-            new Claim("email", user.Email ?? ""),
-            new Claim("createdAt", user.CreatedAt.ToString("O", CultureInfo.InvariantCulture)),
-        };
-
-        // Añadir roles como claims
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-            claims.Add(new Claim("roles", role)); // Claim duplicado para facilitar acceso
-        }
-
-        var token = new JwtSecurityToken(
-            issuer: _issuer,
-            audience: _audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_accessTokenExpiryMinutes),
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    /// <summary>
-    /// Genera un refresh token criptográficamente seguro
-    /// </summary>
-    private string GenerateRefreshToken()
-    {
-        var randomNumber = new byte[32];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        return Convert.ToBase64String(randomNumber)
-            .Replace("/", "_")
-            .Replace("+", "-");
-    }
-
-    /// <summary>
-    /// Valida un access token y retorna los claims
-    /// </summary>
-    public ClaimsPrincipal? ValidateAccessToken(string accessToken)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        
-        try
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
-            
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = _issuer,
-                ValidateAudience = true,
-                ValidAudience = _audience,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero,
-                RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
-                NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
-            };
-
-            var principal = tokenHandler.ValidateToken(
-                accessToken, 
-                validationParameters, 
-                out _);
-
-            return principal;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error validando access token");
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Valida un refresh token y retorna un nuevo access token
-    /// </summary>
-    public async Task<Result<TokenResponse, Error>> RefreshTokensAsync(
-        string accessToken, 
-        string refreshToken)
-    {
-        // Validar access token y extraer claims
-        var principal = ValidateAccessToken(accessToken);
-        if (principal == null)
-        {
-            return Result.Failure<TokenResponse, Error>(
-                Errors.Auth.InvalidToken);
-        }
-
-        // Extraer user ID del token
-        var userIdClaim = principal.FindFirst("userId") ?? 
-            principal.FindFirst(JwtRegisteredClaimNames.Sub);
-        
-        if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out var userId))
-        {
-            return Result.Failure<TokenResponse, Error>(
-                Errors.Auth.InvalidToken);
-        }
-
-        // Obtener usuario de base de datos
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
-        {
-            return Result.Failure<TokenResponse, Error>(
-                Errors.Auth.UsuarioNoEncontrado);
-        }
-
-        // Validar refresh token
-        if (user.RefreshToken != refreshToken ||
-            user.RefreshTokenExpiry < DateTime.UtcNow)
-        {
-            return Result.Failure<TokenResponse, Error>(
-                Errors.Auth.RefreshTokenInvalido);
-        }
-
-        // Generar nuevos tokens
-        return await GenerateTokensAsync(user);
-    }
-}
-
-/// <summary>
-/// Respuesta con tokens generados
-/// </summary>
-public class TokenResponse
-{
-    public string AccessToken { get; set; } = string.Empty;
-    public string RefreshToken { get; set; } = string.Empty;
-    public string TokenType { get; set; } = "Bearer";
-    public int ExpiresIn { get; set; }
-    public long UserId { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public List<string> Roles { get; set; } = new();
-}
-```
-
----
-
-## 15.7. Errores de Autenticación
-
-```csharp
-namespace TiendaApi.Core.Models.Errors;
-
-/// <summary>
-/// Errors predefinidos para operaciones de autenticación
-/// </summary>
-public static partial class Errors
-{
-    public static class Auth
-    {
-        public static Error CredencialesInvalidas => new(
-            "Auth.CredencialesInvalidas",
-            "El email o contraseña son incorrectos");
-
-        public static Error UsuarioNoEncontrado => new(
-            "Auth.UsuarioNoEncontrado",
-            "No se encontró un usuario con ese email");
-
-        public static Error UsuarioInactivo => new(
-            "Auth.UsuarioInactivo",
-            "La cuenta de usuario está desactivada");
-
-        public static Error EmailNoConfirmado => new(
-            "Auth.EmailNoConfirmado",
-            "Es necesario confirmar el email para iniciar sesión");
-
-        public static Error TokenExpirado => new(
-            "Auth.TokenExpirado",
-            "El token de autenticación ha expirado");
-
-        public static Error RefreshTokenInvalido => new(
-            "Auth.RefreshTokenInvalido",
-            "El refresh token es inválido o ha expirado");
-
-        public static Error RefreshTokenUsado => new(
-            "Auth.RefreshTokenUsado",
-            "El refresh token ya ha sido utilizado");
-
-        public static Error InvalidToken => new(
-            "Auth.InvalidToken",
-            "El token de autenticación es inválido");
-
-        public static Error AccesoDenegado => new(
-            "Auth.AccesoDenegado",
-            "No tiene permisos para acceder a este recurso");
-
-        public static Error PasswordIncorrecto => new(
-            "Auth.PasswordIncorrecto",
-            "La contraseña actual es incorrecta");
-
-        public static Error PasswordIgualAnterior => new(
-            "Auth.PasswordIgualAnterior",
-            "La nueva contraseña no puede ser igual a la anterior");
-    }
-}
-```
-
----
-
-## 15.8. AuthController - Endpoints de Autenticación
-
-```csharp
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TiendaApi.Core.Models;
-using TiendaApi.Core.Models.Dto;
-using TiendaApi.Core.Services;
-
-namespace TiendaApi.Apis.Controllers;
-
-/// <summary>
-/// Controlador de autenticación - JWT
-/// </summary>
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
-{
-    private readonly JwtService _jwtService;
-    private readonly UserManager<User> _userManager;
-    private readonly SignInManager<User> _signInManager;
-    private readonly ILogger<AuthController> _logger;
-
-    public AuthController(
-        JwtService jwtService,
-        UserManager<User> userManager,
-        SignInManager<User> signInManager,
-        ILogger<AuthController> logger)
-    {
-        _jwtService = jwtService;
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _logger = logger;
-    }
-
-    /// <summary>
-    /// POST /api/auth/register
-    /// Registrar un nuevo usuario
-    /// </summary>
-    [HttpPost("register")]
-    [ProducesResponseType(typeof(ApiResponse<TokenResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
-    {
-        // Validar modelo
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(new ApiResponse(false, 
-                "Datos inválidos", 
-                ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)));
-        }
-
-        // Verificar si el email ya existe
-        var existingUser = await _userManager.FindByEmailAsync(request.Email);
-        if (existingUser != null)
-        {
-            return BadRequest(new ApiResponse(false, 
-                "El email ya está registrado"));
-        }
-
-        // Crear usuario
-        var user = new User
-        {
-            Email = request.Email,
-            UserName = request.Email,
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            CreatedAt = DateTime.UtcNow,
-            IsActive = true
-        };
-
-        var result = await _userManager.CreateAsync(user, request.Password);
-
-        if (!result.Succeeded)
-        {
-            _logger.LogWarning("Error creando usuario: {Errors}", 
-                string.Join(", ", result.Errors.Select(e => e.Description)));
-            
-            return BadRequest(new ApiResponse(false, 
-                "Error al crear usuario", 
-                result.Errors.Select(e => e.Description)));
-        }
-
-        // Asignar rol por defecto
-        await _userManager.AddToRoleAsync(user, "User");
-
-        // Generar tokens
-        var tokens = await _jwtService.GenerateTokensAsync(user);
-
-        _logger.LogInformation("Usuario registrado: {UserId}", user.Id);
-
-        return Ok(new ApiResponse<TokenResponse>(true, 
-            "Usuario registrado exitosamente", tokens));
-    }
-
-    /// <summary>
-    /// POST /api/auth/login
-    /// Iniciar sesión y obtener tokens JWT
-    /// </summary>
-    [HttpPost("login")]
-    [ProducesResponseType(typeof(ApiResponse<TokenResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
-    {
-        // Validar modelo
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(new ApiResponse(false, "Datos inválidos"));
-        }
-
-        // Buscar usuario por email
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user == null)
-        {
-            _logger.LogWarning("Login fallido - usuario no encontrado: {Email}", 
-                request.Email);
-            return Unauthorized(new ApiResponse(false, 
-                "Email o contraseña incorrectos"));
-        }
-
-        // Verificar si está activo
-        if (!user.IsActive)
-        {
-            return Unauthorized(new ApiResponse(false, 
-                "La cuenta está desactivada. Contacte al administrador."));
-        }
-
-        // Verificar contraseña
-        var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-        if (!isPasswordValid)
-        {
-            _logger.LogWarning("Login fallido - contraseña incorrecta: {Email}", 
-                request.Email);
-            return Unauthorized(new ApiResponse(false, 
-                "Email o contraseña incorrectos"));
-        }
-
-        // Generar tokens
-        var tokens = await _jwtService.GenerateTokensAsync(user);
-
-        // Actualizar último login
-        user.LastLoginAt = DateTime.UtcNow;
-        await _userManager.UpdateAsync(user);
-
-        _logger.LogInformation("Login exitoso: {UserId}", user.Id);
-
-        return Ok(new ApiResponse<TokenResponse>(true, 
-            "Login exitoso", tokens));
-    }
-
-    /// <summary>
-    /// POST /api/auth/refresh
-    /// Renovar access token usando refresh token
-    /// </summary>
-    [HttpPost("refresh")]
-    [ProducesResponseType(typeof(ApiResponse<TokenResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
-    {
-        if (string.IsNullOrEmpty(request.AccessToken) || 
-            string.IsNullOrEmpty(request.RefreshToken))
-        {
-            return BadRequest(new ApiResponse(false, 
-                "Access token y refresh token requeridos"));
-        }
-
-        var result = await _jwtService.RefreshTokensAsync(
-            request.AccessToken, 
-            request.RefreshToken);
-
-        if (result.IsFailure)
-        {
-            return Unauthorized(new ApiResponse(false, result.Error.Message));
-        }
-
-        return Ok(new ApiResponse<TokenResponse>(true, 
-            "Token renovado exitosamente", result.Value));
-    }
-
-    /// <summary>
-    /// POST /api/auth/logout
-    /// Cerrar sesión (invalidar refresh token)
-    /// </summary>
-    [HttpPost("logout")]
-    [Authorize]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Logout()
-    {
-        var userIdClaim = User.FindFirst("userId") ?? 
-            User.FindFirst(JwtRegisteredClaimNames.Sub);
-        
-        if (userIdClaim != null && long.TryParse(userIdClaim.Value, out var userId))
-        {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user != null)
-            {
-                // Invalidar refresh token
-                user.RefreshToken = null;
-                user.RefreshTokenExpiry = null;
-                await _userManager.UpdateAsync(user);
-                
-                _logger.LogInformation("Logout: {UserId}", userId);
-            }
-        }
-
-        return Ok(new ApiResponse(true, "Sesión cerrada correctamente"));
-    }
-
-    /// <summary>
-    /// GET /api/auth/me
-    /// Obtener información del usuario actual
-    /// </summary>
-    [HttpGet("me")]
-    [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<UserInfoResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetCurrentUser()
-    {
-        var userIdClaim = User.FindFirst("userId") ?? 
-            User.FindFirst(JwtRegisteredClaimNames.Sub);
-        
-        if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out var userId))
-        {
-            return Unauthorized(new ApiResponse(false, "Token inválido"));
-        }
-
-        var user = await _userManager.Users
-            .Where(u => u.Id == userId)
-            .Select(u => new UserInfoResponse
-            {
-                Id = u.Id,
-                Email = u.Email ?? "",
-                FirstName = u.FirstName ?? "",
-                LastName = u.LastName ?? "",
-                Roles = _userManager.GetRolesAsync(u).Result.ToList(),
-                CreatedAt = u.CreatedAt,
-                LastLoginAt = u.LastLoginAt
-            })
-            .FirstOrDefaultAsync();
-
-        if (user == null)
-        {
-            return NotFound(new ApiResponse(false, "Usuario no encontrado"));
-        }
-
-        return Ok(new ApiResponse<UserInfoResponse>(true, "Usuario actual", user));
-    }
-
-    /// <summary>
-    /// POST /api/auth/change-password
-    /// Cambiar contraseña del usuario
-    /// </summary>
-    [HttpPost("change-password")]
-    [Authorize]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(new ApiResponse(false, "Datos inválidos"));
-        }
-
-        var userIdClaim = User.FindFirst("userId");
-        if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out var userId))
-        {
-            return Unauthorized(new ApiResponse(false, "Token inválido"));
-        }
-
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
-        {
-            return NotFound(new ApiResponse(false, "Usuario no encontrado"));
-        }
-
-        var result = await _userManager.ChangePasswordAsync(
-            user, 
-            request.CurrentPassword, 
-            request.NewPassword);
-
-        if (!result.Succeeded)
-        {
-            return BadRequest(new ApiResponse(false, 
-                "Error al cambiar contraseña", 
-                result.Errors.Select(e => e.Description)));
-        }
-
-        _logger.LogInformation("Contraseña cambiada: {UserId}", userId);
-
-        return Ok(new ApiResponse(true, "Contraseña cambiada correctamente"));
-    }
-}
-```
-
----
-
-## 15.9. DTOs de Autenticación
-
-```csharp
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-
-namespace TiendaApi.Core.Models.Dto;
-
-/// <summary>
-/// Request para registro de usuario
-/// </summary>
-public class RegisterRequest
-{
-    [Required(ErrorMessage = "El email es obligatorio")]
-    [EmailAddress(ErrorMessage = "El formato del email no es válido")]
-    [MaxLength(255, ErrorMessage = "El email no puede exceder 255 caracteres")]
-    public string Email { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "La contraseña es obligatoria")]
-    [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres")]
-    [MaxLength(100, ErrorMessage = "La contraseña no puede exceder 100 caracteres")]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$", 
-        ErrorMessage = "La contraseña debe contener al menos una mayúscula, una minúscula y un número")]
-    [JsonPropertyName("password")]
-    public string Password { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "La confirmación de contraseña es obligatoria")]
-    [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
-    [JsonPropertyName("confirmPassword")]
-    public string ConfirmPassword { get; set; } = string.Empty;
-
-    [MaxLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]
-    public string? FirstName { get; set; }
-
-    [MaxLength(100, ErrorMessage = "El apellido no puede exceder 100 caracteres")]
-    public string? LastName { get; set; }
-}
-
-/// <summary>
-/// Request para inicio de sesión
-/// </summary>
-public class LoginRequest
-{
-    [Required(ErrorMessage = "El email es obligatorio")]
-    [EmailAddress(ErrorMessage = "El formato del email no es válido")]
-    public string Email { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "La contraseña es obligatoria")]
-    public string Password { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Request para renovación de token
-/// </summary>
-public class RefreshRequest
-{
-    public string AccessToken { get; set; } = string.Empty;
-    public string RefreshToken { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Request para cambio de contraseña
-/// </summary>
-public class ChangePasswordRequest
-{
-    [Required(ErrorMessage = "La contraseña actual es obligatoria")]
-    public string CurrentPassword { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "La nueva contraseña es obligatoria")]
-    [MinLength(8, ErrorMessage = "La nueva contraseña debe tener al menos 8 caracteres")]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$", 
-        ErrorMessage = "La nueva contraseña debe contener al menos una mayúscula, una minúscula y un número")]
-    public string NewPassword { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "La confirmación es obligatoria")]
-    [Compare("NewPassword", ErrorMessage = "Las contraseñas no coinciden")]
-    public string ConfirmNewPassword { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Respuesta con información del usuario
-/// </summary>
-public class UserInfoResponse
-{
-    public long Id { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public List<string> Roles { get; set; } = new();
-    public DateTime CreatedAt { get; set; }
-    public DateTime? LastLoginAt { get; set; }
-}
-
-/// <summary>
-/// Response estándar de API
-/// </summary>
-public class ApiResponse<T>
-{
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public T? Data { get; set; }
-
-    public ApiResponse(bool success, string message, T? data = default)
-    {
-        Success = success;
-        Message = message;
-        Data = data;
-    }
-}
-
-/// <summary>
-/// Response sin tipo genérico (para errores)
-/// </summary>
-public class ApiResponse
-{
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public IEnumerable<string>? Errors { get; set; }
-
-    public ApiResponse(bool success, string message, IEnumerable<string>? errors = null)
-    {
-        Success = success;
-        Message = message;
-        Errors = errors;
-    }
-}
-```
-
----
-
-## 15.10. Configuración de appsettings.json
-
-```json
-{
-  "Jwt": {
-    "Secret": "TuClaveSecretaSuperLargaYSeguraDeAlMenos32Caracteres!",
-    "Issuer": "TiendaApi",
-    "Audience": "TiendaApiClients",
-    "AccessTokenExpiryMinutes": 15,
-    "RefreshTokenExpiryDays": 7
-  },
-
-  "ConnectionStrings": {
-    "PostgreSQL": "Host=localhost;Database=TiendaDb;Username=postgres;Password=postgres",
-    "Redis": "localhost:6379",
-    "MongoDB": "mongodb://localhost:27017"
-  }
-}
-```
-
----
-
-## 15.11. Resumen y Buenas Prácticas
-
-### Puntos Clave del Módulo
-
-| Concepto | Descripción |
-|----------|-------------|
-| **Stateless** | Cada request contiene toda la información de autenticación |
-| **JWT** | Token autocontenido con claims firmados cryptográficamente |
-| **Identity** | Framework completo de gestión de usuarios |
-| **Access Token** | Token corto (15-30 min) para acceso a APIs |
-| **Refresh Token** | Token largo (7-30 días) para renovar access tokens |
-
-### Flujo de Autenticación Completo
-
-```mermaid
-sequenceDiagram
-    participant U as Cliente
-    participant A as Auth API
-    participant DB as PostgreSQL
-    participant J as JWT Service
-    
-    U->>A: POST /auth/login {email, password}
-    A->>DB: Validar credentials
-    DB-->>A: Usuario encontrado
-    A->>J: GenerateTokens(usuario)
-    J-->>A: Access + Refresh tokens
-    A-->>U: {accessToken, refreshToken}
-    
-    Note over U: Cliente almacena tokens
-    
-    U->>A: GET /api/productos (Bearer token)
-    A->>J: ValidateAccessToken(token)
-    J-->>A: Claims principal
-    A->>DB: Consultar productos
-    DB-->>A: Lista productos
-    A-->>U: 200 OK
-    
-    Note over U, A: Cuando access token expira
-    
-    U->>A: POST /auth/refresh {accessToken, refreshToken}
-    A->>J: RefreshTokens(access, refresh)
-    J-->>A: Nuevos tokens
-    A-->>U: {newAccessToken, newRefreshToken}
-```
-
-### Buenas Prácticas de Seguridad
-
-```mermaid
-flowchart TB
-    subgraph "Token Security"
-        A1["HTTPS siempre"]
-        A2["Secret >= 32 caracteres"]
-        A3["Expiration corto (15-30 min)"]
-        A4["ClockSkew = 0"]
-    end
-    
-    subgraph "Password Security"
-        B1["Hash con bcrypt/argon2"]
-        B2["Complexity requirements"]
-        B3["Rate limiting"]
-        B4["Max failed attempts"]
-    end
-    
-    subgraph "Refresh Token"
-        C1["Almacenar en BD"]
-        C2["Revocar en logout"]
-        C3["Rotar en cada refresh"]
-        C4["Expiration más largo"]
-    end
-    
-    subgraph "Monitoring"
-        D1["Log de logins"]
-        D2["Alertas de actividad sospechosa"]
-        D3["Métricas de uso"]
-        D4["Audit trail"]
-    end
-    
-    A1 --> A2 --> A3 --> A4
-    B1 --> B2 --> B3 --> B4
-    C1 --> C2 --> C3 --> C4
-    D1 --> D2 --> D3 --> D4
-```
-
-### Siguientes Pasos
-
-Con JWT dominado, el siguiente paso es aprender sobre autorización y roles.
-
-### Recursos Adicionales
-
-- JWT.io: https://jwt.io/
-- RFC 7519 (JWT): https://datatracker.ietf.org/doc/html/rfc7519
-- ASP.NET Core Identity: https://learn.microsoft.com/aspnet/core/security/authentication/
-- Microsoft JWT Authentication: https://learn.microsoft.com/aspnet/core/security/authentication/jwt-authn
-
----
-
-## 15.12. Enfoque Personalizado: Nuestra Implementacion
-
-### Por Que No Usamos ASP.NET Core Identity en TiendaDawApi
+### 15.3.1. ¿Por Qué un Método Personalizado?
 
 Nuestro proyecto TiendaDawApi implementa **autenticacion JWT personalizada** en lugar de usar ASP.NET Core Identity. Esto no es un error, sino una **decision arquitectonica deliberada**.
 
@@ -1510,7 +240,7 @@ flowchart TB
     end
 ```
 
-### Que es BCrypt y Por Que Lo Usamos
+### 15.3.2. BCrypt: Qué Es y Por Qué Lo Usamos
 
 **BCrypt** es un algoritmo de hashing de contraseñas diseñado para ser lento y costoso computacionalmente. Esto lo hace resistente a ataques de fuerza bruta.
 
@@ -1562,7 +292,7 @@ flowchart LR
 | **BCrypt** | Muy lento | Excelente | ✅ Recomendado |
 | **Argon2** | Muy lento | Excelente | ✅ El mejor |
 
-### Flujo de Registro (Signup)
+### 15.3.3. Flujo de Registro (Signup)
 
 ```mermaid
 sequenceDiagram
@@ -1606,7 +336,7 @@ sequenceDiagram
 5. Guardar usuario en la BD
 6. Retornar 201 con usuario creado
 
-### Flujo de Login (Signin)
+### 15.3.4. Flujo de Login (Signin)
 
 ```mermaid
 sequenceDiagram
@@ -1658,7 +388,7 @@ sequenceDiagram
 6. Si es correcto → generar JWT
 7. Retornar 200 con token y usuario
 
-### Flujo de Peticion Autorizada
+### 15.3.5. Flujo de Petición Autorizada
 
 ```mermaid
 sequenceDiagram
@@ -1695,7 +425,7 @@ sequenceDiagram
 5. Controller ejecuta la logica y consulta BD
 6. Retornar respuesta al cliente
 
-### Arquitectura de Nuestra Autenticacion
+### 15.3.6. Arquitectura de Nuestra Autenticación
 
 ```mermaid
 flowchart TB
@@ -1746,7 +476,7 @@ flowchart TB
     style DB1 fill:#5c6bc0,color:#fff
 ```
 
-### Tablas de Identity vs Nuestra Tabla
+### 15.3.7. Tablas: Identity vs Nuestra Tabla
 
 ```mermaid
 erDiagram
@@ -1806,7 +536,7 @@ erDiagram
     style U1 fill:#2e7d32,stroke:#1b5e20,color:#fff
 ```
 
-### Implementacion del Metodo Personalizado
+### 15.3.8. Implementación del Método Personalizado
 
 #### 1. Modelo de Usuario Simple
 
@@ -1964,7 +694,75 @@ public static class AuthenticationConfig
 }
 ```
 
-### Resultados Equivalentes
+### 15.3.9. Errores de Autenticación
+
+> 📁 Código real: `TiendaApi.Api/Errors/Auth/AuthError.cs` + los tipos de error de dominio.
+
+En modo Custom, los errores de autenticación se devuelven con el patrón **Result** (`CSharpFunctionalExtensions`) y cada tipo de error mapea a un código HTTP:
+
+| Error de dominio | HTTP | Cuándo |
+|------------------|------|--------|
+| `UnauthorizedError` | 401 | Credenciales inválidas (login fallido) |
+| `ConflictError` | 409 | Username o email ya registrados |
+| `ValidationError` | 400 | Datos de registro/login inválidos (FluentValidation) |
+| `BusinessRuleError` | 422 | Regla de negocio incumplida |
+
+```mermaid
+flowchart TB
+    subgraph "AuthError (fábrica de errores)"
+        A1["CredencialesInvalidas()"] --> U["UnauthorizedError"]
+        A2["UsernameExistente(u)"] --> C["ConflictError"]
+        A3["EmailExistente(e)"] --> C
+        A4["Validacion(msg)"] --> V["ValidationError"]
+        A5["ValidacionConCampos(dict)"] --> V
+    end
+
+    U -->|ToHttpResult| H1["401 Unauthorized"]
+    C -->|ToHttpResult| H2["409 Conflict"]
+    V -->|ToHttpResult| H3["400 Bad Request"]
+    B["BusinessRuleError(msg)"] -->|ToHttpResult| H4["422 Unprocessable Entity"]
+
+    style U fill:#c0392b,color:#fff
+    style C fill:#e67e22,color:#fff
+    style V fill:#2980b9,color:#fff
+    style B fill:#8e44ad,color:#fff
+```
+
+La extensión `ToHttpResult()` (patrón ROP) traduce cada error de dominio a su respuesta HTTP — el controller nunca arma respuestas de error a mano:
+
+```csharp
+// El controller es limpio: el Result decide el HTTP
+[HttpPost("signin")]
+public async Task<ActionResult<AuthResponseDto>> SignIn([FromBody] LoginDto dto)
+    => (await _authService.SignInAsync(dto)).ToHttpResult();
+```
+
+```csharp
+// 📁 TiendaApi.Api/Errors/Auth/AuthError.cs
+public static class AuthError
+{
+    public static UnauthorizedError CredencialesInvalidas() =>
+        UnauthorizedError.InvalidCredentials();
+
+    public static ConflictError UsernameExistente(string username) =>
+        ConflictError.Duplicate("nombre de usuario", username);
+
+    public static ConflictError EmailExistente(string email) =>
+        ConflictError.Duplicate("email", email);
+
+    public static ValidationError Validacion(string mensaje) =>
+        ValidationError.Create(mensaje);
+
+    public static ValidationError ValidacionConCampos(Dictionary<string, string[]> errores) =>
+        ValidationError.WithFieldErrors(errores);
+}
+```
+
+🎓 **Detalle importante para el alumno**: en login respondemos **401 con el mismo mensaje** tanto si el usuario no existe como si la contraseña es incorrecta. Si distinguiéramos ambos casos, un atacante podría enumerar usuarios válidos probando emails (user enumeration). *La indistinguibilidad es una medida de seguridad.*
+
+**En modo Identity**, `IdentityAuthService` devuelve exactamente los **mismos errores de dominio**: traduce `IdentityResult.Errors` a `ConflictError` (duplicados) o `BusinessRuleError` (política de password). El cliente no nota la diferencia — solo cambia el algoritmo interno.
+
+### 15.3.10. Resultados Equivalentes
 
 Aunque la implementación es diferente, **conseguimos los mismos objetivos de seguridad**:
 
@@ -1976,35 +774,9 @@ Aunque la implementación es diferente, **conseguimos los mismos objetivos de se
 | **Protección SQL Injection** | ✅ EF Core parametrizes | ✅ EF Core parametrizes |
 | **Soft-delete** | ✅ Configurable | ✅ Implementado manualmente |
 
-### Cuándo Usar Cada Enfoque
+> 📌 **¿Manual o Identity?** La tabla completa de decisión está en la sección [15.9 Cuándo Usar Cada Enfoque](#159-cuándo-usar-cada-enfoque). En resumen: APIs simples y educativas → manual; apps con 2FA/lockout/UI → Identity.
 
-```mermaid
-flowchart TD
-    A[¿Qué tipo de aplicación?] --> B{¿Tiene UI de login?}
-    B -->|Sí - Web Forms/Razor| C[Identity ✅]
-    B -->|No - Solo API| D[¿External Logins?]
-    D -->|Sí - Google, Facebook| E[Identity ✅]
-    D -->|No - Solo email/pass| F[Personalizado ✅]
-    
-    C --> G["UI completa + Cookies"]
-    F --> H["JWT Bearer + BCrypt"]
-    
-    style C fill:#1565c0,stroke:#0d47a1,color:#fff
-    style F fill:#2e7d32,stroke:#1b5e20,color:#fff
-    style G fill:#1565c0,stroke:#0d47a1,color:#fff
-    style H fill:#2e7d32,stroke:#1b5e20,color:#fff
-```
-
-| Escenario | Recomendación | Razón |
-|-----------|---------------|-------|
-| **API REST simple** | Personalizado ✅ | Ligero, control total |
-| **Razor Pages** | Identity ✅ | Cookies + UI login |
-| **Blazor Server** | Identity ✅ | Integración completa |
-| **SPA + API Backend** | Personalizado en API ✅ | JWT es natural para SPAs |
-| **Google/Facebook Login** | Identity ✅ | External logins incluidos |
-| **2FA obligatorio** | Identity ✅ | Integrado |
-
-### Conclusión
+#### Conclusión
 
 **Nuestra implementación no es "menos segura" ni "incorrecta".** Es simplemente más adecuada para una API REST sin UI que solo necesita:
 - Registro/Login con email y contraseña
@@ -2013,13 +785,13 @@ flowchart TD
 
 Si en el futuro necesitamos external logins o 2FA, podemos migrar a Identity sin perder funcionalidad. Pero para el caso de uso actual, el método personalizado es la elección correcta.
 
-### Recursos Adicionales
+#### Recursos Adicionales
 
 - BCrypt: https://github.com/BcryptNet/bcrypt.net
 - JWT: https://jwt.io/
 - RFC 7519: https://datatracker.ietf.org/doc/html/rfc7519
 
-### Comparacion del Middleware de Autenticacion y Autorizacion
+### 15.3.11. El Middleware de Autorización Funciona Igual
 
 Una pregunta frecuente es: **"Si no usamos Identity, funciona igual el [Authorize]?"** La respuesta es **SI**. El middleware de autenticacion y autorizacion de ASP.NET Core funciona independientemente de como gestionemos los usuarios.
 
@@ -2103,9 +875,372 @@ Request --> Authentication Middleware --> Authorization Middleware --> Controlle
 
 ---
 
-## 15.13. Login Externo con OAuth 2.0
+## 15.4. Enfoque con Identity: UserManager + PBKDF2
 
-### 15.13.1. ¿Qué es OAuth 2.0 y por qué usarlo?
+> 📁 En esta sección usamos el **código real del proyecto** (`TiendaApi.Api/Services/Auth/IdentityAuthService.cs`, `Models/User.cs`, `Infrastructures/AuthenticationConfig.cs`). El proyecto lo soporta vía el switch `Auth:Mode = "Identity"` (ver sección 15.8).
+
+### 15.4.1. ¿Qué es ASP.NET Core Identity?
+
+ASP.NET Core Identity es un sistema de membership que permite:
+- Registrar/iniciar sesión de usuarios
+- Almacenar usuarios en base de datos
+- Gestionar passwords (hash, complejidad, lockout)
+- Roles y autorización
+- Confirmación de email
+- Two-Factor Authentication
+- External logins (Google, GitHub, etc.)
+
+**Nuestra API usa Identity como opción alternativa**: el mismo endpoint `POST /api/v1/auth/signin` funciona igual, pero internamente la contraseña se verifica con `SignInManager` (PBKDF2) en lugar de `BCrypt.Verify()`.
+
+### 15.4.2. La Entidad User : IdentityUser
+
+Para que Identity funcione, `User` hereda de `IdentityUser<long>`:
+
+```csharp
+// 📁 TiendaApi.Api/Models/User.cs
+public class User : IdentityUser<long>, ITimestamped
+{
+    // ── Heredados de IdentityUser<long> (NO redeclarar aquí) ──
+    // public long Id              ← ya lo tenemos de IdentityUser<long>
+    // public string Email          ← ya lo tenemos de IdentityUser<long>
+    // public string PasswordHash   ← ya lo tenemos de IdentityUser<long>
+    // public string UserName       ← ya lo tenemos (antes se llamaba Username)
+
+    // ── Nuestros campos personalizados (los mantenemos) ──
+    public string Nombre { get; set; } = string.Empty;
+    public string Apellidos { get; set; } = string.Empty;
+    public string? Avatar { get; set; }
+    public string Role { get; set; } = UserRoles.USER;
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
+}
+```
+
+**Tres puntos clave**:
+
+1. **`Username` → `UserName`**: Identity espera `UserName`. El DTO (`RegisterDto`/`LoginDto`) sigue exponiendo `Username` en el JSON — *los DTOs son tu API pública; la entidad es tu asunto interno*.
+
+2. **NO redeclarar `PasswordHash` con `new`**: `UserStore` (genérico) escribe en la propiedad heredada de `IdentityUser`. Si la ocultamos con `new`, EF mapea **nuestra** propiedad y el hash real se pierde → nadie puede hacer login.
+
+3. **`PasswordHash` es nullable**: los usuarios creados por OAuth no tienen contraseña. Por eso quitamos el `IsRequired()` del mapeo en el `DbContext`.
+
+```mermaid
+classDiagram
+    class IdentityUser~long~ {
+        <<from Identity>>
+        +long Id
+        +string UserName
+        +string Email
+        +string PasswordHash
+        +string NormalizedUserName
+        +bool EmailConfirmed
+        +int AccessFailedCount
+        +DateTime? LockoutEnd
+    }
+    class User {
+        <<our entity>>
+        +string Nombre
+        +string Apellidos
+        +string Role
+        +string Avatar
+        +bool IsDeleted
+        +DateTime CreatedAt
+    }
+    IdentityUser <|-- User : hereda
+
+    note for User "PasswordHash NO se redeclara con new.\nUserStore (genérico) escribe en la base."
+```
+
+### 15.4.3. TiendaDbContext : IdentityDbContext
+
+```csharp
+// 📁 TiendaApi.Api/Data/TiendaDbContext.cs
+public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
+{
+    public new DbSet<User> Users { get; set; } = null!;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);   // ⚠️ obligatorio: añade las tablas AspNet
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("users");
+            entity.HasKey(u => u.Id);
+            entity.Property(u => u.UserName).IsRequired().HasMaxLength(50);
+            entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
+            entity.Property(u => u.PasswordHash);   // nullable: usuarios OAuth sin password
+            entity.Property(u => u.Role).IsRequired().HasMaxLength(20);
+            entity.HasIndex(u => u.UserName).IsUnique();
+            entity.HasIndex(u => u.Email).IsUnique();
+        });
+        // ... resto del modelo (Productos, Categorías, Pedidos)
+    }
+}
+```
+
+`base.OnModelCreating(modelBuilder)` añade las tablas de Identity a la migración:
+
+```mermaid
+erDiagram
+    users ||--o{ AspNetUserRoles : "asigna"
+    AspNetRoles ||--o{ AspNetUserRoles : "tiene"
+    users ||--o{ AspNetUserLogins : "vincula"
+    users ||--o{ AspNetUserClaims : "declara"
+
+    users {
+        bigint Id PK
+        string UserName
+        string Email
+        string PasswordHash "nullable: OAuth sin password"
+        string Role "nuestro campo (USER/ADMIN)"
+        bool IsDeleted
+    }
+    AspNetRoles {
+        bigint Id PK
+        string Name "ADMIN, USER"
+    }
+    AspNetUserRoles {
+        bigint UserId PK_FK
+        bigint RoleId PK_FK
+    }
+    AspNetUserLogins {
+        string LoginProvider PK "Google, GitHub"
+        string ProviderKey PK "id en el proveedor"
+        bigint UserId FK
+    }
+```
+
+### 15.4.4. IdentityAuthService
+
+Este servicio implementa `IAuthService` (el mismo contrato que `AuthService` del modo Custom) pero delega en `UserManager`/`SignInManager`:
+
+```csharp
+// 📁 TiendaApi.Api/Services/Auth/IdentityAuthService.cs
+public class IdentityAuthService(
+    UserManager<User> userManager,
+    SignInManager<User> signInManager,
+    IJwtService jwtService,
+    ILogger<IdentityAuthService> logger
+) : IAuthService
+{
+    public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto)
+    {
+        var user = new User
+        {
+            UserName = dto.Username,
+            Email = dto.Email,
+            Nombre = "",
+            Apellidos = "",
+            Role = UserRoles.USER
+        };
+
+        var result = await userManager.CreateAsync(user, dto.Password!);
+
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+
+            if (result.Errors.Any(e => e.Code.Contains("Duplicate")))
+                return Result.Failure<AuthResponseDto, DomainError>(AuthErrors.EmailExistente(dto.Email!));
+
+            return Result.Failure<AuthResponseDto, DomainError>(new BusinessRuleError(errors));
+        }
+
+        return Result.Success<AuthResponseDto, DomainError>(GenerateAuthResponse(user));
+    }
+
+    public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto)
+    {
+        // Identity permite login por nombre O por email
+        var user = await userManager.FindByNameAsync(dto.Username!)
+            ?? await userManager.FindByEmailAsync(dto.Username!);
+
+        if (user is null)
+            return Result.Failure<AuthResponseDto, DomainError>(AuthErrors.CredencialesInvalidas());
+
+        var result = await signInManager.CheckPasswordSignInAsync(user, dto.Password!, lockoutOnFailure: false);
+
+        if (!result.Succeeded)
+            return Result.Failure<AuthResponseDto, DomainError>(AuthErrors.CredencialesInvalidas());
+
+        return Result.Success<AuthResponseDto, DomainError>(GenerateAuthResponse(user));
+    }
+
+    // LoginExternalAsync: ver sección 15.7.3
+
+    private AuthResponseDto GenerateAuthResponse(User user)
+    {
+        var token = jwtService.GenerateToken(user);   // ← el MISMO JWT que modo Custom
+        var userDto = new UserDto(
+            user.Id, user.UserName ?? "", user.Email ?? "",
+            user.Avatar ?? "", user.Role, user.CreatedAt);
+
+        return new AuthResponseDto(token, userDto);
+    }
+}
+```
+
+🎓 **Observación**: `GenerateAuthResponse` es idéntico al de `AuthService`. **El JWT no cambia entre modos** — solo cambia cómo se verificó la contraseña antes de emitirlo.
+
+### 15.4.5. Configuración: AuthenticationConfig en Modo Identity
+
+```csharp
+// 📁 TiendaApi.Api/Infrastructures/AuthenticationConfig.cs (resumen)
+public static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration configuration)
+{
+    var authMode = configuration["Auth:Mode"] ?? "Custom";
+
+    if (authMode == "Identity")
+        return AddIdentityAuthentication(services, configuration);
+
+    return AddCustomAuthentication(services, configuration);
+}
+
+private static IServiceCollection AddIdentityAuthentication(IServiceCollection services, IConfiguration configuration)
+{
+    services.AddIdentity<User, IdentityRole<long>>(options =>
+    {
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequiredLength = 6;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    })
+    .AddEntityFrameworkStores<TiendaDbContext>()
+    .AddDefaultTokenProviders();
+
+    services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options => { /* ... TokenValidationParameters igual que modo Custom ... */ });
+
+    services.AddScoped<IAuthService, IdentityAuthService>();
+
+    return services;
+}
+```
+
+**Lo que NO cambia entre modos**: el middleware JWT (`AddJwtBearer`), las políticas (`RequireAdminRole`, `RequireUserRole`, `AdminOnly`) y el pipeline (`UseAuthentication`/`UseAuthorization`).
+
+### 15.4.6. Flujos: Signup y Signin con Identity
+
+**Registro con Identity:**
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant A as AuthController
+    participant I as IdentityAuthService
+    participant UM as UserManager~User~
+    participant DB as PostgreSQL
+
+    U->>A: POST /api/v1/auth/signup
+    A->>I: SignUpAsync(RegisterDto)
+    I->>I: new User { UserName, Email, Role = USER }
+    I->>UM: CreateAsync(user, password)
+    UM->>UM: Validar política password (longitud, dígitos, mayúsculas)
+    UM->>UM: HashPassword = PBKDF2 (AQAAAA...)
+    UM->>DB: INSERT users (PasswordHash = PBKDF2)
+    alt Política incumplida / duplicado
+        UM-->>I: IdentityResult.Failed(errors)
+        I-->>A: 409 Conflict / 422 BusinessRuleError
+    else Éxito
+        UM-->>I: IdentityResult.Success
+        I->>I: jwtService.GenerateToken(user)
+        I-->>A: AuthResponseDto { token, user }
+        A-->>U: 201 Created
+    end
+```
+
+**Login con Identity:**
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant A as AuthController
+    participant I as IdentityAuthService
+    participant SM as SignInManager~User~
+    participant DB as PostgreSQL
+
+    U->>A: POST /api/v1/auth/signin
+    A->>I: SignInAsync(LoginDto)
+    I->>SM: FindByNameAsync(username) o FindByEmailAsync(username)
+    SM->>DB: SELECT users WHERE normalized_name = ?
+    alt Usuario no existe
+        DB-->>SM: null
+        SM-->>I: null
+        I-->>A: 401 UnauthorizedError
+    else Usuario existe
+        DB-->>SM: user
+        SM->>SM: CheckPasswordSignInAsync(user, password)
+        SM->>SM: Compare PBKDF2(hash, password)
+        alt Contraseña incorrecta
+            SM-->>I: SignInResult.Failed
+            I-->>A: 401 UnauthorizedError
+        else Contraseña correcta
+            SM-->>I: SignInResult.Success
+            I->>I: jwtService.GenerateToken(user)
+            I-->>A: AuthResponseDto { token, user }
+            A-->>U: 200 OK
+        end
+    end
+```
+
+**Petición autorizada: idéntica al modo Custom** — el middleware JWT no sabe cómo se creó el token:
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant M as Middleware JWT
+    participant P as Controller
+
+    C->>M: GET /api/v1/productos (Bearer eyJ...)
+    M->>M: Verificar firma HS256 + expiración
+    alt Token inválido/expirado
+        M-->>C: 401 Unauthorized
+    else Token válido
+        M->>P: ClaimsPrincipal (sub, email, role...)
+        P-->>C: 200 OK + productos
+    end
+```
+
+### 15.4.7. Comparativa: Cómo Validan la Contraseña
+
+| Aspecto | Custom (BCrypt) | Identity (UserManager) |
+|---------|-----------------|------------------------|
+| **Al registrar** | `BCrypt.HashPassword(password)` | `userManager.CreateAsync(user, password)` |
+| **Al hacer login** | `BCrypt.Verify(password, user.PasswordHash)` | `signInManager.CheckPasswordSignInAsync(user, password)` |
+| **Algoritmo hash** | BCrypt (`$2a$11$...`) | PBKDF2 (`AQAAAAEAACcQ...`) |
+| **Validación de contraseña** | Nosotros (FluentValidation) | Identity (longitud, mayúsculas, dígitos...) |
+| **Lockout automático** | No | Sí (5 intentos → 15 min) |
+| **Login por email** | Lo hacemos nosotros | `FindByNameAsync` + `FindByEmailAsync` |
+
+> ⚠️ **Incompatibilidad de hashes**: un usuario creado en modo Custom (hash BCrypt) **no puede** hacer login en modo Identity (espera PBKDF2) y viceversa. Al cambiar de modo hay que re-hashear las contraseñas o re-sembrar los datos.
+
+### 15.4.8. Opciones de Identity: Política de Contraseñas
+
+La política se configura en `AuthenticationConfig` (ver 15.4.5) y afecta a **todo**: `CreateAsync`, `CheckPasswordSignInAsync` y hasta el seed:
+
+| Opción | Valor en el proyecto | Efecto |
+|--------|---------------------|--------|
+| `Password.RequiredLength` | 6 | mínimo 6 caracteres |
+| `Password.RequireDigit` | true | debe tener al menos un dígito |
+| `Password.RequireUppercase` | true | debe tener mayúscula |
+| `Password.RequireLowercase` | true | debe tener minúscula |
+| `Lockout.MaxFailedAccessAttempts` | 5 | tras 5 fallos... |
+| `Lockout.DefaultLockoutTimeSpan` | 15 min | ...bloquea 15 minutos |
+
+🎓 **Consecuencia práctica**: `"admin"` (5 chars, sin dígito ni mayúscula) **no pasa la política**. Por eso el seed en modo Identity usa `Admin123!` mientras el modo Custom usa `admin` (ver 15.8.4).
+
+---
+
+## 15.5. OAuth 2.0: Conceptos y Arquitectura
+
+> En la Parte II construimos la puerta principal (email + contraseña). Ahora añadimos **puertas alternativas**: login con Google, GitHub o Microsoft. Veremos primero los conceptos y el flujo (15.5), luego nuestra implementación manual (15.6) y por último la versión con Identity (15.7).
+
+
+### 15.5.1. ¿Qué es OAuth 2.0 y por qué usarlo?
 
 OAuth 2.0 es un **estándar de autorización** que permite a un usuario autenticarse con un proveedor externo (Google, GitHub, Microsoft) sin crear una contraseña nueva en nuestra aplicación.
 
@@ -2126,7 +1261,8 @@ OAuth 2.0 es un **estándar de autorización** que permite a un usuario autentic
 | OAuth ≠ SAML | SAML es XML-based, usado en empresas. OAuth es JSON/REST |
 | OAuth ≠ API Key | API Key es estático; OAuth usa tokens temporales con flujo de redirect |
 
-### 15.13.2. Arquitectura: Puertas Múltiples
+
+### 15.5.2. Arquitectura: Puertas Múltiples
 
 OAuth 2.0 añade **puertas de login adicionales** al lado de la puerta principal (JWT). El cliente elige cuál usar. La clave es que **todas las puertas convergen en el mismo JWT**:
 
@@ -2148,7 +1284,7 @@ flowchart TB
         MS -->|redirect + callback| Token
     end
 
-    Token --> API[Endpoints protegidos<br/>[Authorize]]
+    Token --> API["Endpoints protegidos<br/>[Authorize]"]
 
     style JWT fill:#2ecc71,color:#fff
     style Token fill:#3498db,color:#fff
@@ -2163,7 +1299,8 @@ Porque el middleware de autenticación **no sabe cómo se generó el token**. So
 
 Da igual si el usuario se logueó con password o con Google — el JWT resultante es **idéntico**.
 
-### 15.13.3. Flujo OAuth Paso a Paso
+
+### 15.5.3. Flujo OAuth Paso a Paso
 
 ```mermaid
 sequenceDiagram
@@ -2172,7 +1309,7 @@ sequenceDiagram
     participant G as Google OAuth
 
     Note over B,G: FASE 1: Challenge (iniciar login)
-    B->>GET /api/v1/auth/external/Google
+    B->>API: GET /api/v1/auth/external/Google
     API->>API: Verificar que "Google" está configurado
     API->>B: 302 Redirect a accounts.google.com/o/oauth2/v2/auth?...
 
@@ -2181,7 +1318,7 @@ sequenceDiagram
     G->>B: 302 Redirect a /api/v1/auth/external-callback?code=4/xxx
 
     Note over B,G: FASE 3: Callback (procesar respuesta)
-    B->>GET /api/v1/auth/external-callback?code=4/xxx
+    B->>API: GET /api/v1/auth/external-callback?code=4/xxx
     API->>G: POST /token (intercambiar code por access_token)
     G-->>API: { access_token: "ya29.xxx", id_token: "eyJ..." }
     API->>G: GET /userinfo (obtener email, nombre, avatar)
@@ -2195,9 +1332,27 @@ sequenceDiagram
     API-->>B: 200 { token: "eyJhbGci...", user: {...} }
 ```
 
-### 15.13.4. Arquitectura Interna del Proyecto
 
-#### Configuración condicional (OAuthConfig.cs)
+### 15.5.4. Tabla Comparativa de Proveedores
+
+| Característica | Google | GitHub | Microsoft |
+|---------------|:------:|:------:|:---------:|
+| **Email siempre disponible** | ✅ Sí | ⚠️ Puede ser null | ✅ Sí |
+| **Nombre disponible** | ✅ Sí | ✅ Sí | ✅ Sí |
+| **Avatar disponible** | ✅ Sí | ✅ Sí | ✅ Sí |
+| **PKCE recomendado** | ✅ Sí | No necesario | No necesario |
+| **Paquete NuGet** | En caja SDK | Comunidad | En caja SDK |
+| **Facilidad de setup** | Media (OAuth consent screen) | Fácil (5 min) | Media (entra.microsoft.com) |
+| **Ideal para** | Todos los usuarios | Desarrolladores | Entornos educativos/corporativos |
+
+
+## 15.6. OAuth Manual: Nuestra Implementación
+
+> 📁 **Estado en el repo**: `OAuthConfig.cs` (registro condicional de los tres proveedores) y `ExternalLoginDto.cs` están implementados. La **tabla `UserLogin`** y la **lógica `LoginExternalAsync`** de 15.6.2–15.6.3 se muestran como diseño completo de referencia (es el flujo que la versión con Identity de 15.7 implementa con las tablas de Identity).
+
+
+### 15.6.1. Configuración Condicional (OAuthConfig.cs)
+
 
 ```csharp
 // Solo se registra el esquema si Auth:{Proveedor}:Enabled = true
@@ -2217,7 +1372,7 @@ if (configuration.GetValue<bool>("Auth:Google:Enabled"))
 
 **¿Por qué condicional?** En producción quizás solo quieras Google. En desarrollo quizás los tres. La configuración decide, no el código.
 
-#### Modelo de datos: UserLogin
+### 15.6.2. Modelo de Datos: UserLogin
 
 ```mermaid
 erDiagram
@@ -2242,7 +1397,7 @@ erDiagram
 
 **¿Por qué una tabla separada?** Un usuario puede tener múltiples logins externos (Google + GitHub). La unicidad es `(LoginProvider, ProviderKey)` — un proveedor externo solo puede estar vinculado a un usuario local.
 
-#### Lógica de LoginExternalAsync (AuthService.cs)
+### 15.6.3. Lógica de LoginExternalAsync
 
 ```csharp
 public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(
@@ -2278,7 +1433,42 @@ public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(
 
 **¿Por qué dummy hash?** El campo `PasswordHash` es obligatorio (60 chars de BCrypt). Un usuario OAuth no tiene password, pero el campo no puede ser null. Con `"OAUTH-Google"` el login normal fallará (BCrypt no valida), pero no hay `NullReferenceException`.
 
-### 15.13.5. Configuración Completa
+```mermaid
+flowchart TB
+    IN["LoginExternalDto<br/>(provider, key, email, name)"] --> Q1{"¿Existe vinculación<br/>(LoginProvider, ProviderKey)?"}
+    Q1 -->|Sí| U1["Usuario vinculado existente"]
+    Q1 -->|No| Q2{"¿Existe usuario<br/con ese email?"}
+    Q2 -->|Sí| U2["Vincular al usuario existente<br/>(no duplicar cuenta)"]
+    Q2 -->|No| C1["Crear usuario local<br/>PasswordHash = 'OAUTH-Google'<br/>(dummy hash)"]
+    U1 --> V["Guardar UserLogin"]
+    U2 --> V
+    C1 --> V
+    V --> JWT["jwtService.GenerateToken(user)<br/>→ mismo JWT que login manual"]
+
+    style Q1 fill:#f39c12,color:#fff
+    style Q2 fill:#f39c12,color:#fff
+    style C1 fill:#27ae60,color:#fff
+    style JWT fill:#8e44ad,color:#fff
+```
+
+**Las tres ramas convergen en el mismo JWT** — el cliente no distingue si se autenticó con password o con Google.
+
+
+#### La entidad UserLogin
+
+```csharp
+public class UserLogin
+{
+    public long Id { get; set; }
+    public long UserId { get; set; }          // FK a User local
+    public string LoginProvider { get; set; }  // "Google", "GitHub", "Microsoft"
+    public string ProviderKey { get; set; }    // ID único en el proveedor
+    public string? ProviderDisplayName { get; set; }
+}
+```
+
+
+### 15.6.4. Configuración Completa Paso a Paso
 
 #### Paso 1: Crear apps en los proveedores
 
@@ -2337,32 +1527,8 @@ dotnet user-secrets set "Microsoft:ClientSecret" "xxxx"
 http://localhost:5031/api/v1/auth/external/Google
 ```
 
-### 15.13.6. Tabla Comparativa de Proveedores
 
-| Característica | Google | GitHub | Microsoft |
-|---------------|:------:|:------:|:---------:|
-| **Email siempre disponible** | ✅ Sí | ⚠️ Puede ser null | ✅ Sí |
-| **Nombre disponible** | ✅ Sí | ✅ Sí | ✅ Sí |
-| **Avatar disponible** | ✅ Sí | ✅ Sí | ✅ Sí |
-| **PKCE recomendado** | ✅ Sí | No necesario | No necesario |
-| **Paquete NuGet** | En caja SDK | Comunidad | En caja SDK |
-| **Facilidad de setup** | Media (OAuth consent screen) | Fácil (5 min) | Media (entra.microsoft.com) |
-| **Ideal para** | Todos los usuarios | Desarrolladores | Entornos educativos/corporativos |
-
-### 15.13.7. Tabla de Datos: UserLogin
-
-```csharp
-public class UserLogin
-{
-    public long Id { get; set; }
-    public long UserId { get; set; }          // FK a User local
-    public string LoginProvider { get; set; }  // "Google", "GitHub", "Microsoft"
-    public string ProviderKey { get; set; }    // ID único en el proveedor
-    public string? ProviderDisplayName { get; set; }
-}
-```
-
-### 15.13.8. Puntos Clave para el Alumno
+### 15.6.5. Puntos Clave para el Alumno
 
 | Concepto | Explicación |
 |----------|-------------|
@@ -2374,14 +1540,470 @@ public class UserLogin
 | **PKCE** | Protección contra interceptación del code OAuth (recomendado en Google) |
 | **ExternalLoginDto** | Nuestro DTO propio, sin depender de ASP.NET Core Identity |
 
-### 15.13.9. ¿Por qué NO usamos ASP.NET Core Identity?
 
-| Aspecto | Identity | Nuestro enfoque |
-|---------|----------|-----------------|
-| **Tablas** | 8+ tablas (Users, Roles, Claims, Logins, Tokens...) | 2 tablas (User, UserLogin) |
-| **Complejidad** | Alta — muchas abstracciones | Baja — control total |
-| **Flexibilidad** | Limitada por lo que Identity permite | Total — podemos personalizar todo |
-| **Para OAuth** | Tiene `SignInManager.GetExternalLoginInfoAsync()` | Parseamos los claims manualmente |
-| **Para este proyecto** | Sobredimensionado | Adecuado para una API REST educativa |
+## 15.7. OAuth con Identity: ExternalLoginInfo
 
-**Identity es excelente para apps grandes con múltiples features de auth (2FA, password reset, lockout). Para una API educativa con JWT + OAuth básico, nuestro enfoque es más claro y enseña más.**
+> 📁 La API implementa el OAuth con Identity en `IdentityAuthService.LoginExternalAsync` (activo con `Auth:Mode = "Identity"`). La Web (TiendaDawWeb) usa Identity nativamente con cookies: `SignInManager.GetExternalLoginInfoAsync()` + `SignInManager.ExternalLoginSignInAsync()`.
+
+### 15.7.1. El Mismo Middleware OAuth, Otra Vinculación
+
+La parte "puerta" de OAuth (challenge/callback con Google, GitHub, Microsoft) **es idéntica en ambos modos**: el middleware OAuth de ASP.NET Core no sabe nada de Identity ni de nuestro BCrypt. Lo único que cambia es **qué pasa en el callback** cuando llegan los datos del proveedor:
+
+```mermaid
+flowchart TB
+    subgraph "Idéntico en ambos modos"
+        B[Browser] -->|GET /auth/external/Google| MW[Middleware OAuth<br/>challenge + callback]
+        MW -->|code| P[Proveedor]
+        P -->|claims: email, name, provider key| MW
+    end
+
+    MW --> J{¿Auth:Mode?}
+
+    J -->|Custom| M1["Nuestro código:<br/>1. Buscar UserLogin por (provider, key)<br/>2. Si no, buscar usuario por email<br/>3. Si no, crear usuario dummy hash<br/>4. Vincular en tabla user_logins"]
+    J -->|Identity| M2["Identity:<br/>1. GetExternalLoginInfoAsync()<br/>2. SignInManager.ExternalLoginSignInAsync()<br/>3. UserManager.AddLoginAsync()"]
+
+    M1 --> T[JWT propio]
+    M2 --> T
+
+    T --> API["Endpoints protegidos<br/>[Authorize]"]
+
+    style MW fill:#3498db,color:#fff
+    style M1 fill:#2ecc71,color:#fff
+    style M2 fill:#e67e22,color:#fff
+    style T fill:#9b59b6,color:#fff
+```
+
+### 15.7.2. Tabla AspNetUserLogins : IdentityUserLogin
+
+Identity trae su propia tabla de vinculaciones — `AspNetUserLogins` — mapeada a `IdentityUserLogin<TKey>`:
+
+```mermaid
+erDiagram
+    users ||--o{ AspNetUserLogins : "vincula"
+
+    users {
+        bigint Id PK
+        string UserName
+        string Email
+        string PasswordHash "nullable si el usuario es OAuth puro"
+    }
+
+    AspNetUserLogins {
+        string LoginProvider PK "Google, GitHub, Microsoft"
+        string ProviderKey PK "sub / id del proveedor"
+        bigint UserId FK "→ users.Id"
+        string ProviderDisplayName
+    }
+```
+
+| Aspecto | OAuth Manual (15.6) | OAuth con Identity |
+|---------|---------------------|--------------------|
+| **Tabla** | `user_logins` (nuestra, con `Id` propio) | `AspNetUserLogins` (PK compuesta provider+key) |
+| **Entidad** | `UserLogin` (nuestra) | `IdentityUserLogin<long>` (de Identity) |
+| **Búsqueda de vinculación** | `userLoginRepository.FindByProviderAsync(...)` | `userManager.GetLoginsAsync(user)` / `FindLoginAsync(...)` |
+| **Usuario duplicado** | Lo evitamos nosotros | `userManager.FindByEmailAsync(...)` |
+
+> 🎓 Ambas tablas resuelven el mismo problema con la misma unicidad: **`(LoginProvider, ProviderKey)`**. Un proveedor externo solo puede estar vinculado a un usuario local.
+
+### 15.7.3. LoginExternalAsync con Identity
+
+```csharp
+// 📁 TiendaApi.Api/Services/Auth/IdentityAuthService.cs
+public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(ExternalLoginDto info)
+{
+    // 1. Sin email no podemos mapear a usuario local
+    if (string.IsNullOrWhiteSpace(info.Email))
+        return Result.Failure<AuthResponseDto, DomainError>(
+            new BusinessRuleError("El proveedor no devolvió email"));
+
+    // 2. ¿Existe usuario con ese email? (vinculación, no duplicado)
+    var user = await userManager.FindByEmailAsync(info.Email);
+
+    // 3. Primera vez → crear cuenta local (sin contraseña real)
+    if (user is null)
+    {
+        user = new User
+        {
+            UserName = info.Email,      // Identity requiere UserName
+            Email = info.Email,
+            Nombre = info.Name ?? "",
+            Role = UserRoles.USER
+        };
+        await userManager.CreateAsync(user);   // sin password → PasswordHash = null
+    }
+
+    // 4. Vincular login externo en AspNetUserLogins (si no lo estaba)
+    var loginInfo = new UserLoginInfo(info.LoginProvider, info.ProviderKey, info.LoginProvider);
+    var existingLogins = await userManager.GetLoginsAsync(user);
+    if (!existingLogins.Any(l => l.LoginProvider == info.LoginProvider))
+    {
+        await userManager.AddLoginAsync(user, loginInfo);
+    }
+
+    // 5. Generar JWT propio (mismo flujo que login normal)
+    return Result.Success<AuthResponseDto, DomainError>(GenerateAuthResponse(user));
+}
+```
+
+**Diferencias respecto al OAuth manual (15.6.3)**:
+
+| Paso | Manual | Con Identity |
+|------|--------|--------------|
+| Buscar vinculación | Repositorio propio `FindByProviderAsync` | `userManager.GetLoginsAsync(user)` |
+| Usuario sin password | `PasswordHash = "OAUTH-Google"` (dummy hash) | `PasswordHash = null` (nullable en Identity) |
+| Vincular | `userLoginRepository.SaveAsync(new UserLogin{...})` | `userManager.AddLoginAsync(user, new UserLoginInfo(...))` |
+| JWT final | `jwtService.GenerateToken(user)` | **igual** |
+
+> 📚 En la Web (Razor/Blazor con cookies), Identity va un paso más allá: `SignInManager.ExternalLoginSignInAsync()` crea la sesión con cookie directamente. En la API JWT no usamos SignInManager para la sesión — solo para verificar contraseñas — porque **la sesión es el token, no la cookie**.
+
+### 15.7.4. Flujo Completo OAuth + Identity
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant API as API (Auth:Mode=Identity)
+    participant G as Google OAuth
+    participant DB as PostgreSQL
+
+    Note over B,G: FASE 1: Challenge
+    B->>API: GET /api/v1/auth/external/Google
+    API->>API: OAuthConfig: ¿Google:Enabled? → AddGoogle
+    API-->>B: 302 Redirect a accounts.google.com
+
+    Note over B,G: FASE 2: Autenticación en el proveedor
+    B->>G: Login con cuenta Google
+    G-->>B: 302 Redirect a /external-callback?code=4/xxx
+
+    Note over B,DB: FASE 3: Callback con Identity
+    B->>API: GET /external-callback?code=4/xxx
+    API->>G: Intercambiar code por tokens
+    G-->>API: { id_token, access_token }
+    API->>API: Middleware OAuth extrae claims (email, name, sub)
+
+    Note over API,DB: FASE 4: IdentityAuthService.LoginExternalAsync
+    API->>DB: FindByEmailAsync(email)
+    alt Usuario nuevo
+        DB-->>API: null
+        API->>DB: CreateAsync(user sin password → hash null)
+        API->>DB: AddLoginAsync(user, UserLoginInfo(Google, sub))
+    else Usuario existente
+        DB-->>API: user
+        API->>DB: GetLoginsAsync(user) → ¿ya vinculado?
+        API->>DB: AddLoginAsync solo si no existía
+    end
+
+    API->>API: jwtService.GenerateToken(user)  ← MISMO JWT
+    API-->>B: 200 { token: "eyJhbGci...", user: {...} }
+```
+
+### 15.7.5. Comparativa: OAuth Manual vs OAuth con Identity
+
+| Criterio | OAuth Manual (15.6) | OAuth con Identity (15.7) |
+|----------|---------------------|---------------------------|
+| **Código necesario** | Repositorio propio + lógica | `UserManager` hace el trabajo |
+| **Tabla de vinculaciones** | Nuestra `user_logins` | `AspNetUserLogins` |
+| **Usuario sin password** | Dummy hash `"OAUTH-Google"` | `PasswordHash = null` |
+| **Para la API** | Tan válido como Identity | Ligeramente más limpio |
+| **Para la Web (cookies)** | Habría que inventar la sesión | `SignInManager.ExternalLoginSignInAsync()` listo |
+| **Dependencia** | Ninguna extra | Requiere `Auth:Mode = Identity` |
+
+**Conclusión**: para una API JWT, ambos son igual de correctos. La diferencia real aparece en **apps con UI**: ahí Identity aporta la sesión con cookies, 2FA y password reset sin escribir código nuevo.
+
+---
+
+## 15.8. Auth:Mode — Los Cuatro Caminos en el Mismo Proyecto
+
+> 🎓 **Actualización**: ya no hay que elegir. La API soporta **ambos enfoques** con un switch de configuración: `Auth:Mode`.
+
+### 15.8.1. El Problema que Resuelve
+
+La sección 15.3.1 explicó por qué el proyecto nació sin Identity. Pero en clase también queremos **enseñar Identity**. ¿Cómo tener ambos sin duplicar el proyecto?
+
+**Solución**: un switch en configuración que selecciona qué servicio de autenticación se registra:
+
+```json
+{
+  "Auth": {
+    "Mode": "Custom"   // "Custom" (BCrypt) o "Identity" (UserManager)
+  }
+}
+```
+
+### 15.8.2. Arquitectura: El Patrón Strategy Detrás del Switch
+
+Ambos servicios implementan la misma interfaz `IAuthService`:
+
+```mermaid
+classDiagram
+    class IAuthService {
+        <<interface>>
+        +SignUpAsync(RegisterDto) Result~AuthResponseDto~
+        +SignInAsync(LoginDto) Result~AuthResponseDto~
+        +LoginExternalAsync(ExternalLoginDto) Result~AuthResponseDto~
+    }
+    class AuthService {
+        -BCrypt.HashPassword()
+        -BCrypt.Verify()
+    }
+    class IdentityAuthService {
+        -UserManager~User~
+        -SignInManager~User~
+    }
+    IAuthService <|.. AuthService : AuthMode Custom
+    IAuthService <|.. IdentityAuthService : AuthMode Identity
+    AuthService --> BCryptNet : usa
+    IdentityAuthService --> Identity : usa
+```
+
+El **patrón clave**: el código que consume `IAuthService` (el controller, el OAuth handler) **no sabe ni le importa** qué modo está activo. Solo recibe un `Result<AuthResponseDto, DomainError>`.
+
+### 15.8.3. El Switch en AuthenticationConfig
+
+`AuthenticationConfig.AddAuthentication()` lee `Auth:Mode` y registra un servicio u otro. Este es el **único punto de decisión** de toda la autenticación — ocurre una vez, al arrancar:
+
+```mermaid
+flowchart TB
+    START["Program.cs arranca"] --> CFG["Configuration['Auth:Mode']"]
+    CFG --> SW{"¿Modo?"}
+
+    SW -->|"Identity"| ID["AddIdentityAuthentication()<br/>• AddIdentity&lt;User, IdentityRole&gt;<br/>• AddEntityFrameworkStores<br/>• AddJwtBearer (mismo que Custom)<br/>• IAuthService → IdentityAuthService"]
+    SW -->|"Custom (default)"| CU["AddCustomAuthentication()<br/>• AddJwtBearer<br/>• IAuthService → AuthService"]
+
+    ID --> PIPE["Mismo pipeline:<br/>UseAuthentication() → UseAuthorization()<br/>Mismas políticas: RequireAdminRole, AdminOnly"]
+    CU --> PIPE
+
+    PIPE --> EP["Mismos endpoints:<br/>POST /api/v1/auth/signup<br/>POST /api/v1/auth/signin"]
+    EP --> JWT["Mismo JWT Bearer<br/>[Authorize] no nota la diferencia"]
+
+    style SW fill:#f39c12,color:#fff
+    style ID fill:#e67e22,color:#fff
+    style CU fill:#27ae60,color:#fff
+    style JWT fill:#8e44ad,color:#fff
+```
+
+```csharp
+public static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration configuration)
+{
+    var authMode = configuration["Auth:Mode"] ?? "Custom";
+
+    if (authMode == "Identity")
+    {
+        return AddIdentityAuthentication(services, configuration);  // IdentityAuthService
+    }
+
+    return AddCustomAuthentication(services, configuration);        // AuthService (BCrypt)
+}
+```
+
+Ambos caminos registran **exactamente lo mismo** para el middleware:
+
+- `AddAuthentication(JwtBearerDefaults.AuthenticationScheme)` — el middleware JWT
+- `AddAuthorizationBuilder()` — políticas `RequireAdminRole`, `RequireUserRole`, `AdminOnly`
+
+**La única diferencia** es la línea de registro:
+
+| Modo | Registro |
+|------|----------|
+| Custom | `services.AddScoped<IAuthService, AuthService>()` |
+| Identity | `services.AddIdentity<User, IdentityRole<long>>(...).AddEntityFrameworkStores<TiendaDbContext>()` + `services.AddScoped<IAuthService, IdentityAuthService>()` |
+
+### 15.8.4. El Seed Condicional
+
+`SqlSeeder` lee `Auth:Mode` para crear los usuarios con el algoritmo correcto:
+
+```mermaid
+flowchart TD
+    A[SqlSeeder.SeedAsync] --> B{Auth:Mode?}
+    B -->|Custom| C[Crear User con<br/>PasswordHash = BCrypt hardcoded]
+    B -->|Identity| D[Crear User con<br/>userManager.CreateAsync user, password]
+    C --> E[✅ Login funciona]
+    D --> F[✅ Login funciona]
+```
+
+En modo Identity, el seeder usa `IServiceScopeFactory` para resolver `UserManager<User>` (porque el seeder está en un scope diferente al del request).
+
+> ⚠️ **Las contraseñas seed difieren entre modos**. La política de password de Identity (≥6 chars, dígito, mayúscula) hace que `"admin"` sea rechazado, así que el seed Identity usa `Admin123!` mientras el modo Custom usa `admin`. Ambas quedan documentadas en los logs al sembrar.
+
+> 🔧 **Bug que enseñamos en clase**: al principio declarábamos `public new string PasswordHash` en `User` para darle un default. ¡Error! `UserStore` (genérico de Identity) escribe en la propiedad heredada de `IdentityUser`, mientras EF mapeaba **nuestra** propiedad oculta → el hash real se perdía en una propiedad fantasma y nadie podía hacer login. Lección: **no ocultes propiedades de una clase base que un framework genérico escribe por ti**. En su lugar, `PasswordHash` es nullable (los usuarios OAuth no tienen contraseña) y quitamos el `IsRequired()` del mapeo.
+
+### 15.8.5. Puntos Clave para el Alumno
+
+1. **El patrón Strategy**: dos implementaciones de una interfaz, seleccionadas en tiempo de arranque por configuración. Es el mismo principio detrás de `IPaymentService`, `IEmailService`, etc.
+
+2. **El middleware JWT no cambia**: tanto Custom como Identity producen un JWT Bearer. El middleware solo valida el token; no sabe cómo se creó la sesión.
+
+3. **Identity no es mala** — es una herramienta con un coste (más tablas, más abstracción) y un beneficio (features de auth listas). Elegir es un **trade-off**, no una religión.
+
+4. **El DTO protege el contrato externo**: renombrar `Username` → `UserName` en la entidad no rompió ningún cliente porque el DTO sigue exponiendo `Username`. *Los DTOs son tu API pública; la entidad es tu asunto interno.*
+
+### 15.8.6. Estrategia de Testing del Auth:Mode
+
+Los tests del switch viven en tres archivos (27 tests):
+
+| Archivo | Qué prueba | Técnica |
+|---------|-----------|---------|
+| `IdentityAuthServiceTests` | SignUp/SignIn/LoginExternal en modo Identity | Identity **real** + EF InMemory; solo `IJwtService` mockeado |
+| `AuthenticationConfigTests` | El switch selecciona el servicio correcto | Inspección de `ServiceCollection` (descriptores) |
+| `SqlSeederTests` | Seed BCrypt vs PBKDF2 según el modo | Contenedor DI mínimo + `CheckPasswordAsync` real |
+
+🎓 **Por qué Identity real en vez de mocks**: `SignInManager` tiene un constructor que Moq no puede proxyar en .NET 10, y — más importante — probar con mocks solo verificaría que *nuestro mock* devuelve true. Con Identity real validamos que la contraseña se verifica con el algoritmo correcto (PBKDF2) y que un hash BCrypt **no** pasa por `UserManager`.
+
+**Tests de regresión clave**:
+
+- `SeedAsync_ModoIdentity_NoDebeSembrarUsuariosConHashBcrypt` — caza el error de reutilizar los hashes hardcoded en modo Identity
+- `SignUpAsync_ConDatosValidos_DebeGuardarHashPbkdf2NoBcrypt` — el hash guardado empieza por `AQAAAA` (PBKDF2), nunca `$2a$` (BCrypt)
+- `LoginExternalAsync_UsuarioCreadoPorOAuth_NoDebePoderLoginConPassword` — un usuario OAuth no tiene contraseña
+
+**Ver también**: [OAuth 2.0 Externo](16-oauth2-external-login.md)
+
+## 15.9. Cuándo Usar Cada Enfoque
+
+El proyecto enseña **cuatro combinaciones posibles**. Todas producen el mismo JWT Bearer:
+
+```mermaid
+flowchart TB
+    subgraph "Parte II: Usuario + Contraseña"
+        A1[" Manual<br/>BCrypt + JWT<br/>15.3"] --> J[JWT Bearer]
+        A2[" Identity<br/>UserManager + PBKDF2<br/>15.4"] --> J
+    end
+    subgraph "Parte III: OAuth 2.0"
+        B1[" Manual<br/>OAuthConfig + user_logins<br/>15.6"] --> J
+        B2[" Identity<br/>OAuth + AspNetUserLogins<br/>15.7"] --> J
+    end
+
+    J --> M["Middleware JWT<br/>[Authorize] — IGUAL en los 4 casos"]
+
+    style A1 fill:#2ecc71,color:#fff
+    style A2 fill:#e67e22,color:#fff
+    style B1 fill:#3498db,color:#fff
+    style B2 fill:#9b59b6,color:#fff
+    style J fill:#16a085,color:#fff
+    style M fill:#7f8c8d,color:#fff
+```
+
+### ¿Qué aporta cada uno?
+
+| Enfoque | Aporta | Coste |
+|---------|--------|-------|
+| **Manual + BCrypt (15.3)** | Control total, enseña el flujo desde cero | Te encargas de todo (validación, lockout...) |
+| **Identity + PBKDF2 (15.4)** | Lockout, política de passwords, tablas estándar | 7 tablas AspNet, hashes no compatibles con BCrypt |
+| **OAuth manual (15.6)** | Login externo sin depender de Identity | Tabla propia + vinculación manual |
+| **OAuth + Identity (15.7)** | `GetLoginsAsync`/`AddLoginAsync` listos | Requiere `Auth:Mode = Identity` |
+
+### Tabla de decisiones
+
+| Escenario | Recomendación | Razón |
+|-----------|---------------|-------|
+| **API educativa / demo** | Manual (Custom) | Enseña BCrypt y el flujo completo |
+| **API REST simple en producción** | Manual (Custom) | Ligero, control total, menos tablas |
+| **App con 2FA, lockout, password reset** | Identity | Identity ya lo trae todo |
+| **Equipo que conoce Identity** | Identity | Estándar de la industria |
+| **Razor Pages / Blazor Server (Web)** | Identity + Cookies | UI de login + `SignInManager` (así lo hace la Web de la tienda) |
+| **SPA + API backend** | Manual en la API | JWT es natural para SPAs |
+| **Migrar sistema existente con Identity** | Identity | No arrastrar conversión de hashes |
+| **API con login externo y poca base** | OAuth manual | Sin tablas AspNet |
+
+### Regla general
+
+- **¿Tiene UI de login?** → Identity (cookies + SignInManager).
+- **¿Es solo API + necesitas enseñar/entender los fundamentos?** → Manual.
+- **¿Necesitas features de auth "de serie" (2FA, lockout, reset)?** → Identity.
+- **¿Dudas?** → Empieza manual (aprenderás más) y cambia a Identity con `Auth:Mode` cuando lo necesites — el switch existe precisamente para eso.
+
+---
+
+## 15.10. Resumen y Buenas Prácticas
+
+### Puntos Clave del Módulo
+
+| Concepto | Descripción |
+|----------|-------------|
+| **Stateless** | Cada request contiene toda la información de autenticación |
+| **JWT** | Token autocontenido con claims firmados cryptográficamente |
+| **Identity** | Framework completo de gestión de usuarios |
+| **Access Token** | Token corto (15-30 min) para acceso a APIs |
+| **Refresh Token** | Token largo (7-30 días) para renovar access tokens |
+
+### Flujo de Autenticación Completo
+
+```mermaid
+sequenceDiagram
+    participant U as Cliente
+    participant A as Auth API
+    participant DB as PostgreSQL
+    participant J as JWT Service
+    
+    U->>A: POST /auth/login {email, password}
+    A->>DB: Validar credentials
+    DB-->>A: Usuario encontrado
+    A->>J: GenerateTokens(usuario)
+    J-->>A: Access + Refresh tokens
+    A-->>U: {accessToken, refreshToken}
+    
+    Note over U: Cliente almacena tokens
+    
+    U->>A: GET /api/productos (Bearer token)
+    A->>J: ValidateAccessToken(token)
+    J-->>A: Claims principal
+    A->>DB: Consultar productos
+    DB-->>A: Lista productos
+    A-->>U: 200 OK
+    
+    Note over U, A: Cuando access token expira
+    
+    U->>A: POST /auth/refresh {accessToken, refreshToken}
+    A->>J: RefreshTokens(access, refresh)
+    J-->>A: Nuevos tokens
+    A-->>U: {newAccessToken, newRefreshToken}
+```
+
+### Buenas Prácticas de Seguridad
+
+```mermaid
+flowchart TB
+    subgraph "Token Security"
+        A1["HTTPS siempre"]
+        A2["Secret >= 32 caracteres"]
+        A3["Expiration corto (15-30 min)"]
+        A4["ClockSkew = 0"]
+    end
+    
+    subgraph "Password Security"
+        B1["Hash con bcrypt/argon2"]
+        B2["Complexity requirements"]
+        B3["Rate limiting"]
+        B4["Max failed attempts"]
+    end
+    
+    subgraph "Refresh Token"
+        C1["Almacenar en BD"]
+        C2["Revocar en logout"]
+        C3["Rotar en cada refresh"]
+        C4["Expiration más largo"]
+    end
+    
+    subgraph "Monitoring"
+        D1["Log de logins"]
+        D2["Alertas de actividad sospechosa"]
+        D3["Métricas de uso"]
+        D4["Audit trail"]
+    end
+    
+    A1 --> A2 --> A3 --> A4
+    B1 --> B2 --> B3 --> B4
+    C1 --> C2 --> C3 --> C4
+    D1 --> D2 --> D3 --> D4
+```
+
+### Siguientes Pasos
+
+Con JWT dominado, el siguiente paso es aprender sobre autorización y roles.
+
+### Recursos Adicionales
+
+- JWT.io: https://jwt.io/
+- RFC 7519 (JWT): https://datatracker.ietf.org/doc/html/rfc7519
+- ASP.NET Core Identity: https://learn.microsoft.com/aspnet/core/security/authentication/
+- Microsoft JWT Authentication: https://learn.microsoft.com/aspnet/core/security/authentication/jwt-authn
+
+---

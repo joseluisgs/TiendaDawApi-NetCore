@@ -48,7 +48,7 @@ public class JwtServiceTests
         var user = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@example.com",
             Role = UserRoles.USER
         };
@@ -68,7 +68,7 @@ public class JwtServiceTests
         var user = new User
         {
             Id = 42,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@example.com",
             Role = UserRoles.USER
         };
@@ -103,7 +103,7 @@ public class JwtServiceTests
         var adminUser = new User
         {
             Id = 1,
-            Username = "admin",
+            UserName = "admin",
             Email = "admin@example.com",
             Role = UserRoles.ADMIN
         };
@@ -123,8 +123,8 @@ public class JwtServiceTests
     [Test]
     public void GenerateToken_ParaUsuariosDistintos_DebeRetornarTokensDistintos()
     {
-        var user1 = new User { Id = 1, Username = "user1", Email = "user1@test.com", Role = UserRoles.USER };
-        var user2 = new User { Id = 2, Username = "user2", Email = "user2@test.com", Role = UserRoles.USER };
+        var user1 = new User { Id = 1, UserName = "user1", Email = "user1@test.com", Role = UserRoles.USER };
+        var user2 = new User { Id = 2, UserName = "user2", Email = "user2@test.com", Role = UserRoles.USER };
 
         var token1 = _jwtService.GenerateToken(user1);
         var token2 = _jwtService.GenerateToken(user2);
@@ -141,7 +141,7 @@ public class JwtServiceTests
         var user = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@example.com",
             Role = UserRoles.USER
         };
@@ -161,7 +161,7 @@ public class JwtServiceTests
     [Test]
     public void GenerateToken_DebeContenerIssuerCorrecto()
     {
-        var user = new User { Id = 1, Username = "testuser", Email = "test@test.com", Role = UserRoles.USER };
+        var user = new User { Id = 1, UserName = "testuser", Email = "test@test.com", Role = UserRoles.USER };
 
         var token = _jwtService.GenerateToken(user);
         var handler = new JwtSecurityTokenHandler();
@@ -183,7 +183,7 @@ public class JwtServiceTests
         var user = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@example.com",
             Role = UserRoles.USER
         };
@@ -251,7 +251,7 @@ public class JwtServiceTests
         var user = new User
         {
             Id = 99,
-            Username = "claimtest",
+            UserName = "claimtest",
             Email = "claims@test.com",
             Role = UserRoles.USER
         };
@@ -285,7 +285,7 @@ public class JwtServiceTests
         var mockLogger = new Mock<ILogger<JwtService>>();
         var jwtService = new JwtService(config, mockLogger.Object);
 
-        var user = new User { Id = 1, Username = "test", Email = "test@test.com", Role = UserRoles.USER };
+        var user = new User { Id = 1, UserName = "test", Email = "test@test.com", Role = UserRoles.USER };
         var token = jwtService.GenerateToken(user);
 
         token.Should().NotBeNullOrEmpty();
@@ -297,7 +297,7 @@ public class JwtServiceTests
     [Test]
     public void ValidateToken_ConClaveDistinta_NoDebeValidar()
     {
-        var user = new User { Id = 1, Username = "test", Email = "test@test.com", Role = UserRoles.USER };
+        var user = new User { Id = 1, UserName = "test", Email = "test@test.com", Role = UserRoles.USER };
         var token = _jwtService.GenerateToken(user);
 
         var differentConfig = new Dictionary<string, string> {
@@ -328,7 +328,7 @@ public class JwtServiceTests
         var adminUser = new User
         {
             Id = 1,
-            Username = "admin",
+            UserName = "admin",
             Email = "admin@example.com",
             Role = UserRoles.ADMIN
         };
@@ -347,7 +347,7 @@ public class JwtServiceTests
         var regularUser = new User
         {
             Id = 5,
-            Username = "regularuser",
+            UserName = "regularuser",
             Email = "regular@test.com",
             Role = UserRoles.USER
         };
@@ -375,7 +375,7 @@ public class JwtServiceTests
         var user = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@example.com",
             Role = UserRoles.USER
         };
