@@ -208,6 +208,8 @@ async function runSuite() {
   let pedidoId = null;
   let userIdCreado = null;
   let userIdSignup = null;
+  let autoToken = null;
+  let productoIdCreadoGQL = null;
 let imagenProductoUrl = null;
 
   // ============================ HEALTH ============================
@@ -252,11 +254,19 @@ let imagenProductoUrl = null;
     assert(r.json?.token, "falta token");
     assertEq(r.json?.user?.role, "USER", "role");
     userIdSignup = r.json?.user?.id;
+    autoToken = r.json.token;
   });
 
   await test("Auth: POST signup con username inválido → 400", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
       body: { username: "x", email: `bad_${ts}@test.com`, password: "Test1234" },
+    });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Auth: POST signup con email inválido → 400", async () => {
+    const r = await req("POST", "/api/v1/auth/signup", {
+      body: { username: `badmail_${ts}`, email: "no-es-email", password: "Test1234" },
     });
     assertEq(st(r), 400, "status");
   });
@@ -289,6 +299,13 @@ let imagenProductoUrl = null;
     const r = await req("POST", "/api/v1/auth/signin", {
       body: { username: CONFIG.admin.username, password: "WrongPass123" },
     });
+
+  await test("Auth: POST signin usuario no existe → 401", async () => {
+    const r = await req("POST", "/api/v1/auth/signin", {
+      body: { username: `nobody_${ts}`, password: "Password123!" },
+    });
+    assertEq(st(r), 401, "status");
+  });
     assertEq(st(r), 401, "status");
   });
 
@@ -318,6 +335,18 @@ let imagenProductoUrl = null;
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(typeof r.json?.totalCount === "number", "falta totalCount");
     assert(r.json.totalCount >= 3, `semilla esperaba >=3 categorías, hay ${r.json.totalCount}`);
+  });
+
+  await test("Categorías: GET All (sin paginación) → 200 array", async () => {
+    const r = await req("GET", "/api/categorias");
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items ni array");
+  });
+
+  await test("Categorías: GET con filtros (nombre) → 200", async () => {
+    const r = await req("GET", "/api/categorias?nombre=Elec&page=0&size=10&sortBy=id&direction=asc");
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items");
   });
 
   await test("Categorías: GET /1 → 200 (semilla)", async () => {
@@ -365,6 +394,24 @@ let imagenProductoUrl = null;
       token: adminToken,
       body: { nombre: `Auto Cat ${ts}`, descripcion: "Creada por automation" },
     });
+
+  await test("Categorías: POST nombre duplicado → 409 Conflict", async () => {
+    const nombre = `Dup Cat ${ts}`;
+    const body = { nombre, descripcion: "Duplicado E2E" };
+    const primero = await req("POST", "/api/categorias", { token: adminToken, body });
+    assertEq(st(primero), 201, "status primer create");
+    const segundo = await req("POST", "/api/categorias", { token: adminToken, body });
+    assertEq(st(segundo), 409, "status duplicado");
+    await req("DELETE", `/api/categorias/${primero.json.id}`, { token: adminToken });
+  });
+
+  await test("Categorías: PUT /999999 → 404", async () => {
+    const r = await req("PUT", "/api/categorias/999999", {
+      token: adminToken,
+      body: { nombre: "No existe", descripcion: "x" },
+    });
+    assertEq(st(r), 404, "status");
+  });
     assertEq(st(r), 201, "status");
     categoriaId = r.json?.id;
     assert(categoriaId !== undefined, "falta id");
@@ -395,6 +442,12 @@ let imagenProductoUrl = null;
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.json.totalCount >= 3, `semilla esperaba >=3 productos, hay ${r.json.totalCount}`);
+  });
+
+  await test("Productos: GET All (sin paginación) → 200 array", async () => {
+    const r = await req("GET", "/api/productos");
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items ni array");
   });
 
   await test("Productos: GET paged con filtros (precioMax) → 200", async () => {
@@ -445,6 +498,14 @@ let imagenProductoUrl = null;
         precio: 19.99, stock: 5, categoriaId: 1,
       },
     });
+
+  await test("Productos: POST con categoriaId inexistente → 400", async () => {
+    const r = await req("POST", "/api/productos", {
+      token: adminToken,
+      body: { nombre: `OrfCat ${ts}`, descripcion: "categoria inexistente", precio: 5, stock: 1, categoriaId: 999999 },
+    });
+    assertEq(st(r), 400, "status");
+  });
     assertEq(st(r), 201, "status");
     productoId = r.json?.id;
     assert(productoId !== undefined, "falta id");
@@ -543,6 +604,41 @@ let imagenProductoUrl = null;
     assertEq(r.json?.estado, "PENDIENTE", "estado");
   });
 
+  await test("Pedidos user: GET /me/{id} de otro usuario → 403 Forbidden", async () => {
+    assert(autoToken, "falta el token del signup automático");
+    const r = await req("GET", `/api/pedidos/me/${pedidoId}`, { token: autoToken });
+    assertEq(st(r), 403, "status (pedido de otro usuario)");
+  });
+
+  await test("Pedidos user: PUT /me/{id} de otro usuario → 403 Forbidden", async () => {
+    const r = await req("PUT", `/api/pedidos/me/${pedidoId}`, {
+      token: autoToken,
+      body: { direccionEnvio: "Intento de edicion ajena" },
+    });
+    assertEq(st(r), 403, "status (pedido de otro usuario)");
+  });
+
+  await test("Pedidos user: GET /me/{id} inexistente → 404", async () => {
+    const r = await req("GET", "/api/pedidos/me/999999999999999999999999", { token: userToken });
+    assertEq(st(r), 404, "status");
+  });
+
+  await test("Pedidos user: PUT /me/{id} inexistente → 404", async () => {
+    const r = await req("PUT", "/api/pedidos/me/999999999999999999999999", {
+      token: userToken,
+      body: { direccionEnvio: "No existe" },
+    });
+    assertEq(st(r), 404, "status");
+  });
+
+  await test("Pedidos user: POST /me con producto inexistente → 404", async () => {
+    const r = await req("POST", "/api/pedidos/me", {
+      token: userToken,
+      body: { destinatario: dest("invalido"), items: [{ productoId: 999999, cantidad: 1, precioUnitario: 9.99 }] },
+    });
+    assertEq(st(r), 404, "status (error de negocio: producto no existe)");
+  });
+
   await test("Pedidos user: DELETE /me/{id} (pedido extra) → 204", async () => {
     const post = await req("POST", "/api/pedidos/me", {
       token: userToken,
@@ -605,6 +701,24 @@ let imagenProductoUrl = null;
   await test("Pedidos admin: DELETE /{id} → 204", async () => {
     const r = await req("DELETE", `/api/pedidos/${pedidoId}`, { token: adminToken });
     assertEq(st(r), 204, "status");
+  });
+
+  await test("Pedidos admin: POST /me crea pedido propio → 201 PENDIENTE", async () => {
+    const r = await req("POST", "/api/pedidos/me", {
+      token: adminToken,
+      body: {
+        destinatario: {
+          nombreCompleto: "Admin Automation",
+          email: "admin-auto@test.com",
+          telefono: "+34123456789",
+          direccion: { calle: "Calle Admin", numero: "1", ciudad: "Madrid", provincia: "Madrid", pais: "España", codigoPostal: "28001" },
+        },
+        items: [{ productoId: 1, cantidad: 1, precioUnitario: 1299.99 }],
+      },
+    });
+    assertEq(st(r), 201, "status");
+    assertEq(r.json?.estado, "PENDIENTE", "estado");
+    if (r.json?.id) { await req("DELETE", `/api/pedidos/me/${r.json.id}`, { token: adminToken }); }
   });
 
   // ============================ USERS (ADMIN) ============================
@@ -745,6 +859,14 @@ let imagenProductoUrl = null;
     assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)}`);
   });
 
+  await test("GraphQL: query categoria(id:1) → 200 con nombre", async () => {
+    const r = await req("POST", "/graphql", {
+      body: { query: "query($id: Long!) { categoria(id: $id) { id nombre } }", variables: { id: 1 } },
+    });
+    assertEq(st(r), 200, "status");
+    assert(r.json?.data?.categoria?.nombre, "falta data.categoria.nombre");
+  });
+
   await test("GraphQL: query producto(id:1) → 200 con objeto", async () => {
     const r = await req("POST", "/graphql", {
       body: { query: "query($id: Long!) { producto(id: $id) { id nombre precio stock } }", variables: { id: 1 } },
@@ -769,7 +891,7 @@ let imagenProductoUrl = null;
     );
   });
 
-  await test("GraphQL: mutation createProducto con admin → 200 y limpia", async () => {
+  await test("GraphQL: mutation createProducto con admin → 200 y guarda id", async () => {
     const nombre = `GQLOK ${ts}`;
     const r = await req("POST", "/graphql", {
       token: adminToken,
@@ -783,11 +905,68 @@ let imagenProductoUrl = null;
     const creado = r.json?.data?.createProducto;
     assert(creado?.id, `falta id en ${JSON.stringify(r.json).slice(0, 200)}`);
     assertEq(creado.nombre, nombre, "nombre");
-    // Limpieza del producto creado por GraphQL
-    const del = await req("DELETE", `/api/productos/${creado.id}`, { token: adminToken });
-    assert(st(del) === 204 || st(del) === 404, `cleanup status ${del.status}`);
+    productoIdCreadoGQL = creado.id; // lo consumen update/delete más abajo
   });
 
+  await test("GraphQL: mutation createProducto con rol USER → errors authoriz", async () => {
+    const r = await req("POST", "/graphql", {
+      token: userToken,
+      body: {
+        query: "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id } }",
+        variables: { input: { nombre: `GQLUSER ${ts}`, precio: 1, stock: 1, categoriaId: 1 } },
+      },
+    });
+    assert(Array.isArray(r.json?.errors), `esperaba errors: ${JSON.stringify(r.json).slice(0, 150)}`);
+    assert(String(r.json.errors[0]?.message).toLowerCase().includes("authoriz"),
+      `mensaje inesperado: ${r.json.errors[0]?.message}`);
+  });
+
+  await test("GraphQL: mutation createProducto con categoria inexistente → errors validación", async () => {
+    // Por diseño el mutation lanza excepción en validación de negocio (ver XML-doc
+    // de ProductoMutation): el cliente lo ve en errors[], no en data null.
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: {
+        query: "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id } }",
+        variables: { input: { nombre: `GQLCAT ${ts}`, precio: 9.99, stock: 1, categoriaId: 999999 } },
+      },
+    });
+    assert(Array.isArray(r.json?.errors), `esperaba errors: ${JSON.stringify(r.json).slice(0, 150)}`);
+    assert(JSON.stringify(r.json.errors).includes("validaci"),
+      `esperaba error de validación: ${JSON.stringify(r.json.errors).slice(0, 150)}`);
+  });
+
+  await test("GraphQL: mutation updateProducto con admin → 200 (regresión contexto)", async () => {
+    // Regresión del bug "Cannot access a disposed context instance": el mutation
+    // inyectaba el repositorio por constructor (singleton) y el DbContext quedaba
+    // dispuesto tras la primera petición. updateProducto era el camino afectado.
+    const pid = productoIdCreadoGQL ?? null;
+    assert(pid, "falta producto creado por la mutation anterior");
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: {
+        query: "mutation($id: Long!, $input: UpdateProductoInput!) { updateProducto(id: $id, input: $input) { id nombre precio } }",
+        variables: { id: Number(pid), input: { precio: 11.11 } },
+      },
+    });
+    assertEq(st(r), 200, "status");
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)?.slice(0, 200)}`);
+    assertEq(Number(r.json?.data?.updateProducto?.id), Number(pid), "id actualizado");
+  });
+
+  await test("GraphQL: mutation deleteProducto con admin → true + limpia estado", async () => {
+    const pid = productoIdCreadoGQL ?? null;
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: {
+        query: "mutation($id: Long!) { deleteProducto(id: $id) }",
+        variables: { id: Number(pid) },
+      },
+    });
+    assertEq(st(r), 200, "status");
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)?.slice(0, 200)}`);
+    assertEq(r.json?.data?.deleteProducto, true, "resultado delete");
+  });
   // ============================ REALTIME (WebSocket + SignalR) ============================
   // Node 22+ trae cliente WebSocket global (sin npm install, mantiene la filosofía
   // del runner). SignalR se habla a mano: handshake JSON + separador de registro.
