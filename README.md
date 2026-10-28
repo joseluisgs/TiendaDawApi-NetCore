@@ -350,6 +350,12 @@ bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
 ```
 
 **Tests disponibles en:** `TiendaApi.Tests.E2E/{Bruno-Cli, Bruno-Local}/` — las dos colecciones son idénticas (misma colección; Bruno-Cli añade el compose Docker y el entorno `docker.bru`). La carpeta `1 - AUTHENTICATION` incluye los endpoints OAuth externos (`[011]`-`[013]`: puerta cerrada 404, proveedor inexistente 404 y callback sin principal 400).
+
+**Informes generados:**
+- `report.html` - Informe visual
+- `report.json` - Datos estructurados
+- `junit-report.xml` - Para CI/CD
+
 ## 📚 Documentación
 
 Para una comprensión profunda de la arquitectura y las tecnologías utilizadas, consulta los documentos en la carpeta [`doc/`](doc/):
