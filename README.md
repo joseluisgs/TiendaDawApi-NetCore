@@ -331,11 +331,14 @@ newman run TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_collection.
 
 ```bash
 # Opción 1: Con Docker (imagen oficial usebruno/cli; informes en reports/)
+# La colección ejecuta las carpetas del README contra la API del host
+# (host.docker.internal:5031 — ver environments/docker.bru) con delay 3200ms
+# para no saltar el rate limit. La API debe estar arriba antes de lanzarla.
 cd TiendaApi.Tests.E2E/Bruno-Cli
-docker compose up --build
+docker compose run --rm bruno
 start reports/report.html
 
-# Opción 2: Con Bruno CLI local — ejecución única (los tokens NO sobreviven entre tandas)
+# Opción 2: Con Bruno CLI local - ejecución única (los tokens NO sobreviven entre tandas)
 npm install -g @usebruno/cli
 cd TiendaApi.Tests.E2E/Bruno-Local
 bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
@@ -343,16 +346,10 @@ bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
   "10 - GRAPHQL CATEGORÍAS" "11 - GRAPHQL PRODUCTOS" "90 - TEARDOWN" \
   --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 3200
 # Ejecución sin fallos. Fuera de esta ejecución: "6 - USUARIOS" (no incluida) y
-# "12 - WEBSOCKETS" (la CLI no soporta WS; la variable basews no existe en el env)
+# "12 - WEBSOCKETS" (la CLI no soporta WS; los cubre el runner Automation nativo)
 ```
 
-**Tests disponibles en:** `TiendaApi.Tests.E2E/{Bruno-Cli, Bruno-Local}/`
-
-**Informes generados:**
-- `report.html` - Informe visual
-- `report.json` - Datos estructurados
-- `junit-report.xml` - Para CI/CD
-
+**Tests disponibles en:** `TiendaApi.Tests.E2E/{Bruno-Cli, Bruno-Local}/` — las dos colecciones son idénticas (misma colección; Bruno-Cli añade el compose Docker y el entorno `docker.bru`). La carpeta `1 - AUTHENTICATION` incluye los endpoints OAuth externos (`[011]`-`[013]`: puerta cerrada 404, proveedor inexistente 404 y callback sin principal 400).
 ## 📚 Documentación
 
 Para una comprensión profunda de la arquitectura y las tecnologías utilizadas, consulta los documentos en la carpeta [`doc/`](doc/):
