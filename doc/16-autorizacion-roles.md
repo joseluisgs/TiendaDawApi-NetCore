@@ -141,9 +141,29 @@ flowchart TB
 | `User.Identity.Name` | ✅ | ✅ |
 | Politicas personalizadas | ✅ | ✅ |
 
-#### Conclusion
+#### ⚠️ La trampa al COMBINAR Identity + JWT en la misma API
 
-Nuestro sistema de autorizacion con roles funciona **perfectamente** con el metodo personalizado JWT. No necesitamos ASP.NET Core Identity para tener `[Authorize]`, politicas o control de roles.
+Lo anterior es cierto **mientras la autenticación venga de un solo esquema**. El problema aparece cuando mezclamos Identity (que trae su propia cookie `Identity.Application`) con JWT Bearer en la **misma** API — como hace TiendaDawApi en su modo `Auth:Mode=Identity`:
+
+```mermaid
+flowchart TB
+    R["Request con Bearer JWT"] --> P{"¿La política declara esquema?"}
+    P -->|"Sí: AuthorizationPolicyBuilder(Bearer)"| B["Autentica con JWT ✅"]
+    P -->|"No: cae al DefaultScheme"| D{¿Quién es el DefaultScheme?}
+    D -->|"Solo JWT registrado"| B
+    D -->|"AddIdentity dejó la cookie"| C["Cookie Identity.Application → redirect /Account/Login → 401 ❌"]
+```
+
+**El bug real**: los atributos `[Authorize(Roles = ...)]` construyen su política **sin esquemas explícitos** y usan el `DefaultScheme`. Si se usó `AddIdentity` (la variante "con todo incluido"), ese DefaultScheme es la **cookie** → todos los endpoints de admin devuelven 401 con redirect a `/Account/Login`, y el `[Authorize]` plano sí funciona (usa la política por defecto, que sí lleva esquema). Un suite de tests en modo "solo Custom" **nunca lo detecta**.
+
+**Las dos defensas** (aplicadas en TiendaDawApi y verificadas con las suites de los 4 modos):
+
+1. **`AddIdentityCore` en vez de `AddIdentity`** — el primitivo oficial de Microsoft para APIs sin UI ("Identity without UI"): registra `UserManager`/`SignInManager`/roles **sin registrar la cookie**. Complementar con `.AddRoles<>().AddSignInManager()`.
+2. **Esquema Bearer explícito en TODAS las políticas**: `new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme).RequireRole(...).Build()` — la política queda autosuficiente ante cualquier cambio de DefaultScheme futuro.
+
+#### Conclusión
+
+Nuestro sistema de autorizacion con roles funciona **perfectamente** con el metodo personalizado JWT. No necesitamos ASP.NET Core Identity para tener `[Authorize]`, politicas o control de roles — pero si lo incorporamos (modo Identity), recordemos el punto anterior: **esquemas explícitos en las políticas e `AddIdentityCore` para APIs**.
 
 ---
 

@@ -1100,7 +1100,11 @@ public static IServiceCollection AddAuthentication(this IServiceCollection servi
 
 private static IServiceCollection AddIdentityAuthentication(IServiceCollection services, IConfiguration configuration)
 {
-    services.AddIdentity<User, IdentityRole<long>>(options =>
+    // 🎓 Mecanismo OFICIAL de Microsoft para APIs sin UI ("Identity without UI"):
+    // AddIdentityCore registra UserManager/validadores/lockout SIN registrar el
+    // esquema de cookies Identity.Application. Se completa con AddRoles (roles)
+    // y AddSignInManager (CheckPasswordSignInAsync).
+    services.AddIdentityCore<User>(options =>
     {
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
@@ -1109,8 +1113,19 @@ private static IServiceCollection AddIdentityAuthentication(IServiceCollection s
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
+    .AddRoles<IdentityRole<long>>()
+    .AddSignInManager()
     .AddEntityFrameworkStores<TiendaDbContext>()
     .AddDefaultTokenProviders();
+
+    // 🎓 Defensa en profundidad: fijamos el DefaultScheme a Bearer explícitamente
+    services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+    });
 
     services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options => { /* ... TokenValidationParameters igual que modo Custom ... */ });
@@ -1121,7 +1136,28 @@ private static IServiceCollection AddIdentityAuthentication(IServiceCollection s
 }
 ```
 
-**Lo que NO cambia entre modos**: el middleware JWT (`AddJwtBearer`), las políticas (`RequireAdminRole`, `RequireUserRole`, `AdminOnly`) y el pipeline (`UseAuthentication`/`UseAuthorization`).
+> ### AddIdentity o AddIdentityCore al combinar Identity + JWT
+>
+> ASP.NET Core ofrece dos formas de registrar Identity y la elección importa cuando Identity convive con JWT Bearer en la misma API:
+>
+> | | `AddIdentity` | `AddIdentityCore` |
+> |---|---|---|
+> | Orientado a | Aplicaciones con UI de login (cookies) | APIs sin UI |
+> | Registra la cookie `Identity.Application` | Sí | No |
+> | `SignInManager` | Incluido | Con `.AddSignInManager()` |
+> | Roles | Incluidos | Con `.AddRoles<TRole>()` |
+>
+> **El matiz clave**: `AddIdentity` deja la cookie `Identity.Application` como `DefaultScheme` de autenticación. Los atributos `[Authorize(Roles = ...)]` construyen su política **sin esquemas explícitos** y usan ese DefaultScheme: en una API JWT, el handler de cookies atiende la petición en lugar de validar el Bearer, y responde con un redirect a `/Account/Login` (401). Nótese que el `[Authorize]` plano (sin roles) usa la política por defecto —que sí lleva esquema Bearer— y no padece el problema: por eso la diferencia solo se ve probando los endpoints con rol.
+>
+> ```mermaid
+> flowchart LR
+>     R["Request + Bearer JWT"] --> A{"[Authorize(Roles)]"}
+>     A -->|sin esquema| D["DefaultScheme"]
+>     D -->|"AddIdentity"| C["Cookie → redirect /Account/Login (401)"]
+>     D -->|"AddIdentityCore"| B["Bearer → JWT válido → 200"]
+> ```
+>
+> **Para APIs**: usa `AddIdentityCore` (Identity sin UI, el primitivo oficial de Microsoft) y declara además el esquema Bearer **explícitamente** en las políticas (`AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)`) — así la política es autosuficiente ante cualquier cambio de configuración.
 
 ### 15.4.6. Flujos: Signup y Signin con Identity
 
