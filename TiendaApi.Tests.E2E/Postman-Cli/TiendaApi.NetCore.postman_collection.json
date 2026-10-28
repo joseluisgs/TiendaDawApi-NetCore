@@ -271,7 +271,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Signup validation - Status 400 Bad Request', function () { pm.response.to.have.status(400); });"
+                  "// Diferencia por modo: Custom 400 (FluentValidation) / Identity 422 (BusinessRuleError)\npm.expect([400, 422]).to.include(pm.response.code);"
                 ],
                 "type": "text/javascript"
               }
@@ -287,7 +287,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"\",\"email\":\"test@test.com\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"\",\"email\":\"test@test.com\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
@@ -311,7 +311,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Signup invalid email - Status 400 Bad Request', function () { pm.response.to.have.status(400); });"
+                  "// Diferencia por modo: Custom 400 (FluentValidation) / Identity 422 (BusinessRuleError)\npm.expect([400, 422]).to.include(pm.response.code);"
                 ],
                 "type": "text/javascript"
               }
@@ -327,7 +327,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"testuser\",\"email\":\"email-invalido\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"testuser\",\"email\":\"email-invalido\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
@@ -367,7 +367,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"{{adminUsername}}\",\"email\":\"otro@test.com\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"{{adminUsername}}\",\"email\":\"otro@test.com\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
@@ -419,7 +419,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"{{testUsername}}\",\"email\":\"{{testUsername}}@test.com\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"{{testUsername}}\",\"email\":\"{{testUsername}}@test.com\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
@@ -605,7 +605,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"nonexistentuser12345\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"nonexistentuser12345\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signin",
@@ -3147,7 +3147,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"delcuenta_{{tsDedicated}}\",\n  \"email\": \"delcuenta_{{tsDedicated}}@test.com\",\n  \"password\": \"Test1234\"\n}"
+              "raw": "{\n  \"username\": \"delcuenta_{{tsDedicated}}\",\n  \"email\": \"delcuenta_{{tsDedicated}}@test.com\",\n  \"password\": \"Test1234!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
