@@ -87,7 +87,15 @@ public static class AuthenticationConfig
         var jwtIssuer = configuration["Jwt:Issuer"] ?? "TiendaApi";
         var jwtAudience = configuration["Jwt:Audience"] ?? "TiendaApi";
 
-        services.AddIdentity<User, IdentityRole<long>>(options =>
+        // 🎓 Mecanismo OFICIAL de Microsoft para APIs sin UI ("Identity without
+        // UI"): AddIdentityCore registra UserManager/validadores/lockout SIN
+        // registrar el esquema de cookies Identity.Application. Con AddIdentity
+        // (la variante "con todo"), la cookie se convierte en DefaultScheme y
+        // los [Authorize(Roles=...)] (que construyen su política sin esquemas)
+        // iban al handler de cookies → redirect /Account/Login (401) en todo
+        // endpoint de admin. AddRoles + AddSignInManager añaden lo necesario
+        // para roles y CheckPasswordSignInAsync sin tocar el DefaultScheme.
+        services.AddIdentityCore<User>(options =>
         {
             options.Password.RequireDigit = true;
             options.Password.RequireLowercase = true;
@@ -96,13 +104,14 @@ public static class AuthenticationConfig
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         })
+        .AddRoles<IdentityRole<long>>()
+        .AddSignInManager()
         .AddEntityFrameworkStores<TiendaApi.Api.Data.TiendaDbContext>()
         .AddDefaultTokenProviders();
 
-        // 🎓 AddIdentity deja Identity.Application (cookie) como DefaultScheme.
-        // Los atributos [Authorize(Roles=...)] construyen su política SIN esquemas
-        // y usan el DefaultScheme: sin este fijado a Bearer, esas peticiones iban
-        // al handler de cookies → redirect a /Account/Login (401) en modo Identity.
+        // 🎓 Defensa en profundidad: aunque AddIdentityCore no ensucia el
+        // DefaultScheme, lo fijamos explícitamente a Bearer para que ningún
+        // registro futuro (u otra librería) pueda cambiar el comportamiento.
         services.AddAuthentication(options =>
         {
             options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -142,10 +151,13 @@ public static class AuthenticationConfig
     {
         Log.Information("🛡️ Configurando políticas de autorización...");
         // 🎓 Todas las políticas declaran el esquema Bearer EXPLÍCITAMENTE.
-        // Sin esquema, la política usa el DefaultScheme de autenticación: en
-        // modo Identity, AddIdentity registra la cookie Identity.Application como
-        // DefaultScheme y el middleware redirigía a /Account/Login (401) en todos
-        // los endpoints protegidos con política nombrada (RequireAdminRole...).
+        // Aunque el modo Identity usa AddIdentityCore (que NO ensucia el
+        // DefaultScheme con la cookie Identity.Application), declarar el esquema
+        // aquí inmuniza las políticas ante cualquier cambio futuro: si alguien
+        // registrara AddIdentity (con cookie) u otra librería tocara el
+        // DefaultScheme, los [Authorize(Roles=...)] seguirían autenticando con
+        // JWT en vez de redirigir a /Account/Login. Es la buena práctica en
+        // cualquier API JWT: la política es autosuficiente.
         services.AddAuthorizationBuilder()
             .SetDefaultPolicy(new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
                 .RequireAuthenticatedUser()
