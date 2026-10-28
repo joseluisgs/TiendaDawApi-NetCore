@@ -22,15 +22,13 @@ namespace TiendaApi.Api.GraphQL.Mutations;
 /// </summary>
 public class ProductoMutation
 {
-    private readonly IProductoService _productoService;
-    private readonly IProductoRepository _productoRepository;
-
-    /// <summary>Constructor para tests.</summary>
-    public ProductoMutation(IProductoService productoService, IProductoRepository productoRepository)
-    {
-        _productoService = productoService;
-        _productoRepository = productoRepository;
-    }
+    /// <summary>
+    /// 🎓 Las dependencias scoped (repositorio/servicio) se inyectan por PARÁMETRO
+    /// [Service], nunca por constructor: HotChocolate resuelve el tipo de mutación
+    /// una sola vez (lifetime de singleton) y una dependencia scoped capturada en el
+    /// constructor conservaría un DbContext YA DISPUESTO tras la primera petición
+    /// ("Cannot access a disposed context instance").
+    /// </summary>
 
     /// <summary>Crea un nuevo producto.</summary>
     /// <param name="input">Datos del producto.</param>
@@ -61,15 +59,17 @@ public class ProductoMutation
     /// <param name="id">ID del producto.</param>
     /// <param name="input">Campos a modificar.</param>
     /// <param name="service">Servicio de productos.</param>
+    /// <param name="productoRepository">Repositorio (modelo de escritura, sin caché).</param>
     /// <returns>Producto actualizado.</returns>
     [Authorize(policy: "AdminOnly")]
     public async Task<ProductoDto> UpdateProducto(
         long id,
         UpdateProductoInput input,
-        [Service] IProductoService service)
+        [Service] IProductoService service,
+        [Service] IProductoRepository productoRepository)
     {
         // 🎓 Leer del MODELO DE ESCRITURA (PostgreSQL), no de la caché
-        var existing = await _productoRepository.FindByIdAsync(id);
+        var existing = await productoRepository.FindByIdAsync(id);
         if (existing is null)
             throw new Exception($"Producto con ID {id} no encontrado");
 

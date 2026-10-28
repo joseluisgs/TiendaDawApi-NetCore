@@ -27,7 +27,7 @@ public class ProductoMutationTests
     {
         _productoServiceMock = new Mock<IProductoService>();
         _productoRepoMock = new Mock<IProductoRepository>();
-        _mutation = new ProductoMutation(_productoServiceMock.Object, _productoRepoMock.Object);
+        _mutation = new ProductoMutation();
     }
 
     #region CreateProducto Tests
@@ -123,7 +123,7 @@ public class ProductoMutationTests
         _productoServiceMock.Setup(s => s.UpdateAsync(productoId, It.IsAny<ProductoRequestDto>()))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoActualizado));
 
-        var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
+        var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object, _productoRepoMock.Object);
 
         result.Should().NotBeNull();
     }
@@ -137,7 +137,7 @@ public class ProductoMutationTests
         _productoRepoMock.Setup(r => r.FindByIdAsync(productoId))
             .ReturnsAsync((Producto?)null);
 
-        var act = () => _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
+        var act = () => _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object, _productoRepoMock.Object);
 
         await act.Should().ThrowAsync<Exception>()
             .WithMessage($"Producto con ID {productoId} no encontrado");
