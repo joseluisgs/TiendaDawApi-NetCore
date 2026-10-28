@@ -30,10 +30,12 @@ services:
       # entorno local.bru no es alcanzable desde dentro del contenedor)
       - --env-file
       - environments/docker.bru
-      # Rate limit de la API (RateLimitConfig.cs): POST:* 20/min.
-      # Sin este delay la colección recibe 429 en cadena.
+      # Rate limit de la API (RateLimitConfig.cs): general 100/15s, auth 10/min.
+      # 250ms validado empíricamente: Bruno 85/85 en ~42s y Newman 85/85 en ~28s
+      # (antes 3200ms = 4,5 min de espera muerta). Da colchón si la colección
+      # crece; por debajo de 100ms se acerca al límite de ráfaga.
       - --delay
-      - "3200"
+      - "250"
       - --reporter-json
       - /reports/report.json
       - --reporter-junit

@@ -287,7 +287,8 @@ open coverage/index.html
 ### Tests E2E con Newman (Postman), Bruno y Automation
 
 Pruebas end-to-end de la API. **Requisito:** la API levantada en `http://localhost:5031`
-(rate limit `POST:*` = 20/min → los comandos llevan `--delay 3200` / `--delay-request 3200`).
+(rate limit `100/15s` general — los comandos llevan `--delay 250` / `--delay-request 250`,
+validado empíricamente: Bruno y Newman 85/85 a 250ms; antes 3200ms y tardaban 4,5 min).
 
 #### Automation (Node)
 
@@ -332,8 +333,8 @@ newman run TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_collection.
 ```bash
 # Opción 1: Con Docker (imagen oficial usebruno/cli; informes en reports/)
 # La colección ejecuta las carpetas del README contra la API del host
-# (host.docker.internal:5031 — ver environments/docker.bru) con delay 3200ms
-# para no saltar el rate limit. La API debe estar arriba antes de lanzarla.
+# (host.docker.internal:5031 - ver environments/docker.bru) con delay 250ms
+# (validado empíricamente: 85/85 en ~42s). La API debe estar arriba antes.
 cd TiendaApi.Tests.E2E/Bruno-Cli
 docker compose run --rm bruno
 start reports/report.html
@@ -344,7 +345,7 @@ cd TiendaApi.Tests.E2E/Bruno-Local
 bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
   "4 - PEDIDOS (Usuario)" "5 - PEDIDOS (Admin)" "7 - STORAGE" \
   "10 - GRAPHQL CATEGORÍAS" "11 - GRAPHQL PRODUCTOS" "90 - TEARDOWN" \
-  --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 3200
+  --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 250
 # Ejecución sin fallos. Fuera de esta ejecución: "6 - USUARIOS" (no incluida) y
 # "12 - WEBSOCKETS" (la CLI no soporta WS; los cubre el runner Automation nativo)
 ```
