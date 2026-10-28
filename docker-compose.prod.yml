@@ -122,6 +122,18 @@ services:
       - Jwt__Issuer=${JWT_ISSUER:-TiendaApi}
       - Jwt__Audience=${JWT_AUDIENCE:-TiendaApi}
       - Jwt__ExpireMinutes=${JWT_EXPIRE_MINUTES:-30}
+      # Auth: modo de autenticación (Custom=BCrypt | Identity=UserManager) y login externo OAuth 2.0.
+      # Los ClientId/Secret van en .env (nunca en el compose); el callback es https://<dominio>/signin-google
+      - Auth__Mode=${AUTH_MODE:-Custom}
+      - Auth__Google__Enabled=${AUTH_GOOGLE_ENABLED:-false}
+      - Google__ClientId=${GOOGLE_CLIENT_ID:-}
+      - Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
+      - Auth__GitHub__Enabled=${AUTH_GITHUB_ENABLED:-false}
+      - GitHub__ClientId=${GITHUB_CLIENT_ID:-}
+      - GitHub__ClientSecret=${GITHUB_CLIENT_SECRET:-}
+      - Auth__Microsoft__Enabled=${AUTH_MICROSOFT_ENABLED:-false}
+      - Microsoft__ClientId=${MICROSOFT_CLIENT_ID:-}
+      - Microsoft__ClientSecret=${MICROSOFT_CLIENT_SECRET:-}
       - MongoDbSettings__ConnectionString=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin&retryWrites=true&retryReads=true
       - MongoDbSettings__DatabaseName=${MONGO_DB:-tienda}
       - MongoDbSettings__PedidosCollection=${MONGO_PEDIDOS_COLLECTION:-pedidos}

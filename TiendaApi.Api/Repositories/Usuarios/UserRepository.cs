@@ -23,7 +23,7 @@ public class UserRepository(
     /// <inheritdoc/>
     public async Task<User?> FindByUsernameAsync(string username)
     {
-        return await context.Users.FirstOrDefaultAsync(u => u.Username == username);
+        return await context.Users.FirstOrDefaultAsync(u => u.UserName == username);
     }
 
     /// <inheritdoc/>
@@ -48,7 +48,7 @@ public class UserRepository(
             : context.Users.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Username))
-            query = query.Where(u => EF.Functions.Like(u.Username, $"%{filter.Username}%"));
+            query = query.Where(u => EF.Functions.Like(u.UserName, $"%{filter.Username}%"));
 
         if (!string.IsNullOrWhiteSpace(filter.Email))
             query = query.Where(u => EF.Functions.Like(u.Email, $"%{filter.Email}%"));
@@ -119,8 +119,8 @@ public class UserRepository(
         var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
         Expression<Func<User, object>> keySelector = sortBy.ToLower() switch
         {
-            "username" => u => u.Username,
-            "email" => u => u.Email,
+            "username" => u => u.UserName ?? string.Empty,
+            "email" => u => u.Email ?? string.Empty,
             "createdat" => u => u.CreatedAt,
             _ => u => u.Id
         };

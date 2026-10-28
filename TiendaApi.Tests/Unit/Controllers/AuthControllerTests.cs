@@ -1,10 +1,13 @@
 using CSharpFunctionalExtensions;
 using FluentAssertions;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Api.Controllers;
+using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Services.Auth;
@@ -20,6 +23,8 @@ public class AuthControllerTests
 {
     private readonly Mock<IAuthService> _mockAuthService;
     private readonly Mock<ICacheService> _mockCacheService;
+    private readonly Mock<IAuthenticationSchemeProvider> _mockSchemeProvider;
+    private readonly Mock<IAuthenticationService> _mockAuthServiceExtern;
     private readonly Mock<ILogger<AuthController>> _mockLogger;
     private readonly AuthController _controller;
 
@@ -27,8 +32,14 @@ public class AuthControllerTests
     {
         _mockAuthService = new Mock<IAuthService>();
         _mockCacheService = new Mock<ICacheService>();
+        _mockSchemeProvider = new Mock<IAuthenticationSchemeProvider>();
+        _mockAuthServiceExtern = new Mock<IAuthenticationService>();
         _mockLogger = new Mock<ILogger<AuthController>>();
-        _controller = new AuthController(_mockAuthService.Object, _mockLogger.Object);
+        _controller = new AuthController(
+            _mockAuthService.Object,
+            _mockSchemeProvider.Object,
+            _mockAuthServiceExtern.Object,
+            _mockLogger.Object);
     }
 
     #region SignUp Tests
@@ -320,11 +331,95 @@ public class AuthControllerTests
     public void Constructor_ConDependenciasValidas_CreaControlador()
     {
         // Arrange & Act
-        var controller = new AuthController(_mockAuthService.Object, _mockLogger.Object);
+        var controller = new AuthController(
+            _mockAuthService.Object,
+            _mockSchemeProvider.Object,
+            _mockAuthServiceExtern.Object,
+            _mockLogger.Object);
 
         // Assert
         controller.Should().NotBeNull();
     }
 
     #endregion
+
+    #region Login Externo Tests
+
+    /// <summary>
+    /// Verifica que un proveedor no configurado retorna 404 (puerta cerrada).
+    /// </summary>
+    [Test]
+    public async Task ExternalLogin_ProveedorNoConfigurado_RetornaNotFound()
+    {
+        _mockSchemeProvider.Setup(x => x.GetSchemeAsync("Google"))
+            .ReturnsAsync((AuthenticationScheme?)null);
+
+        var result = await _controller.ExternalLogin("Google");
+
+        result.Should().BeOfType<NotFoundObjectResult>();
+        var notFound = (NotFoundObjectResult)result;
+        notFound.StatusCode.Should().Be(404);
+    }
+
+    /// <summary>
+    /// Verifica que un proveedor configurado lanza Challenge (302) hacia el proveedor.
+    /// </summary>
+    [Test]
+    public async Task ExternalLogin_ProveedorConfigurado_RetornaChallenge()
+    {
+        _mockSchemeProvider.Setup(x => x.GetSchemeAsync("Google"))
+            .ReturnsAsync(new AuthenticationScheme("Google", null!, typeof(FakeOAuthHandler)));
+
+        var mockUrlHelper = new Mock<IUrlHelper>();
+        mockUrlHelper.Setup(x => x.Action(It.IsAny<UrlActionContext>()))
+            .Returns("/api/v1/auth/external-callback");
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        _controller.Url = mockUrlHelper.Object;
+
+        var result = await _controller.ExternalLogin("Google");
+
+        result.Should().BeOfType<ChallengeResult>();
+        var challenge = (ChallengeResult)result;
+        challenge.AuthenticationSchemes.Should().ContainSingle(s => s == "Google");
+    }
+
+    /// <summary>
+    /// Verifica que sin principal autenticado el callback retorna 400.
+    /// </summary>
+    [Test]
+    public async Task ExternalLoginCallback_SinPrincipal_RetornaBadRequest()
+    {
+        // Sin esquemas registrados → AuthenticateAsync no tiene nada que autenticar
+        _mockSchemeProvider.Setup(x => x.GetAllSchemesAsync())
+            .ReturnsAsync(new List<AuthenticationScheme>());
+
+        var result = await _controller.ExternalLoginCallback();
+
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Handler falso solo para poder construir AuthenticationScheme en tests
+    /// (el handler real de Google vive en el paquete OAuth).
+    /// </summary>
+    private sealed class FakeOAuthHandler : IAuthenticationHandler
+    {
+        public Task InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+            => Task.CompletedTask;
+
+        public Task<AuthenticateResult> AuthenticateAsync()
+            => Task.FromResult(AuthenticateResult.NoResult());
+
+        public Task ChallengeAsync(AuthenticationProperties? properties)
+            => Task.CompletedTask;
+
+        public Task ForbidAsync(AuthenticationProperties? properties)
+            => Task.CompletedTask;
+    }
 }

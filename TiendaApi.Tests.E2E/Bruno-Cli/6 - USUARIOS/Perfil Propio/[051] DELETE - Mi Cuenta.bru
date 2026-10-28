@@ -1,7 +1,7 @@
 meta {
   name: [051] DELETE Mi Cuenta
   type: http
-  seq: 4
+  seq: 5
 }
 
 delete {
@@ -11,7 +11,7 @@ delete {
 }
 
 auth:bearer {
-  token: {{userToken}}
+  token: {{delCuentaToken}}
 }
 
 script:post-response {
@@ -25,5 +25,7 @@ settings {
 }
 
 docs {
-  Elimina cuenta propia. Retorna 204.
+  Elimina cuenta propia. Retorna 204. Usa la cuenta dedicada creada por el
+  [051b] anterior para no destruir el usuario seed userdaw (paridad con la
+  suite Automation; antes borraba userdaw y rompía las suites siguientes).
 }

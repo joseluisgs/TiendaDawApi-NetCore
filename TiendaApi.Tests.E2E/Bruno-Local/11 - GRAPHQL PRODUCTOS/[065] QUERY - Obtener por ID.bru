@@ -11,7 +11,7 @@ post {
 }
 
 body:graphql {
-  query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { nombre } } }
+  query($id: Long!) { producto(id: $id) { id nombre precio stock categoriaNombre } }
 }
 
 body:graphql:vars {

@@ -1,0 +1,33 @@
+meta {
+  name: [011] EXTERNAL - Google sin credenciales - 404
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/external/Google
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  // Puerta OAuth: con las puertas habilitadas pero SIN credenciales el esquema
+  // no se registra -> 404. Con credenciales reales (user-secrets) seria un 302
+  // Redirect al proveedor, por eso se aceptan ambos status.
+  test("External Google - Puerta cerrada (404) o redirect (302)", function () {
+      expect([404, 302]).to.include(res.getStatus());
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Login externo OAuth 2.0 con Google. En este entorno la puerta esta
+  habilitada en appsettings.Development.json pero sin ClientId/ClientSecret,
+  por lo que el endpoint responde 404 "Proveedor no configurado". Si alguien
+  configura credenciales reales, la respuesta correcta pasa a ser 302 hacia
+  accounts.google.com (con PKCE).
+}

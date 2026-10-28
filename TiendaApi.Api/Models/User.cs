@@ -1,12 +1,15 @@
-namespace TiendaApi.Api.Models;
-
+using Microsoft.AspNetCore.Identity;
 using TiendaApi.Api.Data.Abstractions;
 
+namespace TiendaApi.Api.Models;
+
 /// <summary>
-/// Entidad de dominio que representa un usuario.
-/// Autenticación con email/password hasheado con BCrypt. Roles: USER, ADMIN.
+/// Entidad de usuario que representa un usuario.
+/// Hereda de IdentityUser&lt;long&gt; para soportar ASP.NET Core Identity.
+/// Autenticación con email/password (BCrypt en modo Custom, PBKDF2 en modo Identity).
+/// Roles: USER, ADMIN.
 /// </summary>
-public class User : ITimestamped
+public class User : IdentityUser<long>, ITimestamped
 {
     /// <summary>URL de avatar por defecto cuando no hay imagen.</summary>
     public const string AVATAR_DEFAULT = "https://via.placeholder.com/150";
@@ -14,32 +17,42 @@ public class User : ITimestamped
     /// <summary>Prefijo para avatares locales (/storage/images/usuarios/).</summary>
     public const string AVATAR_LOCAL_PREFIX = "/storage/images/usuarios/";
 
-    /// <summary>ID único del usuario (PK en PostgreSQL).</summary>
-    public long Id { get; set; }
+    // ── Heredados de IdentityUser<long> (NO declarar aquí) ──
+    // public long Id              ← ya lo tenemos de IdentityUser<long>
+    // public string Email          ← ya lo tenemos de IdentityUser<long>
+    // public string PasswordHash   ← ya lo tenemos de IdentityUser<long> (nosotros usamos BCrypt encima)
+    // public string UserName       ← ya lo tenemos de IdentityUser<long> (antes se llamaba Username)
 
-    /// <summary>Nombre de usuario público (3-50 caracteres, único).</summary>
-    public string Username { get; set; } = string.Empty;
+    // ── Propiedades nuevas que Identity añade automáticamente ──
+    // EmailConfirmed, PhoneNumber, PhoneNumberConfirmed, TwoFactorEnabled,
+    // LockoutEnd, LockoutEnabled, AccessFailedCount, SecurityStamp, ConcurrencyStamp
+    // (no las tocamos, las gestiona UserManager)
 
-    /// <summary>Email del usuario (obligatorio, único).</summary>
-    public string Email { get; set; } = string.Empty;
+    // ⚠️ NO redeclarar PasswordHash con `new`: UserStore (genérico) escribe en la
+    // propiedad de IdentityUser, y si la ocultamos EF mapea la nuestra → el hash
+    // real se pierde y nadie puede hacer login. PasswordHash es nullable en
+    // Identity (usuarios OAuth pueden no tener contraseña) y así lo mapeamos.
 
-    /// <summary>Hash BCrypt de la contraseña (60 caracteres aprox).</summary>
-    public string PasswordHash { get; set; } = string.Empty;
+    /// <summary>Nombre del usuario (obligatorio, 1-100 caracteres).</summary>
+    public string Nombre { get; set; } = string.Empty;  // ← custom nuestro
+
+    /// <summary>Apellidos del usuario (obligatorio, 1-200 caracteres).</summary>
+    public string Apellidos { get; set; } = string.Empty;  // ← custom nuestro
 
     /// <summary>URL o ruta del avatar (null = usa AVATAR_DEFAULT).</summary>
-    public string? Avatar { get; set; }
+    public string? Avatar { get; set; }  // ← custom nuestro
 
-    /// <summary>Rol del usuario (USER o ADMIN).</summary>
-    public string Role { get; set; } = UserRoles.USER;
+    /// <summary>Rol del usuario (USER, ADMIN).</summary>
+    public string Role { get; set; } = UserRoles.USER;  // ← custom nuestro (Identity usa AspNetUserRoles)
 
     /// <summary>Indica si el usuario está eliminado (soft-delete).</summary>
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; set; }  // ← custom nuestro
 
     /// <summary>Fecha de creación en UTC.</summary>
-    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;  // ← custom nuestro (ITimestamped)
 
     /// <summary>Fecha de última modificación en UTC.</summary>
-    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;  // ← custom nuestro (ITimestamped)
 
     /// <summary>
     /// Determina si el avatar es local (almacenado en el servidor).

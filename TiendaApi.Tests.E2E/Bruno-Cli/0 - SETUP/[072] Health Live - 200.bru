@@ -1,0 +1,26 @@
+meta {
+  name: [072] Health Live - 200
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/health/live
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Health Live - Status 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Liveness: el proceso responde. No sondea dependencias (sirve para
+  orquestadores: si el proceso no responde, reiniciarlo).
+}

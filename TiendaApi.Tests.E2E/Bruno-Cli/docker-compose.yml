@@ -9,13 +9,33 @@ services:
       - ./reports:/reports
     command:
       - run
-      - "."
+      # Carpetas explícitas: `run .` no escanea la colección en la CLI actual
+      # (devuelve 0 peticiones). Mismas carpetas que documenta el README para
+      # bru run (sin "6 - USUARIOS" ni "12 - WEBSOCKETS": la CLI no soporta WS).
+      - "0 - SETUP"
+      - "1 - AUTHENTICATION"
+      - "2 - CATEGORÍAS"
+      - "3 - PRODUCTOS"
+      - "4 - PEDIDOS (Usuario)"
+      - "5 - PEDIDOS (Admin)"
+      # USUARIOS tiene subcarpetas anidadas: bru no recursa con la carpeta raíz,
+      # hay que listar las rutas completas
+      - "6 - USUARIOS/Gestión Admin"
+      - "6 - USUARIOS/Perfil Propio"
+      - "7 - STORAGE"
+      - "10 - GRAPHQL CATEGORÍAS"
+      - "11 - GRAPHQL PRODUCTOS"
+      - "90 - TEARDOWN"
+      # environments/docker.bru apunta a host.docker.internal (el localhost del
+      # entorno local.bru no es alcanzable desde dentro del contenedor)
       - --env-file
-      - environments/local.bru
-      # Rate limit de la API (RateLimitConfig.cs): POST:* 20/min.
-      # Sin este delay la colección (64 requests) recibe 429 en cadena.
+      - environments/docker.bru
+      # Rate limit de la API (RateLimitConfig.cs): general 100/15s, auth 10/min.
+      # 250ms validado empíricamente: Bruno 85/85 en ~42s y Newman 85/85 en ~28s
+      # (antes 3200ms = 4,5 min de espera muerta). Da colchón si la colección
+      # crece; por debajo de 100ms se acerca al límite de ráfaga.
       - --delay
-      - "3200"
+      - "250"
       - --reporter-json
       - /reports/report.json
       - --reporter-junit

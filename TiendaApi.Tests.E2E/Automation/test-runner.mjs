@@ -43,10 +43,13 @@ const CONFIG = {
   env: {
     ASPNETCORE_ENVIRONMENT: "Development",
     ASPNETCORE_URLS: "http://localhost:5031",
+    // Auth:Mode parametrizable: AUTH_MODE=Identity node test-runner.mjs
+    // arranca la API con UserManager/PBKDF2 en vez de BCrypt.
+    Auth__Mode: process.env.AUTH_MODE || "Custom",
   },
   dbServices: ["postgres", "mongodb"],
   composeFile: "docker-compose.local.yml",
-  // Credenciales seed (§7.4 del plan)
+  // Credenciales seed (varían con Auth:Mode: Custom usa admin/admin; Identity usa Admin123!)
   admin: { username: process.env.ADMIN_USER || "admin", password: process.env.ADMIN_PASS || "admin" },
   user: { username: process.env.USER_USER || "userdaw", password: process.env.USER_PASS || "userdaw" },
 };
@@ -162,6 +165,33 @@ function st(r) {
   return r.status;
 }
 
+// Helpers de tiempo real: WebSocket global de Node 22+ (sin npm install).
+// SignalR se habla a mano: handshake JSON + separador de registro (char 30).
+const SEP = String.fromCharCode(30);
+const wsUrl = (p) => CONFIG.baseUrl.replace(/^http/, "ws") + p;
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function wsOpen(url, { timeoutMs = 5000 } = {}) {
+  return new Promise((resolve, reject) => {
+    const sock = new WebSocket(url);
+    const t = setTimeout(() => { try { sock.close(); } catch { } reject(new Error(`timeout abriendo ${url}`)); }, timeoutMs);
+    sock.onopen = () => { clearTimeout(t); resolve(sock); };
+    sock.onerror = () => { clearTimeout(t); reject(new Error(`error WS abriendo ${url}`)); };
+  });
+}
+function wsNextMessage(sock, timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout esperando mensaje WS")), timeoutMs);
+    sock.onmessage = (ev) => { clearTimeout(t); resolve(String(ev.data)); };
+  });
+}
+function wsWaitClose(sock, timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout esperando cierre WS")), timeoutMs);
+    sock.onclose = (ev) => { clearTimeout(t); resolve({ code: ev.code, reason: ev.reason }); };
+  });
+}
+
 const dest = (pref) => ({
   nombreCompleto: `Automation ${pref}`,
   email: `auto_${pref}_${Date.now()}@test.com`,
@@ -181,6 +211,8 @@ async function runSuite() {
   let pedidoId = null;
   let userIdCreado = null;
   let userIdSignup = null;
+  let autoToken = null;
+  let productoIdCreadoGQL = null;
 let imagenProductoUrl = null;
 
   // ============================ HEALTH ============================
@@ -191,22 +223,76 @@ let imagenProductoUrl = null;
     assert(r.json.status !== undefined, "falta la propiedad status");
   });
 
+  await test("Health: GET /health/live → 200 (liveness, sin dependencias)", async () => {
+    const r = await req("GET", "/health/live");
+    assertEq(st(r), 200, "status");
+  });
+
+  await test("Health: GET /health/ready → 200 (dependencias ready)", async () => {
+    const r = await req("GET", "/health/ready");
+    assertEq(st(r), 200, "status");
+  });
+
+  await test("Info: GET /version → 200 con versión del assembly", async () => {
+    const r = await req("GET", "/version");
+    assertEq(st(r), 200, "status");
+    const v = r.json?.version ?? r.json?.Version;
+    assert(v, `falta version en la respuesta: ${r.text.slice(0, 120)}`);
+  });
+
+  await test("RateLimit: respuestas llevan headers RateLimit-*", async () => {
+    const r = await req("GET", "/version");
+    const limit = r.headers.get("ratelimit-limit");
+    const remaining = r.headers.get("ratelimit-remaining");
+    assert(limit, "falta RateLimit-Limit");
+    assert(remaining !== null && remaining !== undefined, "falta RateLimit-Remaining");
+  });
+
   // ============================ AUTH ============================
   await test("Auth: POST signup usuario único → 201 con token", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
-      body: { username: `auto_${ts}`, email: `auto_${ts}@test.com`, password: "Test1234" },
+      body: { username: `auto_${ts}`, email: `auto_${ts}@test.com`, password: "Test1234!" },
     });
     assertEq(st(r), 201, "status");
     assert(r.json?.token, "falta token");
     assertEq(r.json?.user?.role, "USER", "role");
     userIdSignup = r.json?.user?.id;
+    autoToken = r.json.token;
   });
 
-  await test("Auth: POST signup con username inválido → 400", async () => {
+  await test("Auth: POST signup con username inválido → 400 (Custom) / 201 (Identity)", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
-      body: { username: "x", email: `bad_${ts}@test.com`, password: "Test1234" },
+      body: { username: "x", email: `bad_${ts}@test.com`, password: "Test1234!" },
     });
-    assertEq(st(r), 400, "status");
+    if (CONFIG.authMode === "Identity") {
+      // Diferencia real de contrato: FluentValidation (Custom) exige username >= 3
+      // -> 400; el UserValidator de Identity no tiene longitud minima -> crea (201).
+      assertEq(st(r), 201, "status (Identity sin validación de longitud)");
+      if (r.json?.user?.id) { await req("DELETE", `/api/users/${r.json.user.id}`, { token: adminToken }); }
+    } else {
+      assertEq(st(r), 400, "status");
+    }
+  });
+
+  await test("Auth: POST signup con email inválido → 400 (Custom) / 422 (Identity)", async () => {
+    const r = await req("POST", "/api/v1/auth/signup", {
+      body: { username: `badmail_${ts}`, email: "no-es-email", password: "Test1234!" },
+    });
+    if (CONFIG.authMode === "Identity") {
+      // Identity valida el email en su UserValidator y el servicio lo mapea a
+      // BusinessRuleError (422); FluentValidation (Custom) lo mapea a 400.
+      assertEq(st(r), 422, "status (BusinessRuleError de Identity)");
+    } else {
+      assertEq(st(r), 400, "status");
+    }
+  });
+
+  await test("Auth: POST signup username duplicado → 409 Conflict", async () => {
+    // Reintenta el signup del usuario único: username y email ya registrados
+    const r = await req("POST", "/api/v1/auth/signup", {
+      body: { username: `auto_${ts}`, email: `auto_${ts}@test.com`, password: "Test1234!" },
+    });
+    assertEq(st(r), 409, "status");
   });
 
   await test("Auth: POST signin admin → 200 con token ADMIN", async () => {
@@ -229,7 +315,33 @@ let imagenProductoUrl = null;
     const r = await req("POST", "/api/v1/auth/signin", {
       body: { username: CONFIG.admin.username, password: "WrongPass123" },
     });
+
+  await test("Auth: POST signin usuario no existe → 401", async () => {
+    const r = await req("POST", "/api/v1/auth/signin", {
+      body: { username: `nobody_${ts}`, password: "Password123!" },
+    });
     assertEq(st(r), 401, "status");
+  });
+    assertEq(st(r), 401, "status");
+  });
+
+  // OAuth externo: en este entorno las puertas están habilitadas en
+  // appsettings.Development.json pero SIN credenciales → 404 (puerta cerrada).
+  // Si algún día se configuran credenciales reales, el 404 pasa a ser 302.
+  await test("Auth ext: GET /auth/external/Google sin credenciales → 404 (puerta cerrada)", async () => {
+    const r = await req("GET", "/api/v1/auth/external/Google");
+    assertEq(st(r), 404, "status");
+    assert(String(r.json ?? r.body ?? "").includes("no está configurado"), "mensaje de proveedor no configurado");
+  });
+
+  await test("Auth ext: GET /auth/external/ProveedorInventado → 404", async () => {
+    const r = await req("GET", "/api/v1/auth/external/ProveedorInventado");
+    assertEq(st(r), 404, "status");
+  });
+
+  await test("Auth ext: GET /auth/external-callback sin autenticar → 400", async () => {
+    const r = await req("GET", "/api/v1/auth/external-callback");
+    assertEq(st(r), 400, "status");
   });
 
   // ============================ CATEGORÍAS ============================
@@ -241,10 +353,35 @@ let imagenProductoUrl = null;
     assert(r.json.totalCount >= 3, `semilla esperaba >=3 categorías, hay ${r.json.totalCount}`);
   });
 
+  await test("Categorías: GET All (sin paginación) → 200 array", async () => {
+    const r = await req("GET", "/api/categorias");
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items ni array");
+  });
+
+  await test("Categorías: GET con filtros (nombre) → 200", async () => {
+    const r = await req("GET", "/api/categorias?nombre=Elec&page=0&size=10&sortBy=id&direction=asc");
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items");
+  });
+
   await test("Categorías: GET /1 → 200 (semilla)", async () => {
     const r = await req("GET", "/api/categorias/1");
     assertEq(st(r), 200, "status");
     assert(r.json?.id !== undefined, "falta id");
+  });
+
+  await test("Categorías: GET repetido → HIT de OutputCache (header Age)", async () => {
+    // [OutputCache(Duration=60)] cachea el GET anónimo; la 2ª petición sirve
+    // desde caché y lo delata el header Age. (ETag/304 NO está implementado:
+    // el middleware no emite ETag; ver doc/README sección caché HTTP.)
+    const url = "/api/categorias?page=0&size=2";
+    const first = await req("GET", url);
+    assertEq(st(first), 200, "status inicial");
+    const second = await req("GET", url);
+    assertEq(st(second), 200, "status repetido");
+    assert(second.headers.get("age") !== null && second.headers.get("age") !== undefined,
+      "la 2ª petición no trae header Age: no sirvió desde OutputCache");
   });
 
   await test("Categorías: GET /999999 → 404 con message", async () => {
@@ -273,6 +410,24 @@ let imagenProductoUrl = null;
       token: adminToken,
       body: { nombre: `Auto Cat ${ts}`, descripcion: "Creada por automation" },
     });
+
+  await test("Categorías: POST nombre duplicado → 409 Conflict", async () => {
+    const nombre = `Dup Cat ${ts}`;
+    const body = { nombre, descripcion: "Duplicado E2E" };
+    const primero = await req("POST", "/api/categorias", { token: adminToken, body });
+    assertEq(st(primero), 201, "status primer create");
+    const segundo = await req("POST", "/api/categorias", { token: adminToken, body });
+    assertEq(st(segundo), 409, "status duplicado");
+    await req("DELETE", `/api/categorias/${primero.json.id}`, { token: adminToken });
+  });
+
+  await test("Categorías: PUT /999999 → 404", async () => {
+    const r = await req("PUT", "/api/categorias/999999", {
+      token: adminToken,
+      body: { nombre: "No existe", descripcion: "x" },
+    });
+    assertEq(st(r), 404, "status");
+  });
     assertEq(st(r), 201, "status");
     categoriaId = r.json?.id;
     assert(categoriaId !== undefined, "falta id");
@@ -303,6 +458,12 @@ let imagenProductoUrl = null;
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.json.totalCount >= 3, `semilla esperaba >=3 productos, hay ${r.json.totalCount}`);
+  });
+
+  await test("Productos: GET All (sin paginación) → 200 array", async () => {
+    const r = await req("GET", "/api/productos");
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items ni array");
   });
 
   await test("Productos: GET paged con filtros (precioMax) → 200", async () => {
@@ -353,6 +514,14 @@ let imagenProductoUrl = null;
         precio: 19.99, stock: 5, categoriaId: 1,
       },
     });
+
+  await test("Productos: POST con categoriaId inexistente → 400", async () => {
+    const r = await req("POST", "/api/productos", {
+      token: adminToken,
+      body: { nombre: `OrfCat ${ts}`, descripcion: "categoria inexistente", precio: 5, stock: 1, categoriaId: 999999 },
+    });
+    assertEq(st(r), 400, "status");
+  });
     assertEq(st(r), 201, "status");
     productoId = r.json?.id;
     assert(productoId !== undefined, "falta id");
@@ -451,6 +620,41 @@ let imagenProductoUrl = null;
     assertEq(r.json?.estado, "PENDIENTE", "estado");
   });
 
+  await test("Pedidos user: GET /me/{id} de otro usuario → 403 Forbidden", async () => {
+    assert(autoToken, "falta el token del signup automático");
+    const r = await req("GET", `/api/pedidos/me/${pedidoId}`, { token: autoToken });
+    assertEq(st(r), 403, "status (pedido de otro usuario)");
+  });
+
+  await test("Pedidos user: PUT /me/{id} de otro usuario → 403 Forbidden", async () => {
+    const r = await req("PUT", `/api/pedidos/me/${pedidoId}`, {
+      token: autoToken,
+      body: { direccionEnvio: "Intento de edicion ajena" },
+    });
+    assertEq(st(r), 403, "status (pedido de otro usuario)");
+  });
+
+  await test("Pedidos user: GET /me/{id} inexistente → 404", async () => {
+    const r = await req("GET", "/api/pedidos/me/999999999999999999999999", { token: userToken });
+    assertEq(st(r), 404, "status");
+  });
+
+  await test("Pedidos user: PUT /me/{id} inexistente → 404", async () => {
+    const r = await req("PUT", "/api/pedidos/me/999999999999999999999999", {
+      token: userToken,
+      body: { direccionEnvio: "No existe" },
+    });
+    assertEq(st(r), 404, "status");
+  });
+
+  await test("Pedidos user: POST /me con producto inexistente → 404", async () => {
+    const r = await req("POST", "/api/pedidos/me", {
+      token: userToken,
+      body: { destinatario: dest("invalido"), items: [{ productoId: 999999, cantidad: 1, precioUnitario: 9.99 }] },
+    });
+    assertEq(st(r), 404, "status (error de negocio: producto no existe)");
+  });
+
   await test("Pedidos user: DELETE /me/{id} (pedido extra) → 204", async () => {
     const post = await req("POST", "/api/pedidos/me", {
       token: userToken,
@@ -515,6 +719,24 @@ let imagenProductoUrl = null;
     assertEq(st(r), 204, "status");
   });
 
+  await test("Pedidos admin: POST /me crea pedido propio → 201 PENDIENTE", async () => {
+    const r = await req("POST", "/api/pedidos/me", {
+      token: adminToken,
+      body: {
+        destinatario: {
+          nombreCompleto: "Admin Automation",
+          email: "admin-auto@test.com",
+          telefono: "+34123456789",
+          direccion: { calle: "Calle Admin", numero: "1", ciudad: "Madrid", provincia: "Madrid", pais: "España", codigoPostal: "28001" },
+        },
+        items: [{ productoId: 1, cantidad: 1, precioUnitario: 1299.99 }],
+      },
+    });
+    assertEq(st(r), 201, "status");
+    assertEq(r.json?.estado, "PENDIENTE", "estado");
+    if (r.json?.id) { await req("DELETE", `/api/pedidos/me/${r.json.id}`, { token: adminToken }); }
+  });
+
   // ============================ USERS (ADMIN) ============================
   await test("Users admin: GET / sin token → 401", async () => {
     const r = await req("GET", "/api/users");
@@ -536,6 +758,13 @@ let imagenProductoUrl = null;
   await test("Users admin: GET /999999 → 404", async () => {
     const r = await req("GET", "/api/users/999999", { token: adminToken });
     assertEq(st(r), 404, "status");
+  });
+
+  await test("Users admin: GET /{id} → 200 con datos", async () => {
+    assert(userIdSignup, "falta el id del signup automático");
+    const r = await req("GET", `/api/users/${userIdSignup}`, { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assertEq(r.json?.id, userIdSignup, "id");
   });
 
   await test("Users admin: POST → 201 y guarda id", async () => {
@@ -606,7 +835,7 @@ let imagenProductoUrl = null;
 
   await test("Users perfil: DELETE /me/profile (cuenta dedicada) → 204", async () => {
     const su = await req("POST", "/api/v1/auth/signup", {
-      body: { username: `del_${ts}`, email: `del_${ts}@test.com`, password: "Test1234" },
+      body: { username: `del_${ts}`, email: `del_${ts}@test.com`, password: "Test1234!" },
     });
     assertEq(st(su), 201, "signup dedicada");
     assert(su.json?.token, "falta token de la cuenta dedicada");
@@ -646,6 +875,14 @@ let imagenProductoUrl = null;
     assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)}`);
   });
 
+  await test("GraphQL: query categoria(id:1) → 200 con nombre", async () => {
+    const r = await req("POST", "/graphql", {
+      body: { query: "query($id: Long!) { categoria(id: $id) { id nombre } }", variables: { id: 1 } },
+    });
+    assertEq(st(r), 200, "status");
+    assert(r.json?.data?.categoria?.nombre, "falta data.categoria.nombre");
+  });
+
   await test("GraphQL: query producto(id:1) → 200 con objeto", async () => {
     const r = await req("POST", "/graphql", {
       body: { query: "query($id: Long!) { producto(id: $id) { id nombre precio stock } }", variables: { id: 1 } },
@@ -668,6 +905,150 @@ let imagenProductoUrl = null;
       String(r.json.errors[0]?.message).toLowerCase().includes("authoriz"),
       `mensaje inesperado: ${r.json.errors[0]?.message}`
     );
+  });
+
+  await test("GraphQL: mutation createProducto con admin → 200 y guarda id", async () => {
+    const nombre = `GQLOK ${ts}`;
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: {
+        query: "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id nombre } }",
+        variables: { input: { nombre, precio: 9.99, stock: 1, categoriaId: 1 } },
+      },
+    });
+    assertEq(st(r), 200, "status");
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)}`);
+    const creado = r.json?.data?.createProducto;
+    assert(creado?.id, `falta id en ${JSON.stringify(r.json).slice(0, 200)}`);
+    assertEq(creado.nombre, nombre, "nombre");
+    productoIdCreadoGQL = creado.id; // lo consumen update/delete más abajo
+  });
+
+  await test("GraphQL: mutation createProducto con rol USER → errors authoriz", async () => {
+    const r = await req("POST", "/graphql", {
+      token: userToken,
+      body: {
+        query: "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id } }",
+        variables: { input: { nombre: `GQLUSER ${ts}`, precio: 1, stock: 1, categoriaId: 1 } },
+      },
+    });
+    assert(Array.isArray(r.json?.errors), `esperaba errors: ${JSON.stringify(r.json).slice(0, 150)}`);
+    assert(String(r.json.errors[0]?.message).toLowerCase().includes("authoriz"),
+      `mensaje inesperado: ${r.json.errors[0]?.message}`);
+  });
+
+  await test("GraphQL: mutation createProducto con categoria inexistente → errors validación", async () => {
+    // Por diseño el mutation lanza excepción en validación de negocio (ver XML-doc
+    // de ProductoMutation): el cliente lo ve en errors[], no en data null.
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: {
+        query: "mutation($input: CreateProductoInput!) { createProducto(input: $input) { id } }",
+        variables: { input: { nombre: `GQLCAT ${ts}`, precio: 9.99, stock: 1, categoriaId: 999999 } },
+      },
+    });
+    assert(Array.isArray(r.json?.errors), `esperaba errors: ${JSON.stringify(r.json).slice(0, 150)}`);
+    assert(JSON.stringify(r.json.errors).includes("validaci"),
+      `esperaba error de validación: ${JSON.stringify(r.json.errors).slice(0, 150)}`);
+  });
+
+  await test("GraphQL: mutation updateProducto con admin → 200 (regresión contexto)", async () => {
+    // Regresión del bug "Cannot access a disposed context instance": el mutation
+    // inyectaba el repositorio por constructor (singleton) y el DbContext quedaba
+    // dispuesto tras la primera petición. updateProducto era el camino afectado.
+    const pid = productoIdCreadoGQL ?? null;
+    assert(pid, "falta producto creado por la mutation anterior");
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: {
+        query: "mutation($id: Long!, $input: UpdateProductoInput!) { updateProducto(id: $id, input: $input) { id nombre precio } }",
+        variables: { id: Number(pid), input: { precio: 11.11 } },
+      },
+    });
+    assertEq(st(r), 200, "status");
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)?.slice(0, 200)}`);
+    assertEq(Number(r.json?.data?.updateProducto?.id), Number(pid), "id actualizado");
+  });
+
+  await test("GraphQL: mutation deleteProducto con admin → true + limpia estado", async () => {
+    const pid = productoIdCreadoGQL ?? null;
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: {
+        query: "mutation($id: Long!) { deleteProducto(id: $id) }",
+        variables: { id: Number(pid) },
+      },
+    });
+    assertEq(st(r), 200, "status");
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)?.slice(0, 200)}`);
+    assertEq(r.json?.data?.deleteProducto, true, "resultado delete");
+  });
+  // ============================ REALTIME (WebSocket + SignalR) ============================
+  // Node 22+ trae cliente WebSocket global (sin npm install, mantiene la filosofía
+  // del runner). SignalR se habla a mano: handshake JSON + separador de registro.
+  await test("Realtime WS: /ws/productos (público) recibe broadcast al crear producto", async () => {
+    const sock = await wsOpen(wsUrl("/ws/productos"));
+    const waiting = wsNextMessage(sock, 6000);
+    const r = await req("POST", "/api/productos", {
+      token: adminToken,
+      body: { nombre: `WS ${ts}`, descripcion: "Broadcast E2E", precio: 7.77, stock: 1, categoriaId: 1 },
+    });
+    assertEq(st(r), 201, "status producto");
+    const msg = await waiting;
+    assert(msg.includes('"entity":"productos"'), `mensaje inesperado: ${msg.slice(0, 150)}`);
+    assert(msg.includes(String(r.json.id)) || msg.includes(`WS ${ts}`),
+      `el broadcast no contiene el producto creado: ${msg.slice(0, 200)}`);
+    const del = await req("DELETE", `/api/productos/${r.json.id}`, { token: adminToken });
+    assertEq(st(del), 204, "cleanup");
+    sock.close();
+  });
+
+  await test("Realtime WS: /ws/pedidos sin token → cierre 1008 (Token requerido)", async () => {
+    const sock = new WebSocket(wsUrl("/ws/pedidos"));
+    const close = await wsWaitClose(sock, 5000);
+    assertEq(close.code, 1008, "close code (PolicyViolation)");
+    assert(String(close.reason).toLowerCase().includes("token"), `razón de cierre: ${close.reason}`);
+  });
+
+  await test("Realtime WS: /ws/pedidos con token admin → conexión estable", async () => {
+    const sock = await wsOpen(`${wsUrl("/ws/pedidos")}?token=${encodeURIComponent(adminToken)}`);
+    await wait(1200);
+    assertEq(sock.readyState, WebSocket.OPEN, "el servidor cerró una conexión autenticada");
+    sock.close();
+  });
+
+  await test("Realtime SignalR: /hubs/productos handshake + invocación ProductoCreado", async () => {
+    const sock = await wsOpen(wsUrl("/hubs/productos"));
+    sock.send(`{"protocol":"json","version":1}${SEP}`);
+    const hs = await wsNextMessage(sock, 5000);
+    assert(hs.includes("{}"), `handshake inesperado: ${hs.slice(0, 120)}`);
+    // Suscripción implícita: el hub emite a Clients.All; esperamos la invocación
+    const waiting = wsNextMessage(sock, 6000);
+    const r = await req("POST", "/api/productos", {
+      token: adminToken,
+      body: { nombre: `SIGNALR ${ts}`, descripcion: "Invocación E2E", precio: 8.88, stock: 1, categoriaId: 1 },
+    });
+    assertEq(st(r), 201, "status producto");
+    const msg = await waiting;
+    assert(msg.includes("ProductoCreado"), `esperaba invocación ProductoCreado: ${msg.slice(0, 200)}`);
+    assert(msg.includes(String(r.json.id)) || msg.includes(`SIGNALR ${ts}`),
+      `la invocación no contiene el producto: ${msg.slice(0, 200)}`);
+    const del = await req("DELETE", `/api/productos/${r.json.id}`, { token: adminToken });
+    assertEq(st(del), 204, "cleanup");
+    sock.close();
+  });
+
+  await test("Realtime SignalR: /hubs/pedidos [Authorize] sin token → rechazo en el upgrade (401)", async () => {
+    // [Authorize]: el servidor rechaza el upgrade HTTP con 401; el WebSocket
+    // ni siquiera llega a abrirse (onerror, no un handshake con error)
+    let rejected = false;
+    try {
+      const sock = await wsOpen(wsUrl("/hubs/pedidos"), { timeoutMs: 4000 });
+      sock.close();
+    } catch {
+      rejected = true;
+    }
+    assert(rejected, "el hub autorizado aceptó una conexión sin token");
   });
 
   // ============================ LIMPIEZA ============================

@@ -371,6 +371,9 @@ IOutputCacheStore outputCacheStore
         if (!string.IsNullOrWhiteSpace(dto.Imagen))
             producto.Imagen = dto.Imagen;
 
+        if (dto.CategoriaId.HasValue && dto.CategoriaId.Value > 0)
+            producto.CategoriaId = dto.CategoriaId.Value;
+
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 

@@ -82,9 +82,9 @@ IConfiguration configuration
         {
             var email = new EmailMessage
             {
-                To = user.Email,
+                To = user.Email ?? string.Empty,
                 Subject = $"Novedades en Tienda: {productos.Count()} productos nuevos",
-                Body = GenerateHtmlEmail(productos, user.Username),
+                Body = GenerateHtmlEmail(productos, user.UserName ?? string.Empty),
                 IsHtml = true
             };
 

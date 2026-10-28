@@ -5,7 +5,6 @@ using HotChocolate.Types;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.GraphQL.Inputs;
-using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Api.GraphQL.Mutations;
@@ -22,15 +21,13 @@ namespace TiendaApi.Api.GraphQL.Mutations;
 /// </summary>
 public class ProductoMutation
 {
-    private readonly IProductoService _productoService;
-    private readonly IProductoRepository _productoRepository;
-
-    /// <summary>Constructor para tests.</summary>
-    public ProductoMutation(IProductoService productoService, IProductoRepository productoRepository)
-    {
-        _productoService = productoService;
-        _productoRepository = productoRepository;
-    }
+    /// <summary>
+    /// 🎓 Las dependencias scoped (repositorio/servicio) se inyectan por PARÁMETRO
+    /// [Service], nunca por constructor: HotChocolate resuelve el tipo de mutación
+    /// una sola vez (lifetime de singleton) y una dependencia scoped capturada en el
+    /// constructor conservaría un DbContext YA DISPUESTO tras la primera petición
+    /// ("Cannot access a disposed context instance").
+    /// </summary>
 
     /// <summary>Crea un nuevo producto.</summary>
     /// <param name="input">Datos del producto.</param>
@@ -57,9 +54,17 @@ public class ProductoMutation
         return result.Value;
     }
 
-    /// <summary>Actualiza un producto existente.</summary>
+    /// <summary>
+    /// Actualiza un producto existente (merge de campos: solo se envían los que cambian).
+    ///
+    /// 🎓 El mutation es DELGADO: solo mapea el input al DTO de parche y delega en
+    /// el servicio. La lectura previa (read-before-write) y el merge de campos
+    /// null viven DENTRO de UpdatePartialAsync, como en el endpoint REST PATCH.
+    /// Un mutation no debe inyectar repositorios: la lógica de negocio vive en
+    /// los servicios.
+    /// </summary>
     /// <param name="id">ID del producto.</param>
-    /// <param name="input">Campos a modificar.</param>
+    /// <param name="input">Campos a modificar (null = no tocar).</param>
     /// <param name="service">Servicio de productos.</param>
     /// <returns>Producto actualizado.</returns>
     [Authorize(policy: "AdminOnly")]
@@ -68,21 +73,17 @@ public class ProductoMutation
         UpdateProductoInput input,
         [Service] IProductoService service)
     {
-        // 🎓 Leer del MODELO DE ESCRITURA (PostgreSQL), no de la caché
-        var existing = await _productoRepository.FindByIdAsync(id);
-        if (existing is null)
-            throw new Exception($"Producto con ID {id} no encontrado");
-
-        var dto = new ProductoRequestDto
+        var patch = new ProductoPatchDto
         {
-            Nombre = input.Nombre ?? existing.Nombre,
-            Descripcion = input.Descripcion ?? existing.Descripcion,
-            Precio = input.Precio ?? existing.Precio,
-            Stock = input.Stock ?? existing.Stock,
-            Imagen = input.Imagen ?? existing.Imagen,
-            CategoriaId = input.CategoriaId ?? existing.CategoriaId
+            Nombre = input.Nombre,
+            Descripcion = input.Descripcion,
+            Precio = input.Precio,
+            Stock = input.Stock,
+            Imagen = input.Imagen,
+            CategoriaId = input.CategoriaId
         };
-        var result = await service.UpdateAsync(id, dto);
+
+        var result = await service.UpdatePartialAsync(id, patch);
         if (result.IsFailure)
             throw new Exception(result.Error.Message);
 

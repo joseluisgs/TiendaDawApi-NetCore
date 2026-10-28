@@ -1,0 +1,32 @@
+meta {
+  name: [075] RateLimit - Headers presentes
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/version
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("RateLimit - Lleva header RateLimit-Limit", function () {
+      const headers = res.getHeaders();
+      expect(headers["ratelimit-limit"]).to.not.be.undefined;
+  });
+
+  test("RateLimit - Lleva header RateLimit-Remaining", function () {
+      const headers = res.getHeaders();
+      expect(headers["ratelimit-remaining"]).to.not.be.undefined;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  El middleware RateLimitMiddleware añade RateLimit-Limit/Remaining/Reset a
+  cada respuesta permitida (paridad con el test homónimo de Automation).
+}

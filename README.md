@@ -21,7 +21,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - 🏪 **Gestión de Productos y Categorías**: CRUD completo con validaciones
 - 🛒 **Sistema de Pedidos**: Documentos embebidos con MongoDB
-- 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER)
+- 👥 **Gestión de Usuarios**: Autenticación JWT con roles (ADMIN, USER) — modo Custom (BCrypt) o Identity (UserManager) según `Auth:Mode`
 - 💾 **Multi-Base de Datos**: PostgreSQL (relacional), MongoDB (documentos), Redis (caché)
 - 🔐 **Seguridad**: JWT, validaciones FluentValidation, manejo global de excepciones
 - 📡 **APIs Avanzadas**: GraphQL con HotChocolate, WebSockets y SignalR para notificaciones en tiempo real
@@ -103,6 +103,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - 🏪 **CRUD Completo**: Productos, Categorías, Pedidos y Usuarios
 - 🔐 **Autenticación JWT**: Token-based con roles y claims
+- 🔁 **Auth:Mode switchable**: Custom (BCrypt) o Identity (UserManager) vía configuración
 - 🚪 **Login Externo OAuth 2.0**: Google, GitHub y Microsoft como puertas alternativas al JWT
 - 🔒 **HTTPS + HSTS**: Redirección HTTP→HTTPS, HSTS 365 días, Security Headers
 - 📧 **Notificaciones por Email**: Envío asíncrono con MailKit
@@ -115,7 +116,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - ✅ **Validaciones**: FluentValidation declarativo
 - 🛡️ **Exception Handling**: Middleware global de errores
 - 🏥 **Health Checks**: `GET /health` con sondeo de PostgreSQL y MongoDB (200 OK / 503)
-- ⚡ **Caché HTTP**: `OutputCache` 60s con invalidación por tags + revalidación `ETag`/`304`
+- ⚡ **Caché HTTP**: `OutputCache` 60s con invalidación por tags ( HIT detectable por header `Age`; ETag/304 no implementado)
 - 🛡️ **Resiliencia con Polly**: Retry + CircuitBreaker + Timeout en el envío de emails
 - 📄 **Paginación real en BD**: `Skip/Take` (EF) y `Skip/Limit` (Mongo) con metadatos
 - 🔁 **Result → HTTP**: extensión central `ToHttpResult()` para los errores de dominio
@@ -127,6 +128,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 
 - **.NET 10 con C# 14** - Plataforma principal
 - **ASP.NET Core Web API** - Framework REST
+- **ASP.NET Core Identity** - Autenticación y autorización alternativa (Auth:Mode=Identity) + OAuth 2.0 externo
 - **EF Core 10** - ORM con PostgreSQL y MongoDB
 - **PostgreSQL 17** - Base de datos relacional
 - **MongoDB 7.0** - Base de datos de documentos
@@ -187,7 +189,7 @@ start http://localhost:5031/health
 
 > **OAuth 2.0:** Para activar los logins externos, configura los ClientId/Secret con
 > `dotnet user-secrets` y activa los proveedores en `appsettings.Development.json`
-> (`Auth:{Provider}:Enabled = true`). Ver [doc/15](doc/15-jwt-authentication.md#1513-login-externo-con-oauth-20).
+> (`Auth:{Provider}:Enabled = true`). Ver [doc/15](doc/15-jwt-authentication.md#155-oauth-20-conceptos-y-arquitectura).
 ```
 
 ### Desarrollo en Producción con Docker
@@ -285,7 +287,8 @@ open coverage/index.html
 ### Tests E2E con Newman (Postman), Bruno y Automation
 
 Pruebas end-to-end de la API. **Requisito:** la API levantada en `http://localhost:5031`
-(rate limit `POST:*` = 20/min → los comandos llevan `--delay 3200` / `--delay-request 3200`).
+(rate limit `100/15s` general — los comandos llevan `--delay 250` / `--delay-request 250`,
+validado empíricamente: Bruno y Newman 85/85 a 250ms; antes 3200ms y tardaban 4,5 min).
 
 #### Automation (Node)
 
@@ -329,22 +332,25 @@ newman run TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_collection.
 
 ```bash
 # Opción 1: Con Docker (imagen oficial usebruno/cli; informes en reports/)
+# La colección ejecuta las carpetas del README contra la API del host
+# (host.docker.internal:5031 - ver environments/docker.bru) con delay 250ms
+# (validado empíricamente: 85/85 en ~42s). La API debe estar arriba antes.
 cd TiendaApi.Tests.E2E/Bruno-Cli
-docker compose up --build
+docker compose run --rm bruno
 start reports/report.html
 
-# Opción 2: Con Bruno CLI local — ejecución única (los tokens NO sobreviven entre tandas)
+# Opción 2: Con Bruno CLI local - ejecución única (los tokens NO sobreviven entre tandas)
 npm install -g @usebruno/cli
 cd TiendaApi.Tests.E2E/Bruno-Local
 bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
   "4 - PEDIDOS (Usuario)" "5 - PEDIDOS (Admin)" "7 - STORAGE" \
   "10 - GRAPHQL CATEGORÍAS" "11 - GRAPHQL PRODUCTOS" "90 - TEARDOWN" \
-  --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 3200
+  --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 250
 # Ejecución sin fallos. Fuera de esta ejecución: "6 - USUARIOS" (no incluida) y
-# "12 - WEBSOCKETS" (la CLI no soporta WS; la variable basews no existe en el env)
+# "12 - WEBSOCKETS" (la CLI no soporta WS; los cubre el runner Automation nativo)
 ```
 
-**Tests disponibles en:** `TiendaApi.Tests.E2E/{Bruno-Cli, Bruno-Local}/`
+**Tests disponibles en:** `TiendaApi.Tests.E2E/{Bruno-Cli, Bruno-Local}/` — las dos colecciones son idénticas (misma colección; Bruno-Cli añade el compose Docker y el entorno `docker.bru`). La carpeta `1 - AUTHENTICATION` incluye los endpoints OAuth externos (`[011]`-`[013]`: puerta cerrada 404, proveedor inexistente 404 y callback sin principal 400).
 
 **Informes generados:**
 - `report.html` - Informe visual
@@ -388,7 +394,7 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 ### Seguridad
 | #   | Documento | Descripción |
 | --- | --- | --- |
-| 15 | [15-jwt-authentication.md](doc/15-jwt-authentication.md) | JWT Authentication + OAuth 2.0 Externo |
+| 15 | [15-jwt-authentication.md](doc/15-jwt-authentication.md) | JWT Authentication: manual e Identity + OAuth 2.0 |
 | 16 | [16-autorizacion-roles.md](doc/16-autorizacion-roles.md) | Autorización Roles |
 | 17 | [17-seguridad-http.md](doc/17-seguridad-http.md) | Seguridad HTTP |
 
@@ -1074,6 +1080,7 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 ## 🔐 Seguridad
 
 - ✅ **JWT Authentication**: Tokens Bearer con expiración configurable
+- ✅ **Auth:Mode Dual**: Custom (BCrypt manual) o Identity (UserManager/PBKDF2) según `Auth:Mode` en configuración
 - ✅ **OAuth 2.0 Externo**: Login con Google, GitHub y Microsoft (configurable por entorno)
 - ✅ **Role-Based Authorization**: ADMIN y USER roles con políticas granulares
 - ✅ **FluentValidation**: Validaciones declarativas en DTOs
@@ -1091,14 +1098,57 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 
 > **Ver más:** [Seguridad HTTP](doc/17-seguridad-http.md)
 
+### 🔁 Auth:Mode - Custom vs Identity
+
+La autenticación se configura con `Auth:Mode` en `appsettings.json`. **ASP.NET Core Identity** es el sistema de autenticación de Microsoft (UserManager/SignInManager, tablas `AspNet*`, PBKDF2): este proyecto lo ofrece como modo alternativo al enfoque manual.
+
+La API soporta **4 modos de funcionamiento**, y todos producen el mismo JWT Bearer:
+
+| # | Modo | Cómo valida la contraseña | Login externo | Implementación |
+|---|------|---------------------------|---------------|----------------|
+| 1 | **JWT manual** (`Auth:Mode=Custom`) | `BCrypt.Verify()` (hash `$2a$11$...`) | — | `AuthService` |
+| 2 | **JWT con Identity** (`Auth:Mode=Identity`) | `SignInManager.CheckPasswordSignInAsync()` (PBKDF2, `AQAAAA...`) | — | `IdentityAuthService` |
+| 3 | **OAuth manual** (Google/GitHub/Microsoft) | — (el proveedor autentica) | Tabla propia `user_logins` + dummy hash | `OAuthConfig` + `AuthService.LoginExternalAsync` |
+| 4 | **OAuth con Identity** | — (el proveedor autentica) | `AspNetUserLogins` + `UserManager.AddLoginAsync()` | `OAuthConfig` + `IdentityAuthService.LoginExternalAsync` |
+
+Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` (y el callback usa el servicio del modo activo). El middleware JWT `[Authorize]` es idéntico en los 4.
+
+| Modo | Descripción | Hash | Servicio |
+| ---- | ----------- | ---- | -------- |
+| `Custom` (default) | Enfoque propio: BCrypt manual + JWT Bearer | BCrypt (`$2a$11$...`) | `AuthService` |
+| `Identity` | ASP.NET Core Identity (UserManager/SignInManager) + JWT Bearer | PBKDF2 (`AQAAAAEAACcQ...`) | `IdentityAuthService` |
+
+```json
+{
+  "Auth": {
+    "Mode": "Custom",   // ← "Custom" o "Identity"
+    "Google": { "Enabled": false },
+    "GitHub": { "Enabled": false },
+    "Microsoft": { "Enabled": false }
+  }
+}
+```
+
+🎓 **En clase**: ambos modos comparten el mismo contrato (`IAuthService`) y producen el mismo JWT. La diferencia es **cómo** se valida la contraseña internamente. Cambiar de modo:
+
+1. Cambiar `Auth:Mode` en `appsettings.json`
+2. Aplicar las migraciones pendientes (`AddIdentity` con tablas `AspNet*` y `AddUserLoginsOAuth` con `user_logins`; en desarrollo se aplican solas al arrancar)
+3. Reiniciar — el seed crea los usuarios con el algoritmo correcto según el modo
+
+> **Contraseñas seed**: en modo Custom los usuarios seed usan `admin` / `userdaw`; en modo Identity usan `Admin123!` / `Admin123!` porque la política de password de Identity exige longitud ≥6, dígito y mayúscula. Ambas quedan en los logs al sembrar.
+
+> **Nota**: cambiar de modo **no invalida usuarios existentes**, pero los hashes no son intercambiables (un usuario creado en Custom no puede hacer login en Identity y viceversa, salvo que se re-hasheen las contraseñas).
+
 ## 📡 Endpoints
 
 ### Auth (versionado)
 
-| Endpoint              | Método | Auth | Descripción                  |
-| --------------------- | ------ | ---- | ---------------------------- |
-| `/api/v1/auth/signup` | POST   | No   | Registrar nuevo usuario      |
-| `/api/v1/auth/signin` | POST   | No   | Iniciar sesión y obtener JWT |
+| Endpoint                          | Método | Auth | Descripción                                          |
+| --------------------------------- | ------ | ---- | ---------------------------------------------------- |
+| `/api/v1/auth/signup`             | POST   | No   | Registrar nuevo usuario                              |
+| `/api/v1/auth/signin`             | POST   | No   | Iniciar sesión y obtener JWT                         |
+| `/api/v1/auth/external/{provider}`| GET    | No   | Login externo: 302 al proveedor (Google/GitHub/Microsoft) |
+| `/api/v1/auth/external-callback`  | GET    | No   | Callback del proveedor → vincula usuario y devuelve JWT |
 
 ### Categorías
 
@@ -1437,14 +1487,14 @@ WS ws://localhost:5031/graphql
 
 ## 👥 Usuarios Demo
 
-| Usuario | Email              | Password | Rol   |
-| ------- | ------------------ | -------- | ----- |
-| admin   | admin@tienda.com   | admin    | ADMIN |
-| userdaw | userdaw@tienda.com | userdaw  | USER  |
+| Usuario | Email              | Password (Custom) | Password (Identity) | Rol   |
+| ------- | ------------------ | ----------------- | ------------------- | ----- |
+| admin   | admin@tienda.com   | admin             | Admin123!           | ADMIN |
+| userdaw | userdaw@tienda.com | userdaw           | Admin123!           | USER  |
 
-**Nota:** Las contraseñas son las mismas que los usernames para facilitar las pruebas.
+**Nota:** Las contraseñas del modo Custom son las mismas que los usernames para facilitar las pruebas. En modo Identity (`Auth:Mode = "Identity"`) usan `Admin123!` porque la política de password de Identity exige longitud ≥6, dígito y mayúscula. El seed crea los usuarios con el algoritmo correcto según el modo (ver [doc/15 §15.8.4](doc/15-jwt-authentication.md#1584-el-seed-condicional)).
 
-**Login externo OAuth 2.0:** También puedes iniciar sesión con Google, GitHub o Microsoft. Los usuarios creados vía OAuth tendrán la contraseña dummy `OAUTH-{Provider}` (el login normal fallará para ellos). Ver [doc/15 §15.13](doc/15-jwt-authentication.md#1513-login-externo-con-oauth-20).
+**Login externo OAuth 2.0:** También puedes iniciar sesión con Google, GitHub o Microsoft (endpoints `/api/v1/auth/external/{provider}`). Los usuarios creados vía OAuth **no tienen contraseña**: en modo Custom se guarda un dummy hash `OAUTH-{Provider}` (el login normal fallará para ellos) y en modo Identity `PasswordHash` queda null. Ver [doc/15 §15.6](doc/15-jwt-authentication.md#156-oauth-manual-nuestra-implementación) y [§15.7](doc/15-jwt-authentication.md#157-oauth-con-identity-externallogininfo).
 
 ## 📝 Licencia
 
