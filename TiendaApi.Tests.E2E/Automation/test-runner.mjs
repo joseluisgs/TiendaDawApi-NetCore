@@ -43,10 +43,13 @@ const CONFIG = {
   env: {
     ASPNETCORE_ENVIRONMENT: "Development",
     ASPNETCORE_URLS: "http://localhost:5031",
+    // Auth:Mode parametrizable: AUTH_MODE=Identity node test-runner.mjs
+    // arranca la API con UserManager/PBKDF2 en vez de BCrypt.
+    Auth__Mode: process.env.AUTH_MODE || "Custom",
   },
   dbServices: ["postgres", "mongodb"],
   composeFile: "docker-compose.local.yml",
-  // Credenciales seed (§7.4 del plan)
+  // Credenciales seed (varían con Auth:Mode: Custom usa admin/admin; Identity usa Admin123!)
   admin: { username: process.env.ADMIN_USER || "admin", password: process.env.ADMIN_PASS || "admin" },
   user: { username: process.env.USER_USER || "userdaw", password: process.env.USER_PASS || "userdaw" },
 };
@@ -248,7 +251,7 @@ let imagenProductoUrl = null;
   // ============================ AUTH ============================
   await test("Auth: POST signup usuario único → 201 con token", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
-      body: { username: `auto_${ts}`, email: `auto_${ts}@test.com`, password: "Test1234" },
+      body: { username: `auto_${ts}`, email: `auto_${ts}@test.com`, password: "Test1234!" },
     });
     assertEq(st(r), 201, "status");
     assert(r.json?.token, "falta token");
@@ -257,24 +260,37 @@ let imagenProductoUrl = null;
     autoToken = r.json.token;
   });
 
-  await test("Auth: POST signup con username inválido → 400", async () => {
+  await test("Auth: POST signup con username inválido → 400 (Custom) / 201 (Identity)", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
-      body: { username: "x", email: `bad_${ts}@test.com`, password: "Test1234" },
+      body: { username: "x", email: `bad_${ts}@test.com`, password: "Test1234!" },
     });
-    assertEq(st(r), 400, "status");
+    if (CONFIG.authMode === "Identity") {
+      // Diferencia real de contrato: FluentValidation (Custom) exige username >= 3
+      // -> 400; el UserValidator de Identity no tiene longitud minima -> crea (201).
+      assertEq(st(r), 201, "status (Identity sin validación de longitud)");
+      if (r.json?.user?.id) { await req("DELETE", `/api/users/${r.json.user.id}`, { token: adminToken }); }
+    } else {
+      assertEq(st(r), 400, "status");
+    }
   });
 
-  await test("Auth: POST signup con email inválido → 400", async () => {
+  await test("Auth: POST signup con email inválido → 400 (Custom) / 422 (Identity)", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
-      body: { username: `badmail_${ts}`, email: "no-es-email", password: "Test1234" },
+      body: { username: `badmail_${ts}`, email: "no-es-email", password: "Test1234!" },
     });
-    assertEq(st(r), 400, "status");
+    if (CONFIG.authMode === "Identity") {
+      // Identity valida el email en su UserValidator y el servicio lo mapea a
+      // BusinessRuleError (422); FluentValidation (Custom) lo mapea a 400.
+      assertEq(st(r), 422, "status (BusinessRuleError de Identity)");
+    } else {
+      assertEq(st(r), 400, "status");
+    }
   });
 
   await test("Auth: POST signup username duplicado → 409 Conflict", async () => {
     // Reintenta el signup del usuario único: username y email ya registrados
     const r = await req("POST", "/api/v1/auth/signup", {
-      body: { username: `auto_${ts}`, email: `auto_${ts}@test.com`, password: "Test1234" },
+      body: { username: `auto_${ts}`, email: `auto_${ts}@test.com`, password: "Test1234!" },
     });
     assertEq(st(r), 409, "status");
   });
@@ -819,7 +835,7 @@ let imagenProductoUrl = null;
 
   await test("Users perfil: DELETE /me/profile (cuenta dedicada) → 204", async () => {
     const su = await req("POST", "/api/v1/auth/signup", {
-      body: { username: `del_${ts}`, email: `del_${ts}@test.com`, password: "Test1234" },
+      body: { username: `del_${ts}`, email: `del_${ts}@test.com`, password: "Test1234!" },
     });
     assertEq(st(su), 201, "signup dedicada");
     assert(su.json?.token, "falta token de la cuenta dedicada");

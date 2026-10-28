@@ -99,6 +99,18 @@ public static class AuthenticationConfig
         .AddEntityFrameworkStores<TiendaApi.Api.Data.TiendaDbContext>()
         .AddDefaultTokenProviders();
 
+        // 🎓 AddIdentity deja Identity.Application (cookie) como DefaultScheme.
+        // Los atributos [Authorize(Roles=...)] construyen su política SIN esquemas
+        // y usan el DefaultScheme: sin este fijado a Bearer, esas peticiones iban
+        // al handler de cookies → redirect a /Account/Login (401) en modo Identity.
+        services.AddAuthentication(options =>
+        {
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+        });
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
@@ -129,12 +141,23 @@ public static class AuthenticationConfig
     private static void AddAuthorizationPolicies(IServiceCollection services)
     {
         Log.Information("🛡️ Configurando políticas de autorización...");
+        // 🎓 Todas las políticas declaran el esquema Bearer EXPLÍCITAMENTE.
+        // Sin esquema, la política usa el DefaultScheme de autenticación: en
+        // modo Identity, AddIdentity registra la cookie Identity.Application como
+        // DefaultScheme y el middleware redirigía a /Account/Login (401) en todos
+        // los endpoints protegidos con política nombrada (RequireAdminRole...).
         services.AddAuthorizationBuilder()
             .SetDefaultPolicy(new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
                 .RequireAuthenticatedUser()
                 .Build())
-            .AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRoles.ADMIN))
-            .AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRoles.USER, UserRoles.ADMIN))
-            .AddPolicy("AdminOnly", policy => policy.RequireRole(UserRoles.ADMIN));
+            .AddPolicy("RequireAdminRole", new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                .RequireRole(UserRoles.ADMIN)
+                .Build())
+            .AddPolicy("RequireUserRole", new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                .RequireRole(UserRoles.USER, UserRoles.ADMIN)
+                .Build())
+            .AddPolicy("AdminOnly", new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                .RequireRole(UserRoles.ADMIN)
+                .Build());
     }
 }
