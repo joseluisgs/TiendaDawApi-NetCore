@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Api.Exceptions;
+using TiendaApi.Api.Infrastructures;
 
 namespace TiendaApi.Api.Middleware;
 

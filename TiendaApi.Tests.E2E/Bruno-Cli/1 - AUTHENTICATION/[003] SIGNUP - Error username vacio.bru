@@ -18,13 +18,13 @@ body:json {
   {
       "username": "",
       "email": "test@test.com",
-      "password": "Test1234"
+      "password": "Test1234!"
   }
 }
 
 script:post-response {
   test("Signup validation - Status 400 Bad Request", function () {
-      expect(res.getStatus()).to.equal(400);
+      test("Diferencia por modo: 400 en Custom / 422 en Identity", function () { expect([400, 422]).to.include(res.getStatus()); });
   });
   
   test("Signup validation - Has error message", function () {

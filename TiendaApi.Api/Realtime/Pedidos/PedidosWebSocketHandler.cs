@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using TiendaApi.Api.Realtime.Common;
 using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Cache;
+using TiendaApi.Api.Infrastructures;
 
 namespace TiendaApi.Api.Realtime.Pedidos;
 

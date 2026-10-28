@@ -42,8 +42,8 @@ public class JwtService(
 
         var claims = new[]
         {
-            new Claim("username", user.Username),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim("username", user.UserName ?? string.Empty),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new Claim(ClaimTypes.Role, user.Role),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -59,7 +59,7 @@ public class JwtService(
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-        _logger.LogInformation("Token JWT generado para usuario: {Username}", user.Username);
+        _logger.LogInformation("Token JWT generado para usuario: {Username}", user.UserName);
 
         return tokenString;
     }

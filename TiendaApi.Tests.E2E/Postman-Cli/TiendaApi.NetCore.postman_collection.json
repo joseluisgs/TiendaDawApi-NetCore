@@ -144,6 +144,120 @@
             "description": "Limpia variables de test"
           },
           "response": []
+        },
+        {
+          "name": "[072] Health Live - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health Live - Status 200', function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health/live",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health/live"
+              ]
+            },
+            "description": "Liveness: el proceso responde (no sondea dependencias)."
+          },
+          "response": []
+        },
+        {
+          "name": "[073] Health Ready - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health Ready - Status 200', function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health/ready"
+              ]
+            },
+            "description": "Readiness: PostgreSQL, MongoDB y Redis responden (503 si algo cae)."
+          },
+          "response": []
+        },
+        {
+          "name": "[074] Version - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Version - Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Version - Devuelve la version', function () { const j = pm.response.json(); pm.expect(j.version || j.Version).to.not.be.empty; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "version"
+              ]
+            },
+            "description": "GET /version: versión del assembly + runtime."
+          },
+          "response": []
+        },
+        {
+          "name": "[075] RateLimit - Headers presentes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RateLimit - Lleva header RateLimit-Limit', function () { pm.expect(pm.response.headers.get('RateLimit-Limit')).to.not.be.undefined; });",
+                  "pm.test('RateLimit - Lleva header RateLimit-Remaining', function () { pm.expect(pm.response.headers.get('RateLimit-Remaining')).to.not.be.undefined; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "version"
+              ]
+            },
+            "description": "Headers RateLimit-* del middleware (paridad con Automation)."
+          },
+          "response": []
         }
       ]
     },
@@ -157,7 +271,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Signup validation - Status 400 Bad Request', function () { pm.response.to.have.status(400); });"
+                  "// Diferencia por modo: Custom 400 (FluentValidation) / Identity 422 (BusinessRuleError)\npm.expect([400, 422]).to.include(pm.response.code);"
                 ],
                 "type": "text/javascript"
               }
@@ -173,7 +287,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"\",\"email\":\"test@test.com\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"\",\"email\":\"test@test.com\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
@@ -197,7 +311,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Signup invalid email - Status 400 Bad Request', function () { pm.response.to.have.status(400); });"
+                  "// Diferencia por modo: Custom 400 (FluentValidation) / Identity 422 (BusinessRuleError)\npm.expect([400, 422]).to.include(pm.response.code);"
                 ],
                 "type": "text/javascript"
               }
@@ -213,7 +327,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"testuser\",\"email\":\"email-invalido\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"testuser\",\"email\":\"email-invalido\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
@@ -253,7 +367,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"{{adminUsername}}\",\"email\":\"otro@test.com\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"{{adminUsername}}\",\"email\":\"otro@test.com\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
@@ -305,7 +419,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"{{testUsername}}\",\"email\":\"{{testUsername}}@test.com\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"{{testUsername}}\",\"email\":\"{{testUsername}}@test.com\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signup",
@@ -491,7 +605,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"username\":\"nonexistentuser12345\",\"password\":\"Test1234\"}"
+              "raw": "{\"username\":\"nonexistentuser12345\",\"password\":\"Test1234!\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/signin",
@@ -505,6 +619,102 @@
                 "signin"
               ]
             }
+          },
+          "response": []
+        },
+        {
+          "name": "[011] EXTERNAL - Google sin credenciales - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('External Google - Puerta cerrada (404) o redirect (302)', function () { pm.expect([404, 302]).to.include(pm.response.code); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/external/Google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "external",
+                "Google"
+              ]
+            },
+            "description": "Puerta OAuth: habilitada pero sin credenciales -> 404; con credenciales reales -> 302 al proveedor."
+          },
+          "response": []
+        },
+        {
+          "name": "[012] EXTERNAL - Proveedor inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('External ProveedorInventado - Siempre 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('External ProveedorInventado - Mensaje proveedor', function () { pm.expect(pm.response.text()).to.include('no est'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/external/ProveedorInventado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "external",
+                "ProveedorInventado"
+              ]
+            },
+            "description": "Un proveedor desconocido siempre responde 404."
+          },
+          "response": []
+        },
+        {
+          "name": "[013] EXTERNAL - Callback sin autenticar - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('External Callback sin principal - 400', function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/external-callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "external-callback"
+              ]
+            },
+            "description": "El callback sin haber pasado por el proveedor responde 400 (sin principal)."
           },
           "response": []
         }
@@ -2905,25 +3115,65 @@
           "response": []
         },
         {
-          "name": "[051] DELETE - Mi Cuenta",
+          "name": "[051b] SIGNUP - Cuenta dedicada",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.variables.set('tsDedicated', Date.now());"
+                ],
+                "type": "text/javascript"
+              }
+            },
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Users My Delete - Status 204 No Content', function () { pm.response.to.have.status(204); });"
+                  "pm.test('Signup cuenta dedicada - 201 con token', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) pm.variables.set('delCuentaToken', pm.response.json().token);"
                 ],
                 "type": "text/javascript"
               }
             }
           ],
           "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"delcuenta_{{tsDedicated}}\",\n  \"email\": \"delcuenta_{{tsDedicated}}@test.com\",\n  \"password\": \"Test1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "Cuenta dedicada para [051]."
+          },
+          "response": []
+        },
+        {
+          "name": "[051] DELETE - Mi Cuenta",
+          "request": {
             "auth": {
               "type": "bearer",
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{userToken}}",
+                  "value": "{{delCuentaToken}}",
                   "type": "string"
                 }
               ]
@@ -2940,7 +3190,8 @@
                 "me",
                 "profile"
               ]
-            }
+            },
+            "description": "Cuenta dedicada creada por [051b] (no destruye el seed userdaw)."
           },
           "response": []
         }

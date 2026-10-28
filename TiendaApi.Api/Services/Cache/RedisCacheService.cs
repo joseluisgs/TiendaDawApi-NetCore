@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Caching.Distributed;
+using TiendaApi.Api.Infrastructures;
 
 namespace TiendaApi.Api.Services.Cache;
 

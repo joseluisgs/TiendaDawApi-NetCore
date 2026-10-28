@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
@@ -6,7 +7,7 @@ using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Models;
 
-namespace TiendaApi.Api;
+namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
 /// Contexto de serialización JSON con source-gen para AOT/trimming.
@@ -15,10 +16,14 @@ namespace TiendaApi.Api;
 [JsonSerializable(typeof(ProductoDto))]
 [JsonSerializable(typeof(PedidoDto))]
 [JsonSerializable(typeof(PedidoItemDto))]
+[JsonSerializable(typeof(PedidoItemRequestDto))]
+[JsonSerializable(typeof(DestinatarioDto))]
+[JsonSerializable(typeof(DireccionDto))]
 [JsonSerializable(typeof(UserDto))]
 [JsonSerializable(typeof(RegisterDto))]
 [JsonSerializable(typeof(LoginDto))]
 [JsonSerializable(typeof(AuthResponseDto))]
+[JsonSerializable(typeof(ExternalLoginDto))]
 [JsonSerializable(typeof(UserUpdateDto))]
 [JsonSerializable(typeof(UserPatchDto))]
 [JsonSerializable(typeof(ProductoFilterDto))]

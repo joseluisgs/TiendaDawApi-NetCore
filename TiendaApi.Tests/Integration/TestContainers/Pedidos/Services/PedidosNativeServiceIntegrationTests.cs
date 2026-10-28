@@ -134,7 +134,7 @@ public class PedidosNativeServiceIntegrationTests
 
         var user = new User
         {
-            Username = $"testuser_{Guid.NewGuid():N}".Substring(0, 15),
+            UserName = $"testuser_{Guid.NewGuid():N}".Substring(0, 15),
             Email = "test@example.com",
             PasswordHash = "$2a$11$test",
             Role = "USER"

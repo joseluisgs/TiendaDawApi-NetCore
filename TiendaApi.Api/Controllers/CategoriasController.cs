@@ -63,7 +63,8 @@ public class CategoriasController(
         return resultado.Match(
             onSuccess: categorias =>
             {
-                // ETag lo gestiona OutputCache ([OutputCache] attribute)
+                // Caché la cachea OutputCache ([OutputCache] attribute): la 2ª petición
+    // sirve desde caché (header Age). ETag/304 no está implementado.
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(categorias, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);

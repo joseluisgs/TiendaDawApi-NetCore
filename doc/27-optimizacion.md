@@ -629,7 +629,7 @@ runtime no hace falta descubrir nada.
 
 ### El contexto del proyecto: `AppJsonContext`
 
-`TiendaApi.Api/AppJsonContext.cs` declara con `[JsonSerializable]` los DTOs de
+`TiendaApi.Api/Infrastructures/AppJsonContext.cs` declara con `[JsonSerializable]` los DTOs de
 la API (entidades, DTOs de petición/respuesta, filtros y resultados
 paginados). El contexto se conecta en **todos los puntos** donde la
 aplicación serializa JSON:

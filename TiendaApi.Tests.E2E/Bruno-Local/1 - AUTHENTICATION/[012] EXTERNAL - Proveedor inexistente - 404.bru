@@ -1,0 +1,32 @@
+meta {
+  name: [012] EXTERNAL - Proveedor inexistente - 404
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/external/ProveedorInventado
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("External ProveedorInventado - Siempre 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+
+  test("External ProveedorInventado - Mensaje de proveedor no configurado", function () {
+      const body = JSON.stringify(res.getBody());
+      expect(body).to.include("no est");
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Un proveedor que no existe (ni siquiera como puerta desactivada) siempre
+  responde 404: el schemeProvider no conoce el esquema.
+}

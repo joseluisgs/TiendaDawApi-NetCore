@@ -12,6 +12,12 @@ services:
       - ./reports:/etc/newman/reports
     environment:
       - BASE_URL=${BASE_URL:-http://host.docker.internal:5031}
+    # 250ms validado empíricamente (85/85 requests en ~28s). El rate limit
+    # general (100/15s) queda cubierto incluso sin delay, pero 250ms da
+    # colchón si la colección crece. Por debajo de 100ms empieza a
+    # acercarse al límite de ráfaga.
+    # ⚠️ Los comentarios NO pueden ir DENTRO del scalar plegado (command: >):
+    # YAML los trataría como parte literal del comando y newman fallaría.
     command: >
       run TiendaApi.NetCore.postman_collection.json
       -e TiendaApi.NetCore.postman_environment.json
@@ -22,11 +28,10 @@ services:
       --reporter-json-export /etc/newman/reports/report.json
       --timeout-request 30000
       --timeout-script 5000
-      --delay-request 3200
+      --delay-request 250
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # Rate limit de la API (RateLimitConfig.cs): POST:* 20/min -> --delay-request
-    # evita los 429. Si la API no está aún, reintenta (máx 3).
+    # Si la API no está aún, reintenta (máx 3).
     restart: on-failure:3
 
 networks:

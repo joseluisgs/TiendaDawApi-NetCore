@@ -3,9 +3,11 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Moq;
+using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Repositories.Auth;
 using TiendaApi.Api.Repositories.Usuarios;
 using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Validators.Usuarios;
@@ -22,6 +24,7 @@ namespace TiendaApi.Tests.Unit.Services.Auth;
 public class AuthServiceTests
 {
     private Mock<IUserRepository> _mockUserRepository = null!;
+    private Mock<IUserLoginRepository> _mockUserLoginRepository = null!;
     private Mock<IJwtService> _mockJwtService = null!;
     private Mock<ILogger<AuthService>> _mockLogger = null!;
     private Mock<IValidator<RegisterDto>> _mockRegisterValidator = null!;
@@ -32,6 +35,7 @@ public class AuthServiceTests
     {
         _authService = new AuthService(
             _mockUserRepository.Object,
+            _mockUserLoginRepository.Object,
             _mockJwtService.Object,
             _mockLogger.Object,
             _mockRegisterValidator.Object,
@@ -43,6 +47,7 @@ public class AuthServiceTests
     public void Setup()
     {
         _mockUserRepository = new Mock<IUserRepository>();
+        _mockUserLoginRepository = new Mock<IUserLoginRepository>();
         _mockJwtService = new Mock<IJwtService>();
         _mockLogger = new Mock<ILogger<AuthService>>();
         _mockRegisterValidator = new Mock<IValidator<RegisterDto>>();
@@ -82,7 +87,7 @@ public class AuthServiceTests
         var savedUser = new User
         {
             Id = 1,
-            Username = registerDto.Username,
+            UserName = registerDto.Username,
             Email = registerDto.Email,
             PasswordHash = "hashedpassword",
             Role = UserRoles.USER,
@@ -207,7 +212,7 @@ public class AuthServiceTests
         var existingUser = new User
         {
             Id = 1,
-            Username = "existinguser",
+            UserName = "existinguser",
             Email = "existing@test.com"
         };
 
@@ -237,7 +242,7 @@ public class AuthServiceTests
         var existingUser = new User
         {
             Id = 1,
-            Username = "existinguser",
+            UserName = "existinguser",
             Email = "existing@test.com"
         };
 
@@ -269,7 +274,7 @@ public class AuthServiceTests
         var user = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@test.com",
             PasswordHash = passwordHash,
             Role = UserRoles.USER,
@@ -362,7 +367,7 @@ public class AuthServiceTests
         var user = new User
         {
             Id = 1,
-            Username = "testuser",
+            UserName = "testuser",
             Email = "test@test.com",
             PasswordHash = passwordHash,
             Role = UserRoles.USER
@@ -375,6 +380,110 @@ public class AuthServiceTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<UnauthorizedError>();
+    }
+
+    #endregion
+
+    #region Tests LoginExternal
+
+    [Test]
+    public async Task LoginExternalAsync_UsuarioNuevo_DebeCrearUsuarioYVincular()
+    {
+        var info = new ExternalLoginDto("Google", "g-key-1", "nuevo@test.com", "Nuevo", null);
+
+        _mockUserLoginRepository.Setup(x => x.FindByProviderAsync("Google", "g-key-1"))
+            .ReturnsAsync((UserLogin?)null);
+        _mockUserRepository.Setup(x => x.FindByEmailAsync("nuevo@test.com"))
+            .ReturnsAsync((User?)null);
+        _mockUserRepository.Setup(x => x.SaveAsync(It.IsAny<User>()))
+            .ReturnsAsync((User u) => { u.Id = 42; return u; });
+        _mockUserLoginRepository.Setup(x => x.ExistsAsync("Google", "g-key-1"))
+            .ReturnsAsync(false);
+
+        var result = await _authService.LoginExternalAsync(info);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Token.Should().Be("test-jwt-token");
+        result.Value.User.Email.Should().Be("nuevo@test.com");
+        result.Value.User.Role.Should().Be(UserRoles.USER);
+
+        // Usuario creado con dummy hash (no puede hacer login con password)
+        _mockUserRepository.Verify(x => x.SaveAsync(
+            It.Is<User>(u => u.PasswordHash == "OAUTH-Google")), Times.Once);
+
+        // Vinculación guardada
+        _mockUserLoginRepository.Verify(x => x.SaveAsync(
+            It.Is<UserLogin>(ul => ul.UserId == 42 && ul.LoginProvider == "Google"
+                && ul.ProviderKey == "g-key-1")), Times.Once);
+    }
+
+    [Test]
+    public async Task LoginExternalAsync_ExistentePorProvider_DebeUsarEseUsuario()
+    {
+        var info = new ExternalLoginDto("GitHub", "gh-key-9", "user@test.com", null, null);
+
+        var existingUser = new User
+        {
+            Id = 7,
+            UserName = "user@test.com",
+            Email = "user@test.com",
+            Role = UserRoles.USER
+        };
+
+        _mockUserLoginRepository.Setup(x => x.FindByProviderAsync("GitHub", "gh-key-9"))
+            .ReturnsAsync(new UserLogin { Id = 1, UserId = 7, LoginProvider = "GitHub", ProviderKey = "gh-key-9" });
+        _mockUserRepository.Setup(x => x.FindByIdAsync(7))
+            .ReturnsAsync(existingUser);
+
+        var result = await _authService.LoginExternalAsync(info);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.User.Username.Should().Be("user@test.com");
+        // No debe crear usuario ni vincular otra vez
+        _mockUserRepository.Verify(x => x.SaveAsync(It.IsAny<User>()), Times.Never);
+        _mockUserLoginRepository.Verify(x => x.SaveAsync(It.IsAny<UserLogin>()), Times.Never);
+    }
+
+    [Test]
+    public async Task LoginExternalAsync_ExistentePorEmail_DebeVincularSinDuplicar()
+    {
+        var info = new ExternalLoginDto("Google", "g-key-new", "yaexiste@test.com", null, null);
+
+        var existingUser = new User
+        {
+            Id = 5,
+            UserName = "yaexiste",
+            Email = "yaexiste@test.com",
+            Role = UserRoles.USER
+        };
+
+        _mockUserLoginRepository.Setup(x => x.FindByProviderAsync("Google", "g-key-new"))
+            .ReturnsAsync((UserLogin?)null);
+        _mockUserRepository.Setup(x => x.FindByEmailAsync("yaexiste@test.com"))
+            .ReturnsAsync(existingUser);
+        _mockUserLoginRepository.Setup(x => x.ExistsAsync("Google", "g-key-new"))
+            .ReturnsAsync(false);
+
+        var result = await _authService.LoginExternalAsync(info);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.User.Username.Should().Be("yaexiste");
+        // No crea usuario nuevo (ya existe por email), solo vincula
+        _mockUserRepository.Verify(x => x.SaveAsync(It.IsAny<User>()), Times.Never);
+        _mockUserLoginRepository.Verify(x => x.SaveAsync(
+            It.Is<UserLogin>(ul => ul.UserId == 5)), Times.Once);
+    }
+
+    [Test]
+    public async Task LoginExternalAsync_SinEmail_DebeRetornarBusinessRuleError()
+    {
+        var info = new ExternalLoginDto("GitHub", "gh-key-8", null, "Solo nombre", null);
+
+        var result = await _authService.LoginExternalAsync(info);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<BusinessRuleError>();
+        result.Error.Message.Should().Contain("email");
     }
 
     #endregion

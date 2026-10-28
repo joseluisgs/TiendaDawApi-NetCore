@@ -57,6 +57,8 @@ services.AddDatabases(configuration, environment);
 
 // Auth
 services.AddAuthentication(configuration);
+// Puertas OAuth externas (Google/GitHub/Microsoft), activas según Auth:{Proveedor}:Enabled
+services.AddOAuthDoors(configuration);
 
 // Business
 services.AddRepositories(configuration);
@@ -199,20 +201,63 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     Log.Information("=================================================================");
     Log.Information("ENDPOINTS REST:");
     Log.Information("  Auth:       POST {BaseUrl}/api/v1/auth/signup, /api/v1/auth/signin", baseUrl);
+    Log.Information("  Auth Ext:   GET  {BaseUrl}/api/v1/auth/external/{provider} + /external-callback", baseUrl);
     Log.Information("  Categorias: GET/POST/PUT/DELETE {BaseUrl}/api/categorias", baseUrl);
     Log.Information("  Productos:  GET/POST/PUT/DELETE {BaseUrl}/api/productos", baseUrl);
     Log.Information("  Pedidos:    GET/POST {BaseUrl}/api/pedidos", baseUrl);
     Log.Information("  Usuarios:   GET/POST/PUT/DELETE {BaseUrl}/api/users", baseUrl);
+
+    // 🔐 Los 4 modos de autenticación del proyecto: 2 de contraseña (Auth:Mode)
+    // y 2 de login externo (el callback usa el servicio del modo activo)
+    var authMode = configuration["Auth:Mode"] ?? "Custom";
+    Log.Information("=================================================================");
+    Log.Information("AUTENTICACIÓN:");
+    if (authMode == "Identity")
+    {
+        Log.Information("  Contraseña:  JWT con Identity (UserManager / PBKDF2) [Auth:Mode=Identity]");
+        Log.Information("  Callback OAuth: IdentityAuthService (vincula en AspNetUserLogins)");
+    }
+    else
+    {
+        Log.Information("  Contraseña:  JWT Manual (BCrypt) [Auth:Mode=Custom]");
+        Log.Information("  Callback OAuth: AuthService (vincula en user_logins, dummy hash OAUTH-*)");
+    }
+    foreach (var provider in new[] { "Google", "GitHub", "Microsoft" })
+    {
+        var enabled = string.Equals(configuration[$"Auth:{provider}:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
+        var hasCreds = !string.IsNullOrEmpty(configuration[$"{provider}:ClientId"])
+                       && !string.IsNullOrEmpty(configuration[$"{provider}:ClientSecret"]);
+        var estado = !enabled ? "desactivada"
+            : hasCreds ? "ACTIVA"
+            : "habilitada sin credenciales (puerta cerrada)";
+        Log.Information("  OAuth {Provider,-9}: {Estado}", provider, estado);
+    }
     Log.Information("=================================================================");
     Log.Information("DATOS SEMBRADOS (Seed):");
-    Log.Information("  PostgreSQL: admin (admin/admin), userdaw (userdaw/userdaw)");
+    if (authMode == "Identity")
+    {
+        Log.Information("  PostgreSQL: usuarios seed con hash PBKDF2 (ver CREDENCIALES)");
+    }
+    else
+    {
+        Log.Information("  PostgreSQL: usuarios seed con hash BCrypt (ver CREDENCIALES)");
+    }
     Log.Information("              Categorias: Electronica, Ropa, Libros");
     Log.Information("              Productos: Laptop Dell XPS 15, Camiseta Nike, Clean Code");
     Log.Information("  MongoDB:    3 pedidos de ejemplo");
     Log.Information("=================================================================");
     Log.Information("CREDENCIALES DE PRUEBA:");
-    Log.Information("  Admin:   admin / admin (ROLE_ADMIN)");
-    Log.Information("  Usuario: userdaw / userdaw (ROLE_USER)");
+    if (authMode == "Identity")
+    {
+        // La política de Identity (>=6 chars, dígito y mayúscula) rechaza "admin"/"userdaw"
+        Log.Information("  Admin:   admin / Admin123! (ROLE_ADMIN)");
+        Log.Information("  Usuario: userdaw / Admin123! (ROLE_USER)");
+    }
+    else
+    {
+        Log.Information("  Admin:   admin / admin (ROLE_ADMIN)");
+        Log.Information("  Usuario: userdaw / userdaw (ROLE_USER)");
+    }
     Log.Information("=================================================================");
     Log.Information("🚀 Aplicacion iniciada correctamente en {BaseUrl} ({Mode})",
         baseUrl, mode);

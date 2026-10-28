@@ -146,7 +146,7 @@ public class UserService(
 
         var user = new User
         {
-            Username = dto.Username,
+            UserName = dto.Username,
             Email = dto.Email,
             PasswordHash = passwordHash,
             Role = UserRoles.USER,

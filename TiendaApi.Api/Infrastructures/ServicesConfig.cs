@@ -26,7 +26,9 @@ public static class ServicesConfig
             .AddScoped<IPedidosService, PedidosService>()
             .AddScoped<IJwtService, JwtService>()
             .AddTransient<IJwtTokenExtractor, JwtTokenExtractor>()
-            .AddScoped<IAuthService, AuthService>()
+            // IAuthService NO se registra aquí: lo decide AuthenticationConfig según Auth:Mode
+            // (Custom → AuthService / Identity → IdentityAuthService). Registrarlo aquí lo
+            // sobreescribía y anulaba el switch (en DI gana el último registro).
             .AddScoped<IUserService, UserService>();
     }
 }

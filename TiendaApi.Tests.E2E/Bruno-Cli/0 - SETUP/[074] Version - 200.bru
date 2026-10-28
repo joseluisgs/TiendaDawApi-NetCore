@@ -1,0 +1,31 @@
+meta {
+  name: [074] Version - 200
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/version
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Version - Status 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Version - Devuelve la version del assembly", function () {
+      const jsonData = res.getBody();
+      const version = jsonData.version || jsonData.Version;
+      expect(version).to.not.be.empty;
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  GET /version: version del assembly + runtime (endpoint informativo).
+}
