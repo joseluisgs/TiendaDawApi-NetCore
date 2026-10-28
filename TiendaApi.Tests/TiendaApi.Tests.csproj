@@ -30,6 +30,7 @@
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="Testcontainers.MongoDb" />
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.Cassandra" />
     <PackageReference Include="MongoDB.Driver" />
   </ItemGroup>
 

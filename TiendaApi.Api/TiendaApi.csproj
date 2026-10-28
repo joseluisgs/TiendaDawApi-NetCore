@@ -14,6 +14,7 @@
     <PackageReference Include="AspNet.Security.OAuth.GitHub" />
     <PackageReference Include="AutoMapper" />
     <PackageReference Include="BCrypt.Net-Next" />
+    <PackageReference Include="CassandraCSharpDriver" />
     <PackageReference Include="CSharpFunctionalExtensions" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" />
