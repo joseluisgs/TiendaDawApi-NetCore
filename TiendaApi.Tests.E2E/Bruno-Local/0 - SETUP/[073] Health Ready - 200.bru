@@ -1,0 +1,26 @@
+meta {
+  name: [073] Health Ready - 200
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/health/ready
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Health Ready - Status 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Readiness: PostgreSQL, MongoDB y Redis responden (tags ready). Si alguna
+  dependencia cae, aqui responde 503.
+}

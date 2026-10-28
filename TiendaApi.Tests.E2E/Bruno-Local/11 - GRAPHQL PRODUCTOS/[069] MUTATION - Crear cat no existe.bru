@@ -23,9 +23,12 @@ body:graphql:vars {
 }
 
 script:post-response {
-  test("GraphQL CreateProducto NotFound - Returns null data", function () {
+  // Por diseno el mutation LANZA excepcion en validacion de negocio (ver XML-doc
+  // de ProductoMutation): el cliente lo ve en errors[], no en data null.
+  test("GraphQL CreateProducto cat inexistente - errors de validacion", function () {
       const jsonData = res.getBody();
-      expect(jsonData.data.createProducto).to.be.null;
+      expect(jsonData.errors).to.be.an("array").that.is.not.empty;
+      expect(JSON.stringify(jsonData.errors)).to.include("validaci");
   });
 }
 
