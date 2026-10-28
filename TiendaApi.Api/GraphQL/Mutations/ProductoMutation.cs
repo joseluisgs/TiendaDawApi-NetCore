@@ -5,7 +5,6 @@ using HotChocolate.Types;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.GraphQL.Inputs;
-using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Api.GraphQL.Mutations;
@@ -55,34 +54,36 @@ public class ProductoMutation
         return result.Value;
     }
 
-    /// <summary>Actualiza un producto existente.</summary>
+    /// <summary>
+    /// Actualiza un producto existente (merge de campos: solo se envían los que cambian).
+    ///
+    /// 🎓 El mutation es DELGADO: solo mapea el input al DTO de parche y delega en
+    /// el servicio. La lectura previa (read-before-write) y el merge de campos
+    /// null viven DENTRO de UpdatePartialAsync, como en el endpoint REST PATCH.
+    /// Un mutation no debe inyectar repositorios: la lógica de negocio vive en
+    /// los servicios.
+    /// </summary>
     /// <param name="id">ID del producto.</param>
-    /// <param name="input">Campos a modificar.</param>
+    /// <param name="input">Campos a modificar (null = no tocar).</param>
     /// <param name="service">Servicio de productos.</param>
-    /// <param name="productoRepository">Repositorio (modelo de escritura, sin caché).</param>
     /// <returns>Producto actualizado.</returns>
     [Authorize(policy: "AdminOnly")]
     public async Task<ProductoDto> UpdateProducto(
         long id,
         UpdateProductoInput input,
-        [Service] IProductoService service,
-        [Service] IProductoRepository productoRepository)
+        [Service] IProductoService service)
     {
-        // 🎓 Leer del MODELO DE ESCRITURA (PostgreSQL), no de la caché
-        var existing = await productoRepository.FindByIdAsync(id);
-        if (existing is null)
-            throw new Exception($"Producto con ID {id} no encontrado");
-
-        var dto = new ProductoRequestDto
+        var patch = new ProductoPatchDto
         {
-            Nombre = input.Nombre ?? existing.Nombre,
-            Descripcion = input.Descripcion ?? existing.Descripcion,
-            Precio = input.Precio ?? existing.Precio,
-            Stock = input.Stock ?? existing.Stock,
-            Imagen = input.Imagen ?? existing.Imagen,
-            CategoriaId = input.CategoriaId ?? existing.CategoriaId
+            Nombre = input.Nombre,
+            Descripcion = input.Descripcion,
+            Precio = input.Precio,
+            Stock = input.Stock,
+            Imagen = input.Imagen,
+            CategoriaId = input.CategoriaId
         };
-        var result = await service.UpdateAsync(id, dto);
+
+        var result = await service.UpdatePartialAsync(id, patch);
         if (result.IsFailure)
             throw new Exception(result.Error.Message);
 

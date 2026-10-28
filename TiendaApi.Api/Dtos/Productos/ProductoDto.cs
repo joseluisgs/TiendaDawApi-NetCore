@@ -330,4 +330,12 @@ public record ProductoPatchDto
     [MaxLength(500, ErrorMessage = "La URL de la imagen no puede exceder 500 caracteres")]
     [Url(ErrorMessage = "Debe ser una URL válida")]
     public string? Imagen { get; init; }
+
+    /// <summary>
+    /// Categoría del producto (opcional).
+    /// Si se proporciona, mueve el producto a esa categoría.
+    /// Usado por el REST (PATCH) y por GraphQL (updateProducto).
+    /// </summary>
+    [Range(1, long.MaxValue, ErrorMessage = "El id de categoría debe ser positivo")]
+    public long? CategoriaId { get; init; }
 }

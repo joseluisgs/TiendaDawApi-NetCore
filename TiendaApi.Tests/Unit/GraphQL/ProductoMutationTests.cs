@@ -95,16 +95,6 @@ public class ProductoMutationTests
         long productoId = 1;
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
 
-        var productoExistente = new Producto
-        {
-            Id = productoId,
-            Nombre = "Producto Original",
-            Descripcion = "Descripción",
-            Precio = 999.99m,
-            Stock = 20,
-            CategoriaId = 1
-        };
-
         var productoActualizado = new ProductoDto(
             productoId,
             "Nuevo Nombre",
@@ -117,15 +107,15 @@ public class ProductoMutationTests
             DateTime.UtcNow,
             DateTime.UtcNow);
 
-        _productoRepoMock.Setup(r => r.FindByIdAsync(productoId))
-            .ReturnsAsync(productoExistente);
-
-        _productoServiceMock.Setup(s => s.UpdateAsync(productoId, It.IsAny<ProductoRequestDto>()))
+        // El mutation delega el merge (read-before-write) en el servicio,
+        // igual que el endpoint REST PATCH
+        _productoServiceMock.Setup(s => s.UpdatePartialAsync(productoId, It.IsAny<ProductoPatchDto>()))
             .ReturnsAsync(Result.Success<ProductoDto, DomainError>(productoActualizado));
 
-        var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object, _productoRepoMock.Object);
+        var result = await _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
 
         result.Should().NotBeNull();
+        result.Nombre.Should().Be("Nuevo Nombre");
     }
 
     [Test]
@@ -134,13 +124,13 @@ public class ProductoMutationTests
         long productoId = 999;
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
 
-        _productoRepoMock.Setup(r => r.FindByIdAsync(productoId))
-            .ReturnsAsync((Producto?)null);
+        _productoServiceMock.Setup(s => s.UpdatePartialAsync(productoId, It.IsAny<ProductoPatchDto>()))
+            .ReturnsAsync(Result.Failure<ProductoDto, DomainError>(
+                TiendaApi.Api.Errors.Productos.ProductoError.NotFound(productoId)));
 
-        var act = () => _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object, _productoRepoMock.Object);
+        var act = () => _mutation.UpdateProducto(productoId, input, _productoServiceMock.Object);
 
-        await act.Should().ThrowAsync<Exception>()
-            .WithMessage($"Producto con ID {productoId} no encontrado");
+        await act.Should().ThrowAsync<Exception>();
     }
 
     #endregion
