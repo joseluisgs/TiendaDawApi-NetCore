@@ -1,0 +1,38 @@
+meta {
+  name: [082] GET - Historial con punto nuevo
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/productos/1/historial-precios?limit=50
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Historial Tras PUT - Status 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Historial Tras PUT - La serie crecio respecto a serieAntes", function () {
+      const jsonData = res.getBody();
+      const antes = Number(bru.getVar("serieAntes"));
+      expect(jsonData.length).to.be.at.least(antes + 1);
+  });
+
+  test("Historial Tras PUT - El punto mas reciente es el precio recien escrito", function () {
+      const jsonData = res.getBody();
+      const precio = Number(bru.getVar("precioNuevo"));
+      expect(jsonData[0].precio).to.equal(precio);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Flujo del plan T15: PUT precio -> GET historial con el punto nuevo PRIMERO (orden de la clustering key).
+}

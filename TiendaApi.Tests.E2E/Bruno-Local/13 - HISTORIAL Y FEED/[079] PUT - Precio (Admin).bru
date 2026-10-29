@@ -1,0 +1,50 @@
+meta {
+  name: [079] PUT - Precio (Admin)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/productos/1
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Laptop Dell XPS 15",
+      "descripcion": "Laptop de alto rendimiento",
+      "precio": 1111.11,
+      "stock": 10,
+      "categoriaId": 1
+  }
+}
+
+script:post-response {
+  test("Historial PUT - Status 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  // Guardar el precio nuevo para comprobar que aparece en la serie (T10).
+  if (res.getStatus() === 200) {
+      const jsonData = res.getBody();
+      bru.setVar("precioNuevo", String(jsonData.precio));
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Update de precio sobre el producto seed. T10 escribe el punto en Cassandra (fail-open) de forma INCONDICIONAL en todo update (no exige que el precio cambie), asi que basta un precio fijo. Bruno no soporta randomInt con argumentos: con una variable sin expandir el JSON salia invalido (400).
+}

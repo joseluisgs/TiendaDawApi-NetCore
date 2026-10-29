@@ -1,0 +1,30 @@
+meta {
+  name: [089] POST - Vista inexistente - 404
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/productos/999999/vista
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Vista Inexistente - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  La existencia la certifica PostgreSQL:404 aunque la escritura sea en Cassandra.
+}

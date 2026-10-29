@@ -1,0 +1,41 @@
+meta {
+  name: [076] GET - Serie seed (anon)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/productos/1/historial-precios?limit=50
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Historial Serie seed - Status 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Historial Serie seed - Al menos 3 puntos sembrados (T12)", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('array');
+      expect(jsonData.length).to.be.at.least(3);
+      bru.setVar("serieAntes", String(jsonData.length));
+  });
+
+  test("Historial Serie seed - Orden DESC por clustering key", function () {
+      const jsonData = res.getBody();
+      for (let i = 1; i < jsonData.length; i++) {
+          expect(new Date(jsonData[i - 1].fecha).getTime())
+              .to.be.at.least(new Date(jsonData[i].fecha).getTime());
+      }
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Serie historica sembrada por T12 (>=3 puntos, orden DESC gratis). Guarda serieAntes para el flujo del PUT.
+}

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "tienda-api-netcore-e2e",
     "name": "TiendaApi .NET - Tests E2E (Bruno-Local)",
-    "description": "Colección de tests E2E para TiendaApi .NET - Portada desde Bruno-Local\n\nOrden de ejecución: 001-071 (excluyendo websockets 080-081)",
+    "description": "Colección de tests E2E para TiendaApi .NET - Portada desde Bruno-Local\n\nOrden de ejecución: 001-089 (excluyendo websockets 080-081; 076-079 y 082-089 = historial y feed T15)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -1762,6 +1762,499 @@
               "path": [
                 "api",
                 "productos"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13 - HISTORIAL Y FEED",
+      "item": [
+        {
+          "name": "[076] GET - Serie seed (anon)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Historial Serie seed - Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Historial Serie seed - Al menos 3 puntos sembrados (T12)', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('array'); pm.expect(jsonData.length).to.be.at.least(3); pm.environment.set('serieAntes', String(jsonData.length)); });",
+                  "pm.test('Historial Serie seed - Orden DESC por clustering key', function () { const jsonData = pm.response.json(); for (let i = 1; i < jsonData.length; i++) { pm.expect(new Date(jsonData[i - 1].fecha).getTime()).to.be.at.least(new Date(jsonData[i].fecha).getTime()); } });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/1/historial-precios?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "1",
+                "historial-precios"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[077] GET - Rango invertido - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Historial Rango invertido - Status 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Historial Rango invertido - errors.desde presente', function () { const jsonData = pm.response.json(); pm.expect(jsonData.errors).to.be.an('object'); pm.expect(jsonData.errors.desde).to.not.be.undefined; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/1/historial-precios?desde=2026-10-10&hasta=2026-09-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "1",
+                "historial-precios"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-10-10"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-09-01"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[078] GET - No existe - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Historial Inexistente - Status 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Historial Inexistente - message presente (PostgreSQL manda)', function () { const jsonData = pm.response.json(); pm.expect(jsonData.message).to.be.a('string').and.not.empty; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/999999/historial-precios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "999999",
+                "historial-precios"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[079] PUT - Precio (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Historial PUT - Status 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) { const jsonData = pm.response.json(); pm.environment.set('precioNuevo', String(jsonData.precio)); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "1"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laptop Dell XPS 15\",\n  \"descripcion\": \"Laptop de alto rendimiento\",\n  \"precio\": 1844,\n  \"stock\": 10,\n  \"categoriaId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[082] GET - Historial con punto nuevo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Historial Tras PUT - Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Historial Tras PUT - La serie crecio respecto a serieAntes', function () { const jsonData = pm.response.json(); const antes = Number(pm.environment.get('serieAntes')); pm.expect(jsonData.length).to.be.at.least(antes + 1); });",
+                  "pm.test('Historial Tras PUT - El punto mas reciente es el precio recien escrito', function () { const jsonData = pm.response.json(); const precio = Number(pm.environment.get('precioNuevo')); pm.expect(jsonData[0].precio).to.equal(precio); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/1/historial-precios?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "1",
+                "historial-precios"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[083] POST - Vista 1 (Laptop)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Feed Vista 1 - Status 204', function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/1/vista",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "1",
+                "vista"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[084] POST - Vista 2 (Clean Code)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Feed Vista 2 - Status 204', function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/3/vista",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "3",
+                "vista"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[085] POST - Vista 3 (Camiseta)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Feed Vista 3 - Status 204', function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/2/vista",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "2",
+                "vista"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[086] GET - Feed ordenado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Feed - Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Feed - Entre 3 (flujo) y 20 (limit por defecto) entradas', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('array'); pm.expect(jsonData.length).to.be.at.least(3); pm.expect(jsonData.length).to.be.at.most(20); });",
+                  "pm.test('Feed - Ordenado mas reciente primero (clustering DESC)', function () { const jsonData = pm.response.json(); for (let i = 1; i < jsonData.length; i++) { pm.expect(new Date(jsonData[i - 1].fecha).getTime()).to.be.at.least(new Date(jsonData[i].fecha).getTime()); } });",
+                  "pm.test('Feed - Nombre denormalizado en la fila (sin cruces)', function () { const jsonData = pm.response.json(); const entrada = jsonData.find((e) => e.productoId === 1); pm.expect(entrada).to.not.be.undefined; pm.expect(entrada.nombre).to.be.a('string').and.not.empty; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/feed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "feed"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[087] GET - Feed limit 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Feed Limit 5 - Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Feed Limit 5 - Acotado a 5 entradas', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('array'); pm.expect(jsonData.length).to.be.at.most(5); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/feed?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[088] GET - Feed sin auth - 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Feed Sin Auth - Status 401', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/feed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "feed"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[089] POST - Vista inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Vista Inexistente - Status 404', function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/999999/vista",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "999999",
+                "vista"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
               ]
             }
           },

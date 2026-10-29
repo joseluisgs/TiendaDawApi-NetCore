@@ -16,6 +16,7 @@ services:
       - "1 - AUTHENTICATION"
       - "2 - CATEGORÍAS"
       - "3 - PRODUCTOS"
+      - "13 - HISTORIAL Y FEED"
       - "4 - PEDIDOS (Usuario)"
       - "5 - PEDIDOS (Admin)"
       # USUARIOS tiene subcarpetas anidadas: bru no recursa con la carpeta raíz,

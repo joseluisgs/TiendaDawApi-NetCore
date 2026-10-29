@@ -1,0 +1,30 @@
+meta {
+  name: [083] POST - Vista 1 (Laptop)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/productos/1/vista
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Feed Vista 1 - Status 204 (o 204 fail-open)", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Registra una vista del usuario seed (Q-B). Si Cassandra esta caido tambien responde 204 (fail-open).
+}

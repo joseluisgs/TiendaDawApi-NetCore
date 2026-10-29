@@ -1,0 +1,30 @@
+meta {
+  name: [084] POST - Vista 2 (Clean Code)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/productos/3/vista
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Feed Vista 2 - Status 204", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Segunda vista del flujo (3 POST -> GET feed ordenado).
+}
