@@ -19,4 +19,7 @@ public static class TestContainerImages
 
     /// <summary>Tag unificada con docker-compose.*.yml.</summary>
     public const string Mongo = "mongo:7.0";
+
+    /// <summary>Tag unificada con docker-compose.*.yml.</summary>
+    public const string Cassandra = "cassandra:5.0";
 }
