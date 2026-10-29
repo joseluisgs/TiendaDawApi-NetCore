@@ -380,7 +380,7 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | --- | --- | --- |
 | 07 | [07-repository-pattern.md](doc/07-repository-pattern.md) | Repository Pattern |
 | 08 | [08-ef-core-postgresql.md](doc/08-ef-core-postgresql.md) | EF Core PostgreSQL |
-| 09 | [09-mongodb.md](doc/09-mongodb.md) | MongoDB |
+| 09 | [09-mongodb-cassandra.md](doc/09-mongodb-cassandra.md) | MongoDB |
 | 10 | [10-redis-caching.md](doc/10-redis-caching.md) | Redis Caching |
 
 ### Lógica de Negocio
