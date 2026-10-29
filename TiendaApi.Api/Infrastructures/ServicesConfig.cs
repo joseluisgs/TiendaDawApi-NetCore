@@ -3,6 +3,7 @@ using Serilog;
 using TiendaApi.Api.Services;
 using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Categorias;
+using TiendaApi.Api.Services.Historial;
 using TiendaApi.Api.Services.Pedidos;
 using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Services.Users;
@@ -23,6 +24,7 @@ public static class ServicesConfig
         return services
             .AddScoped<ICategoriaService, CategoriaService>()
             .AddScoped<IProductoService, ProductoService>()
+            .AddScoped<IHistorialService, HistorialService>()
             .AddScoped<IPedidosService, PedidosService>()
             .AddScoped<IJwtService, JwtService>()
             .AddTransient<IJwtTokenExtractor, JwtTokenExtractor>()
