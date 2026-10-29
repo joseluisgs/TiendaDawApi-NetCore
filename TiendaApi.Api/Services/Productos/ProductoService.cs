@@ -13,6 +13,7 @@ using TiendaApi.Api.Mappers;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
@@ -26,6 +27,7 @@ namespace TiendaApi.Api.Services.Productos;
 /// </summary>
 public class ProductoService(
 IProductoRepository productoRepository,
+IHistorialRepository historialRepository,
 ICategoriaRepository categoriaRepository,
 ILogger<ProductoService> logger,
 ICacheService cacheService,
@@ -241,6 +243,8 @@ IOutputCacheStore outputCacheStore
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 
+        await RegistrarPrecioEnCassandra(updated);
+
         await InvalidarCacheProductoAsync($"productos:{id}");
 
         return Result.Success<ProductoDto, DomainError>(resultDto)
@@ -377,6 +381,8 @@ IOutputCacheStore outputCacheStore
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 
+        await RegistrarPrecioEnCassandra(updated);
+
         await InvalidarCacheProductoAsync($"productos:{id}");
 
         return Result.Success<ProductoDto, DomainError>(resultDto)
@@ -388,6 +394,26 @@ IOutputCacheStore outputCacheStore
                 if (dto.Stock.HasValue)
                     EventoSuscripcionStockBajo(resultDto, 10);
             });
+    }
+
+    /// <summary>
+    /// 🎓 Fail-open: el histórico en Cassandra NO puede tumbar el update de
+    /// PostgreSQL. Se AWAIT (no fire-and-forget) para que quien acaba de hacer
+    /// el PATCH pueda leer el punto recién escrito (y para el E2E), pero la
+    /// excepción se traga con warning: si Cassandra está caído, la API sigue.
+    /// Equivalente al PrecioHistoricoHandler del proyecto CQRS.
+    /// </summary>
+    private async Task RegistrarPrecioEnCassandra(Producto producto)
+    {
+        try
+        {
+            await historialRepository.RegistrarPrecioAsync(producto.Id, (double)producto.Precio);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Cassandra: no se pudo registrar el precio del producto {Id} (modo degradado)", producto.Id);
+        }
     }
 
     #region Métodos Privados - Cache

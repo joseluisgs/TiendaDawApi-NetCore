@@ -1,4 +1,6 @@
 using Cassandra;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ISession = Cassandra.ISession;
 
@@ -90,5 +92,27 @@ public static class CassandraSchemaExtensions
             """));
 
         Log.Information("Esquema de Cassandra listo en el keyspace {Keyspace}", keyspace);
+    }
+
+    /// <summary>
+    /// Arranque de Cassandra en la aplicación: espera al nodo (hasta ~60 s),
+    /// crea el esquema con CREATE IF NOT EXISTS y, si el nodo no despierta,
+    /// la app sigue en MODO DEGRADADO — el resto de la API no depende de
+    /// Cassandra: solo el histórico de precios y el feed de actividad.
+    /// </summary>
+    /// <param name="app">Aplicación en arranque (antes de app.Run()).</param>
+    /// <returns>Tarea asíncrona.</returns>
+    public static async Task InitializeCassandraAsync(this WebApplication app)
+    {
+        try
+        {
+            var settings = app.Services.GetRequiredService<CassandraSettings>();
+            await app.Services.GetRequiredService<ISession>().InitializeSchemaAsync(settings.Keyspace);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex,
+                "Cassandra no disponible tras los reintentos: la API arranca en modo degradado (sin historial de precios ni feed)");
+        }
     }
 }
