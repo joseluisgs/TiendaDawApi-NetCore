@@ -4,6 +4,7 @@ using Serilog;
 using Serilog.Extensions.Logging;
 using TiendaApi.Api;
 using TiendaApi.Api.Data;
+using TiendaApi.Api.Data.Seed.Cassandra;
 using TiendaApi.Api.Data.Seed.Mongo;
 using TiendaApi.Api.Infrastructures;
 using TiendaApi.Api.Middleware;
@@ -149,6 +150,17 @@ app.InitializeStorage(isDevelopment);
 
 // Cassandra: CREATE IF NOT EXISTS + espera al nodo (~60 s); si no despierta, modo degradado
 await app.InitializeCassandraAsync();
+
+// Seed de Cassandra (solo desarrollo): serie histórica de precios y feed de
+// ejemplo. Va DESPUÉS del esquema y con scope propio; si el nodo quedó en modo
+// degradado, el seeder avisa (fail-open) y el arranque continúa igual.
+if (isDevelopment)
+{
+    using var cassandraScope = app.Services.CreateScope();
+    var cassandraSeeder = cassandraScope.ServiceProvider.GetService<CassandraSeeder>();
+    if (cassandraSeeder != null)
+        await cassandraSeeder.SeedAsync();
+}
 
 PrintStartupInfo(isDevelopment, configuration);
 
