@@ -2819,7 +2819,7 @@ const CONFIG = {
 };
 ```
 
-**Qué cubre (55/55 checks)** — todos los controladores, happy path **y** errores/autorización:
+**Qué cubre** - todos los controladores, happy path **y** errores/autorización:
 
 | Bloque | Ejemplos de checks |
 |---|---|
@@ -2832,12 +2832,12 @@ const CONFIG = {
 
 **Por qué "falla claro" en 429:** el runner conoce el rate limit (`RateLimitConfig.cs`) y distingue *rotura* de *límite de tráfico* — si un check recibe 429, el mensaje lo dice explícitamente en vez de un 400 genérico.
 
-**Resultado actual:** `Total: 55 · OK: 55 · KO: 0` con exit code 0 — verificado tras cada fase (Fases 5, 6, 7 y 11). Junto con los tests unit (1039), de integración (161) y las colecciones E2E (Newman 95 · Bruno 108), completa la pirámide de testing del proyecto:
+**Ejemplo de salida:** `OK` con exit code 0 - verificado tras cada hito de este proyecto. Junto con los tests unit, los de integración y las colecciones E2E (Newman y Bruno), completa la pirámide de testing del proyecto:
 
 ```mermaid
 flowchart TD
-    U["Unit (NUnit, 1039)"] --> I["Integración (TestContainers, 161)"]
+    U["Unit (NUnit)"] --> I["Integración (TestContainers)"]
     I --> C["Controller (WebApplicationFactory)"]
     C --> A["Automation E2E Node (55)"]
-    A --> E["Colecciones: Newman (95) + Bruno (108)"]
+    A --> E["Colecciones: Newman + Bruno"]
 ```

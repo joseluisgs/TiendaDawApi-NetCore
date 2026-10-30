@@ -1050,7 +1050,7 @@ Los errores distinguen el motivo para dejar buenas trazas: `BrokenCircuitExcepti
 
 El pipeline está **detrás** de la cola (21.6): `EmailBackgroundService` desencola y llama a `SendEmailAsync` dentro de su propio `try/catch`. Si SMTP falla 4 veces y el circuito se abre, la excepción muere en el background service — el usuario que creó el pedido recibió su `201` hace rato.
 
-### Tests (1039 unit)
+### Tests
 
 `Unit/Infrastructures/PollyConfigTests.cs`, 5 tests con `delay: TimeSpan.Zero` para que sean instantáneos:
 

@@ -289,8 +289,7 @@ open coverage/index.html
 ### Tests E2E con Newman (Postman), Bruno y Automation
 
 Pruebas end-to-end de la API. **Requisito:** la API levantada en `http://localhost:5031`
-(rate limit `100/15s` general — los comandos llevan `--delay 250` / `--delay-request 250`,
-validado empíricamente: Bruno y Newman 85/85 a 250ms; antes 3200ms y tardaban 4,5 min).
+(rate limit `100/15s` general - por eso los comandos llevan `--delay 250` / `--delay-request 250`).
 
 #### Automation (Node)
 

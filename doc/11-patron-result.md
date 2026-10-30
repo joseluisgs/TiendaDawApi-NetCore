@@ -1001,7 +1001,7 @@ return error switch
 };
 ```
 
-**Resultado**: 31 `error switch` → 1 extensión + 31 call sites de una línea, mismos códigos HTTP y mismo shape `{message, ...}` (los tests E2E — 95+55 asserts — pasaron sin tocarlos, que es exactamente el objetivo: refactor sin cambiar contrato).
+**Resultado**: 31 `error switch` → 1 extensión + 31 call sites de una línea, mismos códigos HTTP y mismo shape `{message, ...}` (los tests E2E pasaron sin tocarlos, que es exactamente el objetivo: refactor sin cambiar contrato).
 
 **Comparación de enfoques:**
 
