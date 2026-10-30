@@ -2773,7 +2773,7 @@ Con testing E2E dominado (tanto Postman como Bruno), tienes un arsenal completo 
 
 ## 24.15. Automation E2E con Node (test-runner.mjs)
 
-Newman y Bruno prueban **colecciones HTTP**. La **Fase 7** añadió una tercera capa: un runner en **Node nativo, sin `npm install`**, que lleva la API de cero a verde en un solo comando y sirve de red de seguridad para el resto de fases (y de comando de CI).
+Newman y Bruno prueban **colecciones HTTP**. Esta suite añadió una tercera capa: un runner en **Node nativo, sin `npm install`**, que lleva la API de cero a verde en un solo comando y sirve de red de seguridad para el resto de fases (y de comando de CI).
 
 **Uso:**
 
@@ -2789,7 +2789,7 @@ BASE_URL=http://localhost:5031 node TiendaApi.Tests.E2E/Automation/test-runner.m
 
 ```javascript
 /**
- * Automation E2E — TiendaApi .NET (Fase 7 del plan FASES-MEJORAS.md)
+ * Automation E2E — TiendaApi .NET
  *
  * Estilo UD02 ejemplos/<nn>-ProductosX/automation/test-runner.mjs:
  * Node nativo, SIN npm install.

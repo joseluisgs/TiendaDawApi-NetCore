@@ -234,7 +234,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 }
 ```
 
-### Índices reales del proyecto (Fase 1)
+### Índices reales del proyecto
 
 Los de arriba son de ejemplo; estos son los que definen el `TiendaDbContext` real del proyecto (la migración `AddOptimizationIndexes` los versiona para las BDs existentes):
 
@@ -486,9 +486,9 @@ public class ProductoRepository
 }
 ```
 
-### AsNoTracking selectivo (Fase 2)
+### AsNoTracking selectivo
 
-`AsNoTracking()` le dice a EF que **no** cargue el Change Tracker con las entidades: menos memoria y menos trabajo por fila. Solo es válido donde la entidad **no va a guardarse después** — y ahí el proyecto aplica el cambio de la Fase 2 en **9 sitios de solo lectura**:
+`AsNoTracking()` le dice a EF que **no** cargue el Change Tracker con las entidades: menos memoria y menos trabajo por fila. Solo es válido donde la entidad **no va a guardarse después** — y ahí el proyecto aplica ese cambio en **9 sitios de solo lectura**:
 
 ```csharp
 // ProductoRepository.cs — FindAllAsync (con Include) y variantes
@@ -502,7 +502,7 @@ public async Task<IEnumerable<Producto>> FindAllAsync()
         .ToListAsync();
 }
 
-// También expuesto como IQueryable para composición (Fase 2)
+// También expuesto como IQueryable para composición
 public IQueryable<Producto> FindAllAsNoTracking()
 {
     return context.Productos
@@ -516,7 +516,7 @@ Aplicado en: `CategoriaRepository` (FindAllAsync, items de FindAllPagedAsync) ·
 
 **Lo que NO se toca** (y por qué): `FindByIdAsync` de producto/categoría/usuario, `FindByUsernameAsync`, `FindByEmailAsync`, `DeleteAsync` y las rutas de `Update` **siguen con tracking** — esos métodos devuelven la entidad para modificarla o borrarla, y sin tracking el `SaveChanges` no tendría nada que guardar. Pista de diseño: si el nombre del método es `Find*Async` y su resultado alimenta un PUT/DELETE, déjalo trackeando.
 
-> **Medido en la Fase 2**: build 0/0 · 1034 tests unit · 23/23 endpoints en vivo OK (listados y round-trips POST→PUT→DELETE). Es una optimización de perfil "casi gratis", pero solo si respetas la línea de "no escribo después".
+> **Medido en esa optimización**: build 0/0 · 1034 tests unit · 23/23 endpoints en vivo OK (listados y round-trips POST→PUT→DELETE). Es una optimización de perfil "casi gratis", pero solo si respetas la línea de "no escribo después".
 
 ---
 

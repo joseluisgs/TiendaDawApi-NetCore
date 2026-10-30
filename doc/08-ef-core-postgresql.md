@@ -758,7 +758,7 @@ dotnet ef database update
 dotnet ef database update PreviousMigrationName
 ```
 
-### Factory design-time: `TiendaDbContextFactory` (Fase 8)
+### Factory design-time: `TiendaDbContextFactory`
 
 Las herramientas `dotnet ef` necesitan crear el `DbContext` **sin ejecutar la API**. Si no se les da un factory, ejecutan `Program.cs`… y en desarrollo este proyecto arranca con `EnsureDeleted + EnsureCreated`, de modo que **cada `dotnet ef migrations add` estaría destruyendo la BD**. La solución es el factory design-time:
 
@@ -786,12 +786,12 @@ public class TiendaDbContextFactory : IDesignTimeDbContextFactory<TiendaDbContex
 }
 ```
 
-### Migraciones reales del proyecto (Fase 8)
+### Migraciones reales del proyecto
 
 | Migración | Qué hace | Por qué |
 |---|---|---|
 | `..._InitialCreate` | Crea el esquema completo (tablas, FKs, índices básicos) | Baseline de EF Core |
-| `..._AddOptimizationIndexes` | Solo añade índices de optimización (Fase 1: búsqueda, fechas, claves foráneas) | **No toca datos**: segura en BDs vivas |
+| `..._AddOptimizationIndexes` | Solo añade índices de optimización (búsqueda, fechas, claves foráneas) | **No toca datos**: segura en BDs vivas |
 
 ```bash
 dotnet ef migrations add AddOptimizationIndexes

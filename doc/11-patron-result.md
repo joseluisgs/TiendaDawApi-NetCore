@@ -944,11 +944,11 @@ private IActionResult GetHttpResult(DomainError error)
 }
 ```
 
-### Opción C aplicada en el proyecto: `ToHttpResult<T>()` (Fase 9 + refactor ActionResult<T>)
+### Opción C aplicada en el proyecto: `ToHttpResult<T>()` (refactor ActionResult<T>)
 
 Los dos ejemplos de arriba repiten el `error switch` **dentro de cada controlador**: 31 repeticiones (una por endpoint que devuelve `Result<T, DomainError>`) repartidas en 5 controladores. Si mañana un `ValidationError` pasa a devolver `422` en vez de `400`, hay que tocar los 31 sitios y los tests E2E son el único aviso.
 
-La **Fase 9 (Opción C)** centraliza ese mapeo en **una única extensión** — `TiendaApi.Api/Extensions/DomainErrorExtensions.cs`:
+La **Opción C** centraliza ese mapeo en **una única extensión** — `TiendaApi.Api/Extensions/DomainErrorExtensions.cs`:
 
 ```csharp
 public static class DomainErrorExtensions
@@ -1001,7 +1001,7 @@ return error switch
 };
 ```
 
-**Resultados de la Fase 9**: 31 `error switch` → 1 extensión + 31 call sites de una línea, mismos códigos HTTP y mismo shape `{message, ...}` (los tests E2E de la Fase 5/7 — 95+55 asserts — pasaron sin tocarlos, que es exactamente el objetivo: refactor sin cambiar contrato).
+**Resultado**: 31 `error switch` → 1 extensión + 31 call sites de una línea, mismos códigos HTTP y mismo shape `{message, ...}` (los tests E2E — 95+55 asserts — pasaron sin tocarlos, que es exactamente el objetivo: refactor sin cambiar contrato).
 
 **Comparación de enfoques:**
 

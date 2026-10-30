@@ -1524,26 +1524,34 @@ public class EventPublisher : IEventPublisher
 ```csharp
 public class ProductoService(
     // ... otros parámetros
-    IEventPublisher eventPublisher
+    IProductoEffects effects          // 🎓 los efectos viven en su clase propia (SRP)
 ) : IProductoService
 {
     public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
     {
-        // ... lógica de creación
-        
+        // ... validar y guardar
+        var saved = await productoRepository.SaveAsync(dto.ToEntity());
+        var resultDto = saved.ToDto();
+
+        await RegistrarPrecioEnCassandra(saved);   // punto de nacimiento en la serie (Q-A)
+        await InvalidarCacheProductoAsync();       // purga los tags de salida
+
         return Result.Success<ProductoDto, DomainError>(resultDto)
             .Tap( dto =>
             {
-                // Efectos secundarios
-                InvalidarCacheProducto("productos:all");
-                NotificarWebSocketProductoCreado(dto);
-                EnviarEmailProductoCreado(saved);
-                
+                // Efectos secundarios delegados: el servicio decide QUÉ pasa,
+                // IProductoEffects decide CÓMO (WS, SignalR, email, suscripción)
+                effects.NotificarWebSocketProductoCreado(dto);
+                effects.NotificarSignalRProductoCreado(dto);
+                effects.EnviarEmailProductoCreado(saved);
+
                 // 🚀 Publicar evento para GraphQL Subscription
-                EventoSuscripcionProductoCreado(dto);
+                effects.EventoSuscripcionProductoCreado(dto);
             });
     }
     
+    // 🎓 El motor vive en ProductoEffects.cs (clase propia inyectada por
+    // IProductoEffects); el servicio solo lo llama desde el Tap de arriba.
     private void EventoSuscripcionProductoCreado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
