@@ -191,14 +191,10 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         logger.LogInformation("GetMyPedidos - User: {User}", User?.Identity?.Name);
         logger.LogInformation("GetMyPedidos - IsAuthenticated: {IsAuth}", User?.Identity?.IsAuthenticated);
 
-        if (User?.Identity == null || !User.Identity.IsAuthenticated)
+        if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        logger.LogInformation("GetMyPedidos - NameIdentifier claim: {Claim}", userIdClaim);
-
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
-            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        logger.LogInformation("GetMyPedidos - NameIdentifier claim: {Claim}", userId);
 
         var resultado = await service.FindByUserIdAsync(userId);
 
@@ -226,12 +222,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         [FromQuery] string? sortBy = null,
         [FromQuery] string? direction = null)
     {
-        if (User?.Identity == null || !User.Identity.IsAuthenticated)
-            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var resultado = await service.FindMyPedidosAsync(userId, page - 1, size);
@@ -261,12 +252,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> CreateMyPedido([FromBody] PedidoRequestDto dto)
     {
-        if (User?.Identity == null || !User.Identity.IsAuthenticated)
-            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var resultado = await service.CreateAsync(userId, dto);
@@ -293,12 +279,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> GetMyPedidoById(string id)
     {
-        if (User?.Identity == null || !User.Identity.IsAuthenticated)
-            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var resultado = await service.FindMyPedidoAsync(id, userId);
@@ -325,12 +306,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> UpdateMyPedido(string id, [FromBody] UpdatePedidoDto dto)
     {
-        if (User?.Identity == null || !User.Identity.IsAuthenticated)
-            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var resultado = await service.UpdateMyPedidoAsync(id, userId, dto);
@@ -356,12 +332,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteMyPedido(string id)
     {
-        if (User?.Identity == null || !User.Identity.IsAuthenticated)
-            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var resultado = await service.DeleteMyPedidoAsync(id, userId);
@@ -380,5 +351,20 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         };
     }
 
-    #endregion
+        /// <summary>
+    /// Lee el id de la sesión actual (claim NameIdentifier). Devuelve false
+    /// cuando no hay sesión o el claim no es numérico: agrupa el patrón que
+    /// repiten las seis acciones "me/" de este controller y cada acción
+    /// responde 401 con una sola línea.
+    /// </summary>
+    private bool TryGetUserId(out long userId)
+    {
+        userId = 0;
+        if (User?.Identity == null || !User.Identity.IsAuthenticated)
+            return false;
+
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return !string.IsNullOrEmpty(claim) && long.TryParse(claim, out userId);
+    }
+#endregion
 }

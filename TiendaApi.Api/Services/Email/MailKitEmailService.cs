@@ -27,6 +27,32 @@ public class MailKitEmailService(
         emailPipeline ?? PollyConfig.BuildEmailPipeline(logger);
 
     /// <summary>
+    /// Resuelve la configuración SMTP completa (host, puerto, credenciales y
+    /// remitente). Extraído de SendEmailAsync para que ese método se quede con
+    /// la política de envío (Polly) y el manejo de errores; null = falta
+    /// configuración esencial y no hay nada con lo que conectar.
+    /// </summary>
+    private (string Host, int Port, string User, string Password, string FromEmail, string FromName)? ResolverConfigSmtp()
+    {
+        var host = _configuration["Smtp:Host"];
+        var user = _configuration["Smtp:Username"];
+        var password = _configuration["Smtp:Password"];
+        var fromEmail = _configuration["Smtp:FromEmail"] ?? user;
+
+        if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(user) ||
+            string.IsNullOrEmpty(password) || string.IsNullOrEmpty(fromEmail))
+            return null;
+
+        return (
+            host,
+            int.Parse(_configuration["Smtp:Port"] ?? "587"),
+            user,
+            password,
+            fromEmail,
+            _configuration["Smtp:FromName"] ?? "TiendaApi");
+    }
+
+    /// <summary>
     /// Envía un email inmediatamente usando SMTP.
     /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation/Internal)
     /// </summary>
@@ -34,20 +60,14 @@ public class MailKitEmailService(
     {
         try
         {
-            var smtpHost = _configuration["Smtp:Host"];
-            var smtpPort = int.Parse(_configuration["Smtp:Port"] ?? "587");
-            var smtpUser = _configuration["Smtp:Username"];
-            var smtpPassword = _configuration["Smtp:Password"];
-            var fromEmail = _configuration["Smtp:FromEmail"] ?? smtpUser;
-            var fromName = _configuration["Smtp:FromName"] ?? "TiendaApi";
-
-            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPassword) || string.IsNullOrEmpty(fromEmail))
+            var smtp = ResolverConfigSmtp();
+            if (smtp is null)
             {
                 _logger.LogWarning("SMTP no configurado correctamente, omitiendo envío de email");
                 return;
             }
 
-            var mimeMessage = ConstruirMimeMessage(message, new MailboxAddress(fromName, fromEmail));
+            var mimeMessage = ConstruirMimeMessage(message, new MailboxAddress(smtp.Value.FromName, smtp.Value.FromEmail));
 
             // Polly: cada intento tiene Timeout(10s); hasta 3 reintentos con
             // backoff 2^n; si hay 3 fallos seguidos el CircuitBreaker abre 30s y el
@@ -55,8 +75,8 @@ public class MailKitEmailService(
             await _emailPipeline.ExecuteAsync(async _ =>
             {
                 using var client = new SmtpClient();
-                await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-                await client.AuthenticateAsync(smtpUser, smtpPassword);
+                await client.ConnectAsync(smtp.Value.Host, smtp.Value.Port, MailKit.Security.SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(smtp.Value.User, smtp.Value.Password);
                 await client.SendAsync(mimeMessage);
                 await client.DisconnectAsync(true);
             }, CancellationToken.None);

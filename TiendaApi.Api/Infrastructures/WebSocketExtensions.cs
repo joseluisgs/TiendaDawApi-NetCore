@@ -24,8 +24,9 @@ public static class WebSocketExtensions
         {
             if (context.WebSockets.IsWebSocketRequest)
             {
-                // using: si el handler lanza (cliente caido, error de red), el
-                // WebSocket se libera igualmente - el catch del handler solo loguea.
+                // using: el endpoint es el dueno del socket - el dispose se
+                // ejecuta en cualquier salida del Map (el handler solo garantiza
+                // el cierre en su camino normal).
                 using var ws = await context.WebSockets.AcceptWebSocketAsync();
                 var handler = context.RequestServices.GetRequiredService<ProductosWebSocketHandler>();
                 await handler.HandleConnectionAsync(context, ws);

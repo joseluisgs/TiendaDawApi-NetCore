@@ -7,7 +7,7 @@ using Path = System.IO.Path;
 namespace TiendaApi.Tests.Integration.TestContainers.Historial;
 
 /// <summary>
-/// T14 - integración de la pila de series contra Cassandra REAL (Testcontainers,
+/// Integración de la pila de series contra Cassandra REAL (Testcontainers,
 /// el mismo esquema de producción creado por InitializeSchemaAsync). Sin mocks:
 /// se verifican las 5 garantías del diseño de la pizarra.
 /// </summary>

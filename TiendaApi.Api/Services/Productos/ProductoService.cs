@@ -183,7 +183,8 @@ IProductoEffects effects
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
 
-        // ROP: Guardar -> Mapear -> Efectos (log, cache, websocket, email)
+        // ROP: Guardar -> Mapear -> serie de precios -> invalidar cache -> log y
+        // efectos delegados en IProductoEffects (WS, SignalR, email, suscripciones)
         var saved = await productoRepository.SaveAsync(dto.ToEntity());
         var resultDto = saved.ToDto();
 

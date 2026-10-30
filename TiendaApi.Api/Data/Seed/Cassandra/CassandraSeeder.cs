@@ -123,8 +123,9 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
 
         logger.LogInformation("Sembrando feed de ejemplo en Cassandra...");
 
-        // Nombres COPIADOS en la fila (denormalización, igual que T11) con los
-        // productos seed de SqlSeeder. Horas decrecientes = orden del feed.
+        // Nombres COPIADOS en la fila (denormalización: quien consulta el feed
+        // no necesita ir a buscar el producto) con los productos seed de
+        // SqlSeeder. Horas decrecientes = orden del feed.
         var vistasSeed = new (int HorasAtras, long ProductoId, string Nombre)[]
         {
             (1, 1, "Laptop Dell XPS 15"),

@@ -148,12 +148,13 @@ app.MapVersionEndpoint();
 await app.InitializeDatabaseAsync(isDevelopment);
 app.InitializeStorage(isDevelopment);
 
-// Cassandra: CREATE IF NOT EXISTS + espera al nodo (~60 s); si no despierta, modo degradado
+// Cassandra: CREATE IF NOT EXISTS + espera al nodo (~60 s), el tiempo que
+// tarda la imagen oficial (JVM) en estar lista.
 await app.InitializeCassandraAsync();
 
 // Seed de Cassandra (solo desarrollo): serie histórica de precios y feed de
-// ejemplo. Va DESPUÉS del esquema y con scope propio; si el nodo quedó en modo
-// degradado, el seeder avisa (fail-open) y el arranque continúa igual.
+// ejemplo. Va DESPUÉS del esquema y con scope propio: son datos de ejemplo,
+// no un prerequisito del arranque (mismo criterio que el resto de seeders).
 if (isDevelopment)
 {
     using var cassandraScope = app.Services.CreateScope();
