@@ -24,7 +24,9 @@ public static class WebSocketExtensions
         {
             if (context.WebSockets.IsWebSocketRequest)
             {
-                var ws = await context.WebSockets.AcceptWebSocketAsync();
+                // using: si el handler lanza (cliente caido, error de red), el
+                // WebSocket se libera igualmente - el catch del handler solo loguea.
+                using var ws = await context.WebSockets.AcceptWebSocketAsync();
                 var handler = context.RequestServices.GetRequiredService<ProductosWebSocketHandler>();
                 await handler.HandleConnectionAsync(context, ws);
             }
@@ -35,7 +37,9 @@ public static class WebSocketExtensions
         {
             if (context.WebSockets.IsWebSocketRequest)
             {
-                var ws = await context.WebSockets.AcceptWebSocketAsync();
+                // using: mismo motivo que el endpoint de productos (liberar ante
+                // cualquier salida, incluida la excepcion del handler).
+                using var ws = await context.WebSockets.AcceptWebSocketAsync();
                 var handler = context.RequestServices.GetRequiredService<PedidosWebSocketHandler>();
                 await handler.HandleConnectionAsync(context, ws);
             }

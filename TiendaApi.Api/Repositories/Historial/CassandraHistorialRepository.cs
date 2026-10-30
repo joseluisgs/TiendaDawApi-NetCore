@@ -78,7 +78,7 @@ public class CassandraHistorialRepository(ISession session) : IHistorialReposito
 
         // SELECT fecha, producto_id, precio FROM cambios_precio_por_fecha
         //   WHERE fecha IN (...)
-        var resultado = await session.ExecuteAsync(new SimpleStatement(
+        using var resultado = await session.ExecuteAsync(new SimpleStatement(
             $"SELECT fecha, producto_id, precio FROM cambios_precio_por_fecha WHERE fecha IN ({inDias})"));
 
         var cambios = new List<CambioPrecioDto>();
