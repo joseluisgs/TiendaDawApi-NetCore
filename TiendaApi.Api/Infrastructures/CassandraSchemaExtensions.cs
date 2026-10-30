@@ -17,9 +17,8 @@ public static class CassandraSchemaExtensions
     /// Espera a que el nodo acepte conexiones y crea el keyspace si no existe.
     ///
     /// La imagen oficial de Cassandra tarda ~30-60 s en estar lista (es una JVM):
-    /// si el primer statement falla con NoHostAvailableException, reintentamos
-    /// hasta 30 veces con 2 s de espera. Si el nodo no despierta, la excepción
-    /// se propaga y la aplicación puede decidir arrancar en modo degradado.
+    /// por eso el primer statement se reintenta hasta 30 veces con 2 s de espera
+    /// en vez de rendirse al primer intento.
     /// </summary>
     /// <param name="session">Sesión de Cassandra.</param>
     /// <param name="keyspace">Keyspace de la aplicación.</param>
@@ -95,10 +94,10 @@ public static class CassandraSchemaExtensions
     }
 
     /// <summary>
-    /// Arranque de Cassandra en la aplicación: espera al nodo (hasta ~60 s),
-    /// crea el esquema con CREATE IF NOT EXISTS y, si el nodo no despierta,
-    /// la app sigue en MODO DEGRADADO — el resto de la API no depende de
-    /// Cassandra: solo el histórico de precios y el feed de actividad.
+    /// Arranque de Cassandra en la aplicación: espera al nodo (hasta ~60 s) y
+    /// crea el esquema con CREATE IF NOT EXISTS. Vive en un try propio porque
+    /// el resto de la API no depende de Cassandra: solo el histórico de precios
+    /// y el feed de actividad.
     /// </summary>
     /// <param name="app">Aplicación en arranque (antes de app.Run()).</param>
     /// <returns>Tarea asíncrona.</returns>

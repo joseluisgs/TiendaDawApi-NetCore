@@ -11,9 +11,9 @@ namespace TiendaApi.Api.Services.Historial;
 /// <remarks>
 /// 🎓 Consistencia eventual en un almacén de series: la existencia del producto
 /// la certifica PostgreSQL (fuente de verdad → su 404 manda) y la serie la sirve
-/// Cassandra. Si el nodo de Cassandra no responde, el servicio NO propaga la
-/// excepción: lecturas devuelven vacío y la escritura se descarta con warning
-/// (fail-open). La tienda entera sigue siendo usable sin histórico ni feed.
+/// Cassandra como dato derivado. Por eso cada método valida primero contra
+/// PostgreSQL (existencia, rango de fechas, límite) y solo después consulta la
+/// serie; la serie se expone como lista, donde "sin puntos" = lista vacía.
 /// </remarks>
 public class HistorialService(
     IProductoRepository productoRepository,

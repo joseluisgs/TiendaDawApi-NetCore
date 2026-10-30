@@ -373,23 +373,7 @@ IOutputCacheStore outputCacheStore
 
         var precioAnterior = producto.Precio;   // capturado ANTES de aplicar el patch
 
-        if (!string.IsNullOrWhiteSpace(dto.Nombre))
-            producto.Nombre = dto.Nombre;
-
-        if (!string.IsNullOrWhiteSpace(dto.Descripcion))
-            producto.Descripcion = dto.Descripcion;
-
-        if (dto.Precio.HasValue && dto.Precio.Value > 0)
-            producto.Precio = dto.Precio.Value;
-
-        if (dto.Stock.HasValue)
-            producto.Stock = dto.Stock.Value;
-
-        if (!string.IsNullOrWhiteSpace(dto.Imagen))
-            producto.Imagen = dto.Imagen;
-
-        if (dto.CategoriaId.HasValue && dto.CategoriaId.Value > 0)
-            producto.CategoriaId = dto.CategoriaId.Value;
+        AplicarPatch(producto, dto);
 
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
@@ -413,11 +397,37 @@ IOutputCacheStore outputCacheStore
     }
 
     /// <summary>
-    /// 🎓 Fail-open: el histórico en Cassandra NO puede tumbar el update de
-    /// PostgreSQL. Se AWAIT (no fire-and-forget) para que quien acaba de hacer
-    /// el PATCH pueda leer el punto recién escrito (y para el E2E), pero la
-    /// excepción se traga con warning: si Cassandra está caído, la API sigue.
-    /// Equivalente al PrecioHistoricoHandler del proyecto CQRS.
+    /// Aplica el patch condicional: cada campo solo se toca si el DTO trae valor
+    /// (la semantica de PATCH). Metodo puro sin estado: extraido de
+    /// UpdatePartialAsync para dejar el flujo de ese metodo lineal.
+    /// </summary>
+    private static void AplicarPatch(Producto producto, ProductoPatchDto dto)
+    {
+        if (!string.IsNullOrWhiteSpace(dto.Nombre))
+            producto.Nombre = dto.Nombre;
+
+        if (!string.IsNullOrWhiteSpace(dto.Descripcion))
+            producto.Descripcion = dto.Descripcion;
+
+        if (dto.Precio.HasValue && dto.Precio.Value > 0)
+            producto.Precio = dto.Precio.Value;
+
+        if (dto.Stock.HasValue)
+            producto.Stock = dto.Stock.Value;
+
+        if (!string.IsNullOrWhiteSpace(dto.Imagen))
+            producto.Imagen = dto.Imagen;
+
+        if (dto.CategoriaId.HasValue && dto.CategoriaId.Value > 0)
+            producto.CategoriaId = dto.CategoriaId.Value;
+    }
+
+    /// <summary>
+    /// 🎓 Escribe el precio actualizado en las dos tablas de serie (Q-A histórico +
+    /// Q-C informe del día) DESPUÉS de persistir en PostgreSQL y con await: el
+    /// orden importa, quien acaba de hacer el PATCH encuentra el punto ya escrito
+    /// si consulta la serie seguido. Equivalente al PrecioHistoricoHandler del
+    /// proyecto CQRS: misma escritura, otro cableado.
     /// </summary>
     private async Task RegistrarPrecioEnCassandra(Producto producto)
     {

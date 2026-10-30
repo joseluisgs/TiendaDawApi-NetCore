@@ -47,21 +47,7 @@ public class MailKitEmailService(
                 return;
             }
 
-            var mimeMessage = new MimeMessage();
-            mimeMessage.From.Add(new MailboxAddress(fromName, fromEmail));
-            mimeMessage.To.Add(MailboxAddress.Parse(message.To));
-            mimeMessage.Subject = message.Subject;
-
-            var bodyBuilder = new BodyBuilder();
-            if (message.IsHtml)
-            {
-                bodyBuilder.HtmlBody = message.Body;
-            }
-            else
-            {
-                bodyBuilder.TextBody = message.Body;
-            }
-            mimeMessage.Body = bodyBuilder.ToMessageBody();
+            var mimeMessage = ConstruirMimeMessage(message, new MailboxAddress(fromName, fromEmail));
 
             // Polly: cada intento tiene Timeout(10s); hasta 3 reintentos con
             // backoff 2^n; si hay 3 fallos seguidos el CircuitBreaker abre 30s y el
@@ -94,6 +80,33 @@ public class MailKitEmailService(
             _logger.LogError(ex, "Error al enviar email a: {To}", message.To);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Construye el mensaje Mime a partir del EmailMessage de dominio (remitente,
+    /// destinatario, asunto y cuerpo HTML/texto). Extraido de SendEmailAsync para
+    /// que ese metodo se quede con la politica de envio (Polly) y el manejo de
+    /// errores, sin la construccion intercalada.
+    /// </summary>
+    private static MimeMessage ConstruirMimeMessage(EmailMessage message, MailboxAddress remitente)
+    {
+        var mimeMessage = new MimeMessage();
+        mimeMessage.From.Add(remitente);
+        mimeMessage.To.Add(MailboxAddress.Parse(message.To));
+        mimeMessage.Subject = message.Subject;
+
+        var bodyBuilder = new BodyBuilder();
+        if (message.IsHtml)
+        {
+            bodyBuilder.HtmlBody = message.Body;
+        }
+        else
+        {
+            bodyBuilder.TextBody = message.Body;
+        }
+        mimeMessage.Body = bodyBuilder.ToMessageBody();
+
+        return mimeMessage;
     }
 
     /// <summary>

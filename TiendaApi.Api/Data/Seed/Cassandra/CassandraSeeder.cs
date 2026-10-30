@@ -10,8 +10,8 @@ namespace TiendaApi.Api.Data.Seed.Cassandra;
 ///
 /// 🎓 Va DESPUÉS de <c>InitializeCassandraAsync</c>: necesita el esquema creado.
 /// Como <c>MongoDbSeeder</c>, es idempotente (si la partición ya tiene filas lo
-/// omite) y fail-open (si el nodo no responde solo avisa: la API arranca igual,
-/// en modo degradado, igual que el resto del cableado T10).
+/// omite), y su trabajo vive en un try propio: son datos de ejemplo, no un
+/// prerequisito del arranque de la API.
 /// Ojo con el ciclo de vida en desarrollo: PostgreSQL se ELIMINA y recrea en cada
 /// arranque, pero el keyspace NO (CREATE IF NOT EXISTS + datos persistentes);
 /// por eso la comprobación de "¿ya sembrado?" es obligatoria, no opcional.
@@ -19,8 +19,9 @@ namespace TiendaApi.Api.Data.Seed.Cassandra;
 public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
 {
     /// <summary>
-    /// Siembra historial y feed si sus particiones están vacías.
-    /// Nunca lanza: cualquier fallo queda en warning (fail-open).
+    /// Siembra historial y feed si sus particiones están vacías: comprueba el
+    /// estado antes de escribir para poder repetirse en cada arranque sin
+    /// duplicar puntos.
     /// </summary>
     public async Task SeedAsync()
     {
