@@ -190,6 +190,11 @@ IOutputCacheStore outputCacheStore
         var saved = await productoRepository.SaveAsync(dto.ToEntity());
         var resultDto = saved.ToDto();
 
+        // Punto de precio de NACIMIENTO (Q-A): el precio inicial tambien es un
+        // punto de la serie; sin el, un producto que nunca se actualiza tendria
+        // el historial vacio para siempre.
+        await RegistrarPrecioEnCassandra(saved);
+
         // Invalidar OutputCache tras crear (el listado paginado cambió)
         await InvalidarCacheProductoAsync();
 
@@ -233,6 +238,8 @@ IOutputCacheStore outputCacheStore
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
 
+        var precioAnterior = producto.Precio;   // capturado ANTES de tocar el producto
+
         producto.Nombre = dto.Nombre;
         producto.Descripcion = dto.Descripcion;
         producto.Precio = dto.Precio;
@@ -243,7 +250,11 @@ IOutputCacheStore outputCacheStore
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 
-        await RegistrarPrecioEnCassandra(updated);
+        // El historial registra CAMBIOS de precio, no eventos de edicion:
+        // solo si el precio vario (un update de solo stock/imagen no genera
+        // punto, y el informe Q-C solo cuenta cambios reales).
+        if (precioAnterior != updated.Precio)
+            await RegistrarPrecioEnCassandra(updated);
 
         await InvalidarCacheProductoAsync($"productos:{id}");
 
@@ -360,6 +371,8 @@ IOutputCacheStore outputCacheStore
             );
         }
 
+        var precioAnterior = producto.Precio;   // capturado ANTES de aplicar el patch
+
         if (!string.IsNullOrWhiteSpace(dto.Nombre))
             producto.Nombre = dto.Nombre;
 
@@ -381,7 +394,10 @@ IOutputCacheStore outputCacheStore
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 
-        await RegistrarPrecioEnCassandra(updated);
+        // Solo si el precio vario: un PATCH de solo stock/imagen no es un
+        // cambio de precio (ver UpdateAsync).
+        if (precioAnterior != updated.Precio)
+            await RegistrarPrecioEnCassandra(updated);
 
         await InvalidarCacheProductoAsync($"productos:{id}");
 
