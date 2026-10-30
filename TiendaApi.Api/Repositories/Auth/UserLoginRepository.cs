@@ -24,15 +24,6 @@ public class UserLoginRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<UserLogin>> FindByUserIdAsync(long userId)
-    {
-        return await context.ExternalLogins
-            .AsNoTracking()
-            .Where(ul => ul.UserId == userId)
-            .ToListAsync();
-    }
-
-    /// <inheritdoc/>
     public async Task<UserLogin> SaveAsync(UserLogin userLogin)
     {
         context.ExternalLogins.Add(userLogin);

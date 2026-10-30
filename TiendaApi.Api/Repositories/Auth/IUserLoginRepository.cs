@@ -10,9 +10,6 @@ public interface IUserLoginRepository
     /// <summary>Busca una vinculación por proveedor y provider key.</summary>
     Task<UserLogin?> FindByProviderAsync(string loginProvider, string providerKey);
 
-    /// <summary>Busca todas las vinculaciones de un usuario.</summary>
-    Task<IEnumerable<UserLogin>> FindByUserIdAsync(long userId);
-
     /// <summary>Guarda una nueva vinculación.</summary>
     Task<UserLogin> SaveAsync(UserLogin userLogin);
 
