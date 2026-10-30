@@ -73,14 +73,11 @@ public class ProductoServiceTests
             _mockCategoriaRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
-            _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
-            _mockEventPublisher.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new ProductoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, _mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
         );
     }
 
@@ -290,14 +287,11 @@ public class ProductoServiceTests
             _mockCategoriaRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
-            _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
-            _mockEventPublisher.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new ProductoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, _mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
         );
     }
 

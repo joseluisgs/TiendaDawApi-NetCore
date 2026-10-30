@@ -24,8 +24,10 @@ public static class ServicesConfig
         return services
             .AddScoped<ICategoriaService, CategoriaService>()
             .AddScoped<IProductoService, ProductoService>()
+            .AddScoped<IProductoEffects, ProductoEffects>()
             .AddScoped<IHistorialService, HistorialService>()
             .AddScoped<IPedidosService, PedidosService>()
+            .AddScoped<IPedidoEffects, PedidoEffects>()
             .AddScoped<IJwtService, JwtService>()
             .AddTransient<IJwtTokenExtractor, JwtTokenExtractor>()
             // IAuthService NO se registra aquí: lo decide AuthenticationConfig según Auth:Mode

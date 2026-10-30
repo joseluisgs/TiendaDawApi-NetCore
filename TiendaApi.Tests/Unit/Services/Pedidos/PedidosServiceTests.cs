@@ -52,13 +52,10 @@ public class PedidosServiceTests
             _mockProductoRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
             _mockPedidoValidator.Object,
             _mockItemValidator.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
     }
 
@@ -191,13 +188,10 @@ public class PedidosServiceTests
             _mockProductoRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
             _mockPedidoValidator.Object,
             _mockItemValidator.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
         var result = await _service.CreateAsync(userId, pedidoDto);
@@ -229,13 +223,10 @@ public class PedidosServiceTests
             _mockProductoRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
             _mockPedidoValidator.Object,
             _mockItemValidator.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
         var result = await _service.CreateAsync(userId, pedidoDto);
@@ -708,13 +699,10 @@ public class PedidosServiceTests
             _mockProductoRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
             _mockPedidoValidator.Object,
             _mockItemValidator.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
         var result = await _service.CreateAsync(userId, pedidoDto);

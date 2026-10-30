@@ -96,6 +96,7 @@ public class ProductoServiceIntegrationTests
 
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
+        services.AddScoped<IProductoEffects, ProductoEffects>();
         services.AddScoped<IProductoService, ProductoService>();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
         services.AddScoped<ICacheService, MemoryCacheService>();
