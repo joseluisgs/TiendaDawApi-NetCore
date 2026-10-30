@@ -111,7 +111,8 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 📡 **GraphQL**: Consultas flexibles con HotChocolate
 - 🔌 **WebSockets/SignalR**: Notificaciones en tiempo real personalizadas por roles
 - ⏰ **Background Jobs**: Tareas programadas con BackgroundService (reportes semanales de productos)
-- 🗄️ **Multi-Database**: PostgreSQL + MongoDB + Redis
+- 📈 **Serie histórica y feed (Cassandra)**: histórico de precios por producto y feed de actividad por usuario con **TTL nativo de 180 días**
+- 🗄️ **Multi-Database**: PostgreSQL + MongoDB + Cassandra + Redis
 - 📈 **Versionado de API**: Control de versiones por URL
 - ✅ **Validaciones**: FluentValidation declarativo
 - 🛡️ **Exception Handling**: Middleware global de errores
@@ -132,6 +133,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **EF Core 10** - ORM con PostgreSQL y MongoDB
 - **PostgreSQL 17** - Base de datos relacional
 - **MongoDB 7.0** - Base de datos de documentos
+- **Cassandra 5.0 (CassandraCSharpDriver)** - Base de datos de columnas para series temporales (histórico de precios y feed con TTL nativo)
 - **Redis** - Cache distribuido
 - **JWT** - Autenticación basada en tokens
 - **OAuth 2.0 (Google/GitHub/Microsoft)** - Login externo opcional
@@ -380,7 +382,7 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | --- | --- | --- |
 | 07 | [07-repository-pattern.md](doc/07-repository-pattern.md) | Repository Pattern |
 | 08 | [08-ef-core-postgresql.md](doc/08-ef-core-postgresql.md) | EF Core PostgreSQL |
-| 09 | [09-mongodb-cassandra.md](doc/09-mongodb-cassandra.md) | MongoDB |
+| 09 | [09-mongodb-cassandra.md](doc/09-mongodb-cassandra.md) | MongoDB y Cassandra |
 | 10 | [10-redis-caching.md](doc/10-redis-caching.md) | Redis Caching |
 
 ### Lógica de Negocio
@@ -666,6 +668,7 @@ erDiagram
 | ---------------- | ----------------------------------------- | ------------------------------------------- | -------------------- |
 | **🐘 PostgreSQL** | Escritura y lectura (datos maestros)      | User, Categoria, Producto                   | Relacional (FK)      |
 | **🍃 MongoDB**    | Escritura y lectura (pedidos embebidos)   | Pedido, PedidoItem, Destinatario, Direccion | Documentos embebidos |
+| **🗄️ Cassandra** | Escritura y lectura (series temporales) | Serie de precios por producto, feed de usuario | CassandraCSharpDriver (partición + clustering + TTL) |
 | **🔴 Redis**      | Caché de lectura (Cache-Aside)            | Sessions, consultas frecuentes              | Key-value            |
 
 
@@ -1073,9 +1076,24 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 | **🍃 MongoDB**    | Escritura y lectura (pedidos)        | Pedido, PedidoItem, Destinatario, Direccion | EF Core MongoDB (Con documentos anidados)           |
 | **🔴 Redis**      | Caché de lectura distribuida         | Sessions, consultas frecuentes              | StackExchange.Redis (Cache-Aside)                   |
 
+
+```mermaid
+flowchart LR
+    CLI["Cliente / API"] --> PG["PostgreSQL<br/>fuente de verdad"]
+    PG -->|"update de precio"| EV["await + notificacion<br/>(handler o servicio)"]
+    EV --> CAS["Cassandra<br/>serie Q-A + feed Q-B"]
+    PG --> MONGO["MongoDB<br/>read model + pedidos"]
+    CLI -.cache.-> RED["Redis<br/>catalogo y sesiones"]
+    style PG fill:#336791,color:#fff
+    style MONGO fill:#47A248,color:#fff
+    style CAS fill:#1287B1,color:#fff
+    style RED fill:#DC382D,color:#fff
+```
+
 **Patrón de datos:**
 - PostgreSQL: Entidades normalizadas con Foreign Keys
 - MongoDB: Documentos embebidos para mantener historial de precios (los items del pedido no cambian si el producto cambia)
+- Cassandra: una tabla por consulta (Q-A serie, Q-B feed) sin joins; el dual-write desde la aplicación mantiene las copias al día
 
 ## 🔐 Seguridad
 
