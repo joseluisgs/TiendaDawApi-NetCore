@@ -17,7 +17,11 @@ public class PedidosEfCoreRepository(
     public async Task<IEnumerable<Pedido>> FindAllAsync()
     {
         logger.LogDebug("Buscando todos los pedidos");
+        // AsNoTracking: estos listados solo se proyectan a DTO y jamas se
+        // persisten; sin el, el change tracker retendria todas las filas del
+        // listado hasta acabar el request (memoria y CPU de mas).
         return await context.Pedidos
+            .AsNoTracking()
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
@@ -26,7 +30,8 @@ public class PedidosEfCoreRepository(
     public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size)
     {
         logger.LogDebug("Buscando pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
-        var query = context.Pedidos.OrderByDescending(p => p.CreatedAt);
+        // AsNoTracking: listado de solo lectura (ver FindAllAsync).
+        var query = context.Pedidos.AsNoTracking().OrderByDescending(p => p.CreatedAt);
 
         var totalCount = await query.CountAsync();
         var items = await query.Skip(page * size).Take(size).ToListAsync();
@@ -38,6 +43,7 @@ public class PedidosEfCoreRepository(
     {
         logger.LogDebug("Buscando pedidos para usuario: {UserId}", userId);
         return await context.Pedidos
+            .AsNoTracking()
             .Where(p => p.UserId == userId)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
@@ -47,7 +53,9 @@ public class PedidosEfCoreRepository(
     public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindByUserIdPagedAsync(long userId, int page, int size)
     {
         logger.LogDebug("Buscando pedidos paginados para usuario: {UserId}", userId);
+        // AsNoTracking: listado de solo lectura (ver FindAllAsync).
         var query = context.Pedidos
+            .AsNoTracking()
             .Where(p => p.UserId == userId)
             .OrderByDescending(p => p.CreatedAt);
 

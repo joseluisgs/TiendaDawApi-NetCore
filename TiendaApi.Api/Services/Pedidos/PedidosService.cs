@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -34,7 +35,8 @@ IConfiguration configuration,
 PedidosWebSocketHandler webSocketHandler,
 IHubContext<PedidosHub> pedidosHubContext,
 IValidator<PedidoRequestDto> pedidoValidator,
-IValidator<PedidoItemRequestDto> pedidoItemValidator
+IValidator<PedidoItemRequestDto> pedidoItemValidator,
+IOutputCacheStore outputCacheStore
 ) : IPedidosService
 {
     private const int MaxRetries = 3;
@@ -316,7 +318,10 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
         {
             try
             {
-                return await CreateWithSerializableTransactionAsync(userId, dto);
+                var creado = await CreateWithSerializableTransactionAsync(userId, dto);
+                if (creado.IsSuccess)
+                    await InvalidarCachePedidoAsync();   // sin keys: solo purga el tag, el listado crece
+                return creado;
             }
             catch (SerializationFailureException)
             {
@@ -476,6 +481,15 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             var pedidoItems = new List<PedidoItem>();
             decimal total = 0;
 
+            // Precarga de una sola vez: los productos distintos del pedido se
+            // leen con UN SELECT (IDs unicos) en vez de una consulta por item.
+            // La categoria viene incluida para que UpdateAsync no tenga que
+            // recargarla item a item, y el tracking es el que hace valido el
+            // decremento de stock que viene despues.
+            var productosPorId = (await productoRepository
+                .FindByIdsAsync(dto.Items.Select(i => i.ProductoId)))
+                .ToDictionary(p => p.Id);
+
             foreach (var itemDto in dto.Items)
             {
                 var itemValidation = await ValidatePedidoItemAsync(itemDto);
@@ -485,8 +499,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
                     return Result.Failure<PedidoDto, DomainError>(itemValidation.Error);
                 }
 
-                var producto = await productoRepository.FindByIdAsync(itemDto.ProductoId);
-                if (producto == null)
+                if (!productosPorId.TryGetValue(itemDto.ProductoId, out var producto))
                 {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
@@ -581,6 +594,12 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             try { await cacheService.RemoveAsync(key); }
             catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
         }
+
+        // El tag "pedidos" purga el OutputCache de los listados admin
+        // (GetAllPedidos/GetAllPedidosPaged): se invalida en TODA escritura,
+        // el mismo criterio que productos y categorias.
+        try { await outputCacheStore.EvictByTagAsync("pedidos", CancellationToken.None); }
+        catch (Exception ex) { logger.LogWarning(ex, "Output cache invalidation error: Tag=pedidos"); }
     }
 
     #endregion

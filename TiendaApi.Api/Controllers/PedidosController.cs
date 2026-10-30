@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
@@ -27,6 +28,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     /// Obtiene todos los pedidos del sistema (solo administradores).
     /// </summary>
     [HttpGet]
+    [OutputCache(Duration = 60, Tags = new[] { "pedidos" })]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -50,6 +52,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     /// <param name="direction">Dirección (asc, desc).</param>
     /// <returns>200 OK con lista paginada de pedidos.</returns>
     [HttpGet("paged")]
+    [OutputCache(Duration = 60, Tags = new[] { "pedidos" })]
     [Authorize(Roles = UserRoles.ADMIN)]
     [ProducesResponseType(typeof(PagedResult<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

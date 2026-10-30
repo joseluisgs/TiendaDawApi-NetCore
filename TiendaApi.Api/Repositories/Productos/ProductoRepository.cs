@@ -87,6 +87,22 @@ public class ProductoRepository(
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<Producto>> FindByIdsAsync(IEnumerable<long> ids)
+    {
+        var lista = ids.Distinct().ToList();
+        if (lista.Count == 0)
+            return Array.Empty<Producto>();
+
+        logger.LogDebug("Buscando {Count} productos por ids (precarga de pedido)", lista.Count);
+        // Sin AsNoTracking a proposito: el llamador decrementa stock sobre estas
+        // mismas instancias y las persiste con UpdateAsync.
+        return await context.Productos
+            .Include(p => p.Categoria)
+            .Where(p => lista.Contains(p.Id))
+            .ToListAsync();
+    }
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<Producto>> FindByCategoriaIdAsync(long categoriaId)
     {
         logger.LogDebug("Buscando productos para categoría: {CategoriaId}", categoriaId);

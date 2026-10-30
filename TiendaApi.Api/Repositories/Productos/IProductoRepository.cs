@@ -26,6 +26,18 @@ public interface IProductoRepository
     /// <returns>Producto o null.</returns>
     Task<Producto?> FindByIdAsync(long id);
 
+    /// <summary>Busca varios productos por ID en una sola consulta.</summary>
+    /// <remarks>
+    /// 🎓 La creación de pedido lo usa para leer en UN SELECT los productos de
+    /// todos los items (IDs únicos) en vez de una consulta por item. Se devuelven
+    /// CON tracking (después se decrementa stock y se persiste) y con la
+    /// categoría incluida: UpdateAsync recarga la categoría solo si no viene ya
+    /// cargada, así el Include evita una recarga por item.
+    /// </remarks>
+    /// <param name="ids">IDs de los productos (con duplicados admitidos).</param>
+    /// <returns>Productos hallados; los inexistentes no aparecen.</returns>
+    Task<IEnumerable<Producto>> FindByIdsAsync(IEnumerable<long> ids);
+
     /// <summary>Obtiene productos por categoría.</summary>
     /// <param name="categoriaId">ID de la categoría.</param>
     /// <returns>Colección de productos.</returns>

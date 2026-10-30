@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.OutputCaching;
 using System.Diagnostics;
 using System.Threading.Channels;
 using CSharpFunctionalExtensions;
@@ -164,6 +165,7 @@ public class PedidosServiceIntegrationTests
         services.AddScoped<PedidosWebSocketHandler>();
         services.AddScoped<IEmailService, MemoryEmailService>();
         services.AddScoped<ICacheService, MemoryCacheService>();
+        services.AddOutputCache();
         services.AddScoped<IPedidosService, PedidosService>();
         services.AddScoped<IValidator<PedidoRequestDto>, PedidoRequestValidator>();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
