@@ -10,6 +10,7 @@ using TiendaApi.Api.Controllers;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
+using TiendaApi.Api.Services.Historial;
 using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Tests.Unit.Controllers;
@@ -23,7 +24,8 @@ public class ProductosControllerTests
     {
         _mockService = new Mock<IProductoService>();
         var mockLogger = new Mock<ILogger<ProductosController>>();
-        _controller = new ProductosController(_mockService.Object, mockLogger.Object)
+        // IHistorialService mockeado: estos tests no tocan el historial/vista (T13 lo cubre).
+        _controller = new ProductosController(_mockService.Object, Mock.Of<IHistorialService>(), mockLogger.Object)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };

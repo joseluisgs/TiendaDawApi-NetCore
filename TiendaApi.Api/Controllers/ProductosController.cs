@@ -1,12 +1,15 @@
+using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Historial;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Extensions;
 using TiendaApi.Api.Helpers.Pagination;
+using TiendaApi.Api.Services.Historial;
 using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Api.Controllers;
@@ -20,6 +23,7 @@ namespace TiendaApi.Api.Controllers;
 [Produces("application/json")]
 public class ProductosController(
     IProductoService service,
+    IHistorialService historialService,
     ILogger<ProductosController> logger
 ) : ControllerBase
 {
@@ -254,5 +258,69 @@ public class ProductosController(
             onSuccess: producto => producto,
             onFailure: error => error.ToHttpResult<ProductoDto>()
         );
+    }
+
+    /// <summary>
+    /// 🎓 Serie histórica de precios de un producto (Cassandra, consulta Q-A).
+    /// PÚBLICO, como el propio catálogo. El orden (más reciente primero) lo
+    /// guarda la clustering key de la tabla; el 404 lo decide PostgreSQL (fuente
+    /// de verdad), no Cassandra. Sin OutputCache: una serie que cambia con cada
+    /// update no debe servirse cacheada (además ETag/cache y TTL de series se
+    /// pisan; aquí manda la frescura).
+    /// </summary>
+    /// <param name="id">Producto.</param>
+    /// <param name="desde">Fecha mínima opcional (ISO 8601).</param>
+    /// <param name="hasta">Fecha máxima opcional (ISO 8601).</param>
+    /// <param name="limit">Puntos máximos (1..200, por defecto 50).</param>
+    /// <returns>200 con la serie, 404 si el producto no existe, 400 si el rango está invertido.</returns>
+    [HttpGet("{id}/historial-precios")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IReadOnlyList<HistorialPrecioDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IReadOnlyList<HistorialPrecioDto>>> GetHistorialPrecios(
+        long id,
+        [FromQuery] DateTime? desde = null,
+        [FromQuery] DateTime? hasta = null,
+        [FromQuery] int limit = 50)
+    {
+        var resultado = await historialService.GetHistorialPreciosAsync(id, desde, hasta, limit);
+
+        // Constructor explícito: el operador implícito T -> ActionResult<T> no se
+        // aplica cuando T es una interfaz genérica construida (IReadOnlyList<>).
+        return resultado.Match(
+            onSuccess: serie => new ActionResult<IReadOnlyList<HistorialPrecioDto>>(serie),
+            onFailure: error => error.ToHttpResult<IReadOnlyList<HistorialPrecioDto>>()
+        );
+    }
+
+    /// <summary>
+    /// Registra que el usuario autenticado ha visto este producto (escritura Q-B,
+    /// alimenta su feed con TTL nativo de 180 días). Fail-open: si Cassandra está
+    /// caído responde igual 204 (solo warning en el servidor).
+    /// </summary>
+    /// <param name="id">Producto visto.</param>
+    /// <returns>204 No Content, 401 sin sesión o 404 si el producto no existe.</returns>
+    [HttpPost("{id}/vista")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    // ActionResult<object> y no ActionResult: en ASP.NET Core 10 ActionResult<T>
+    // ya no hereda de ActionResult, así que ToHttpResult<T> no es convertible al
+    // tipo no genérico. Con T = object el 204/401 y el mapeo de errores siguen iguales.
+    public async Task<ActionResult<object>> RegistrarVista(long id)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        var resultado = await historialService.RegistrarVistaAsync(userId, id);
+
+        if (resultado.IsSuccess)
+            return NoContent();
+
+        return resultado.Error.ToHttpResult<object>();
     }
 }

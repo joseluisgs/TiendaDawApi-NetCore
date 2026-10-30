@@ -104,6 +104,42 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  cassandra:
+    image: cassandra:5.0
+    container_name: tienda-cassandra
+    ports:
+      - "${CASSANDRA_PORT:-9042}:9042"
+    # La JVM pide memoria sin techo: heap fijado igual que en desarrollo.
+    environment:
+      MAX_HEAP_SIZE: ${CASSANDRA_MAX_HEAP:-1G}
+      HEAP_NEWSIZE: ${CASSANDRA_HEAP_NEWSIZE:-256M}
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    # La imagen tarda ~30-60 s en estar lista: el healthcheck comprueba el
+    # protocolo CQL real, no el proceso de la JVM.
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT now() FROM system.local' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    restart: unless-stopped
+    networks:
+      - tienda-network
+    deploy:
+      resources:
+        limits:
+          cpus: '${CASSANDRA_CPUS:-1}'
+          memory: "${CASSANDRA_MEMORY:-2G}"
+        reservations:
+          cpus: '${CASSANDRA_CPUS_RESERVED:-0.5}'
+          memory: "${CASSANDRA_MEMORY_RESERVED:-1G}"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   api:
     build:
       context: .
@@ -118,6 +154,9 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-tienda};Username=${POSTGRES_USER:-admin};Password=${POSTGRES_PASSWORD:-admin123}
       - ConnectionStrings__MongoDB=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/${MONGO_DB:-tienda}?authSource=admin&retryWrites=true&retryReads=true
       - ConnectionStrings__Redis=redis:6379
+      - Cassandra__Hosts__0=cassandra
+      - Cassandra__Port=${CASSANDRA_PORT:-9042}
+      - Cassandra__Keyspace=${CASSANDRA_KEYSPACE:-tienda}
       - Jwt__Key=${JWT_KEY:-ChangeThisToASecureKeyAtLeast32CharactersLong}
       - Jwt__Issuer=${JWT_ISSUER:-TiendaApi}
       - Jwt__Audience=${JWT_AUDIENCE:-TiendaApi}
@@ -162,6 +201,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      cassandra:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - tienda-network
@@ -202,6 +243,8 @@ volumes:
   mongodb-data:
     driver: local
   redis-data:
+    driver: local
+  cassandra-data:
     driver: local
   tienda-images:
     driver: local

@@ -1,0 +1,52 @@
+meta {
+  name: [086] GET - Feed ordenado
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/users/me/feed
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Feed - Status 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Feed - Entre 3 (flujo) y 20 (limit por defecto) entradas", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('array');
+      expect(jsonData.length).to.be.at.least(3);
+      expect(jsonData.length).to.be.at.most(20);
+  });
+
+  test("Feed - Ordenado mas reciente primero (clustering DESC)", function () {
+      const jsonData = res.getBody();
+      for (let i = 1; i < jsonData.length; i++) {
+          expect(new Date(jsonData[i - 1].fecha).getTime())
+              .to.be.at.least(new Date(jsonData[i].fecha).getTime());
+      }
+  });
+
+  test("Feed - Nombre denormalizado en la fila (sin cruces)", function () {
+      const jsonData = res.getBody();
+      const entrada = jsonData.find((e) => e.productoId === 1);
+      expect(entrada).to.not.be.undefined;
+      expect(entrada.nombre).to.be.a('string').and.not.empty;
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Feed del usuario autenticado tras las 3 vistas. Dato por-usuario: sin VaryByClaim no se cachea jamas.
+}

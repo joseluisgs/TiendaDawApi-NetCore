@@ -113,6 +113,7 @@ public static class DatabaseConfig
             services.AddScoped<Data.Seed.Mongo.MongoDbEfCoreSeeder>();
         }
         services.AddScoped<Data.Seed.Sql.SqlSeeder>();
+        services.AddScoped<Data.Seed.Cassandra.CassandraSeeder>();
 
         return services;
     }

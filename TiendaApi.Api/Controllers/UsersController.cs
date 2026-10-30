@@ -3,11 +3,13 @@ using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Historial;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Extensions;
 using TiendaApi.Api.Helpers.Pagination;
 using TiendaApi.Api.Models;
+using TiendaApi.Api.Services.Historial;
 using TiendaApi.Api.Services.Users;
 
 namespace TiendaApi.Api.Controllers;
@@ -21,6 +23,7 @@ namespace TiendaApi.Api.Controllers;
 [Produces("application/json")]
 public class UsersController(
     IUserService service,
+    IHistorialService historialService,
     ILogger<UsersController> logger
 ) : ControllerBase
 {
@@ -324,5 +327,29 @@ public class UsersController(
             onSuccess: usuario => usuario,
             onFailure: error => error.ToHttpResult<UserDto>()
         );
+    }
+
+    /// <summary>
+    /// Feed de actividad del usuario autenticado: últimos productos vistos
+    /// (Cassandra, consulta Q-B, TTL nativo de 180 días). Una partición vacía
+    /// responde lista vacía, no 404: el usuario existe (está autenticado).
+    /// </summary>
+    /// <param name="limit">Tamaño del feed (1..100, por defecto 20).</param>
+    /// <returns>200 con el feed (más reciente primero) o 401 sin sesión.</returns>
+    [HttpGet("me/feed")]
+    [Authorize]
+    [ProducesResponseType(typeof(IReadOnlyList<VistaFeedDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IReadOnlyList<VistaFeedDto>>> GetMyFeed(
+        [FromQuery] int limit = 20)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+
+        var feed = await historialService.GetFeedVistasAsync(userId, limit);
+        // Constructor explícito: el operador implícito no se aplica con T = interfaz.
+        return new ActionResult<IReadOnlyList<VistaFeedDto>>(feed);
     }
 }

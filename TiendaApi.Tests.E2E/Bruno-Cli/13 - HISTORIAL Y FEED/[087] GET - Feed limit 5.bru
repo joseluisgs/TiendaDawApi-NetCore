@@ -1,0 +1,36 @@
+meta {
+  name: [087] GET - Feed limit 5
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/users/me/feed?limit=5
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Feed Limit 5 - Status 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Feed Limit 5 - Acotado a 5 entradas", function () {
+      const jsonData = res.getBody();
+      expect(jsonData).to.be.an('array');
+      expect(jsonData.length).to.be.at.most(5);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  El limit se acota en la fachada (Math.Clamp 1..100):5 pide la particion con LIMIT 5.
+}

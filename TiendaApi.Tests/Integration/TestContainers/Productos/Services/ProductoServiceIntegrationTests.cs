@@ -18,6 +18,7 @@ using TiendaApi.Api.GraphQL.Publishers;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
@@ -110,6 +111,17 @@ public class ProductoServiceIntegrationTests
             return mockStorage.Object;
         });
         services.AddScoped<IEmailService, MemoryEmailService>();
+        // IHistorialRepository (Cassandra): mock al estilo de este container (como
+        // IStorageService/IHubContext de arriba). Estos tests prueban PostgreSQL y
+        // MongoDB; la escritura del precio en los updates es fail-open (T10) y la
+        // serie real de Cassandra se cubre en T14 con Testcontainers.Cassandra.
+        services.AddScoped<IHistorialRepository>(sp =>
+        {
+            var mockHistorial = new Mock<IHistorialRepository>();
+            mockHistorial.Setup(h => h.RegistrarPrecioAsync(It.IsAny<long>(), It.IsAny<double>()))
+                .Returns(Task.CompletedTask);
+            return mockHistorial.Object;
+        });
         services.AddScoped<ProductosWebSocketHandler>();
 
         // Mock IHubContext<ProductosHub> for ProductoService

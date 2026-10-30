@@ -1,0 +1,32 @@
+meta {
+  name: [077] GET - Rango invertido - 400
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/productos/1/historial-precios?desde=2026-10-10&hasta=2026-09-01
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Historial Rango invertido - Status 400", function () {
+      expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Historial Rango invertido - errors.desde presente", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.an('object');
+      expect(jsonData.errors.desde).to.not.be.undefined;
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Rango desde > hasta: la validacion vive en la fachada y responde 400 con errors por campo.
+}

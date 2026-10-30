@@ -1,0 +1,30 @@
+meta {
+  name: [085] POST - Vista 3 (Camiseta)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/productos/2/vista
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("Feed Vista 3 - Status 204", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Tercera vista del flujo. Con sumar una basta para el feed; las3 confirman el orden.
+}

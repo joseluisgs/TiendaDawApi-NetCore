@@ -1,0 +1,31 @@
+meta {
+  name: [078] GET - No existe - 404
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/productos/999999/historial-precios
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Historial Inexistente - Status 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+
+  test("Historial Inexistente - message presente (PostgreSQL manda)", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.message).to.be.a('string').and.not.empty;
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  El 404 lo decide PostgreSQL (fuente de verdad): ni se consulta Cassandra.
+}
