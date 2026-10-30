@@ -73,6 +73,30 @@ services:
     networks:
       - tienda-local-network
 
+  cassandra:
+    image: cassandra:5.0
+    container_name: tienda-local-cassandra
+    ports:
+      - "${CASSANDRA_PORT:-9042}:9042"
+    # Sin techo de heap: la JVM de Cassandra pide varios GB y un portátil de
+    # clase se ahoga. Con 1G vive cómoda una instancia de un solo nodo.
+    environment:
+      MAX_HEAP_SIZE: 1G
+      HEAP_NEWSIZE: 256M
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    # Cassandra tarda ~30-60 s en aceptar conexiones (es una JVM): el healthcheck
+    # comprueba el protocolo CQL real, no el proceso.
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT now() FROM system.local' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    restart: unless-stopped
+    networks:
+      - tienda-local-network
+
 networks:
   tienda-local-network:
     driver: bridge
@@ -81,4 +105,6 @@ volumes:
   postgres-data:
     driver: local
   mongodb-data:
+    driver: local
+  cassandra-data:
     driver: local

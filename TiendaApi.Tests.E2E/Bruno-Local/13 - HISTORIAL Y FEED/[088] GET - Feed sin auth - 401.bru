@@ -1,0 +1,26 @@
+meta {
+  name: [088] GET - Feed sin auth - 401
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/users/me/feed
+  body: none
+  auth: none
+}
+
+script:post-response {
+  test("Feed Sin Auth - Status 401", function () {
+      expect(res.getStatus()).to.equal(401);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  El feed usa los claims del JWT: sin sesion,401.
+}

@@ -66,6 +66,7 @@ public class ProductoServiceTests
         var eventPublisher = new Mock<IEventPublisher>();
         _service = new ProductoService(
             _mockProductoRepo.Object,
+            Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
             _mockCategoriaRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
@@ -282,6 +283,7 @@ public class ProductoServiceTests
         // Re-crear servicio con mocks configurados
         _service = new ProductoService(
             _mockProductoRepo.Object,
+            Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
             _mockCategoriaRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,

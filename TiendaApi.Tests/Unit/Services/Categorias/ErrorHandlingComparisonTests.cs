@@ -83,6 +83,7 @@ public class ErrorHandlingComparisonTests
 
         _productoService = new ProductoService(
             _mockProductoRepo.Object,
+            Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
             _mockCategoriaRepo.Object,
             _mockProductoLogger.Object,
             mockCacheService.Object,
@@ -250,6 +251,7 @@ public class ErrorHandlingComparisonTests
 
         _productoService = new ProductoService(
             _mockProductoRepo.Object,
+            Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
             _mockCategoriaRepo.Object,
             _mockProductoLogger.Object,
             mockCacheService.Object,

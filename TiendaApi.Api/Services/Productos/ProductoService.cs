@@ -13,6 +13,7 @@ using TiendaApi.Api.Mappers;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
@@ -26,6 +27,7 @@ namespace TiendaApi.Api.Services.Productos;
 /// </summary>
 public class ProductoService(
 IProductoRepository productoRepository,
+IHistorialRepository historialRepository,
 ICategoriaRepository categoriaRepository,
 ILogger<ProductoService> logger,
 ICacheService cacheService,
@@ -188,6 +190,11 @@ IOutputCacheStore outputCacheStore
         var saved = await productoRepository.SaveAsync(dto.ToEntity());
         var resultDto = saved.ToDto();
 
+        // Punto de precio de NACIMIENTO (Q-A): el precio inicial tambien es un
+        // punto de la serie; sin el, un producto que nunca se actualiza tendria
+        // el historial vacio para siempre.
+        await RegistrarPrecioEnCassandra(saved);
+
         // Invalidar OutputCache tras crear (el listado paginado cambió)
         await InvalidarCacheProductoAsync();
 
@@ -231,6 +238,8 @@ IOutputCacheStore outputCacheStore
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
 
+        var precioAnterior = producto.Precio;   // capturado ANTES de tocar el producto
+
         producto.Nombre = dto.Nombre;
         producto.Descripcion = dto.Descripcion;
         producto.Precio = dto.Precio;
@@ -240,6 +249,12 @@ IOutputCacheStore outputCacheStore
 
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
+
+        // El historial registra CAMBIOS de precio, no eventos de edicion:
+        // solo si el precio vario (un update de solo stock/imagen no genera
+        // punto, y el informe Q-C solo cuenta cambios reales).
+        if (precioAnterior != updated.Precio)
+            await RegistrarPrecioEnCassandra(updated);
 
         await InvalidarCacheProductoAsync($"productos:{id}");
 
@@ -356,6 +371,8 @@ IOutputCacheStore outputCacheStore
             );
         }
 
+        var precioAnterior = producto.Precio;   // capturado ANTES de aplicar el patch
+
         if (!string.IsNullOrWhiteSpace(dto.Nombre))
             producto.Nombre = dto.Nombre;
 
@@ -377,6 +394,11 @@ IOutputCacheStore outputCacheStore
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
 
+        // Solo si el precio vario: un PATCH de solo stock/imagen no es un
+        // cambio de precio (ver UpdateAsync).
+        if (precioAnterior != updated.Precio)
+            await RegistrarPrecioEnCassandra(updated);
+
         await InvalidarCacheProductoAsync($"productos:{id}");
 
         return Result.Success<ProductoDto, DomainError>(resultDto)
@@ -388,6 +410,26 @@ IOutputCacheStore outputCacheStore
                 if (dto.Stock.HasValue)
                     EventoSuscripcionStockBajo(resultDto, 10);
             });
+    }
+
+    /// <summary>
+    /// 🎓 Fail-open: el histórico en Cassandra NO puede tumbar el update de
+    /// PostgreSQL. Se AWAIT (no fire-and-forget) para que quien acaba de hacer
+    /// el PATCH pueda leer el punto recién escrito (y para el E2E), pero la
+    /// excepción se traga con warning: si Cassandra está caído, la API sigue.
+    /// Equivalente al PrecioHistoricoHandler del proyecto CQRS.
+    /// </summary>
+    private async Task RegistrarPrecioEnCassandra(Producto producto)
+    {
+        try
+        {
+            await historialRepository.RegistrarPrecioAsync(producto.Id, (double)producto.Precio);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Cassandra: no se pudo registrar el precio del producto {Id} (modo degradado)", producto.Id);
+        }
     }
 
     #region Métodos Privados - Cache

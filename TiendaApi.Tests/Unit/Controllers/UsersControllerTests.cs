@@ -10,6 +10,7 @@ using TiendaApi.Api.Controllers;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
+using TiendaApi.Api.Services.Historial;
 using TiendaApi.Api.Services.Users;
 
 namespace TiendaApi.Tests.Unit.Controllers;
@@ -24,7 +25,8 @@ public class UsersControllerTests
     {
         _mockUserService = new Mock<IUserService>();
         _mockLogger = new Mock<ILogger<UsersController>>();
-        _controller = new UsersController(_mockUserService.Object, _mockLogger.Object);
+        // IHistorialService mockeado: estos tests no tocan el historial/feed (T13 lo cubre).
+        _controller = new UsersController(_mockUserService.Object, Mock.Of<IHistorialService>(), _mockLogger.Object);
     }
 
     #region GetAll Tests

@@ -49,6 +49,11 @@ const CONFIG = {
   },
   dbServices: ["postgres", "mongodb"],
   composeFile: "docker-compose.local.yml",
+  // Auth:Mode ACTIVO de esta corrida (misma variable que env.Auth__Mode): los
+  // tests condicionales (ramas Identity/Custom de signup) lo consultan aqui.
+  // Sin esta declaracion CONFIG.authMode era undefined y la rama Identity
+  // nunca se ejecutaba (T15 exige validar los DOS modos).
+  authMode: process.env.AUTH_MODE || "Custom",
   // Credenciales seed (varían con Auth:Mode: Custom usa admin/admin; Identity usa Admin123!)
   admin: { username: process.env.ADMIN_USER || "admin", password: process.env.ADMIN_PASS || "admin" },
   user: { username: process.env.USER_USER || "userdaw", password: process.env.USER_PASS || "userdaw" },
@@ -78,7 +83,16 @@ function serviceRunning(name) {
       `docker compose -f ${CONFIG.composeFile} ps --status running --format "{{.Service}}"`,
       { cwd: ROOT, encoding: "utf8", shell: true }
     );
-    return (res.stdout || "").split(/\r?\n/).includes(name);
+    if ((res.stdout || "").split(/\r?\n/).includes(name)) return true;
+    // Los contenedores locales pueden existir SIN labels de compose (creados a
+    // mano o por otra via): compose ps no los asocia al proyecto y el `up`
+    // posterior chocaria por container_name. Detectarlos por nombre generado
+    // (tienda-local-<servicio>) para no tocar infra que ya esta sana.
+    const byName = spawnSync(
+      `docker ps --filter "name=tienda-local-${name}" --filter status=running --format "{{.Names}}"`,
+      { encoding: "utf8", shell: true }
+    );
+    return (byName.stdout || "").includes(`tienda-local-${name}`);
   } catch { return false; }
 }
 function killTree(pid) {
@@ -260,31 +274,25 @@ let imagenProductoUrl = null;
     autoToken = r.json.token;
   });
 
-  await test("Auth: POST signup con username inválido → 400 (Custom) / 201 (Identity)", async () => {
+  await test("Auth: POST signup con username inválido → 400 en ambos modos", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
       body: { username: "x", email: `bad_${ts}@test.com`, password: "Test1234!" },
     });
-    if (CONFIG.authMode === "Identity") {
-      // Diferencia real de contrato: FluentValidation (Custom) exige username >= 3
-      // -> 400; el UserValidator de Identity no tiene longitud minima -> crea (201).
-      assertEq(st(r), 201, "status (Identity sin validación de longitud)");
-      if (r.json?.user?.id) { await req("DELETE", `/api/users/${r.json.user.id}`, { token: adminToken }); }
-    } else {
-      assertEq(st(r), 400, "status");
-    }
+    // FluentValidationAutoValidation (ControllersConfig) evalua ANTES del
+    // controller en TODOS los Auth:Mode: ni Custom ni Identity llegan a
+    // UserManager. La rama Identity solo se ejecuta desde T15 (antes
+    // CONFIG.authMode era undefined y este test siempre tomaba la de Custom).
+    assertEq(st(r), 400, "status");
   });
 
-  await test("Auth: POST signup con email inválido → 400 (Custom) / 422 (Identity)", async () => {
+  await test("Auth: POST signup con email inválido → 400 en ambos modos", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {
       body: { username: `badmail_${ts}`, email: "no-es-email", password: "Test1234!" },
     });
-    if (CONFIG.authMode === "Identity") {
-      // Identity valida el email en su UserValidator y el servicio lo mapea a
-      // BusinessRuleError (422); FluentValidation (Custom) lo mapea a 400.
-      assertEq(st(r), 422, "status (BusinessRuleError de Identity)");
-    } else {
-      assertEq(st(r), 400, "status");
-    }
+    // Mismo motivo: la validacion previa (400) pilla el email mal formado
+    // antes de que Identity llegue a su BusinessRuleError (422), que sigue
+    // existiendo para los errores de UserManager (p. ej. politica de password).
+    assertEq(st(r), 400, "status");
   });
 
   await test("Auth: POST signup username duplicado → 409 Conflict", async () => {
@@ -1049,6 +1057,99 @@ let imagenProductoUrl = null;
       rejected = true;
     }
     assert(rejected, "el hub autorizado aceptó una conexión sin token");
+  });
+
+  // ============================ HISTORIAL Y FEED (Cassandra) ============================
+  // T15: los flujos nuevos de las series (Q-A) y el feed (Q-B). NO se hace ningun
+  // signin nuevo (usan adminToken/userToken ya guardados) para respetar auth 10/min.
+  let serieAntes = 0;
+  let precioNuevo = null;
+
+  await test("Historial: GET serie seed (anon) 200 con >=3 puntos ordenados", async () => {
+    const r = await req("GET", "/api/productos/1/historial-precios?limit=50");
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json), "no es array");
+    assert(r.json.length >= 3, `semilla T12 esperaba >=3 puntos, hay ${r.json.length}`);
+    // Orden DESC garantizado por la CLUSTERING KEY, sin ORDER BY en el servidor.
+    for (let i = 1; i < r.json.length; i++) {
+      assert(new Date(r.json[i - 1].fecha) >= new Date(r.json[i].fecha),
+        `la serie no viene ordenada DESC en la posicion ${i}`);
+    }
+    serieAntes = r.json.length;
+  });
+
+  await test("Historial: GET rango invertido 400 con errors.desde", async () => {
+    const r = await req("GET", "/api/productos/1/historial-precios?desde=2026-10-10&hasta=2026-09-01");
+    assertEq(st(r), 400, "status");
+    assert(r.json?.errors?.desde, `falta errors.desde: ${r.text.slice(0, 150)}`);
+  });
+
+  await test("Historial: GET id inexistente 404 (lo decide PostgreSQL)", async () => {
+    const r = await req("GET", "/api/productos/999999/historial-precios");
+    assertEq(st(r), 404, "status");
+    assert(r.json?.message, "falta message");
+  });
+
+  await test("Historial: PUT precio 200 y la serie crece con el punto nuevo PRIMERO", async () => {
+    // Precio garantizado DISTINTO al actual: el historial ahora solo registra
+    // cambios reales de precio (no eventos de edicion), asi que leemos el
+    // precio vigente y variamos - random puro podria coincidir y no habria punto.
+    const act = await req("GET", "/api/productos/1");
+    assertEq(st(act), 200, "GET precio actual");
+    precioNuevo = Math.round((act.json.precio + 1 + Math.random() * 500) * 100) / 100;
+    const put = await req("PUT", "/api/productos/1", {
+      token: adminToken,
+      body: {
+        nombre: "Laptop Dell XPS 15", descripcion: "Laptop de alto rendimiento",
+        precio: precioNuevo, stock: 10, categoriaId: 1,
+      },
+    });
+    assertEq(st(put), 200, "status PUT");
+    assertEq(put.json?.precio, precioNuevo, "precio del PUT");
+
+    const r = await req("GET", "/api/productos/1/historial-precios?limit=50");
+    assertEq(st(r), 200, "status GET serie");
+    assert(r.json.length >= serieAntes + 1,
+      `la serie no crecio tras el update (${serieAntes} -> ${r.json.length})`);
+    assertEq(r.json[0].precio, precioNuevo,
+      "el punto mas reciente es el precio recien escrito (escritura T10, fail-open)");
+  });
+
+  await test("Feed: POST vista de 3 productos 204 cada una", async () => {
+    for (const pid of [1, 3, 2]) {
+      const r = await req("POST", `/api/productos/${pid}/vista`, { token: userToken });
+      assertEq(st(r), 204, `status POST vista ${pid}`);
+    }
+  });
+
+  await test("Feed: GET /me/feed 200 con <=20 entradas ordenadas y nombre copiado", async () => {
+    const r = await req("GET", "/api/users/me/feed", { token: userToken });
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json), "no es array");
+    assert(r.json.length >= 3, `esperaba al menos las 3 vistas del flujo, hay ${r.json.length}`);
+    assert(r.json.length <= 20, `limit por defecto (20) excedido: ${r.json.length}`);
+    for (let i = 1; i < r.json.length; i++) {
+      assert(new Date(r.json[i - 1].fecha) >= new Date(r.json[i].fecha),
+        `feed no ordenado DESC en la posicion ${i}`);
+    }
+    const conNombre = r.json.find((e) => e.productoId === 1);
+    assert(conNombre?.nombre, "la entrada del feed debe traer el nombre denormalizado");
+  });
+
+  await test("Feed: GET /me/feed?limit=5 acota la particion a 5", async () => {
+    const r = await req("GET", "/api/users/me/feed?limit=5", { token: userToken });
+    assertEq(st(r), 200, "status");
+    assert(r.json.length <= 5, `limit=5 excedido: ${r.json.length}`);
+  });
+
+  await test("Feed: GET /me/feed sin token 401", async () => {
+    const r = await req("GET", "/api/users/me/feed");
+    assertEq(st(r), 401, "status");
+  });
+
+  await test("Feed: POST vista de producto inexistente 404", async () => {
+    const r = await req("POST", "/api/productos/999999/vista", { token: userToken });
+    assertEq(st(r), 404, "status");
   });
 
   // ============================ LIMPIEZA ============================
