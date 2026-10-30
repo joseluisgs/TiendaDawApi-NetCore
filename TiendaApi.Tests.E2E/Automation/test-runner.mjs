@@ -1091,7 +1091,12 @@ let imagenProductoUrl = null;
   });
 
   await test("Historial: PUT precio 200 y la serie crece con el punto nuevo PRIMERO", async () => {
-    precioNuevo = Math.round((1000 + Math.random() * 900) * 100) / 100;
+    // Precio garantizado DISTINTO al actual: el historial ahora solo registra
+    // cambios reales de precio (no eventos de edicion), asi que leemos el
+    // precio vigente y variamos - random puro podria coincidir y no habria punto.
+    const act = await req("GET", "/api/productos/1");
+    assertEq(st(act), 200, "GET precio actual");
+    precioNuevo = Math.round((act.json.precio + 1 + Math.random() * 500) * 100) / 100;
     const put = await req("PUT", "/api/productos/1", {
       token: adminToken,
       body: {

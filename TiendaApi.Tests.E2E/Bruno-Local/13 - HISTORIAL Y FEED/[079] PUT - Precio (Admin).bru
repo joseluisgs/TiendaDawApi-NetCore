@@ -46,5 +46,5 @@ settings {
 }
 
 docs {
-  Update de precio sobre el producto seed. T10 escribe el punto en Cassandra (fail-open) de forma INCONDICIONAL en todo update (no exige que el precio cambie), asi que basta un precio fijo. Bruno no soporta randomInt con argumentos: con una variable sin expandir el JSON salia invalido (400).
+  Update de precio sobre el producto seed. El historial solo registra un punto si el precio CAMBIO (no es un log de ediciones): con precio fijo 1111.11 (distinto al precio seed 1299.99) y el protocolo de BD fresh por corrida, SIEMPRE hay cambio. Bruno no soporta randomInt con argumentos: con una variable sin expandir el JSON salia invalido (400).
 }
