@@ -32,9 +32,9 @@ services:
       - --env-file
       - environments/docker.bru
       # Rate limit de la API (RateLimitConfig.cs): general 100/15s, auth 10/min.
-      # 250ms validado empíricamente: Bruno 85/85 en ~42s y Newman 85/85 en ~28s
-      # (antes 3200ms = 4,5 min de espera muerta). Da colchón si la colección
-      # crece; por debajo de 100ms se acerca al límite de ráfaga.
+      # 250ms validado empíricamente (misma configuración que la API CQRS):
+      # da colchón si la colección crece; por debajo de 100ms se acerca al
+      # límite de ráfaga.
       - --delay
       - "250"
       - --reporter-json

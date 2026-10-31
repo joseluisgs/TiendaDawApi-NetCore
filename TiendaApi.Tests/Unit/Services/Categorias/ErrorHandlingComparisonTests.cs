@@ -87,14 +87,11 @@ public class ErrorHandlingComparisonTests
             _mockCategoriaRepo.Object,
             _mockProductoLogger.Object,
             mockCacheService.Object,
-            mockWebSocketHandler.Object,
-            mockHubContext.Object,
-            mockEmailService.Object,
             mockConfiguration.Object,
             _mockProductoValidator.Object,
             mockStorageService.Object,
-            mockEventPublisher.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new ProductoEffects(mockWebSocketHandler.Object, mockHubContext.Object, mockEmailService.Object, mockConfiguration.Object, mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
         );
     }
 
@@ -255,14 +252,11 @@ public class ErrorHandlingComparisonTests
             _mockCategoriaRepo.Object,
             _mockProductoLogger.Object,
             mockCacheService.Object,
-            mockWebSocketHandler.Object,
-            mockHubContext.Object,
-            mockEmailService.Object,
             mockConfiguration.Object,
             _mockProductoValidator.Object,
             mockStorageService.Object,
-            mockEventPublisher.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new ProductoEffects(mockWebSocketHandler.Object, mockHubContext.Object, mockEmailService.Object, mockConfiguration.Object, mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
         );
 
         // Act

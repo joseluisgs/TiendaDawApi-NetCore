@@ -24,7 +24,8 @@ public class ProductosControllerTests
     {
         _mockService = new Mock<IProductoService>();
         var mockLogger = new Mock<ILogger<ProductosController>>();
-        // IHistorialService mockeado: estos tests no tocan el historial/vista (T13 lo cubre).
+        // IHistorialService mockeado: estos tests no tocan el historial/vista (lo
+        // cubren los tests unit e integration del historial).
         _controller = new ProductosController(_mockService.Object, Mock.Of<IHistorialService>(), mockLogger.Object)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }

@@ -15,7 +15,7 @@ script:post-response {
       expect(res.getStatus()).to.equal(200);
   });
 
-  test("Historial Serie seed - Al menos 3 puntos sembrados (T12)", function () {
+  test("Historial Serie seed - Al menos 3 puntos sembrados", function () {
       const jsonData = res.getBody();
       expect(jsonData).to.be.an('array');
       expect(jsonData.length).to.be.at.least(3);
@@ -37,5 +37,5 @@ settings {
 }
 
 docs {
-  Serie historica sembrada por T12 (>=3 puntos, orden DESC gratis). Guarda serieAntes para el flujo del PUT.
+  Serie historica sembrada (>=3 puntos, orden DESC gratis). Guarda serieAntes para el flujo del PUT.
 }

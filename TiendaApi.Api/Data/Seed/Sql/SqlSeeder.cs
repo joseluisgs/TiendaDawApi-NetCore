@@ -10,9 +10,9 @@ namespace TiendaApi.Api.Data.Seed.Sql;
 /// Crea usuarios, categorías y productos de ejemplo.
 ///
 /// Los usuarios se crean condicionalmente según Auth:Mode:
-/// - "Custom" (default): hashes BCrypt hardcoded → admin@tienda.com / admin
-/// - "Identity": UserManager (PBKDF2) → admin@tienda.com / Admin123!
-///   (la política de password de Identity exige longitud ≥6, dígito y mayúscula)
+/// - "Custom" (default): hash BCrypt calculado de <see cref="SeedCredentials"/>
+/// - "Identity": UserManager (PBKDF2) con las MISMAS credenciales
+/// El modo solo cambia el algoritmo del hash: mismo usuario y contraseña en ambos.
 /// </summary>
 public class SqlSeeder
 {
@@ -75,25 +75,28 @@ public class SqlSeeder
                 }
             }
 
-            // ⚠️ La política de password de Identity (AuthenticationConfig) exige
-            // longitud ≥6, dígito y mayúscula. "admin" NO cumple → usar "Admin123!".
-            const string identityPassword = "Admin123!";
-
-            var identityUsers = new List<User>
+            // ⚠️ Credenciales unificadas (SeedCredentials): las MISMAS que en Custom.
+            // La política de Identity (≥8, mayúscula y dígito) las acepta, así que el
+            // modo solo determina el algoritmo del hash, nunca quién puede entrar.
+            // El modelo User no tiene campos de perfil (username/email/rol/credencial):
+            // la semilla solo fija esos.
+            var identityUsers = new List<(User User, string Password)>
             {
-                new() { UserName = "admin", Email = "admin@tienda.com", Role = UserRoles.ADMIN, Nombre = "Admin", Apellidos = "Admin" },
-                new() { UserName = "userdaw", Email = "userdaw@tienda.com", Role = UserRoles.USER, Nombre = "User", Apellidos = "Daw" }
+                (new() { UserName = SeedCredentials.AdminUsername, Email = "admin@tienda.com", Role = UserRoles.ADMIN },
+                    SeedCredentials.AdminPassword),
+                (new() { UserName = SeedCredentials.UserUsername, Email = "userdaw@tienda.com", Role = UserRoles.USER },
+                    SeedCredentials.UserPassword)
             };
 
-            foreach (var user in identityUsers)
+            foreach (var (user, password) in identityUsers)
             {
-                var result = await userManager.CreateAsync(user, identityPassword);
+                var result = await userManager.CreateAsync(user, password);
                 if (result.Succeeded)
                 {
                     if (user.Role == UserRoles.ADMIN)
                         await userManager.AddToRoleAsync(user, UserRoles.ADMIN);
                     _logger.LogInformation("Usuario Identity creado: {Email} (contraseña seed: {Password})",
-                        user.Email, identityPassword);
+                        user.Email, password);
                 }
                 else
                 {
@@ -104,17 +107,16 @@ public class SqlSeeder
             return;
         }
 
-        // Modo Custom (default): hashes BCrypt hardcoded
-        // Contraseñas en texto plano (para testing):
-        // Admin: admin@tienda.com / admin
-        // User:  userdaw@tienda.com / userdaw
+        // Modo Custom (default): hash BCrypt calculado en el momento desde
+        // SeedCredentials — la MISMA contraseña que en Identity, solo cambia
+        // el algoritmo del hash. Sin hashes hardcoded que puedan divergir.
         var users = new List<User>
         {
             new()
             {
-                UserName = "admin",
+                UserName = SeedCredentials.AdminUsername,
                 Email = "admin@tienda.com",
-                PasswordHash = "$2a$11$oET21qjcdCsP/5xzDij2QOVHnHF04Ipc5HervdO45pkKnE8lpdCrK",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(SeedCredentials.AdminPassword, workFactor: 11),
                 Role = UserRoles.ADMIN,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
@@ -122,9 +124,9 @@ public class SqlSeeder
             },
             new()
             {
-                UserName = "userdaw",
+                UserName = SeedCredentials.UserUsername,
                 Email = "userdaw@tienda.com",
-                PasswordHash = "$2a$11$0NFi7iTLKAmHXF5lq18h..zp/KtjzsNUXUsAlpdVtTTG4dpf0nyBe",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(SeedCredentials.UserPassword, workFactor: 11),
                 Role = UserRoles.USER,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,

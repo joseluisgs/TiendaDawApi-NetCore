@@ -31,14 +31,11 @@ IHistorialRepository historialRepository,
 ICategoriaRepository categoriaRepository,
 ILogger<ProductoService> logger,
 ICacheService cacheService,
-ProductosWebSocketHandler webSocketHandler,
-IHubContext<ProductosHub> productosHubContext,
-IEmailService emailService,
 IConfiguration configuration,
 IValidator<ProductoRequestDto> productoValidator,
 IStorageService storageService,
-IEventPublisher eventPublisher,
-IOutputCacheStore outputCacheStore
+IOutputCacheStore outputCacheStore,
+IProductoEffects effects
 ) : IProductoService
 {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
@@ -186,7 +183,8 @@ IOutputCacheStore outputCacheStore
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
 
-        // ROP: Guardar -> Mapear -> Efectos (log, cache, websocket, email)
+        // ROP: Guardar -> Mapear -> serie de precios -> invalidar cache -> log y
+        // efectos delegados en IProductoEffects (WS, SignalR, email, suscripciones)
         var saved = await productoRepository.SaveAsync(dto.ToEntity());
         var resultDto = saved.ToDto();
 
@@ -203,10 +201,10 @@ IOutputCacheStore outputCacheStore
             {
                 logger.LogInformation("Producto creado con ID: {Id}", dto.Id);
                 
-                NotificarWebSocketProductoCreado(dto);
-                NotificarSignalRProductoCreado(dto);
-                EnviarEmailProductoCreado(saved);
-                EventoSuscripcionProductoCreado(dto);
+                effects.NotificarWebSocketProductoCreado(dto);
+                effects.NotificarSignalRProductoCreado(dto);
+                effects.EnviarEmailProductoCreado(saved);
+                effects.EventoSuscripcionProductoCreado(dto);
             });
     }
 
@@ -262,10 +260,10 @@ IOutputCacheStore outputCacheStore
             .Tap(_ =>
             {
                 logger.LogInformation("Producto actualizado con ID: {Id}", id);
-                NotificarWebSocketProductoActualizado(resultDto);
-                NotificarSignalRProductoActualizado(resultDto);
-                EventoSuscripcionProductoActualizado(resultDto);
-                EventoSuscripcionStockBajo(resultDto, 10);
+                effects.NotificarWebSocketProductoActualizado(resultDto);
+                effects.NotificarSignalRProductoActualizado(resultDto);
+                effects.EventoSuscripcionProductoActualizado(resultDto);
+                effects.EventoSuscripcionStockBajo(resultDto, 10);
             });
     }
 
@@ -300,9 +298,9 @@ IOutputCacheStore outputCacheStore
         logger.LogInformation("Producto eliminado con ID: {Id}", id);
 
         await InvalidarCacheProductoAsync($"productos:{id}");
-        NotificarWebSocketProductoEliminado(id);
-        NotificarSignalRProductoEliminado(id);
-        EventoSuscripcionProductoEliminado(id);
+        effects.NotificarWebSocketProductoEliminado(id);
+        effects.NotificarSignalRProductoEliminado(id);
+        effects.EventoSuscripcionProductoEliminado(id);
 
         return UnitResult.Success<DomainError>();
     }
@@ -348,8 +346,8 @@ IOutputCacheStore outputCacheStore
             .Tap(_ =>
             {
                 logger.LogInformation("Imagen actualizada para producto con ID: {Id}", id);
-                NotificarWebSocketProductoActualizado(resultDto);
-                EventoSuscripcionProductoActualizado(resultDto);
+                effects.NotificarWebSocketProductoActualizado(resultDto);
+                effects.EventoSuscripcionProductoActualizado(resultDto);
             });
     }
 
@@ -373,6 +371,36 @@ IOutputCacheStore outputCacheStore
 
         var precioAnterior = producto.Precio;   // capturado ANTES de aplicar el patch
 
+        AplicarPatch(producto, dto);
+
+        var updated = await productoRepository.UpdateAsync(producto);
+        var resultDto = updated.ToDto();
+
+        // Solo si el precio vario: un PATCH de solo stock/imagen no es un
+        // cambio de precio (ver UpdateAsync).
+        if (precioAnterior != updated.Precio)
+            await RegistrarPrecioEnCassandra(updated);
+
+        await InvalidarCacheProductoAsync($"productos:{id}");
+
+        return Result.Success<ProductoDto, DomainError>(resultDto)
+            .Tap(_ =>
+            {
+                logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
+                effects.NotificarWebSocketProductoActualizado(resultDto);
+                effects.EventoSuscripcionProductoActualizado(resultDto);
+                if (dto.Stock.HasValue)
+                    effects.EventoSuscripcionStockBajo(resultDto, 10);
+            });
+    }
+
+    /// <summary>
+    /// Aplica el patch condicional: cada campo solo se toca si el DTO trae valor
+    /// (la semantica de PATCH). Metodo puro sin estado: extraido de
+    /// UpdatePartialAsync para dejar el flujo de ese metodo lineal.
+    /// </summary>
+    private static void AplicarPatch(Producto producto, ProductoPatchDto dto)
+    {
         if (!string.IsNullOrWhiteSpace(dto.Nombre))
             producto.Nombre = dto.Nombre;
 
@@ -390,34 +418,14 @@ IOutputCacheStore outputCacheStore
 
         if (dto.CategoriaId.HasValue && dto.CategoriaId.Value > 0)
             producto.CategoriaId = dto.CategoriaId.Value;
-
-        var updated = await productoRepository.UpdateAsync(producto);
-        var resultDto = updated.ToDto();
-
-        // Solo si el precio vario: un PATCH de solo stock/imagen no es un
-        // cambio de precio (ver UpdateAsync).
-        if (precioAnterior != updated.Precio)
-            await RegistrarPrecioEnCassandra(updated);
-
-        await InvalidarCacheProductoAsync($"productos:{id}");
-
-        return Result.Success<ProductoDto, DomainError>(resultDto)
-            .Tap(_ =>
-            {
-                logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
-                NotificarWebSocketProductoActualizado(resultDto);
-                EventoSuscripcionProductoActualizado(resultDto);
-                if (dto.Stock.HasValue)
-                    EventoSuscripcionStockBajo(resultDto, 10);
-            });
     }
 
     /// <summary>
-    /// 🎓 Fail-open: el histórico en Cassandra NO puede tumbar el update de
-    /// PostgreSQL. Se AWAIT (no fire-and-forget) para que quien acaba de hacer
-    /// el PATCH pueda leer el punto recién escrito (y para el E2E), pero la
-    /// excepción se traga con warning: si Cassandra está caído, la API sigue.
-    /// Equivalente al PrecioHistoricoHandler del proyecto CQRS.
+    /// 🎓 Escribe el precio actualizado en las dos tablas de serie (Q-A histórico +
+    /// Q-C informe del día) DESPUÉS de persistir en PostgreSQL y con await: el
+    /// orden importa, quien acaba de hacer el PATCH encuentra el punto ya escrito
+    /// si consulta la serie seguido. Equivalente al PrecioHistoricoHandler del
+    /// proyecto CQRS: misma escritura, otro cableado.
     /// </summary>
     private async Task RegistrarPrecioEnCassandra(Producto producto)
     {
@@ -471,205 +479,8 @@ IOutputCacheStore outputCacheStore
 
     #endregion
 
-    #region Métodos Privados - WebSocket Nativo
 
-    /// <summary>
-    /// Notifica vía WebSocket la creación de un producto.
-    /// </summary>
-    private void NotificarWebSocketProductoCreado(ProductoDto producto)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                    ProductoNotificationType.CREATED,
-                    producto.Id,
-                    producto
-                ));
-                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto creado ID={ProductoId}", producto.Id);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación WebSocket al crear producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
 
-    /// <summary>
-    /// Notifica vía WebSocket la actualización de un producto.
-    /// </summary>
-    private void NotificarWebSocketProductoActualizado(ProductoDto producto)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                    ProductoNotificationType.UPDATED,
-                    producto.Id,
-                    producto
-                ));
-                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto actualizado ID={ProductoId}", producto.Id);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación WebSocket al actualizar producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Notifica vía WebSocket la eliminación de un producto.
-    /// </summary>
-    private void NotificarWebSocketProductoEliminado(long productoId)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                    ProductoNotificationType.DELETED,
-                    productoId,
-                    null
-                ));
-                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto eliminado ID={ProductoId}", productoId);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación WebSocket al eliminar producto: {ProductoId}", productoId);
-            }
-        });
-    }
-
-    #endregion
-
-    #region Métodos Privados - SignalR
-
-    /// <summary>
-    /// Notifica vía SignalR la creación de un producto.
-    /// </summary>
-    private void NotificarSignalRProductoCreado(ProductoDto producto)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
-                    productoId = producto.Id,
-                    nombre = producto.Nombre,
-                    descripcion = producto.Descripcion,
-                    precio = producto.Precio,
-                    stock = producto.Stock,
-                    categoriaId = producto.CategoriaId,
-                    categoriaNombre = producto.CategoriaNombre,
-                    tipo = "PRODUCTO_CREADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoCreado", payload);
-                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto creado ID={ProductoId}", producto.Id);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación SignalR al crear producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Notifica vía SignalR la actualización de un producto.
-    /// </summary>
-    private void NotificarSignalRProductoActualizado(ProductoDto producto)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
-                    productoId = producto.Id,
-                    nombre = producto.Nombre,
-                    descripcion = producto.Descripcion,
-                    precio = producto.Precio,
-                    stock = producto.Stock,
-                    categoriaId = producto.CategoriaId,
-                    categoriaNombre = producto.CategoriaNombre,
-                    tipo = "PRODUCTO_ACTUALIZADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoActualizado", payload);
-                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto actualizado ID={ProductoId}", producto.Id);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación SignalR al actualizar producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Notifica vía SignalR la eliminación de un producto.
-    /// </summary>
-    private void NotificarSignalRProductoEliminado(long productoId)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
-                    productoId,
-                    tipo = "PRODUCTO_ELIMINADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoEliminado", payload);
-                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto eliminado ID={ProductoId}", productoId);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación SignalR al eliminar producto: {ProductoId}", productoId);
-            }
-        });
-    }
-
-    #endregion
-
-    #region Métodos Privados - Email
-
-    /// <summary>
-    /// Envía email de notificación cuando se crea un producto.
-    /// </summary>
-    private void EnviarEmailProductoCreado(Producto producto)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
-
-                var content = EmailTemplates.ProductoCreado(producto.Nombre, producto.Precio, producto.Stock, producto.Id);
-                var body = EmailTemplates.CreateBase("Nuevo Producto Creado", content);
-
-                var emailMessage = new EmailMessage
-                {
-                    To = adminEmail,
-                    Subject = "🆕 Nuevo Producto en Tienda DAW",
-                    Body = body,
-                    IsHtml = true
-                };
-                await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras crear producto");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras crear producto");
-            }
-        });
-    }
-
-    #endregion
 
     #region Métodos Privados - Validación
 
@@ -711,110 +522,4 @@ IOutputCacheStore outputCacheStore
 
     #endregion
 
-    #region Métodos Privados - GraphQL Subscriptions
-
-    /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se crea un producto.
-    /// </summary>
-    private void EventoSuscripcionProductoCreado(ProductoDto producto)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent
-                {
-                    ProductoId = producto.Id,
-                    Nombre = producto.Nombre,
-                    Precio = producto.Precio,
-                    Stock = producto.Stock,
-                    CreatedAt = DateTime.UtcNow
-                });
-                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto creado ID={ProductoId}", producto.Id);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al crear producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se actualiza un producto.
-    /// </summary>
-    private void EventoSuscripcionProductoActualizado(ProductoDto producto)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await eventPublisher.PublishAsync("onProductoActualizado", new ProductoActualizadoEvent
-                {
-                    ProductoId = producto.Id,
-                    Nombre = producto.Nombre,
-                    Precio = producto.Precio,
-                    Stock = producto.Stock,
-                    UpdatedAt = DateTime.UtcNow
-                });
-                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto actualizado ID={ProductoId}", producto.Id);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al actualizar producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se elimina un producto.
-    /// </summary>
-    private void EventoSuscripcionProductoEliminado(long productoId)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await eventPublisher.PublishAsync("onProductoEliminado", new ProductoEliminadoEvent
-                {
-                    ProductoId = productoId,
-                    DeletedAt = DateTime.UtcNow
-                });
-                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto eliminado ID={ProductoId}", productoId);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al eliminar producto: {ProductoId}", productoId);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Publica evento de GraphQL Subscription cuando el stock está bajo.
-    /// </summary>
-    private void EventoSuscripcionStockBajo(ProductoDto producto, int umbralStock)
-    {
-        if (producto.Stock > umbralStock) return;
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await eventPublisher.PublishAsync("onStockBajo", new ProductoStockBajoEvent
-                {
-                    ProductoId = producto.Id,
-                    Nombre = producto.Nombre,
-                    StockActual = producto.Stock,
-                    UmbralStock = umbralStock,
-                    DetectedAt = DateTime.UtcNow
-                });
-                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Stock bajo ID={ProductoId}, Stock={Stock}", producto.Id, producto.Stock);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription de stock bajo: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    #endregion
 }

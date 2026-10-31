@@ -25,7 +25,8 @@ public class UsersControllerTests
     {
         _mockUserService = new Mock<IUserService>();
         _mockLogger = new Mock<ILogger<UsersController>>();
-        // IHistorialService mockeado: estos tests no tocan el historial/feed (T13 lo cubre).
+        // IHistorialService mockeado: estos tests no tocan el historial/feed (lo
+        // cubren los tests unit e integration del historial).
         _controller = new UsersController(_mockUserService.Object, Mock.Of<IHistorialService>(), _mockLogger.Object);
     }
 

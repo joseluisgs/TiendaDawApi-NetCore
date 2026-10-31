@@ -24,9 +24,15 @@ public static class ServicesConfig
         return services
             .AddScoped<ICategoriaService, CategoriaService>()
             .AddScoped<IProductoService, ProductoService>()
+            .AddScoped<IProductoEffects, ProductoEffects>()
             .AddScoped<IHistorialService, HistorialService>()
             .AddScoped<IPedidosService, PedidosService>()
-            .AddScoped<IJwtService, JwtService>()
+            .AddScoped<IPedidoEffects, PedidoEffects>()
+            // JwtService es stateless (config + logger, sin estado por request):
+            // se registra como Singleton para poder inyectarlo en
+            // PedidosWebSocketHandler, que TAMBIÉN es singleton (guarda las
+            // conexiones activas) y un singleton no puede consumir scoped.
+            .AddSingleton<IJwtService, JwtService>()
             .AddTransient<IJwtTokenExtractor, JwtTokenExtractor>()
             // IAuthService NO se registra aquí: lo decide AuthenticationConfig según Auth:Mode
             // (Custom → AuthService / Identity → IdentityAuthService). Registrarlo aquí lo

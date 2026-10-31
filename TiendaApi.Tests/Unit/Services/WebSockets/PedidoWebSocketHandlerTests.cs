@@ -39,6 +39,7 @@ public class PedidosWebSocketHandlerTests
         _handler = new PedidosWebSocketHandler(
             _mockLogger.Object,
             _mockTokenExtractor.Object,
+            Mock.Of<IJwtService>(),
             _mockCacheService.Object,
             _mockConfiguration.Object);
     }
@@ -73,6 +74,7 @@ public class PedidosWebSocketHandlerTests
         var handler = new PedidosWebSocketHandler(
             logger.Object,
             tokenExtractor.Object,
+            Mock.Of<IJwtService>(),
             cacheService.Object,
             config.Object);
 
@@ -319,6 +321,7 @@ public class PedidosWebSocketHandlerTests
         return new PedidosWebSocketHandler(
             _mockLogger.Object,
             _mockTokenExtractor.Object,
+            Mock.Of<IJwtService>(),
             _mockCacheService.Object,
             _mockConfiguration.Object);
     }

@@ -2,6 +2,7 @@ using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -51,12 +52,10 @@ public class PedidosServiceTests
             _mockProductoRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
             _mockPedidoValidator.Object,
-            _mockItemValidator.Object
+            _mockItemValidator.Object,
+            Mock.Of<IOutputCacheStore>(),
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
     }
 
@@ -72,7 +71,10 @@ public class PedidosServiceTests
         _mockHubContext = new Mock<IHubContext<PedidosHub>>();
         _mockWebSocketHandler = new Mock<PedidosWebSocketHandler>(
             Mock.Of<ILogger<PedidosWebSocketHandler>>(),
-            Mock.Of<IJwtTokenExtractor>());
+            Mock.Of<IJwtTokenExtractor>(),
+            Mock.Of<IJwtService>(),
+            Mock.Of<ICacheService>(),
+            Mock.Of<IConfiguration>());
         _mockPedidoValidator = new Mock<IValidator<PedidoRequestDto>>();
         _mockItemValidator = new Mock<IValidator<PedidoItemRequestDto>>();
         _mockTransaction = new Mock<IDbContextTransaction>();
@@ -87,6 +89,7 @@ public class PedidosServiceTests
         _mockWebSocketHandler = new Mock<PedidosWebSocketHandler>(
             Mock.Of<ILogger<PedidosWebSocketHandler>>(),
             Mock.Of<IJwtTokenExtractor>(),
+            Mock.Of<IJwtService>(),
             _mockCacheService.Object,
             _mockConfiguration.Object);
 
@@ -155,8 +158,8 @@ public class PedidosServiceTests
             Estado = PedidoEstado.PENDIENTE
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -189,12 +192,10 @@ public class PedidosServiceTests
             _mockProductoRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
             _mockPedidoValidator.Object,
-            _mockItemValidator.Object
+            _mockItemValidator.Object,
+            Mock.Of<IOutputCacheStore>(),
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
         var result = await _service.CreateAsync(userId, pedidoDto);
@@ -226,12 +227,10 @@ public class PedidosServiceTests
             _mockProductoRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
             _mockPedidoValidator.Object,
-            _mockItemValidator.Object
+            _mockItemValidator.Object,
+            Mock.Of<IOutputCacheStore>(),
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
         var result = await _service.CreateAsync(userId, pedidoDto);
@@ -252,8 +251,8 @@ public class PedidosServiceTests
             }
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
-            .ReturnsAsync((Producto?)null);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(Array.Empty<Producto>());
 
         var result = await _service.CreateAsync(userId, pedidoDto);
 
@@ -282,8 +281,8 @@ public class PedidosServiceTests
             Stock = 10
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
 
         var result = await _service.CreateAsync(userId, pedidoDto);
 
@@ -314,8 +313,8 @@ public class PedidosServiceTests
 
         var npgsqlException = new NpgsqlException("40001: serialization_failure");
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
 
         _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
             .ThrowsAsync(npgsqlException)
@@ -362,8 +361,8 @@ public class PedidosServiceTests
 
         var npgsqlException = new NpgsqlException("40001: serialization_failure");
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -421,10 +420,8 @@ public class PedidosServiceTests
             Estado = PedidoEstado.PENDIENTE
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto1);
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(2))
-            .ReturnsAsync(producto2);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new List<Producto> { producto1, producto2 });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync((Producto p) => p);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -527,8 +524,8 @@ public class PedidosServiceTests
             Estado = PedidoEstado.PENDIENTE
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -577,8 +574,8 @@ public class PedidosServiceTests
 
         var npgsqlException = new NpgsqlException("40001: could not serialize access due to concurrent update");
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -626,8 +623,8 @@ public class PedidosServiceTests
 
         var npgsqlException = new NpgsqlException("error de serializacion al actualizar");
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -673,8 +670,8 @@ public class PedidosServiceTests
             Estado = PedidoEstado.PENDIENTE
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -706,12 +703,10 @@ public class PedidosServiceTests
             _mockProductoRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockEmailService.Object,
-            _mockConfiguration.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
             _mockPedidoValidator.Object,
-            _mockItemValidator.Object
+            _mockItemValidator.Object,
+            Mock.Of<IOutputCacheStore>(),
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
         var result = await _service.CreateAsync(userId, pedidoDto);
@@ -733,8 +728,8 @@ public class PedidosServiceTests
             }
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
-            .ReturnsAsync((Producto?)null);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(Array.Empty<Producto>());
 
         await _service.CreateAsync(userId, pedidoDto);
 
@@ -762,8 +757,8 @@ public class PedidosServiceTests
             Stock = 10
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
 
         await _service.CreateAsync(userId, pedidoDto);
 
@@ -804,8 +799,8 @@ public class PedidosServiceTests
 
         var npgsqlException = new NpgsqlException("40001: serialization_failure");
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -851,8 +846,8 @@ public class PedidosServiceTests
 
         var npgsqlException = new NpgsqlException("40001: serialization_failure");
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -892,9 +887,8 @@ public class PedidosServiceTests
         var producto2 = new Producto { Id = 2, Nombre = "Product 2", Precio = 25, Stock = 20 };
         var producto3 = new Producto { Id = 3, Nombre = "Product 3", Precio = 30, Stock = 5 };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(producto1);
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(2)).ReturnsAsync(producto2);
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(3)).ReturnsAsync(producto3);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new List<Producto> { producto1, producto2, producto3 });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync((Producto p) => p);
 
@@ -929,8 +923,8 @@ public class PedidosServiceTests
             Estado = PedidoEstado.PENDIENTE
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(producto1);
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(2)).ReturnsAsync(producto2);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new List<Producto> { producto1, producto2 });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync((Producto p) => p);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -975,8 +969,8 @@ public class PedidosServiceTests
             Estado = PedidoEstado.PENDIENTE
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.Is<Producto>(p => p.Stock == 0)))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -1015,8 +1009,8 @@ public class PedidosServiceTests
             Estado = PedidoEstado.PENDIENTE
         };
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
@@ -1052,8 +1046,8 @@ public class PedidosServiceTests
         var genericException = new SerializationFailureException("connection timeout",
             new NpgsqlException("connection timeout"));
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
 
         _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
             .ThrowsAsync(genericException)
@@ -1089,8 +1083,8 @@ public class PedidosServiceTests
 
         var npgsqlException = new NpgsqlException("40001: serialization_failure");
 
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
 
         _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
             .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
@@ -1561,8 +1555,8 @@ public class PedidosServiceTests
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .Callback<Pedido>(p => pedidoGuardado = p)
             .ReturnsAsync((Pedido p) => p);
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
 
@@ -1606,8 +1600,8 @@ public class PedidosServiceTests
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .Callback<Pedido>(p => pedidoGuardado = p)
             .ReturnsAsync((Pedido p) => p);
-        _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
+            .ReturnsAsync(new[] { producto });
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
 

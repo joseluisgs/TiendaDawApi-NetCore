@@ -17,6 +17,7 @@ using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
+using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Services.Storage;
 using TiendaApi.Api.Validators.Productos;
@@ -40,6 +41,7 @@ public class ProductoServiceTests
     private Mock<IValidator<ProductoRequestDto>> _mockValidator = null!;
     private Mock<IStorageService> _mockStorageService = null!;
     private Mock<IEventPublisher> _mockEventPublisher = null!;
+    private Mock<IHistorialRepository> _mockHistorialRepo = null!;
     private ProductoService _service = null!;
 
     [SetUp]
@@ -56,6 +58,7 @@ public class ProductoServiceTests
         _mockValidator = new Mock<IValidator<ProductoRequestDto>>();
         _mockStorageService = new Mock<IStorageService>();
         _mockEventPublisher = new Mock<IEventPublisher>();
+        _mockHistorialRepo = new Mock<IHistorialRepository>();
 
         _mockConfiguration.Setup(c => c["Cache:ProductoCacheTTLMinutes"]).Returns("10");
 
@@ -66,18 +69,15 @@ public class ProductoServiceTests
         var eventPublisher = new Mock<IEventPublisher>();
         _service = new ProductoService(
             _mockProductoRepo.Object,
-            Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
+            _mockHistorialRepo.Object,
             _mockCategoriaRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
-            _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
-            _mockEventPublisher.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new ProductoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, _mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
         );
     }
 
@@ -287,14 +287,11 @@ public class ProductoServiceTests
             _mockCategoriaRepo.Object,
             _mockLogger.Object,
             _mockCacheService.Object,
-            _mockWebSocketHandler.Object,
-            _mockHubContext.Object,
-            _mockEmailService.Object,
             _mockConfiguration.Object,
             _mockValidator.Object,
             _mockStorageService.Object,
-            _mockEventPublisher.Object,
-            Mock.Of<IOutputCacheStore>()
+            Mock.Of<IOutputCacheStore>(),
+            new ProductoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, _mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
         );
     }
 
@@ -605,6 +602,169 @@ public class ProductoServiceTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
+    }
+
+    #endregion
+
+    #region UpdatePartialAsync Tests
+
+    // El PATCH mide dos cosas: aplicar SOLO los campos enviados (semantica
+    // parcial de AplicarPatch) y, si el precio vario, escribir el punto en la
+    // serie de Cassandra. Aqui se ejercita el servicio REAL de ProductService;
+    // los tests de controller usan mock del servicio y no llegan hasta aqui.
+
+    [Test]
+    public async Task UpdatePartialAsync_PatchCompleto_AplicaTodosLosCampos_Y_EscribeSerie()
+    {
+        // Arrange: producto existente y DTO con los6 campos rellenos
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Teclado",
+            Descripcion = "Mecanico",
+            Precio = 50m,
+            Stock = 5,
+            Imagen = "teclado.png",
+            CategoriaId = 2
+        };
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync((Producto p) => p);
+
+        var dto = new ProductoPatchDto
+        {
+            Nombre = "Teclado RGB",
+            Descripcion = "Mecanico retroiluminado",
+            Precio = 79.99m,
+            Stock = 12,
+            Imagen = "rgb.png",
+            CategoriaId = 3
+        };
+
+        // Act
+        var result = await _service.UpdatePartialAsync(1, dto);
+
+        // Assert: los6 campos enviados llegan al repositorio
+        result.IsSuccess.Should().BeTrue();
+        _mockProductoRepo.Verify(r => r.UpdateAsync(It.Is<Producto>(p =>
+            p.Nombre == "Teclado RGB" &&
+            p.Descripcion == "Mecanico retroiluminado" &&
+            p.Precio == 79.99m &&
+            p.Stock == 12 &&
+            p.Imagen == "rgb.png" &&
+            p.CategoriaId == 3)), Times.Once);
+        // El precio vario -> el punto se escribe en las series (Q-A + Q-C)
+        _mockHistorialRepo.Verify(r => r.RegistrarPrecioAsync(1, (double)79.99m), Times.Once);
+        // La cache de lectura se invalida para que el siguiente GET vea el cambio
+        _mockCacheService.Verify(c => c.RemoveAsync("productos:1"), Times.Once);
+    }
+
+    [Test]
+    public async Task UpdatePartialAsync_SoloPrecio_DejaElRestoIntacto()
+    {
+        // Arrange: solo el precio viene en el DTO; el resto NO debe tocarse
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Teclado",
+            Descripcion = "Mecanico",
+            Precio = 50m,
+            Stock = 5,
+            CategoriaId = 2
+        };
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync((Producto p) => p);
+
+        var dto = new ProductoPatchDto { Precio = 79.99m };
+
+        // Act
+        var result = await _service.UpdatePartialAsync(1, dto);
+
+        // Assert: cambia el precio, los demas campos conservan su valor
+        result.IsSuccess.Should().BeTrue();
+        _mockProductoRepo.Verify(r => r.UpdateAsync(It.Is<Producto>(p =>
+            p.Precio == 79.99m &&
+            p.Nombre == "Teclado" &&
+            p.Descripcion == "Mecanico" &&
+            p.Stock == 5 &&
+            p.CategoriaId == 2)), Times.Once);
+    }
+
+    [Test]
+    public async Task UpdatePartialAsync_ValoresInvalidos_NoModificaNada_NiEscribeSerie()
+    {
+        // Arrange: Nombre en blanco, Precio<=0 y CategoriaId=0 significan
+        // "no tocar ese campo" en la semantica del patch
+        var producto = new Producto
+        {
+            Id = 1,
+            Nombre = "Teclado",
+            Descripcion = "Mecanico",
+            Precio = 50m,
+            Stock = 5,
+            CategoriaId = 2
+        };
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync((Producto p) => p);
+
+        var dto = new ProductoPatchDto { Nombre = "   ", Precio = 0m, CategoriaId = 0 };
+
+        // Act
+        var result = await _service.UpdatePartialAsync(1, dto);
+
+        // Assert: el producto persiste intacto...
+        result.IsSuccess.Should().BeTrue();
+        _mockProductoRepo.Verify(r => r.UpdateAsync(It.Is<Producto>(p =>
+            p.Nombre == "Teclado" &&
+            p.Precio == 50m &&
+            p.CategoriaId == 2)), Times.Once);
+        // ...y al no variar el precio no se anade punto a la serie
+        _mockHistorialRepo.Verify(
+            r => r.RegistrarPrecioAsync(It.IsAny<long>(), It.IsAny<double>()), Times.Never);
+    }
+
+    [Test]
+    public async Task UpdatePartialAsync_SoloStock_NoEscribeSerie()
+    {
+        // Arrange: un patch de solo stock no es un cambio de precio, por eso
+        // no genera punto nuevo en el historial
+        var producto = new Producto { Id = 1, Nombre = "Teclado", Precio = 50m, Stock = 5 };
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(producto);
+        _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
+            .ReturnsAsync((Producto p) => p);
+
+        var dto = new ProductoPatchDto { Stock = 10 };
+
+        // Act
+        var result = await _service.UpdatePartialAsync(1, dto);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _mockProductoRepo.Verify(r => r.UpdateAsync(It.Is<Producto>(p => p.Stock == 10)), Times.Once);
+        _mockHistorialRepo.Verify(
+            r => r.RegistrarPrecioAsync(It.IsAny<long>(), It.IsAny<double>()), Times.Never);
+    }
+
+    [Test]
+    public async Task UpdatePartialAsync_ProductoInexistente_RetornaNoEncontrado_SinPersistir()
+    {
+        // Arrange: el 404 lo decide PostgreSQL (fuente de verdad)
+        _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
+            .ReturnsAsync((Producto?)null);
+
+        var dto = new ProductoPatchDto { Nombre = "Nuevo" };
+
+        // Act
+        var result = await _service.UpdatePartialAsync(999, dto);
+
+        // Assert: error y ninguna escritura posterior
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>();
+        _mockProductoRepo.Verify(r => r.UpdateAsync(It.IsAny<Producto>()), Times.Never);
+        _mockHistorialRepo.Verify(
+            r => r.RegistrarPrecioAsync(It.IsAny<long>(), It.IsAny<double>()), Times.Never);
     }
 
     #endregion

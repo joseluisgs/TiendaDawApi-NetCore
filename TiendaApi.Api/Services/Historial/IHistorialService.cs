@@ -10,9 +10,9 @@ namespace TiendaApi.Api.Services.Historial;
 /// 🎓 Reparto de responsabilidades al estilo de la casa:
 /// - PostgreSQL (vía <c>IProductoRepository</c>) decide si el producto EXISTE:
 ///   es la fuente de verdad, y su 404 manda.
-/// - Cassandra (vía <c>IHistorialRepository</c>) guarda las SERIES. Si el nodo
-///   está caído, la API no se rompe: lecturas responden vacío y escrituras no
-///   tumbean el resto (fail-open, mismo criterio que el cableado T10).
+/// - Cassandra (vía <c>IHistorialRepository</c>) guarda las SERIES: dato derivado
+///   que se consulta DESPUÉS de validar contra PostgreSQL, y cuya API trabaja
+///   con listas — sin puntos = lista vacía, una respuesta válida como otra.
 /// </summary>
 public interface IHistorialService
 {
@@ -43,6 +43,6 @@ public interface IHistorialService
     /// </summary>
     /// <param name="usuarioId">Usuario autenticado.</param>
     /// <param name="limit">Tamaño del feed (se acota a 1..100; por defecto 20).</param>
-    /// <returns>Entradas del feed, de la más reciente a la más antigua (vacío si Cassandra está en modo degradado).</returns>
+    /// <returns>Entradas del feed, de la más reciente a la más antigua (vacío si el usuario aún no tiene vistas).</returns>
     Task<IReadOnlyList<VistaFeedDto>> GetFeedVistasAsync(long usuarioId, int limit);
 }

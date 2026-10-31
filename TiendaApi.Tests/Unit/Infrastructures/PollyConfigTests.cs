@@ -9,7 +9,7 @@ using TiendaApi.Api.Infrastructures;
 namespace TiendaApi.Tests.Unit.Infrastructures;
 
 /// <summary>
-/// Fase 6 — Tests educativos del pipeline de resiliencia (Polly v8).
+/// Tests educativos del pipeline de resiliencia (Polly v8).
 /// Cubren los tres comportamientos clave: reintentos con backoff, corte de
 /// reintentos al abrir el circuito y agotamiento total de intentos.
 /// Los delays se anulan (delay: TimeSpan.Zero) para que los tests sean instantáneos.

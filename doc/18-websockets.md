@@ -399,6 +399,42 @@ public class WebSocketMessage
 
 ## 18.6. WebSocket Handler
 
+### Autenticación del token (endpoint `/ws/pedidos`)
+
+`/ws/pedidos` recibe el JWT por header `Authorization: Bearer ...` (preferido:
+el query string aparece en logs de proxies y el header no) o por `?token=` como
+fallback para clientes que no pueden fijar cabeceras. Y lo importante: el token
+se **valida con firma** antes de confiar en lo que dice:
+
+```csharp
+// De PedidosWebSocketHandler.HandleConnectionAsync
+if (string.IsNullOrEmpty(token))
+{
+    await CloseWebSocketAsync(webSocket, WebSocketCloseStatus.PolicyViolation, "Token requerido");
+    return;
+}
+
+// 🎓 Validar la FIRMA antes de confiar en el contenido del token.
+// El extractor solo parsea el JWT (ReadJwtToken), así que sin esta
+// comprobación valdría cualquier token fabricado. Aquí se comprueba
+// firma, issuer, audiencia y vida - la misma validación que aplica la
+// API HTTP con JwtBearer.
+if (_jwtService.ValidateToken(token) is null)
+{
+    await CloseWebSocketAsync(webSocket, WebSocketCloseStatus.PolicyViolation, "Token inválido");
+    return;
+}
+
+var (userId, isAdmin, _) = _tokenExtractor.ExtractUserInfo(token);
+```
+
+Dos capas con responsabilidades distintas: `IJwtService.ValidateToken` decide
+**si el token es auténtico**; `IJwtTokenExtractor` (que solo lee claims) decide
+**qué información contiene**. Sin la primera, cualquiera podría fabricar un
+token con `alg: none` y recibir notificaciones de pedidos ajenos — incluso
+fingiendo el rol admin, porque el estado de administrador también se lee del
+token (ya validado).
+
 ```csharp
 public class WebSocketHandler
 {

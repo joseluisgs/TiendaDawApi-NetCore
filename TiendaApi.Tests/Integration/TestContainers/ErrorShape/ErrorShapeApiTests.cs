@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
+using TiendaApi.Api.Data.Seed;
 
 namespace TiendaApi.Tests.Integration.TestContainers.ErrorShape;
 
@@ -22,7 +23,8 @@ public class ErrorShapeApiTests
 {
     private const string DatabaseName = "it_error_shape";
     private const string AdminUsuario = "admin";
-    private const string AdminPassword = "admin";
+    // Credenciales unificadas: las MISMAS en Custom e Identity (SeedCredentials).
+    private const string AdminPassword = SeedCredentials.AdminPassword;
     private const string IpRateLimit = "172.16.9.9";
 
     private WebApplicationFactory<Program>? _factory;

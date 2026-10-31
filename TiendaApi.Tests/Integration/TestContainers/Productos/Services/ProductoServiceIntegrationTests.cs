@@ -96,6 +96,7 @@ public class ProductoServiceIntegrationTests
 
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
+        services.AddScoped<IProductoEffects, ProductoEffects>();
         services.AddScoped<IProductoService, ProductoService>();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
         services.AddScoped<ICacheService, MemoryCacheService>();
@@ -113,8 +114,9 @@ public class ProductoServiceIntegrationTests
         services.AddScoped<IEmailService, MemoryEmailService>();
         // IHistorialRepository (Cassandra): mock al estilo de este container (como
         // IStorageService/IHubContext de arriba). Estos tests prueban PostgreSQL y
-        // MongoDB; la escritura del precio en los updates es fail-open (T10) y la
-        // serie real de Cassandra se cubre en T14 con Testcontainers.Cassandra.
+        // MongoDB; la escritura del precio en los updates se delega en este mock y
+        // la serie real de Cassandra la cubren los tests de integración con
+        // Testcontainers.Cassandra.
         services.AddScoped<IHistorialRepository>(sp =>
         {
             var mockHistorial = new Mock<IHistorialRepository>();

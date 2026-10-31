@@ -292,6 +292,13 @@ public class SingletonService
         // Usar context...
     }
 }
+
+// ✅ TAMBIÉN CORRECTO - Si el "scoped" es stateless, hazlo Singleton.
+// Caso real de este proyecto: IJwtService solo lee IConfiguration e ILogger
+// (sin estado por request) y lo necesita inyectar PedidosWebSocketHandler,
+// que ES singleton porque guarda las conexiones activas - y un singleton
+// no puede consumir servicios scoped.
+builder.Services.AddSingleton<IJwtService, JwtService>();
 ```
 
 ---

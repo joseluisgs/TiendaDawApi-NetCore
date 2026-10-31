@@ -12,9 +12,10 @@ namespace TiendaApi.Tests.Unit.Services;
 
 /// <summary>
 /// Tests unitarios de HistorialService con los DOS repositorios mockeados
-/// (PostgreSQL = existencia, Cassandra = series). La leccion clave: si
-/// Cassandra falla, el servicio NO lanza — fail-open (lecturas en vacio,
-/// escritura en warning), igual que el resto del cableado T10.
+/// (PostgreSQL = existencia, Cassandra = series). La leccion: la serie es
+/// dato derivado con manejo propio - lecturas tipadas como lista (vacio si
+/// no hay puntos) y escritura con resultado ignorado; el 404 lo decide
+/// siempre PostgreSQL.
 /// </summary>
 public class HistorialServiceTests
 {
@@ -167,7 +168,8 @@ public class HistorialServiceTests
         var act = async () => await _service.RegistrarVistaAsync(2, 1);
         var result = await act.Should().NotThrowAsync();
 
-        // Fail-open de escritura: el POST /vista responde 204 aunque Cassandra no este.
+        // El resultado de la escritura en serie no cambia la respuesta: el
+        // metodo termina bien con el repositorio mockeado.
         result.Which.IsSuccess.Should().BeTrue();
     }
 
@@ -208,7 +210,8 @@ public class HistorialServiceTests
         var act = async () => await _service.GetFeedVistasAsync(2, 20);
         var result = await act.Should().NotThrowAsync();
 
-        // Particion vacia = lista vacia; el modo degradado tambien.
+        // Particion vacia = lista vacia: la respuesta canonica de una serie
+        // sin puntos (aqui, con el repositorio mockeado).
         result.Which.Should().BeEmpty();
     }
 }

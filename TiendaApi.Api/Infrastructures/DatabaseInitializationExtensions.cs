@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using Serilog;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Data.Seed.Mongo;
@@ -36,6 +37,25 @@ public static class DatabaseInitializationExtensions
             context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
 
+            // 🎓 Mongo con el MISMO patrón que PostgreSQL: en desarrollo se
+            // elimina la BD y las siembras de más abajo (read-model de productos
+            // y pedidos) la vuelven a poblar desde cero. Sin este paso,
+            // MongoDbSeeder solo siembra si está vacío y la BD acumulaba
+            // pedidos entre corridas de las suites E2E.
+            try
+            {
+                var mongoDbName = configuration["MongoDbSettings:DatabaseName"] ?? "tienda";
+                var mongoClient = scope.ServiceProvider.GetRequiredService<IMongoClient>();
+                await mongoClient.DropDatabaseAsync(mongoDbName);
+                logger.LogInformation("🗂️ [DESARROLLO] MongoDB '{Database}' eliminado (se siembra a continuación)", mongoDbName);
+            }
+            catch (Exception ex)
+            {
+                // Mongo puede no estar disponible aún: mismo criterio que el resto
+                // de siembras Mongo, no bloquea el arranque (se reintenta en cada reinicio).
+                logger.LogWarning(ex, "No se pudo reiniciar MongoDB en desarrollo");
+            }
+
             // Seed PostgreSQL
             var sqlSeeder = scope.ServiceProvider.GetRequiredService<SqlSeeder>();
             await sqlSeeder.SeedAsync();
@@ -44,7 +64,7 @@ public static class DatabaseInitializationExtensions
         }
         else
         {
-            // Producción: EF Core Migrations (8.4/8.5) — Migrate() aplica solo lo
+            // Producción: EF Core Migrations — Migrate() aplica solo lo
             // pendiente, por lo que una BD viva actualiza sin perder datos.
             await ApplyPendingMigrationsAsync(context, logger);
         }
@@ -80,8 +100,8 @@ public static class DatabaseInitializationExtensions
     /// <summary>
     /// Aplica las migraciones pendientes en producción.
     /// <para>
-    /// <b>Baseline (8.5):</b> las BDs creadas antes de esta fase con <c>EnsureCreated</c>
-    /// ya tienen las tablas pero NO la tabla <c>__EFMigrationsHistory</c>. Si
+    /// <b>Baseline de migraciones:</b> las BDs ya creadas con <c>EnsureCreated</c>
+    /// tienen las tablas pero NO la tabla <c>__EFMigrationsHistory</c>. Si
     /// <c>Migrate()</c> intentase ejecutar <c>InitialCreate</c> fallaría por "tabla ya
     /// existe". Por eso, si el esquema ya existe y no hay historial, marcamos
     /// <c>InitialCreate</c> como aplicada (sin ejecutarla) y <c>Migrate()</c> se

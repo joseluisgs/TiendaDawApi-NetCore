@@ -33,7 +33,7 @@ script:post-response {
       expect(res.getStatus()).to.equal(200);
   });
 
-  // Guardar el precio nuevo para comprobar que aparece en la serie (T10).
+  // Guardar el precio nuevo para comprobar que aparece en la serie.
   if (res.getStatus() === 200) {
       const jsonData = res.getBody();
       bru.setVar("precioNuevo", String(jsonData.precio));

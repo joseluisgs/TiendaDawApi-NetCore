@@ -7,7 +7,7 @@ using Path = System.IO.Path;
 namespace TiendaApi.Tests.Integration.TestContainers.Historial;
 
 /// <summary>
-/// T14 - integración de la pila de series contra Cassandra REAL (Testcontainers,
+/// Integración de la pila de series contra Cassandra REAL (Testcontainers,
 /// el mismo esquema de producción creado por InitializeSchemaAsync). Sin mocks:
 /// se verifican las 5 garantías del diseño de la pizarra.
 /// </summary>
@@ -146,7 +146,7 @@ public class CassandraHistorialRepositoryTests
 
         foreach (var fichero in ficheros)
         {
-            // Anti-patron T5.2.9: ALLOW FILTERING escanea la tabla entera; el
+            // Anti-patrón: ALLOW FILTERING escanea la tabla entera; el
             // diseno por particiones no debe necesitarlo jamas.
             File.ReadAllText(fichero).ToUpperInvariant().Should().NotContain("ALLOW FILTERING",
                 $"el fichero {Path.GetFileName(fichero)} no debe depender de filtros en el servidor");

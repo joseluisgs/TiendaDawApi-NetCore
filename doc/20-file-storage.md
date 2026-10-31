@@ -565,26 +565,33 @@ if (filename.Contains("..") || filename.Contains('/') || filename.Contains('\\')
 }
 ```
 
-### Validación de Ruta
+### Validación en la lectura (`GET /storage/{**path}`)
+
+El endpoint que sirve las imágenes recibe la ruta **del cliente**, así que aquí la
+regla es que **la ruta nunca manda** (la sección de subida no cubre este camino):
 
 ```csharp
-public string GetFullPath(string filename)
-{
-    if (System.IO.Path.IsPathRooted(filename))
-        return filename;
+// De StorageController.GetFile - defensa en profundidad
+var basePath = System.IO.Path.Combine(_environment.ContentRootPath, "wwwroot");
 
-    // Sanitizar filename
-    var cleanFilename = filename;
-    var prefix = $"/{_uploadPath}/";
+// 1) Sin rutas absolutas: Path.Combine descartaría basePath
+//    (ej: GET /storage//etc/passwd leería /etc/passwd)
+// 2) Sin segmentos "..": escapan de wwwroot
+if (System.IO.Path.IsPathRooted(path) || path.Contains("..", StringComparison.Ordinal))
+    return NotFound();
 
-    if (filename.StartsWith("/storage/", StringComparison.OrdinalIgnoreCase))
-        cleanFilename = filename["/storage/".Length..];
-    else if (filename.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        cleanFilename = filename[prefix.Length..];
-
-    return System.IO.Path.Combine(_rootPath, cleanFilename);
-}
+// 3) Y la ruta final debe seguir DENTRO de basePath
+var fullPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(basePath, path));
+var basePathFull = System.IO.Path.GetFullPath(basePath);
+if (!fullPath.StartsWith(basePathFull + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal))
+    return NotFound();
 ```
+
+> 📌 `FileSystemStorageService.GetFullPath` (la utilidad del servicio) solo
+> **normaliza prefijos** (`/storage/...`): **no es una validación por sí misma** —
+> con una ruta absoluta la devuelve tal cual. La defensa de lectura vive en el
+> controller con las tres comprobaciones de arriba. Las dos capas (subida y
+> lectura) son la misma idea: **el cliente propone, el servidor verifica**.
 
 ---
 

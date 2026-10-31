@@ -262,9 +262,10 @@ public class JwtTokenExtractorTests
 
         // Assert
         Assert.That(claims, Is.Not.Null);
-        Assert.That(claims!.FindFirstValue(ClaimTypes.NameIdentifier), Is.EqualTo("123"));
-        Assert.That(claims.FindFirstValue(ClaimTypes.Role), Is.EqualTo("admin"));
-        Assert.That(claims.FindFirstValue(ClaimTypes.Email), Is.EqualTo("test@example.com"));
+        var c = claims!;   // no-null garantizado por la asercion previa (CS8604)
+        Assert.That(c.FindFirstValue(ClaimTypes.NameIdentifier), Is.EqualTo("123"));
+        Assert.That(c.FindFirstValue(ClaimTypes.Role), Is.EqualTo("admin"));
+        Assert.That(c.FindFirstValue(ClaimTypes.Email), Is.EqualTo("test@example.com"));
     }
 
     [Test]

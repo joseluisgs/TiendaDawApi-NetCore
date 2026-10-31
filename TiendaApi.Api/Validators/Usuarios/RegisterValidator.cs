@@ -5,7 +5,7 @@ namespace TiendaApi.Api.Validators.Usuarios;
 
 /// <summary>
 /// Validador FluentValidation para RegisterDto.
-/// Reglas: Username(3-50), Email válido, Password(6-100).
+/// Reglas: Username(3-50), Email válido, Password(8-100 con mayúscula, minúscula y dígito).
 /// </summary>
 public class RegisterValidator : AbstractValidator<RegisterDto>
 {
@@ -27,7 +27,13 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
 
         RuleFor(r => r.Password)
             .NotEmpty().WithMessage("La contraseña es obligatoria")
-            .MinimumLength(6).WithMessage("La contraseña debe tener al menos 6 caracteres")
-            .MaximumLength(100).WithMessage("La contraseña no puede exceder 100 caracteres");
+            // 🎓 Misma política que Identity (AuthenticationConfig): ≥8, mayúscula,
+            // minúscula y dígito. Si el validador permitiera menos, Custom aceptaría
+            // contraseñas que Identity rechaza → el modo cambiaría el comportamiento.
+            .MinimumLength(8).WithMessage("La contraseña debe tener al menos 8 caracteres")
+            .MaximumLength(100).WithMessage("La contraseña no puede exceder 100 caracteres")
+            .Matches("[A-Z]").WithMessage("La contraseña debe contener al menos una mayúscula")
+            .Matches("[a-z]").WithMessage("La contraseña debe contener al menos una minúscula")
+            .Matches("[0-9]").WithMessage("La contraseña debe contener al menos un dígito");
     }
 }

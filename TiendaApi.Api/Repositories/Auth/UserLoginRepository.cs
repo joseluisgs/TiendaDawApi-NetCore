@@ -15,17 +15,12 @@ public class UserLoginRepository(
     /// <inheritdoc/>
     public async Task<UserLogin?> FindByProviderAsync(string loginProvider, string providerKey)
     {
+        // AsNoTracking: la vinculacion hallada solo se lee (UserId); si no
+        // existe, la alta es un Add de una entidad NUEVA en SaveAsync.
         return await context.ExternalLogins
+            .AsNoTracking()
             .FirstOrDefaultAsync(ul =>
                 ul.LoginProvider == loginProvider && ul.ProviderKey == providerKey);
-    }
-
-    /// <inheritdoc/>
-    public async Task<IEnumerable<UserLogin>> FindByUserIdAsync(long userId)
-    {
-        return await context.ExternalLogins
-            .Where(ul => ul.UserId == userId)
-            .ToListAsync();
     }
 
     /// <inheritdoc/>

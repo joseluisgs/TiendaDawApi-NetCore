@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.OutputCaching;
 using System.Diagnostics;
 using System.Threading.Channels;
 using CSharpFunctionalExtensions;
@@ -180,8 +181,13 @@ public class PedidosNativeServiceIntegrationTests
 
         services.AddScoped<ILogger<PedidosService>, Logger<PedidosService>>();
         services.AddScoped<PedidosWebSocketHandler>();
+        // El handler valida el JWT con IJwtService al aceptar la conexión:
+        // el contenedor de este test debe registrarlo igual que ServicesConfig.
+        services.AddSingleton<IJwtService, JwtService>();
         services.AddScoped<IEmailService, MemoryEmailService>();
         services.AddScoped<ICacheService, MemoryCacheService>();
+        services.AddOutputCache();
+        services.AddScoped<IPedidoEffects, PedidoEffects>();
         services.AddScoped<IPedidosService, PedidosService>();
         services.AddScoped<IValidator<PedidoRequestDto>, PedidoRequestValidator>();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();

@@ -24,7 +24,7 @@
     },
     {
       "name": "adminPassword",
-      "value": "admin",
+      "value": "Admin123!",
       "type": "text",
       "enabled": true,
       "secret": true
@@ -38,7 +38,7 @@
     },
     {
       "name": "userPassword",
-      "value": "userdaw",
+      "value": "Userdaw123!",
       "type": "text",
       "enabled": true,
       "secret": true

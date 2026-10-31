@@ -349,9 +349,9 @@ public static class PaginationLinksHelper
 }
 ```
 
-### Paginación real en el proyecto (Fase 3)
+### Paginación real en el proyecto
 
-Antes de la **Fase 3** los endpoints paginados (`GET /api/pedidos`) cargaban **toda** la colección con `FindAllAsync()` y recortaban en memoria con `.Skip().Take()`: coste proporcional a la tabla completa, trabajo desperdiciado y un `totalCount` también calculado sobre la lista entera. La paginación real se empuja a la BD, **una vez por backend**:
+Antes de paginar en BD los endpoints paginados (`GET /api/pedidos`) cargaban **toda** la colección con `FindAllAsync()` y recortaban en memoria con `.Skip().Take()`: coste proporcional a la tabla completa, trabajo desperdiciado y un `totalCount` también calculado sobre la lista entera. La paginación real se empuja a la BD, **una vez por backend**:
 
 ```csharp
 // EF Core + PostgreSQL (PedidosEfCoreRepository.cs)
@@ -796,6 +796,11 @@ public class ProductFilterSpecification : Specification<Producto>
 
 ## 6.7. ETag para Cacheo
 
+> ⚠ **Nota de este proyecto**: el siguiente bloque es un **ejemplo educativo** del patrón de
+> revalidación con ETag. Este proyecto **no lo implementa** — aquí la caché HTTP se apoya
+> **solo en OutputCache + tags** (y el header `Age` del propio middleware). Lo demuestra el
+> propio README: *"`ETag/304 no implementado`"*.
+
 ```csharp
 [HttpGet("{id:long}")]
 [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
@@ -823,27 +828,27 @@ public async Task<IActionResult> GetProduct(long id)
 }
 ```
 
-### Patrón real del proyecto (Fase 4): OutputCache + ETag + 304
+### Patrón real del proyecto: OutputCache + invalidación por tags
 
-Este proyecto combina la caché de salida con revalidación ETag en **dos capas**. La decisión de diseño es importante: **cada GET cacheable declara su propia política en el atributo**, no hay un TTL global oculto:
+Este proyecto cachea los GET con el middleware de caché de salida. La decisión de diseño es importante: **cada GET cacheable declara su propia política en el atributo**, no hay un TTL global oculto:
 
 ```csharp
-// ProductosController.cs — GET, GET {id} y GET paged
+// ProductosController.cs - GET, GET {id} y GET paged (mismo patrón en Categorias
+// y en los listados admin de Pedidos, con su propio tag)
 [HttpGet]
 [OutputCache(Duration = 60, Tags = new[] { "productos" })]
 [ProducesResponseType(typeof(PagedResult<ProductoDto>), StatusCodes.Status200OK)]
 public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int size = 10)
 {
     // ...servicio...
-    Response.Headers.ETag = $"\"{Guid.NewGuid():n}\"";   // ETag por respuesta
-    return Ok(dto);
+    return Ok(dto);   // el middleware añade el header Age con los segundos cacheados
 }
 ```
 
 - **`Duration = 60`**: durante 60 s las peticiones idénticas se sirven desde la caché de salida (middleware `OutputCache`, registrado en `Infrastructures/OutputCacheConfig.cs` y activado con `app.UseOutputCacheConfig()` **antes** de `MapControllers`).
-- **`Tags = { "productos" }`**: invalidación selectiva. Tras cualquier CUD, los servicios llaman a `IOutputCacheStore.EvictByTagAsync("productos", ...)` — incluido el alta desde **GraphQL**, que también muta productos. Sin tags, los 60 s de TTL dejarían datos viejos tras un PUT/DELETE.
-- **ETag + `304`**: si el cliente revalida (`If-None-Match`) y el middleware no está devolviendo ya la respuesta cacheada, el controlador responde `304 Not Modified` sin cuerpo. Verificado en el smoke de la Fase 4: segundo `GET /api/productos` → **304**.
-- **Qué NO se cachea**: endpoints autenticados o mutaciones (`POST/PUT/DELETE`), que dependen de `Authorization`.
+- **Tags**: invalidación selectiva por recurso. Tras cualquier CUD se llama a `IOutputCacheStore.EvictByTagAsync(...)`: `productos` desde servicios y comandos (incluido el alta desde **GraphQL**), `categorias` desde el servicio de categorías y `pedidos` desde `PedidosService`/los commands (listados admin de pedidos). Sin tags, los 60 s de TTL dejarían datos viejos tras un PUT/DELETE.
+- **ETag + `304`**: **no implementados** en este proyecto (no hay `If-None-Match` ni `NotModified` en el código); el HIT de caché se detecta por el header `Age`.
+- **Qué NO se cachea**: las mutaciones (`POST/PUT/DELETE`) y los GET **por usuario** (`/pedidos/me/*`, `/users/me/*`): `OutputCache` **no varía por `Authorization`** por defecto, así que cachearlos serviría datos de otro usuario. Los listados admin de pedidos (`GET /pedidos` y `/pedidos/paged`, con tag `pedidos`) **sí se cachean**.
 
 > Regla práctica: **TTL para lo que cambia "con el tiempo"** (listados públicos) y **tags para lo que cambia "por eventos"** (cualquier CUD). Las dos conviven: el tag siempre "gana" porque permite invalidar antes de que venza el TTL.
 

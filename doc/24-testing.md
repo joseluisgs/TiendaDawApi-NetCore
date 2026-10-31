@@ -1830,7 +1830,7 @@ TiendaApi Collection/
         "baseUrl": "http://localhost:5000",
         "apiVersion": "v1",
         "email": "admin@tienda.com",
-        "password": "Admin123"
+        "password": "Admin123!"
     },
     "prod": {
         "baseUrl": "https://api.tienda.com",
@@ -1950,7 +1950,7 @@ pm.test("Signin - Token recibido", function () {
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"email\": \"admin@tienda.com\",\n    \"password\": \"Admin123\"\n}"
+                            "raw": "{\n    \"email\": \"admin@tienda.com\",\n    \"password\": \"Admin123!\"\n}"
                         },
                         "url": {
                             "raw": "{{baseUrl}}/v1/auth/signin",
@@ -2485,9 +2485,9 @@ meta {
 vars {
   baseUrl: http://localhost:5000
   adminUsername: admin
-  adminPassword: Admin1234
-  userUsername: user
-  userPassword: User1234
+  adminPassword: Admin123!
+  userUsername: userdaw
+  userPassword: Userdaw123!
 }
 ```
 
@@ -2625,7 +2625,7 @@ services:
     environment:
       - BASE_URL=http://host.docker.internal:5000
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=Admin1234
+      - ADMIN_PASSWORD=Admin123!
     command: >
       sh -c "
         npm install -g @usebruno/cli 2>/dev/null &&
@@ -2773,7 +2773,7 @@ Con testing E2E dominado (tanto Postman como Bruno), tienes un arsenal completo 
 
 ## 24.15. Automation E2E con Node (test-runner.mjs)
 
-Newman y Bruno prueban **colecciones HTTP**. La **Fase 7** añadió una tercera capa: un runner en **Node nativo, sin `npm install`**, que lleva la API de cero a verde en un solo comando y sirve de red de seguridad para el resto de fases (y de comando de CI).
+Newman y Bruno prueban **colecciones HTTP**. Esta suite añadió una tercera capa: un runner en **Node nativo, sin `npm install`**, que lleva la API de cero a verde en un solo comando y sirve de red de seguridad para el resto de fases (y de comando de CI).
 
 **Uso:**
 
@@ -2789,7 +2789,7 @@ BASE_URL=http://localhost:5031 node TiendaApi.Tests.E2E/Automation/test-runner.m
 
 ```javascript
 /**
- * Automation E2E — TiendaApi .NET (Fase 7 del plan FASES-MEJORAS.md)
+ * Automation E2E — TiendaApi .NET
  *
  * Estilo UD02 ejemplos/<nn>-ProductosX/automation/test-runner.mjs:
  * Node nativo, SIN npm install.
@@ -2819,7 +2819,7 @@ const CONFIG = {
 };
 ```
 
-**Qué cubre (55/55 checks)** — todos los controladores, happy path **y** errores/autorización:
+**Qué cubre** - todos los controladores, happy path **y** errores/autorización:
 
 | Bloque | Ejemplos de checks |
 |---|---|
@@ -2832,12 +2832,12 @@ const CONFIG = {
 
 **Por qué "falla claro" en 429:** el runner conoce el rate limit (`RateLimitConfig.cs`) y distingue *rotura* de *límite de tráfico* — si un check recibe 429, el mensaje lo dice explícitamente en vez de un 400 genérico.
 
-**Resultado actual:** `Total: 55 · OK: 55 · KO: 0` con exit code 0 — verificado tras cada fase (Fases 5, 6, 7 y 11). Junto con los tests unit (1039), de integración (161) y las colecciones E2E (Newman 95 · Bruno 108), completa la pirámide de testing del proyecto:
+**Ejemplo de salida:** `OK` con exit code 0 - verificado tras cada hito de este proyecto. Junto con los tests unit, los de integración y las colecciones E2E (Newman y Bruno), completa la pirámide de testing del proyecto:
 
 ```mermaid
 flowchart TD
-    U["Unit (NUnit, 1039)"] --> I["Integración (TestContainers, 161)"]
+    U["Unit (NUnit)"] --> I["Integración (TestContainers)"]
     I --> C["Controller (WebApplicationFactory)"]
     C --> A["Automation E2E Node (55)"]
-    A --> E["Colecciones: Newman (95) + Bruno (108)"]
+    A --> E["Colecciones: Newman + Bruno"]
 ```

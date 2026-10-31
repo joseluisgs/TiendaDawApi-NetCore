@@ -1,728 +1,728 @@
-# 27. Optimización de Rendimiento
+#·27.·Optimización·de·Rendimiento
 
-## Índice
+##·Índice
 
-[27. Optimización de Rendimiento](#27-optimización-de-rendimiento)
-  - [27.1. ¿Por qué Optimizar?](#271-por-qué-optimizar)
-  - [27.2. Optimización de Endpoints](#272-optimización-de-endpoints)
-  - [27.3. Optimización de Base de Datos](#273-optimización-de-base-de-datos)
-  - [27.4. Caching Avanzado](#274-caching-avanzado)
-  - [27.5. Optimización de Entity Framework Core](#275-optimización-de-entity-framework-core)
-  - [27.6. Benchmarking](#276-benchmarking)
-  - [27.7. Serialización JSON con Source Generation](#277-serialización-json-con-source-generation)
-  - [27.8. Resumen y Buenas Prácticas](#278-resumen-y-buenas-prácticas)
+[27.·Optimización·de·Rendimiento](#27-optimización-de-rendimiento)
+··-·[27.1.·¿Por·qué·Optimizar?](#271-por-qué-optimizar)
+··-·[27.2.·Optimización·de·Endpoints](#272-optimización-de-endpoints)
+··-·[27.3.·Optimización·de·Base·de·Datos](#273-optimización-de-base-de-datos)
+··-·[27.4.·Caching·Avanzado](#274-caching-avanzado)
+··-·[27.5.·Optimización·de·Entity·Framework·Core](#275-optimización-de-entity-framework-core)
+··-·[27.6.·Benchmarking](#276-benchmarking)
+··-·[27.7.·Serialización·JSON·con·Source·Generation](#277-serialización-json-con-source-generation)
+··-·[27.8.·Resumen·y·Buenas·Prácticas](#278-resumen-y-buenas-prácticas)
 
 ---
 
-## 27.1. ¿Por qué Optimizar?
+##·27.1.·¿Por·qué·Optimizar?
 
-El rendimiento de una API afecta directamente la experiencia del usuario y los costos de infraestructura.
+El·rendimiento·de·una·API·afecta·directamente·la·experiencia·del·usuario·y·los·costos·de·infraestructura.
 
 ```mermaid
-flowchart LR
-    subgraph "Sin optimizacion"
-        A1["Request"] --> A2["200ms"]
-        A2 --> A3[" usuario frustrado"]
-    end
-    
-    subgraph "Con optimizacion"
-        B1["Request"] --> B2["50ms"]
-        B2 --> B3[" usuario satisfecho"]
-    end
-    
-    subgraph "Impacto"
-        C1["Menor latencia"]
-        C2["Mejor UX"]
-        C3["Menores costos"]
-        C4["Mayor escalabilidad"]
-    end
+flowchart·LR
+····subgraph·"Sin·optimizacion"
+········A1["Request"]·-->·A2["200ms"]
+········A2·-->·A3["·usuario·frustrado"]
+····end
+····
+····subgraph·"Con·optimizacion"
+········B1["Request"]·-->·B2["50ms"]
+········B2·-->·B3["·usuario·satisfecho"]
+····end
+····
+····subgraph·"Impacto"
+········C1["Menor·latencia"]
+········C2["Mejor·UX"]
+········C3["Menores·costos"]
+········C4["Mayor·escalabilidad"]
+····end
 ```
 
-### Métricas Clave
+###·Métricas·Clave
 
-| Métrica | Objetivo | Medición |
+|·Métrica·|·Objetivo·|·Medición·|
 |---------|----------|----------|
-| **Latencia** | < 100ms API | P95 |
-| **Throughput** | Requests/segundo | RPS |
-| **Disponibilidad** | 99.9% | Uptime |
-| **Uso de CPU** | < 70% | Promedio |
-| **Uso de Memoria** | Estable | Peak |
+|·**Latencia**·|·<·100ms·API·|·P95·|
+|·**Throughput**·|·Requests/segundo·|·RPS·|
+|·**Disponibilidad**·|·99.9%·|·Uptime·|
+|·**Uso·de·CPU**·|·<·70%·|·Promedio·|
+|·**Uso·de·Memoria**·|·Estable·|·Peak·|
 
 ---
 
-## 27.2. Optimización de Endpoints
+##·27.2.·Optimización·de·Endpoints
 
-### Response Compression
+###·Response·Compression
 
 ```csharp
-using Microsoft.AspNetCore.ResponseCompression;
+using·Microsoft.AspNetCore.ResponseCompression;
 
-var builder = WebApplication.CreateBuilder(args);
+var·builder·=·WebApplication.CreateBuilder(args);
 
-builder.Services.AddResponseCompression(options =>
+builder.Services.AddResponseCompression(options·=>
 {
-    options.EnableForHttps = true;
-    
-    options.Providers.Add<BrotliCompressionProvider>();
-    options.Providers.Add<GzipCompressionProvider>();
-    
-    options.MimeTypes = new[]
-    {
-        "text/plain",
-        "text/html",
-        "text/css",
-        "text/javascript",
-        "application/javascript",
-        "application/json",
-        "application/xml"
-    };
+····options.EnableForHttps·=·true;
+····
+····options.Providers.Add<BrotliCompressionProvider>();
+····options.Providers.Add<GzipCompressionProvider>();
+····
+····options.MimeTypes·=·new[]
+····{
+········"text/plain",
+········"text/html",
+········"text/css",
+········"text/javascript",
+········"application/javascript",
+········"application/json",
+········"application/xml"
+····};
 });
 
-builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+builder.Services.Configure<BrotliCompressionProviderOptions>(options·=>
 {
-    options.Level = CompressionLevel.Optimal;
+····options.Level·=·CompressionLevel.Optimal;
 });
 
-builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+builder.Services.Configure<GzipCompressionProviderOptions>(options·=>
 {
-    options.Level = CompressionLevel.Optimal;
+····options.Level·=·CompressionLevel.Optimal;
 });
 
 app.UseResponseCompression();
 ```
 
-### Rate Limiting
+###·Rate·Limiting
 
-Sin paquetes de terceros: se usa la API nativa de .NET `System.Threading.RateLimiting` (ventanas fijas) con un middleware propio que emite las cabeceras `RateLimit-*`:
+Sin·paquetes·de·terceros:·se·usa·la·API·nativa·de·.NET·`System.Threading.RateLimiting`·(ventanas·fijas)·con·un·middleware·propio·que·emite·las·cabeceras·`RateLimit-*`:
 
 ```csharp
-// RateLimitConfig.cs — registro de reglas
-public static IServiceCollection AddRateLimitingPolicy(this IServiceCollection services)
+//·RateLimitConfig.cs·—·registro·de·reglas
+public·static·IServiceCollection·AddRateLimitingPolicy(this·IServiceCollection·services)
 {
-    services.AddSingleton<RateLimitingState>(); // particiones (IP + verbo + ruta)
-    return services;
+····services.AddSingleton<RateLimitingState>();·//·particiones·(IP·+·verbo·+·ruta)
+····return·services;
 }
 
-public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
+public·static·IApplicationBuilder·UseRateLimiting(this·IApplicationBuilder·app)
 {
-    app.UseMiddleware<RateLimitMiddleware>();
-    return app;
+····app.UseMiddleware<RateLimitMiddleware>();
+····return·app;
 }
 ```
 
 ```csharp
-// RateLimitMiddleware.cs — limitadores por partición
-var general = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
+//·RateLimitMiddleware.cs·—·limitadores·por·partición
+var·general·=·new·FixedWindowRateLimiter(new·FixedWindowRateLimiterOptions
 {
-    PermitLimit = RateLimitConfig.GeneralLimit,   // 100
-    Window = RateLimitConfig.GeneralWindow,       // 15 s
-    QueueLimit = 0,                               // sin cola: se rechaza al instante
-    AutoReplenishment = true
+····PermitLimit·=·RateLimitConfig.GeneralLimit,···//·100
+····Window·=·RateLimitConfig.GeneralWindow,·······//·15·s
+····QueueLimit·=·0,·······························//·sin·cola:·se·rechaza·al·instante
+····AutoReplenishment·=·true
 });
 
-// Ventana de un minuto: 10 en /api/v1/auth/*, 20 en cualquier POST
-var minute = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
+//·Ventana·de·un·minuto:·10·en·/api/v1/auth/*,·20·en·cualquier·POST
+var·minute·=·new·FixedWindowRateLimiter(new·FixedWindowRateLimiterOptions
 {
-    PermitLimit = minuteLimit,
-    Window = RateLimitConfig.MinuteWindow,        // 1 min
-    QueueLimit = 0,
-    AutoReplenishment = true
+····PermitLimit·=·minuteLimit,
+····Window·=·RateLimitConfig.MinuteWindow,········//·1·min
+····QueueLimit·=·0,
+····AutoReplenishment·=·true
 });
 ```
 
-Al superar el límite la respuesta es `429 Too Many Requests` con cuerpo JSON y `Retry-After`; las respuestas permitidas incluyen `RateLimit-Limit`, `RateLimit-Remaining` y `RateLimit-Reset`.
+Al·superar·el·límite·la·respuesta·es·`429·Too·Many·Requests`·con·cuerpo·JSON·y·`Retry-After`;·las·respuestas·permitidas·incluyen·`RateLimit-Limit`,·`RateLimit-Remaining`·y·`RateLimit-Reset`.
 
 ---
 
-## 27.3. Optimización de Base de Datos
+##·27.3.·Optimización·de·Base·de·Datos
 
-### Select N+1 Prevention
+###·Select·N+1·Prevention
 
 ```csharp
-// ❌ MAL: N+1 queries
-public async Task<List<ProductoDto>> GetProductosConCategorias()
+//·❌·MAL:·N+1·queries
+public·async·Task<List<ProductoDto>>·GetProductosConCategorias()
 {
-    var productos = await _context.Productos.ToListAsync();
-    
-    var dtos = new List<ProductoDto>();
-    foreach (var producto in productos)
-    {
-        // Query adicional por cada producto
-        var categoria = await _context.Categorias
-            .FirstAsync(c => c.Id == producto.CategoriaId);
-        
-        dtos.Add(new ProductoDto
-        {
-            Id = producto.Id,
-            Nombre = producto.Nombre,
-            CategoriaNombre = categoria.Nombre
-        });
-    }
-    
-    return dtos;
+····var·productos·=·await·_context.Productos.ToListAsync();
+····
+····var·dtos·=·new·List<ProductoDto>();
+····foreach·(var·producto·in·productos)
+····{
+········//·Query·adicional·por·cada·producto
+········var·categoria·=·await·_context.Categorias
+············.FirstAsync(c·=>·c.Id·==·producto.CategoriaId);
+········
+········dtos.Add(new·ProductoDto
+········{
+············Id·=·producto.Id,
+············Nombre·=·producto.Nombre,
+············CategoriaNombre·=·categoria.Nombre
+········});
+····}
+····
+····return·dtos;
 }
 
-// ✅ BIEN: Eager loading
-public async Task<List<ProductoDto>> GetProductosConCategorias()
+//·✅·BIEN:·Eager·loading
+public·async·Task<List<ProductoDto>>·GetProductosConCategorias()
 {
-    return await _context.Productos
-        .Include(p => p.Categoria)  // Carga categoría en la misma query
-        .Select(p => new ProductoDto
-        {
-            Id = p.Id,
-            Nombre = p.Nombre,
-            CategoriaNombre = p.Categoria.Nombre
-        })
-        .ToListAsync();
-}
-```
-
-### Proyección de Columnas
-
-```csharp
-// ❌ Obtiene todas las columnas
-var productos = await _context.Productos.ToListAsync();
-
-// ✅ Solo las columnas necesarias
-var productos = await _context.Productos
-    .Where(p => p.Stock > 0)
-    .Select(p => new
-    {
-        p.Id,
-        p.Nombre,
-        p.Precio
-    })
-    .ToListAsync();
-
-// ✅ Usar AsNoTracking para solo lectura
-var productos = await _context.Productos
-    .AsNoTracking()
-    .Where(p => p.IsActive)
-    .Select(p => new ProductoDto
-    {
-        Id = p.Id,
-        Nombre = p.Nombre,
-        Precio = p.Precio
-    })
-    .ToListAsync();
-```
-
-### Índices Optimizados
-
-```csharp
-protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    modelBuilder.Entity<Producto>(entity =>
-    {
-        // Índice para búsquedas frecuentes
-        entity.HasIndex(p => new { p.CategoriaId, p.IsActive })
-            .HasDatabaseName("IX_Productos_Categoria_Activo");
-
-        // Índice para ordenamiento
-        entity.HasIndex(p => p.CreatedAt)
-            .HasDatabaseName("IX_Productos_CreatedAt");
-
-        // Índice compuesto para filtros comunes
-        entity.HasIndex(p => new { p.IsActive, p.Stock })
-            .HasDatabaseName("IX_Productos_Activo_Stock");
-
-        // Índice parcial para filtrar solo activos
-        entity.HasIndex(p => p.Nombre)
-            .HasDatabaseName("IX_Productos_Nombre_Activos")
-            .HasFilter("IsActive = true");
-    });
+····return·await·_context.Productos
+········.Include(p·=>·p.Categoria)··//·Carga·categoría·en·la·misma·query
+········.Select(p·=>·new·ProductoDto
+········{
+············Id·=·p.Id,
+············Nombre·=·p.Nombre,
+············CategoriaNombre·=·p.Categoria.Nombre
+········})
+········.ToListAsync();
 }
 ```
 
-### Índices reales del proyecto (Fase 1)
-
-Los de arriba son de ejemplo; estos son los que definen el `TiendaDbContext` real del proyecto (la migración `AddOptimizationIndexes` los versiona para las BDs existentes):
+###·Proyección·de·Columnas
 
 ```csharp
-// TiendaDbContext.cs — OnModelCreating (solo los índices)
-modelBuilder.Entity<Categoria>(entity =>
+//·❌·Obtiene·todas·las·columnas
+var·productos·=·await·_context.Productos.ToListAsync();
+
+//·✅·Solo·las·columnas·necesarias
+var·productos·=·await·_context.Productos
+····.Where(p·=>·p.Stock·>·0)
+····.Select(p·=>·new
+····{
+········p.Id,
+········p.Nombre,
+········p.Precio
+····})
+····.ToListAsync();
+
+//·✅·Usar·AsNoTracking·para·solo·lectura
+var·productos·=·await·_context.Productos
+····.AsNoTracking()
+····.Where(p·=>·p.IsActive)
+····.Select(p·=>·new·ProductoDto
+····{
+········Id·=·p.Id,
+········Nombre·=·p.Nombre,
+········Precio·=·p.Precio
+····})
+····.ToListAsync();
+```
+
+###·Índices·Optimizados
+
+```csharp
+protected·override·void·OnModelCreating(ModelBuilder·modelBuilder)
 {
-    entity.HasIndex(c => c.Nombre).IsUnique();                 // búsqueda por nombre, sin duplicados
+····modelBuilder.Entity<Producto>(entity·=>
+····{
+········//·Índice·para·búsquedas·frecuentes
+········entity.HasIndex(p·=>·new·{·p.CategoriaId,·p.IsActive·})
+············.HasDatabaseName("IX_Productos_Categoria_Activo");
+
+········//·Índice·para·ordenamiento
+········entity.HasIndex(p·=>·p.CreatedAt)
+············.HasDatabaseName("IX_Productos_CreatedAt");
+
+········//·Índice·compuesto·para·filtros·comunes
+········entity.HasIndex(p·=>·new·{·p.IsActive,·p.Stock·})
+············.HasDatabaseName("IX_Productos_Activo_Stock");
+
+········//·Índice·parcial·para·filtrar·solo·activos
+········entity.HasIndex(p·=>·p.Nombre)
+············.HasDatabaseName("IX_Productos_Nombre_Activos")
+············.HasFilter("IsActive·=·true");
+····});
+}
+```
+
+###·Índices·reales·del·proyecto
+
+Los·de·arriba·son·de·ejemplo;·estos·son·los·que·definen·el·`TiendaDbContext`·real·del·proyecto·(la·migración·`AddOptimizationIndexes`·los·versiona·para·las·BDs·existentes):
+
+```csharp
+//·TiendaDbContext.cs·—·OnModelCreating·(solo·los·índices)
+modelBuilder.Entity<Categoria>(entity·=>
+{
+····entity.HasIndex(c·=>·c.Nombre).IsUnique();·················//·búsqueda·por·nombre,·sin·duplicados
 });
 
-modelBuilder.Entity<Producto>(entity =>
+modelBuilder.Entity<Producto>(entity·=>
 {
-    entity.HasIndex(p => p.CategoriaId);                       // JOINs/filtros por categoría
-    entity.HasIndex(p => new { p.CategoriaId, p.Precio });     // compuesto: catálogo filtrado+ordenado por precio
-    entity.HasIndex(p => p.CreatedAt);                         // orden por fecha (listados y "recién creados")
-    entity.HasIndex(p => p.IsDeleted);                         // soft-delete: casi todos los SELECT lo filtran
+····entity.HasIndex(p·=>·p.CategoriaId);·······················//·JOINs/filtros·por·categoría
+····entity.HasIndex(p·=>·new·{·p.CategoriaId,·p.Precio·});·····//·compuesto:·catálogo·filtrado+ordenado·por·precio
+····entity.HasIndex(p·=>·p.CreatedAt);·························//·orden·por·fecha·(listados·y·"recién·creados")
+····entity.HasIndex(p·=>·p.IsDeleted);·························//·soft-delete:·casi·todos·los·SELECT·lo·filtran
 });
 
-modelBuilder.Entity<Usuario>(entity =>
+modelBuilder.Entity<Usuario>(entity·=>
 {
-    entity.HasIndex(u => u.Username).IsUnique();               // login
-    entity.HasIndex(u => u.Email).IsUnique();                  // registro/recuperación
-    entity.HasIndex(u => u.Role);                              // listados por rol (admin)
+····entity.HasIndex(u·=>·u.Username).IsUnique();···············//·login
+····entity.HasIndex(u·=>·u.Email).IsUnique();··················//·registro/recuperación
+····entity.HasIndex(u·=>·u.Role);······························//·listados·por·rol·(admin)
 });
 ```
 
-**Cómo elegirlos**: mira el `WHERE`/`ORDER BY` de los listados reales de la API (los mismos que la Automation E2E ejercita): categoría+precio, `IsDeleted`, `CreatedAt`, `Username`/`Email` únicos. Un índice que no corresponde a ninguna consulta es solo coste de escritura. Compuestos → **orden de columnas importa**: `(CategoriaId, Precio)` sirve para filtrar por categoría *y* ordenar por precio; el inverso no.
+**Cómo·elegirlos**:·mira·el·`WHERE`/`ORDER·BY`·de·los·listados·reales·de·la·API·(los·mismos·que·la·Automation·E2E·ejercita):·categoría+precio,·`IsDeleted`,·`CreatedAt`,·`Username`/`Email`·únicos.·Un·índice·que·no·corresponde·a·ninguna·consulta·es·solo·coste·de·escritura.·Compuestos·→·**orden·de·columnas·importa**:·`(CategoriaId,·Precio)`·sirve·para·filtrar·por·categoría·*y*·ordenar·por·precio;·el·inverso·no.
 
 ---
 
-## 27.4. Caching Avanzado
+##·27.4.·Caching·Avanzado
 
-### Cache-Aside con Redis
+###·Cache-Aside·con·Redis
 
 ```csharp
-public class OptimizedCacheService
+public·class·OptimizedCacheService
 {
-    private readonly IDistributedCache _cache;
-    private readonly IConnectionMultiplexer _redis;
-    private readonly TimeSpan _defaultExpiry = TimeSpan.FromMinutes(15);
-    private readonly ILogger<OptimizedCacheService> _logger;
+····private·readonly·IDistributedCache·_cache;
+····private·readonly·IConnectionMultiplexer·_redis;
+····private·readonly·TimeSpan·_defaultExpiry·=·TimeSpan.FromMinutes(15);
+····private·readonly·ILogger<OptimizedCacheService>·_logger;
 
-    public OptimizedCacheService(
-        IDistributedCache cache,
-        IConnectionMultiplexer redis,
-        ILogger<OptimizedCacheService> logger)
-    {
-        _cache = cache;
-        _redis = redis;
-        _logger = logger;
-    }
+····public·OptimizedCacheService(
+········IDistributedCache·cache,
+········IConnectionMultiplexer·redis,
+········ILogger<OptimizedCacheService>·logger)
+····{
+········_cache·=·cache;
+········_redis·=·redis;
+········_logger·=·logger;
+····}
 
-    public async Task<T?> GetOrSetAsync<T>(
-        string key, 
-        Func<Task<T>> factory,
-        TimeSpan? expiry = null)
-    {
-        try
-        {
-            var cached = await _cache.GetStringAsync(key);
-            
-            if (cached != null)
-            {
-                _logger.LogDebug("Cache HIT: {Key}", key);
-                return JsonSerializer.Deserialize<T>(cached);
-            }
+····public·async·Task<T?>·GetOrSetAsync<T>(
+········string·key,·
+········Func<Task<T>>·factory,
+········TimeSpan?·expiry·=·null)
+····{
+········try
+········{
+············var·cached·=·await·_cache.GetStringAsync(key);
+············
+············if·(cached·!=·null)
+············{
+················_logger.LogDebug("Cache·HIT:·{Key}",·key);
+················return·JsonSerializer.Deserialize<T>(cached);
+············}
 
-            _logger.LogDebug("Cache MISS: {Key}", key);
-            
-            var value = await factory();
-            
-            if (value != null)
-            {
-                var options = new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = expiry ?? _defaultExpiry,
-                    SlidingExpiration = TimeSpan.FromMinutes(5)
-                };
-                
-                await _cache.SetStringAsync(
-                    key, 
-                    JsonSerializer.Serialize(value), 
-                    options);
-            }
-            
-            return value;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error accediendo al cache");
-            return await factory();
-        }
-    }
+············_logger.LogDebug("Cache·MISS:·{Key}",·key);
+············
+············var·value·=·await·factory();
+············
+············if·(value·!=·null)
+············{
+················var·options·=·new·DistributedCacheEntryOptions
+················{
+····················AbsoluteExpirationRelativeToNow·=·expiry·??·_defaultExpiry,
+····················SlidingExpiration·=·TimeSpan.FromMinutes(5)
+················};
+················
+················await·_cache.SetStringAsync(
+····················key,·
+····················JsonSerializer.Serialize(value),·
+····················options);
+············}
+············
+············return·value;
+········}
+········catch·(Exception·ex)
+········{
+············_logger.LogWarning(ex,·"Error·accediendo·al·cache");
+············return·await·factory();
+········}
+····}
 
-    public async Task InvalidatePatternAsync(string pattern)
-    {
-        try
-        {
-            var server = _redis.GetServer(_redis.GetEndPoints()[0]);
-            var keys = server.Keys(pattern: $"{pattern}*").ToArray();
-            
-            if (keys.Length > 0)
-            {
-                var db = _redis.GetDatabase();
-                await db.KeyDeleteAsync(keys);
-                _logger.LogInformation(
-                    "Invalidado cache: {Count} keys con patrón {Pattern}",
-                    keys.Length, pattern);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error invalidando cache con patrón {Pattern}", pattern);
-        }
-    }
+····public·async·Task·InvalidatePatternAsync(string·pattern)
+····{
+········try
+········{
+············var·server·=·_redis.GetServer(_redis.GetEndPoints()[0]);
+············var·keys·=·server.Keys(pattern:·$"{pattern}*").ToArray();
+············
+············if·(keys.Length·>·0)
+············{
+················var·db·=·_redis.GetDatabase();
+················await·db.KeyDeleteAsync(keys);
+················_logger.LogInformation(
+····················"Invalidado·cache:·{Count}·keys·con·patrón·{Pattern}",
+····················keys.Length,·pattern);
+············}
+········}
+········catch·(Exception·ex)
+········{
+············_logger.LogWarning(ex,·"Error·invalidando·cache·con·patrón·{Pattern}",·pattern);
+········}
+····}
 }
 ```
 
-### Caché Multinivel (L1 + L2)
+###·Caché·Multinivel·(L1·+·L2)
 
 ```csharp
-public class MultiLevelCacheService
+public·class·MultiLevelCacheService
 {
-    private readonly IMemoryCache _l1Cache;
-    private readonly IDistributedCache _l2Cache;
-    private readonly TimeSpan _l1Expiry = TimeSpan.FromSeconds(30);
-    private readonly TimeSpan _l2Expiry = TimeSpan.FromMinutes(15);
+····private·readonly·IMemoryCache·_l1Cache;
+····private·readonly·IDistributedCache·_l2Cache;
+····private·readonly·TimeSpan·_l1Expiry·=·TimeSpan.FromSeconds(30);
+····private·readonly·TimeSpan·_l2Expiry·=·TimeSpan.FromMinutes(15);
 
-    public async Task<T?> GetAsync<T>(string key)
-    {
-        // L1: Memory cache (ultra rápido)
-        if (_l1Cache.TryGetValue(key, out T? l1Value))
-        {
-            return l1Value;
-        }
+····public·async·Task<T?>·GetAsync<T>(string·key)
+····{
+········//·L1:·Memory·cache·(ultra·rápido)
+········if·(_l1Cache.TryGetValue(key,·out·T?·l1Value))
+········{
+············return·l1Value;
+········}
 
-        try
-        {
-            // L2: Distributed cache
-            var l2Json = await _l2Cache.GetStringAsync(key);
-            
-            if (l2Json != null)
-            {
-                var value = JsonSerializer.Deserialize<T>(l2Json);
-                
-                // Poblar L1
-                _l1Cache.Set(key, value, _l1Expiry);
-                
-                return value;
-            }
-        }
-        catch (Exception ex)
-        {
-            // Fail-open
-        }
+········try
+········{
+············//·L2:·Distributed·cache
+············var·l2Json·=·await·_l2Cache.GetStringAsync(key);
+············
+············if·(l2Json·!=·null)
+············{
+················var·value·=·JsonSerializer.Deserialize<T>(l2Json);
+················
+················//·Poblar·L1
+················_l1Cache.Set(key,·value,·_l1Expiry);
+················
+················return·value;
+············}
+········}
+········catch·(Exception·ex)
+········{
+············//·Fail-open
+········}
 
-        return default;
-    }
+········return·default;
+····}
 
-    public async Task SetAsync<T>(string key, T value)
-    {
-        // Set L1
-        _l1Cache.Set(key, value, _l1Expiry);
+····public·async·Task·SetAsync<T>(string·key,·T·value)
+····{
+········//·Set·L1
+········_l1Cache.Set(key,·value,·_l1Expiry);
 
-        try
-        {
-            // Set L2
-            await _l2Cache.SetStringAsync(
-                key,
-                JsonSerializer.Serialize(value),
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = _l2Expiry
-                });
-        }
-        catch (Exception ex)
-        {
-            // Fail-open
-        }
-    }
+········try
+········{
+············//·Set·L2
+············await·_l2Cache.SetStringAsync(
+················key,
+················JsonSerializer.Serialize(value),
+················new·DistributedCacheEntryOptions
+················{
+····················AbsoluteExpirationRelativeToNow·=·_l2Expiry
+················});
+········}
+········catch·(Exception·ex)
+········{
+············//·Fail-open
+········}
+····}
 
-    public void Invalidate(string key)
-    {
-        _l1Cache.Remove(key);
-        _l2Cache.RemoveAsync(key);
-    }
+····public·void·Invalidate(string·key)
+····{
+········_l1Cache.Remove(key);
+········_l2Cache.RemoveAsync(key);
+····}
 }
 ```
 
 ---
 
-## 27.5. Optimización de Entity Framework Core
+##·27.5.·Optimización·de·Entity·Framework·Core
 
-### Compiled Queries
+###·Compiled·Queries
 
 ```csharp
-// Compilar query para reutilizar
-private static readonly Func<TiendaDbContext, long, Task<Producto?>> 
-    GetByIdCompiled = EF.CompileAsyncQuery(
-        (TiendaDbContext ctx, long id) => 
-            ctx.Productos.FirstOrDefault(p => p.Id == id));
+//·Compilar·query·para·reutilizar
+private·static·readonly·Func<TiendaDbContext,·long,·Task<Producto?>>·
+····GetByIdCompiled·=·EF.CompileAsyncQuery(
+········(TiendaDbContext·ctx,·long·id)·=>·
+············ctx.Productos.FirstOrDefault(p·=>·p.Id·==·id));
 
-// Uso
-public async Task<Producto?> GetByIdAsync(long id)
+//·Uso
+public·async·Task<Producto?>·GetByIdAsync(long·id)
 {
-    return await GetByIdCompiled(_context, id);
+····return·await·GetByIdCompiled(_context,·id);
 }
 ```
 
-### Change Tracking Optimization
+###·Change·Tracking·Optimization
 
 ```csharp
-public class ProductoRepository
+public·class·ProductoRepository
 {
-    private readonly TiendaDbContext _context;
+····private·readonly·TiendaDbContext·_context;
 
-    public async Task<List<ProductoDto>> GetAllReadOnlyAsync()
-    {
-        // Sin tracking para solo lectura
-        return await _context.Productos
-            .AsNoTrackingWithIdentityResolution()  // Para include
-            .Where(p => p.IsActive)
-            .Select(p => new ProductoDto
-            {
-                Id = p.Id,
-                Nombre = p.Nombre,
-                Precio = p.Precio
-            })
-            .ToListAsync();
-    }
+····public·async·Task<List<ProductoDto>>·GetAllReadOnlyAsync()
+····{
+········//·Sin·tracking·para·solo·lectura
+········return·await·_context.Productos
+············.AsNoTrackingWithIdentityResolution()··//·Para·include
+············.Where(p·=>·p.IsActive)
+············.Select(p·=>·new·ProductoDto
+············{
+················Id·=·p.Id,
+················Nombre·=·p.Nombre,
+················Precio·=·p.Precio
+············})
+············.ToListAsync();
+····}
 
-    public async Task<Producto> UpdateStockAsync(long productoId, int nuevoStock)
-    {
-        // Update directo sin cargar entidad
-        var producto = new Producto { Id = productoId };
-        _context.Attach(producto);
-        producto.Stock = nuevoStock;
-        producto.UpdatedAt = DateTime.UtcNow;
+····public·async·Task<Producto>·UpdateStockAsync(long·productoId,·int·nuevoStock)
+····{
+········//·Update·directo·sin·cargar·entidad
+········var·producto·=·new·Producto·{·Id·=·productoId·};
+········_context.Attach(producto);
+········producto.Stock·=·nuevoStock;
+········producto.UpdatedAt·=·DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
-        return producto;
-    }
+········await·_context.SaveChangesAsync();
+········return·producto;
+····}
 
-    public async Task BulkInsertAsync(IEnumerable<Producto> productos)
-    {
-        // Bulk insert para grandes volúmenes
-        await _context.BulkInsertAsync(productos.ToList());
-    }
+····public·async·Task·BulkInsertAsync(IEnumerable<Producto>·productos)
+····{
+········//·Bulk·insert·para·grandes·volúmenes
+········await·_context.BulkInsertAsync(productos.ToList());
+····}
 }
 ```
 
-### AsNoTracking selectivo (Fase 2)
+###·AsNoTracking·selectivo
 
-`AsNoTracking()` le dice a EF que **no** cargue el Change Tracker con las entidades: menos memoria y menos trabajo por fila. Solo es válido donde la entidad **no va a guardarse después** — y ahí el proyecto aplica el cambio de la Fase 2 en **9 sitios de solo lectura**:
+`AsNoTracking()`·le·dice·a·EF·que·**no**·cargue·el·Change·Tracker·con·las·entidades:·menos·memoria·y·menos·trabajo·por·fila.·Solo·es·válido·donde·la·entidad·**no·va·a·guardarse·después**·—·y·ahí·el·proyecto·aplica·ese·cambio·en·**9·sitios·de·solo·lectura**:
 
 ```csharp
-// ProductoRepository.cs — FindAllAsync (con Include) y variantes
-public async Task<IEnumerable<Producto>> FindAllAsync()
+//·ProductoRepository.cs·—·FindAllAsync·(con·Include)·y·variantes
+public·async·Task<IEnumerable<Producto>>·FindAllAsync()
 {
-    logger.LogDebug("Buscando todos los productos");
-    return await context.Productos
-        .Include(p => p.Categoria)
-        .OrderBy(p => p.Nombre)
-        .AsNoTracking()          // ← la lectura nunca hará SaveChanges
-        .ToListAsync();
+····logger.LogDebug("Buscando·todos·los·productos");
+····return·await·context.Productos
+········.Include(p·=>·p.Categoria)
+········.OrderBy(p·=>·p.Nombre)
+········.AsNoTracking()··········//·←·la·lectura·nunca·hará·SaveChanges
+········.ToListAsync();
 }
 
-// También expuesto como IQueryable para composición (Fase 2)
-public IQueryable<Producto> FindAllAsNoTracking()
+//·También·expuesto·como·IQueryable·para·composición
+public·IQueryable<Producto>·FindAllAsNoTracking()
 {
-    return context.Productos
-        .Include(p => p.Categoria)
-        .OrderBy(p => p.Nombre)
-        .AsNoTracking();
+····return·context.Productos
+········.Include(p·=>·p.Categoria)
+········.OrderBy(p·=>·p.Nombre)
+········.AsNoTracking();
 }
 ```
 
-Aplicado en: `CategoriaRepository` (FindAllAsync, items de FindAllPagedAsync) · `ProductoRepository` (FindAllAsync con Include, items de FindAllPagedAsync, FindByCategoriaIdAsync, GetRecentlyCreatedAsync) · `UserRepository` (FindAllAsync, items de FindAllPagedAsync, GetActiveUsersAsync).
+Aplicado·en:·`CategoriaRepository`·(FindAllAsync,·items·de·FindAllPagedAsync)···`ProductoRepository`·(FindAllAsync·con·Include,·items·de·FindAllPagedAsync,·FindByCategoriaIdAsync,·GetRecentlyCreatedAsync)···`UserRepository`·(FindAllAsync,·items·de·FindAllPagedAsync,·GetActiveUsersAsync).
 
-**Lo que NO se toca** (y por qué): `FindByIdAsync` de producto/categoría/usuario, `FindByUsernameAsync`, `FindByEmailAsync`, `DeleteAsync` y las rutas de `Update` **siguen con tracking** — esos métodos devuelven la entidad para modificarla o borrarla, y sin tracking el `SaveChanges` no tendría nada que guardar. Pista de diseño: si el nombre del método es `Find*Async` y su resultado alimenta un PUT/DELETE, déjalo trackeando.
+**Lo·que·NO·se·toca**·(y·por·qué):·`FindByIdAsync`·de·producto/categoría/usuario,·`FindByUsernameAsync`,·`FindByEmailAsync`,·`DeleteAsync`·y·las·rutas·de·`Update`·**siguen·con·tracking**·—·esos·métodos·devuelven·la·entidad·para·modificarla·o·borrarla,·y·sin·tracking·el·`SaveChanges`·no·tendría·nada·que·guardar.·Pista·de·diseño:·si·el·nombre·del·método·es·`Find*Async`·y·su·resultado·alimenta·un·PUT/DELETE,·déjalo·trackeando.
 
-> **Medido en la Fase 2**: build 0/0 · 1034 tests unit · 23/23 endpoints en vivo OK (listados y round-trips POST→PUT→DELETE). Es una optimización de perfil "casi gratis", pero solo si respetas la línea de "no escribo después".
+>·**Medido·en·esa·optimización**:·build·0/0·23/23·endpoints·en·vivo·OK·(listados·y·round-trips·POST→PUT→DELETE).·Es·una·optimización·de·perfil·"casi·gratis",·pero·solo·si·respetas·la·línea·de·"no·escribo·después".
 
 ---
 
-## 27.6. Benchmarking
+##·27.6.·Benchmarking
 
-### Instalación
+###·Instalación
 
 ```bash
-dotnet add package BenchmarkDotNet
+dotnet·add·package·BenchmarkDotNet
 ```
 
-### Benchmark de Cache
+###·Benchmark·de·Cache
 
 ```csharp
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
+using·BenchmarkDotNet.Attributes;
+using·BenchmarkDotNet.Running;
 
 [MemoryDiagnoser]
 [RankColumn]
-public class CacheBenchmark
+public·class·CacheBenchmark
 {
-    private MemoryCache _memoryCache;
-    private IDistributedCache _distributedCache;
-    private const string Key = "test_key";
+····private·MemoryCache·_memoryCache;
+····private·IDistributedCache·_distributedCache;
+····private·const·string·Key·=·"test_key";
 
-    [GlobalSetup]
-    public void Setup()
-    {
-        _memoryCache = new MemoryCache(new MemoryCacheOptions());
-        // Configurar distributed cache...
-    }
+····[GlobalSetup]
+····public·void·Setup()
+····{
+········_memoryCache·=·new·MemoryCache(new·MemoryCacheOptions());
+········//·Configurar·distributed·cache...
+····}
 
-    [Benchmark]
-    public void MemoryCache_Get()
-    {
-        _memoryCache.TryGetValue(Key, out _);
-    }
+····[Benchmark]
+····public·void·MemoryCache_Get()
+····{
+········_memoryCache.TryGetValue(Key,·out·_);
+····}
 
-    [Benchmark]
-    public void DistributedCache_Get()
-    {
-        _distributedCache.GetStringAsync(Key).Wait();
-    }
+····[Benchmark]
+····public·void·DistributedCache_Get()
+····{
+········_distributedCache.GetStringAsync(Key).Wait();
+····}
 
-    [Benchmark]
-    public void MultiLevelCache_Get()
-    {
-        // Test multi-level cache
-    }
+····[Benchmark]
+····public·void·MultiLevelCache_Get()
+····{
+········//·Test·multi-level·cache
+····}
 }
 
-// Runner
-// var summary = BenchmarkRunner.Run<CacheBenchmark>();
+//·Runner
+//·var·summary·=·BenchmarkRunner.Run<CacheBenchmark>();
 ```
 
-### Benchmark de Repository
+###·Benchmark·de·Repository
 
 ```csharp
 [MemoryDiagnoser]
 [RankColumn]
-public class RepositoryBenchmark
+public·class·RepositoryBenchmark
 {
-    private ProductoRepository _repository;
+····private·ProductoRepository·_repository;
 
-    [GlobalSetup]
-    public void Setup()
-    {
-        // Configurar contexto...
-    }
+····[GlobalSetup]
+····public·void·Setup()
+····{
+········//·Configurar·contexto...
+····}
 
-    [Benchmark]
-    public async Task<List<ProductoDto>> GetAllWithTracking()
-    {
-        return await _repository.GetAllWithTrackingAsync();
-    }
+····[Benchmark]
+····public·async·Task<List<ProductoDto>>·GetAllWithTracking()
+····{
+········return·await·_repository.GetAllWithTrackingAsync();
+····}
 
-    [Benchmark]
-    public async Task<List<ProductoDto>> GetAllNoTracking()
-    {
-        return await _repository.GetAllReadOnlyAsync();
-    }
+····[Benchmark]
+····public·async·Task<List<ProductoDto>>·GetAllNoTracking()
+····{
+········return·await·_repository.GetAllReadOnlyAsync();
+····}
 
-    [Benchmark]
-    public async Task<List<ProductoDto>> GetAllCompiled()
-    {
-        return await _repository.GetAllCompiledAsync();
-    }
+····[Benchmark]
+····public·async·Task<List<ProductoDto>>·GetAllCompiled()
+····{
+········return·await·_repository.GetAllCompiledAsync();
+····}
 }
 ```
 
 ---
 
-## 27.7. Serialización JSON con Source Generation
+##·27.7.·Serialización·JSON·con·Source·Generation
 
-### Reflexión frente a generación de código
+###·Reflexión·frente·a·generación·de·código
 
-Por defecto, `System.Text.Json` construye el contrato de cada tipo en tiempo
-de ejecución mediante **reflexión**: la primera vez que se serializa un tipo
-se descubren sus propiedades y se cachea el resultado. Con la **source
-generation**, un generador incluido en el SDK produce en compilación el
-código que serializa y deserializa los tipos declarados, de forma que en
-runtime no hace falta descubrir nada.
+Por·defecto,·`System.Text.Json`·construye·el·contrato·de·cada·tipo·en·tiempo
+de·ejecución·mediante·**reflexión**:·la·primera·vez·que·se·serializa·un·tipo
+se·descubren·sus·propiedades·y·se·cachea·el·resultado.·Con·la·**source
+generation**,·un·generador·incluido·en·el·SDK·produce·en·compilación·el
+código·que·serializa·y·deserializa·los·tipos·declarados,·de·forma·que·en
+runtime·no·hace·falta·descubrir·nada.
 
-| | Reflexión | Source generation |
-| --- | --- | --- |
-| Descubrimiento | En runtime, primera vez | En compilación |
-| Arranque | Coste inicial por tipo | Cero (código ya generado) |
-| Publicación AOT/trimmed | Requiere reflexión disponible | Preparado |
-| Tipos admitidos | Todos (incluidos anónimos) | Solo los declarados |
+|·|·Reflexión·|·Source·generation·|
+|·---·|·---·|·---·|
+|·Descubrimiento·|·En·runtime,·primera·vez·|·En·compilación·|
+|·Arranque·|·Coste·inicial·por·tipo·|·Cero·(código·ya·generado)·|
+|·Publicación·AOT/trimmed·|·Requiere·reflexión·disponible·|·Preparado·|
+|·Tipos·admitidos·|·Todos·(incluidos·anónimos)·|·Solo·los·declarados·|
 
-### El contexto del proyecto: `AppJsonContext`
+###·El·contexto·del·proyecto:·`AppJsonContext`
 
-`TiendaApi.Api/Infrastructures/AppJsonContext.cs` declara con `[JsonSerializable]` los DTOs de
-la API (entidades, DTOs de petición/respuesta, filtros y resultados
-paginados). El contexto se conecta en **todos los puntos** donde la
-aplicación serializa JSON:
+`TiendaApi.Api/Infrastructures/AppJsonContext.cs`·declara·con·`[JsonSerializable]`·los·DTOs·de
+la·API·(entidades,·DTOs·de·petición/respuesta,·filtros·y·resultados
+paginados).·El·contexto·se·conecta·en·**todos·los·puntos**·donde·la
+aplicación·serializa·JSON:
 
-| Punto | Fichero |
-| --- | --- |
-| Entradas/salidas de MVC | `Infrastructures/ControllersConfig.cs` (`AddJsonOptions`) |
-| `/health*`, `/version` | `Program.cs` (`ConfigureHttpJsonOptions`) |
-| Excepciones inesperadas | `Middleware/GlobalExceptionHandler.cs` |
-| Respuesta 429 | `Middleware/RateLimitMiddleware.cs` |
-| WebSockets de productos y pedidos | `Realtime/**` |
-| Caché de Redis | `Services/Cache/RedisCacheService.cs` |
+|·Punto·|·Fichero·|
+|·---·|·---·|
+|·Entradas/salidas·de·MVC·|·`Infrastructures/ControllersConfig.cs`·(`AddJsonOptions`)·|
+|·`/health*`,·`/version`·|·`Program.cs`·(`ConfigureHttpJsonOptions`)·|
+|·Excepciones·inesperadas·|·`Middleware/GlobalExceptionHandler.cs`·|
+|·Respuesta·429·|·`Middleware/RateLimitMiddleware.cs`·|
+|·WebSockets·de·productos·y·pedidos·|·`Realtime/**`·|
+|·Caché·de·Redis·|·`Services/Cache/RedisCacheService.cs`·|
 
-### El fallback es obligatorio
+###·El·fallback·es·obligatorio
 
-La conexión se hace siempre con **resolución combinada**:
+La·conexión·se·hace·siempre·con·**resolución·combinada**:
 
 ```csharp
-TypeInfoResolver = JsonTypeInfoResolver.Combine(
-    AppJsonContext.Default,
-    new DefaultJsonTypeInfoResolver())
+TypeInfoResolver·=·JsonTypeInfoResolver.Combine(
+····AppJsonContext.Default,
+····new·DefaultJsonTypeInfoResolver())
 ```
 
-Si el contexto declarado no conoce un tipo (respuestas anónimas como las de
-`/health`, `/version` o el cuerpo del 429, `ProblemDetails`, etc.),
-**`DefaultJsonTypeInfoResolver` lo resuelve por reflexión**. Conectar solo
-`AppJsonContext.Default` lanzaría `JsonSerializerException` en runtime ante
-cualquier tipo no declarado: por eso el fallback no es opcional.
+Si·el·contexto·declarado·no·conoce·un·tipo·(respuestas·anónimas·como·las·de
+`/health`,·`/version`·o·el·cuerpo·del·429,·`ProblemDetails`,·etc.),
+**`DefaultJsonTypeInfoResolver`·lo·resuelve·por·reflexión**.·Conectar·solo
+`AppJsonContext.Default`·lanzaría·`JsonSerializerException`·en·runtime·ante
+cualquier·tipo·no·declarado:·por·eso·el·fallback·no·es·opcional.
 
-### Cuándo compensa y cómo se mantiene
+###·Cuándo·compensa·y·cómo·se·mantiene
 
-- **Arranque y primeras peticiones**: menos trabajo de descubrimiento.
-- **AOT y trimming**: es el único camino si algún día se publica la API
-  «trimmable»; la reflexión en runtime no sobrevive al recorte.
-- **Coste real en esta API**: con la carga actual, la reflexión es más que
-  suficiente; el valor inmediato es tener el camino preparado y el contrato
-  de tipos declarado.
-- **Mantenimiento**: cada DTO nuevo conviene añadirlo a `AppJsonContext`
-  aunque el fallback lo cubriría; y cualquier cambio de formato debe
-  verificarse con la suite E2E y con la comprobación de contrato OpenAPI,
-  porque un cambio de nombres de propiedad rompe clientes silenciosamente.
+-·**Arranque·y·primeras·peticiones**:·menos·trabajo·de·descubrimiento.
+-·**AOT·y·trimming**:·es·el·único·camino·si·algún·día·se·publica·la·API
+··«trimmable»;·la·reflexión·en·runtime·no·sobrevive·al·recorte.
+-·**Coste·real·en·esta·API**:·con·la·carga·actual,·la·reflexión·es·más·que
+··suficiente;·el·valor·inmediato·es·tener·el·camino·preparado·y·el·contrato
+··de·tipos·declarado.
+-·**Mantenimiento**:·cada·DTO·nuevo·conviene·añadirlo·a·`AppJsonContext`
+··aunque·el·fallback·lo·cubriría;·y·cualquier·cambio·de·formato·debe
+··verificarse·con·la·suite·E2E·y·con·la·comprobación·de·contrato·OpenAPI,
+··porque·un·cambio·de·nombres·de·propiedad·rompe·clientes·silenciosamente.
 
 ---
 
-## 27.8. Resumen y Buenas Prácticas
+##·27.8.·Resumen·y·Buenas·Prácticas
 
-### Checklist de Optimización
+###·Checklist·de·Optimización
 
 ```mermaid
-flowchart TB
-    subgraph "Red"
-        A1["Compression"]
-        A2["CDN"]
-        A3["Rate limiting"]
-    end
-    
-    subgraph "API"
-        A4["Response size"]
-        A5["Batch operations"]
-        A6["Async/Await"]
-    end
-    
-    subgraph "Base de datos"
-        B1["Indices"]
-        B2["No tracking"]
-        B3["Compiled queries"]
-    end
-    
-    subgraph "Cache"
-        C1["Multi-level"]
-        C2["Invalidation"]
-        C3["TTL apropiado"]
-    end
-    
-    subgraph "Monitoreo"
-        D1["Benchmarks"]
-        D2["Métricas"]
-        D3["Profiling"]
-    end
-    
-    A1 --> A2 --> A3
-    A4 --> A5 --> A6
-    B1 --> B2 --> B3
-    C1 --> C2 --> C3
-    D1 --> D2 --> D3
+flowchart·TB
+····subgraph·"Red"
+········A1["Compression"]
+········A2["CDN"]
+········A3["Rate·limiting"]
+····end
+····
+····subgraph·"API"
+········A4["Response·size"]
+········A5["Batch·operations"]
+········A6["Async/Await"]
+····end
+····
+····subgraph·"Base·de·datos"
+········B1["Indices"]
+········B2["No·tracking"]
+········B3["Compiled·queries"]
+····end
+····
+····subgraph·"Cache"
+········C1["Multi-level"]
+········C2["Invalidation"]
+········C3["TTL·apropiado"]
+····end
+····
+····subgraph·"Monitoreo"
+········D1["Benchmarks"]
+········D2["Métricas"]
+········D3["Profiling"]
+····end
+····
+····A1·-->·A2·-->·A3
+····A4·-->·A5·-->·A6
+····B1·-->·B2·-->·B3
+····C1·-->·C2·-->·C3
+····D1·-->·D2·-->·D3
 ```
 
-### Siguientes Pasos
+###·Siguientes·Pasos
 
-Con optimización dominado, el siguiente paso es aprender sobre patrones de arquitectura limpia.
+Con·optimización·dominado,·el·siguiente·paso·es·aprender·sobre·patrones·de·arquitectura·limpia.
 
-### Recursos Adicionales
+###·Recursos·Adicionales
 
-- EF Core Performance: https://learn.microsoft.com/ef/core/performance/
-- BenchmarkDotNet: https://benchmarkdotnet.org/
-- Performance Tips: https://learn.microsoft.com/aspnet/core/performance/
+-·EF·Core·Performance:·https://learn.microsoft.com/ef/core/performance/
+-·BenchmarkDotNet:·https://benchmarkdotnet.org/
+-·Performance·Tips:·https://learn.microsoft.com/aspnet/core/performance/

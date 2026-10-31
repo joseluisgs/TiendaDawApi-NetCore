@@ -24,7 +24,10 @@ public static class WebSocketExtensions
         {
             if (context.WebSockets.IsWebSocketRequest)
             {
-                var ws = await context.WebSockets.AcceptWebSocketAsync();
+                // using: el endpoint es el dueno del socket - el dispose se
+                // ejecuta en cualquier salida del Map (el handler solo garantiza
+                // el cierre en su camino normal).
+                using var ws = await context.WebSockets.AcceptWebSocketAsync();
                 var handler = context.RequestServices.GetRequiredService<ProductosWebSocketHandler>();
                 await handler.HandleConnectionAsync(context, ws);
             }
@@ -35,7 +38,9 @@ public static class WebSocketExtensions
         {
             if (context.WebSockets.IsWebSocketRequest)
             {
-                var ws = await context.WebSockets.AcceptWebSocketAsync();
+                // using: mismo motivo que el endpoint de productos (liberar ante
+                // cualquier salida, incluida la excepcion del handler).
+                using var ws = await context.WebSockets.AcceptWebSocketAsync();
                 var handler = context.RequestServices.GetRequiredService<PedidosWebSocketHandler>();
                 await handler.HandleConnectionAsync(context, ws);
             }

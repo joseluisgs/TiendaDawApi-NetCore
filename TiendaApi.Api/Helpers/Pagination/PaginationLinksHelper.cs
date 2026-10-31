@@ -28,54 +28,54 @@ public static class PaginationLinksHelper
         try
         {
             var linkHeader = new System.Text.StringBuilder();
-            var host = request.Host.Host ?? "localhost";
-            var port = request.Host.Port ?? (request.IsHttps ? 443 : 80);
-            var scheme = request.Scheme;
-            var path = request.Path.Value ?? "";
-            var query = request.QueryString.ToString();
 
-            var uriBuilder = new UriBuilder
+            // Base de todos los enlaces: mismo host, puerto y path que la
+            // petición entrante; BuildUri sobrescribe después la query de cada
+            // enlace con page+size (y el orden, si se pasó).
+            var uriBase = new UriBuilder
             {
-                Scheme = scheme,
-                Host = host,
-                Port = port,
-                Path = path,
-                Query = query
+                Scheme = request.Scheme,
+                Host = request.Host.Host ?? "localhost",
+                Port = request.Host.Port ?? (request.IsHttps ? 443 : 80),
+                Path = request.Path.Value ?? "",
+                Query = request.QueryString.ToString()
             };
 
-            int paginaActual = pagedResult.Page;
-            int totalPaginas = pagedResult.TotalPages;
-            int tamanoPagina = pagedResult.PageSize;
-
-            if (paginaActual > 1)
-            {
-                var uriFirst = BuildUri(1, tamanoPagina, sortBy, direction, uriBuilder);
-                AppendLink(linkHeader, uriFirst, "first");
-            }
-
-            if (paginaActual > 1)
-            {
-                var uriPrev = BuildUri(paginaActual - 1, tamanoPagina, sortBy, direction, uriBuilder);
-                AppendLink(linkHeader, uriPrev, "prev");
-            }
-
-            if (paginaActual < totalPaginas)
-            {
-                var uriNext = BuildUri(paginaActual + 1, tamanoPagina, sortBy, direction, uriBuilder);
-                AppendLink(linkHeader, uriNext, "next");
-            }
-
-            if (paginaActual < totalPaginas)
-            {
-                var uriLast = BuildUri(totalPaginas, tamanoPagina, sortBy, direction, uriBuilder);
-                AppendLink(linkHeader, uriLast, "last");
-            }
+            AgregarEnlacesDeNavegacion(linkHeader, uriBase, pagedResult, sortBy, direction);
 
             return linkHeader.ToString();
         }
         catch
         {
             return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Añade los cuatro enlaces de navegación: first/prev solo si no es la
+    /// primera página y next/last solo si no es la última. Los dos pares de
+    /// condiciones se agrupan aquí (antes vivían intercalados en
+    /// CreateLinkHeader) porque los vecinos de una página se deciden juntos.
+    /// </summary>
+    private static void AgregarEnlacesDeNavegacion<T>(
+        System.Text.StringBuilder header,
+        UriBuilder uriBase,
+        PagedResult<T> pagedResult,
+        string? sortBy,
+        string? direction)
+    {
+        var tamanoPagina = pagedResult.PageSize;
+
+        if (pagedResult.Page > 1)
+        {
+            AppendLink(header, BuildUri(1, tamanoPagina, sortBy, direction, uriBase), "first");
+            AppendLink(header, BuildUri(pagedResult.Page - 1, tamanoPagina, sortBy, direction, uriBase), "prev");
+        }
+
+        if (pagedResult.Page < pagedResult.TotalPages)
+        {
+            AppendLink(header, BuildUri(pagedResult.Page + 1, tamanoPagina, sortBy, direction, uriBase), "next");
+            AppendLink(header, BuildUri(pagedResult.TotalPages, tamanoPagina, sortBy, direction, uriBase), "last");
         }
     }
 

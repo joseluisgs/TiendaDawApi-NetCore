@@ -296,8 +296,9 @@ public class ProductosController(
 
     /// <summary>
     /// Registra que el usuario autenticado ha visto este producto (escritura Q-B,
-    /// alimenta su feed con TTL nativo de 180 días). Fail-open: si Cassandra está
-    /// caído responde igual 204 (solo warning en el servidor).
+    /// alimenta su feed con TTL nativo de 180 días). El 204 lo decide la sesión
+    /// y la existencia del producto: la fila del feed es un dato auxiliar del
+    /// usuario que alimenta una consulta aparte.
     /// </summary>
     /// <param name="id">Producto visto.</param>
     /// <returns>204 No Content, 401 sin sesión o 404 si el producto no existe.</returns>

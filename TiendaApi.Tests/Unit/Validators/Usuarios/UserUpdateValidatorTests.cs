@@ -174,7 +174,7 @@ public class UserUpdateValidatorTests
     }
 
     /// <summary>
-    /// Verifica que un password con menos de 6 caracteres produce un error de validación.
+    /// Verifica que un password con menos de 8 caracteres produce un error de validación.
     /// </summary>
     [Test]
     public void Validate_ConPasswordMuyCorto_TieneError()
@@ -187,17 +187,17 @@ public class UserUpdateValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("6 caracteres"));
+        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("8 caracteres"));
     }
 
     /// <summary>
-    /// Verifica que un password de exactamente 6 caracteres es válido.
+    /// Verifica que un password mínimo válido (≥8 + mayúscula + minúscula + dígito) pasa.
     /// </summary>
     [Test]
-    public void Validate_ConPasswordDe6Caracteres_EsValido()
+    public void Validate_ConPasswordMinimaValida_EsValido()
     {
         // Arrange
-        var dto = new UserUpdateDto { Password = "123456" };
+        var dto = new UserUpdateDto { Password = "Abc12345" };
 
         // Act
         var result = _validator.Validate(dto);
@@ -287,7 +287,7 @@ public class UserUpdateValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("6 caracteres"));
+        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("8 caracteres"));
         result.Errors.Should().NotContain(e => e.ErrorMessage.Contains("correo"));
     }
 

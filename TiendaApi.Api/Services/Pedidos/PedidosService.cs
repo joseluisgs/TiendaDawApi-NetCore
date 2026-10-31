@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -29,12 +30,10 @@ IPedidosRepository pedidosRepository,
 IProductoRepository productoRepository,
 ILogger<PedidosService> logger,
 ICacheService cacheService,
-IEmailService emailService,
-IConfiguration configuration,
-PedidosWebSocketHandler webSocketHandler,
-IHubContext<PedidosHub> pedidosHubContext,
 IValidator<PedidoRequestDto> pedidoValidator,
-IValidator<PedidoItemRequestDto> pedidoItemValidator
+IValidator<PedidoItemRequestDto> pedidoItemValidator,
+IOutputCacheStore outputCacheStore,
+IPedidoEffects effects
 ) : IPedidosService
 {
     private const int MaxRetries = 3;
@@ -146,9 +145,9 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por administrador", id);
-                NotificarWebSocketPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
-                NotificarSignalRPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
-                EnviarEmailPedidoActualizadoAdmin(pedido.Id.ToString(), pedido.Estado ?? "", pedido.Total, pedido.UserId);
+                effects.NotificarWebSocketPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
+                effects.NotificarSignalRPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
+                effects.EnviarEmailPedidoActualizadoAdmin(pedido.Id.ToString(), pedido.Estado ?? "", pedido.Total, pedido.UserId);
             });
     }
 
@@ -177,8 +176,8 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
 
         await InvalidarCachePedidoAsync($"pedidos:{id}");
 
-        NotificarSignalRPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "");
-        EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
+        effects.NotificarSignalRPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "");
+        effects.EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
 
         return UnitResult.Success<DomainError>();
     }
@@ -220,9 +219,9 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             .Tap(_ =>
             {
                 logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
-                NotificarWebSocketPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
-                NotificarSignalRPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
-                EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId);
+                effects.NotificarWebSocketPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
+                effects.NotificarSignalRPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
+                effects.EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId);
             });
     }
 
@@ -316,7 +315,10 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
         {
             try
             {
-                return await CreateWithSerializableTransactionAsync(userId, dto);
+                var creado = await CreateWithSerializableTransactionAsync(userId, dto);
+                if (creado.IsSuccess)
+                    await InvalidarCachePedidoAsync();   // sin keys: solo purga el tag, el listado crece
+                return creado;
             }
             catch (SerializationFailureException)
             {
@@ -410,7 +412,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
-                NotificarWebSocketPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
+                effects.NotificarWebSocketPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
             });
     }
 
@@ -455,7 +457,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
 
         await InvalidarCachePedidoAsync($"pedidos:{id}");
 
-        EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
+        effects.EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
 
         return UnitResult.Success<DomainError>();
     }
@@ -476,6 +478,15 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             var pedidoItems = new List<PedidoItem>();
             decimal total = 0;
 
+            // Precarga de una sola vez: los productos distintos del pedido se
+            // leen con UN SELECT (IDs unicos) en vez de una consulta por item.
+            // La categoria viene incluida para que UpdateAsync no tenga que
+            // recargarla item a item, y el tracking es el que hace valido el
+            // decremento de stock que viene despues.
+            var productosPorId = (await productoRepository
+                .FindByIdsAsync(dto.Items.Select(i => i.ProductoId)))
+                .ToDictionary(p => p.Id);
+
             foreach (var itemDto in dto.Items)
             {
                 var itemValidation = await ValidatePedidoItemAsync(itemDto);
@@ -485,8 +496,7 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
                     return Result.Failure<PedidoDto, DomainError>(itemValidation.Error);
                 }
 
-                var producto = await productoRepository.FindByIdAsync(itemDto.ProductoId);
-                if (producto == null)
+                if (!productosPorId.TryGetValue(itemDto.ProductoId, out var producto))
                 {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
@@ -541,9 +551,9 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             return Result.Success<PedidoDto, DomainError>(dtoResult)
                 .Tap(_ =>
                 {
-                    NotificarWebSocketPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE);
-                    NotificarSignalRPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
-                    EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId);
+                    effects.NotificarWebSocketPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE);
+                    effects.NotificarSignalRPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
+                    effects.EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId);
                     
                 });
         }
@@ -581,271 +591,18 @@ IValidator<PedidoItemRequestDto> pedidoItemValidator
             try { await cacheService.RemoveAsync(key); }
             catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
         }
+
+        // El tag "pedidos" purga el OutputCache de los listados admin
+        // (GetAllPedidos/GetAllPedidosPaged): se invalida en TODA escritura,
+        // el mismo criterio que productos y categorias.
+        try { await outputCacheStore.EvictByTagAsync("pedidos", CancellationToken.None); }
+        catch (Exception ex) { logger.LogWarning(ex, "Output cache invalidation error: Tag=pedidos"); }
     }
 
     #endregion
 
-    #region ========== MÉTODOS PRIVADOS - WEBSOCKET ==========
 
-    /// <summary>
-    /// Notifica vía WebSocket la creación de un pedido.
-    /// Envía notificación al usuario que creó el pedido y a todos los administradores.
-    /// </summary>
-    /// <param name="pedidoId">Identificador del pedido creado.</param>
-    /// <param name="userId">ID del usuario que creó el pedido.</param>
-    /// <param name="estado">Estado inicial del pedido.</param>
-    private void NotificarWebSocketPedidoCreado(string pedidoId, long userId, string estado)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
-                    PedidoNotificationType.CREADO,
-                    pedidoId,
-                    userId,
-                    estado,
-                    null
-                ));
-                logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", pedidoId);
-            }
-        });
-    }
 
-    /// <summary>
-    /// Notifica vía WebSocket la actualización del estado de un pedido.
-    /// Envía notificación al usuario afectado y a todos los administradores.
-    /// </summary>
-    /// <param name="pedidoId">Identificador del pedido.</param>
-    /// <param name="userId">ID del usuario que realizó el pedido.</param>
-    /// <param name="estado">Nuevo estado del pedido.</param>
-    /// <param name="pedido">Datos actualizados del pedido.</param>
-    private void NotificarWebSocketPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
-                    PedidoNotificationType.ESTADO_ACTUALIZADO,
-                    pedidoId,
-                    userId,
-                    estado,
-                    pedido
-                ));
-                logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", pedidoId);
-            }
-        });
-    }
-
-    #endregion
-
-    #region ========== MÉTODOS PRIVADOS - SIGNALR ==========
-
-    private void NotificarSignalRPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
-                    pedidoId,
-                    userId,
-                    estado,
-                    tipo = "PEDIDO_CREADO",
-                    total = pedido.Total,
-                    itemsCount = pedido.Items?.Count ?? 0,
-                    timestamp = DateTime.UtcNow
-                };
-                await pedidosHubContext.Clients.All.SendAsync("PedidoCreado", payload);
-                logger.LogDebug("Notificación SignalR enviada para pedido creado: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
-            }
-        });
-    }
-
-    private void NotificarSignalRPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
-                    pedidoId,
-                    userId,
-                    estado,
-                    tipo = "PEDIDO_ACTUALIZADO",
-                    total = pedido.Total,
-                    timestamp = DateTime.UtcNow
-                };
-                await pedidosHubContext.Clients.All.SendAsync("PedidoActualizado", payload);
-                logger.LogDebug("Notificación SignalR enviada para pedido actualizado: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
-            }
-        });
-    }
-
-    private void NotificarSignalRPedidoEliminado(string pedidoId, long userId, string estado)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
-                    pedidoId,
-                    userId,
-                    estado,
-                    tipo = "PEDIDO_ELIMINADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await pedidosHubContext.Clients.All.SendAsync("PedidoEliminado", payload);
-                logger.LogDebug("Notificación SignalR enviada para pedido eliminado: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
-            }
-        });
-    }
-
-    #endregion
-
-    #region ========== MÉTODOS PRIVADOS - EMAIL ==========
-
-    private void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
-
-                var content = EmailTemplates.PedidoCreado(pedidoId, total, itemCount, userId);
-                var body = EmailTemplates.CreateBase("Nuevo Pedido Recibido", content);
-
-                var emailMessage = new EmailMessage
-                {
-                    To = adminEmail,
-                    Subject = $"🛒 Nuevo Pedido #{pedidoId}",
-                    Body = body,
-                    IsHtml = true
-                };
-                await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras crear pedido");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras crear pedido");
-            }
-        });
-    }
-
-    private void EnviarEmailPedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, long userId)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
-
-                var content = EmailTemplates.PedidoEstadoActualizado(pedidoId, estadoAnterior, nuevoEstado, total, userId);
-                var body = EmailTemplates.CreateBase("Cambio de Estado de Pedido", content);
-
-                var emailMessage = new EmailMessage
-                {
-                    To = adminEmail,
-                    Subject = $"📦 Pedido #{pedidoId} - {nuevoEstado}",
-                    Body = body,
-                    IsHtml = true
-                };
-                await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras cambio de estado del pedido");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras cambio de estado");
-            }
-        });
-    }
-
-    private void EnviarEmailPedidoActualizadoAdmin(string pedidoId, string estado, decimal total, long userId)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
-
-                var content = EmailTemplates.PedidoActualizadoAdmin(pedidoId, estado, total, userId);
-                var body = EmailTemplates.CreateBase("Pedido Actualizado por Administrador", content);
-
-                var emailMessage = new EmailMessage
-                {
-                    To = adminEmail,
-                    Subject = $"✏️ Pedido #{pedidoId} Actualizado",
-                    Body = body,
-                    IsHtml = true
-                };
-                await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras actualización de pedido por admin");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras actualización por admin");
-            }
-        });
-    }
-
-    private void EnviarEmailPedidoEliminadoAdmin(string pedidoId, decimal total, long userId)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
-
-                var content = EmailTemplates.PedidoEliminadoAdmin(pedidoId, total, userId);
-                var body = EmailTemplates.CreateBase("Pedido Eliminado", content);
-
-                var emailMessage = new EmailMessage
-                {
-                    To = adminEmail,
-                    Subject = $"🗑️ Pedido #{pedidoId} Eliminado",
-                    Body = body,
-                    IsHtml = true
-                };
-                await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras eliminación de pedido por admin");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras eliminación por admin");
-            }
-        });
-    }
-
-    #endregion
 
     #region ========== UTILIDADES ==========
 
