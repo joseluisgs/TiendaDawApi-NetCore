@@ -98,4 +98,4 @@ instalados en la máquina: solo hace falta Docker.
 - **Producción**: compose `prod` (todo, API incluida en el8080 interno → `API_PORT`).
 - **Tests con BD reales**: la suite de integración usa Testcontainers (Docker
   arrancado); los composes E2E van aparte.
-- Nunca subas `.env` al repositorio: el compose de prod lo lee como variables.
+- **`.env` (raíz) jamás se sube** (lo ignora `.gitignore`): ahí van las credenciales reales y el compose de prod lo lee como variables. **`.env.development` sí está versionado**, solo con los defaults locales de clase (`admin123`) — criterio educativo; en un proyecto real las credenciales salen del repositorio (user-secrets o variables de entorno).

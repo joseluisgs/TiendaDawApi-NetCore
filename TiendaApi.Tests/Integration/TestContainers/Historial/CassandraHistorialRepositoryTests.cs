@@ -146,7 +146,7 @@ public class CassandraHistorialRepositoryTests
 
         foreach (var fichero in ficheros)
         {
-            // Anti-patron T5.2.9: ALLOW FILTERING escanea la tabla entera; el
+            // Anti-patrón: ALLOW FILTERING escanea la tabla entera; el
             // diseno por particiones no debe necesitarlo jamas.
             File.ReadAllText(fichero).ToUpperInvariant().Should().NotContain("ALLOW FILTERING",
                 $"el fichero {Path.GetFileName(fichero)} no debe depender de filtros en el servidor");

@@ -22,8 +22,9 @@ public static class CassandraSchemaExtensions
     /// </summary>
     /// <param name="session">Sesión de Cassandra.</param>
     /// <param name="keyspace">Keyspace de la aplicación.</param>
+    /// <param name="isDevelopment">true = elimina el keyspace antes de crearlo (reset de desarrollo).</param>
     /// <returns>Tarea asíncrona.</returns>
-    public static async Task InitializeSchemaAsync(this ISession session, string keyspace)
+    public static async Task InitializeSchemaAsync(this ISession session, string keyspace, bool isDevelopment = false)
     {
         for (var intento = 1; ; intento++)
         {
@@ -39,6 +40,17 @@ public static class CassandraSchemaExtensions
             }
         }
 
+        // 🎓 Mismo patrón que EnsureDeleted de PostgreSQL: en desarrollo el
+        // keyspace se elimina y re-crea en cada arranque para que las suites
+        // E2E nazcan siempre de los datos de semilla (histórico y feed).
+        // Va tras la espera al nodo (DROP necesita conexión) y antes del CREATE;
+        // la sesión aún no ha hecho ChangeKeyspace, así que el DROP es seguro.
+        if (isDevelopment)
+        {
+            await session.ExecuteAsync(new SimpleStatement($"DROP KEYSPACE IF EXISTS {keyspace}"));
+            Log.Information("🗂️ [DESARROLLO] Keyspace '{Keyspace}' eliminado (se re-crea con datos de semilla)", keyspace);
+        }
+
         // SimpleStrategy y factor 1: suficiente para un nodo único de desarrollo.
         // En producción iría NetworkTopologyStrategy con réplicas por datacenter.
         await session.ExecuteAsync(new SimpleStatement(
@@ -52,7 +64,7 @@ public static class CassandraSchemaExtensions
         // clustering key = fecha con orden DESC GUARDADO en la tabla: los puntos
         // salen del más reciente al más antiguo sin ningún ORDER BY.
         // Sin bucket por producto: un producto cambia de precio unas pocas veces
-        // al año, la partición no crece (decisión de diseño documentada en doc/09).
+        // al año, la partición no crece.
         await session.ExecuteAsync(new SimpleStatement("""
             CREATE TABLE IF NOT EXISTS historial_precios_por_producto (
                 producto_id bigint,
@@ -63,7 +75,7 @@ public static class CassandraSchemaExtensions
             """));
 
         // ── Q-C: qué precios cambiaron en un día (alimenta informes) ────────
-        // Bucketing de serie temporal (T5.2.8): la partición es EL DÍA (date),
+        // Bucketing de serie temporal: la partición es EL DÍA (date),
         // no el timestamp exacto — si fuera timestamp cada instante sería una
         // partición diminuta e infinita. Acota el crecimiento por diseño.
         await session.ExecuteAsync(new SimpleStatement("""
@@ -76,9 +88,9 @@ public static class CassandraSchemaExtensions
             """));
 
         // ── Q-B: feed de actividad, últimos productos vistos por usuario ────
-        // Mismo patrón Discord del doc: partición por usuario, orden temporal
-        // gratis. El TTL nativo (180 días) caduca las filas SOLO, sin jobs de
-        // purga, y acota el crecimiento de la partición (decisión 0.3 del plan).
+        // Partición por usuario con orden temporal gratis. El TTL nativo (180
+        // días) caduca las filas SOLO, sin jobs de purga, y acota el
+        // crecimiento de la partición.
         await session.ExecuteAsync(new SimpleStatement("""
             CREATE TABLE IF NOT EXISTS vistas_por_usuario (
                 usuario_id bigint,
@@ -100,13 +112,14 @@ public static class CassandraSchemaExtensions
     /// y el feed de actividad.
     /// </summary>
     /// <param name="app">Aplicación en arranque (antes de app.Run()).</param>
+    /// <param name="isDevelopment">true = reset del keyspace en desarrollo.</param>
     /// <returns>Tarea asíncrona.</returns>
-    public static async Task InitializeCassandraAsync(this WebApplication app)
+    public static async Task InitializeCassandraAsync(this WebApplication app, bool isDevelopment)
     {
         try
         {
             var settings = app.Services.GetRequiredService<CassandraSettings>();
-            await app.Services.GetRequiredService<ISession>().InitializeSchemaAsync(settings.Keyspace);
+            await app.Services.GetRequiredService<ISession>().InitializeSchemaAsync(settings.Keyspace, isDevelopment);
         }
         catch (Exception ex)
         {

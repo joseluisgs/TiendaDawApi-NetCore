@@ -71,7 +71,10 @@ public class PedidosServiceTests
         _mockHubContext = new Mock<IHubContext<PedidosHub>>();
         _mockWebSocketHandler = new Mock<PedidosWebSocketHandler>(
             Mock.Of<ILogger<PedidosWebSocketHandler>>(),
-            Mock.Of<IJwtTokenExtractor>());
+            Mock.Of<IJwtTokenExtractor>(),
+            Mock.Of<IJwtService>(),
+            Mock.Of<ICacheService>(),
+            Mock.Of<IConfiguration>());
         _mockPedidoValidator = new Mock<IValidator<PedidoRequestDto>>();
         _mockItemValidator = new Mock<IValidator<PedidoItemRequestDto>>();
         _mockTransaction = new Mock<IDbContextTransaction>();
@@ -86,6 +89,7 @@ public class PedidosServiceTests
         _mockWebSocketHandler = new Mock<PedidosWebSocketHandler>(
             Mock.Of<ILogger<PedidosWebSocketHandler>>(),
             Mock.Of<IJwtTokenExtractor>(),
+            Mock.Of<IJwtService>(),
             _mockCacheService.Object,
             _mockConfiguration.Object);
 

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Api.Data;
+using TiendaApi.Api.Data.Seed;
 using TiendaApi.Api.Data.Seed.Sql;
 using TiendaApi.Api.Models;
 
@@ -81,11 +82,15 @@ public class SqlSeederTests
 
         await seeder.SeedAsync();
 
-        var admin = context.Users.First(u => u.UserName == "admin");
+        var admin = context.Users.First(u => u.UserName == SeedCredentials.AdminUsername);
+        var user = context.Users.First(u => u.UserName == SeedCredentials.UserUsername);
 
-        // Si BCrypt no verifica, nadie puede hacer login en modo Custom
-        BCrypt.Net.BCrypt.Verify("admin", admin.PasswordHash!)
-            .Should().BeTrue("la contraseña seed del admin en modo Custom es 'admin'");
+        // Si BCrypt no verifica, nadie puede hacer login en modo Custom.
+        // Credenciales unificadas: las MISMAS que en Identity (SeedCredentials).
+        BCrypt.Net.BCrypt.Verify(SeedCredentials.AdminPassword, admin.PasswordHash!)
+            .Should().BeTrue("la contraseña seed del admin debe verificar con su hash BCrypt");
+        BCrypt.Net.BCrypt.Verify(SeedCredentials.UserPassword, user.PasswordHash!)
+            .Should().BeTrue("la contraseña seed del userdaw debe verificar con su hash BCrypt");
     }
 
     [Test]
@@ -152,15 +157,19 @@ public class SqlSeederTests
         var context = assertScope.ServiceProvider.GetRequiredService<TiendaDbContext>();
         var userManager = assertScope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
-        var admin = context.Users.First(u => u.UserName == "admin");
+        var admin = context.Users.First(u => u.UserName == SeedCredentials.AdminUsername);
+        var user = context.Users.First(u => u.UserName == SeedCredentials.UserUsername);
 
-        // Política de Identity: ≥6 chars, dígito y mayúscula → "admin" NO cumple,
-        // por eso el seed Identity usa "Admin123!" (ver SqlSeeder).
-        var passwordOk = await userManager.CheckPasswordAsync(admin, "Admin123!");
-        var passwordAdminVieja = await userManager.CheckPasswordAsync(admin, "admin");
+        // Credenciales unificadas: SeedCredentials cumple la política de Identity
+        // (≥8, mayúscula y dígito) y es la MISMA en los dos modos. Las contraseñas
+        // cortas antiguas ("admin") NO deben validar.
+        var adminOk = await userManager.CheckPasswordAsync(admin, SeedCredentials.AdminPassword);
+        var userOk = await userManager.CheckPasswordAsync(user, SeedCredentials.UserPassword);
+        var passwordCortaVieja = await userManager.CheckPasswordAsync(admin, "admin");
 
-        passwordOk.Should().BeTrue("la contraseña seed en modo Identity debe validar con UserManager");
-        passwordAdminVieja.Should().BeFalse("la contraseña del modo Custom NO debe funcionar en Identity");
+        adminOk.Should().BeTrue("la contraseña del admin (SeedCredentials) debe validar con UserManager");
+        userOk.Should().BeTrue("la contraseña del userdaw (SeedCredentials) debe validar con UserManager");
+        passwordCortaVieja.Should().BeFalse("las contraseñas cortas antiguas NO deben funcionar");
     }
 
     [Test]

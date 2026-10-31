@@ -43,6 +43,7 @@ public class PedidosWebSocketHandler
     private readonly ILogger<PedidosWebSocketHandler> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly IJwtTokenExtractor _tokenExtractor;
+    private readonly IJwtService _jwtService;
     private readonly ICacheService _cacheService;
     private readonly TimeSpan _roleCacheTTL;
 
@@ -51,16 +52,19 @@ public class PedidosWebSocketHandler
     /// </summary>
     /// <param name="logger">Logger de la instancia.</param>
     /// <param name="tokenExtractor">Extractor de datos del token JWT.</param>
+    /// <param name="jwtService">Validador de firma/lifetime del JWT (la misma validación que usa la API HTTP).</param>
     /// <param name="cacheService">Servicio de caché para roles.</param>
     /// <param name="configuration">Configuración de la aplicación.</param>
     public PedidosWebSocketHandler(
         ILogger<PedidosWebSocketHandler> logger,
         IJwtTokenExtractor tokenExtractor,
+        IJwtService jwtService,
         ICacheService cacheService,
         IConfiguration configuration)
     {
         _logger = logger;
         _tokenExtractor = tokenExtractor;
+        _jwtService = jwtService;
         _cacheService = cacheService;
         var ttlMinutes = configuration.GetValue<int>("WebSocket:RoleCacheTTLMinutes", 5);
         _roleCacheTTL = TimeSpan.FromMinutes(ttlMinutes);
@@ -88,6 +92,17 @@ public class PedidosWebSocketHandler
         if (string.IsNullOrEmpty(token))
         {
             await CloseWebSocketAsync(webSocket, WebSocketCloseStatus.PolicyViolation, "Token requerido");
+            return;
+        }
+
+        // 🎓 Validar la FIRMA antes de confiar en el contenido del token.
+        // El extractor solo parsea el JWT (ReadJwtToken), así que sin esta
+        // comprobación valdría cualquier token fabricado. Aquí se comprueba
+        // firma, issuer, audiencia y vida - la misma validación que aplica la
+        // API HTTP con JwtBearer.
+        if (_jwtService.ValidateToken(token) is null)
+        {
+            await CloseWebSocketAsync(webSocket, WebSocketCloseStatus.PolicyViolation, "Token inválido");
             return;
         }
 

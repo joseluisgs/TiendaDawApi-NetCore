@@ -100,7 +100,14 @@ public static class AuthenticationConfig
             options.Password.RequireDigit = true;
             options.Password.RequireLowercase = true;
             options.Password.RequireUppercase = true;
-            options.Password.RequiredLength = 6;
+            // 🎓 Mínimo de 8 (OWASP: >= 8); con 6 una contraseña corta
+            // de solo letras y dígitos era suficientemente barata.
+            options.Password.RequiredLength = 8;
+            // 🎓 false EXPLÍCITO: el default de Identity es true y dejarlo implícito
+            // hacía que contraseñas fijas de tests/E2E sin símbolos (p.ej. "User1234")
+            // fueran válidas en Custom pero rechazadas en Identity. La política se
+            // declara entera una vez aquí y los validadores DTO la reflejan.
+            options.Password.RequireNonAlphanumeric = false;
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         })

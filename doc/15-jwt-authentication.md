@@ -663,6 +663,13 @@ public static class AuthenticationConfig
     {
         var jwtKey = configuration["Jwt:Key"] 
             ?? throw new InvalidOperationException("JWT Key no configurada");
+
+        // ⚠ Educativo: en ESTE proyecto la clave vive en appsettings.json
+        // para que "clone y ejecuta" funcione sin configurar nada. En un proyecto
+        // real la clave NO se versiona: va en user-secrets
+        //   dotnet user-secrets set "Jwt:Key" "<clave>"
+        // o en la variable de entorno Jwt__Key - quien lea este archivo puede
+        // forjar tokens de cualquier usuario, admin incluido.
         
         // Solo JWT Bearer - sin Identity
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -907,8 +914,6 @@ public class User : IdentityUser<long>, ITimestamped
     // public string UserName       ← ya lo tenemos (antes se llamaba Username)
 
     // ── Nuestros campos personalizados (los mantenemos) ──
-    public string Nombre { get; set; } = string.Empty;
-    public string Apellidos { get; set; } = string.Empty;
     public string? Avatar { get; set; }
     public string Role { get; set; } = UserRoles.USER;
     public bool IsDeleted { get; set; }
@@ -940,8 +945,6 @@ classDiagram
     }
     class User {
         <<our entity>>
-        +string Nombre
-        +string Apellidos
         +string Role
         +string Avatar
         +bool IsDeleted
@@ -1031,8 +1034,6 @@ public class IdentityAuthService(
         {
             UserName = dto.Username,
             Email = dto.Email,
-            Nombre = "",
-            Apellidos = "",
             Role = UserRoles.USER
         };
 
@@ -1109,7 +1110,8 @@ private static IServiceCollection AddIdentityAuthentication(IServiceCollection s
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;
-        options.Password.RequiredLength = 6;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireNonAlphanumeric = false;
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
@@ -1260,14 +1262,15 @@ La política se configura en `AuthenticationConfig` (ver 15.4.5) y afecta a **to
 
 | Opción | Valor en el proyecto | Efecto |
 |--------|---------------------|--------|
-| `Password.RequiredLength` | 6 | mínimo 6 caracteres |
+| `Password.RequiredLength` | 8 | mínimo 8 caracteres (OWASP) |
 | `Password.RequireDigit` | true | debe tener al menos un dígito |
 | `Password.RequireUppercase` | true | debe tener mayúscula |
 | `Password.RequireLowercase` | true | debe tener minúscula |
+| `Password.RequireNonAlphanumeric` | false | no exige símbolos (las contraseñas fijas de tests/E2E no los usan todas) |
 | `Lockout.MaxFailedAccessAttempts` | 5 | tras 5 fallos... |
 | `Lockout.DefaultLockoutTimeSpan` | 15 min | ...bloquea 15 minutos |
 
-🎓 **Consecuencia práctica**: `"admin"` (5 chars, sin dígito ni mayúscula) **no pasa la política**. Por eso el seed en modo Identity usa `Admin123!` mientras el modo Custom usa `admin` (ver 15.8.4).
+🎓 **Consecuencia práctica**: `"admin"` (5 chars, sin dígito ni mayúscula) **no pasa la política**. Por eso las credenciales seed unificadas (`SeedCredentials.cs`) son `admin` / `Admin123!` y `userdaw` / `Userdaw123!` en **ambos modos** — cumplen la política y el modo solo cambia el algoritmo del hash (ver 15.8.4). Los validadores DTO (`RegisterValidator`) reflejan esta misma política para que Custom no acepte contraseñas que Identity rechaza.
 
 ---
 
@@ -1850,7 +1853,7 @@ Ambos caminos registran **exactamente lo mismo** para el middleware:
 ```mermaid
 flowchart TD
     A[SqlSeeder.SeedAsync] --> B{Auth:Mode?}
-    B -->|Custom| C[Crear User con<br/>PasswordHash = BCrypt hardcoded]
+    B -->|Custom| C[Crear User con<br/>PasswordHash = BCrypt de SeedCredentials]
     B -->|Identity| D[Crear User con<br/>userManager.CreateAsync user, password]
     C --> E[✅ Login funciona]
     D --> F[✅ Login funciona]
@@ -1858,7 +1861,7 @@ flowchart TD
 
 En modo Identity, el seeder usa `IServiceScopeFactory` para resolver `UserManager<User>` (porque el seeder está en un scope diferente al del request).
 
-> ⚠️ **Las contraseñas seed difieren entre modos**. La política de password de Identity (≥6 chars, dígito, mayúscula) hace que `"admin"` sea rechazado, así que el seed Identity usa `Admin123!` mientras el modo Custom usa `admin`. Ambas quedan documentadas en los logs al sembrar.
+> ✅ **Credenciales unificadas**: AMBOS modos usan las mismas credenciales (`SeedCredentials.cs`: `admin`/`Admin123!` y `userdaw`/`Userdaw123!`). El modo solo cambia el algoritmo del hash (BCrypt vs PBKDF2), nunca quién puede entrar — así las suites E2E pasan igual en los dos modos.
 
 > 🔧 **Bug que enseñamos en clase**: al principio declarábamos `public new string PasswordHash` en `User` para darle un default. ¡Error! `UserStore` (genérico de Identity) escribe en la propiedad heredada de `IdentityUser`, mientras EF mapeaba **nuestra** propiedad oculta → el hash real se perdía en una propiedad fantasma y nadie podía hacer login. Lección: **no ocultes propiedades de una clase base que un framework genérico escribe por ti**. En su lugar, `PasswordHash` es nullable (los usuarios OAuth no tienen contraseña) y quitamos el `IsRequired()` del mapeo.
 

@@ -75,7 +75,7 @@ public record UserDto(
 ///
 /// <remarks>
 /// Validaciones de contraseña:
-/// - Mínimo 6 caracteres
+/// - Mínimo 8 caracteres
 /// - Se recomienda incluir mayúsculas, minúsculas, números y símbolos
 /// </remarks>
 public record RegisterDto
@@ -113,7 +113,7 @@ public record RegisterDto
     /// </summary>
     /// <example>Contraseña123!</example>
     [Required(ErrorMessage = "La contraseña es obligatoria")]
-    [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+    [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres")]
     [MaxLength(100, ErrorMessage = "La contraseña no puede exceder 100 caracteres")]
     public string Password { get; init; } = string.Empty;
 }
@@ -180,10 +180,10 @@ public record UserUpdateDto
 
     /// <summary>
     /// Nueva contraseña del usuario (opcional).
-    /// Mínimo 6 caracteres.
+    /// Mínimo 8 caracteres.
     /// </summary>
     /// <example>NuevaContraseña456!</example>
-    [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+    [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres")]
     [MaxLength(100, ErrorMessage = "La contraseña no puede exceder 100 caracteres")]
     public string? Password { get; init; }
 }

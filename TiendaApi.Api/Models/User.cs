@@ -17,11 +17,11 @@ public class User : IdentityUser<long>, ITimestamped
     /// <summary>Prefijo para avatares locales (/storage/images/usuarios/).</summary>
     public const string AVATAR_LOCAL_PREFIX = "/storage/images/usuarios/";
 
-    // ── Heredados de IdentityUser<long> (NO declarar aquí) ──
+    // ── Heredados de IdentityUser<long> (NO redeclarar aquí) ──
     // public long Id              ← ya lo tenemos de IdentityUser<long>
     // public string Email          ← ya lo tenemos de IdentityUser<long>
     // public string PasswordHash   ← ya lo tenemos de IdentityUser<long> (nosotros usamos BCrypt encima)
-    // public string UserName       ← ya lo tenemos de IdentityUser<long> (antes se llamaba Username)
+    // public string UserName       ← ya lo tenemos de IdentityUser<long>
 
     // ── Propiedades nuevas que Identity añade automáticamente ──
     // EmailConfirmed, PhoneNumber, PhoneNumberConfirmed, TwoFactorEnabled,
@@ -29,20 +29,14 @@ public class User : IdentityUser<long>, ITimestamped
     // (no las tocamos, las gestiona UserManager)
 
     // ⚠️ NO redeclarar PasswordHash con `new`: UserStore (genérico) escribe en la
-    // propiedad de IdentityUser, y si la ocultamos EF mapea la nuestra → el hash
-    // real se pierde y nadie puede hacer login. PasswordHash es nullable en
-    // Identity (usuarios OAuth pueden no tener contraseña) y así lo mapeamos.
-
-    /// <summary>Nombre del usuario (obligatorio, 1-100 caracteres).</summary>
-    public string Nombre { get; set; } = string.Empty;  // ← custom nuestro
-
-    /// <summary>Apellidos del usuario (obligatorio, 1-200 caracteres).</summary>
-    public string Apellidos { get; set; } = string.Empty;  // ← custom nuestro
+    // propiedad heredada de IdentityUser y si la ocultamos EF mapea la nuestra →
+    // el hash real se pierde y nadie puede hacer login. PasswordHash es nullable
+    // (los usuarios OAuth no tienen contraseña).
 
     /// <summary>URL o ruta del avatar (null = usa AVATAR_DEFAULT).</summary>
     public string? Avatar { get; set; }  // ← custom nuestro
 
-    /// <summary>Rol del usuario (USER, ADMIN).</summary>
+    /// <summary>Rol del usuario (USER o ADMIN).</summary>
     public string Role { get; set; } = UserRoles.USER;  // ← custom nuestro (Identity usa AspNetUserRoles)
 
     /// <summary>Indica si el usuario está eliminado (soft-delete).</summary>
@@ -52,7 +46,7 @@ public class User : IdentityUser<long>, ITimestamped
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;  // ← custom nuestro (ITimestamped)
 
     /// <summary>Fecha de última modificación en UTC.</summary>
-    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;  // ← custom nuestro (ITimestamped)
+    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;  // ← custom nuestro
 
     /// <summary>
     /// Determina si el avatar es local (almacenado en el servidor).

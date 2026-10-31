@@ -189,7 +189,7 @@ public class AuthServiceTests
         _mockRegisterValidator.Setup(v => v.ValidateAsync(registerDto, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult(new[]
             {
-                new ValidationFailure("Password", "La contraseña debe tener al menos 6 caracteres")
+                new ValidationFailure("Password", "La contraseña debe tener al menos 8 caracteres")
             }));
 
         var result = await _authService.SignUpAsync(registerDto);

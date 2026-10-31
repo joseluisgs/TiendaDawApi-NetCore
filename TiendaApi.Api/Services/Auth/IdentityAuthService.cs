@@ -39,8 +39,6 @@ public class IdentityAuthService(
         {
             UserName = dto.Username,
             Email = dto.Email,
-            Nombre = "",
-            Apellidos = "",
             Role = UserRoles.USER
         };
 
@@ -110,7 +108,6 @@ public class IdentityAuthService(
             {
                 UserName = info.Email,
                 Email = info.Email,
-                Nombre = info.Name ?? "",
                 Role = UserRoles.USER
             };
             await userManager.CreateAsync(user);

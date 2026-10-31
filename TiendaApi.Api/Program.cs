@@ -4,6 +4,7 @@ using Serilog;
 using Serilog.Extensions.Logging;
 using TiendaApi.Api;
 using TiendaApi.Api.Data;
+using TiendaApi.Api.Data.Seed;
 using TiendaApi.Api.Data.Seed.Cassandra;
 using TiendaApi.Api.Data.Seed.Mongo;
 using TiendaApi.Api.Infrastructures;
@@ -150,7 +151,7 @@ app.InitializeStorage(isDevelopment);
 
 // Cassandra: CREATE IF NOT EXISTS + espera al nodo (~60 s), el tiempo que
 // tarda la imagen oficial (JVM) en estar lista.
-await app.InitializeCassandraAsync();
+await app.InitializeCassandraAsync(isDevelopment);
 
 // Seed de Cassandra (solo desarrollo): serie histórica de precios y feed de
 // ejemplo. Va DESPUÉS del esquema y con scope propio: son datos de ejemplo,
@@ -252,30 +253,15 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     }
     Log.Information("=================================================================");
     Log.Information("DATOS SEMBRADOS (Seed):");
-    if (authMode == "Identity")
-    {
-        Log.Information("  PostgreSQL: usuarios seed con hash PBKDF2 (ver CREDENCIALES)");
-    }
-    else
-    {
-        Log.Information("  PostgreSQL: usuarios seed con hash BCrypt (ver CREDENCIALES)");
-    }
+    Log.Information("  PostgreSQL: usuarios seed con hash {Hash} (credenciales idénticas en ambos modos)",
+        authMode == "Identity" ? "PBKDF2" : "BCrypt");
     Log.Information("              Categorias: Electronica, Ropa, Libros");
     Log.Information("              Productos: Laptop Dell XPS 15, Camiseta Nike, Clean Code");
     Log.Information("  MongoDB:    3 pedidos de ejemplo");
     Log.Information("=================================================================");
-    Log.Information("CREDENCIALES DE PRUEBA:");
-    if (authMode == "Identity")
-    {
-        // La política de Identity (>=6 chars, dígito y mayúscula) rechaza "admin"/"userdaw"
-        Log.Information("  Admin:   admin / Admin123! (ROLE_ADMIN)");
-        Log.Information("  Usuario: userdaw / Admin123! (ROLE_USER)");
-    }
-    else
-    {
-        Log.Information("  Admin:   admin / admin (ROLE_ADMIN)");
-        Log.Information("  Usuario: userdaw / userdaw (ROLE_USER)");
-    }
+    Log.Information("CREDENCIALES DE PRUEBA (idénticas en Custom e Identity):");
+    Log.Information("  Admin:   {User} / {Pass} (ROLE_ADMIN)", SeedCredentials.AdminUsername, SeedCredentials.AdminPassword);
+    Log.Information("  Usuario: {User} / {Pass} (ROLE_USER)", SeedCredentials.UserUsername, SeedCredentials.UserPassword);
     Log.Information("=================================================================");
     Log.Information("🚀 Aplicacion iniciada correctamente en {BaseUrl} ({Mode})",
         baseUrl, mode);

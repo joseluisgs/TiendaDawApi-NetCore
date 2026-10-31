@@ -34,7 +34,19 @@ public class StorageController(
         try
         {
             var basePath = System.IO.Path.Combine(_environment.ContentRootPath, "wwwroot");
-            var fullPath = System.IO.Path.Combine(basePath, path);
+
+            // 🎓 Anti path traversal: la ruta del cliente NUNCA manda.
+            // - Rutas absolutas: Path.Combine descartaría basePath y leería
+            //   cualquier fichero del disco (ej: GET /storage//etc/passwd).
+            // - "..": segmentos que escapan de wwwroot.
+            // - Y además la ruta final debe quedar DENTRO de basePath.
+            if (System.IO.Path.IsPathRooted(path) || path.Contains("..", StringComparison.Ordinal))
+                return NotFound();
+
+            var fullPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(basePath, path));
+            var basePathFull = System.IO.Path.GetFullPath(basePath);
+            if (!fullPath.StartsWith(basePathFull + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                return NotFound();
 
             if (!System.IO.File.Exists(fullPath))
             {

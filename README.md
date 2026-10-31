@@ -291,6 +291,12 @@ open coverage/index.html
 Pruebas end-to-end de la API. **Requisito:** la API levantada en `http://localhost:5031`
 (rate limit `100/15s` general - por eso los comandos llevan `--delay 250` / `--delay-request 250`).
 
+**Estado de BD:** en desarrollo la API **recrea las tres bases de datos al arrancar**
+(PostgreSQL, MongoDB y Cassandra) con sus datos de semilla — no hace falta ningún paso
+manual antes de la suite. Si repites la suite varias veces seguidas, **reinicia la API
+entre corridas** para volver al estado semilla (los datos se acumulan mientras la API
+siga viva). Para un reset total de contenedores queda `./Reset-Database.ps1`.
+
 #### Automation (Node)
 
 ```bash
@@ -316,7 +322,7 @@ start reports/report.html
 npm install -g newman
 newman run TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_collection.json \
   -e TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_environment.json \
-  --delay-request 3200 \
+  --delay-request 250 \
   -r cli,html,json,junit --reporter-html-export report.html \
   --reporter-json-export report.json \
   --reporter-junit-export junit-report.xml
@@ -1152,7 +1158,7 @@ Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` 
 2. Aplicar las migraciones pendientes (`AddIdentity` con tablas `AspNet*` y `AddUserLoginsOAuth` con `user_logins`; en desarrollo se aplican solas al arrancar)
 3. Reiniciar — el seed crea los usuarios con el algoritmo correcto según el modo
 
-> **Contraseñas seed**: en modo Custom los usuarios seed usan `admin` / `userdaw`; en modo Identity usan `Admin123!` / `Admin123!` porque la política de password de Identity exige longitud ≥6, dígito y mayúscula. Ambas quedan en los logs al sembrar.
+> **Contraseñas seed (unificadas)**: en AMBOS modos (`Custom` e `Identity`) los usuarios seed son `admin` / `Admin123!` y `userdaw` / `Userdaw123!`. El modo solo cambia el algoritmo del hash (BCrypt vs PBKDF2), nunca las credenciales — definen `SeedCredentials.cs`, que consumen el seeder, el mensaje de arranque y los tests.
 
 > **Nota**: cambiar de modo **no invalida usuarios existentes**, pero los hashes no son intercambiables (un usuario creado en Custom no puede hacer login en Identity y viceversa, salvo que se re-hasheen las contraseñas).
 
@@ -1504,12 +1510,12 @@ WS ws://localhost:5031/graphql
 
 ## 👥 Usuarios Demo
 
-| Usuario | Email              | Password (Custom) | Password (Identity) | Rol   |
-| ------- | ------------------ | ----------------- | ------------------- | ----- |
-| admin   | admin@tienda.com   | admin             | Admin123!           | ADMIN |
-| userdaw | userdaw@tienda.com | userdaw           | Admin123!           | USER  |
+| Usuario | Email              | Password    | Rol   |
+| ------- | ------------------ | ----------- | ----- |
+| admin   | admin@tienda.com   | Admin123!   | ADMIN |
+| userdaw | userdaw@tienda.com | Userdaw123! | USER  |
 
-**Nota:** Las contraseñas del modo Custom son las mismas que los usernames para facilitar las pruebas. En modo Identity (`Auth:Mode = "Identity"`) usan `Admin123!` porque la política de password de Identity exige longitud ≥6, dígito y mayúscula. El seed crea los usuarios con el algoritmo correcto según el modo (ver [doc/15 §15.8.4](doc/15-jwt-authentication.md#1584-el-seed-condicional)).
+**Nota:** Credenciales **unificadas**: las MISMAS en modo Custom e Identity (`SeedCredentials.cs`) — cumplen la política de Identity (≥8, mayúscula, minúscula y dígito), así que el modo solo determina el algoritmo del hash, no quién puede entrar. El seed crea los usuarios con el algoritmo correcto según el modo (ver [doc/15 §15.8.4](doc/15-jwt-authentication.md#1584-el-seed-condicional)).
 
 **Login externo OAuth 2.0:** También puedes iniciar sesión con Google, GitHub o Microsoft (endpoints `/api/v1/auth/external/{provider}`). Los usuarios creados vía OAuth **no tienen contraseña**: en modo Custom se guarda un dummy hash `OAUTH-{Provider}` (el login normal fallará para ellos) y en modo Identity `PasswordHash` queda null. Ver [doc/15 §15.6](doc/15-jwt-authentication.md#156-oauth-manual-nuestra-implementación) y [§15.7](doc/15-jwt-authentication.md#157-oauth-con-identity-externallogininfo).
 

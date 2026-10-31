@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Automation E2E — TiendaApi .NET (Fase 7 del plan FASES-MEJORAS.md)
+ * Automation E2E — TiendaApi .NET
  *
- * Estilo UD02 ejemplos/<nn>-ProductosX/automation/test-runner.mjs: Node nativo, SIN npm install.
+ * Node nativo, SIN npm install.
  *
  * Uso (desde la raíz del repo):
  *   node TiendaApi.Tests.E2E/Automation/test-runner.mjs
@@ -14,16 +14,16 @@
  *     contra una API ya levantada (también se usa automáticamente si la API
  *     ya responde en el baseUrl configurado).
  *
- * Diseño (FASES-MEJORAS.md §Fase 7):
+ * Diseño:
  *   - NO ejecuta `docker compose down -v` al final: solo para los servicios de BD
  *     que ÉL haya levantado (si ya estaban corriendo, no se tocan) → no rompe
  *     el entorno de desarrollo.
  *   - Fallback: si `dotnet run` no responde, intenta `docker compose up -d --build`.
- *   - Compatible con Fase 1: espera /health primero; si falla acepta /swagger
- *     o /api/productos.
+ *   - Espera /health primero; si falla acepta /swagger o /api/productos.
  *   - Rate limit awareness: helper st() → falla CLARO si la API devuelve 429
  *     (100/15s general · 10/min auth · 20/min POST · 200/min graphql).
- *   - Credenciales seed: admin/admin, userdaw/userdaw.
+ *   - Credenciales seed: admin/Admin123!, userdaw/Userdaw123! (iguales en
+ *     modo Custom e Identity — ver SeedCredentials.cs).
  *   - Sale con código 0 si todo OK, 1 si algo falla (listo para CI).
  */
 
@@ -36,7 +36,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..", "..");
 
 const CONFIG = {
-  nombre: "TiendaApi .NET · Automation E2E (Fase 7)",
+  nombre: "TiendaApi .NET · Automation E2E",
   csproj: "TiendaApi.Api/TiendaApi.csproj",
   baseUrl: process.env.BASE_URL || "http://localhost:5031",
   healthPaths: ["/health", "/swagger", "/api/productos"],
@@ -52,11 +52,11 @@ const CONFIG = {
   // Auth:Mode ACTIVO de esta corrida (misma variable que env.Auth__Mode): los
   // tests condicionales (ramas Identity/Custom de signup) lo consultan aqui.
   // Sin esta declaracion CONFIG.authMode era undefined y la rama Identity
-  // nunca se ejecutaba (T15 exige validar los DOS modos).
+  // nunca se ejecutaba (hay que validar los DOS modos).
   authMode: process.env.AUTH_MODE || "Custom",
-  // Credenciales seed (varían con Auth:Mode: Custom usa admin/admin; Identity usa Admin123!)
-  admin: { username: process.env.ADMIN_USER || "admin", password: process.env.ADMIN_PASS || "admin" },
-  user: { username: process.env.USER_USER || "userdaw", password: process.env.USER_PASS || "userdaw" },
+  // Credenciales seed unificadas (las MISMAS en Custom e Identity — SeedCredentials)
+  admin: { username: process.env.ADMIN_USER || "admin", password: process.env.ADMIN_PASS || "Admin123!" },
+  user: { username: process.env.USER_USER || "userdaw", password: process.env.USER_PASS || "Userdaw123!" },
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -102,7 +102,7 @@ function killTree(pid) {
 }
 function spawnApi() {
   // --no-launch-profile: launchSettings.json fuerza Development y su propio puerto;
-  // aquí controlamos entorno y URL explícitamente (requisito de §Fase 8/7).
+  // aquí controlamos entorno y URL explícitamente.
   const child = spawn(
     "dotnet",
     ["run", "--project", CONFIG.csproj, "-c", "Debug", "--no-launch-profile"],
@@ -169,7 +169,7 @@ async function test(nombre, fn) {
 function assert(c, m) { if (!c) throw new Error(m); }
 function assertEq(a, e, m) { if (a !== e) throw new Error(`${m}: obtenido ${JSON.stringify(a)}, esperado ${JSON.stringify(e)}`); }
 
-// Rate limit awareness (§7.3): el 429 NUNCA se acepta como OK.
+// Rate limit awareness: el 429 NUNCA se acepta como OK.
 function st(r) {
   assert(
     r.status !== 429,
@@ -280,8 +280,8 @@ let imagenProductoUrl = null;
     });
     // FluentValidationAutoValidation (ControllersConfig) evalua ANTES del
     // controller en TODOS los Auth:Mode: ni Custom ni Identity llegan a
-    // UserManager. La rama Identity solo se ejecuta desde T15 (antes
-    // CONFIG.authMode era undefined y este test siempre tomaba la de Custom).
+    // UserManager. La rama Identity solo se ejecuta cuando CONFIG.authMode
+    // está definido; sin él, este test siempre tomaría la rama de Custom.
     assertEq(st(r), 400, "status");
   });
 
@@ -695,7 +695,7 @@ let imagenProductoUrl = null;
     const r = await req("GET", "/api/pedidos/paged?page=1&size=2", { token: adminToken });
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
-    assert(r.headers.get("link"), "falta header Link (Fase 3)");
+    assert(r.headers.get("link"), "falta header Link");
   });
 
   await test("Pedidos admin: GET /{id} → 200", async () => {
@@ -1060,7 +1060,7 @@ let imagenProductoUrl = null;
   });
 
   // ============================ HISTORIAL Y FEED (Cassandra) ============================
-  // T15: los flujos nuevos de las series (Q-A) y el feed (Q-B). NO se hace ningun
+  // Los flujos nuevos de las series (Q-A) y el feed (Q-B). NO se hace ningun
   // signin nuevo (usan adminToken/userToken ya guardados) para respetar auth 10/min.
   let serieAntes = 0;
   let precioNuevo = null;
@@ -1069,7 +1069,7 @@ let imagenProductoUrl = null;
     const r = await req("GET", "/api/productos/1/historial-precios?limit=50");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json), "no es array");
-    assert(r.json.length >= 3, `semilla T12 esperaba >=3 puntos, hay ${r.json.length}`);
+    assert(r.json.length >= 3, `la semilla esperaba >=3 puntos, hay ${r.json.length}`);
     // Orden DESC garantizado por la CLUSTERING KEY, sin ORDER BY en el servidor.
     for (let i = 1; i < r.json.length; i++) {
       assert(new Date(r.json[i - 1].fecha) >= new Date(r.json[i].fecha),
@@ -1112,7 +1112,7 @@ let imagenProductoUrl = null;
     assert(r.json.length >= serieAntes + 1,
       `la serie no crecio tras el update (${serieAntes} -> ${r.json.length})`);
     assertEq(r.json[0].precio, precioNuevo,
-      "el punto mas reciente es el precio recien escrito (escritura T10, fail-open)");
+      "el punto mas reciente es el precio recien escrito (fail-open)");
   });
 
   await test("Feed: POST vista de 3 productos 204 cada una", async () => {
@@ -1222,7 +1222,7 @@ async function main() {
     log("\n▶ Limpieza...");
     procs.forEach((p) => killTree(p.pid));
     // NO `docker compose down -v`: solo paramos los servicios de BD que
-    // levantamos nosotros; los que ya estaban corriendo se quedan (§Fase 7).
+    // levantamos nosotros; los que ya estaban corriendo se quedan.
     if (startedServices.length) {
       try { run(`docker compose -f ${CONFIG.composeFile} stop ${startedServices.join(" ")}`); }
       catch (e) { logErr(`stop: ${e.message}`); }
@@ -1231,6 +1231,17 @@ async function main() {
 
   const pass = resultados.filter((r) => r.ok).length;
   const fail = resultados.length - pass;
+  // Reporte estructurado: los orquestadores leen SIEMPRE este JSON, jamás la consola.
+  try {
+    const { writeFileSync } = await import("node:fs");
+    const outDir = path.join(__dirname, "reports");
+    if (!existsSync(outDir)) (await import("node:fs")).mkdirSync(outDir, { recursive: true });
+    writeFileSync(
+      path.join(outDir, "report.json"),
+      JSON.stringify({ total: resultados.length, passed: pass, failed: fail, resultados }, null, 2),
+      "utf8"
+    );
+  } catch { /* el reporte no debe enmascarar fallos de la suite */ }
   log("\n========== RESUMEN ==========");
   log(`Total: ${resultados.length} · OK: ${pass} · KO: ${fail}`);
   for (const r of resultados.filter((r) => !r.ok)) log(`  ✗ ${r.nombre}: ${r.error}`);

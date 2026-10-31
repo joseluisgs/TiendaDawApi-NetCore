@@ -94,7 +94,7 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
             entity.ToTable("users");
             entity.HasKey(u => u.Id);
             entity.Property(u => u.Id).UseIdentityAlwaysColumn();
-            // UserName viene de IdentityUser (antes se llamaba Username)
+            // UserName viene de IdentityUser
             entity.Property(u => u.UserName).IsRequired().HasMaxLength(50);
             entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
             // PasswordHash nullable: los usuarios OAuth pueden no tener contraseña.

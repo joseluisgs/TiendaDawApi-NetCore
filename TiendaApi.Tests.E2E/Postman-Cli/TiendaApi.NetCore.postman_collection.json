@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "tienda-api-netcore-e2e",
     "name": "TiendaApi .NET - Tests E2E (Bruno-Local)",
-    "description": "Colección de tests E2E para TiendaApi .NET - Portada desde Bruno-Local\n\nOrden de ejecución: 001-089 (excluyendo websockets 080-081; 076-079 y 082-089 = historial y feed T15)",
+    "description": "Colección de tests E2E para TiendaApi .NET - Portada desde Bruno-Local\n\nOrden de ejecución: 001-089 (excluyendo websockets 080-081; 076-079 y 082-089 = historial y feed)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -18,7 +18,7 @@
     },
     {
       "key": "adminPassword",
-      "value": "admin",
+      "value": "Admin123!",
       "type": "string"
     },
     {
@@ -28,7 +28,7 @@
     },
     {
       "key": "userPassword",
-      "value": "userdaw",
+      "value": "Userdaw123!",
       "type": "string"
     },
     {
@@ -1780,7 +1780,7 @@
               "script": {
                 "exec": [
                   "pm.test('Historial Serie seed - Status 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Historial Serie seed - Al menos 3 puntos sembrados (T12)', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('array'); pm.expect(jsonData.length).to.be.at.least(3); pm.environment.set('serieAntes', String(jsonData.length)); });",
+                  "pm.test('Historial Serie seed - Al menos 3 puntos sembrados', function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.be.an('array'); pm.expect(jsonData.length).to.be.at.least(3); pm.environment.set('serieAntes', String(jsonData.length)); });",
                   "pm.test('Historial Serie seed - Orden DESC por clustering key', function () { const jsonData = pm.response.json(); for (let i = 1; i < jsonData.length; i++) { pm.expect(new Date(jsonData[i - 1].fecha).getTime()).to.be.at.least(new Date(jsonData[i].fecha).getTime()); } });"
                 ],
                 "type": "text/javascript"

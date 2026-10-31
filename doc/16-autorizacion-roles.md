@@ -833,6 +833,20 @@ flowchart TB
 
 ## 16.10. Buenas Prácticas de Autorización
 
+### Política de contraseñas (Identity)
+
+La primera línea de la autorización es la contraseña. En
+`AuthenticationConfig.AddIdentityCore` está configurada así:
+
+- **Mínimo 8 caracteres** (`RequiredLength = 8` — con6 bastaba una corta de
+  solo letras y dígitos; el cambio es reciente, antes era6).
+- Obligatorias: **dígitos, mayúsculas y minúsculas**.
+- **Lockout**:5 intentos fallidos → bloqueo de15 minutos (antifuerza bruta).
+
+🎓 En un proyecto real añade también `RequireNonAlphanumeric` y considera2FA:
+una API con roles impecables y contraseñas débiles se abre con fuerza bruta
+silenciosa.
+
 ```mermaid
 flowchart TB
     subgraph "Diseño"

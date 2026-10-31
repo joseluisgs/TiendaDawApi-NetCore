@@ -216,7 +216,7 @@ public class RegisterValidatorTests
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Password)
-            .WithErrorMessage("La contraseña debe tener al menos 6 caracteres");
+            .WithErrorMessage("La contraseña debe tener al menos 8 caracteres");
     }
 
     [Test]
@@ -246,9 +246,10 @@ public class RegisterValidatorTests
     }
 
     [Test]
-    public void SignUpAsync_ConPasswordMinimo_DeberiaPasar()
+    public void SignUpAsync_ConPasswordMinima_DeberiaPasar()
     {
-        var dto = new RegisterDto { Username = "johndoe", Email = "john@test.com", Password = "123456" };
+        // Política completa: ≥8 + mayúscula + minúscula + dígito ("Abc12345").
+        var dto = new RegisterDto { Username = "johndoe", Email = "john@test.com", Password = "Abc12345" };
 
         var result = _validator.TestValidate(dto);
 

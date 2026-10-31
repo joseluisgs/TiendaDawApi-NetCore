@@ -5,10 +5,10 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Extensions;
 
 /// <summary>
-/// Opción C (§7.8.3): centraliza el mapeo <see cref="DomainError"/> → HTTP en una
-/// única extensión, en lugar de repetir un <c>error switch</c> en cada controlador.
-/// Mantiene los códigos y el shape <c>{message, ...}</c> de las respuestas actuales
-/// para no romper los tests E2E.
+/// Centraliza el mapeo <see cref="DomainError"/> → HTTP en una única extensión,
+/// en lugar de repetir un <c>switch</c> de errores en cada controlador.
+/// Devuelve siempre el shape <c>{message, ...}</c> (con <c>errors</c> por campo
+/// en validaciones) que consumen los tests E2E.
 /// </summary>
 public static class DomainErrorExtensions
 {

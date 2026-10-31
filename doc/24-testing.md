@@ -1830,7 +1830,7 @@ TiendaApi Collection/
         "baseUrl": "http://localhost:5000",
         "apiVersion": "v1",
         "email": "admin@tienda.com",
-        "password": "Admin123"
+        "password": "Admin123!"
     },
     "prod": {
         "baseUrl": "https://api.tienda.com",
@@ -1950,7 +1950,7 @@ pm.test("Signin - Token recibido", function () {
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"email\": \"admin@tienda.com\",\n    \"password\": \"Admin123\"\n}"
+                            "raw": "{\n    \"email\": \"admin@tienda.com\",\n    \"password\": \"Admin123!\"\n}"
                         },
                         "url": {
                             "raw": "{{baseUrl}}/v1/auth/signin",
@@ -2485,9 +2485,9 @@ meta {
 vars {
   baseUrl: http://localhost:5000
   adminUsername: admin
-  adminPassword: Admin1234
-  userUsername: user
-  userPassword: User1234
+  adminPassword: Admin123!
+  userUsername: userdaw
+  userPassword: Userdaw123!
 }
 ```
 
@@ -2625,7 +2625,7 @@ services:
     environment:
       - BASE_URL=http://host.docker.internal:5000
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=Admin1234
+      - ADMIN_PASSWORD=Admin123!
     command: >
       sh -c "
         npm install -g @usebruno/cli 2>/dev/null &&

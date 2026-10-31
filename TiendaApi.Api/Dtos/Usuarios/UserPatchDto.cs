@@ -26,10 +26,10 @@ public record UserPatchDto
 
     /// <summary>
     /// Nueva contraseña del usuario (opcional).
-    /// Mínimo 6 caracteres.
+    /// Mínimo 8 caracteres.
     /// </summary>
     /// <example>NuevaContraseña456!</example>
-    [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+    [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres")]
     [MaxLength(100, ErrorMessage = "La contraseña no puede exceder 100 caracteres")]
     public string? Password { get; init; }
 
