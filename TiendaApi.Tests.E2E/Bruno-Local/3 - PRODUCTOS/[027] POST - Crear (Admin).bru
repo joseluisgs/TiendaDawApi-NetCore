@@ -40,7 +40,7 @@ script:post-response {
       expect(jsonData.nombre).to.equal('Laptop HP Test');
       expect(jsonData.precio).to.equal(999.99);
       expect(jsonData.stock).to.equal(50);
-      expect(jsonData.categoriaId).to.equal(1);
+      expect(jsonData.categoria.id).to.equal(1);
   });
   
   // Guardar ID para siguientes tests

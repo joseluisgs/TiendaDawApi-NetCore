@@ -1,0 +1,37 @@
+meta {
+    name: [090] GET All (Admin)
+    type: http
+    seq: 1
+}
+
+get {
+    url: {{baseUrl}}/api/proveedores?page=0&size=10
+    body: none
+    auth: inherit
+}
+
+script:post-response {
+    test("Proveedores GetAll - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Proveedores GetAll - Tiene items paginados", function () {
+        const d = res.getBody();
+        expect(d.items).to.be.an('array');
+        expect(d.totalCount).to.be.at.least(3);
+    });
+
+    test("Proveedores GetAll - Codigo de 11 caracteres", function () {
+        const d = res.getBody();
+        const conCodigo = d.items.filter(i => i.codigo);
+        conCodigo.forEach(i => expect(i.codigo).to.have.lengthOf(11));
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Listado paginado de proveedores. Requiere token ADMIN (los GET también).
+}

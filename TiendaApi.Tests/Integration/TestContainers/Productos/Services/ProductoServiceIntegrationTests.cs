@@ -20,6 +20,7 @@ using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Repositories.Proveedores;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Productos;
@@ -96,6 +97,7 @@ public class ProductoServiceIntegrationTests
 
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
+        services.AddScoped<IProveedorRepository, ProveedorRepository>();
         services.AddScoped<IProductoEffects, ProductoEffects>();
         services.AddScoped<IProductoService, ProductoService>();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();

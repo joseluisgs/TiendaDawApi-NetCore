@@ -15,6 +15,7 @@ using TiendaApi.Api.Models;
 using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Repositories.Proveedores;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Repositories.Historial;
@@ -71,6 +72,7 @@ public class ProductoServiceTests
             _mockProductoRepo.Object,
             _mockHistorialRepo.Object,
             _mockCategoriaRepo.Object,
+            Mock.Of<IProveedorRepository>(),
             _mockLogger.Object,
             _mockCacheService.Object,
             _mockConfiguration.Object,
@@ -112,7 +114,7 @@ public class ProductoServiceTests
         // Arrange
         var cachedDtos = new List<ProductoDto>
         {
-            new ProductoDto(1, "Cached Product", "", 0, 0, null, 0, "", DateTime.UtcNow, DateTime.UtcNow)
+            new ProductoDto(1, "Cached Product", "", 0, 0, null, new CategoriaResumenDto(0, ""), null, DateTime.UtcNow, DateTime.UtcNow)
         };
 
         _mockCacheService.Setup(c => c.GetAsync<IEnumerable<ProductoDto>>("productos:all"))
@@ -285,6 +287,7 @@ public class ProductoServiceTests
             _mockProductoRepo.Object,
             Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
             _mockCategoriaRepo.Object,
+            Mock.Of<IProveedorRepository>(),
             _mockLogger.Object,
             _mockCacheService.Object,
             _mockConfiguration.Object,

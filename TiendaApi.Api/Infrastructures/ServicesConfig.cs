@@ -6,6 +6,7 @@ using TiendaApi.Api.Services.Categorias;
 using TiendaApi.Api.Services.Historial;
 using TiendaApi.Api.Services.Pedidos;
 using TiendaApi.Api.Services.Productos;
+using TiendaApi.Api.Services.Proveedores;
 using TiendaApi.Api.Services.Users;
 
 namespace TiendaApi.Api.Infrastructures;
@@ -23,6 +24,7 @@ public static class ServicesConfig
         Log.Information("⚙️ Registrando servicios...");
         return services
             .AddScoped<ICategoriaService, CategoriaService>()
+            .AddScoped<IProveedorService, ProveedorService>()
             .AddScoped<IProductoService, ProductoService>()
             .AddScoped<IProductoEffects, ProductoEffects>()
             .AddScoped<IHistorialService, HistorialService>()

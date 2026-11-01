@@ -1,0 +1,34 @@
+meta {
+    name: [098] DELETE Con productos (422)
+    type: http
+    seq: 9
+}
+
+delete {
+    url: {{baseUrl}}/api/proveedores/Distribuc01
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Proveedores DeleteConProductos - Status 422", function () {
+        expect(res.getStatus()).to.equal(422);
+    });
+
+    test("Proveedores DeleteConProductos - Explica el motivo", function () {
+        const d = res.getBody();
+        expect(d.message).to.be.a('string');
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Distribuc01 tiene productos asignados en la semilla: no se puede eliminar.
+}

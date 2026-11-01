@@ -418,6 +418,10 @@ let imagenProductoUrl = null;
       token: adminToken,
       body: { nombre: `Auto Cat ${ts}`, descripcion: "Creada por automation" },
     });
+    assertEq(st(r), 201, "status");
+    categoriaId = r.json?.id;
+    assert(categoriaId !== undefined, "falta id");
+  });
 
   await test("Categorías: POST nombre duplicado → 409 Conflict", async () => {
     const nombre = `Dup Cat ${ts}`;
@@ -435,10 +439,6 @@ let imagenProductoUrl = null;
       body: { nombre: "No existe", descripcion: "x" },
     });
     assertEq(st(r), 404, "status");
-  });
-    assertEq(st(r), 201, "status");
-    categoriaId = r.json?.id;
-    assert(categoriaId !== undefined, "falta id");
   });
 
   await test("Categorías: PUT /{id} admin → 200", async () => {
@@ -460,12 +460,105 @@ let imagenProductoUrl = null;
     assertEq(st(r), 404, "status");
   });
 
+  // ============================ PROVEEDORES ============================
+  // El controlador de proveedores es ADMIN también en lectura: los GET anónimos
+  // y con rol USER deben rechazarse.
+  let proveedorCodigo = null;
+
+  await test("Proveedores: GET sin token → 401", async () => {
+    const r = await req("GET", "/api/proveedores");
+    assertEq(st(r), 401, "status");
+  });
+
+  await test("Proveedores: GET rol USER → 403", async () => {
+    const r = await req("GET", "/api/proveedores", { token: userToken });
+    assertEq(st(r), 403, "status");
+  });
+
+  await test("Proveedores: GET paged admin → 200 con semilla", async () => {
+    const r = await req("GET", "/api/proveedores?page=0&size=10", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.items), "items no es array");
+    assert(r.json.totalCount >= 3, `semilla esperaba >=3 proveedores, hay ${r.json.totalCount}`);
+  });
+
+  await test("Proveedores: POST admin sin código → 201 con código de 11 caracteres", async () => {
+    const r = await req("POST", "/api/proveedores", {
+      token: adminToken,
+      body: { nombre: `Auto Prov ${ts}`, descripcion: "Creado por automation", contacto: "e2e@tienda.example" },
+    });
+    assertEq(st(r), 201, "status");
+    proveedorCodigo = r.json?.codigo;
+    assert(proveedorCodigo?.length === 11, `el código debe tener 11 caracteres, tiene ${proveedorCodigo?.length}`);
+  });
+
+  await test("Proveedores: GET /{codigo} admin → 200", async () => {
+    const r = await req("GET", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assertEq(r.json?.codigo, proveedorCodigo, "codigo");
+  });
+
+  await test("Proveedores: POST con código de formato inválido → 400", async () => {
+    const r = await req("POST", "/api/proveedores", {
+      token: adminToken,
+      body: { codigo: "no-valido!", nombre: `Invalido ${ts}` },
+    });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Proveedores: POST nombre duplicado → 409", async () => {
+    const nombre = `Dup Prov ${ts}`;
+    const primero = await req("POST", "/api/proveedores", { token: adminToken, body: { nombre } });
+    assertEq(st(primero), 201, "status primer create");
+    const segundo = await req("POST", "/api/proveedores", { token: adminToken, body: { nombre } });
+    assertEq(st(segundo), 409, "status duplicado");
+    await req("DELETE", `/api/proveedores/${primero.json.codigo}`, { token: adminToken });
+  });
+
+  await test("Proveedores: PUT /{codigo} admin → 200", async () => {
+    const r = await req("PUT", `/api/proveedores/${proveedorCodigo}`, {
+      token: adminToken,
+      body: { nombre: `Auto Prov ${ts} v2`, descripcion: "Actualizado" },
+    });
+    assertEq(st(r), 200, "status");
+    assert(String(r.json?.nombre).includes("v2"), "nombre no actualizado");
+  });
+
+  await test("Proveedores: DELETE con productos asociados → 422", async () => {
+    // Distribuc01 viene de la semilla con productos asignados: no se puede borrar.
+    const r = await req("DELETE", "/api/proveedores/Distribuc01", { token: adminToken });
+    assertEq(st(r), 422, "status");
+  });
+
+  await test("Proveedores: DELETE /{codigo} admin → 204", async () => {
+    const r = await req("DELETE", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    assertEq(st(r), 204, "status");
+  });
+
+  await test("Proveedores: GET /{codigo} tras DELETE → 404", async () => {
+    const r = await req("GET", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    assertEq(st(r), 404, "status");
+  });
+
   // ============================ PRODUCTOS ============================
   await test("Productos: GET paged → 200 con semilla", async () => {
     const r = await req("GET", "/api/productos?page=0&size=2");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.json.totalCount >= 3, `semilla esperaba >=3 productos, hay ${r.json.totalCount}`);
+  });
+
+  await test("Productos: GET /{id} trae categoria y proveedor anidados", async () => {
+    const r = await req("GET", "/api/productos/1");
+    assertEq(st(r), 200, "status");
+    assert(r.json?.categoria?.id > 0, "falta categoria.id");
+    assert(typeof r.json?.categoria?.nombre === "string" && r.json.categoria.nombre.length > 0, "falta categoria.nombre");
+    assert(typeof r.json?.proveedor?.codigo === "string", "falta proveedor.codigo");
+    assert(String(r.json?.proveedor?.codigo).length === 11, "el código del proveedor debe tener 11 caracteres");
+    assert(typeof r.json?.proveedor?.nombre === "string" && r.json.proveedor.nombre.length > 0, "falta proveedor.nombre");
+    // Los campos planos desaparecieron del contrato.
+    assert(r.json?.categoriaNombre === undefined, "categoriaNombre ya no debe existir");
+    assert(r.json?.proveedorNombre === undefined, "proveedorNombre ya no debe existir");
   });
 
   await test("Productos: GET All (sin paginación) → 200 array", async () => {

@@ -1341,7 +1341,7 @@
                   "pm.test(\"Schema - Producto\", function () {",
                   "  pm.response.to.have.jsonSchema({",
                   "    type: \"object\",",
-                  "    required: [\"id\", \"nombre\", \"precio\", \"stock\", \"categoriaId\"],",
+                  "    required: [\"id\", \"nombre\", \"precio\", \"stock\", \"categoria\"],",
                   "    properties: {",
                   "      id: { type: \"integer\" },",
                   "      nombre: { type: \"string\" },",
@@ -1349,7 +1349,8 @@
                   "      precio: { type: \"number\" },",
                   "      stock: { type: \"integer\" },",
                   "      imagen: { type: [\"string\", \"null\"] },",
-                  "      categoriaId: { type: \"integer\" }",
+                  "      categoria: { type: \"object\", required: [\"id\", \"nombre\"], properties: { id: { type: \"integer\" }, nombre: { type: \"string\" } } },",
+                  "      proveedor: { type: [\"object\", \"null\"] }",
                   "    }",
                   "  });",
                   "});"
@@ -1766,6 +1767,472 @@
             }
           },
           "response": []
+        }
+      ]
+    },
+    {
+      "name": "14 - PROVEEDORES",
+      "item": [
+        {
+          "name": "[090] GET - All (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores GetAll - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Proveedores GetAll - Items paginados', function () { const d = pm.response.json(); pm.expect(d.items).to.be.an('array'); pm.expect(d.totalCount).to.be.at.least(3); });",
+                  "pm.test('Proveedores GetAll - Codigos de 11 caracteres', function () { pm.response.json().items.filter(i => i.codigo).forEach(i => pm.expect(i.codigo).to.have.lengthOf(11)); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores?page=0&size=10"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[091] GET - Por codigo (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores GetByCodigo - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Proveedores GetByCodigo - Devuelve el codigo pedido', function () { const d = pm.response.json(); pm.expect(d.codigo).to.equal('Distribuc01'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores/Distribuc01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                "Distribuc01"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[092] GET - Sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores SinToken - Status 401', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[093] GET - Rol USER (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores RolUser - Status 403', function () { pm.response.to.have.status(403); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[094] POST - Crear sin codigo (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores Create - Status 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Proveedores Create - El servidor genera un codigo de 11 caracteres', function () { const d = pm.response.json(); pm.expect(d.codigo).to.have.lengthOf(11); pm.expect(d.nombre).to.equal('Proveedor Automation'); });",
+                  "if (pm.response.code === 201) { pm.environment.set('proveedorCodigo', pm.response.json().codigo); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Proveedor Automation\",\n    \"descripcion\": \"Creado por las colecciones E2E\",\n    \"contacto\": \"e2e@tienda.example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[095] POST - Codigo invalido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores CodigoInvalido - Status 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Proveedores CodigoInvalido - Devuelve errores por campo', function () { pm.expect(pm.response.json()).to.have.property('errors'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"codigo\": \"no-valido!\",\n    \"nombre\": \"Proveedor con codigo invalido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[096] POST - Nombre duplicado (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores Duplicado - Status 409 Conflict', function () { pm.response.to.have.status(409); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Proveedor Automation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[097] PUT - Actualizar (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores Update - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Proveedores Update - Nombre cambiado y codigo intacto', function () { const d = pm.response.json(); pm.expect(d.nombre).to.equal('Proveedor Automation v2'); pm.expect(d.codigo).to.equal(pm.environment.get('proveedorCodigo')); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores/{{proveedorCodigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                "{{proveedorCodigo}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Proveedor Automation v2\",\n    \"descripcion\": \"Actualizado por las colecciones E2E\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[098] DELETE - Con productos (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores DeleteConProductos - Status 422', function () { pm.response.to.have.status(422); });",
+                  "pm.test('Proveedores DeleteConProductos - Explica el motivo', function () { pm.expect(pm.response.json().message).to.be.a('string'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores/Distribuc01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                "Distribuc01"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[099] DELETE - Ok y verificacion (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores Delete - Status 204', function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores/{{proveedorCodigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                "{{proveedorCodigo}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
         }
       ]
     },
@@ -3860,7 +4327,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"query\":\"query { productos { id nombre precio stock categoriaId } }\"}"
+              "raw": "{\"query\":\"query { productos { id nombre precio stock categoria { id nombre } } }\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/graphql",

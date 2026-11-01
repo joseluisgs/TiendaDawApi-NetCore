@@ -1,0 +1,46 @@
+meta {
+    name: [097] PUT Actualizar (Admin)
+    type: http
+    seq: 8
+}
+
+put {
+    url: {{baseUrl}}/api/proveedores/{{proveedorCodigo}}
+    body: json
+    auth: bearer
+}
+
+headers {
+    Content-Type: application/json
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+body:json {
+    {
+        "nombre": "Proveedor Automation v2",
+        "descripcion": "Actualizado por las colecciones E2E"
+    }
+}
+
+script:post-response {
+    test("Proveedores Update - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Proveedores Update - El nombre cambia y el codigo se mantiene", function () {
+        const d = res.getBody();
+        expect(d.nombre).to.equal('Proveedor Automation v2');
+        expect(d.codigo).to.equal(bru.getVar('proveedorCodigo'));
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Actualiza los datos editables. El codigo es la clave y no cambia.
+}

@@ -14,6 +14,7 @@ using TiendaApi.Api.Models;
 using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Repositories.Proveedores;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Categorias;
 using TiendaApi.Api.Services.Productos;
@@ -85,6 +86,7 @@ public class ErrorHandlingComparisonTests
             _mockProductoRepo.Object,
             Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
             _mockCategoriaRepo.Object,
+            Mock.Of<IProveedorRepository>(),
             _mockProductoLogger.Object,
             mockCacheService.Object,
             mockConfiguration.Object,
@@ -250,6 +252,7 @@ public class ErrorHandlingComparisonTests
             _mockProductoRepo.Object,
             Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
             _mockCategoriaRepo.Object,
+            Mock.Of<IProveedorRepository>(),
             _mockProductoLogger.Object,
             mockCacheService.Object,
             mockConfiguration.Object,

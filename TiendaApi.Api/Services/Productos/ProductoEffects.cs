@@ -116,8 +116,8 @@ public class ProductoEffects(
                     descripcion = producto.Descripcion,
                     precio = producto.Precio,
                     stock = producto.Stock,
-                    categoriaId = producto.CategoriaId,
-                    categoriaNombre = producto.CategoriaNombre,
+                    categoria = producto.Categoria,
+                    proveedor = producto.Proveedor,
                     tipo = "PRODUCTO_CREADO",
                     timestamp = DateTime.UtcNow
                 };
@@ -147,8 +147,8 @@ public class ProductoEffects(
                     descripcion = producto.Descripcion,
                     precio = producto.Precio,
                     stock = producto.Stock,
-                    categoriaId = producto.CategoriaId,
-                    categoriaNombre = producto.CategoriaNombre,
+                    categoria = producto.Categoria,
+                    proveedor = producto.Proveedor,
                     tipo = "PRODUCTO_ACTUALIZADO",
                     timestamp = DateTime.UtcNow
                 };

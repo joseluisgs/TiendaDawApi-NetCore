@@ -1,0 +1,45 @@
+meta {
+    name: [095] POST Codigo invalido (400)
+    type: http
+    seq: 6
+}
+
+post {
+    url: {{baseUrl}}/api/proveedores
+    body: json
+    auth: bearer
+}
+
+headers {
+    Content-Type: application/json
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+body:json {
+    {
+        "codigo": "no-valido!",
+        "nombre": "Proveedor con codigo invalido"
+    }
+}
+
+script:post-response {
+    test("Proveedores CodigoInvalido - Status 400", function () {
+        expect(res.getStatus()).to.equal(400);
+    });
+
+    test("Proveedores CodigoInvalido - Devuelve errores por campo", function () {
+        const d = res.getBody();
+        expect(d).to.have.property('errors');
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Un codigo que no es un identificador de 11 caracteres Base64url se rechaza con 400.
+}

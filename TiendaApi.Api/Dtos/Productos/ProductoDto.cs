@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using TiendaApi.Api.IdGenerators;
 
 namespace TiendaApi.Api.Dtos.Productos;
 
@@ -108,20 +109,18 @@ public record ProductoDto(
     string? Imagen,
 
     // <summary>
-    // Identificador de la categoría a la que pertenece el producto.
-    // Clave foránea que relaciona el producto con su categoría.
-    // Útil para filtrados y organización jerárquica.
+    // Categoría del producto, anidada con su identificador y su nombre.
+    // Se resuelve con la navegación ya cargada, así que no añade consultas al listado.
     // </summary>
-    // <example>1</example>
-    long CategoriaId,
+    // <example>{"id": 1, "nombre": "Electrónica"}</example>
+    CategoriaResumenDto Categoria,
 
     // <summary>
-    // Nombre de la categoría del producto (desnormalizado).
-    // Repetido aquí para evitar consulta adicional a la tabla de categorías.
-    // Mejora el rendimiento en listados y reduce llamadas al servidor.
+    // Proveedor del producto, anidado con su código y su nombre.
+    // Null cuando el producto no tiene proveedor asignado.
     // </summary>
-    // <example>Electrónica</example>
-    string CategoriaNombre,
+    // <example>{"codigo": "Distribuc01", "nombre": "Distribuciones DAW"}</example>
+    ProveedorResumenDto? Proveedor,
 
     // <summary>
     // Fecha y hora de creación del registro en formato UTC.
@@ -253,6 +252,15 @@ public record ProductoRequestDto
     [Required(ErrorMessage = "La categoría es obligatoria")]
     [Range(1, long.MaxValue, ErrorMessage = "Debe seleccionar una categoría válida")]
     public long CategoriaId { get; init; }
+
+    /// <summary>
+    /// Proveedor del producto (opcional).
+    /// Si se envía, debe ser un código existente de 11 caracteres estilo YouTube; si se omite,
+    /// el producto queda sin proveedor asignado.
+    /// </summary>
+    /// <example>XqZsoesa55w</example>
+    [IdYouTube]
+    public string? ProveedorCodigo { get; init; }
 }
 
 /// <summary>
@@ -338,4 +346,41 @@ public record ProductoPatchDto
     /// </summary>
     [Range(1, long.MaxValue, ErrorMessage = "El id de categoría debe ser positivo")]
     public long? CategoriaId { get; init; }
+
+    /// <summary>
+    /// Proveedor del producto (opcional).
+    /// Si se proporciona, reasigna el producto a ese proveedor; si se envía vacío, el producto
+    /// queda sin proveedor.
+    /// </summary>
+    /// <example>XqZsoesa55w</example>
+    [IdYouTube]
+    public string? ProveedorCodigo { get; init; }
 }
+
+/// <summary>
+/// Resumen de categoría dentro de un producto: identificador y nombre.
+/// Es el único dato de categoría que necesita el cliente al ver un producto.
+/// </summary>
+public record CategoriaResumenDto(
+    // <summary>Identificador de la categoría.</summary>
+    // <example>1</example>
+    long Id,
+
+    // <summary>Nombre de la categoría.</summary>
+    // <example>Electrónica</example>
+    string Nombre
+);
+
+/// <summary>
+/// Resumen de proveedor dentro de un producto: código y nombre.
+/// El código es un identificador de 11 caracteres estilo YouTube.
+/// </summary>
+public record ProveedorResumenDto(
+    // <summary>Código de 11 caracteres del proveedor.</summary>
+    // <example>Distribuc01</example>
+    string Codigo,
+
+    // <summary>Nombre del proveedor.</summary>
+    // <example>Distribuciones DAW</example>
+    string Nombre
+);

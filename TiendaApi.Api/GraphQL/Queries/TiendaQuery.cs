@@ -64,9 +64,7 @@ public class TiendaQuery
         var result = await productoRepository.FindAllPagedAsync(filter);
         return new PagedResult<ProductoDto>
         {
-            Items = result.Items.Select(p => new ProductoDto(
-                p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock,
-                p.Imagen, p.CategoriaId, p.Categoria?.Nombre ?? "", p.CreatedAt, p.UpdatedAt)),
+            Items = result.Items.Select(p => p.ToDto()),
             TotalCount = result.TotalCount,
             Page = page,
             PageSize = size

@@ -1,0 +1,35 @@
+meta {
+    name: [091] GET Por codigo (Admin)
+    type: http
+    seq: 2
+}
+
+get {
+    url: {{baseUrl}}/api/proveedores/Distribuc01
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Proveedores GetByCodigo - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Proveedores GetByCodigo - Devuelve el codigo pedido", function () {
+        const d = res.getBody();
+        expect(d.codigo).to.equal('Distribuc01');
+        expect(d.nombre).to.be.a('string');
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Obtiene un proveedor por su codigo. Distribuc01 viene de la semilla.
+}
