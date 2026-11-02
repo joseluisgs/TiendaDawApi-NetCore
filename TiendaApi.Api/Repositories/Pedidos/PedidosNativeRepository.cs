@@ -25,6 +25,20 @@ public class PedidosNativeRepository(
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<Pedido>> FindByRangoFechasAsync(DateTime desde, DateTime hasta)
+    {
+        logger.LogDebug("Buscando pedidos entre {Desde} y {Hasta}", desde, hasta);
+        // El rango se resuelve en el servidor: solo viajan los pedidos pedidos.
+        var filtro = Builders<Pedido>.Filter.Gte(p => p.CreatedAt, desde)
+            & Builders<Pedido>.Filter.Lt(p => p.CreatedAt, hasta);
+
+        return await _collection
+            .Find(filtro)
+            .SortBy(p => p.CreatedAt)
+            .ToListAsync();
+    }
+
+    /// <inheritdoc/>
     public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size)
     {
         logger.LogDebug("Buscando pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);

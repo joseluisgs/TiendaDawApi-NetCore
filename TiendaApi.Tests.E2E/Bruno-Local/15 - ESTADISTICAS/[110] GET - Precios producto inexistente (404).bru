@@ -1,0 +1,29 @@
+meta {
+    name: [110] GET Precios producto inexistente (404)
+    type: http
+    seq: 11
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/precios?productoId=999999
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Precios inexistente - Status 404", function () {
+        expect(res.getStatus()).to.equal(404);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Un producto sin histórico (o inexistente) responde 404.
+}

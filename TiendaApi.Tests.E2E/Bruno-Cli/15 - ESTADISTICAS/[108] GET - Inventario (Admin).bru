@@ -1,0 +1,38 @@
+meta {
+    name: [108] GET Inventario (Admin)
+    type: http
+    seq: 9
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/inventario?stockMax=5
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Inventario - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Inventario - Valor y agotados", function () {
+        const d = res.getBody();
+        expect(d.stockMax).to.equal(5);
+        expect(d.productos.total).to.be.at.least(3);
+        expect(d.productos.valorInventario).to.be.a('number').that.is.at.least(0);
+        expect(d.agotados).to.be.an('array');
+        expect(d.mayorValor).to.be.an('array');
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Foto del inventario: valor, stock bajo (umbral) y agotados.
+}

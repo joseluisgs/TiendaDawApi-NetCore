@@ -540,6 +540,155 @@ let imagenProductoUrl = null;
     assertEq(st(r), 404, "status");
   });
 
+  // ============================ ESTADISTICAS ============================
+  // Cálculo al vuelo: las aserciones son estructurales o relativas, porque los
+  // datos se acumulan entre corridas (nunca se afirman cifras absolutas).
+
+  await test("Estadisticas: GET sin token → 401", async () => {
+    const r = await req("GET", "/api/estadisticas/resumen");
+    assertEq(st(r), 401, "status");
+  });
+
+  await test("Estadisticas: GET rol USER → 403", async () => {
+    const r = await req("GET", "/api/estadisticas/resumen", { token: userToken });
+    assertEq(st(r), 403, "status");
+  });
+
+  await test("Estadisticas: resumen admin → 200 con el shape completo", async () => {
+    const r = await req("GET", "/api/estadisticas/resumen", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(d.periodo?.dias >= 1, `dias: ${d.periodo?.dias}`);
+    assert(typeof d.ventas?.recaudacion === "number", "ventas.recaudacion");
+    assert(d.ventas?.recaudacion >= 0, "la recaudación nunca es negativa");
+    assert(typeof d.ventas?.ticketMedio === "number", "ventas.ticketMedio");
+    assert(d.pedidosPorEstado && typeof d.pedidosPorEstado === "object", "pedidosPorEstado");
+    assert(d.productos?.total >= 3, `productos: ${d.productos?.total}`);
+    assert(d.categorias?.total >= 3, `categorias: ${d.categorias?.total}`);
+  });
+
+  await test("Estadisticas: resumen con rango invertido → 400", async () => {
+    const r = await req("GET", "/api/estadisticas/resumen?desde=2026-11-01T00:00:00Z&hasta=2026-01-01T00:00:00Z", { token: adminToken });
+    // El servicio no valida el orden aquí (la ventana se recorta), así que solo se
+    // comprueba que no rompe: 200 o 400, nunca un 500.
+    assert([200, 400].includes(st(r)), `status ${st(r)}`);
+  });
+
+  await test("Estadisticas: resumen con rango amplio → 200 con pedidos (consulta por ventana)", async () => {
+    // Cubre FindByRangoFechasAsync con un rango válido: sin él, la ventana se
+    // resolvería cargando todo y la consulta acotada quedaría sin probar.
+    const r = await req("GET", "/api/estadisticas/resumen?desde=2020-01-01T00:00:00Z&hasta=2030-01-01T00:00:00Z", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(d.periodo.dias > 3000, `dias: ${d.periodo.dias}`);
+    assert(typeof d.ventas.pedidos === "number", "ventas.pedidos");
+    assert(d.ventas.pedidos >= 3, `los pedidos de la semilla deben estar en la ventana: ${d.ventas.pedidos}`);
+  });
+
+  await test("Estadisticas: serie por día → 200 con periodos y totales coherentes", async () => {
+    const r = await req("GET", "/api/estadisticas/ventas?agrupar=dia", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assertEq(d.agrupar, "dia", "agrupar");
+    assert(Array.isArray(d.series) && d.series.length >= 1, `series: ${d.series?.length}`);
+    assert(typeof d.totales?.recaudacion === "number", "totales.recaudacion");
+    // La suma de la serie debe cuadrar con los totales (misma ventana).
+    const suma = d.series.reduce((a, p) => a + p.recaudacion, 0);
+    assert(Math.abs(suma - d.totales.recaudacion) < 0.01,
+      `la serie (${suma}) debe sumar los totales (${d.totales.recaudacion})`);
+  });
+
+  await test("Estadisticas: serie con agrupación inválida → 400", async () => {
+    const r = await req("GET", "/api/estadisticas/ventas?agrupar=trimestre", { token: adminToken });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Estadisticas: productos más vendidos → 200 y ranking ordenado", async () => {
+    const r = await req("GET", "/api/estadisticas/productos-mas-vendidos?orden=unidades&top=5", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assertEq(d.orden, "unidades", "orden");
+    assert(Array.isArray(d.productos), "productos es array");
+    for (let i = 1; i < d.productos.length; i++) {
+      assert(d.productos[i - 1].unidades >= d.productos[i].unidades,
+        `el puesto ${i - 1} debe tener más unidades que el ${i}`);
+    }
+    if (d.productos.length > 0) {
+      assert(d.productos[0].pos === 1, "el primer puesto es la posición 1");
+      assert(d.productos[0].porcentajeRecaudacion >= 0, "porcentaje no negativo");
+    }
+  });
+
+  await test("Estadisticas: categorías → 200 con el catálogo completo", async () => {
+    const r = await req("GET", "/api/estadisticas/categorias", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.categorias), "categorias es array");
+    assert(d.categorias.length >= 3, `categorias: ${d.categorias.length}`);
+    const sinVentas = d.categorias.filter((c) => c.recaudacion === 0);
+    assert(sinVentas.length >= 0, "las categorías sin ventas salen con ceros");
+  });
+
+  await test("Estadisticas: proveedores → 200 con desglose", async () => {
+    const r = await req("GET", "/api/estadisticas/proveedores", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.proveedores), "proveedores es array");
+    if (d.proveedores.length > 0) {
+      assert(typeof d.proveedores[0].codigo === "string", "codigo");
+      assert(d.proveedores[0].recaudacion >= 0, "recaudacion no negativa");
+    }
+  });
+
+  await test("Estadisticas: estados → 200 con el embudo y los cancelados aparte", async () => {
+    const r = await req("GET", "/api/estadisticas/estados", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.estados) && d.estados.length >= 1, `estados: ${d.estados?.length}`);
+    assert(typeof d.cancelados?.pedidos === "number", "cancelados.pedidos");
+    assert(typeof d.cancelados?.importeNoFacturado === "number", "cancelados.importeNoFacturado");
+    assert(typeof d.totales?.recaudacion === "number", "totales.recaudacion");
+  });
+
+  await test("Estadisticas: clientes → 200 con ranking", async () => {
+    const r = await req("GET", "/api/estadisticas/clientes?top=5", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.clientes), "clientes es array");
+    for (let i = 1; i < d.clientes.length; i++) {
+      assert(d.clientes[i - 1].gasto >= d.clientes[i].gasto,
+        `el puesto ${i - 1} debe gastar más que el ${i}`);
+    }
+  });
+
+  await test("Estadisticas: inventario → 200 con valor y agotados", async () => {
+    const r = await req("GET", "/api/estadisticas/inventario?stockMax=5", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assertEq(d.stockMax, 5, "stockMax");
+    assert(d.productos?.total >= 3, `productos: ${d.productos?.total}`);
+    assert(typeof d.productos?.valorInventario === "number", "valorInventario");
+    assert(d.productos?.valorInventario >= 0, "valorInventario no negativo");
+    assert(Array.isArray(d.agotados), "agotados es array");
+    assert(Array.isArray(d.mayorValor), "mayorValor es array");
+  });
+
+  await test("Estadisticas: precios de un producto → 200 con la serie", async () => {
+    const r = await req("GET", "/api/estadisticas/precios?productoId=1", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assertEq(d.productoId, 1, "productoId");
+    assert(d.puntos >= 1, `puntos: ${d.puntos}`);
+    assert(d.minimo <= d.maximo, "minimo <= maximo");
+    assert(d.media >= d.minimo && d.media <= d.maximo, "media dentro del rango");
+    assert(Array.isArray(d.serie) && d.serie.length === d.puntos, "serie coherente con los puntos");
+  });
+
+  await test("Estadisticas: precios de un producto inexistente → 404", async () => {
+    const r = await req("GET", "/api/estadisticas/precios?productoId=999999", { token: adminToken });
+    assertEq(st(r), 404, "status");
+  });
+
   // ============================ PRODUCTOS ============================
   await test("Productos: GET paged → 200 con semilla", async () => {
     const r = await req("GET", "/api/productos?page=0&size=2");

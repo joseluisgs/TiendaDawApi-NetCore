@@ -1,0 +1,29 @@
+meta {
+    name: [112] GET Resumen rol USER (403)
+    type: http
+    seq: 13
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/resumen
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{userToken}}
+}
+
+script:post-response {
+    test("Estadisticas RolUser - Status 403", function () {
+        expect(res.getStatus()).to.equal(403);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Las estadísticas son solo ADMIN, también en lectura.
+}

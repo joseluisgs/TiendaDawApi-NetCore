@@ -1,0 +1,36 @@
+meta {
+    name: [106] GET Estados (Admin)
+    type: http
+    seq: 7
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/estados
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Estados - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Estados - Embudo y cancelados aparte", function () {
+        const d = res.getBody();
+        expect(d.estados).to.be.an('array').that.is.not.empty;
+        expect(d.cancelados.pedidos).to.be.a('number');
+        expect(d.cancelados.importeNoFacturado).to.be.a('number');
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Embudo de estados; los cancelados nunca suman en los totales.
+}

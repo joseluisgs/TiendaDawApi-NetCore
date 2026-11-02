@@ -1218,6 +1218,24 @@ Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` 
 | `/api/proveedores/{codigo}` | PUT    | ADMIN | Actualizar proveedor (el código es la clave)         |
 | `/api/proveedores/{codigo}` | DELETE | ADMIN | Eliminar proveedor (422 si tiene productos asociados) |
 
+### Estadísticas
+
+> Cálculo al vuelo sobre los datos existentes: sin tablas de agregados ni trabajos
+> de fondo. Todas son de solo lectura y **solo ADMIN**, porque incluyen cifras de
+> negocio y datos de clientes.
+
+| Endpoint                                   | Método | Auth  | Descripción                                                        |
+| ------------------------------------------ | ------ | ----- | ------------------------------------------------------------------ |
+| `/api/estadisticas/resumen`                | GET    | ADMIN | Resumen general: ventas, estados, inventario y comparativa          |
+| `/api/estadisticas/ventas`                 | GET    | ADMIN | Serie temporal (`agrupar=dia\|semana\|mes`) con huecos a cero        |
+| `/api/estadisticas/productos-mas-vendidos` | GET    | ADMIN | Ranking por `orden=unidades\|recaudacion` (top 1-50)                 |
+| `/api/estadisticas/categorias`             | GET    | ADMIN | Rendimiento por categoría (incluye las que no venden)               |
+| `/api/estadisticas/proveedores`            | GET    | ADMIN | Rendimiento por proveedor                                           |
+| `/api/estadisticas/estados`                | GET    | ADMIN | Embudo de estados; los cancelados se reportan aparte                |
+| `/api/estadisticas/clientes`               | GET    | ADMIN | Clientes con más gasto y su producto favorito                       |
+| `/api/estadisticas/inventario`             | GET    | ADMIN | Valor del stock, agotados y productos con `stockMax` o menos        |
+| `/api/estadisticas/precios`                | GET    | ADMIN | Histórico de precios (mínimo, máximo, media y variación)            |
+
 ### Productos
 
 | Endpoint                                 | Método | Auth  | Descripción                       |

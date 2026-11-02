@@ -1,0 +1,38 @@
+meta {
+    name: [103] GET Productos más vendidos (Admin)
+    type: http
+    seq: 4
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/productos-mas-vendidos?orden=unidades&top=5
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Ranking - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Ranking - Orden descendente por unidades", function () {
+        const d = res.getBody();
+        expect(d.productos).to.be.an('array');
+        for (let i = 1; i < d.productos.length; i++) {
+            expect(d.productos[i - 1].unidades).to.be.at.least(d.productos[i].unidades);
+        }
+        if (d.productos.length) expect(d.productos[0].pos).to.equal(1);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Ranking por unidades (también admite orden=recaudacion).
+}

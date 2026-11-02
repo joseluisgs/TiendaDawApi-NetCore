@@ -16,6 +16,8 @@ services:
       - "1 - AUTHENTICATION"
       - "2 - CATEGORÍAS"
       - "3 - PRODUCTOS"
+      - "14 - PROVEEDORES"
+      - "15 - ESTADISTICAS"
       - "13 - HISTORIAL Y FEED"
       - "4 - PEDIDOS (Usuario)"
       - "5 - PEDIDOS (Admin)"

@@ -1,0 +1,25 @@
+meta {
+    name: [111] GET Resumen sin token (401)
+    type: http
+    seq: 12
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/resumen
+    body: none
+    auth: none
+}
+
+script:post-response {
+    test("Estadisticas SinToken - Status 401", function () {
+        expect(res.getStatus()).to.equal(401);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Sin token no se consulta nada.
+}
