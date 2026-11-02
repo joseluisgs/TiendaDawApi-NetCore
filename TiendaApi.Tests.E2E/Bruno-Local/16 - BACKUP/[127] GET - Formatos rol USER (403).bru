@@ -1,0 +1,29 @@
+meta {
+    name: [127] GET Formatos rol USER (403)
+    type: http
+    seq: 6
+}
+
+get {
+    url: {{baseUrl}}/api/backup/formatos
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{userToken}}
+}
+
+script:post-response {
+    test("Backup RolUser - Status 403", function () {
+        expect(res.getStatus()).to.equal(403);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Un usuario sin rol ADMIN no consulta el catálogo.
+}

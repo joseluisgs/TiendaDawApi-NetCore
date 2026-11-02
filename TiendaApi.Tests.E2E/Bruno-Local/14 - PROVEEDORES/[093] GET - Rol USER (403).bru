@@ -1,0 +1,29 @@
+meta {
+    name: [093] GET Rol USER (403)
+    type: http
+    seq: 4
+}
+
+get {
+    url: {{baseUrl}}/api/proveedores
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{userToken}}
+}
+
+script:post-response {
+    test("Proveedores RolUser - Status 403", function () {
+        expect(res.getStatus()).to.equal(403);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Un usuario sin rol ADMIN no puede consultar proveedores.
+}

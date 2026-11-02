@@ -230,6 +230,9 @@ namespace TiendaApi.Api.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<string>("ProveedorId")
+                        .HasColumnType("character varying(11)");
+
                     b.Property<byte[]>("RowVersion")
                         .IsRequired()
                         .HasColumnType("bytea");
@@ -248,9 +251,52 @@ namespace TiendaApi.Api.Migrations
 
                     b.HasIndex("IsDeleted");
 
+                    b.HasIndex("ProveedorId");
+
                     b.HasIndex("CategoriaId", "Precio");
 
                     b.ToTable("productos", (string)null);
+                });
+
+            modelBuilder.Entity("TiendaApi.Api.Models.Proveedor", b =>
+                {
+                    b.Property<string>("Codigo")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)");
+
+                    b.Property<string>("Contacto")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Codigo");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("proveedores", (string)null);
                 });
 
             modelBuilder.Entity("TiendaApi.Api.Models.User", b =>
@@ -263,10 +309,6 @@ namespace TiendaApi.Api.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
-
-                    b.Property<string>("Apellidos")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Avatar")
                         .HasMaxLength(500)
@@ -299,10 +341,6 @@ namespace TiendaApi.Api.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -462,7 +500,14 @@ namespace TiendaApi.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("TiendaApi.Api.Models.Proveedor", "Proveedor")
+                        .WithMany("Productos")
+                        .HasForeignKey("ProveedorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Categoria");
+
+                    b.Navigation("Proveedor");
                 });
 
             modelBuilder.Entity("TiendaApi.Api.Models.UserLogin", b =>
@@ -477,6 +522,11 @@ namespace TiendaApi.Api.Migrations
                 });
 
             modelBuilder.Entity("TiendaApi.Api.Models.Categoria", b =>
+                {
+                    b.Navigation("Productos");
+                });
+
+            modelBuilder.Entity("TiendaApi.Api.Models.Proveedor", b =>
                 {
                     b.Navigation("Productos");
                 });

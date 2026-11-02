@@ -1,0 +1,37 @@
+meta {
+    name: [107] GET Clientes (Admin)
+    type: http
+    seq: 8
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/clientes?top=5
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Clientes - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Clientes - Ordenado por gasto", function () {
+        const d = res.getBody();
+        expect(d.clientes).to.be.an('array');
+        for (let i = 1; i < d.clientes.length; i++) {
+            expect(d.clientes[i - 1].gasto).to.be.at.least(d.clientes[i].gasto);
+        }
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Clientes con más gasto y su producto favorito.
+}

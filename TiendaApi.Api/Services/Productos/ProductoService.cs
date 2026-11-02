@@ -15,6 +15,7 @@ using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Repositories.Proveedores;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Storage;
@@ -29,6 +30,7 @@ public class ProductoService(
 IProductoRepository productoRepository,
 IHistorialRepository historialRepository,
 ICategoriaRepository categoriaRepository,
+IProveedorRepository proveedorRepository,
 ILogger<ProductoService> logger,
 ICacheService cacheService,
 IConfiguration configuration,
@@ -244,6 +246,7 @@ IProductoEffects effects
         producto.Stock = dto.Stock;
         producto.Imagen = dto.Imagen;
         producto.CategoriaId = dto.CategoriaId;
+        producto.ProveedorId = dto.ProveedorCodigo;
 
         var updated = await productoRepository.UpdateAsync(producto);
         var resultDto = updated.ToDto();
@@ -371,6 +374,17 @@ IProductoEffects effects
 
         var precioAnterior = producto.Precio;   // capturado ANTES de aplicar el patch
 
+        if (!string.IsNullOrWhiteSpace(dto.ProveedorCodigo)
+            && !await proveedorRepository.ExistsByIdAsync(dto.ProveedorCodigo))
+        {
+            return Result.Failure<ProductoDto, DomainError>(
+                ProductoError.ValidacionConCampos(new Dictionary<string, string[]>
+                {
+                    { "ProveedorCodigo", new[] { $"El proveedor con código {dto.ProveedorCodigo} no fue encontrado" } }
+                })
+            );
+        }
+
         AplicarPatch(producto, dto);
 
         var updated = await productoRepository.UpdateAsync(producto);
@@ -418,6 +432,9 @@ IProductoEffects effects
 
         if (dto.CategoriaId.HasValue && dto.CategoriaId.Value > 0)
             producto.CategoriaId = dto.CategoriaId.Value;
+
+        if (dto.ProveedorCodigo is not null)
+            producto.ProveedorId = string.IsNullOrWhiteSpace(dto.ProveedorCodigo) ? null : dto.ProveedorCodigo;
     }
 
     /// <summary>
@@ -515,6 +532,20 @@ IProductoEffects effects
                     { "CategoriaId", new[] { $"La categoría con ID {dto.CategoriaId} no fue encontrada" } }
                 })
             );
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.ProveedorCodigo))
+        {
+            var proveedorExists = await proveedorRepository.ExistsByIdAsync(dto.ProveedorCodigo);
+            if (!proveedorExists)
+            {
+                return UnitResult.Failure<DomainError>(
+                    ProductoError.ValidacionConCampos(new Dictionary<string, string[]>
+                    {
+                        { "ProveedorCodigo", new[] { $"El proveedor con código {dto.ProveedorCodigo} no fue encontrado" } }
+                    })
+                );
+            }
         }
 
         return UnitResult.Success<DomainError>();

@@ -1,0 +1,38 @@
+meta {
+    name: [121] GET Export json (Admin)
+    type: http
+    seq: 2
+}
+
+get {
+    url: {{baseUrl}}/api/backup/export?formato=json
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Backup Export - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Backup Export - JSON con manifest y entidades", function () {
+        const d = res.getBody();
+        expect(d.manifest.version).to.equal('1.0');
+        expect(d.manifest.generadoEn).to.be.a('string');
+        expect(d.productos.length).to.be.at.least(3);
+        expect(d.categorias.length).to.be.at.least(3);
+        expect(d.productos[0].categoriaId).to.be.a('number');
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Export en JSON: manifest + entidades con las claves foráneas en plano.
+}

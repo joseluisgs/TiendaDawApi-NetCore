@@ -1,0 +1,29 @@
+meta {
+    name: [125] GET Export entidad desconocida (400)
+    type: http
+    seq: 4
+}
+
+get {
+    url: {{baseUrl}}/api/backup/export?entidades=usuarios
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Backup Export entidad - Status 400", function () {
+        expect(res.getStatus()).to.equal(400);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Solo productos, categorias y proveedores.
+}

@@ -33,11 +33,11 @@ public class WebSocketHandlerTests
             99.99m,
             10,
             null,
-            1,
-            "Categoria",
+            new CategoriaResumenDto(1, "Categoria"),
+            null,
             DateTime.UtcNow,
             DateTime.UtcNow
-        );
+            );
 
         var act = async () => await _handler.NotifyAsync(new ProductoNotificacion(
             ProductoNotificationType.CREATED,
@@ -57,11 +57,11 @@ public class WebSocketHandlerTests
             99.99m,
             10,
             "https://example.com/image.jpg",
-            1,
-            "Categoria",
+            new CategoriaResumenDto(1, "Categoria"),
+            null,
             DateTime.UtcNow,
             DateTime.UtcNow
-        );
+            );
 
         var act = async () => await _handler.NotifyAsync(new ProductoNotificacion(
             ProductoNotificationType.CREATED,
@@ -85,11 +85,11 @@ public class WebSocketHandlerTests
             99.99m,
             10,
             null,
-            1,
-            "Categoria",
+            new CategoriaResumenDto(1, "Categoria"),
+            null,
             DateTime.UtcNow,
             DateTime.UtcNow
-        );
+            );
 
         var act = async () => await _handler.NotifyAsync(new ProductoNotificacion(
             ProductoNotificationType.UPDATED,
@@ -109,11 +109,11 @@ public class WebSocketHandlerTests
             149.99m,
             20,
             "https://example.com/new-image.jpg",
-            1,
-            "Categoria",
+            new CategoriaResumenDto(1, "Categoria"),
+            null,
             DateTime.UtcNow,
             DateTime.UtcNow
-        );
+            );
 
         var act = async () => await _handler.NotifyAsync(new ProductoNotificacion(
             ProductoNotificationType.UPDATED,
@@ -165,11 +165,11 @@ public class WebSocketHandlerTests
             10m,
             5,
             null,
-            1,
-            "Cat",
+            new CategoriaResumenDto(1, "Cat"),
+            null,
             DateTime.UtcNow,
             DateTime.UtcNow
-        );
+            );
 
         var act = async () => await _handler.NotifyAsync(new ProductoNotificacion(
             ProductoNotificationType.CREATED,
@@ -189,11 +189,11 @@ public class WebSocketHandlerTests
             10m,
             5,
             null,
-            1,
-            "Cat",
+            new CategoriaResumenDto(1, "Cat"),
+            null,
             DateTime.UtcNow,
             DateTime.UtcNow
-        );
+            );
 
         var act = async () => await _handler.NotifyAsync(new ProductoNotificacion(
             ProductoNotificationType.UPDATED,
@@ -224,11 +224,11 @@ public class WebSocketHandlerTests
             10m,
             5,
             null,
-            1,
-            "Cat",
+            new CategoriaResumenDto(1, "Cat"),
+            null,
             DateTime.UtcNow,
             DateTime.UtcNow
-        );
+            );
 
         // CREATE
         await _handler.NotifyAsync(new ProductoNotificacion(

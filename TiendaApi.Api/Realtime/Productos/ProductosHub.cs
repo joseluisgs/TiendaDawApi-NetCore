@@ -46,8 +46,8 @@ public class ProductosHub(ILogger<ProductosHub> logger) : Hub
         precio = producto?.Precio,
         stock = producto?.Stock,
         imagen = producto?.Imagen,
-        categoriaId = producto?.CategoriaId,
-        categoriaNombre = producto?.CategoriaNombre,
+        categoria = producto?.Categoria,
+        proveedor = producto?.Proveedor,
         tipo,
         timestamp = DateTime.UtcNow
     };

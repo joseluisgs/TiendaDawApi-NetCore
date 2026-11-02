@@ -1,0 +1,35 @@
+meta {
+    name: [105] GET Proveedores (Admin)
+    type: http
+    seq: 6
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/proveedores
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Proveedores - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Proveedores - Desglose con códigos", function () {
+        const d = res.getBody();
+        expect(d.proveedores).to.be.an('array');
+        d.proveedores.forEach((p) => { expect(p.codigo).to.be.a('string'); });
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Desglose por proveedor; lo sin proveedor va con código vacío.
+}

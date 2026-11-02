@@ -9,11 +9,12 @@ services:
       - ./TiendaApi.NetCore.postman_collection.json:/etc/newman/TiendaApi.NetCore.postman_collection.json:ro
       - ./TiendaApi.NetCore.postman_environment.json:/etc/newman/TiendaApi.NetCore.postman_environment.json:ro
       - ./test-image.png:/etc/newman/test-image.png:ro
+      - ./backup-ejemplo.json:/etc/newman/backup-ejemplo.json:ro
       - ./reports:/etc/newman/reports
     environment:
       - BASE_URL=${BASE_URL:-http://host.docker.internal:5031}
     # Rate limit de la API (RateLimitConfig.cs): general 100/15s, auth 10/min.
-    # 250ms validado empíricamente (misma configuración que la API CQRS):
+    # 250ms validado empíricamente (misma configuración que la API):
     # da colchón si la colección crece; por debajo de 100ms se acerca al
     # límite de ráfaga.
     # ⚠️ Los comentarios NO pueden ir DENTRO del scalar plegado (command: >):
@@ -22,7 +23,7 @@ services:
       run TiendaApi.NetCore.postman_collection.json
       -e TiendaApi.NetCore.postman_environment.json
       --env-var baseUrl=${BASE_URL:-http://host.docker.internal:5031}
-      --reporters cli,junit,html,json
+      --reporters cli,junit,json
       --reporter-junit-export /etc/newman/reports/junit-report.xml
       --reporter-html-export /etc/newman/reports/report.html
       --reporter-json-export /etc/newman/reports/report.json

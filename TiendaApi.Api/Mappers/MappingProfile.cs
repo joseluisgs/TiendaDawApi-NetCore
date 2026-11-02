@@ -22,10 +22,10 @@ public class MappingProfile : Profile
         CreateMap<Categoria, CategoriaDto>();
         CreateMap<CategoriaRequestDto, Categoria>();
 
-        // Mapeos de producto
-        CreateMap<Producto, ProductoDto>()
-            .ForMember(dest => dest.CategoriaNombre,
-                opt => opt.MapFrom(src => src.Categoria.Nombre));
+        // Mapeos de producto: la categoría y el proveedor viajan anidados en el DTO
+        CreateMap<Categoria, CategoriaResumenDto>();
+        CreateMap<Proveedor, ProveedorResumenDto>();
+        CreateMap<Producto, ProductoDto>();
         CreateMap<ProductoRequestDto, Producto>();
 
         // Mapeos de usuario

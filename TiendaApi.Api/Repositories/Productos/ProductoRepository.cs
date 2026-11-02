@@ -22,6 +22,7 @@ public class ProductoRepository(
         logger.LogDebug("Buscando todos los productos");
         return await context.Productos
             .Include(p => p.Categoria)
+            .Include(p => p.Proveedor)
             .OrderBy(p => p.Nombre)
             .AsNoTracking()
             .ToListAsync();
@@ -33,6 +34,7 @@ public class ProductoRepository(
         logger.LogDebug("Obteniendo productos como IQueryable");
         return context.Productos
             .Include(p => p.Categoria)
+            .Include(p => p.Proveedor)
             .OrderBy(p => p.Nombre)
             .AsNoTracking();
     }
@@ -43,8 +45,8 @@ public class ProductoRepository(
         logger.LogDebug("Buscando productos paginados con filtros");
 
         var query = filter.IsDeleted.HasValue
-            ? context.Productos.IgnoreQueryFilters().Include(p => p.Categoria).AsQueryable()
-            : context.Productos.Include(p => p.Categoria).AsQueryable();
+            ? context.Productos.IgnoreQueryFilters().Include(p => p.Categoria).Include(p => p.Proveedor).AsQueryable()
+            : context.Productos.Include(p => p.Categoria).Include(p => p.Proveedor).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.Nombre))
             query = query.Where(p => EF.Functions.Like(p.Nombre, $"%{filter.Nombre}%"));
@@ -83,6 +85,7 @@ public class ProductoRepository(
     {
         return await context.Productos
             .Include(p => p.Categoria)
+            .Include(p => p.Proveedor)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
@@ -98,6 +101,7 @@ public class ProductoRepository(
         // mismas instancias y las persiste con UpdateAsync.
         return await context.Productos
             .Include(p => p.Categoria)
+            .Include(p => p.Proveedor)
             .Where(p => lista.Contains(p.Id))
             .ToListAsync();
     }
@@ -108,6 +112,7 @@ public class ProductoRepository(
         logger.LogDebug("Buscando productos para categoría: {CategoriaId}", categoriaId);
         return await context.Productos
             .Include(p => p.Categoria)
+            .Include(p => p.Proveedor)
             .Where(p => p.CategoriaId == categoriaId)
             .OrderBy(p => p.Nombre)
             .AsNoTracking()
@@ -120,9 +125,53 @@ public class ProductoRepository(
         context.Productos.Add(producto);
         await context.SaveChangesAsync();
         await context.Entry(producto).Reference(p => p.Categoria).LoadAsync();
+        await context.Entry(producto).Reference(p => p.Proveedor).LoadAsync();
         logger.LogInformation("Producto guardado con ID: {Id}", producto.Id);
         return producto;
     }
+
+    /// <inheritdoc/>
+    public async Task CrearConIdExplicitoAsync(Producto producto)
+    {
+        logger.LogDebug("Creando producto con ID explícito: {Id}", producto.Id);
+        // GENERATED ALWAYS rechaza valores explícitos: se inserta con OVERRIDING y
+        // después ResincronizarSecuenciaAsync deja la secuencia al día.
+        await context.Database.ExecuteSqlRawAsync(
+            """
+            INSERT INTO "productos"
+                ("Id", "Nombre", "Descripcion", "Precio", "Stock", "Imagen",
+                 "IsDeleted", "RowVersion", "CategoriaId", "ProveedorId", "CreatedAt", "UpdatedAt")
+            OVERRIDING SYSTEM VALUE
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})
+            """,
+            producto.Id,
+            producto.Nombre,
+            producto.Descripcion!,
+            producto.Precio,
+            producto.Stock,
+            producto.Imagen!,
+            producto.IsDeleted,
+            producto.RowVersion,
+            producto.CategoriaId,
+            producto.ProveedorId!,
+            AUtc(producto.CreatedAt),
+            AUtc(producto.UpdatedAt));
+    }
+
+    /// <inheritdoc/>
+    public async Task ResincronizarSecuenciaAsync()
+    {
+        logger.LogDebug("Re-sincronizando secuencia de productos");
+        await context.Database.ExecuteSqlRawAsync(
+            """
+            SELECT setval(pg_get_serial_sequence('productos', 'Id'), COALESCE(MAX("Id"), 1))
+            FROM "productos"
+            """);
+    }
+
+    /// <summary>Garantiza Kind=Utc, que Npgsql exige para timestamp with time zone.</summary>
+    private static DateTime AUtc(DateTime valor) =>
+        valor.Kind == DateTimeKind.Utc ? valor : DateTime.SpecifyKind(valor, DateTimeKind.Utc);
 
     /// <inheritdoc/>
     public async Task<Producto> UpdateAsync(Producto producto)
@@ -130,6 +179,7 @@ public class ProductoRepository(
         context.Productos.Update(producto);
         await context.SaveChangesAsync();
         await context.Entry(producto).Reference(p => p.Categoria).LoadAsync();
+        await context.Entry(producto).Reference(p => p.Proveedor).LoadAsync();
         logger.LogInformation("Producto actualizado con ID: {Id}", producto.Id);
         return producto;
     }

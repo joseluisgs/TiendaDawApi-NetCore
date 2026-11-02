@@ -1,0 +1,29 @@
+meta {
+    name: [102] GET Ventas agrupación inválida (400)
+    type: http
+    seq: 3
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/ventas?agrupar=trimestre
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Ventas invalida - Status 400", function () {
+        expect(res.getStatus()).to.equal(400);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Solo se admiten dia, semana y mes.
+}

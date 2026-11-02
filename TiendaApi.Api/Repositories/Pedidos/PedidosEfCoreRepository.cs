@@ -27,6 +27,19 @@ public class PedidosEfCoreRepository(
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<Pedido>> FindByRangoFechasAsync(DateTime desde, DateTime hasta)
+    {
+        logger.LogDebug("Buscando pedidos entre {Desde} y {Hasta}", desde, hasta);
+        // AsNoTracking: las estadísticas solo agregan, jamás persisten. El rango ya
+        // acota el volumen, así que no hace falta proyectar a mano las columnas.
+        return await context.Pedidos
+            .AsNoTracking()
+            .Where(p => p.CreatedAt >= desde && p.CreatedAt < hasta)
+            .OrderBy(p => p.CreatedAt)
+            .ToListAsync();
+    }
+
+    /// <inheritdoc/>
     public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size)
     {
         logger.LogDebug("Buscando pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);

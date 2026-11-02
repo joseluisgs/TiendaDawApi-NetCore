@@ -22,7 +22,7 @@ script:post-response {
       expect(jsonData.nombre).to.be.a('string');
       expect(jsonData.precio).to.be.a('number');
       expect(jsonData.stock).to.be.a('number');
-      expect(jsonData.categoriaId).to.be.a('number');
+      expect(jsonData.categoria.id).to.be.a('number');
   });
 }
 

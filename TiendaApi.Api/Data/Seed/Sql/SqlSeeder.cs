@@ -43,6 +43,7 @@ public class SqlSeeder
 
             await SeedUsersAsync();
             await SeedCategoriasAsync();
+            await SeedProveedoresAsync();
             await SeedProductosAsync();
 
             _logger.LogInformation("Datos de PostgreSQL sembrados correctamente");
@@ -174,6 +175,50 @@ public class SqlSeeder
         _logger.LogInformation("Insertadas {Count} categorías de ejemplo", categorias.Count);
     }
 
+    private async Task SeedProveedoresAsync()
+    {
+        // Los códigos son fijos y no aleatorios: la semilla debe ser determinista para que
+        // los tests E2E puedan referenciarlos. La generación aleatoria estilo YouTube es el
+        // camino por defecto cuando un cliente crea un proveedor sin enviar código.
+        var proveedores = new List<Proveedor>
+            {
+                new()
+                {
+                    Codigo = "TiendaDAW01",
+                    Nombre = "Tienda DAW Interna",
+                    Descripcion = "Proveedor interno para material de laboratorio",
+                    Contacto = "lab@tiendadaw.example",
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new()
+                {
+                    Codigo = "Distribuc01",
+                    Nombre = "Distribuciones DAW",
+                    Descripcion = "Distribuidor general de electrónica y periféricos",
+                    Contacto = "pedidos@distribucionesdaw.example",
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new()
+                {
+                    Codigo = "Editorial01",
+                    Nombre = "Editorial Código Limpio",
+                    Descripcion = "Librería técnica especializada",
+                    Contacto = "ventas@editorialcodigolimpio.example",
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                }
+            };
+
+        await _context.Proveedores.AddRangeAsync(proveedores);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Insertados {Count} proveedores de ejemplo", proveedores.Count);
+    }
+
     private async Task SeedProductosAsync()
     {
         var productos = new List<Producto>
@@ -185,6 +230,7 @@ public class SqlSeeder
                 Precio = 1299.99m,
                 Stock = 10,
                 CategoriaId = 1,
+                ProveedorId = "Distribuc01",
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
@@ -209,6 +255,7 @@ public class SqlSeeder
                 Precio = 42.99m,
                 Stock = 25,
                 CategoriaId = 3,
+                ProveedorId = "Editorial01",
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,

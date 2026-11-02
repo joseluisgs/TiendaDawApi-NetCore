@@ -1,0 +1,29 @@
+meta {
+    name: [099] DELETE Ok y verificacion (204)
+    type: http
+    seq: 10
+}
+
+delete {
+    url: {{baseUrl}}/api/proveedores/{{proveedorCodigo}}
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Proveedores Delete - Status 204", function () {
+        expect(res.getStatus()).to.equal(204);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Elimina el proveedor creado por automation. El siguiente GET debe devolver 404.
+}

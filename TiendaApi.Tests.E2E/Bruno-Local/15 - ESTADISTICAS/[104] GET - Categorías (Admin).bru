@@ -1,0 +1,35 @@
+meta {
+    name: [104] GET Categorías (Admin)
+    type: http
+    seq: 5
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/categorias
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Categorias - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Categorias - Catalogo completo", function () {
+        const d = res.getBody();
+        expect(d.categorias).to.be.an('array');
+        expect(d.categorias.length).to.be.at.least(3);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Desglose por categoría; las sin ventas salen con ceros.
+}

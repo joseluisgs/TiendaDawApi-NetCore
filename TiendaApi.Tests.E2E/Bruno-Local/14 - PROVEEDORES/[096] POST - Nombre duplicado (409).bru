@@ -1,0 +1,40 @@
+meta {
+    name: [096] POST Nombre duplicado (409)
+    type: http
+    seq: 7
+}
+
+post {
+    url: {{baseUrl}}/api/proveedores
+    body: json
+    auth: bearer
+}
+
+headers {
+    Content-Type: application/json
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+body:json {
+    {
+        "nombre": "Proveedor Automation"
+    }
+}
+
+script:post-response {
+    test("Proveedores Duplicado - Status 409 Conflict", function () {
+        // El nombre ya se creó en la petición [094]: repetirlo debe devolver conflicto
+        expect(res.getStatus()).to.equal(409);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Repite el nombre creado en [094]: el servicio debe rechazarlo con 409.
+}
