@@ -42,6 +42,20 @@ public interface ICategoriaRepository
     /// <returns>Categoría creada.</returns>
     Task<Categoria> CreateAsync(Categoria categoria);
 
+    /// <summary>
+    /// Crea una categoría con un ID concreto, para el restore de un backup.
+    /// La columna de identidad es <c>GENERATED ALWAYS</c>: requiere
+    /// <c>OVERRIDING SYSTEM VALUE</c> y dejar la secuencia al día.
+    /// </summary>
+    /// <param name="categoria">Categoría con su ID original.</param>
+    Task CrearConIdExplicitoAsync(Categoria categoria);
+
+    /// <summary>
+    /// Re-sincroniza la secuencia de identidad tras altas con ID explícito.
+    /// Sin esto, la siguiente creación generaría un ID ya ocupado.
+    /// </summary>
+    Task ResincronizarSecuenciaAsync();
+
     /// <summary>Actualiza una categoría existente.</summary>
     /// <param name="categoria">Categoría con datos actualizados.</param>
     /// <returns>Categoría actualizada.</returns>

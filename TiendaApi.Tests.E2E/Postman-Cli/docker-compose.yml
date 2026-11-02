@@ -9,6 +9,7 @@ services:
       - ./TiendaApi.NetCore.postman_collection.json:/etc/newman/TiendaApi.NetCore.postman_collection.json:ro
       - ./TiendaApi.NetCore.postman_environment.json:/etc/newman/TiendaApi.NetCore.postman_environment.json:ro
       - ./test-image.png:/etc/newman/test-image.png:ro
+      - ./backup-ejemplo.json:/etc/newman/backup-ejemplo.json:ro
       - ./reports:/etc/newman/reports
     environment:
       - BASE_URL=${BASE_URL:-http://host.docker.internal:5031}

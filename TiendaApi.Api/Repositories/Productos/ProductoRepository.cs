@@ -131,6 +131,49 @@ public class ProductoRepository(
     }
 
     /// <inheritdoc/>
+    public async Task CrearConIdExplicitoAsync(Producto producto)
+    {
+        logger.LogDebug("Creando producto con ID explícito: {Id}", producto.Id);
+        // GENERATED ALWAYS rechaza valores explícitos: se inserta con OVERRIDING y
+        // después ResincronizarSecuenciaAsync deja la secuencia al día.
+        await context.Database.ExecuteSqlRawAsync(
+            """
+            INSERT INTO "productos"
+                ("Id", "Nombre", "Descripcion", "Precio", "Stock", "Imagen",
+                 "IsDeleted", "RowVersion", "CategoriaId", "ProveedorId", "CreatedAt", "UpdatedAt")
+            OVERRIDING SYSTEM VALUE
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11})
+            """,
+            producto.Id,
+            producto.Nombre,
+            producto.Descripcion!,
+            producto.Precio,
+            producto.Stock,
+            producto.Imagen!,
+            producto.IsDeleted,
+            producto.RowVersion,
+            producto.CategoriaId,
+            producto.ProveedorId!,
+            AUtc(producto.CreatedAt),
+            AUtc(producto.UpdatedAt));
+    }
+
+    /// <inheritdoc/>
+    public async Task ResincronizarSecuenciaAsync()
+    {
+        logger.LogDebug("Re-sincronizando secuencia de productos");
+        await context.Database.ExecuteSqlRawAsync(
+            """
+            SELECT setval(pg_get_serial_sequence('productos', 'Id'), COALESCE(MAX("Id"), 1))
+            FROM "productos"
+            """);
+    }
+
+    /// <summary>Garantiza Kind=Utc, que Npgsql exige para timestamp with time zone.</summary>
+    private static DateTime AUtc(DateTime valor) =>
+        valor.Kind == DateTimeKind.Utc ? valor : DateTime.SpecifyKind(valor, DateTimeKind.Utc);
+
+    /// <inheritdoc/>
     public async Task<Producto> UpdateAsync(Producto producto)
     {
         context.Productos.Update(producto);

@@ -689,6 +689,119 @@ let imagenProductoUrl = null;
     assertEq(st(r), 404, "status");
   });
 
+  // ============================ BACKUP ============================
+  // Todo admin. El import real se hace con un backup exportado de la MISMA base,
+  // así que el round-trip no cambia datos (sinCambios) y no afecta a otros tests.
+
+  await test("Backup: GET formatos sin token → 401", async () => {
+    const r = await req("GET", "/api/backup/formatos");
+    assertEq(st(r), 401, "status");
+  });
+
+  await test("Backup: GET formatos rol USER → 403", async () => {
+    const r = await req("GET", "/api/backup/formatos", { token: userToken });
+    assertEq(st(r), 403, "status");
+  });
+
+  await test("Backup: GET formatos admin → 200 con el catálogo", async () => {
+    const r = await req("GET", "/api/backup/formatos", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.formatos) && d.formatos.length === 3, `formatos: ${d.formatos?.length}`);
+    const nombres = d.formatos.map((f) => f.nombre);
+    assert(nombres.includes("zip") && nombres.includes("json") && nombres.includes("csv"), "zip, json y csv");
+    assert(Array.isArray(d.entidades) && d.entidades.length === 3, "las 3 entidades");
+    assert(d.limites?.maxBytes > 0, "límite de tamaño declarado");
+    assert(typeof d.reglas?.upsert === "string", "reglas.upsert");
+  });
+
+  await test("Backup: GET export json → 200 con manifest y entidades", async () => {
+    const r = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(String(r.headers.get("content-type")).includes("application/json"), "content-type");
+    assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga como fichero");
+    const d = r.json;
+    assert(d.manifest?.version === "1.0", "manifest.version");
+    assert(typeof d.manifest?.generadoEn === "string", "manifest.generadoEn");
+    assert(Array.isArray(d.productos) && d.productos.length >= 3, `productos: ${d.productos?.length}`);
+    assert(Array.isArray(d.categorias) && d.categorias.length >= 3, "categorias");
+    // El backup va plano, con las claves foráneas tal cual.
+    assert(typeof d.productos[0].categoriaId === "number", "categoriaId plano en el backup");
+  });
+
+  await test("Backup: GET export csv → 200 text/csv", async () => {
+    // Regresión de E/S síncrona: StreamWriter hace flush sincrono al cerrar y
+    // Kestrel lo rechaza si no se habilita; la descarga se cortaba a mitad.
+    const r = await req("GET", "/api/backup/export?formato=csv&entidades=productos", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(String(r.headers.get("content-type")).includes("text/csv"), "content-type");
+    assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga");
+    assert(r.text.includes("categoriaId"), "cabecera del CSV");
+  });
+
+  await test("Backup: GET export zip → 200 application/zip", async () => {
+    const r = await req("GET", "/api/backup/export?formato=zip", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(String(r.headers.get("content-type")).includes("application/zip"), "content-type");
+    assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga");
+  });
+
+  await test("Backup: GET export formato desconocido → 400", async () => {
+    const r = await req("GET", "/api/backup/export?formato=xml", { token: adminToken });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Backup: GET export entidad desconocida → 400", async () => {
+    const r = await req("GET", "/api/backup/export?entidades=usuarios", { token: adminToken });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Backup: POST import sin fichero → 400", async () => {
+    const r = await req("POST", "/api/backup/import", { token: adminToken, body: {} });
+    assert(st(r) === 400 || st(r) === 415, `status ${st(r)}`);
+  });
+
+  await test("Backup: POST import dryRun → 200 sin tocar nada", async () => {
+    // Se exporta y se reimporta el MISMO contenido: dryRun no escribe y, aun
+    // sin dryRun, el round-trip no debería cambiar nada (mismas claves).
+    const descarga = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    assertEq(st(descarga), 200, "status del export");
+
+    const form = new FormData();
+    form.append("file", new Blob([JSON.stringify(descarga.json)], { type: "application/json" }), "backup.json");
+    const r = await req("POST", "/api/backup/import?formato=json&dryRun=true", { token: adminToken, body: form });
+    assertEq(st(r), 200, "status del import");
+    const informe = r.json;
+    assertEq(informe.dryRun, true, "dryRun");
+    assert(typeof informe.duracionMs === "number", "duracionMs");
+    assert(Array.isArray(informe.entidades), "entidades");
+    assert(informe.entidades.some((e) => e.leidos >= 3), "debe leer las entidades del backup");
+  });
+
+  await test("Backup: POST import real (round-trip) → 200 completo", async () => {
+    const descarga = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    assertEq(st(descarga), 200, "status del export");
+
+    const form = new FormData();
+    form.append("file", new Blob([JSON.stringify(descarga.json)], { type: "application/json" }), "backup.json");
+    const r = await req("POST", "/api/backup/import?formato=json", { token: adminToken, body: form });
+    assertEq(st(r), 200, "status del import");
+    const informe = r.json;
+    assertEq(informe.dryRun, false, "dryRun");
+    assert(informe.completo === true,
+      `debe importar sin errores: ${JSON.stringify(informe.entidades.flatMap((e) => e.errores))}`);
+    // Round-trip: mismas claves → todo sin cambios, ni altas ni modificaciones.
+    assert(informe.entidades.every((e) => e.creados === 0 && e.actualizados === 0),
+      "el round-trip no debe crear ni actualizar nada");
+  });
+
+  await test("Backup: POST import con formato desconocido → 400", async () => {
+    const form = new FormData();
+    form.append("file", new Blob(["<xml/>"], { type: "application/xml" }), "backup.xml");
+    const r = await req("POST", "/api/backup/import?formato=xml", { token: adminToken, body: form });
+    assertEq(st(r), 400, "status");
+  });
+
   // ============================ PRODUCTOS ============================
   await test("Productos: GET paged → 200 con semilla", async () => {
     const r = await req("GET", "/api/productos?page=0&size=2");

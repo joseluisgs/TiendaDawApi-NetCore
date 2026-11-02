@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Dtos.Backup;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Estadisticas;
 using TiendaApi.Api.Dtos.Historial;
@@ -59,6 +60,13 @@ namespace TiendaApi.Api.Infrastructures;
 [JsonSerializable(typeof(ClientesEstadisticasDto))]
 [JsonSerializable(typeof(InventarioDto))]
 [JsonSerializable(typeof(PreciosEstadisticasDto))]
+[JsonSerializable(typeof(BackupDto))]
+[JsonSerializable(typeof(ManifestBackupDto))]
+[JsonSerializable(typeof(ImportReportDto))]
+[JsonSerializable(typeof(CatalogoFormatosDto))]
+[JsonSerializable(typeof(List<BackupCategoriaDto>))]
+[JsonSerializable(typeof(List<BackupProveedorDto>))]
+[JsonSerializable(typeof(List<BackupProductoDto>))]
 [JsonSerializable(typeof(AvatarUpdateDto))]
 [JsonSerializable(typeof(PagedResult<CategoriaDto>))]
 [JsonSerializable(typeof(PagedResult<ProductoDto>))]

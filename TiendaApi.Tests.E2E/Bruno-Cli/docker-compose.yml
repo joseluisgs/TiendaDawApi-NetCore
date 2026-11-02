@@ -18,6 +18,7 @@ services:
       - "3 - PRODUCTOS"
       - "14 - PROVEEDORES"
       - "15 - ESTADISTICAS"
+      - "16 - BACKUP"
       - "13 - HISTORIAL Y FEED"
       - "4 - PEDIDOS (Usuario)"
       - "5 - PEDIDOS (Admin)"

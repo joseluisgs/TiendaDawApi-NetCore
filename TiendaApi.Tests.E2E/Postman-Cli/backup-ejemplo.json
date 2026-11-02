@@ -1,0 +1,70 @@
+{
+  "manifest": {
+    "version": "1.0",
+    "generadoEn": "2026-11-02T10:00:00Z",
+    "entidades": {
+      "categorias": 2,
+      "proveedores": 1,
+      "productos": 2
+    },
+    "incluirBorrados": false,
+    "formato": "json"
+  },
+  "categorias": [
+    {
+      "id": 9001,
+      "nombre": "Fixture Uno",
+      "descripcion": "Categoría de ejemplo",
+      "isDeleted": false,
+      "createdAt": "2026-11-02T10:00:00Z",
+      "updatedAt": "2026-11-02T10:00:00Z"
+    },
+    {
+      "id": 9002,
+      "nombre": "Fixture Dos",
+      "descripcion": null,
+      "isDeleted": false,
+      "createdAt": "2026-11-02T10:00:00Z",
+      "updatedAt": "2026-11-02T10:00:00Z"
+    }
+  ],
+  "proveedores": [
+    {
+      "codigo": "Fixture0001",
+      "nombre": "Proveedor fixture",
+      "descripcion": null,
+      "contacto": null,
+      "isDeleted": false,
+      "createdAt": "2026-11-02T10:00:00Z",
+      "updatedAt": "2026-11-02T10:00:00Z"
+    }
+  ],
+  "productos": [
+    {
+      "id": 9101,
+      "nombre": "Producto fixture 1",
+      "descripcion": "Ejemplo",
+      "precio": 10.5,
+      "stock": 3,
+      "imagen": null,
+      "categoriaId": 9001,
+      "proveedorId": "Fixture0001",
+      "isDeleted": false,
+      "createdAt": "2026-11-02T10:00:00Z",
+      "updatedAt": "2026-11-02T10:00:00Z"
+    },
+    {
+      "id": 9102,
+      "nombre": "Producto fixture 2",
+      "descripcion": "Ejemplo",
+      "precio": 20,
+      "stock": 1,
+      "imagen": null,
+      "categoriaId": 9002,
+      "proveedorId": null,
+      "isDeleted": false,
+      "createdAt": "2026-11-02T10:00:00Z",
+      "updatedAt": "2026-11-02T10:00:00Z"
+    }
+  ]
+}

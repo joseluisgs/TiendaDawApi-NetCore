@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using TiendaApi.Api.Services;
 using TiendaApi.Api.Services.Auth;
+using TiendaApi.Api.Services.Backup;
 using TiendaApi.Api.Services.Categorias;
 using TiendaApi.Api.Services.Estadisticas;
 using TiendaApi.Api.Services.Historial;
@@ -27,6 +28,7 @@ public static class ServicesConfig
             .AddScoped<ICategoriaService, CategoriaService>()
             .AddScoped<IProveedorService, ProveedorService>()
             .AddScoped<IEstadisticasService, EstadisticasService>()
+            .AddScoped<IBackupService, BackupService>()
             .AddScoped<IProductoService, ProductoService>()
             .AddScoped<IProductoEffects, ProductoEffects>()
             .AddScoped<IHistorialService, HistorialService>()
