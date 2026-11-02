@@ -51,6 +51,13 @@ public class Producto : ITimestamped
     /// <summary>Categoría asociada (relación muchos-a-uno).</summary>
     public Categoria Categoria { get; set; } = null!;
 
+    /// <summary>Código del proveedor asociado (FK). Opcional: un producto puede no tener proveedor.</summary>
+    /// <example>XqZsoesa55w</example>
+    public string? ProveedorId { get; set; }
+
+    /// <summary>Proveedor asociado (relación muchos-a-uno).</summary>
+    public Proveedor? Proveedor { get; set; }
+
     /// <summary>
     /// Determina si la imagen es local (almacenada en el servidor).
     /// </summary>

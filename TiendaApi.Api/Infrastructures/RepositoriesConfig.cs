@@ -6,6 +6,7 @@ using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
+using TiendaApi.Api.Repositories.Proveedores;
 using TiendaApi.Api.Repositories.Usuarios;
 
 namespace TiendaApi.Api.Infrastructures;
@@ -26,6 +27,7 @@ public static class RepositoriesConfig
         Log.Information("Registrando repositorios...");
 
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+        services.AddScoped<IProveedorRepository, ProveedorRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
     services.AddScoped<IUserLoginRepository, UserLoginRepository>();

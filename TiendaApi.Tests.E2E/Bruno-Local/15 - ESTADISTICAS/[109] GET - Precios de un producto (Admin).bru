@@ -1,0 +1,39 @@
+meta {
+    name: [109] GET Precios de un producto (Admin)
+    type: http
+    seq: 10
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/precios?productoId=1
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Precios - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Precios - Estadisticas coherentes", function () {
+        const d = res.getBody();
+        expect(d.productoId).to.equal(1);
+        expect(d.puntos).to.be.at.least(1);
+        expect(d.minimo).to.be.at.most(d.maximo);
+        expect(d.media).to.be.at.least(d.minimo);
+        expect(d.media).to.be.at.most(d.maximo);
+        expect(d.serie).to.have.lengthOf(d.puntos);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Histórico de precios de Cassandra: mínimo, máximo, media y variación.
+}

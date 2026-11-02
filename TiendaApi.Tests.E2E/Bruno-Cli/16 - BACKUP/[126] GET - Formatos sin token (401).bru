@@ -1,0 +1,25 @@
+meta {
+    name: [126] GET Formatos sin token (401)
+    type: http
+    seq: 5
+}
+
+get {
+    url: {{baseUrl}}/api/backup/formatos
+    body: none
+    auth: none
+}
+
+script:post-response {
+    test("Backup SinToken - Status 401", function () {
+        expect(res.getStatus()).to.equal(401);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    El backup es solo ADMIN, también en lectura.
+}

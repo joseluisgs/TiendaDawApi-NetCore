@@ -1,0 +1,38 @@
+meta {
+    name: [120] GET Formatos (Admin)
+    type: http
+    seq: 1
+}
+
+get {
+    url: {{baseUrl}}/api/backup/formatos
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Backup Formatos - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Backup Formatos - Catalogo completo", function () {
+        const d = res.getBody();
+        expect(d.formatos).to.be.an('array').with.lengthOf(3);
+        expect(d.formatos.map(f => f.nombre)).to.include.members(['zip', 'json', 'csv']);
+        expect(d.entidades).to.have.lengthOf(3);
+        expect(d.limites.maxBytes).to.be.above(0);
+        expect(d.reglas.upsert).to.be.a('string');
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Catálogo de formatos, entidades, límites y reglas. Solo ADMIN.
+}

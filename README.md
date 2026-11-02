@@ -123,6 +123,10 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - 🔁 **Result → HTTP**: extensión central `ToHttpResult()` para los errores de dominio
 - 🧪 **Testing**: Unit (NUnit + Moq), integración (Testcontainers) y E2E (Newman/Bruno/Automation)
 - 📊 **Code Coverage**: Métricas con Coverlet
+- 🗃️ **Backup/Restore**: export e import de productos, categorías y proveedores en **zip, json o csv**, con `dryRun`, upsert por clave e informe de errores de fila que no abortan la operación (solo ADMIN, subida limitada a 10 MB)
+- 📊 **Estadísticas al vuelo**: 9 endpoints admin (resumen, serie temporal, rankings, embudo de estados, inventario y precios) calculados en cada petición sobre los datos existentes — sin tablas de agregados ni jobs
+- 🏷️ **Proveedor por producto**: entidad con relación 1:N, **ID estilo YouTube** de 11 caracteres generado en la aplicación y desnormalizado en el DTO de producto (junto a la categoría)
+- 🧪 **Pruebas de backup y estadísticas**: codecs CSV/ZIP con round-trip, protección anti zip-bomb y tests de la secuencia de identidad tras un restore
 - 🐳 **Docker**: Contenedores para desarrollo y producción
 
 ## 🚀 Tecnologías
@@ -151,6 +155,10 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **Newman/Bruno/Node** - Pruebas de API (colecciones + Automation runner)
 - **BackgroundService** - Tareas programadas y jobs en segundo plano
 - **Security Headers** - X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy
+- **System.IO.Compression (BCL)** - ZIP del backup sin dependencias externas, con límite de entradas y de tamaño descomprimido (anti zip-bomb)
+- **CSV RFC4180 propio** - Codificador/decodificador sin paquetes NuGet: comillas, comas dentro de campo, UTF-8 con BOM para Excel y cultura invariante
+- **Generador de IDs estilo YouTube** - `ValueGenerator` de EF Core + atributo `IdYouTube` de validación (Base64url de 11 caracteres, no correlativo)
+- **SQL con `OVERRIDING SYSTEM VALUE`** - Altas con ID explícito en el restore y re-sincronización de la secuencia de identidad
 
 ## 🏃‍♂️ Inicio Rápido
 
@@ -397,6 +405,8 @@ Para una comprensión profunda de la arquitectura y las tecnologías utilizadas,
 | 12 | [12-servicios-negocio.md](doc/12-servicios-negocio.md) | Servicios de Negocio |
 | 13 | [13-pedidos-transacciones.md](doc/13-pedidos-transacciones.md) | Pedidos y Transacciones |
 | 14 | [14-mapeadores.md](doc/14-mapeadores.md) | Mapeadores |
+| 31 | [31-estadisticas.md](doc/31-estadisticas.md) | Estadísticas |
+| 32 | [32-backup-restore.md](doc/32-backup-restore.md) | Backup y Restore |
 
 ### Seguridad
 | #   | Documento | Descripción |
@@ -502,6 +512,17 @@ classDiagram
     +ICollection~Producto~ Productos
   }
 
+  class Proveedor {
+    +string Codigo
+    +string Nombre
+    +string? Descripcion
+    +string? Contacto
+    +bool IsDeleted
+    +DateTime CreatedAt
+    +DateTime UpdatedAt
+    +ICollection~Producto~ Productos
+  }
+
   class Producto {
     +long Id
     +string Nombre
@@ -510,11 +531,13 @@ classDiagram
     +int Stock
     +string? Imagen
     +long CategoriaId
+    +string? ProveedorId
     +bool IsDeleted
     +DateTime CreatedAt
     +DateTime UpdatedAt
     +byte[] RowVersion
     +Categoria Categoria
+    +Proveedor? Proveedor
     +IsLocalImage()
     +HasDefaultImage()
     +GetImagenUrl()
@@ -565,6 +588,8 @@ classDiagram
   User "1" --> "*" UserLogin : "vincula"
   Categoria "1" --> "*" Producto : "tiene"
   Producto "*" --> "1" Categoria : "pertenece"
+  Proveedor "1" --> "*" Producto : "tiene"
+  Producto "*" --> "1" Proveedor : "suministra"
   Pedido "1" *-- "1" Destinatario : "compone"
   Pedido "1" *-- "*" PedidoItem : "compone items"
   Destinatario "1" *-- "1" Direccion : "compone"
@@ -580,7 +605,7 @@ classDiagram
 > [TiendaDawApi-Cqrs-MediatR-NetCore](https://github.com/joseluisgs/TiendaDawApi-Cqrs-MediatR-NetCore).
 
 **Distribución por entidad:**
-- ✍️📖 **PostgreSQL** → User, Categoria, Producto (commands y queries)
+- ✍️📖 **PostgreSQL** → User, Categoria, Producto, Proveedor (commands y queries)
 - ✍️📖 **MongoDB** → Pedido, PedidoItem, Destinatario, Direccion (commands y queries)
 - ⚡ **Redis** → caché de lectura (Cache-Aside)
 
@@ -588,6 +613,7 @@ classDiagram
 ```mermaid
 erDiagram
     CATEGORIA ||--o{ PRODUCTO : "tiene"
+    PROVEEDOR ||--o{ PRODUCTO : "tiene"
     
     USER {
         bigint Id PK
@@ -622,6 +648,15 @@ erDiagram
         decimal Precio
         int Stock
         bigint CategoriaId FK
+        string ProveedorId FK
+        bool IsDeleted
+    }
+
+    PROVEEDOR {
+        string Codigo PK
+        string Nombre
+        string Descripcion
+        string Contacto
         bool IsDeleted
     }
 ```
@@ -671,7 +706,7 @@ erDiagram
 **Resumen:**
 | Base de Datos    | Rol                                       | Entidades                                   | Tipo                 |
 | ---------------- | ----------------------------------------- | ------------------------------------------- | -------------------- |
-| **🐘 PostgreSQL** | Escritura y lectura (datos maestros)      | User, Categoria, Producto                   | Relacional (FK)      |
+| **🐘 PostgreSQL** | Escritura y lectura (datos maestros)      | User, Categoria, Producto, Proveedor                   | Relacional (FK)      |
 | **🍃 MongoDB**    | Escritura y lectura (pedidos embebidos)   | Pedido, PedidoItem, Destinatario, Direccion | Documentos embebidos |
 | **🗄️ Cassandra** | Escritura y lectura (series temporales) | Serie de precios por producto, feed de usuario | CassandraCSharpDriver (partición + clustering + TTL) |
 | **🔴 Redis**      | Caché de lectura (Cache-Aside)            | Sessions, consultas frecuentes              | Key-value            |
@@ -693,8 +728,8 @@ TiendaDawApi-NetCore/
 │
 ├── TiendaApi.Api/                    # Proyecto Principal (ASP.NET Core 10)
 │   ├── Program.cs                    # Configuración de Pipeline, DI y Middlewares
-│   ├── Controllers/                  # Controladores REST (Auth, Categorias, Productos, Pedidos, Users, Storage)
-│   ├── Services/                     # Lógica de negocio (Auth, Categorias, Productos, Users)
+│   ├── Controllers/                  # Controladores REST (Auth, Categorias, Proveedores, Productos, Pedidos, Users, Storage)
+│   ├── Services/                     # Lógica de negocio (Auth, Categorias, Proveedores, Productos, Users)
 │   │   ├── Auth/                     # Servicios de autenticación
 │   │   ├── Background/               # Background Jobs y tareas programadas
 │   │   ├── Cache/                    # Servicios de caché (Redis / memoria)
@@ -704,7 +739,7 @@ TiendaDawApi-NetCore/
 │   │   ├── Productos/                # Servicios de productos
 │   │   ├── Storage/                  # Servicios de almacenamiento
 │   │   └── Users/                    # Servicios de usuarios
-│   ├── Repositories/                 # Acceso a datos (Categoria, Producto, User, Pedidos, Auth)
+│   ├── Repositories/                 # Acceso a datos (Categoria, Proveedor, Producto, User, Pedidos, Auth)
 │   ├── Models/                       # Modelos de dominio (User, UserLogin, Producto, Categoria, Pedido)
 │   ├── Dtos/                         # Data Transfer Objects (Request/Response, Auth)
 │   ├── Data/                         # DbContext y configuración de bases de datos
@@ -759,10 +794,10 @@ TiendaDawApi-NetCore/
 
 | Carpeta               | Propósito                  | Contenido                                                                                     |
 | --------------------- | -------------------------- | --------------------------------------------------------------------------------------------- |
-| **Controllers**       | Entry points HTTP          | AuthController, CategoriasController, ProductosController, PedidosController, UsersController, StorageController |
-| **Services**          | Lógica de negocio          | AuthService, CategoriaService, ProductoService, PedidosService, UserService, MailKitEmailService               |
+| **Controllers**       | Entry points HTTP          | AuthController, CategoriasController, ProveedoresController, ProductosController, PedidosController, UsersController, StorageController |
+| **Services**          | Lógica de negocio          | AuthService, CategoriaService, ProveedorService, ProductoService, PedidosService, UserService, MailKitEmailService               |
 | **Background**        | Tareas programadas         | BackgroundJobService, EmailBackgroundService, ProductoReportTask para reportes                                |
-| **Repositories**      | Abstracción de datos       | CategoriaRepository, ProductoRepository, UserRepository, PedidosRepository                                    |
+| **Repositories**      | Abstracción de datos       | CategoriaRepository, ProveedorRepository, ProductoRepository, UserRepository, PedidosRepository                                    |
 | **Models**            | Modelos de dominio         | User, Producto, Categoria, Pedido, Direccion, Destinatario                                                    |
 | **Dtos**              | Transferencia de datos     | Request/Response para API                                                                                     |
 | **Mappers**           | Modelos <-> DTO            | AutoMapper y Funciones de Extensión                                                                           |
@@ -803,7 +838,7 @@ graph TB
 
     subgraph "🎯 Application Layer - API"
         subgraph "Controllers & Filters"
-            CTRL[Controllers<br/>Auth, Categorias,<br/>Productos, Pedidos, Users]
+            CTRL[Controllers<br/>Auth, Categorias,<br/>Proveedores, Productos, Pedidos, Users]
             FILT[Filters<br/>Auth, Validation,<br/>Exception]
         end
         subgraph "Middleware Pipeline"
@@ -817,7 +852,7 @@ graph TB
 
     subgraph "🔷 Core Layer - Domain & Application"
         subgraph "Application Services"
-            SVC[Services<br/>Auth, Categoria,<br/>Producto, User]
+            SVC[Services<br/>Auth, Categoria,<br/>Proveedor, Producto, User]
         end
         subgraph "Cross-Cutting Concerns"
             ROP[Result~T,E&gt;<br/>Railway Oriented<br/>Programming]
@@ -851,7 +886,7 @@ graph TB
     end
 
     subgraph "💾 Data Stores"
-        PG[(🐘 PostgreSQL<br/>Users, Categorias,<br/>Productos<br/>commands y queries)]
+        PG[(🐘 PostgreSQL<br/>Users, Categorias,<br/>Productos, Proveedores<br/>commands y queries)]
         MONGO_DB[(🍃 MongoDB<br/>Pedidos, Items<br/>Embebidos<br/>commands y queries)]
         REDIS_DB[(🔴 Redis<br/>Caché de lectura<br/>Cache-Aside)]
     end
@@ -926,12 +961,12 @@ graph TB
     end
 
     subgraph "🔵 Application Layer"
-        CTRL["🎯 Controllers<br/>Auth, Categorias, Productos<br/>Pedidos, Users, GraphQL"]
+        CTRL["🎯 Controllers<br/>Auth, Categorias, Productos<br/>Proveedores, Pedidos, Users, GraphQL"]
         FILT["🔍 Filters & Middleware<br/>Auth, Validation, Exception<br/>JWT, CORS, RateLimit"]
     end
 
     subgraph "🟠 Core Layer"
-        SVC["🏢 Services<br/>Auth, Categoria, Producto<br/>User, Pedidos, Background"]
+        SVC["🏢 Services<br/>Auth, Categoria, Proveedor<br/>Producto, User, Pedidos, Background"]
         CCC["🛠️ Cross-Cutting<br/>AutoMapper, FluentValidation<br/>Result~T,E&gt;, Errors"]
     end
 
@@ -982,28 +1017,6 @@ El proyecto implementa **Railway Oriented Programming (ROP)** usando la librerí
 | **Ensure**  | Valida condiciones, retorna Failure si no se cumple | `result.Ensure(condition, error)`    |
 
 #### Anatomía del Patrón (Two-Track Model)
-
-```mermaid
-flowchart TB
-    subgraph ROP["RAILWAY ORIENTED PROGRAMMING"]
-        INP["INPUT<br/>(Happy Path)"]
-        R1["RAIL 1<br/>(SUCCESS)"]
-        OUT_H["OUTPUT<br/>(Happy)"]
-        R2["RAIL 2<br/>(FAILURE)"]
-        OUT_E["OUTPUT<br/>(Error)"]
-        
-        INP --> R1
-        R1 --> OUT_H
-        R1 -.->|"SWITCH (error)"| R2
-        R2 --> OUT_E
-    end
-
-    style INP fill:#27ae60,color:#fff
-    style R1 fill:#27ae60,color:#fff
-    style OUT_H fill:#27ae60,color:#fff
-    style R2 fill:#e74c3c,color:#fff
-    style OUT_E fill:#e74c3c,color:#fff
-```
 
 #### Beneficios de ROP
 
@@ -1077,23 +1090,10 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 
 | Base de Datos    | Uso                                  | Entidades                                   | Tecnologías                                         |
 | ---------------- | ------------------------------------ | ------------------------------------------- | --------------------------------------------------- |
-| **🐘 PostgreSQL** | Escritura y lectura (datos maestros) | User, Categoria, Producto                   | EF Core SQL (System.ComponentModel.DataAnnotations) |
+| **🐘 PostgreSQL** | Escritura y lectura (datos maestros) | User, Categoria, Producto, Proveedor                   | EF Core SQL (System.ComponentModel.DataAnnotations) |
 | **🍃 MongoDB**    | Escritura y lectura (pedidos)        | Pedido, PedidoItem, Destinatario, Direccion | EF Core MongoDB (Con documentos anidados)           |
 | **🔴 Redis**      | Caché de lectura distribuida         | Sessions, consultas frecuentes              | StackExchange.Redis (Cache-Aside)                   |
 
-
-```mermaid
-flowchart LR
-    CLI["Cliente / API"] --> PG["PostgreSQL<br/>fuente de verdad"]
-    PG -->|"update de precio"| EV["await + notificacion<br/>(handler o servicio)"]
-    EV --> CAS["Cassandra<br/>serie Q-A + feed Q-B"]
-    PG --> MONGO["MongoDB<br/>read model + pedidos"]
-    CLI -.cache.-> RED["Redis<br/>catalogo y sesiones"]
-    style PG fill:#336791,color:#fff
-    style MONGO fill:#47A248,color:#fff
-    style CAS fill:#1287B1,color:#fff
-    style RED fill:#DC382D,color:#fff
-```
 
 **Patrón de datos:**
 - PostgreSQL: Entidades normalizadas con Foreign Keys
@@ -1182,6 +1182,48 @@ Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` 
 | `/api/categorias`      | POST   | ADMIN | Crear categoría                   |
 | `/api/categorias/{id}` | PUT    | ADMIN | Actualizar categoría              |
 | `/api/categorias/{id}` | DELETE | ADMIN | Eliminar categoría                |
+
+### Proveedores
+
+| Endpoint                    | Método | Auth  | Descripción                                          |
+| --------------------------- | ------ | ----- | ---------------------------------------------------- |
+| `/api/proveedores`          | GET    | ADMIN | Obtener todos (paginado, filtros)                    |
+| `/api/proveedores/{codigo}` | GET    | ADMIN | Obtener por código (11 caracteres estilo YouTube)    |
+| `/api/proveedores`          | POST   | ADMIN | Crear proveedor (si no se envía código, lo genera)   |
+| `/api/proveedores/{codigo}` | PUT    | ADMIN | Actualizar proveedor (el código es la clave)         |
+| `/api/proveedores/{codigo}` | DELETE | ADMIN | Eliminar proveedor (422 si tiene productos asociados) |
+
+### Estadísticas
+
+> Cálculo al vuelo sobre los datos existentes: sin tablas de agregados ni trabajos
+> de fondo. Todas son de solo lectura y **solo ADMIN**, porque incluyen cifras de
+> negocio y datos de clientes.
+
+| Endpoint                                   | Método | Auth  | Descripción                                                        |
+| ------------------------------------------ | ------ | ----- | ------------------------------------------------------------------ |
+| `/api/estadisticas/resumen`                | GET    | ADMIN | Resumen general: ventas, estados, inventario y comparativa          |
+| `/api/estadisticas/ventas`                 | GET    | ADMIN | Serie temporal (`agrupar=dia\|semana\|mes`) con huecos a cero        |
+| `/api/estadisticas/productos-mas-vendidos` | GET    | ADMIN | Ranking por `orden=unidades\|recaudacion` (top 1-50)                 |
+| `/api/estadisticas/categorias`             | GET    | ADMIN | Rendimiento por categoría (incluye las que no venden)               |
+| `/api/estadisticas/proveedores`            | GET    | ADMIN | Rendimiento por proveedor                                           |
+| `/api/estadisticas/estados`                | GET    | ADMIN | Embudo de estados; los cancelados se reportan aparte                |
+| `/api/estadisticas/clientes`               | GET    | ADMIN | Clientes con más gasto y su producto favorito                       |
+| `/api/estadisticas/inventario`             | GET    | ADMIN | Valor del stock, agotados y productos con `stockMax` o menos        |
+| `/api/estadisticas/precios`                | GET    | ADMIN | Histórico de precios (mínimo, máximo, media y variación)            |
+
+### Backup
+
+> Exporta e importa datos completos en **zip, json o csv**. Es solo ADMIN y la
+> subida está limitada a 10 MB. El import hace **upsert por clave** (id en
+> categorías y productos, código en proveedores), admite `dryRun=true` para
+> validar sin escribir y devuelve un informe con los errores de fila — que no
+> abortan la operación.
+
+| Endpoint                  | Método | Auth  | Descripción                                                        |
+| ------------------------- | ------ | ----- | ------------------------------------------------------------------ |
+| `/api/backup/export`      | GET    | ADMIN | Descarga (`formato=zip\|json\|csv`, `entidades=...`, `incluirBorrados`) |
+| `/api/backup/import`      | POST   | ADMIN | Subida multipart con `dryRun` y `formato`; informe de la importación |
+| `/api/backup/formatos`    | GET    | ADMIN | Catálogo: formatos, entidades, límites y reglas                     |
 
 ### Productos
 

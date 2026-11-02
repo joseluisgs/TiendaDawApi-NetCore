@@ -1,10 +1,13 @@
 using System.Text.Json.Serialization;
 using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Dtos.Backup;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Estadisticas;
 using TiendaApi.Api.Dtos.Historial;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Dtos.Productos;
+using TiendaApi.Api.Dtos.Proveedores;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Models;
 
@@ -36,17 +39,41 @@ namespace TiendaApi.Api.Infrastructures;
 [JsonSerializable(typeof(CategoriaFilterDto))]
 [JsonSerializable(typeof(MyPedidoFilterDto))]
 [JsonSerializable(typeof(CategoriaRequestDto))]
+[JsonSerializable(typeof(ProveedorDto))]
+[JsonSerializable(typeof(ProveedorRequestDto))]
+[JsonSerializable(typeof(ProveedorFilterDto))]
+[JsonSerializable(typeof(PagedResult<ProveedorDto>))]
+[JsonSerializable(typeof(List<ProveedorDto>))]
 [JsonSerializable(typeof(ProductoRequestDto))]
 [JsonSerializable(typeof(PedidoRequestDto))]
 [JsonSerializable(typeof(UpdateEstadoDto))]
 [JsonSerializable(typeof(UpdatePedidoDto))]
 [JsonSerializable(typeof(ProductoPatchDto))]
+[JsonSerializable(typeof(CategoriaResumenDto))]
+[JsonSerializable(typeof(ProveedorResumenDto))]
+[JsonSerializable(typeof(ResumenEstadisticasDto))]
+[JsonSerializable(typeof(VentasSerieDto))]
+[JsonSerializable(typeof(ProductosMasVendidosDto))]
+[JsonSerializable(typeof(CategoriasEstadisticasDto))]
+[JsonSerializable(typeof(ProveedoresEstadisticasDto))]
+[JsonSerializable(typeof(EstadosEstadisticasDto))]
+[JsonSerializable(typeof(ClientesEstadisticasDto))]
+[JsonSerializable(typeof(InventarioDto))]
+[JsonSerializable(typeof(PreciosEstadisticasDto))]
+[JsonSerializable(typeof(BackupDto))]
+[JsonSerializable(typeof(ManifestBackupDto))]
+[JsonSerializable(typeof(ImportReportDto))]
+[JsonSerializable(typeof(CatalogoFormatosDto))]
+[JsonSerializable(typeof(List<BackupCategoriaDto>))]
+[JsonSerializable(typeof(List<BackupProveedorDto>))]
+[JsonSerializable(typeof(List<BackupProductoDto>))]
 [JsonSerializable(typeof(AvatarUpdateDto))]
 [JsonSerializable(typeof(PagedResult<CategoriaDto>))]
 [JsonSerializable(typeof(PagedResult<ProductoDto>))]
 [JsonSerializable(typeof(PagedResult<PedidoDto>))]
 [JsonSerializable(typeof(PagedResult<UserDto>))]
 [JsonSerializable(typeof(Categoria))]
+[JsonSerializable(typeof(Proveedor))]
 [JsonSerializable(typeof(Producto))]
 [JsonSerializable(typeof(Pedido))]
 [JsonSerializable(typeof(User))]

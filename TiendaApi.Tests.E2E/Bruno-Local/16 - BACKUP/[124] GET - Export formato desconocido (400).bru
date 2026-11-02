@@ -1,0 +1,29 @@
+meta {
+    name: [124] GET Export formato desconocido (400)
+    type: http
+    seq: 3
+}
+
+get {
+    url: {{baseUrl}}/api/backup/export?formato=xml
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Backup Export formato - Status 400", function () {
+        expect(res.getStatus()).to.equal(400);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Solo zip, json y csv.
+}

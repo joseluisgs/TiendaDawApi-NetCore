@@ -28,6 +28,9 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
     /// <summary>DbSet de Productos.</summary>
     public DbSet<Producto> Productos { get; set; } = null!;
 
+    /// <summary>DbSet de Proveedores.</summary>
+    public DbSet<Proveedor> Proveedores { get; set; } = null!;
+
     /// <summary>DbSet de Usuarios.</summary>
     public new DbSet<User> Users { get; set; } = null!;
 
@@ -83,9 +86,39 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
                 .HasForeignKey(p => p.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(p => p.CategoriaId);
+
+            // Proveedor opcional: la FK es nullable y Restrict evita borrar un proveedor
+            // que todavía tiene productos asignados.
+            entity.HasOne(p => p.Proveedor)
+                .WithMany(pr => pr.Productos)
+                .HasForeignKey(p => p.ProveedorId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(p => p.ProveedorId);
             entity.HasIndex(p => new { p.CategoriaId, p.Precio });
             entity.HasIndex(p => p.CreatedAt);
             entity.HasIndex(p => p.IsDeleted);
+            entity.HasQueryFilter(p => !p.IsDeleted);
+        });
+
+        modelBuilder.Entity<Proveedor>(entity =>
+        {
+            entity.ToTable("proveedores");
+            entity.HasKey(p => p.Codigo);
+
+            // La clave es un string generado por la aplicación en el momento de añadir la
+            // entidad. ValueGeneratedOnAdd es obligatorio para claves string: sin él EF Core
+            // no invoca al generador y rechaza la entidad por clave nula.
+            entity.Property(p => p.Codigo)
+                .HasMaxLength(IdGenerators.IdYouTube.Longitud)
+                .ValueGeneratedOnAdd()
+                .HasValueGenerator<IdGenerators.YouTubeIdValueGenerator>();
+
+            entity.Property(p => p.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(p => p.Descripcion).HasMaxLength(500);
+            entity.Property(p => p.Contacto).HasMaxLength(200);
+            entity.Property(p => p.IsDeleted).HasDefaultValue(false);
+            entity.HasIndex(p => p.Nombre).IsUnique();
+            entity.ConfigureTimestamps();
             entity.HasQueryFilter(p => !p.IsDeleted);
         });
 

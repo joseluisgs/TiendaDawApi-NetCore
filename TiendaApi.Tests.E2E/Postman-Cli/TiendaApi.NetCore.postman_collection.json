@@ -1341,7 +1341,7 @@
                   "pm.test(\"Schema - Producto\", function () {",
                   "  pm.response.to.have.jsonSchema({",
                   "    type: \"object\",",
-                  "    required: [\"id\", \"nombre\", \"precio\", \"stock\", \"categoriaId\"],",
+                  "    required: [\"id\", \"nombre\", \"precio\", \"stock\", \"categoria\"],",
                   "    properties: {",
                   "      id: { type: \"integer\" },",
                   "      nombre: { type: \"string\" },",
@@ -1349,7 +1349,8 @@
                   "      precio: { type: \"number\" },",
                   "      stock: { type: \"integer\" },",
                   "      imagen: { type: [\"string\", \"null\"] },",
-                  "      categoriaId: { type: \"integer\" }",
+                  "      categoria: { type: \"object\", required: [\"id\", \"nombre\"], properties: { id: { type: \"integer\" }, nombre: { type: \"string\" } } },",
+                  "      proveedor: { type: [\"object\", \"null\"] }",
                   "    }",
                   "  });",
                   "});"
@@ -1762,6 +1763,1476 @@
               "path": [
                 "api",
                 "productos"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14 - PROVEEDORES",
+      "item": [
+        {
+          "name": "[090] GET - All (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores GetAll - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Proveedores GetAll - Items paginados', function () { const d = pm.response.json(); pm.expect(d.items).to.be.an('array'); pm.expect(d.totalCount).to.be.at.least(3); });",
+                  "pm.test('Proveedores GetAll - Codigos de 11 caracteres', function () { pm.response.json().items.filter(i => i.codigo).forEach(i => pm.expect(i.codigo).to.have.lengthOf(11)); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores?page=0&size=10"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[091] GET - Por codigo (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores GetByCodigo - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Proveedores GetByCodigo - Devuelve el codigo pedido', function () { const d = pm.response.json(); pm.expect(d.codigo).to.equal('Distribuc01'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores/Distribuc01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                "Distribuc01"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[092] GET - Sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores SinToken - Status 401', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[093] GET - Rol USER (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores RolUser - Status 403', function () { pm.response.to.have.status(403); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[094] POST - Crear sin codigo (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores Create - Status 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Proveedores Create - El servidor genera un codigo de 11 caracteres', function () { const d = pm.response.json(); pm.expect(d.codigo).to.have.lengthOf(11); pm.expect(d.nombre).to.equal('Proveedor Automation'); });",
+                  "if (pm.response.code === 201) { pm.environment.set('proveedorCodigo', pm.response.json().codigo); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Proveedor Automation\",\n    \"descripcion\": \"Creado por las colecciones E2E\",\n    \"contacto\": \"e2e@tienda.example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[095] POST - Codigo invalido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores CodigoInvalido - Status 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Proveedores CodigoInvalido - Devuelve errores por campo', function () { pm.expect(pm.response.json()).to.have.property('errors'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"codigo\": \"no-valido!\",\n    \"nombre\": \"Proveedor con codigo invalido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[096] POST - Nombre duplicado (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores Duplicado - Status 409 Conflict', function () { pm.response.to.have.status(409); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Proveedor Automation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[097] PUT - Actualizar (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores Update - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Proveedores Update - Nombre cambiado y codigo intacto', function () { const d = pm.response.json(); pm.expect(d.nombre).to.equal('Proveedor Automation v2'); pm.expect(d.codigo).to.equal(pm.environment.get('proveedorCodigo')); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores/{{proveedorCodigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                "{{proveedorCodigo}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Proveedor Automation v2\",\n    \"descripcion\": \"Actualizado por las colecciones E2E\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[098] DELETE - Con productos (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores DeleteConProductos - Status 422', function () { pm.response.to.have.status(422); });",
+                  "pm.test('Proveedores DeleteConProductos - Explica el motivo', function () { pm.expect(pm.response.json().message).to.be.a('string'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores/Distribuc01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                "Distribuc01"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[099] DELETE - Ok y verificacion (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Proveedores Delete - Status 204', function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores/{{proveedorCodigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                "{{proveedorCodigo}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "protocolProfileBehavior": {}
+        }
+      ]
+    },
+    {
+      "name": "15 - ESTADISTICAS",
+      "item": [
+        {
+          "name": "[100] GET - Resumen (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Resumen - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Resumen - Trae ventas y periodo', function () { const d = pm.response.json(); pm.expect(d.periodo.dias).to.be.at.least(1); pm.expect(d.ventas.recaudacion).to.be.a('number'); pm.expect(d.productos.total).to.be.at.least(3); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/resumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "resumen"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[101] GET - Ventas por día (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Ventas - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Ventas - La serie cuadra con los totales', function () { const d = pm.response.json(); pm.expect(d.agrupar).to.equal('dia'); pm.expect(d.series).to.be.an('array').that.is.not.empty; const suma = d.series.reduce((a, p) => a + p.recaudacion, 0); pm.expect(Math.abs(suma - d.totales.recaudacion)).to.be.below(0.01); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/ventas?agrupar=dia",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "ventas?agrupar=dia"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[102] GET - Ventas agrupación inválida (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Ventas invalida - Status 400', function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/ventas?agrupar=trimestre",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "ventas?agrupar=trimestre"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[103] GET - Productos más vendidos (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Ranking - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Ranking - Orden descendente', function () { const d = pm.response.json(); for (let i = 1; i < d.productos.length; i++) { pm.expect(d.productos[i - 1].unidades).to.be.at.least(d.productos[i].unidades); } });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/productos-mas-vendidos?orden=unidades&top=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "productos-mas-vendidos?orden=unidades&top=5"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[104] GET - Categorías (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Categorias - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Categorias - Catalogo completo', function () { const d = pm.response.json(); pm.expect(d.categorias.length).to.be.at.least(3); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/categorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "categorias"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[105] GET - Proveedores (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Proveedores - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Proveedores - Desglose con códigos', function () { const d = pm.response.json(); pm.expect(d.proveedores).to.be.an('array'); d.proveedores.forEach((p) => pm.expect(p.codigo).to.be.a('string')); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/proveedores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "proveedores"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[106] GET - Estados (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Estados - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Estados - Embudo y cancelados aparte', function () { const d = pm.response.json(); pm.expect(d.estados).to.be.an('array').that.is.not.empty; pm.expect(d.cancelados.pedidos).to.be.a('number'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/estados",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "estados"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[107] GET - Clientes (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Clientes - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Clientes - Ordenado por gasto', function () { const d = pm.response.json(); for (let i = 1; i < d.clientes.length; i++) { pm.expect(d.clientes[i - 1].gasto).to.be.at.least(d.clientes[i].gasto); } });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/clientes?top=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "clientes?top=5"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[108] GET - Inventario (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Inventario - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Inventario - Valor y agotados', function () { const d = pm.response.json(); pm.expect(d.stockMax).to.equal(5); pm.expect(d.productos.valorInventario).to.be.at.least(0); pm.expect(d.agotados).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/inventario?stockMax=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "inventario?stockMax=5"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[109] GET - Precios de un producto (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Precios - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estadisticas Precios - Estadisticas coherentes', function () { const d = pm.response.json(); pm.expect(d.puntos).to.be.at.least(1); pm.expect(d.minimo).to.be.at.most(d.maximo); pm.expect(d.serie).to.have.lengthOf(d.puntos); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/precios?productoId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "precios?productoId=1"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[110] GET - Precios producto inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas Precios inexistente - Status 404', function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/precios?productoId=999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "precios?productoId=999999"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[111] GET - Resumen sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas SinToken - Status 401', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/resumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "resumen"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[112] GET - Resumen rol USER (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estadisticas RolUser - Status 403', function () { pm.response.to.have.status(403); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estadisticas/resumen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "resumen"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "16 - BACKUP",
+      "item": [
+        {
+          "name": "[120] GET - Formatos (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup Formatos - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Backup Formatos - Catalogo completo', function () { const d = pm.response.json(); pm.expect(d.formatos).to.have.lengthOf(3); pm.expect(d.entidades).to.have.lengthOf(3); pm.expect(d.limites.maxBytes).to.be.above(0); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/formatos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "formatos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[121] GET - Export json (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup Export - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Backup Export - JSON con manifest', function () { const d = pm.response.json(); pm.expect(d.manifest.version).to.equal('1.0'); pm.expect(d.productos.length).to.be.at.least(3); pm.expect(d.productos[0].categoriaId).to.be.a('number'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/export?formato=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "json"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[122] GET - Export csv (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup Export CSV - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Backup Export CSV - text/csv', function () { pm.expect(pm.response.headers.get('Content-Type')).to.contain('text/csv'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/export?formato=csv&entidades=productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "csv"
+                },
+                {
+                  "key": "entidades",
+                  "value": "productos"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[123] GET - Export zip (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup Export ZIP - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Backup Export ZIP - application/zip', function () { pm.expect(pm.response.headers.get('Content-Type')).to.contain('application/zip'); pm.expect(pm.response.headers.get('Content-Disposition')).to.contain('attachment'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/export?formato=zip",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "zip"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[124] GET - Export formato desconocido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup Export formato - Status 400', function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/export?formato=xml",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "xml"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[125] GET - Export entidad desconocida (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup Export entidad - Status 400', function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/export?entidades=usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "entidades",
+                  "value": "usuarios"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[126] GET - Formatos sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup SinToken - Status 401', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/formatos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "formatos"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[127] GET - Formatos rol USER (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup RolUser - Status 403', function () { pm.response.to.have.status(403); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/formatos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "formatos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[128] POST - Import dryRun (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup Import dryRun - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Backup Import dryRun - Informe sin escritura', function () { const d = pm.response.json(); pm.expect(d.dryRun).to.be.true; pm.expect(d.formato).to.equal('json'); pm.expect(d.entidades).to.be.an('array'); pm.expect(d.entidades.reduce((n, e) => n + e.leidos, 0)).to.be.at.least(5); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import?formato=json&dryRun=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "json"
+                },
+                {
+                  "key": "dryRun",
+                  "value": "true"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [
+                    "backup-ejemplo.json"
+                  ]
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[129] POST - Import formato desconocido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Backup Import formato - Status 400', function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import?formato=xml",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "xml"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [
+                    "backup-ejemplo.json"
+                  ]
+                }
               ]
             }
           },
@@ -3860,7 +5331,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"query\":\"query { productos { id nombre precio stock categoriaId } }\"}"
+              "raw": "{\"query\":\"query { productos { id nombre precio stock categoria { id nombre } } }\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/graphql",

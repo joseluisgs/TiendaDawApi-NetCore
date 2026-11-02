@@ -1,0 +1,25 @@
+meta {
+    name: [092] GET Sin token (401)
+    type: http
+    seq: 3
+}
+
+get {
+    url: {{baseUrl}}/api/proveedores
+    body: none
+    auth: none
+}
+
+script:post-response {
+    test("Proveedores SinToken - Status 401", function () {
+        expect(res.getStatus()).to.equal(401);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Sin token el listado de proveedores no se puede consultar.
+}

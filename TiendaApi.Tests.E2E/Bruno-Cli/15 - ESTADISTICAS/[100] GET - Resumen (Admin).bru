@@ -1,0 +1,37 @@
+meta {
+    name: [100] GET Resumen (Admin)
+    type: http
+    seq: 1
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/resumen
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Resumen - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Resumen - Trae ventas y periodo", function () {
+        const d = res.getBody();
+        expect(d.periodo.dias).to.be.at.least(1);
+        expect(d.ventas.recaudacion).to.be.a('number');
+        expect(d.ventas.recaudacion).to.be.at.least(0);
+        expect(d.productos.total).to.be.at.least(3);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Resumen general: ventas, estados, inventario y comparativa. Solo ADMIN.
+}

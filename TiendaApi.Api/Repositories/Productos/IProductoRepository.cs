@@ -48,6 +48,20 @@ public interface IProductoRepository
     /// <returns>Producto guardado.</returns>
     Task<Producto> SaveAsync(Producto producto);
 
+    /// <summary>
+    /// Crea un producto con un ID concreto, para el restore de un backup.
+    /// La columna de identidad es <c>GENERATED ALWAYS</c>: requiere
+    /// <c>OVERRIDING SYSTEM VALUE</c> y dejar la secuencia al día.
+    /// </summary>
+    /// <param name="producto">Producto con su ID original.</param>
+    Task CrearConIdExplicitoAsync(Producto producto);
+
+    /// <summary>
+    /// Re-sincroniza la secuencia de identidad tras altas con ID explícito.
+    /// Sin esto, la siguiente creación generaría un ID ya ocupado.
+    /// </summary>
+    Task ResincronizarSecuenciaAsync();
+
     /// <summary>Actualiza un producto existente.</summary>
     /// <param name="producto">Producto con datos actualizados.</param>
     /// <returns>Producto actualizado.</returns>

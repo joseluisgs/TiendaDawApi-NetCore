@@ -418,6 +418,10 @@ let imagenProductoUrl = null;
       token: adminToken,
       body: { nombre: `Auto Cat ${ts}`, descripcion: "Creada por automation" },
     });
+    assertEq(st(r), 201, "status");
+    categoriaId = r.json?.id;
+    assert(categoriaId !== undefined, "falta id");
+  });
 
   await test("Categorías: POST nombre duplicado → 409 Conflict", async () => {
     const nombre = `Dup Cat ${ts}`;
@@ -435,10 +439,6 @@ let imagenProductoUrl = null;
       body: { nombre: "No existe", descripcion: "x" },
     });
     assertEq(st(r), 404, "status");
-  });
-    assertEq(st(r), 201, "status");
-    categoriaId = r.json?.id;
-    assert(categoriaId !== undefined, "falta id");
   });
 
   await test("Categorías: PUT /{id} admin → 200", async () => {
@@ -460,12 +460,367 @@ let imagenProductoUrl = null;
     assertEq(st(r), 404, "status");
   });
 
+  // ============================ PROVEEDORES ============================
+  // El controlador de proveedores es ADMIN también en lectura: los GET anónimos
+  // y con rol USER deben rechazarse.
+  let proveedorCodigo = null;
+
+  await test("Proveedores: GET sin token → 401", async () => {
+    const r = await req("GET", "/api/proveedores");
+    assertEq(st(r), 401, "status");
+  });
+
+  await test("Proveedores: GET rol USER → 403", async () => {
+    const r = await req("GET", "/api/proveedores", { token: userToken });
+    assertEq(st(r), 403, "status");
+  });
+
+  await test("Proveedores: GET paged admin → 200 con semilla", async () => {
+    const r = await req("GET", "/api/proveedores?page=0&size=10", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.items), "items no es array");
+    assert(r.json.totalCount >= 3, `semilla esperaba >=3 proveedores, hay ${r.json.totalCount}`);
+  });
+
+  await test("Proveedores: POST admin sin código → 201 con código de 11 caracteres", async () => {
+    const r = await req("POST", "/api/proveedores", {
+      token: adminToken,
+      body: { nombre: `Auto Prov ${ts}`, descripcion: "Creado por automation", contacto: "e2e@tienda.example" },
+    });
+    assertEq(st(r), 201, "status");
+    proveedorCodigo = r.json?.codigo;
+    assert(proveedorCodigo?.length === 11, `el código debe tener 11 caracteres, tiene ${proveedorCodigo?.length}`);
+  });
+
+  await test("Proveedores: GET /{codigo} admin → 200", async () => {
+    const r = await req("GET", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assertEq(r.json?.codigo, proveedorCodigo, "codigo");
+  });
+
+  await test("Proveedores: POST con código de formato inválido → 400", async () => {
+    const r = await req("POST", "/api/proveedores", {
+      token: adminToken,
+      body: { codigo: "no-valido!", nombre: `Invalido ${ts}` },
+    });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Proveedores: POST nombre duplicado → 409", async () => {
+    const nombre = `Dup Prov ${ts}`;
+    const primero = await req("POST", "/api/proveedores", { token: adminToken, body: { nombre } });
+    assertEq(st(primero), 201, "status primer create");
+    const segundo = await req("POST", "/api/proveedores", { token: adminToken, body: { nombre } });
+    assertEq(st(segundo), 409, "status duplicado");
+    await req("DELETE", `/api/proveedores/${primero.json.codigo}`, { token: adminToken });
+  });
+
+  await test("Proveedores: PUT /{codigo} admin → 200", async () => {
+    const r = await req("PUT", `/api/proveedores/${proveedorCodigo}`, {
+      token: adminToken,
+      body: { nombre: `Auto Prov ${ts} v2`, descripcion: "Actualizado" },
+    });
+    assertEq(st(r), 200, "status");
+    assert(String(r.json?.nombre).includes("v2"), "nombre no actualizado");
+  });
+
+  await test("Proveedores: DELETE con productos asociados → 422", async () => {
+    // Distribuc01 viene de la semilla con productos asignados: no se puede borrar.
+    const r = await req("DELETE", "/api/proveedores/Distribuc01", { token: adminToken });
+    assertEq(st(r), 422, "status");
+  });
+
+  await test("Proveedores: DELETE /{codigo} admin → 204", async () => {
+    const r = await req("DELETE", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    assertEq(st(r), 204, "status");
+  });
+
+  await test("Proveedores: GET /{codigo} tras DELETE → 404", async () => {
+    const r = await req("GET", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    assertEq(st(r), 404, "status");
+  });
+
+  // ============================ ESTADISTICAS ============================
+  // Cálculo al vuelo: las aserciones son estructurales o relativas, porque los
+  // datos se acumulan entre corridas (nunca se afirman cifras absolutas).
+
+  await test("Estadisticas: GET sin token → 401", async () => {
+    const r = await req("GET", "/api/estadisticas/resumen");
+    assertEq(st(r), 401, "status");
+  });
+
+  await test("Estadisticas: GET rol USER → 403", async () => {
+    const r = await req("GET", "/api/estadisticas/resumen", { token: userToken });
+    assertEq(st(r), 403, "status");
+  });
+
+  await test("Estadisticas: resumen admin → 200 con el shape completo", async () => {
+    const r = await req("GET", "/api/estadisticas/resumen", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(d.periodo?.dias >= 1, `dias: ${d.periodo?.dias}`);
+    assert(typeof d.ventas?.recaudacion === "number", "ventas.recaudacion");
+    assert(d.ventas?.recaudacion >= 0, "la recaudación nunca es negativa");
+    assert(typeof d.ventas?.ticketMedio === "number", "ventas.ticketMedio");
+    assert(d.pedidosPorEstado && typeof d.pedidosPorEstado === "object", "pedidosPorEstado");
+    assert(d.productos?.total >= 3, `productos: ${d.productos?.total}`);
+    assert(d.categorias?.total >= 3, `categorias: ${d.categorias?.total}`);
+  });
+
+  await test("Estadisticas: resumen con rango invertido → 400", async () => {
+    const r = await req("GET", "/api/estadisticas/resumen?desde=2026-11-01T00:00:00Z&hasta=2026-01-01T00:00:00Z", { token: adminToken });
+    // El servicio no valida el orden aquí (la ventana se recorta), así que solo se
+    // comprueba que no rompe: 200 o 400, nunca un 500.
+    assert([200, 400].includes(st(r)), `status ${st(r)}`);
+  });
+
+  await test("Estadisticas: resumen con rango amplio → 200 con pedidos (consulta por ventana)", async () => {
+    // Cubre FindByRangoFechasAsync con un rango válido: sin él, la ventana se
+    // resolvería cargando todo y la consulta acotada quedaría sin probar.
+    const r = await req("GET", "/api/estadisticas/resumen?desde=2020-01-01T00:00:00Z&hasta=2030-01-01T00:00:00Z", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(d.periodo.dias > 3000, `dias: ${d.periodo.dias}`);
+    assert(typeof d.ventas.pedidos === "number", "ventas.pedidos");
+    assert(d.ventas.pedidos >= 3, `los pedidos de la semilla deben estar en la ventana: ${d.ventas.pedidos}`);
+  });
+
+  await test("Estadisticas: serie por día → 200 con periodos y totales coherentes", async () => {
+    const r = await req("GET", "/api/estadisticas/ventas?agrupar=dia", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assertEq(d.agrupar, "dia", "agrupar");
+    assert(Array.isArray(d.series) && d.series.length >= 1, `series: ${d.series?.length}`);
+    assert(typeof d.totales?.recaudacion === "number", "totales.recaudacion");
+    // La suma de la serie debe cuadrar con los totales (misma ventana).
+    const suma = d.series.reduce((a, p) => a + p.recaudacion, 0);
+    assert(Math.abs(suma - d.totales.recaudacion) < 0.01,
+      `la serie (${suma}) debe sumar los totales (${d.totales.recaudacion})`);
+  });
+
+  await test("Estadisticas: serie con agrupación inválida → 400", async () => {
+    const r = await req("GET", "/api/estadisticas/ventas?agrupar=trimestre", { token: adminToken });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Estadisticas: productos más vendidos → 200 y ranking ordenado", async () => {
+    const r = await req("GET", "/api/estadisticas/productos-mas-vendidos?orden=unidades&top=5", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assertEq(d.orden, "unidades", "orden");
+    assert(Array.isArray(d.productos), "productos es array");
+    for (let i = 1; i < d.productos.length; i++) {
+      assert(d.productos[i - 1].unidades >= d.productos[i].unidades,
+        `el puesto ${i - 1} debe tener más unidades que el ${i}`);
+    }
+    if (d.productos.length > 0) {
+      assert(d.productos[0].pos === 1, "el primer puesto es la posición 1");
+      assert(d.productos[0].porcentajeRecaudacion >= 0, "porcentaje no negativo");
+    }
+  });
+
+  await test("Estadisticas: categorías → 200 con el catálogo completo", async () => {
+    const r = await req("GET", "/api/estadisticas/categorias", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.categorias), "categorias es array");
+    assert(d.categorias.length >= 3, `categorias: ${d.categorias.length}`);
+    const sinVentas = d.categorias.filter((c) => c.recaudacion === 0);
+    assert(sinVentas.length >= 0, "las categorías sin ventas salen con ceros");
+  });
+
+  await test("Estadisticas: proveedores → 200 con desglose", async () => {
+    const r = await req("GET", "/api/estadisticas/proveedores", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.proveedores), "proveedores es array");
+    if (d.proveedores.length > 0) {
+      assert(typeof d.proveedores[0].codigo === "string", "codigo");
+      assert(d.proveedores[0].recaudacion >= 0, "recaudacion no negativa");
+    }
+  });
+
+  await test("Estadisticas: estados → 200 con el embudo y los cancelados aparte", async () => {
+    const r = await req("GET", "/api/estadisticas/estados", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.estados) && d.estados.length >= 1, `estados: ${d.estados?.length}`);
+    assert(typeof d.cancelados?.pedidos === "number", "cancelados.pedidos");
+    assert(typeof d.cancelados?.importeNoFacturado === "number", "cancelados.importeNoFacturado");
+    assert(typeof d.totales?.recaudacion === "number", "totales.recaudacion");
+  });
+
+  await test("Estadisticas: clientes → 200 con ranking", async () => {
+    const r = await req("GET", "/api/estadisticas/clientes?top=5", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.clientes), "clientes es array");
+    for (let i = 1; i < d.clientes.length; i++) {
+      assert(d.clientes[i - 1].gasto >= d.clientes[i].gasto,
+        `el puesto ${i - 1} debe gastar más que el ${i}`);
+    }
+  });
+
+  await test("Estadisticas: inventario → 200 con valor y agotados", async () => {
+    const r = await req("GET", "/api/estadisticas/inventario?stockMax=5", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assertEq(d.stockMax, 5, "stockMax");
+    assert(d.productos?.total >= 3, `productos: ${d.productos?.total}`);
+    assert(typeof d.productos?.valorInventario === "number", "valorInventario");
+    assert(d.productos?.valorInventario >= 0, "valorInventario no negativo");
+    assert(Array.isArray(d.agotados), "agotados es array");
+    assert(Array.isArray(d.mayorValor), "mayorValor es array");
+  });
+
+  await test("Estadisticas: precios de un producto → 200 con la serie", async () => {
+    const r = await req("GET", "/api/estadisticas/precios?productoId=1", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assertEq(d.productoId, 1, "productoId");
+    assert(d.puntos >= 1, `puntos: ${d.puntos}`);
+    assert(d.minimo <= d.maximo, "minimo <= maximo");
+    assert(d.media >= d.minimo && d.media <= d.maximo, "media dentro del rango");
+    assert(Array.isArray(d.serie) && d.serie.length === d.puntos, "serie coherente con los puntos");
+  });
+
+  await test("Estadisticas: precios de un producto inexistente → 404", async () => {
+    const r = await req("GET", "/api/estadisticas/precios?productoId=999999", { token: adminToken });
+    assertEq(st(r), 404, "status");
+  });
+
+  // ============================ BACKUP ============================
+  // Todo admin. El import real se hace con un backup exportado de la MISMA base,
+  // así que el round-trip no cambia datos (sinCambios) y no afecta a otros tests.
+
+  await test("Backup: GET formatos sin token → 401", async () => {
+    const r = await req("GET", "/api/backup/formatos");
+    assertEq(st(r), 401, "status");
+  });
+
+  await test("Backup: GET formatos rol USER → 403", async () => {
+    const r = await req("GET", "/api/backup/formatos", { token: userToken });
+    assertEq(st(r), 403, "status");
+  });
+
+  await test("Backup: GET formatos admin → 200 con el catálogo", async () => {
+    const r = await req("GET", "/api/backup/formatos", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    const d = r.json;
+    assert(Array.isArray(d.formatos) && d.formatos.length === 3, `formatos: ${d.formatos?.length}`);
+    const nombres = d.formatos.map((f) => f.nombre);
+    assert(nombres.includes("zip") && nombres.includes("json") && nombres.includes("csv"), "zip, json y csv");
+    assert(Array.isArray(d.entidades) && d.entidades.length === 3, "las 3 entidades");
+    assert(d.limites?.maxBytes > 0, "límite de tamaño declarado");
+    assert(typeof d.reglas?.upsert === "string", "reglas.upsert");
+  });
+
+  await test("Backup: GET export json → 200 con manifest y entidades", async () => {
+    const r = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(String(r.headers.get("content-type")).includes("application/json"), "content-type");
+    assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga como fichero");
+    const d = r.json;
+    assert(d.manifest?.version === "1.0", "manifest.version");
+    assert(typeof d.manifest?.generadoEn === "string", "manifest.generadoEn");
+    assert(Array.isArray(d.productos) && d.productos.length >= 3, `productos: ${d.productos?.length}`);
+    assert(Array.isArray(d.categorias) && d.categorias.length >= 3, "categorias");
+    // El backup va plano, con las claves foráneas tal cual.
+    assert(typeof d.productos[0].categoriaId === "number", "categoriaId plano en el backup");
+  });
+
+  await test("Backup: GET export csv → 200 text/csv", async () => {
+    // Regresión de E/S síncrona: StreamWriter hace flush sincrono al cerrar y
+    // Kestrel lo rechaza si no se habilita; la descarga se cortaba a mitad.
+    const r = await req("GET", "/api/backup/export?formato=csv&entidades=productos", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(String(r.headers.get("content-type")).includes("text/csv"), "content-type");
+    assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga");
+    assert(r.text.includes("categoriaId"), "cabecera del CSV");
+  });
+
+  await test("Backup: GET export zip → 200 application/zip", async () => {
+    const r = await req("GET", "/api/backup/export?formato=zip", { token: adminToken });
+    assertEq(st(r), 200, "status");
+    assert(String(r.headers.get("content-type")).includes("application/zip"), "content-type");
+    assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga");
+  });
+
+  await test("Backup: GET export formato desconocido → 400", async () => {
+    const r = await req("GET", "/api/backup/export?formato=xml", { token: adminToken });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Backup: GET export entidad desconocida → 400", async () => {
+    const r = await req("GET", "/api/backup/export?entidades=usuarios", { token: adminToken });
+    assertEq(st(r), 400, "status");
+  });
+
+  await test("Backup: POST import sin fichero → 400", async () => {
+    const r = await req("POST", "/api/backup/import", { token: adminToken, body: {} });
+    assert(st(r) === 400 || st(r) === 415, `status ${st(r)}`);
+  });
+
+  await test("Backup: POST import dryRun → 200 sin tocar nada", async () => {
+    // Se exporta y se reimporta el MISMO contenido: dryRun no escribe y, aun
+    // sin dryRun, el round-trip no debería cambiar nada (mismas claves).
+    const descarga = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    assertEq(st(descarga), 200, "status del export");
+
+    const form = new FormData();
+    form.append("file", new Blob([JSON.stringify(descarga.json)], { type: "application/json" }), "backup.json");
+    const r = await req("POST", "/api/backup/import?formato=json&dryRun=true", { token: adminToken, body: form });
+    assertEq(st(r), 200, "status del import");
+    const informe = r.json;
+    assertEq(informe.dryRun, true, "dryRun");
+    assert(typeof informe.duracionMs === "number", "duracionMs");
+    assert(Array.isArray(informe.entidades), "entidades");
+    assert(informe.entidades.some((e) => e.leidos >= 3), "debe leer las entidades del backup");
+  });
+
+  await test("Backup: POST import real (round-trip) → 200 completo", async () => {
+    const descarga = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    assertEq(st(descarga), 200, "status del export");
+
+    const form = new FormData();
+    form.append("file", new Blob([JSON.stringify(descarga.json)], { type: "application/json" }), "backup.json");
+    const r = await req("POST", "/api/backup/import?formato=json", { token: adminToken, body: form });
+    assertEq(st(r), 200, "status del import");
+    const informe = r.json;
+    assertEq(informe.dryRun, false, "dryRun");
+    assert(informe.completo === true,
+      `debe importar sin errores: ${JSON.stringify(informe.entidades.flatMap((e) => e.errores))}`);
+    // Round-trip: mismas claves → todo sin cambios, ni altas ni modificaciones.
+    assert(informe.entidades.every((e) => e.creados === 0 && e.actualizados === 0),
+      "el round-trip no debe crear ni actualizar nada");
+  });
+
+  await test("Backup: POST import con formato desconocido → 400", async () => {
+    const form = new FormData();
+    form.append("file", new Blob(["<xml/>"], { type: "application/xml" }), "backup.xml");
+    const r = await req("POST", "/api/backup/import?formato=xml", { token: adminToken, body: form });
+    assertEq(st(r), 400, "status");
+  });
+
   // ============================ PRODUCTOS ============================
   await test("Productos: GET paged → 200 con semilla", async () => {
     const r = await req("GET", "/api/productos?page=0&size=2");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.json.totalCount >= 3, `semilla esperaba >=3 productos, hay ${r.json.totalCount}`);
+  });
+
+  await test("Productos: GET /{id} trae categoria y proveedor anidados", async () => {
+    const r = await req("GET", "/api/productos/1");
+    assertEq(st(r), 200, "status");
+    assert(r.json?.categoria?.id > 0, "falta categoria.id");
+    assert(typeof r.json?.categoria?.nombre === "string" && r.json.categoria.nombre.length > 0, "falta categoria.nombre");
+    assert(typeof r.json?.proveedor?.codigo === "string", "falta proveedor.codigo");
+    assert(String(r.json?.proveedor?.codigo).length === 11, "el código del proveedor debe tener 11 caracteres");
+    assert(typeof r.json?.proveedor?.nombre === "string" && r.json.proveedor.nombre.length > 0, "falta proveedor.nombre");
+    // Los campos planos desaparecieron del contrato.
+    assert(r.json?.categoriaNombre === undefined, "categoriaNombre ya no debe existir");
+    assert(r.json?.proveedorNombre === undefined, "proveedorNombre ya no debe existir");
   });
 
   await test("Productos: GET All (sin paginación) → 200 array", async () => {

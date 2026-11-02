@@ -1,0 +1,37 @@
+meta {
+    name: [101] GET Ventas por día (Admin)
+    type: http
+    seq: 2
+}
+
+get {
+    url: {{baseUrl}}/api/estadisticas/ventas?agrupar=dia
+    body: none
+    auth: bearer
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+script:post-response {
+    test("Estadisticas Ventas - Status 200 OK", function () {
+        expect(res.getStatus()).to.equal(200);
+    });
+
+    test("Estadisticas Ventas - La serie cuadra con los totales", function () {
+        const d = res.getBody();
+        expect(d.agrupar).to.equal('dia');
+        expect(d.series).to.be.an('array').that.is.not.empty;
+        const suma = d.series.reduce((a, p) => a + p.recaudacion, 0);
+        expect(Math.abs(suma - d.totales.recaudacion)).to.be.below(0.01);
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Serie temporal por día con los periodos vacíos a cero.
+}

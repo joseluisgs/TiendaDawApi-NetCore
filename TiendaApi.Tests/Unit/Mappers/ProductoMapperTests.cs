@@ -42,8 +42,8 @@ public class ProductoMapperTests
         dto.Precio.Should().Be(1999.99m);
         dto.Stock.Should().Be(25);
         dto.Imagen.Should().Be("laptop.jpg");
-        dto.CategoriaId.Should().Be(1);
-        dto.CategoriaNombre.Should().Be("Electronics");
+        dto.Categoria.Id.Should().Be(1);
+        dto.Categoria.Nombre.Should().Be("Electronics");
     }
 
     [Test]
@@ -61,7 +61,7 @@ public class ProductoMapperTests
         var dto = producto.ToDto();
 
         // Assert
-        dto.CategoriaNombre.Should().BeEmpty();
+        dto.Categoria.Nombre.Should().BeEmpty();
     }
 
     [Test]
@@ -79,7 +79,7 @@ public class ProductoMapperTests
         var dto = producto.ToDto();
 
         // Assert
-        dto.CategoriaNombre.Should().BeEmpty();
+        dto.Categoria.Nombre.Should().BeEmpty();
     }
 
     [Test]
@@ -458,7 +458,7 @@ public class ProductoMapperTests
         resultDto.Nombre.Should().Be(dto.Nombre);
         resultDto.Precio.Should().Be(dto.Precio);
         resultDto.Stock.Should().Be(dto.Stock);
-        resultDto.CategoriaId.Should().Be(dto.CategoriaId);
+        resultDto.Categoria.Id.Should().Be(dto.CategoriaId);
     }
 
     #endregion

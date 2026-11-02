@@ -121,8 +121,8 @@ public class MapperExtensionTests
         dto.Precio.Should().Be(1500.00m);
         dto.Stock.Should().Be(10);
         dto.Imagen.Should().Be("laptop.jpg");
-        dto.CategoriaId.Should().Be(1);
-        dto.CategoriaNombre.Should().Be("Electronics");
+        dto.Categoria.Id.Should().Be(1);
+        dto.Categoria.Nombre.Should().Be("Electronics");
     }
 
     [Test]
@@ -140,7 +140,7 @@ public class MapperExtensionTests
         var dto = producto.ToDto();
 
         // Assert
-        dto.CategoriaNombre.Should().BeEmpty();
+        dto.Categoria.Nombre.Should().BeEmpty();
     }
 
     [Test]

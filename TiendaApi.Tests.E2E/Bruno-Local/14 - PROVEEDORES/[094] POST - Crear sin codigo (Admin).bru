@@ -1,0 +1,53 @@
+meta {
+    name: [094] POST Crear sin codigo (Admin)
+    type: http
+    seq: 5
+}
+
+post {
+    url: {{baseUrl}}/api/proveedores
+    body: json
+    auth: bearer
+}
+
+headers {
+    Content-Type: application/json
+}
+
+auth:bearer {
+    token: {{adminToken}}
+}
+
+body:json {
+    {
+        "nombre": "Proveedor Automation",
+        "descripcion": "Creado por las colecciones E2E",
+        "contacto": "e2e@tienda.example"
+    }
+}
+
+script:post-response {
+    test("Proveedores Create - Status 201 Created", function () {
+        expect(res.getStatus()).to.equal(201);
+    });
+
+    test("Proveedores Create - El servidor genera un codigo de 11 caracteres", function () {
+        const d = res.getBody();
+        expect(d.codigo).to.have.lengthOf(11);
+        expect(d.nombre).to.equal('Proveedor Automation');
+    });
+
+    test("Proveedores Create - Guarda el codigo para las siguientes peticiones", function () {
+        if (res.getStatus() === 201) {
+            bru.setVar('proveedorCodigo', res.getBody().codigo);
+        }
+    });
+}
+
+settings {
+    encodeUrl: true
+}
+
+docs {
+    Crea un proveedor sin enviar codigo: el servidor genera un identificador de 11 caracteres.
+}

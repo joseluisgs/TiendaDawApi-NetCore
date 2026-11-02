@@ -17,8 +17,10 @@ public static class ProductoMapper
             producto.Precio,
             producto.Stock,
             producto.Imagen,
-            producto.CategoriaId,
-            producto.Categoria?.Nombre ?? string.Empty,
+            new CategoriaResumenDto(producto.CategoriaId, producto.Categoria?.Nombre ?? string.Empty),
+            producto.Proveedor is null
+                ? null
+                : new ProveedorResumenDto(producto.Proveedor.Codigo, producto.Proveedor.Nombre),
             producto.CreatedAt,
             producto.UpdatedAt
         );
@@ -36,11 +38,13 @@ public static class ProductoMapper
         Stock = dto.Stock,
         Imagen = dto.Imagen,
         CategoriaId = dto.CategoriaId,
+        // Un código vacío no es una clave válida: se trata como "sin proveedor".
+        ProveedorId = string.IsNullOrWhiteSpace(dto.ProveedorCodigo) ? null : dto.ProveedorCodigo,
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow
     };
 
-    /// <summary>Actualiza Producto desde ProductoRequestDto.</summary>
+    /// <summary>Actualiza Producto desde ProductoRequestDto (PUT: reemplaza todos los campos editables).</summary>
     public static void UpdateEntity(this ProductoRequestDto dto, Producto producto)
     {
         producto.Nombre = dto.Nombre;
@@ -48,6 +52,7 @@ public static class ProductoMapper
         producto.Precio = dto.Precio;
         producto.Stock = dto.Stock;
         producto.CategoriaId = dto.CategoriaId;
+        producto.ProveedorId = string.IsNullOrWhiteSpace(dto.ProveedorCodigo) ? null : dto.ProveedorCodigo;
         if (!string.IsNullOrEmpty(dto.Imagen))
             producto.Imagen = dto.Imagen;
     }

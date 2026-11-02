@@ -23,8 +23,8 @@ public static class ProductoMapper
             Precio = dto.Precio,
             Stock = dto.Stock,
             Imagen = dto.Imagen,
-            CategoriaId = dto.CategoriaId,
-            CategoriaNombre = dto.CategoriaNombre,
+            CategoriaId = dto.Categoria.Id,
+            CategoriaNombre = dto.Categoria.Nombre,
             CreatedAt = dto.CreatedAt,
             UpdatedAt = dto.UpdatedAt
         };

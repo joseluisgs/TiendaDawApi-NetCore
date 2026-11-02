@@ -101,6 +101,42 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
+    public async Task CrearConIdExplicitoAsync(Categoria categoria)
+    {
+        logger.LogDebug("Creando categoría con ID explícito: {Id}", categoria.Id);
+        // GENERATED ALWAYS rechaza valores explícitos: se inserta con OVERRIDING
+        // y después se llama a ResincronizarSecuenciaAsync para no dejar la
+        // secuencia por detrás del mayor ID.
+        await context.Database.ExecuteSqlRawAsync(
+            """
+            INSERT INTO "categorias" ("Id", "Nombre", "Descripcion", "IsDeleted", "CreatedAt", "UpdatedAt")
+            OVERRIDING SYSTEM VALUE
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5})
+            """,
+            categoria.Id,
+            categoria.Nombre,
+            categoria.Descripcion!,
+            categoria.IsDeleted,
+            AUtc(categoria.CreatedAt),
+            AUtc(categoria.UpdatedAt));
+    }
+
+    /// <inheritdoc/>
+    public async Task ResincronizarSecuenciaAsync()
+    {
+        logger.LogDebug("Re-sincronizando secuencia de categorías");
+        await context.Database.ExecuteSqlRawAsync(
+            """
+            SELECT setval(pg_get_serial_sequence('categorias', 'Id'), COALESCE(MAX("Id"), 1))
+            FROM "categorias"
+            """);
+    }
+
+    /// <summary>Garantiza Kind=Utc, que Npgsql exige para timestamp with time zone.</summary>
+    private static DateTime AUtc(DateTime valor) =>
+        valor.Kind == DateTimeKind.Utc ? valor : DateTime.SpecifyKind(valor, DateTimeKind.Utc);
+
+    /// <inheritdoc/>
     public async Task<Categoria> UpdateAsync(Categoria categoria)
     {
         logger.LogDebug("Actualizando categoría ID: {Id}", categoria.Id);

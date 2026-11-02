@@ -43,17 +43,7 @@ public class ProductoMutationTests
             CategoriaId = 1
         };
 
-        var productoCreado = new ProductoDto(
-            1,
-            "Nuevo Producto",
-            "Descripción",
-            99.99m,
-            10,
-            "image.jpg",
-            1,
-            "Electrónica",
-            DateTime.UtcNow,
-            DateTime.UtcNow);
+        var productoCreado = new ProductoDto(1, "Nuevo Producto", "Descripción", 99.99m, 10, "image.jpg", new CategoriaResumenDto(1, "Electrónica"), null, DateTime.UtcNow, DateTime.UtcNow);
 
         _productoServiceMock
             .Setup(s => s.CreateAsync(It.IsAny<ProductoRequestDto>()))
@@ -95,17 +85,7 @@ public class ProductoMutationTests
         long productoId = 1;
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
 
-        var productoActualizado = new ProductoDto(
-            productoId,
-            "Nuevo Nombre",
-            "Descripción",
-            999.99m,
-            20,
-            null,
-            1,
-            "Electrónica",
-            DateTime.UtcNow,
-            DateTime.UtcNow);
+        var productoActualizado = new ProductoDto(productoId, "Nuevo Nombre", "Descripción", 999.99m, 20, null, new CategoriaResumenDto(1, "Electrónica"), null, DateTime.UtcNow, DateTime.UtcNow);
 
         // El mutation delega el merge (read-before-write) en el servicio,
         // igual que el endpoint REST PATCH
