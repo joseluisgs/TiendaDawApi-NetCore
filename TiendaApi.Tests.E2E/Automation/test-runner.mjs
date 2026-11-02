@@ -262,6 +262,17 @@ let imagenProductoUrl = null;
     assert(remaining !== null && remaining !== undefined, "falta RateLimit-Remaining");
   });
 
+  await test("Seguridad: CSP presente y X-XSS-Protection ausente", async () => {
+    // X-XSS-Protection es obsoleta (los navegadores modernos la ignoran);
+    // la protección real contra XSS es Content-Security-Policy.
+    const r = await req("GET", "/version");
+    const csp = r.headers.get("content-security-policy") || "";
+    assert(csp.includes("default-src 'none'"), `falta CSP estricta: "${csp}"`);
+    assert(csp.includes("frame-ancestors 'none'"), `falta frame-ancestors: "${csp}"`);
+    assert(r.headers.get("x-xss-protection") === null,
+      "X-XSS-Protection no debe enviarse (cabecera obsoleta)");
+  });
+
   // ============================ AUTH ============================
   await test("Auth: POST signup usuario único → 201 con token", async () => {
     const r = await req("POST", "/api/v1/auth/signup", {

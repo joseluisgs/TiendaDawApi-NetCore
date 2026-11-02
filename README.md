@@ -154,7 +154,7 @@ TiendaDawApi es una serie de servicios backend desarrollados con .NET 10 ASP.NET
 - **Docker** - Containerización
 - **Newman/Bruno/Node** - Pruebas de API (colecciones + Automation runner)
 - **BackgroundService** - Tareas programadas y jobs en segundo plano
-- **Security Headers** - X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy
+- **Security Headers** - X-Content-Type-Options, X-Frame-Options, Content-Security-Policy, Referrer-Policy
 - **System.IO.Compression (BCL)** - ZIP del backup sin dependencias externas, con límite de entradas y de tamaño descomprimido (anti zip-bomb)
 - **CSV RFC4180 propio** - Codificador/decodificador sin paquetes NuGet: comillas, comas dentro de campo, UTF-8 con BOM para Excel y cultura invariante
 - **Generador de IDs estilo YouTube** - `ValueGenerator` de EF Core + atributo `IdYouTube` de validación (Base64url de 11 caracteres, no correlativo)
@@ -1117,7 +1117,7 @@ public async Task<IActionResult> Create([FromBody] ProductoRequestDto dto)
 - ✅ **Concurrency Control**: RowVersion para control de concurrencia optimista
 - ✅ **EF Core Parameterization**: Protección contra SQL Injection via LINQ
 - ✅ **HTTPS + HSTS**: Redirección HTTP→HTTPS y HSTS con max-age 365 días
-- ✅ **Security Headers**: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
+- ✅ **Security Headers**: X-Content-Type-Options, X-Frame-Options, Content-Security-Policy, Referrer-Policy, Permissions-Policy
 
 > **Ver más:** [Seguridad HTTP](doc/17-seguridad-http.md)
 
