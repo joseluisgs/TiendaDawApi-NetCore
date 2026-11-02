@@ -189,9 +189,15 @@ flowchart LR
 |--------|-------|------------|
 | **X-Content-Type-Options** | `nosniff` | Previene MIME sniffing |
 | **X-Frame-Options** | `DENY` | Previene clickjacking (iframes) |
-| **X-XSS-Protection** | `1; mode=block` | Protege contra XSS legacy |
+| **Content-Security-Policy** | `default-src 'none'; frame-ancestors 'none'; ...` | Protege contra XSS: el navegador solo carga lo que la política permite |
 | **Referrer-Policy** | `strict-origin-when-cross-origin` | Controla información del referrer |
 | **Permissions-Policy** | `accelerometer=(), camera=(), ...` | Controla APIs del navegador |
+
+> **Nota sobre X-XSS-Protection**: esta cabecera (`1; mode=block`) se dejó de
+> enviar a propósito. Es obsoleta: los navegadores modernos la ignoran (Chrome
+> la retiró en 2019), el propio filtro podía romper páginas legítimas y OWASP
+> recomienda no enviarla. La protección real contra XSS hoy es
+> **Content-Security-Policy**.
 
 ### Implementación del Middleware
 
@@ -210,7 +216,7 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
     {
         ["X-Content-Type-Options"] = "nosniff",
         ["X-Frame-Options"] = "DENY",
-        ["X-XSS-Protection"] = "1; mode=block",
+        ["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
         ["Referrer-Policy"] = "strict-origin-when-cross-origin",
         ["Permissions-Policy"] = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
     };
@@ -341,12 +347,20 @@ flowchart LR
 <!-- Cuando otro usuario ve el comentario, sus cookies son robadas -->
 ```
 
-**Protección con X-XSS-Protection:**
+**Protección con Content-Security-Policy:**
 ```
-X-XSS-Protection: 1; mode=block
+Content-Security-Policy: default-src 'none'; frame-ancestors 'none'
 
-// El navegador detecta el script malicioso y lo bloquea
+// El navegador solo carga y ejecuta lo que la política permite:
+// sin scripts, sin recursos externos, sin embeber en iframes.
+// Un comentario inyectado simplemente no se ejecuta.
 ```
+
+> **Por qué no enviamos X-XSS-Protection**: esta cabecera (`1; mode=block`)
+> se envió durante años, pero es obsoleta. Los navegadores modernos la ignoran
+> (Chrome la retiró en 2019), el propio filtro del navegador podía romper
+> páginas legítimas y OWASP recomienda expresamente no enviarla. La protección
+> real contra XSS hoy es **Content-Security-Policy**.
 
 #### Clickjacking
 
@@ -438,7 +452,7 @@ X-Content-Type-Options: nosniff
 |----------------|---------------------|----------------------|
 | **HTTP→HTTPS** | Manual, vulnerable a downgrade | Automático, 301 redirect |
 | **HSTS** | ❌ Navegador puede usar HTTP | ✅ 365 días, subdominios, preload |
-| **XSS** | ❌ Sin protección | ✅ X-XSS-Protection: 1; mode=block |
+| **XSS** | ❌ Sin protección | ✅ Content-Security-Policy: default-src 'none' |
 | **Clickjacking** | ❌ Página puede iframearse | ✅ X-Frame-Options: DENY |
 | **MIME Sniffing** | ❌ Navegador adivina tipos | ✅ X-Content-Type-Options: nosniff |
 
@@ -449,7 +463,7 @@ graph TD
     subgraph "Security Headers"
         A["X-Content-Type-Options: nosniff"] --> B["Previene que el navegador<br/>adivine el tipo de archivo"]
         C["X-Frame-Options: DENY"] --> D["Previene que la página<br/>se muestre en un iframe"]
-        E["X-XSS-Protection: 1; mode=block"] --> F["Bloquea ataques XSS<br/>(legacy, para navegadores antiguos)"]
+        E["Content-Security-Policy<br/>default-src 'none'"] --> F["El navegador solo ejecuta<br/>los recursos permitidos (anti-XSS)"]
         G["Referrer-Policy"] --> H["Controla qué información<br/>se envía al referrer"]
         I["Permissions-Policy"] --> J["Deshabilita APIs sensibles<br/>como cámara, micrófono, etc."]
     end
@@ -657,7 +671,7 @@ curl -I https://localhost:5000/api/categorias
 # HTTP/1.1 200 OK
 # X-Content-Type-Options: nosniff
 # X-Frame-Options: DENY
-# X-XSS-Protection: 1; mode=block
+# Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; ...
 # Referrer-Policy: strict-origin-when-cross-origin
 # Permissions-Policy: accelerometer=(), camera=(), ...
 ```
@@ -749,7 +763,7 @@ graph LR
     subgraph "Response Headers"
         A["HTTP/1.1 200 OK"] --> B["X-Content-Type-Options: nosniff"]
         A --> C["X-Frame-Options: DENY"]
-        A --> D["X-XSS-Protection: 1; mode=block"]
+        A --> D["Content-Security-Policy: default-src 'none'"]
         A --> E["Referrer-Policy: strict-origin-when-cross-origin"]
         A --> F["Permissions-Policy: accelerometer=(), ..."]    
         A --> G["Strict-Transport-Security: max-age=31536000"]
