@@ -194,7 +194,7 @@ public class PedidosWebSocketHandler
     }
 
     /// <summary>Notifica a usuario Y administradores.</summary>
-    public async Task NotifyUserAndAdminsAsync(long userId, PedidoNotificacion notificacion)
+    public virtual async Task NotifyUserAndAdminsAsync(long userId, PedidoNotificacion notificacion)
     {
         await Task.WhenAll(NotifyUserAsync(userId, notificacion), NotifyAdminsAsync(notificacion));
     }
