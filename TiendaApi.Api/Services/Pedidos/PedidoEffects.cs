@@ -320,73 +320,109 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Encola el email de cambio de estado (cliente).
+    /// Encola el email de cambio de estado AL CLIENTE del pedido.
     /// </summary>
-    public void EnviarEmailPedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, long userId)
+    /// <remarks>
+    /// 📧 Matriz de emails: el usuario es quien debe enterarse de los cambios
+    /// de estado. El admin NO recibe este email porque los cambios de estado
+    /// los provoca él desde el panel (ver doc/21-email-services.md).
+    /// </remarks>
+    public void EnviarEmailPedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, DestinatarioDto? destinatario)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
+                if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
 
-                var content = EmailTemplates.PedidoEstadoActualizado(pedidoId, estadoAnterior, nuevoEstado, total, userId);
+                var content = EmailTemplates.PedidoEstadoActualizado(pedidoId, estadoAnterior, nuevoEstado, total);
                 var body = EmailTemplates.CreateBase("Cambio de Estado de Pedido", content);
 
                 var emailMessage = new EmailMessage
                 {
-                    To = adminEmail,
+                    To = destinatario.Email,
                     Subject = $"📦 Pedido #{pedidoId} - {nuevoEstado}",
                     Body = body,
                     IsHtml = true
                 };
                 await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras cambio de estado del pedido");
+                logger.LogDebug("Email de cambio de estado encolado para el cliente del pedido {PedidoId}", pedidoId);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras cambio de estado");
+                logger.LogWarning(ex, "Error al encolar email de cambio de estado tras cambio de estado");
             }
         });
     }
 
     /// <summary>
-    /// Encola el email de aviso al administrador al actualizar un pedido.
+    /// Encola el email de aviso AL CLIENTE cuando un administrador modifica
+    /// datos de su pedido sin cambiar el estado.
     /// </summary>
-    public void EnviarEmailPedidoActualizadoAdmin(string pedidoId, string estado, decimal total, long userId)
+    public void EnviarEmailPedidoModificadoCliente(string pedidoId, DestinatarioDto? destinatario)
     {
         _ = Task.Run(async () =>
         {
             try
             {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
+                if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
 
-                var content = EmailTemplates.PedidoActualizadoAdmin(pedidoId, estado, total, userId);
-                var body = EmailTemplates.CreateBase("Pedido Actualizado por Administrador", content);
+                var content = EmailTemplates.PedidoModificadoCliente(pedidoId, destinatario.NombreCompleto);
+                var body = EmailTemplates.CreateBase($"Pedido #{pedidoId} modificado", content);
 
-                var emailMessage = new EmailMessage
+                await emailService.EnqueueEmailAsync(new EmailMessage
                 {
-                    To = adminEmail,
-                    Subject = $"✏️ Pedido #{pedidoId} Actualizado",
+                    To = destinatario.Email,
+                    Subject = $"✏️ Tu pedido #{pedidoId} ha sido modificado",
                     Body = body,
                     IsHtml = true
-                };
-                await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras actualización de pedido por admin");
+                });
+                logger.LogDebug("Email de aviso de modificación encolado para el cliente del pedido {PedidoId}", pedidoId);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras actualización por admin");
+                logger.LogWarning(ex, "Error al encolar email de aviso de modificación para pedido {PedidoId}", pedidoId);
             }
         });
     }
 
     /// <summary>
-    /// Encola el email de aviso al administrador al eliminar un pedido.
+    /// Encola el email de cancelación AL CLIENTE (cancelación propia o
+    /// eliminación por administrador).
     /// </summary>
-    public void EnviarEmailPedidoEliminadoAdmin(string pedidoId, decimal total, long userId)
+    public void EnviarEmailPedidoCanceladoCliente(string pedidoId, decimal total, DestinatarioDto? destinatario)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
+
+                var content = EmailTemplates.PedidoCanceladoCliente(pedidoId, total, destinatario.NombreCompleto);
+                var body = EmailTemplates.CreateBase($"Pedido #{pedidoId} cancelado", content);
+
+                await emailService.EnqueueEmailAsync(new EmailMessage
+                {
+                    To = destinatario.Email,
+                    Subject = $"🚫 Tu pedido #{pedidoId} ha sido cancelado",
+                    Body = body,
+                    IsHtml = true
+                });
+                logger.LogDebug("Email de cancelación encolado para el cliente del pedido {PedidoId}", pedidoId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error al encolar email de cancelación para pedido {PedidoId}", pedidoId);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Encola el aviso AL ADMINISTRADOR cuando un usuario cancela su propio
+    /// pedido (matriz de emails: es lo único que el admin debe gestionar y
+    /// no proviene de él, junto con la creación).
+    /// </summary>
+    public void EnviarEmailPedidoCanceladoAdmin(string pedidoId, decimal total, long userId)
     {
         _ = Task.Run(async () =>
         {
@@ -396,21 +432,21 @@ public class PedidoEffects(
                 if (string.IsNullOrEmpty(adminEmail)) return;
 
                 var content = EmailTemplates.PedidoEliminadoAdmin(pedidoId, total, userId);
-                var body = EmailTemplates.CreateBase("Pedido Eliminado", content);
+                var body = EmailTemplates.CreateBase("Pedido Cancelado por Usuario", content);
 
                 var emailMessage = new EmailMessage
                 {
                     To = adminEmail,
-                    Subject = $"🗑️ Pedido #{pedidoId} Eliminado",
+                    Subject = $"🚫 Pedido #{pedidoId} Cancelado por Usuario",
                     Body = body,
                     IsHtml = true
                 };
                 await emailService.EnqueueEmailAsync(emailMessage);
-                logger.LogDebug("Email de notificación encolado tras eliminación de pedido por admin");
+                logger.LogDebug("Aviso de cancelación encolado para el administrador del pedido {PedidoId}", pedidoId);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error al encolar email de notificación tras eliminación por admin");
+                logger.LogWarning(ex, "Error al encolar aviso de cancelación para el administrador: {PedidoId}", pedidoId);
             }
         });
     }

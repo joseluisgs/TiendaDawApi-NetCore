@@ -798,6 +798,42 @@ public class EmailBackgroundService : BackgroundService
 
 ## 21.7. Envío de Emails desde Servicios de Negocio
 
+### 📧 Matriz de destinatarios de emails de pedidos
+
+> **Regla de oro:** el **usuario recibe TODO** lo que pasa a SU pedido; el
+> **admin recibe solo lo que debe gestionar y no proviene de él** (creación
+> y cancelación por usuario). Las acciones que el admin realiza él mismo no
+> le generan email: las ve en el panel y en tiempo real. El tiempo real
+> (WebSocket + SignalR) sigue llegando **tanto al dueño como a todos los
+> administradores** en todos los eventos, sin excepción.
+
+| Evento | ¿Quién lo inicia? | → Usuario | → Admin |
+| --- | --- | --- | --- |
+| **Creación** (el usuario compra) | usuario | ✅ Confirmación `PedidoConfirmacionCliente` | ✅ Aviso `PedidoCreado` ("nuevo pedido a gestionar") |
+| **Cambio de estado** (enviado, procesando…) | **admin** | ✅ `PedidoEstadoActualizado` ("Tu pedido pasó de A a B") | ❌ lo provoca él; panel + tiempo real |
+| **Cancelación por el usuario** | usuario | ✅ `PedidoCanceladoCliente` | ✅ Aviso `PedidoCanceladoAdmin` ("el usuario canceló #X") |
+| **Eliminación por el admin** | admin | ✅ `PedidoCanceladoCliente` | ❌ su propia acción |
+| **Edición de datos del pedido** (dirección…) | admin | ✅ `PedidoModificadoCliente` | ❌ su propia acción |
+| **Edición por el propio usuario** | usuario | ❌ él lo acaba de hacer; el realtime lo confirma | ❌ |
+| **Tiempo real (WS + SignalR)** | — | ✅ sus pedidos | ✅ todos los pedidos |
+
+Notas de implementación:
+
+- **Un email por destinatario y evento**: jamás llegan dos correos al mismo
+  buzón por un solo evento (antes, en la variante CQRS, cualquier cambio de
+  estado mandaba dos emails al admin).
+- **Los destinatarios** se resuelven con `Destinatario.Email` del pedido
+  (obligatorio y validado con `[EmailAddress]` en el checkout) y
+  `Smtp:AdminEmail` para el administrador.
+- **Voz coherente**: cada plantilla está redactada para su destinatario —
+  `PedidoEstadoActualizado` y `PedidoConfirmacionCliente` hablan en segunda
+  persona ("Tu pedido…"), las de aviso al admin hablan de gestión.
+- En la **variante CQRS** la matriz se materializa con un handler por
+  destinatario sobre la misma notification (p. ej.
+  `EstadoPedidoActualizadoNotification` → `EstadoPedidoActualizadoEmailHandler`
+  (cliente) y los handlers de tiempo real), y un único `mediator.Publish`
+  por evento. Ver `doc/15-pedidos-transacciones.md`.
+
 ### PedidoService con Notificaciones por Email
 
 ```csharp

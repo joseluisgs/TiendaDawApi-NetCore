@@ -222,4 +222,89 @@ public class PedidoEffectsTests
     }
 
     #endregion
+
+    #region Matriz de emails: el usuario recibe todo, el admin solo creación y cancelación de usuario
+
+    [Test]
+    public async Task EnviarEmailPedidoEstadoActualizado_EnviaAlCliente_YNoAlAdmin()
+    {
+        // 📧 El cambio de estado lo provoca el admin desde el panel: quien
+        // debe enterarse es el USUARIO. El admin no recibe este email.
+        var destinatario = new DestinatarioDto
+        {
+            NombreCompleto = "María García",
+            Email = "maria@test.com",
+            Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
+        };
+
+        _effects.EnviarEmailPedidoEstadoActualizado("PED-2024-0001", "Pendiente", "Enviado", 99.5m, destinatario);
+
+        await Eventually(() =>
+        {
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "maria@test.com" &&
+                m.Subject.Contains("Enviado"))), Times.Once);
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "admin@tienda.com")), Times.Never);
+        });
+    }
+
+    [Test]
+    public async Task EnviarEmailPedidoModificadoCliente_EnviaAlCliente()
+    {
+        var destinatario = new DestinatarioDto
+        {
+            NombreCompleto = "María García",
+            Email = "maria@test.com",
+            Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
+        };
+
+        _effects.EnviarEmailPedidoModificadoCliente("PED-2024-0001", destinatario);
+
+        await Eventually(() =>
+        {
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "maria@test.com" &&
+                m.Subject.Contains("modificado"))), Times.Once);
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "admin@tienda.com")), Times.Never);
+        });
+    }
+
+    [Test]
+    public async Task EnviarEmailPedidoCanceladoCliente_EnviaAlCliente()
+    {
+        var destinatario = new DestinatarioDto
+        {
+            NombreCompleto = "María García",
+            Email = "maria@test.com",
+            Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
+        };
+
+        _effects.EnviarEmailPedidoCanceladoCliente("PED-2024-0001", 99.5m, destinatario);
+
+        await Eventually(() =>
+        {
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "maria@test.com" &&
+                m.Subject.Contains("cancelado"))), Times.Once);
+        });
+    }
+
+    [Test]
+    public async Task EnviarEmailPedidoCanceladoAdmin_EnviaAlAdmin()
+    {
+        // 📧 Único aviso de gestión del admin junto con la creación: la
+        // cancelación de un pedido por parte del usuario.
+        _effects.EnviarEmailPedidoCanceladoAdmin("PED-2024-0001", 99.5m, UserId);
+
+        await Eventually(() =>
+        {
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "admin@tienda.com" &&
+                m.Subject.Contains("Cancelado por Usuario"))), Times.Once);
+        });
+    }
+
+    #endregion
 }
