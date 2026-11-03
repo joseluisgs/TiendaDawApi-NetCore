@@ -1190,26 +1190,20 @@ public class PedidoService
     {
         var pedido = await _repository.SaveAsync(request.ToEntity());
 
-        // 🚀 TRUCO: Notificar SOLO al usuario (grupo: user-{id})
-        // El usuario ya está en este grupo gracias a OnConnectedAsync en el Hub
-        await _hubContext.Clients
-            .Group($"user-{request.UsuarioId}")
-            .SendAsync("PedidoCreado", new
+        // 🚀 TRUCO: UNA sola función que llama a los DOS destinatarios:
+        // dueño (grupo: user-{id}) + todos los administradores (grupo: admins).
+        // El usuario ya está en su grupo gracias a OnConnectedAsync en el Hub.
+        await _hubContext.SendPedidoToUserAndAdminsAsync(
+            request.UsuarioId,
+            "PedidoCreado",
+            new
             {
                 pedidoId = pedido.Id,
+                userId = request.UsuarioId,
                 estado = pedido.Estado,
+                tipo = "PEDIDO_CREADO",
                 total = pedido.Total,
                 timestamp = DateTime.UtcNow
-            });
-
-        // 🚀 TRUCO: Notificar a TODOS los administradores
-        await _hubContext.Clients
-            .Group("admins")
-            .SendAsync("NuevoPedido", new
-            {
-                pedidoId = pedido.Id,
-                usuarioId = request.UsuarioId,
-                total = pedido.Total
             });
 
         return pedido.ToDto();
@@ -1219,28 +1213,29 @@ public class PedidoService
     {
         var pedido = await _repository.UpdateEstadoAsync(pedidoId, nuevoEstado);
 
-        // Notificar al usuario específico
-        await _hubContext.Clients
-            .Group($"user-{usuarioId}")
-            .SendAsync("PedidoEstadoActualizado", new
+        // Mismo evento y misma función selectiva: dueño + admins en un envío.
+        await _hubContext.SendPedidoToUserAndAdminsAsync(
+            usuarioId,
+            "PedidoActualizado",
+            new
             {
                 pedidoId,
+                userId = usuarioId,
                 estado = nuevoEstado,
-                timestamp = DateTime.UtcNow
-            });
-
-        // Notificar a admins
-        await _hubContext.Clients
-            .Group("admins")
-            .SendAsync("PedidoActualizado", new
-            {
-                pedidoId,
-                estado = nuevoEstado,
+                tipo = "PEDIDO_ACTUALIZADO",
                 timestamp = DateTime.UtcNow
             });
     }
 }
 ```
+
+> 🎓 **En el proyecto real** este envío vive en `PedidoEffects`
+> (`IPedidoEffects`): cada evento tiene UN método combinado
+> (`NotificarPedidoCreado`, `NotificarPedidoActualizado`,
+> `NotificarPedidoEliminado`) que dispara **WebSocket Y SignalR** a la vez, y
+> dentro de SignalR usa esta misma función `SendPedidoToUserAndAdminsAsync`.
+> De ese modo ningún punto de llamada puede olvidar un canal ni un
+> destinatario.
 
 ### Inyección de Dependencias
 
@@ -1271,11 +1266,14 @@ public class MiServicio
 
 ### Resumen: Patrón del Proyecto
 
-| Escenario           | Hub                | Cliente  | Envío desde Servicio                     |
-| ------------------- | ------------------ | -------- | ---------------------------------------- |
-| **Productos**       | `[AllowAnonymous]` | Sin auth | `_hubContext.Clients.All`                |
-| **Pedidos usuario** | `[Authorize]`      | JWT      | `_hubContext.Clients.Group("user-{id}")` |
-| **Pedidos admin**   | `[Authorize]`      | JWT      | `_hubContext.Clients.Group("admins")`    |
+| Escenario           | Hub                | Cliente  | Envío desde Servicio                              |
+| ------------------- | ------------------ | -------- | ------------------------------------------------- |
+| **Productos**       | `[AllowAnonymous]` | Sin auth | `_hubContext.Clients.All`                         |
+| **Pedidos usuario** | `[Authorize]`      | JWT      | `_hubContext.SendPedidoToUserAndAdminsAsync(...)` |
+| **Pedidos admin**   | `[Authorize]`      | JWT      | `_hubContext.SendPedidoToUserAndAdminsAsync(...)` |
+
+> Los dos escenarios de pedidos comparten la misma función: un único envío
+> selectivo a los grupos `user-{id}` + `admins` (nunca `Clients.All`).
 
 ---
 
@@ -1631,25 +1629,19 @@ public class PedidoService
     {
         var pedido = await _repository.AddAsync(request);
 
-        // 🚀 Notificar SOLO al usuario que hizo el pedido
-        await _hubContext.Clients
-            .Group($"user-{request.UsuarioId}")
-            .SendAsync("PedidoCreado", new
+        // 🚀 UNA sola función para los DOS destinatarios:
+        // el dueño (grupo user-{id}) y todos los admins (grupo admins)
+        await _hubContext.SendPedidoToUserAndAdminsAsync(
+            request.UsuarioId,
+            "PedidoCreado",
+            new
             {
                 pedidoId = pedido.Id,
+                userId = request.UsuarioId,
                 estado = "Pendiente",
+                tipo = "PEDIDO_CREADO",
                 total = pedido.Total,
                 timestamp = DateTime.UtcNow
-            });
-
-        // 🚀 Notificar a TODOS los administradores
-        await _hubContext.Clients
-            .Group("admins")
-            .SendAsync("NuevoPedido", new
-            {
-                pedidoId = pedido.Id,
-                usuarioId = request.UsuarioId,
-                total = pedido.Total
             });
 
         return pedido;
@@ -1659,13 +1651,16 @@ public class PedidoService
     {
         await _repository.UpdateEstadoAsync(pedidoId, nuevoEstado);
 
-        // Notificar al usuario específico
-        await _hubContext.Clients
-            .Group($"user-{usuarioId}")
-            .SendAsync("PedidoEstadoActualizado", new
+        // Dueño + admins: el admin también necesita enterarse del cambio
+        await _hubContext.SendPedidoToUserAndAdminsAsync(
+            usuarioId,
+            "PedidoActualizado",
+            new
             {
                 pedidoId,
+                userId = usuarioId,
                 estado = nuevoEstado,
+                tipo = "PEDIDO_ACTUALIZADO",
                 timestamp = DateTime.UtcNow
             });
     }

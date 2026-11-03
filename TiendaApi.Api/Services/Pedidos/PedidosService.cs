@@ -145,8 +145,7 @@ IPedidoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por administrador", id);
-                effects.NotificarWebSocketPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
-                effects.NotificarSignalRPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
+                effects.NotificarPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
                 effects.EnviarEmailPedidoActualizadoAdmin(pedido.Id.ToString(), pedido.Estado ?? "", pedido.Total, pedido.UserId);
             });
     }
@@ -176,7 +175,7 @@ IPedidoEffects effects
 
         await InvalidarCachePedidoAsync($"pedidos:{id}");
 
-        effects.NotificarSignalRPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "");
+        effects.NotificarPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "", pedido.Total);
         effects.EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
 
         return UnitResult.Success<DomainError>();
@@ -219,8 +218,7 @@ IPedidoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
-                effects.NotificarWebSocketPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
-                effects.NotificarSignalRPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
+                effects.NotificarPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
                 effects.EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId);
             });
     }
@@ -412,7 +410,7 @@ IPedidoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
-                effects.NotificarWebSocketPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
+                effects.NotificarPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
             });
     }
 
@@ -457,6 +455,7 @@ IPedidoEffects effects
 
         await InvalidarCachePedidoAsync($"pedidos:{id}");
 
+        effects.NotificarPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "", pedido.Total);
         effects.EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
 
         return UnitResult.Success<DomainError>();
@@ -551,8 +550,7 @@ IPedidoEffects effects
             return Result.Success<PedidoDto, DomainError>(dtoResult)
                 .Tap(_ =>
                 {
-                    effects.NotificarWebSocketPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE);
-                    effects.NotificarSignalRPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
+                    effects.NotificarPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
                     effects.EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId);
                     
                 });

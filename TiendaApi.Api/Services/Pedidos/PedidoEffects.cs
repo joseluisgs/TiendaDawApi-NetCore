@@ -14,6 +14,13 @@ namespace TiendaApi.Api.Services.Pedidos;
 /// inyecta por IPedidoEffects). El reparto equivalente en el proyecto CQRS
 /// son sus notifications + handlers.
 /// </summary>
+/// <remarks>
+/// 🎓 Cada evento de tiempo real tiene un método PÚBLICO combinado que llama
+/// a los dos canales (WebSocket + SignalR), del mismo modo que
+/// <c>PedidosWebSocketHandler.NotifyUserAndAdminsAsync</c> llama a
+/// NotifyUserAsync + NotifyAdminsAsync. Los métodos por canal son privados:
+/// así ningún consumidor puede invocar un solo canal y olvidar el otro.
+/// </remarks>
 public class PedidoEffects(
     PedidosWebSocketHandler webSocketHandler,
     IHubContext<PedidosHub> pedidosHubContext,
@@ -22,6 +29,52 @@ public class PedidoEffects(
     ILogger<PedidoEffects> logger
 ) : IPedidoEffects
 {
+    #region ========== MÉTODOS PÚBLICOS - TIEMPO REAL (WS + SIGNALR) ==========
+
+    /// <summary>
+    /// Notifica la creación de un pedido por WebSocket Y SignalR.
+    /// La reciben el usuario que creó el pedido y todos los administradores.
+    /// </summary>
+    /// <param name="pedidoId">Identificador del pedido creado.</param>
+    /// <param name="userId">ID del usuario que creó el pedido.</param>
+    /// <param name="estado">Estado inicial del pedido.</param>
+    /// <param name="pedido">Datos del pedido creado.</param>
+    public void NotificarPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
+    {
+        NotificarWebSocketPedidoCreado(pedidoId, userId, estado, pedido);
+        NotificarSignalRPedidoCreado(pedidoId, userId, estado, pedido);
+    }
+
+    /// <summary>
+    /// Notifica la actualización de un pedido por WebSocket Y SignalR.
+    /// La reciben el usuario dueño del pedido y todos los administradores.
+    /// </summary>
+    /// <param name="pedidoId">Identificador del pedido.</param>
+    /// <param name="userId">ID del usuario que realizó el pedido.</param>
+    /// <param name="estado">Nuevo estado del pedido.</param>
+    /// <param name="pedido">Datos actualizados del pedido.</param>
+    public void NotificarPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
+    {
+        NotificarWebSocketPedidoActualizado(pedidoId, userId, estado, pedido);
+        NotificarSignalRPedidoActualizado(pedidoId, userId, estado, pedido);
+    }
+
+    /// <summary>
+    /// Notifica la eliminación/cancelación de un pedido por WebSocket Y SignalR.
+    /// La reciben el usuario dueño del pedido y todos los administradores.
+    /// </summary>
+    /// <param name="pedidoId">Identificador del pedido.</param>
+    /// <param name="userId">ID del usuario que realizó el pedido.</param>
+    /// <param name="estado">Estado del pedido al eliminarse.</param>
+    /// <param name="total">Total del pedido eliminado.</param>
+    public void NotificarPedidoEliminado(string pedidoId, long userId, string estado, decimal total)
+    {
+        NotificarWebSocketPedidoEliminado(pedidoId, userId, estado);
+        NotificarSignalRPedidoEliminado(pedidoId, userId, estado, total);
+    }
+
+    #endregion
+
     #region ========== MÉTODOS PRIVADOS - WEBSOCKET ==========
 
     /// <summary>
@@ -31,7 +84,8 @@ public class PedidoEffects(
     /// <param name="pedidoId">Identificador del pedido creado.</param>
     /// <param name="userId">ID del usuario que creó el pedido.</param>
     /// <param name="estado">Estado inicial del pedido.</param>
-    public void NotificarWebSocketPedidoCreado(string pedidoId, long userId, string estado)
+    /// <param name="pedido">Datos del pedido creado.</param>
+    private void NotificarWebSocketPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
     {
         _ = Task.Run(async () =>
         {
@@ -42,7 +96,7 @@ public class PedidoEffects(
                     pedidoId,
                     userId,
                     estado,
-                    null
+                    pedido
                 ));
                 logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", pedidoId);
             }
@@ -61,7 +115,7 @@ public class PedidoEffects(
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
     /// <param name="estado">Nuevo estado del pedido.</param>
     /// <param name="pedido">Datos actualizados del pedido.</param>
-    public void NotificarWebSocketPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
+    private void NotificarWebSocketPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
     {
         _ = Task.Run(async () =>
         {
@@ -83,14 +137,44 @@ public class PedidoEffects(
         });
     }
 
+    /// <summary>
+    /// Notifica vía WebSocket la eliminación/cancelación de un pedido.
+    /// Envía notificación al usuario afectado y a todos los administradores.
+    /// </summary>
+    /// <param name="pedidoId">Identificador del pedido.</param>
+    /// <param name="userId">ID del usuario que realizó el pedido.</param>
+    /// <param name="estado">Estado del pedido al eliminarse.</param>
+    private void NotificarWebSocketPedidoEliminado(string pedidoId, long userId, string estado)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
+                    PedidoNotificationType.ELIMINADO,
+                    pedidoId,
+                    userId,
+                    estado,
+                    null
+                ));
+                logger.LogDebug("Notificación WebSocket enviada para pedido eliminado: {PedidoId}", pedidoId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error en notificación WebSocket para pedido eliminado: {PedidoId}", pedidoId);
+            }
+        });
+    }
+
     #endregion
 
     #region ========== MÉTODOS PRIVADOS - SIGNALR ==========
 
     /// <summary>
     /// Notifica via SignalR la creacion de un pedido.
+    /// Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
-    public void NotificarSignalRPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
+    private void NotificarSignalRPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
     {
         _ = Task.Run(async () =>
         {
@@ -106,7 +190,7 @@ public class PedidoEffects(
                     itemsCount = pedido.Items?.Count ?? 0,
                     timestamp = DateTime.UtcNow
                 };
-                await pedidosHubContext.Clients.All.SendAsync("PedidoCreado", payload);
+                await pedidosHubContext.SendPedidoToUserAndAdminsAsync(userId, "PedidoCreado", payload);
                 logger.LogDebug("Notificación SignalR enviada para pedido creado: {PedidoId}", pedidoId);
             }
             catch (Exception ex)
@@ -118,8 +202,9 @@ public class PedidoEffects(
 
     /// <summary>
     /// Notifica via SignalR la actualizacion de un pedido.
+    /// Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
-    public void NotificarSignalRPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
+    private void NotificarSignalRPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
     {
         _ = Task.Run(async () =>
         {
@@ -134,7 +219,7 @@ public class PedidoEffects(
                     total = pedido.Total,
                     timestamp = DateTime.UtcNow
                 };
-                await pedidosHubContext.Clients.All.SendAsync("PedidoActualizado", payload);
+                await pedidosHubContext.SendPedidoToUserAndAdminsAsync(userId, "PedidoActualizado", payload);
                 logger.LogDebug("Notificación SignalR enviada para pedido actualizado: {PedidoId}", pedidoId);
             }
             catch (Exception ex)
@@ -146,8 +231,9 @@ public class PedidoEffects(
 
     /// <summary>
     /// Notifica via SignalR la eliminacion de un pedido.
+    /// Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
-    public void NotificarSignalRPedidoEliminado(string pedidoId, long userId, string estado)
+    private void NotificarSignalRPedidoEliminado(string pedidoId, long userId, string estado, decimal total)
     {
         _ = Task.Run(async () =>
         {
@@ -159,14 +245,15 @@ public class PedidoEffects(
                     userId,
                     estado,
                     tipo = "PEDIDO_ELIMINADO",
+                    total,
                     timestamp = DateTime.UtcNow
                 };
-                await pedidosHubContext.Clients.All.SendAsync("PedidoEliminado", payload);
+                await pedidosHubContext.SendPedidoToUserAndAdminsAsync(userId, "PedidoEliminado", payload);
                 logger.LogDebug("Notificación SignalR enviada para pedido eliminado: {PedidoId}", pedidoId);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
+                logger.LogWarning(ex, "Error en notificación SignalR para pedido eliminado: {PedidoId}", pedidoId);
             }
         });
     }

@@ -25,7 +25,7 @@ public class PedidosHub(ILogger<PedidosHub> logger) : Hub
     public override async Task OnConnectedAsync()
     {
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var isAdmin = Context.User?.IsInRole("Admin") == true;
+        var isAdmin = EsAdmin(Context.User);
 
         logger.LogInformation("Cliente conectado: {ConnectionId}, UserId: {UserId}, IsAdmin: {IsAdmin}",
             Context.ConnectionId, userId, isAdmin);
@@ -38,6 +38,18 @@ public class PedidosHub(ILogger<PedidosHub> logger) : Hub
 
         await base.OnConnectedAsync();
     }
+
+    /// <summary>
+    /// 🎓 Detecta el rol admin de forma case-insensitive, igual que hace el
+    /// canal WebSocket (<c>JwtTokenExtractor.IsAdmin</c>). El rol real que
+    /// emite el JWT es <c>UserRoles.ADMIN = "ADMIN"</c> y <c>IsInRole</c>
+    /// compara ordinal: con <c>IsInRole("Admin")</c> los administradores NO
+    /// entraban al grupo <c>admins</c> y no recibían nada por SignalR.
+    /// </summary>
+    private static bool EsAdmin(ClaimsPrincipal? user) =>
+        user?.Claims.Any(c =>
+            (c.Type == ClaimTypes.Role || c.Type == "role") &&
+            string.Equals(c.Value, "admin", StringComparison.OrdinalIgnoreCase)) == true;
 
     /// <summary>Cliente desconectado.</summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -57,6 +69,6 @@ public class PedidosHub(ILogger<PedidosHub> logger) : Hub
         connectionId = Context.ConnectionId,
         userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value,
         userName = Context.User?.Identity?.Name,
-        isAdmin = Context.User?.IsInRole("Admin") == true
+        isAdmin = EsAdmin(Context.User)
     };
 }

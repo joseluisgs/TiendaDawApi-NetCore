@@ -16,6 +16,14 @@ namespace TiendaApi.Api.Services.Productos;
 /// un canal de notificación: SRP + DIP (se inyecta por IProductoEffects). El
 /// reparto equivalente en el proyecto CQRS son sus notifications + handlers.
 /// </summary>
+/// <remarks>
+/// 🎓 Cada evento de tiempo real tiene un método PÚBLICO combinado que llama
+/// a los dos canales (WebSocket + SignalR), del mismo modo que
+/// <c>PedidosWebSocketHandler.NotifyUserAndAdminsAsync</c> llama a
+/// NotifyUserAsync + NotifyAdminsAsync. Los métodos por canal son privados:
+/// así ningún consumidor puede invocar un solo canal y olvidar el otro.
+/// Los productos se difunden a todos los clientes en ambos canales.
+/// </remarks>
 public class ProductoEffects(
     ProductosWebSocketHandler webSocketHandler,
     IHubContext<ProductosHub> productosHubContext,
@@ -25,12 +33,46 @@ public class ProductoEffects(
     ILogger<ProductoEffects> logger
 ) : IProductoEffects
 {
+    #region Métodos Públicos - Tiempo Real (WS + SignalR)
+
+    /// <summary>
+    /// Notifica la creación de un producto por WebSocket Y SignalR
+    /// (broadcast: catálogo público).
+    /// </summary>
+    public void NotificarProductoCreado(ProductoDto producto)
+    {
+        NotificarWebSocketProductoCreado(producto);
+        NotificarSignalRProductoCreado(producto);
+    }
+
+    /// <summary>
+    /// Notifica la actualización de un producto por WebSocket Y SignalR
+    /// (broadcast: catálogo público).
+    /// </summary>
+    public void NotificarProductoActualizado(ProductoDto producto)
+    {
+        NotificarWebSocketProductoActualizado(producto);
+        NotificarSignalRProductoActualizado(producto);
+    }
+
+    /// <summary>
+    /// Notifica la eliminación de un producto por WebSocket Y SignalR
+    /// (broadcast: catálogo público).
+    /// </summary>
+    public void NotificarProductoEliminado(long productoId)
+    {
+        NotificarWebSocketProductoEliminado(productoId);
+        NotificarSignalRProductoEliminado(productoId);
+    }
+
+    #endregion
+
     #region Métodos Privados - WebSocket Nativo
 
     /// <summary>
     /// Notifica vía WebSocket la creación de un producto.
     /// </summary>
-    public void NotificarWebSocketProductoCreado(ProductoDto producto)
+    private void NotificarWebSocketProductoCreado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
         {
@@ -53,7 +95,7 @@ public class ProductoEffects(
     /// <summary>
     /// Notifica vía WebSocket la actualización de un producto.
     /// </summary>
-    public void NotificarWebSocketProductoActualizado(ProductoDto producto)
+    private void NotificarWebSocketProductoActualizado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
         {
@@ -76,7 +118,7 @@ public class ProductoEffects(
     /// <summary>
     /// Notifica vía WebSocket la eliminación de un producto.
     /// </summary>
-    public void NotificarWebSocketProductoEliminado(long productoId)
+    private void NotificarWebSocketProductoEliminado(long productoId)
     {
         _ = Task.Run(async () =>
         {
@@ -103,7 +145,7 @@ public class ProductoEffects(
     /// <summary>
     /// Notifica vía SignalR la creación de un producto.
     /// </summary>
-    public void NotificarSignalRProductoCreado(ProductoDto producto)
+    private void NotificarSignalRProductoCreado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
         {
@@ -116,6 +158,7 @@ public class ProductoEffects(
                     descripcion = producto.Descripcion,
                     precio = producto.Precio,
                     stock = producto.Stock,
+                    imagen = producto.Imagen,
                     categoria = producto.Categoria,
                     proveedor = producto.Proveedor,
                     tipo = "PRODUCTO_CREADO",
@@ -134,7 +177,7 @@ public class ProductoEffects(
     /// <summary>
     /// Notifica vía SignalR la actualización de un producto.
     /// </summary>
-    public void NotificarSignalRProductoActualizado(ProductoDto producto)
+    private void NotificarSignalRProductoActualizado(ProductoDto producto)
     {
         _ = Task.Run(async () =>
         {
@@ -147,6 +190,7 @@ public class ProductoEffects(
                     descripcion = producto.Descripcion,
                     precio = producto.Precio,
                     stock = producto.Stock,
+                    imagen = producto.Imagen,
                     categoria = producto.Categoria,
                     proveedor = producto.Proveedor,
                     tipo = "PRODUCTO_ACTUALIZADO",
@@ -165,7 +209,7 @@ public class ProductoEffects(
     /// <summary>
     /// Notifica vía SignalR la eliminación de un producto.
     /// </summary>
-    public void NotificarSignalRProductoEliminado(long productoId)
+    private void NotificarSignalRProductoEliminado(long productoId)
     {
         _ = Task.Run(async () =>
         {
