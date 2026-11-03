@@ -48,7 +48,7 @@ public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger
         /// <summary>M�ximo de conexiones simult�neas aceptadas.</summary>
     private const int MaxConnections = 1000;
 
-private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
+    private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
     private readonly ILogger<ProductosWebSocketHandler> _logger = logger;
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -70,7 +70,7 @@ private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
             return;
         }
 
-var connectionId = Guid.NewGuid().ToString();
+        var connectionId = Guid.NewGuid().ToString();
         _connections.TryAdd(connectionId, webSocket);
         _logger.LogInformation("Conexión WebSocket: {ConnectionId}", connectionId);
 
@@ -97,7 +97,7 @@ var connectionId = Guid.NewGuid().ToString();
 
     /// <summary>Notifica a todos los clientes.</summary>
     /// <param name="notificacion">Datos de la notificación.</param>
-    public async Task NotifyAsync(ProductoNotificacion notificacion)
+    public virtual async Task NotifyAsync(ProductoNotificacion notificacion)
     {
         var wrapper = new
         {

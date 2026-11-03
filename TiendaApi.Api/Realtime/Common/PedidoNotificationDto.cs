@@ -37,4 +37,7 @@ public static class PedidoNotificationType
 
     /// <summary>Cambio de estado.</summary>
     public const string ESTADO_ACTUALIZADO = "PEDIDO_ESTADO_ACTUALIZADO";
+
+    /// <summary>Pedido eliminado o cancelado.</summary>
+    public const string ELIMINADO = "PEDIDO_ELIMINADO";
 }

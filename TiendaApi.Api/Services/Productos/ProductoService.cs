@@ -203,8 +203,7 @@ IProductoEffects effects
             {
                 logger.LogInformation("Producto creado con ID: {Id}", dto.Id);
                 
-                effects.NotificarWebSocketProductoCreado(dto);
-                effects.NotificarSignalRProductoCreado(dto);
+                effects.NotificarProductoCreado(dto);
                 effects.EnviarEmailProductoCreado(saved);
                 effects.EventoSuscripcionProductoCreado(dto);
             });
@@ -263,8 +262,7 @@ IProductoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Producto actualizado con ID: {Id}", id);
-                effects.NotificarWebSocketProductoActualizado(resultDto);
-                effects.NotificarSignalRProductoActualizado(resultDto);
+                effects.NotificarProductoActualizado(resultDto);
                 effects.EventoSuscripcionProductoActualizado(resultDto);
                 effects.EventoSuscripcionStockBajo(resultDto, 10);
             });
@@ -301,8 +299,7 @@ IProductoEffects effects
         logger.LogInformation("Producto eliminado con ID: {Id}", id);
 
         await InvalidarCacheProductoAsync($"productos:{id}");
-        effects.NotificarWebSocketProductoEliminado(id);
-        effects.NotificarSignalRProductoEliminado(id);
+        effects.NotificarProductoEliminado(id);
         effects.EventoSuscripcionProductoEliminado(id);
 
         return UnitResult.Success<DomainError>();
@@ -349,7 +346,7 @@ IProductoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Imagen actualizada para producto con ID: {Id}", id);
-                effects.NotificarWebSocketProductoActualizado(resultDto);
+                effects.NotificarProductoActualizado(resultDto);
                 effects.EventoSuscripcionProductoActualizado(resultDto);
             });
     }
@@ -401,7 +398,7 @@ IProductoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
-                effects.NotificarWebSocketProductoActualizado(resultDto);
+                effects.NotificarProductoActualizado(resultDto);
                 effects.EventoSuscripcionProductoActualizado(resultDto);
                 if (dto.Stock.HasValue)
                     effects.EventoSuscripcionStockBajo(resultDto, 10);

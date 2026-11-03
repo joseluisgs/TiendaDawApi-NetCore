@@ -130,6 +130,10 @@ IPedidoEffects effects
             );
         }
 
+        var estadoAnterior = pedido.Estado;
+        var estadoCambiado = dto.Estado != null && !string.IsNullOrWhiteSpace(dto.Estado)
+            && !string.Equals(estadoAnterior, dto.Estado, StringComparison.OrdinalIgnoreCase);
+
         if (dto.Estado != null && !string.IsNullOrWhiteSpace(dto.Estado))
             pedido.Estado = dto.Estado;
 
@@ -145,9 +149,17 @@ IPedidoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por administrador", id);
-                effects.NotificarWebSocketPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
-                effects.NotificarSignalRPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
-                effects.EnviarEmailPedidoActualizadoAdmin(pedido.Id.ToString(), pedido.Estado ?? "", pedido.Total, pedido.UserId);
+                effects.NotificarPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
+
+                // Matriz de emails (doc/21): el usuario recibe todo lo que
+                // pasa a su pedido; el admin no se notifica sus propias
+                // acciones. Si cambió el estado → email de estado; si solo
+                // datos → email de modificación.
+                if (estadoCambiado)
+                    effects.EnviarEmailPedidoEstadoActualizado(
+                        id, estadoAnterior ?? "", pedido.Estado ?? "", pedido.Total, resultDto.Destinatario);
+                else
+                    effects.EnviarEmailPedidoModificadoCliente(id, resultDto.Destinatario);
             });
     }
 
@@ -176,8 +188,10 @@ IPedidoEffects effects
 
         await InvalidarCachePedidoAsync($"pedidos:{id}");
 
-        effects.NotificarSignalRPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "");
-        effects.EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
+        // Matriz de emails: eliminación por admin → aviso al USUARIO; el
+        // admin no se notifica su propia acción (la ve en el panel/realtime).
+        effects.NotificarPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "", pedido.Total);
+        effects.EnviarEmailPedidoCanceladoCliente(id, pedido.Total, pedido.Destinatario.ToDto());
 
         return UnitResult.Success<DomainError>();
     }
@@ -219,9 +233,9 @@ IPedidoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
-                effects.NotificarWebSocketPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
-                effects.NotificarSignalRPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
-                effects.EnviarEmailPedidoEstadoActualizado(pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, pedido.UserId);
+                effects.NotificarPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
+                effects.EnviarEmailPedidoEstadoActualizado(
+                    pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, resultDto.Destinatario);
             });
     }
 
@@ -412,7 +426,7 @@ IPedidoEffects effects
             .Tap(_ =>
             {
                 logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
-                effects.NotificarWebSocketPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
+                effects.NotificarPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
             });
     }
 
@@ -457,7 +471,12 @@ IPedidoEffects effects
 
         await InvalidarCachePedidoAsync($"pedidos:{id}");
 
-        effects.EnviarEmailPedidoEliminadoAdmin(pedido.Id.ToString(), pedido.Total, pedido.UserId);
+        // Matriz de emails: cancelación por usuario → aviso al CLIENTE (es su
+        // pedido) y al ADMIN (debe enterarse: es lo que debe gestionar y no
+        // proviene de él).
+        effects.NotificarPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "", pedido.Total);
+        effects.EnviarEmailPedidoCanceladoCliente(id, pedido.Total, pedido.Destinatario.ToDto());
+        effects.EnviarEmailPedidoCanceladoAdmin(id, pedido.Total, pedido.UserId);
 
         return UnitResult.Success<DomainError>();
     }
@@ -551,9 +570,8 @@ IPedidoEffects effects
             return Result.Success<PedidoDto, DomainError>(dtoResult)
                 .Tap(_ =>
                 {
-                    effects.NotificarWebSocketPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE);
-                    effects.NotificarSignalRPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
-                    effects.EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId);
+                    effects.NotificarPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
+                    effects.EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId, dtoResult.Destinatario);
                     
                 });
         }

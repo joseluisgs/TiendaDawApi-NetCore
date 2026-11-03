@@ -1289,8 +1289,8 @@ Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` 
 
 | Endpoint                         | Auth | Descripción                             | Eventos                                              |
 | -------------------------------- | ---- | --------------------------------------- | ---------------------------------------------------- |
-| `ws://host/ws/productos`         | No   | Notificaciones de productos (broadcast) | PRODUCTO_CREATED, PRODUCTO_UPDATED, PRODUCTO_DELETED |
-| `ws://host/ws/pedidos?token=JWT` | JWT  | Notificaciones de pedidos (por rol)     | PEDIDO_CREATED, PEDIDO_ESTADO_UPDATED                |
+| `ws://host/ws/productos`         | No   | Notificaciones de productos (broadcast) | PRODUCTO_CREADO, PRODUCTO_ACTUALIZADO, PRODUCTO_ELIMINADO |
+| `ws://host/ws/pedidos?token=JWT` | JWT  | Notificaciones de pedidos (por rol)     | PEDIDO_CREADO, PEDIDO_ESTADO_ACTUALIZADO, PEDIDO_ELIMINADO |
 
 **WebSocket Productos:** Broadcast a todos los clientes conectados (sin autenticación).
 

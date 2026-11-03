@@ -87,6 +87,44 @@ public class PedidosHubTests
     }
 
     [Test]
+    public async Task OnConnectedAsync_RolRealADMIN_SeAñadeAGrupoAdmins()
+    {
+        // 🎓 Regresión: el rol que emite el JWT es UserRoles.ADMIN = "ADMIN"
+        // (no "Admin"). Con IsInRole("Admin") —comparación ordinal— los
+        // administradores no entraban al grupo y no recibían nada por SignalR.
+        var adminRealIdentity = new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.Name, "admin"),
+            new Claim(ClaimTypes.Role, "ADMIN")
+        }, "TestAuthType");
+
+        var contextAdminReal = Mock.Of<HubCallerContext>(c =>
+            c.ConnectionId == "admin-real-connection-id" &&
+            c.User == new ClaimsPrincipal(adminRealIdentity));
+
+        var hub = new PedidosHub(_loggerMock.Object);
+        SetupHubContext(hub, contextAdminReal);
+        _groupManagerMock
+            .Setup(g => g.AddToGroupAsync("admin-real-connection-id", "user-1", It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _groupManagerMock
+            .Setup(g => g.AddToGroupAsync("admin-real-connection-id", "admins", It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await hub.OnConnectedAsync();
+
+        // Assert
+        _groupManagerMock.Verify(
+            g => g.AddToGroupAsync("admin-real-connection-id", "admins", It.IsAny<CancellationToken>()),
+            Times.Once);
+        _groupManagerMock.Verify(
+            g => g.AddToGroupAsync("admin-real-connection-id", "user-1", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
     public async Task OnConnectedAsync_RegularUser_SeAñadeSoloAGrupoUser()
     {
         // Arrange
