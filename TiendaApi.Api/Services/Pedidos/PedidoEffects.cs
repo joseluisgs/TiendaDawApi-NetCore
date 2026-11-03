@@ -263,14 +263,39 @@ public class PedidoEffects(
     #region ========== MÉTODOS PRIVADOS - EMAIL ==========
 
     /// <summary>
-    /// Encola el email de bienvenida al cliente tras crear un pedido.
+    /// Encola el email de confirmación al cliente y el aviso de nuevo pedido
+    /// al administrador tras crear un pedido.
     /// </summary>
-    public void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId)
+    /// <remarks>
+    /// 🎓 Antes solo se enviaba el aviso a <c>Smtp:AdminEmail</c> y el cliente
+    /// no recibía nada (aunque la plantilla estaba redactada para él). Ahora
+    /// salen DOS emails: confirmación al destinatario del pedido y aviso al
+    /// admin. El email al cliente no depende de la config del admin.
+    /// </remarks>
+    public void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId, DestinatarioDto? destinatario)
     {
         _ = Task.Run(async () =>
         {
             try
             {
+                // 1) Confirmación AL CLIENTE (dirección del pedido)
+                if (!string.IsNullOrWhiteSpace(destinatario?.Email))
+                {
+                    var contentCliente = EmailTemplates.PedidoConfirmacionCliente(
+                        pedidoId, total, itemCount, destinatario.NombreCompleto);
+                    var bodyCliente = EmailTemplates.CreateBase($"Pedido #{pedidoId} confirmado", contentCliente);
+
+                    await emailService.EnqueueEmailAsync(new EmailMessage
+                    {
+                        To = destinatario.Email,
+                        Subject = $"✅ Pedido #{pedidoId} confirmado",
+                        Body = bodyCliente,
+                        IsHtml = true
+                    });
+                    logger.LogDebug("Email de confirmación encolado para el cliente del pedido {PedidoId}", pedidoId);
+                }
+
+                // 2) Aviso AL ADMINISTRADOR
                 var adminEmail = configuration["Smtp:AdminEmail"];
                 if (string.IsNullOrEmpty(adminEmail)) return;
 

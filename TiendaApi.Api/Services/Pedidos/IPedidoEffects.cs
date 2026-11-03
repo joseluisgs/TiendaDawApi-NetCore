@@ -37,8 +37,11 @@ public interface IPedidoEffects
     /// </summary>
     void NotificarPedidoEliminado(string pedidoId, long userId, string estado, decimal total);
 
-    /// <summary>Encola el email de bienvenida al cliente tras crear un pedido.</summary>
-    void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId);
+    /// <summary>
+    /// Encola el email de confirmación AL CLIENTE que hizo el pedido y el
+    /// aviso de nuevo pedido AL ADMINISTRADOR.
+    /// </summary>
+    void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId, DestinatarioDto? destinatario);
 
     /// <summary>Encola el email de cambio de estado (cliente).</summary>
     void EnviarEmailPedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, long userId);

@@ -107,6 +107,36 @@ public static class EmailTemplates
     }
 
     /// <summary>
+    /// Genera el contenido para el email de CONFIRMACIÓN dirigido al cliente
+    /// que realizó el pedido (distinto del email de aviso al administrador).
+    /// </summary>
+    public static string PedidoConfirmacionCliente(string pedidoId, decimal total, int itemCount, string nombreDestinatario)
+    {
+        return $@"
+            <p style='color: #1a1a2e;'>Hola <strong>{nombreDestinatario}</strong>,</p>
+            <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                <h3 style='margin-top: 0; color: #1a1a2e;'>✅ Pedido #{pedidoId} confirmado</h3>
+                <table style='width: 100%; border-collapse: collapse; margin-bottom: 15px;'>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>Número de pedido:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600; color: #1a1a2e;'>#{pedidoId}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>Total:</td>
+                        <td style='padding: 8px 0; text-align: right; font-weight: 600; color: #28a745; font-size: 18px;'>{total:N2}€</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px 0; color: #6c757d;'>Artículos:</td>
+                        <td style='padding: 8px 0; text-align: right;'>{itemCount} productos</td>
+                    </tr>
+                </table>
+            </div>
+            <p style='padding: 15px; background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 4px; color: #155724;'>
+                📦 Gracias por tu compra. Te avisaremos por email cada vez que tu pedido cambie de estado.
+            </p>";
+    }
+
+    /// <summary>
     /// Genera el contenido para email de cambio de estado de pedido (incluye datos del cliente).
     /// </summary>
     public static string PedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, long userId)

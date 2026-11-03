@@ -551,7 +551,7 @@ IPedidoEffects effects
                 .Tap(_ =>
                 {
                     effects.NotificarPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
-                    effects.EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId);
+                    effects.EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId, dtoResult.Destinatario);
                     
                 });
         }

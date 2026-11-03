@@ -28,6 +28,7 @@ public class PedidoEffectsTests
     private Mock<IHubClients> _clients = null!;
     private Mock<IClientProxy> _userProxy = null!;
     private Mock<IClientProxy> _adminsProxy = null!;
+    private Mock<IEmailService> _email = null!;
     private PedidoEffects _effects = null!;
 
     [SetUp]
@@ -37,6 +38,7 @@ public class PedidoEffectsTests
         var wsSection = new Mock<IConfigurationSection>();
         wsSection.Setup(s => s.Value).Returns("5");
         configuration.Setup(c => c.GetSection("WebSocket:RoleCacheTTLMinutes")).Returns(wsSection.Object);
+        configuration.Setup(c => c["Smtp:AdminEmail"]).Returns("admin@tienda.com");
 
         _webSocket = new Mock<PedidosWebSocketHandler>(
             Mock.Of<ILogger<PedidosWebSocketHandler>>(),
@@ -53,10 +55,12 @@ public class PedidoEffectsTests
         _hubContext = new Mock<IHubContext<PedidosHub>>();
         _hubContext.Setup(h => h.Clients).Returns(_clients.Object);
 
+        _email = new Mock<IEmailService>();
+
         _effects = new PedidoEffects(
             _webSocket.Object,
             _hubContext.Object,
-            Mock.Of<IEmailService>(),
+            _email.Object,
             configuration.Object,
             Mock.Of<ILogger<PedidoEffects>>());
     }
@@ -158,4 +162,64 @@ public class PedidoEffectsTests
             _clients.Verify(c => c.All, Times.Never);
         });
     }
+
+    #region Emails de creación: cliente + admin
+
+    [Test]
+    public async Task EnviarEmailPedidoCreado_EnviaConfirmacionAlClienteYAlAdmin()
+    {
+        // 🎓 Antes solo se avisaba al admin y el cliente no recibía nada.
+        var destinatario = new DestinatarioDto
+        {
+            NombreCompleto = "María García",
+            Email = "maria@test.com",
+            Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
+        };
+
+        _effects.EnviarEmailPedidoCreado("PED-2024-0001", 99.5m, 2, UserId, destinatario);
+
+        await Eventually(() =>
+        {
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "maria@test.com" &&
+                m.Subject.Contains("PED-2024-0001") &&
+                m.Subject.Contains("confirmado"))), Times.Once);
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "admin@tienda.com" &&
+                m.Subject.Contains("PED-2024-0001"))), Times.Once);
+        });
+    }
+
+    [Test]
+    public async Task EnviarEmailPedidoCreado_SinConfigDeAdmin_AunEnviaLaConfirmacionAlCliente()
+    {
+        // El email al cliente no depende de Smtp:AdminEmail.
+        var configurationSinAdmin = new Mock<IConfiguration>();
+        configurationSinAdmin.Setup(c => c["Smtp:AdminEmail"]).Returns((string?)null);
+        var effects = new PedidoEffects(
+            _webSocket.Object,
+            _hubContext.Object,
+            _email.Object,
+            configurationSinAdmin.Object,
+            Mock.Of<ILogger<PedidoEffects>>());
+
+        var destinatario = new DestinatarioDto
+        {
+            NombreCompleto = "María García",
+            Email = "maria@test.com",
+            Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
+        };
+
+        effects.EnviarEmailPedidoCreado("PED-2024-0001", 99.5m, 2, UserId, destinatario);
+
+        await Eventually(() =>
+        {
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "maria@test.com")), Times.Once);
+            _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
+                m.To == "admin@tienda.com")), Times.Never);
+        });
+    }
+
+    #endregion
 }
