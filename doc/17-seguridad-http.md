@@ -193,6 +193,17 @@ flowchart LR
 | **Referrer-Policy** | `strict-origin-when-cross-origin` | Controla información del referrer |
 | **Permissions-Policy** | `accelerometer=(), camera=(), ...` | Controla APIs del navegador |
 
+> **Páginas HTML de la API (exentas del `default-src 'none'`)**: además de la
+> API JSON, este proyecto sirve dos SPAs — **Swagger UI** (`/swagger`) y la
+> **UI de GraphQL / Banana Cake Pop** (`/graphql`). Sus assets (scripts,
+> estilos, workers de Monaco, manifest y `connect-src` al propio endpoint)
+> no sobreviven a la política estricta, así que ambas rutas reciben una
+> política propia (`ContentSecurityPolicyUi`) que solo permite recursos del
+> mismo origen. **Si añades otra página HTML a la API, añade su ruta a esa
+> exención**: con el `default-src 'none'` la página se sirve pero el
+> navegador la deja en blanco (era exactamente el bug de `/graphql` —
+> ver test `Invoke_GraphQLUi_RecibePoliticaQueLeDejaCargarSusAssets`).
+
 > **Nota sobre X-XSS-Protection**: esta cabecera (`1; mode=block`) se dejó de
 > enviar a propósito. Es obsoleta: los navegadores modernos la ignoran (Chrome
 > la retiró en 2019), el propio filtro podía romper páginas legítimas y OWASP
@@ -221,11 +232,27 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
         ["Permissions-Policy"] = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
     };
 
+    // Páginas HTML de la API (Swagger UI y la UI de GraphQL en /graphql):
+    // SPAs que cargan sus propios scripts/estilos/workers, así que reciben
+    // la política mínima del mismo origen que les deja funcionar.
+    // 'unsafe-eval' es necesario porque HotChocolate compila sus validadores
+    // de esquema con new Function(); solo aplica a estas rutas de UI.
+    private const string ContentSecurityPolicyUi =
+        "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self' blob:; " +
+        "manifest-src 'self'; base-uri 'self'; frame-ancestors 'none'";
+
     public async Task InvokeAsync(HttpContext context)
     {
+        var esPaginaUi = context.Request.Path.StartsWithSegments("/swagger")
+                      || context.Request.Path.StartsWithSegments("/graphql");
+
         foreach (var header in SecurityHeaders)
         {
-            context.Response.Headers.TryAdd(header.Key, header.Value);
+            if (esPaginaUi && header.Key == "Content-Security-Policy")
+                context.Response.Headers[header.Key] = ContentSecurityPolicyUi;
+            else
+                context.Response.Headers.TryAdd(header.Key, header.Value);
         }
 
         await _next(context);

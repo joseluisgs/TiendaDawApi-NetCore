@@ -18,12 +18,16 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
     };
 
     /// <summary>
-    /// Política para Swagger UI: es la única página HTML que sirve esta API y
-    /// su script interno no admite el default-src 'none' de la API, así que
-    /// recibe la mínima que le deja funcionar (solo en /swagger).
+    /// Política para las páginas HTML que sirve esta API: Swagger UI y la UI
+    /// de GraphQL (Banana Cake Pop en /graphql). Son SPAs que cargan sus
+    /// propios scripts, estilos, workers y assets, así que reciben la mínima
+    /// que les deja funcionar; el resto de respuestas (la API JSON) mantiene
+    /// el default-src 'none' de arriba.
     /// </summary>
-    private const string ContentSecurityPolicySwagger =
-        "default-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; frame-ancestors 'none'";
+    private const string ContentSecurityPolicyUi =
+        "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self' blob:; " +
+        "manifest-src 'self'; base-uri 'self'; frame-ancestors 'none'";
 
     /// <summary>
     /// Añade los headers de seguridad a la respuesta y continúa con la petición.
@@ -34,12 +38,13 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
     /// <param name="context">Contexto HTTP de la petición en curso.</param>
     public async Task InvokeAsync(HttpContext context)
     {
-        var esSwagger = context.Request.Path.StartsWithSegments("/swagger");
+        var esPaginaUi = context.Request.Path.StartsWithSegments("/swagger")
+                      || context.Request.Path.StartsWithSegments("/graphql");
 
         foreach (var header in SecurityHeaders)
         {
-            if (esSwagger && header.Key == "Content-Security-Policy")
-                context.Response.Headers[header.Key] = ContentSecurityPolicySwagger;
+            if (esPaginaUi && header.Key == "Content-Security-Policy")
+                context.Response.Headers[header.Key] = ContentSecurityPolicyUi;
             else
                 context.Response.Headers.TryAdd(header.Key, header.Value);
         }
