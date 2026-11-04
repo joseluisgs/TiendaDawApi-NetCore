@@ -58,6 +58,25 @@ public class SecurityHeadersMiddlewareTests
     }
 
     [Test]
+    public async Task Invoke_GraphQLUi_RecibePoliticaQueLeDejaCargarSusAssets()
+    {
+        // 🎓 Regresión: la UI de GraphQL (Banana Cake Pop en /graphql) se
+        // servía con el default-src 'none' de la API y el navegador bloqueaba
+        // sus scripts, estilos, manifest y conexiones → página en blanco.
+        var context = await InvocarAsync("/graphql/");
+
+        var csp = context.Response.Headers["Content-Security-Policy"].ToString();
+        csp.Should().Contain("default-src 'self'", "la UI de GraphQL necesita cargar sus propios recursos");
+        csp.Should().NotContain("default-src 'none'",
+            "la política estricta de la API dejaría la UI de GraphQL en blanco");
+        csp.Should().Contain("connect-src 'self'", "la UI consulta el endpoint /graphql en el mismo origen");
+        csp.Should().Contain("worker-src", "el editor Monaco de la UI carga web workers");
+        csp.Should().Contain("manifest-src 'self'", "la UI carga su manifest.webmanifest");
+        csp.Should().Contain("'unsafe-eval'",
+            "HotChocolate compila sus validadores de esquema con new Function() y sin unsafe-eval la UI muere en runtime");
+    }
+
+    [Test]
     public async Task Invoke_OtrasCabecerasDeSeguridad_SiguenPresentes()
     {
         var context = await InvocarAsync("/api/productos");
