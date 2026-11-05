@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,8 @@ namespace TiendaApi.Api.Controllers;
 /// al rol ADMIN porque incluyen cifras de negocio y datos de clientes.
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 [Produces("application/json")]
 [Authorize(Roles = UserRoles.ADMIN)]
 public class EstadisticasController(

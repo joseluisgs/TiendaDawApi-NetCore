@@ -52,7 +52,7 @@ sequenceDiagram
     participant S as StorageService
     participant DB as Base de Datos
     
-    C->>M: POST /api/productos/1/imagen (IFormFile)
+    C->>M: POST /api/v1/productos/1/imagen (IFormFile)
     M->>S: SaveFileAsync(file, "productos")
     S->>W: Escribir en wwwroot/uploads/productos/
     S-->>DB: Guardar ruta: /uploads/productos/uuid.jpg
@@ -421,13 +421,15 @@ private UnitResult<DomainError> ValidateFile(IFormFile file)
 ## 20.6. Controlador de Archivos
 
 ```csharp
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Apis.Services.Storage;
 
 namespace TiendaApi.Apis.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class FilesController : ControllerBase
 {
     private readonly IStorageService _storageService;
@@ -477,7 +479,8 @@ public class FilesController : ControllerBase
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     private readonly IStorageService _storageService;
@@ -548,7 +551,7 @@ El **path traversal** es un ataque donde un usuario malintencionado intenta acce
 
 ```mermaid
 flowchart TD
-    A["Malicioso: /api/files?path=../../../etc/passwd"] --> B["Validación"]
+    A["Malicioso: /api/v1/files?path=../../../etc/passwd"] --> B["Validación"]
     B --> C{"¿Contiene '..'?"}
     C -->|Sí| D["Bloquear - 400 Bad Request"]
     C -->|No| E["Procesar normalmente"]

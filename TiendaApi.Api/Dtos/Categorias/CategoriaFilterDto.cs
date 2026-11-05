@@ -7,7 +7,7 @@ namespace TiendaApi.Api.Dtos.Categorias;
 ///
 /// <remarks>
 /// Uso típico:
-/// - GET /api/categorias?nombre=Elec&amp;page=0&amp;size=10&amp;sortBy=nombre&amp;direction=desc
+/// - GET /api/v1/categorias?nombre=Elec&amp;page=0&amp;size=10&amp;sortBy=nombre&amp;direction=desc
 /// - Consultas con múltiples criterios combinados
 /// </remarks>
 /// </summary>

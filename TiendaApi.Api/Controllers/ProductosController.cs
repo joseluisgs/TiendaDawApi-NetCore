@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,8 @@ namespace TiendaApi.Api.Controllers;
 /// Endpoints: CRUD paginado, filtrado, búsqueda por categoría.
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 [Produces("application/json")]
 public class ProductosController(
     IProductoService service,

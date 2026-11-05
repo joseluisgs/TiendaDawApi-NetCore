@@ -29,7 +29,7 @@ public class SecurityHeadersMiddlewareTests
     [Test]
     public async Task Invoke_RespuestaApi_LlevaContentSecurityPolicy()
     {
-        var context = await InvocarAsync("/api/productos");
+        var context = await InvocarAsync("/api/v1/productos");
 
         context.Response.Headers["Content-Security-Policy"].ToString()
             .Should().Contain("default-src 'none'", "una API JSON no debe cargar ningún recurso");
@@ -40,7 +40,7 @@ public class SecurityHeadersMiddlewareTests
     [Test]
     public async Task Invoke_RespuestaApi_NoEnviaXssProtection()
     {
-        var context = await InvocarAsync("/api/productos");
+        var context = await InvocarAsync("/api/v1/productos");
 
         context.Response.Headers.ContainsKey("X-XSS-Protection").Should().BeFalse(
             "X-XSS-Protection es obsoleta: los navegadores modernos la ignoran y OWASP recomienda no enviarla");
@@ -79,7 +79,7 @@ public class SecurityHeadersMiddlewareTests
     [Test]
     public async Task Invoke_OtrasCabecerasDeSeguridad_SiguenPresentes()
     {
-        var context = await InvocarAsync("/api/productos");
+        var context = await InvocarAsync("/api/v1/productos");
 
         context.Response.Headers["X-Content-Type-Options"].ToString().Should().Be("nosniff");
         context.Response.Headers["X-Frame-Options"].ToString().Should().Be("DENY");

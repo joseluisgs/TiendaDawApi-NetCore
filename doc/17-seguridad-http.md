@@ -177,7 +177,7 @@ Los security headers añaden capas adicionales de protección contra ataques com
 ```mermaid
 flowchart LR
     subgraph "Request/Response"
-        REQ["Request HTTP<br/>GET /api/productos"] --> RESP["Response HTTP 200<br/>Content-Type: application/json<br/>X-Content-Type-Options: nosniff<br/>X-Frame-Options: DENY<br/>..."]
+        REQ["Request HTTP<br/>GET /api/v1/productos"] --> RESP["Response HTTP 200<br/>Content-Type: application/json<br/>X-Content-Type-Options: nosniff<br/>X-Frame-Options: DENY<br/>..."]
     end
     
     style RESP fill:#27ae60,color:#fff
@@ -692,7 +692,7 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
 
 ```bash
 # Ver headers de respuesta
-curl -I https://localhost:5000/api/categorias
+curl -I https://localhost:5000/api/v1/categorias
 
 # Expected headers:
 # HTTP/1.1 200 OK
@@ -707,7 +707,7 @@ curl -I https://localhost:5000/api/categorias
 
 ```bash
 # Desde producción
-curl -I https://tu-dominio.com/api/categorias
+curl -I https://tu-dominio.com/api/v1/categorias
 
 # Verificar header Strict-Transport-Security
 # Strict-Transport-Security: max-age=31536000; includeSubDomains; preload

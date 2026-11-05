@@ -280,14 +280,14 @@ public class SignalRService(AuthStore authStore, NotificationStore notificationS
 
 | Método | Endpoint | Descripción | Autenticación |
 |--------|----------|-------------|---------------|
-| `GET` | `/api/productos` | Listar productos (paginado) | ❌ Público |
-| `GET` | `/api/productos/{id}` | Obtener producto por ID | ❌ Público |
-| `POST` | `/api/productos` | Crear nuevo producto | ✅ JWT requerido |
-| `PUT` | `/api/productos/{id}` | Actualizar producto | ✅ JWT requerido |
-| `DELETE` | `/api/productos/{id}` | Eliminar producto | ✅ JWT requerido |
-| `GET` | `/api/categorias` | Listar categorías | ❌ Público |
-| `GET` | `/api/categorias/{id}` | Obtener categoría por ID | ❌ Público |
-| `POST` | `/api/auth/signin` | Autenticación JWT | ❌ Público |
+| `GET` | `/api/v1/productos` | Listar productos (paginado) | ❌ Público |
+| `GET` | `/api/v1/productos/{id}` | Obtener producto por ID | ❌ Público |
+| `POST` | `/api/v1/productos` | Crear nuevo producto | ✅ JWT requerido |
+| `PUT` | `/api/v1/productos/{id}` | Actualizar producto | ✅ JWT requerido |
+| `DELETE` | `/api/v1/productos/{id}` | Eliminar producto | ✅ JWT requerido |
+| `GET` | `/api/v1/categorias` | Listar categorías | ❌ Público |
+| `GET` | `/api/v1/categorias/{id}` | Obtener categoría por ID | ❌ Público |
+| `POST` | `/api/v1/auth/signin` | Autenticación JWT | ❌ Público |
 
 ### 🔗 GraphQL Endpoints
 

@@ -9,7 +9,7 @@ namespace TiendaApi.Api.Dtos.Usuarios;
 ///
 /// <remarks>
 /// Uso típico:
-/// - PATCH /api/users/{id}
+/// - PATCH /api/v1/users/{id}
 /// - Actualizar perfil de usuario
 /// - Cambiar avatar
 /// </remarks>

@@ -142,13 +142,15 @@ app.Run();
 ### Documentación de Endpoints
 
 ```csharp
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace TiendaApi.Apis.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 [Produces("application/json")]
 public class ProductosController : ControllerBase
 {
@@ -378,12 +380,12 @@ public class PagedResponse<T>
 flowchart TD
     subgraph "URL Path"
         A1["/api/v1/productos"]
-        A2["/api/v2/productos"]
+        A2["/api/v1/v2/productos"]
     end
     
     subgraph "Query String"
-        B1["/api/productos?api-version=1.0"]
-        B2["/api/productos?api-version=2.0"]
+        B1["/api/v1/productos?api-version=1.0"]
+        B2["/api/v1/productos?api-version=2.0"]
     end
     
     subgraph "Header"
@@ -429,6 +431,7 @@ app.UseApiVersioning();
 ### Controladores Versionados
 
 ```csharp
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TiendaApi.Apis.Controllers.V1;
@@ -643,7 +646,7 @@ C# permite añadir comentarios XML directamente en el código fuente usando las 
 /// <param name="id">El identificador numérico del producto.</param>
 /// <returns>El producto encontrado con sus datos completos.</returns>
 /// <example>
-/// GET /api/productos/1
+/// GET /api/v1/productos/1
 /// Response: { "id": 1, "nombre": "Laptop", "precio": 999.99 }
 /// </example>
 [HttpGet("{id:long}")]

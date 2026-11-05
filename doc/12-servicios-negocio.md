@@ -158,7 +158,7 @@ sequenceDiagram
     participant WS as WebSocket
     participant Logger as Logger
 
-    Client->>Ctrl: GET /api/productos/1
+    Client->>Ctrl: GET /api/v1/productos/1
     Ctrl->>Svc: GetByIdAsync(1)
     
     Note over Svc: 1. Loggear peticion
@@ -692,7 +692,7 @@ sequenceDiagram
     participant WS as WebSocketHandler
     participant Clients as Clientes WS
 
-    C->>S: POST /api/productos
+    C->>S: POST /api/v1/productos
     S->>R: SaveAsync(producto)
     R-->>S: producto guardado
     

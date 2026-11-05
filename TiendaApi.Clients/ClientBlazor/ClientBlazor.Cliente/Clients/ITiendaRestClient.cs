@@ -23,21 +23,21 @@ public interface ITiendaRestClient
     // PRODUCTOS
     // ========================================================================
 
-    [Get("/api/productos")]
+    [Get("/api/v1/productos")]
     Task<PagedResult<ProductoDto>> GetProductosAsync([Query] ProductoFilterDto filter);
 
-    [Get("/api/productos/{id}")]
+    [Get("/api/v1/productos/{id}")]
     Task<ProductoDto> GetProductoByIdAsync(long id);
 
-    [Post("/api/productos")]
+    [Post("/api/v1/productos")]
     [Headers("Authorization: Bearer")]
     Task<ProductoDto> CreateProductoAsync([Body] ProductoRequestDto producto);
 
-    [Put("/api/productos/{id}")]
+    [Put("/api/v1/productos/{id}")]
     [Headers("Authorization: Bearer")]
     Task<ProductoDto> UpdateProductoAsync(long id, [Body] ProductoRequestDto producto);
 
-    [Delete("/api/productos/{id}")]
+    [Delete("/api/v1/productos/{id}")]
     [Headers("Authorization: Bearer")]
     Task DeleteProductoAsync(long id);
 
@@ -45,21 +45,21 @@ public interface ITiendaRestClient
     // CATEGORÍAS
     // ========================================================================
 
-    [Get("/api/categorias")]
+    [Get("/api/v1/categorias")]
     Task<PagedResult<CategoriaDto>> GetCategoriasAsync([Query] CategoriaFilterDto filter);
 
-    [Get("/api/categorias/{id}")]
+    [Get("/api/v1/categorias/{id}")]
     Task<CategoriaDto> GetCategoriaByIdAsync(long id);
 
-    [Post("/api/categorias")]
+    [Post("/api/v1/categorias")]
     [Headers("Authorization: Bearer")]
     Task<CategoriaDto> CreateCategoriaAsync([Body] CategoriaRequestDto categoria);
 
-    [Put("/api/categorias/{id}")]
+    [Put("/api/v1/categorias/{id}")]
     [Headers("Authorization: Bearer")]
     Task<CategoriaDto> UpdateCategoriaAsync(long id, [Body] CategoriaRequestDto categoria);
 
-    [Delete("/api/categorias/{id}")]
+    [Delete("/api/v1/categorias/{id}")]
     [Headers("Authorization: Bearer")]
     Task DeleteCategoriaAsync(long id);
 }

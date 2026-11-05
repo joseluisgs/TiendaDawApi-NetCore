@@ -7,7 +7,7 @@ namespace TiendaApi.Api.Dtos.Usuarios;
 /// </summary>
 /// <remarks>
 /// Uso típico:
-/// - PATCH /api/usuarios/{id}/avatar
+/// - PATCH /api/v1/usuarios/{id}/avatar
 /// - Actualizar imagen de perfil del usuario
 /// </remarks>
 public record AvatarUpdateDto

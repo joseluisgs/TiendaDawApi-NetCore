@@ -7,7 +7,7 @@ namespace TiendaApi.Api.Dtos.Usuarios;
 ///
 /// <remarks>
 /// Uso típico:
-/// - GET /api/users?username=juan&amp;page=0&amp;size=10
+/// - GET /api/v1/users?username=juan&amp;page=0&amp;size=10
 /// - Búsquedas administrativas de usuarios
 /// - Reportes filtrados por estado
 /// </remarks>

@@ -5,7 +5,7 @@ namespace TiendaApi.Api.Dtos.Proveedores;
 /// Permite filtrar por nombre y estado de eliminación, con paginación y ordenamiento.
 /// </summary>
 /// <remarks>
-/// Uso típico: GET /api/proveedores?nombre=DAW&amp;page=0&amp;size=10&amp;sortBy=nombre&amp;direction=asc
+/// Uso típico: GET /api/v1/proveedores?nombre=DAW&amp;page=0&amp;size=10&amp;sortBy=nombre&amp;direction=asc
 /// </remarks>
 public record ProveedorFilterDto
 {
