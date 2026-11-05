@@ -1,12 +1,15 @@
+using System.Security.Claims;
 using HotChocolate;
-using HotChocolate.Data;
+using HotChocolate.Authorization;
 using HotChocolate.Types;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Mappers;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
 
 namespace TiendaApi.Api.GraphQL.Queries;
@@ -93,7 +96,7 @@ public class TiendaQuery
         return categoria?.ToDto();
     }
 
-    /// <summary>Obtiene categorías paginadas.</summary>
+    /// <summary>Obtiene todas las categorías paginadas.</summary>
     /// <param name="page">Número de página (base 1, contrato GraphQL).</param>
     /// <param name="size">Elementos por página.</param>
     /// <param name="categoriaRepository">Repositorio de categorías.</param>
@@ -118,5 +121,48 @@ public class TiendaQuery
             Page = page,
             PageSize = size
         };
+    }
+
+    // ════════════════════════ PEDIDOS (solo queries) ════════════════════════
+    // 🎓 Decisión de diseño: GraphQL solo LEE pedidos (sin mutations ni
+    // subscriptions): crear/editar/borrar es cosa de REST. El control de
+    // acceso es de dos niveles:
+    //   · pedidos      → solo ADMIN (lista completa)
+    //   · misPedidos   → cualquier autenticado, FILTRADO por su propio claim
+    //                     (un usuario jamás ve pedidos ajenos por GraphQL).
+
+    /// <summary>
+    /// Obtiene TODOS los pedidos. Solo administradores.
+    /// </summary>
+    /// <param name="pedidosRepository">Repositorio de pedidos.</param>
+    /// <returns>Lista de pedidos (DTOs, no entidades).</returns>
+    [Authorize(policy: "AdminOnly")]
+    public async Task<IReadOnlyList<PedidoDto>> GetPedidos(
+        [Service] IPedidosRepository pedidosRepository)
+    {
+        var pedidos = await pedidosRepository.FindAllAsync();
+        return pedidos.Select(p => p.ToDto()).ToList();
+    }
+
+    /// <summary>
+    /// Obtiene MIS pedidos: los del usuario autenticado (cualquier usuario
+    /// logueado). El userId sale del claim del JWT (inyectado por
+    /// HotChocolate como parámetro) y el repositorio filtra por él: nunca se
+    /// devuelven pedidos de otros usuarios.
+    /// </summary>
+    /// <param name="user">Usuario autenticado (claims del JWT).</param>
+    /// <param name="pedidosRepository">Repositorio de pedidos.</param>
+    /// <returns>Lista de pedidos del usuario autenticado.</returns>
+    [Authorize]
+    public async Task<IReadOnlyList<PedidoDto>> GetMisPedidos(
+        ClaimsPrincipal user,
+        [Service] IPedidosRepository pedidosRepository)
+    {
+        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (claim is null || !long.TryParse(claim, out var userId))
+            throw new GraphQLException("No se pudo identificar al usuario autenticado (falta el claim NameIdentifier).");
+
+        var pedidos = await pedidosRepository.FindByUserIdAsync(userId);
+        return pedidos.Select(p => p.ToDto()).ToList();
     }
 }

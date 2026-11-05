@@ -69,18 +69,26 @@ public record GraphQLError(
 
 /// <summary>
 /// Evento de subscription para producto creado.
+/// 🎓 Shape real del servidor (GraphQL/Events/ProductoEvent.cs): plano, sin
+/// objeto anidado y con createdAt en vez de timestamp.
 /// </summary>
 public record ProductoCreadoEvent(
-    GraphQLProductoDto Producto,
-    DateTime Timestamp
+    long ProductoId,
+    string Nombre,
+    decimal Precio,
+    int Stock,
+    DateTime CreatedAt
 );
 
 /// <summary>
 /// Evento de subscription para producto actualizado.
 /// </summary>
 public record ProductoActualizadoEvent(
-    GraphQLProductoDto Producto,
-    DateTime Timestamp
+    long ProductoId,
+    string Nombre,
+    decimal Precio,
+    int Stock,
+    DateTime UpdatedAt
 );
 
 /// <summary>
@@ -88,7 +96,7 @@ public record ProductoActualizadoEvent(
 /// </summary>
 public record ProductoEliminadoEvent(
     long ProductoId,
-    DateTime Timestamp
+    DateTime DeletedAt
 );
 
 /// <summary>
@@ -96,7 +104,8 @@ public record ProductoEliminadoEvent(
 /// </summary>
 public record StockBajoEvent(
     long ProductoId,
-    string NombreProducto,
+    string Nombre,
     int StockActual,
-    DateTime Timestamp
+    int UmbralStock,
+    DateTime DetectedAt
 );

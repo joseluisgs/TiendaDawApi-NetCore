@@ -137,7 +137,7 @@
             if (operacion == "productos") query = "query {\n  productos {\n    id\n    nombre\n    precio\n    stock\n    categoria {\n      id\n      nombre\n    }\n  }\n}";
             else if (operacion == "producto") query = "query {\n  producto(id: " + id + ") {\n    id\n    nombre\n    precio\n    stock\n  }\n}";
             else if (operacion == "categorias") query = "query {\n  categorias {\n    id\n    nombre\n  }\n}";
-            else if (operacion == "categoria") query = "query {\n  categoria(id: " + id + ") {\n    id\n    nombre\n    productos {\n      id\n      nombre\n      precio\n    }\n  }\n}";
+            else if (operacion == "categoria") query = "query {\n  categoria(id: " + id + ") {\n    id\n    nombre\n    descripcion\n  }\n}";
         } else {
             if (operacion == "createProducto") query = "mutation {\n  createProducto(input: {\n    nombre: \"Nuevo\", precio: 99.99, categoriaId: 1\n  }) {\n    id\n    nombre\n  }\n}";
             else if (operacion == "updateProducto") query = "mutation {\n  updateProducto(id: " + id + ", input: {\n    nombre: \"Update\"\n  }) {\n    id\n    nombre\n  }\n}";
