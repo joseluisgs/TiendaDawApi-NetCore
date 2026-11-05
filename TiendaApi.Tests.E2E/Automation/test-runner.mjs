@@ -1267,6 +1267,52 @@ let imagenProductoUrl = null;
     assert(typeof pid === "number" || (typeof pid === "string" && pid.length > 0), `id inesperado: ${JSON.stringify(pid)}`);
   });
 
+  await test("GraphQL: query pedidos con admin → 200 con datos", async () => {
+    const r = await req("POST", "/graphql", {
+      token: adminToken,
+      body: { query: "query { pedidos { id userId estado total } }" },
+    });
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.data?.pedidos), "data.pedidos no es array");
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)}`);
+  });
+
+  await test("GraphQL: query pedidos con rol USER → errors authoriz", async () => {
+    const r = await req("POST", "/graphql", {
+      token: userToken,
+      body: { query: "query { pedidos { id } }" },
+    });
+    assert(Array.isArray(r.json?.errors), "esperaba errors de autorización");
+    assert(
+      String(r.json.errors[0]?.message).toLowerCase().includes("authoriz"),
+      `mensaje inesperado: ${r.json.errors[0]?.message}`
+    );
+  });
+
+  await test("GraphQL: query misPedidos con user → 200 y solo sus pedidos", async () => {
+    const r = await req("POST", "/graphql", {
+      token: userToken,
+      body: { query: "query { misPedidos { id userId estado } }" },
+    });
+    assertEq(st(r), 200, "status");
+    assert(Array.isArray(r.json?.data?.misPedidos), "data.misPedidos no es array");
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json?.errors)}`);
+    for (const p of r.json.data.misPedidos) {
+      assertEq(p.userId, 2, "misPedidos debe devolver solo pedidos del usuario autenticado (userdaw = 2)");
+    }
+  });
+
+  await test("GraphQL: query misPedidos sin token → errors authoriz", async () => {
+    const r = await req("POST", "/graphql", {
+      body: { query: "query { misPedidos { id } }" },
+    });
+    assert(Array.isArray(r.json?.errors), "esperaba errors de autorización");
+    assert(
+      String(r.json.errors[0]?.message).toLowerCase().includes("authoriz"),
+      `mensaje inesperado: ${r.json.errors[0]?.message}`
+    );
+  });
+
   await test("GraphQL: mutation createProducto sin auth → errors Unauthorized", async () => {
     const r = await req("POST", "/graphql", {
       body: {

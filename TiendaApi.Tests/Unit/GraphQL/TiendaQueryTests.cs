@@ -1,12 +1,16 @@
+using System.Security.Claims;
 using FluentAssertions;
+using HotChocolate;
 using Moq;
 using NUnit.Framework;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.GraphQL.Queries;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
 
 namespace TiendaApi.Tests.Unit.GraphQL;
@@ -190,6 +194,67 @@ public class TiendaQueryTests
 
         result.Page.Should().Be(3);
         capturedFilter!.Page.Should().Be(2);
+    }
+
+    #endregion
+
+    #region GetPedidos / GetMisPedidos Tests
+
+    private static Pedido UnPedido(long userId) => new()
+    {
+        Id = MongoDB.Bson.ObjectId.GenerateNewId(),
+        UserId = userId,
+        Estado = "Pendiente",
+        Total = 10m,
+        Items = new List<PedidoItem>(),
+        CreatedAt = DateTime.UtcNow
+    };
+
+    [Test]
+    public async Task GetPedidos_ReturnsAllAsDtos()
+    {
+        var repo = new Mock<IPedidosRepository>();
+        repo.Setup(r => r.FindAllAsync())
+            .ReturnsAsync(new List<Pedido> { UnPedido(1), UnPedido(2) });
+
+        var result = await _query.GetPedidos(repo.Object);
+
+        result.Should().HaveCount(2);
+        result![0].Should().BeOfType<PedidoDto>();
+        repo.Verify(r => r.FindAllAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task GetMisPedidos_ConClaim_FiltraPorElUsuarioAutenticado()
+    {
+        // El userId SIEMPRE sale del claim del JWT: el repositorio filtra
+        // por él y un usuario jamás ve pedidos ajenos por GraphQL.
+        var repo = new Mock<IPedidosRepository>();
+        repo.Setup(r => r.FindByUserIdAsync(7))
+            .ReturnsAsync(new List<Pedido> { UnPedido(7) });
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            new[] { new Claim(ClaimTypes.NameIdentifier, "7") }, "test"));
+
+        var result = await _query.GetMisPedidos(user, repo.Object);
+
+        result.Should().HaveCount(1);
+        result![0].UserId.Should().Be(7);
+        repo.Verify(r => r.FindByUserIdAsync(7), Times.Once);
+        repo.Verify(r => r.FindAllAsync(), Times.Never, "misPedidos jamás debe listar todos los pedidos");
+    }
+
+    [Test]
+    public async Task GetMisPedidos_SinClaim_LanzaError()
+    {
+        var repo = new Mock<IPedidosRepository>();
+        var sinClaims = new ClaimsPrincipal(new ClaimsIdentity()); // anónimo
+
+        var act = () => _query.GetMisPedidos(sinClaims, repo.Object);
+
+        await act.Should().ThrowAsync<GraphQLException>()
+            .WithMessage("*NameIdentifier*");
+        repo.Verify(r => r.FindByUserIdAsync(It.IsAny<long>()), Times.Never);
     }
 
     #endregion

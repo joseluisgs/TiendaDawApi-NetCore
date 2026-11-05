@@ -28,8 +28,7 @@ public class MapperTests
             Precio = 100.50m,
             Stock = 10,
             Imagen = "test.jpg",
-            CategoriaId = 2,
-            CategoriaNombre = "Cat",
+            Categoria = new() { Id = 2, Nombre = "Cat", Descripcion = "Categoría de prueba" },
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -41,6 +40,8 @@ public class MapperTests
         model.Id.Should().Be(dto.Id);
         model.Nombre.Should().Be(dto.Nombre);
         model.Precio.Should().Be(dto.Precio);
+        model.CategoriaId.Should().Be(2, "el id de categoría se desanida desde dto.Categoria");
+        model.CategoriaNombre.Should().Be("Cat", "el nombre de categoría se desanida desde dto.Categoria");
     }
 
     /// <summary>

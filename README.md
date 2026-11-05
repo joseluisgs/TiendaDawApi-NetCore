@@ -1330,10 +1330,10 @@ await connection.start();
 
 ### GraphQL
 
-| Endpoint    | Método | Descripción        |
-| ----------- | ------ | ------------------ |
-| `/graphql`  | POST   | Endpoint GraphQL   |
-| `/graphiql` | GET    | Playground GraphQL |
+| Endpoint   | Método | Descripción                                       |
+| ---------- | ------ | ------------------------------------------------- |
+| `/graphql` | POST   | Endpoint GraphQL (ejecución de queries/mutations) |
+| `/graphql` | GET    | Playground (Banana Cake Pop) servido por HotChocolate |
 
 **Queries disponibles:**
 
@@ -1341,13 +1341,35 @@ await connection.start();
 # Productos
 productos                    # Todos los productos
 producto(id: Long!)          # Producto por ID
-productos(first: Int, after: String) # Productos paginados
+productosPaged(page: Int = 1, size: Int = 10)  # Productos paginados
 
 # Categorías
 categorias                   # Todas las categorías
 categoria(id: Long!)         # Categoría por ID
-categorias(first: Int, after: String) # Categorías paginadas
+categoriasPaged(page: Int = 1, size: Int = 10) # Categorías paginadas
+
+# Pedidos (solo queries: sin mutations ni subscriptions)
+pedidos                      # Todos los pedidos → SOLO ADMIN
+misPedidos                   # Los pedidos del usuario autenticado (claim JWT)
 ```
+
+**Pedidos en GraphQL:**
+
+| Query | Auth | Comentario |
+| ----- | ---- | ---------- |
+| `pedidos` | **ADMIN** (`AdminOnly`) | Lista completa de pedidos |
+| `misPedidos` | Cualquier autenticado | Filtrado por el claim `NameIdentifier` del JWT: nunca devuelve pedidos de otros usuarios |
+
+```graphql
+# Admin: todos los pedidos
+query { pedidos { id userId estado total createdAt } }
+
+# Usuario: solo los suyos
+query { misPedidos { id estado total items { nombreProducto cantidad } } }
+```
+
+> ⚠️ Los pedidos **solo se leen** por GraphQL (consultas). Crear, actualizar
+> y cancelar pedidos es cosa de REST (`POST/PUT /api/pedidos...`).
 
 **Ejemplo de Query: Obtener producto con solo nombre de categoría**
 
@@ -1397,13 +1419,6 @@ query ObtenerProductoConCategoria($id: Long!) {
 
 > **Nota:** GraphQL soporta tanto **Queries**, **Mutations** y **Subscriptions** para notificaciones en tiempo real sobre Productos.
 
-**Mutations disponibles (requieren token JWT con rol ADMIN):**
-
-```graphql
-# Productos (requiere ADMIN)
-
-```
-
 **Authorization:** Todas las mutations requieren header:
 ```
 Authorization: Bearer <token_admin>
@@ -1413,8 +1428,8 @@ Authorization: Bearer <token_admin>
 
 ```graphql
 # Productos (requiere ADMIN)
-createProducto(input: CreateProductoInput!): Producto
-updateProducto(id: Long!, input: UpdateProductoInput!): Producto
+createProducto(input: CreateProductoInput!): ProductoDto
+updateProducto(id: Long!, input: UpdateProductoInput!): ProductoDto
 deleteProducto(id: Long!): Boolean
 ```
 
@@ -1424,19 +1439,21 @@ deleteProducto(id: Long!): Boolean
 input CreateProductoInput {
   nombre: String!
   descripcion: String
-  precio: Float!
+  precio: Decimal!
   stock: Int!
   imagen: String
   categoriaId: Long!
+  proveedorCodigo: String
 }
 
 input UpdateProductoInput {
   nombre: String
   descripcion: String
-  precio: Float
+  precio: Decimal
   stock: Int
   imagen: String
   categoriaId: Long
+  proveedorCodigo: String
 }
 ```
 

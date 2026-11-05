@@ -670,7 +670,7 @@
         <h4>💡 Información</h4>
         <p>• <b>Queries:</b> Públicas - no requieren token</p>
         <p>• <b>Mutations:</b> Requiere token de admin</p>
-        <p>• <b>Subscriptions:</b> Usa GraphiQL en <code>http://localhost:5031/graphiql</code></p>
+        <p>• <b>Subscriptions:</b> por WebSocket contra <code>ws://localhost:5031/graphql</code> (el playground de HotChocolate está en <code>/graphql</code>)</p>
         <p>• <b>Token:</b> Se auto-rellena tras hacer login arriba</p>
       </div>
     </div>
@@ -709,11 +709,7 @@
   categorias {
     id
     nombre
-    productos {
-      id
-      nombre
-      precio
-    }
+    descripcion
   }
 }`,
         productoById2: `query($id: Long!) {
@@ -769,16 +765,16 @@
 }`,
         varsDelete: `{"id": 3}`,
         subCreado: `subscription {
-  onProductoCreado { productoId nombre precio timestamp }
+  onProductoCreado { productoId nombre precio createdAt }
 }`,
         subActualizado: `subscription {
-  onProductoActualizado { productoId cambios timestamp }
+  onProductoActualizado { productoId nombre precio stock updatedAt }
 }`,
         subEliminado: `subscription {
-  onProductoEliminado { productoId timestamp }
+  onProductoEliminado { productoId deletedAt }
 }`,
         subStock: `subscription {
-  onStockBajo { productoId stockActual timestamp }
+  onStockBajo { productoId nombre stockActual umbralStock detectedAt }
 }`
       };
 

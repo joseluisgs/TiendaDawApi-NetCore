@@ -19,6 +19,9 @@ public record CategoriaResumenDto
 {
     public long Id { get; init; }
     public string Nombre { get; init; } = string.Empty;
+
+    /// <summary>Descripción de la categoría (null si la categoría no tiene).</summary>
+    public string? Descripcion { get; init; }
 }
 
 /// <summary>Proveedor de un producto, anidado en la respuesta de la API. Null si no tiene.</summary>
@@ -26,6 +29,9 @@ public record ProveedorResumenDto
 {
     public string Codigo { get; init; } = string.Empty;
     public string Nombre { get; init; } = string.Empty;
+
+    /// <summary>Descripción del proveedor (null si no tiene).</summary>
+    public string? Descripcion { get; init; }
 }
 
 public record ProductoRequestDto

@@ -17,10 +17,16 @@ public static class ProductoMapper
             producto.Precio,
             producto.Stock,
             producto.Imagen,
-            new CategoriaResumenDto(producto.CategoriaId, producto.Categoria?.Nombre ?? string.Empty),
+            new CategoriaResumenDto(
+                producto.CategoriaId,
+                producto.Categoria?.Nombre ?? string.Empty,
+                producto.Categoria?.Descripcion),
             producto.Proveedor is null
                 ? null
-                : new ProveedorResumenDto(producto.Proveedor.Codigo, producto.Proveedor.Nombre),
+                : new ProveedorResumenDto(
+                    producto.Proveedor.Codigo,
+                    producto.Proveedor.Nombre,
+                    producto.Proveedor.Descripcion),
             producto.CreatedAt,
             producto.UpdatedAt
         );

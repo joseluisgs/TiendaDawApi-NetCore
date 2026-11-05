@@ -45,7 +45,8 @@ public class ProductoMutation
             Precio = input.Precio,
             Stock = input.Stock,
             Imagen = input.Imagen,
-            CategoriaId = input.CategoriaId
+            CategoriaId = input.CategoriaId,
+            ProveedorCodigo = input.ProveedorCodigo
         };
         var result = await service.CreateAsync(dto);
         if (result.IsFailure)
@@ -80,7 +81,8 @@ public class ProductoMutation
             Precio = input.Precio,
             Stock = input.Stock,
             Imagen = input.Imagen,
-            CategoriaId = input.CategoriaId
+            CategoriaId = input.CategoriaId,
+            ProveedorCodigo = input.ProveedorCodigo
         };
 
         var result = await service.UpdatePartialAsync(id, patch);
