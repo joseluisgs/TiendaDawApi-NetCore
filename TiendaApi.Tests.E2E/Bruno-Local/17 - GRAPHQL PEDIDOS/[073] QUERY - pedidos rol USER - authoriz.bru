@@ -1,0 +1,37 @@
+meta {
+  name: [073] QUERY - pedidos rol USER - authoriz
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:graphql {
+  query { pedidos { id } }
+}
+
+script:post-response {
+  test("GraphQL Pedidos USER - Requiere rol Admin", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.an('array').that.is.not.empty;
+      expect(jsonData.errors[0].message.toLowerCase()).to.include('authoriz');
+      expect(jsonData.data).to.not.be.ok;  // data es null en errores de autorizacion
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  GraphQL: pedidos con rol USER debe fallar (solo ADMIN)
+}

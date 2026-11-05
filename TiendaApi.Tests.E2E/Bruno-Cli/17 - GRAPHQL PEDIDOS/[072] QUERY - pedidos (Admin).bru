@@ -1,0 +1,45 @@
+meta {
+  name: [072] QUERY - pedidos (Admin)
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:graphql {
+  query { pedidos { id userId estado total } }
+}
+
+script:post-response {
+  test("GraphQL Pedidos Admin - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("GraphQL Pedidos Admin - Devuelve la lista completa", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.undefined;
+      expect(jsonData.data.pedidos).to.be.an('array').that.is.not.empty;
+      const primero = jsonData.data.pedidos[0];
+      expect(primero.id).to.be.a('string');
+      expect(primero.userId).to.be.a('number');
+      expect(primero.estado).to.be.a('string');
+      expect(primero.total).to.be.a('number');
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  GraphQL: Todos los pedidos - solo ADMIN (AdminOnly)
+}
