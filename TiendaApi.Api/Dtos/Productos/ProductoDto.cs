@@ -332,7 +332,8 @@ public record ProductoPatchDto
     /// <summary>
     /// URL de la imagen del producto (opcional).
     /// Actualiza la imagen del producto si se proporciona.
-    /// Valor null elimina la imagen actual.
+    /// Nota: en PATCH/GraphQL un valor null NO vacía la imagen (no distingue
+    /// "sin cambios" de "borrar"); para quitarla hay que usar el PUT completo.
     /// </summary>
     /// <example>https://cdn.tienda.com/products/iphone-15-pro-nuevo.jpg</example>
     [MaxLength(500, ErrorMessage = "La URL de la imagen no puede exceder 500 caracteres")]
@@ -358,8 +359,9 @@ public record ProductoPatchDto
 }
 
 /// <summary>
-/// Resumen de categoría dentro de un producto: identificador y nombre.
-/// Es el único dato de categoría que necesita el cliente al ver un producto.
+/// Resumen de categoría dentro de un producto: identificador, nombre y
+/// descripción. Es todo lo que el cliente necesita de categoría al ver un
+/// producto (REST y GraphQL comparten este contrato).
 /// </summary>
 public record CategoriaResumenDto(
     // <summary>Identificador de la categoría.</summary>
@@ -368,11 +370,15 @@ public record CategoriaResumenDto(
 
     // <summary>Nombre de la categoría.</summary>
     // <example>Electrónica</example>
-    string Nombre
+    string Nombre,
+
+    // <summary>Descripción de la categoría (null si la categoría no tiene).</summary>
+    // <example>Categoría de productos electrónicos y periféricos.</example>
+    string? Descripcion = null
 );
 
 /// <summary>
-/// Resumen de proveedor dentro de un producto: código y nombre.
+/// Resumen de proveedor dentro de un producto: código, nombre y descripción.
 /// El código es un identificador de 11 caracteres estilo YouTube.
 /// </summary>
 public record ProveedorResumenDto(
@@ -382,5 +388,9 @@ public record ProveedorResumenDto(
 
     // <summary>Nombre del proveedor.</summary>
     // <example>Distribuciones DAW</example>
-    string Nombre
+    string Nombre,
+
+    // <summary>Descripción del proveedor (null si no tiene).</summary>
+    // <example>Distribuidor general de electrónica y periféricos.</example>
+    string? Descripcion = null
 );

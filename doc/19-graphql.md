@@ -62,36 +62,45 @@ flowchart LR
 
 ### Paquetes Necesarios
 
-```bash
-# Paquete principal de HotChocolate
-dotnet add package HotChocolate.AspNetCore
+Versiones fijadas en `Directory.Packages.props` (central package management):
 
-# Paquetes adicionales útiles
-dotnet add package HotChocolate.Data        # Para filtrado y paginación
-dotnet add package HotChocolate.Stitching   # Para federar esquemas
+```bash
+HotChocolate.AspNetCore               16.6.7   # servidor + GraphiQL
+HotChocolate.AspNetCore.Authorization 16.6.7   # [Authorize] / policies
+HotChocolate.Data                     16.6.7   # utilidades de datos
 ```
+
+> En este proyecto **no** se usa `HotChocolate.Stitching` (no hay
+> federación de esquemas).
 
 ### Dependencias en el Proyecto
 
-Del archivo `Program.cs`:
+Del archivo `Infrastructures/GraphQLConfig.cs` (llamado desde `Program.cs`
+con `builder.Services.AddGraphQL(environment)`):
 
 ```csharp
-// GraphQL
 Log.Information("🔍 Configurando GraphQL con HotChocolate...");
+
+services.AddGraphQLPubSub();
+
 builder.Services
     .AddGraphQLServer()
+    .AddAuthorization()
     .AddQueryType<TiendaQuery>()
+    .AddMutationType<ProductoMutation>()
+    .AddSubscriptionType<ProductoSubscription>()
+    .AddInMemorySubscriptions()
     .AddType<ProductoType>()
     .AddType<CategoriaType>()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = environment.IsDevelopment());
 ```
 
 ### Endpoint de GraphQL
 
 ```csharp
-// GraphQL Endpoint
-Log.Information("🔍 Configurando endpoint GraphQL: /graphql");
-app.MapGraphQL();
+// Extensión MapGraphQLEndpoints (GraphQLConfig.cs)
+app.MapGraphQL();          // → http://localhost:5031/graphql (GraphiQL + endpoint)
+app.MapGraphQLWebSocket(); // → suscripciones por WS
 ```
 
 ---
@@ -101,54 +110,50 @@ app.MapGraphQL();
 ### Configuración Básica
 
 ```csharp
-using HotChocolate;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// Agregar GraphQL
+// Agregar GraphQL (la forma mínima; el proyecto usa GraphQLConfig.AddGraphQL)
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<Query>();
+    .AddQueryType<TiendaQuery>();
 ```
 
 ### Configuración Completa
 
+La configuración real vive en `Infrastructures/GraphQLConfig.cs`
+(extensión `AddGraphQL`); resumen:
+
 ```csharp
-builder.Services
+services.AddGraphQLPubSub();                  // IEventPublisher
+
+var builder = services
     .AddGraphQLServer()
-    .AddQueryType<Query>()                    // Tipo de consulta raíz
-    .AddType<ProductoType>()                  // Tipos personalizados
+    .AddAuthorization()                       // Habilita [Authorize]
+    .AddQueryType<TiendaQuery>()              // Tipo de consulta raíz
+    .AddMutationType<ProductoMutation>()      // Mutaciones
+    .AddSubscriptionType<ProductoSubscription>() // Suscripciones
+    .AddInMemorySubscriptions()
+    .AddType<ProductoType>()                  // Tipos sobre DTOs
     .AddType<CategoriaType>()
-    .AddMutationType<Mutation>()              // Mutaciones (opcional)
-    .AddSubscriptionType<Subscription>()      // Suscripciones (opcional)
-    
+    .AddType<ProveedorType>()
+    .AddType<PedidoType>()
+    .AddType<DestinatarioType>()
+    .AddType<DireccionType>()
+    .AddType<PedidoItemType>()
+    .ModifyOptions(o => o.RemoveUnreachableTypes = true)
+
     // 🛡️ Límite de profundidad de ejecución: evita queries anidadas
     // infinitas que consuman memoria/CPU. 10 niveles es más que
     // suficiente para cualquier consulta legítima de este proyecto.
     .AddMaxExecutionDepthRule(
         maxAllowedExecutionDepth: 10,
         skipIntrospectionFields: true)
-    
-    // Configuración de errores
-    .ModifyRequestOptions(opt => 
-        opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())
-    
-    // Introspection habilitada por defecto en desarrollo
-    .AddIntrospectionTypes()
-    
-    // Formateo de errores
-    .AddErrorFilter(error => 
-    {
-        // Personalizar errores según el entorno
-        return error;
-    });
 
-// 🛡️ Introspección deshabilitada en producción: impide descubrir
-// el esquema completo (query/mutation names, tipos, argumentos).
-if (!builder.Environment.IsDevelopment())
-{
-    builder.Services.AddGraphQLServer().DisableIntrospection();
-}
+    // Configuración de errores (detalle solo en desarrollo)
+    .ModifyRequestOptions(opt =>
+        opt.IncludeExceptionDetails = environment.IsDevelopment());
+
+// Introspección: deshabilitada fuera de desarrollo
+if (!environment.IsDevelopment())
+    builder.DisableIntrospection();
 ```
 
 ### Diferentes Entornos
@@ -199,109 +204,123 @@ builder.Services
 public class TiendaQuery
 {
     // Query pública - cualquiera puede ver productos
-    [UseFirstOrDefault]
-    [UseProjection]
-    public IQueryable<Producto> GetProductos(
+    public async Task<IReadOnlyList<ProductoDto>> GetProductos(
         [Service] IProductoRepository productoRepository)
     {
-        return productoRepository.FindAllAsNoTracking();
+        var productos = await productoRepository.FindAllAsync();
+        return productos.ToDtoList().ToList();
     }
 
-    // Query protegida - solo usuarios autenticados
-    [Authorize]  // ← Requiere JWT válido
-    [UseFirstOrDefault]
-    public async Task<Producto?> GetProducto(
-        long id,
-        [Service] IProductoRepository productoRepository)
+    // Query protegida - solo administradores (pedidos = visibles solo por admin)
+    [Authorize(policy: "AdminOnly")]  // ← Policy que requiere rol Admin
+    public async Task<IReadOnlyList<PedidoDto>> GetPedidos(
+        [Service] IPedidosRepository pedidosRepository)
     {
-        return await productoRepository.FindByIdAsync(id);
+        var pedidos = await pedidosRepository.FindAllAsync();
+        return pedidos.Select(p => p.ToDto()).ToList();
+    }
+
+    // Query del propio usuario - cualquier autenticado, filtrada por su claim
+    [Authorize]  // ← Requiere JWT válido
+    public async Task<IReadOnlyList<PedidoDto>> GetMisPedidos(
+        ClaimsPrincipal user,          // ← inyectado por HotChocolate
+        [Service] IPedidosRepository pedidosRepository)
+    {
+        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (claim is null || !long.TryParse(claim, out var userId))
+            throw new GraphQLException("Falta el claim NameIdentifier.");
+
+        var pedidos = await pedidosRepository.FindByUserIdAsync(userId);
+        return pedidos.Select(p => p.ToDto()).ToList();
     }
 }
 ```
 
 ### Proteger Mutations con Roles
 
+Del archivo `GraphQL/Mutations/ProductoMutation.cs` (resumen):
+
 ```csharp
 public class ProductoMutation
 {
     // Solo administradores pueden crear productos
     [Authorize(policy: "AdminOnly")]  // ← Policy que requiere rol Admin
-    public async Task<Result<Producto, DomainError>> CreateProducto(
+    public async Task<ProductoDto> CreateProducto(
         CreateProductoInput input,
-        [Service] IProductoService productoService)
+        [Service] IProductoService service)
     {
-        return await productoService.CreateAsync(input.ToDto());
+        var dto = new ProductoRequestDto
+        {
+            Nombre = input.Nombre,
+            Descripcion = input.Descripcion ?? string.Empty,
+            Precio = input.Precio,
+            Stock = input.Stock,
+            Imagen = input.Imagen,
+            CategoriaId = input.CategoriaId,
+            ProveedorCodigo = input.ProveedorCodigo
+        };
+        var result = await service.CreateAsync(dto);
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);   // ← errors[] en GraphQL
+
+        return result.Value;
     }
 
-    // Solo administradores pueden actualizar
-    [Authorize(Roles = "Admin")]
-    public async Task<Result<Producto, DomainError>> UpdateProducto(
+    // Actualización parcial (merge de campos null) — también ADMIN
+    [Authorize(policy: "AdminOnly")]
+    public async Task<ProductoDto> UpdateProducto(
         long id,
         UpdateProductoInput input,
-        [Service] IProductoService productoService)
-    {
-        return await productoService.UpdateAsync(id, input.ToDto());
-    }
+        [Service] IProductoService service) { /* … map to ProductoPatchDto … */ }
 
-    // Solo administradores pueden eliminar
-    [Authorize(Roles = "Admin")]
-    public async Task<Result<bool, DomainError>> DeleteProducto(
+    // Eliminación (soft delete) — también ADMIN
+    [Authorize(policy: "AdminOnly")]
+    public async Task<bool> DeleteProducto(
         long id,
-        [Service] IProductoService productoService)
-    {
-        return await productoService.DeleteAsync(id);
-    }
+        [Service] IProductoService service) { /* … */ }
 }
 ```
+
+> 🎓 El mutation es **delgado**: mapea el input al DTO y delega en el
+> servicio (la misma capa que usa REST). Si el `Result` falla se lanza
+> excepción para que el cliente lo vea en `errors`.
 
 ### Proteger Fields Individuales
 
 ```csharp
-public class ProductoType : ObjectType<Producto>
+// Opción "un solo contrato": el type va sobre el DTO, con BindFieldsExplicitly.
+// Un campo solo se expone si se declara aquí; para añadir protección a un
+// campo concreto se usa .Authorize(...) en su descriptor:
+public class ProductoType : ObjectType<ProductoDto>
 {
-    protected override void Configure(IObjectTypeDescriptor<Producto> descriptor)
+    protected override void Configure(IObjectTypeDescriptor<ProductoDto> descriptor)
     {
-        descriptor.Field(p => p.Id)
-            .Type<NonNullType<IdType>>();
+        descriptor.BindFieldsExplicitly();
 
-        descriptor.Field(p => p.Nombre)
-            .Type<NonNullType<StringType>>();
+        descriptor.Field(p => p.Id).Description("Identificador del producto");
+        descriptor.Field(p => p.Nombre).Description("El nombre del producto");
 
-        // Campo solo visible para administradores
-        descriptor.Field(p => p.CostoProveedor)
-            .Type<DecimalType>()
-            .Authorize(new[] { "Admin" });  // ← Solo Admin puede ver este campo
-
-        descriptor.Field(p => p.Categoria)
-            .Type<CategoriaType>();
+        // Ejemplo de campo restringido (si existiera en el DTO):
+        // descriptor.Field(p => p.PrecioCoste).Authorize(new[] { "AdminOnly" });
     }
 }
 ```
 
 ### Proteger Subscriptions
 
+En este proyecto **las suscripciones de productos son públicas** (el catálogo
+de productos también lo es en REST). Si alguna vez quisieras restringirlas,
+el patrón de HotChocolate es añadir `[Authorize]` al resolver:
+
 ```csharp
 public class ProductoSubscription
 {
-    // Subscription requiere JWT válido
-    [Authorize]
+    // Ejemplo: exigir JWT válido en una suscripción
+    // [Authorize]
     [Subscribe]
-    [Topic]
+    [Topic("onProductoCreado")]
     public ProductoCreadoEvent OnProductoCreado(
-        [EventMessage] ProductoCreadoEvent message)
-    {
-        return message;
-    }
-
-    // Subscription con política específica
-    [Authorize(policy: "AdminOnly")]
-    [Subscribe]
-    [Topic]
-    public ProductoEliminadoEvent OnProductoEliminado(
-        [EventMessage] ProductoEliminadoEvent message)
-    {
-        return message;
-    }
+        [EventMessage] ProductoCreadoEvent message) => message;
 }
 ```
 
@@ -556,31 +575,40 @@ query {
 }
 ```
 
-**4. Query con filtros:**
+**4. Query con paginación (argumentos propios, base 1):**
 ```graphql
 query {
-  productos(where: { precio: { gt: 100 } }) {
-    id
-    nombre
-    precio
+  productosPaged(page: 2, size: 5) {
+    items {
+      id
+      nombre
+      precio
+    }
+    totalCount
+    page
+    pageSize
   }
 }
 ```
 
-**5. Query paginada:**
+**5. Query paginada de categorías:**
 ```graphql
 query {
-  productos(first: 10, offset: 0) {
-    nodes {
+  categoriasPaged(page: 1, size: 10) {
+    items {
       id
       nombre
+      descripcion
     }
-    pageInfo {
-      hasNextPage
-    }
+    totalCount
   }
 }
 ```
+
+> **Nota:** este API **no** expone argumentos `where`/`first`/`offset` de
+> HotChocolate Data: los filtros se resuelven en el repositorio (REST
+> `GET /api/productos?precioMax=…`) y GraphQL ofrece paginación explícita
+> con `page`/`size` sobre `productosPaged` y `categoriasPaged`.
 
 ### Tipos de Query en GraphQL
 
@@ -610,78 +638,166 @@ flowchart TD
 
 ## 19.5. TiendaQuery: Consultas del Proyecto
 
-Del archivo `TiendaQuery.cs`:
-
-### Query Raíz
+Del archivo `GraphQL/Queries/TiendaQuery.cs` (versión resumida; el archivo
+real lleva XML doc completo):
 
 ```csharp
-namespace TiendaApi.Apis.GraphQL.Types;
+using System.Security.Claims;
+using HotChocolate;
+using HotChocolate.Authorization;
+using HotChocolate.Types;
+using TiendaApi.Api.Dtos.Categorias;
+using TiendaApi.Api.Dtos.Common;
+using TiendaApi.Api.Dtos.Pedidos;
+using TiendaApi.Api.Dtos.Productos;
+using TiendaApi.Api.Mappers;
+using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Pedidos;
+using TiendaApi.Api.Repositories.Productos;
 
+namespace TiendaApi.Api.GraphQL.Queries;
+
+// 🎓 Seguridad: GraphQL solo expone DTOs, nunca entidades del modelo de
+// escritura. Así el cliente no puede componer consultas arbitrarias sobre
+// la BD interna.
 public class TiendaQuery
 {
-    // Consulta básica: Obtener todos los productos
-    [UseFirstOrDefault]
-    [UseProjection]
-    public IQueryable<Producto> GetProductos(
+    // Productos (público) — devuelve DTOs, no entidades
+    public async Task<IReadOnlyList<ProductoDto>> GetProductos(
         [Service] IProductoRepository productoRepository)
     {
-        return productoRepository.FindAllAsNoTracking();
+        var productos = await productoRepository.FindAllAsync();
+        return productos.ToDtoList().ToList();
     }
 
-    // Obtener producto por ID
-    [UseFirstOrDefault]
-    public async Task<Producto?> GetProducto(
+    public async Task<ProductoDto?> GetProducto(
         long id,
         [Service] IProductoRepository productoRepository)
     {
-        return await productoRepository.FindByIdAsync(id);
+        var producto = await productoRepository.FindByIdAsync(id);
+        return producto?.ToDto();
     }
 
-    // Paginación
-    [UsePaging(MaxPageSize = 100, DefaultPageSize = 10)]
-    public IQueryable<Producto> GetProductosPaged(
-        [Service] IProductoRepository productoRepository)
+    // Paginación: GraphQL usa página BASE 1; el repositorio trabaja en
+    // base 0 (Skip(Page*Size)), así que se convierte aquí.
+    public async Task<PagedResult<ProductoDto>> GetProductosPaged(
+        [Service] IProductoRepository productoRepository,
+        int page = 1,
+        int size = 10)
     {
-        return productoRepository.FindAllAsNoTracking();
+        var filter = new ProductoFilterDto(
+            Nombre: null, Categoria: null, IsDeleted: null,
+            PrecioMax: null, StockMin: null,
+            Page: Math.Max(page - 1, 0), Size: size);
+
+        var result = await productoRepository.FindAllPagedAsync(filter);
+        return new PagedResult<ProductoDto>
+        {
+            Items = result.Items.Select(p => p.ToDto()),
+            TotalCount = result.TotalCount,
+            Page = page,
+            PageSize = size
+        };
     }
 
-    // Categorías
-    [UseFirstOrDefault]
-    [UseProjection]
-    public IQueryable<Categoria> GetCategorias(
-        [Service] ICategoriaRepository categoriaRepository)
+    // Categorías (público): listado, por id y paginado (mismo patrón)
+
+    // ══════════ PEDIDOS (solo queries: sin mutations ni subscriptions) ════
+    // · pedidos    → solo ADMIN (lista completa)
+    // · misPedidos → cualquier autenticado, FILTRADO por su propio claim
+    //                (un usuario jamás ve pedidos ajenos por GraphQL)
+
+    [Authorize(policy: "AdminOnly")]
+    public async Task<IReadOnlyList<PedidoDto>> GetPedidos(
+        [Service] IPedidosRepository pedidosRepository)
     {
-        return categoriaRepository.FindAllAsNoTracking();
+        var pedidos = await pedidosRepository.FindAllAsync();
+        return pedidos.Select(p => p.ToDto()).ToList();
     }
 
-    [UseFirstOrDefault]
-    public async Task<Categoria?> GetCategoria(
-        long id,
-        [Service] ICategoriaRepository categoriaRepository)
+    [Authorize]
+    public async Task<IReadOnlyList<PedidoDto>> GetMisPedidos(
+        ClaimsPrincipal user,          // ← HotChocolate inyecta los claims
+        [Service] IPedidosRepository pedidosRepository)
     {
-        return await categoriaRepository.FindByIdAsync(id);
-    }
+        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (claim is null || !long.TryParse(claim, out var userId))
+            throw new GraphQLException("No se pudo identificar al usuario autenticado (falta el claim NameIdentifier).");
 
-    [UsePaging(MaxPageSize = 100, DefaultPageSize = 10)]
-    public IQueryable<Categoria> GetCategoriasPaged(
-        [Service] ICategoriaRepository categoriaRepository)
-    {
-        return categoriaRepository.FindAllAsNoTracking();
+        var pedidos = await pedidosRepository.FindByUserIdAsync(userId);
+        return pedidos.Select(p => p.ToDto()).ToList();
     }
 }
 ```
+
+> **Nota (HotChocolate 16):** `IResolverContext.User` ya no existe; los
+> claims se inyectan como parámetro `ClaimsPrincipal` del resolver.
+> `misPedidos` nunca lista todos los pedidos: solo consulta
+> `FindByUserIdAsync(userId)` con el userId del JWT.
+
+### Variante CQRS (repo `TiendaDawApi-Cqrs-MediatR-NetCore`)
+
+El contrato GraphQL es **idéntico** (mismos tipos, mismas queries, mismos
+nombres); lo único que cambia es que cada resolver delega en MediatR, igual
+que los controladores REST:
+
+```csharp
+[Authorize(policy: "AdminOnly")]
+public async Task<IReadOnlyList<PedidoDto>> GetPedidos(
+    [Service] IMediator mediator,
+    CancellationToken ct = default)
+{
+    var result = await mediator.Send(new GetAllPedidosListQuery(), ct);
+    if (result.IsFailure)
+        throw new Exception(result.Error.Message);
+
+    return result.Value.ToList();
+}
+
+[Authorize]
+public async Task<IReadOnlyList<PedidoDto>> GetMisPedidos(
+    ClaimsPrincipal user,
+    [Service] IMediator mediator,
+    CancellationToken ct = default)
+{
+    var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (claim is null || !long.TryParse(claim, out var userId))
+        throw new GraphQLException("No se pudo identificar al usuario autenticado (falta el claim NameIdentifier).");
+
+    var result = await mediator.Send(new GetMyPedidosQuery(userId), ct);
+    if (result.IsFailure)
+        throw new Exception(result.Error.Message);
+
+    return result.Value.ToList();
+}
+```
+
+En CQRS, `GetPedidos` usa `GetAllPedidosListQuery` (la misma query que el
+endpoint REST `GET /api/pedidos` del admin) y `misPedidos` usa
+`GetMyPedidosQuery(userId)` (el de `GET /api/pedidos/me`).
+
+### Queries expuestas en la raíz
+
+| Query | Descripción | Auth |
+|-------|-------------|------|
+| `productos` | Todos los productos (DTOs) | Pública |
+| `producto(id)` | Un producto por ID | Pública |
+| `productosPaged(page, size)` | Productos paginados (base 1) | Pública |
+| `categorias` | Todas las categorías | Pública |
+| `categoria(id)` | Una categoría por ID | Pública |
+| `categoriasPaged(page, size)` | Categorías paginadas (base 1) | Pública |
+| `pedidos` | Todos los pedidos | **Solo admin** (`AdminOnly`) |
+| `misPedidos` | Pedidos del usuario autenticado | Cualquier autenticado (claim `NameIdentifier`) |
 
 ### Atributos de HotChocolate
 
 | Atributo | Descripción |
 |----------|-------------|
-| `[UseFirstOrDefault]` | Convierte IQueryable a elemento único |
-| `[UseProjection]` | Permite seleccionar campos específicos |
-| `[UsePaging]` | Añade paginación automática |
-| `[UseFiltering]` | Añade filtrado automático |
-| `[UseSorting]` | Añade ordenamiento automático |
-| `[UseFiltering]` | Añade filtrado automático |
-| `[Service]` | Inyecta dependencias |
+| `[Authorize]` | Requiere usuario autenticado (JWT) |
+| `[Authorize(policy: "...")]` | Requiere una política concreta (p. ej. `AdminOnly`) |
+| `[Service]` | Inyecta dependencias (repositorios, IMediator…) |
+| `ClaimsPrincipal` | Parámetro del resolver con los claims del JWT |
+| `CancellationToken ct` | Parámetro de cancelación (se inyecta solo) |
 
 ---
 
@@ -693,62 +809,32 @@ Del archivo `ProductoType.cs`:
 
 ```csharp
 using HotChocolate.Types;
-using TiendaApi.Apis.Models;
+using TiendaApi.Api.Dtos.Productos;
 
-namespace TiendaApi.Apis.GraphQL.Types;
+namespace TiendaApi.Api.GraphQL.Types;
 
-public class ProductoType : ObjectType<Producto>
+// 🎓 Opción "un solo contrato": el type se construye sobre el DTO (la MISMA
+// salida que REST), con BindFieldsExplicitly. Los campos internos de la
+// entidad (isDeleted, rowVersion, categoriaId…) NO se exponen: si algún día
+// hacen falta, se añaden al DTO y los ganan REST y GraphQL a la vez.
+public class ProductoType : ObjectType<ProductoDto>
 {
-    protected override void Configure(IObjectTypeDescriptor<Producto> descriptor)
+    protected override void Configure(IObjectTypeDescriptor<ProductoDto> descriptor)
     {
-        descriptor.Name("Producto");
-        descriptor.Description("Entidad Producto");
+        descriptor.Name("ProductoDto");
+        descriptor.Description("Producto tal como lo sirve la API (mismo contrato que REST).");
+        descriptor.BindFieldsExplicitly();
 
-        // Definir campos disponibles
-        descriptor.Field(p => p.Id)
-            .Type<NonNullType<IdType>>()
-            .Description("El ID del producto");
-
-        descriptor.Field(p => p.Nombre)
-            .Type<NonNullType<StringType>>()
-            .Description("El nombre del producto");
-
-        descriptor.Field(p => p.Descripcion)
-            .Type<StringType>()
-            .Description("La descripción del producto");
-
-        descriptor.Field(p => p.Precio)
-            .Type<NonNullType<DecimalType>>()
-            .Description("El precio del producto");
-
-        descriptor.Field(p => p.Stock)
-            .Type<NonNullType<IntType>>()
-            .Description("Cantidad en stock");
-
-        descriptor.Field(p => p.Imagen)
-            .Type<StringType>()
-            .Description("URL de la imagen");
-
-        descriptor.Field(p => p.CategoriaId)
-            .Type<NonNullType<IntType>>()
-            .Description("El ID de la categoría");
-
-        descriptor.Field(p => p.CreatedAt)
-            .Type<NonNullType<DateTimeType>>()
-            .Description("Fecha de creación");
-
-        descriptor.Field(p => p.UpdatedAt)
-            .Type<NonNullType<DateTimeType>>()
-            .Description("Fecha de última actualización");
-
-        descriptor.Field(p => p.IsDeleted)
-            .Type<NonNullType<BooleanType>>()
-            .Description("Si el producto está eliminado");
-
-        // Campo con relación a otra entidad
-        descriptor.Field(p => p.Categoria)
-            .Type<CategoriaType>()
-            .Description("La categoría del producto");
+        descriptor.Field(p => p.Id).Description("Identificador del producto");
+        descriptor.Field(p => p.Nombre).Description("El nombre del producto");
+        descriptor.Field(p => p.Descripcion).Description("La descripción del producto");
+        descriptor.Field(p => p.Precio).Description("El precio del producto");
+        descriptor.Field(p => p.Stock).Description("Cantidad en stock");
+        descriptor.Field(p => p.Imagen).Description("URL de la imagen (null si no tiene)");
+        descriptor.Field(p => p.Categoria).Description("La categoría del producto (resumen: id, nombre y descripción)");
+        descriptor.Field(p => p.Proveedor).Description("El proveedor del producto (resumen: código, nombre y descripción; null si no tiene)");
+        descriptor.Field(p => p.CreatedAt).Description("Fecha de creación");
+        descriptor.Field(p => p.UpdatedAt).Description("Fecha de última actualización");
     }
 }
 ```
@@ -759,36 +845,27 @@ Del archivo `CategoriaType.cs`:
 
 ```csharp
 using HotChocolate.Types;
-using TiendaApi.Apis.Models;
+using TiendaApi.Api.Dtos.Categorias;
 
-namespace TiendaApi.Apis.GraphQL.Types;
+namespace TiendaApi.Api.GraphQL.Types;
 
-public class CategoriaType : ObjectType<Categoria>
+// 🎓 Opción "un solo contrato": sobre el DTO, con BindFieldsExplicitly.
+// El campo `productos` de la entidad NO se expone: el listado de productos
+// de una categoría se pide por la query `productos` (REST: GET
+// /api/productos/categoria/{id}), no por navegación anidada.
+public class CategoriaType : ObjectType<CategoriaDto>
 {
-    protected override void Configure(IObjectTypeDescriptor<Categoria> descriptor)
+    protected override void Configure(IObjectTypeDescriptor<CategoriaDto> descriptor)
     {
-        descriptor.Name("Categoria");
-        descriptor.Description("Entidad Categoria");
+        descriptor.Name("CategoriaDto");
+        descriptor.Description("Categoría tal como la sirve la API (mismo contrato que REST).");
+        descriptor.BindFieldsExplicitly();
 
-        descriptor.Field(c => c.Id)
-            .Type<NonNullType<IdType>>()
-            .Description("El ID de la categoría");
-
-        descriptor.Field(c => c.Nombre)
-            .Type<NonNullType<StringType>>()
-            .Description("El nombre de la categoría");
-
-        descriptor.Field(c => c.CreatedAt)
-            .Type<NonNullType<DateTimeType>>()
-            .Description("Fecha de creación");
-
-        descriptor.Field(c => c.UpdatedAt)
-            .Type<NonNullType<DateTimeType>>()
-            .Description("Fecha de última actualización");
-
-        descriptor.Field(c => c.IsDeleted)
-            .Type<NonNullType<BooleanType>>()
-            .Description("Si la categoría está eliminada");
+        descriptor.Field(c => c.Id).Description("El ID de la categoría");
+        descriptor.Field(c => c.Nombre).Description("El nombre de la categoría");
+        descriptor.Field(c => c.Descripcion).Description("La descripción de la categoría");
+        descriptor.Field(c => c.CreatedAt).Description("Fecha de creación");
+        descriptor.Field(c => c.UpdatedAt).Description("Fecha de última actualización");
     }
 }
 ```
@@ -825,42 +902,20 @@ descriptor.Field(p => p.Descripcion)
 
 ## 19.8. GraphiQL: Herramienta de Desarrollo
 
-El proyecto incluye una interfaz GraphiQL para probar las consultas:
-
-```csharp
-app.MapGet("/graphiql", async context =>
-{
-    context.Response.ContentType = "text/html";
-    await context.Response.WriteAsync(@"
-<!DOCTYPE html>
-<html>
-<head>
-    <title>GraphiQL</title>
-    <link href=""https://unpkg.com/graphiql/graphiql.min.css"" rel=""stylesheet"" />
-</head>
-<body style=""margin: 0;"">
-    <div id=""graphiql"" style=""height: 100vh;""></div>
-    <script crossorigin src=""https://unpkg.com/react/umd/react.production.min.js""></script>
-    <script crossorigin src=""https://unpkg.com/react-dom/umd/react-dom.production.min.js""></script>
-    <script crossorigin src=""https://unpkg.com/graphiql/graphiql.min.js""></script>
-    <script>
-        const fetcher = GraphiQL.createFetcher({ url: '/graphql' });
-        ReactDOM.render(
-            React.createElement(GraphiQL, { fetcher: fetcher }),
-            document.getElementById('graphiql')
-        );
-    </script>
-</body>
-</html>");
-});
-```
+HotChocolate sirve GraphiQL en el **mismo endpoint** `/graphql`
+(`app.MapGraphQL()` en `MapGraphQLEndpoints`). No hay endpoint aparte
+`/graphiql`.
 
 ### Acceso a GraphiQL
 
 ```
-Desarrollo: http://localhost:5000/graphiql
-Producción: http://tu-dominio/graphiql
+Desarrollo: http://localhost:5031/graphql
+Producción: https://tu-dominio/graphql   (introspección deshabilitada)
 ```
+
+En desarrollo también puedes probar el esquema con el cliente incluido en
+el repo (`TiendaApi.Clients/graphql-client-js/index.html`) apuntando a
+`http://localhost:5031/graphql`.
 
 ---
 
@@ -899,26 +954,27 @@ query {
 
 ```graphql
 query {
-  productosPaged(first: 10) {
-    nodes {
+  productosPaged(page: 1, size: 10) {
+    items {
       id
       nombre
       precio
     }
-    pageInfo {
-      hasNextPage
-      hasPreviousPage
-    }
     totalCount
+    page
+    pageSize
   }
 }
 ```
 
 ### Con Filtrado
 
+Los filtros viven en REST (`GET /api/productos?precioMax=…`); GraphQL
+ofrece las queries de listado y por ID:
+
 ```graphql
 query {
-  productos(where: { precio: { gt: 100 } }) {
+  productos {
     id
     nombre
     precio
@@ -928,15 +984,8 @@ query {
 
 ### Con Ordenamiento
 
-```graphql
-query {
-  productos(order: [{ precio: DESC }]) {
-    id
-    nombre
-    precio
-  }
-}
-```
+Este API no expone argumentos `order`/`where` de HotChocolate Data: el
+orden lo decide el repositorio (mismo criterio que REST).
 
 ---
 
@@ -946,48 +995,68 @@ Las mutations son operaciones que modifican datos en el servidor. Son el equival
 
 ### Estructura de una Mutation
 
-Una mutation típica sigue el patrón de entrada-salida: recibe un input, procesa la operación, y devuelve un resultado. Esto permite al cliente saber si la operación fue exitosa y obtener los datos actualizados.
+Una mutation típica sigue el patrón de entrada-salida: recibe un input, procesa la operación, y devuelve un resultado. En este proyecto el mutation **no toca repositorios directamente**: es una capa de traducción delgada que mapea el input a un DTO y delega en el servicio (la misma capa que usa REST).
 
 ```csharp
-public class Mutation
+public class ProductoMutation
 {
-    public async Task<Producto> CreateProducto(
+    [Authorize(policy: "AdminOnly")]
+    public async Task<ProductoDto> CreateProducto(
         CreateProductoInput input,
-        [Service] IProductoRepository repository)
+        [Service] IProductoService service)
     {
-        var producto = new Producto
+        var dto = new ProductoRequestDto
+        {
+            Nombre = input.Nombre,
+            Descripcion = input.Descripcion ?? string.Empty,
+            Precio = input.Precio,
+            Stock = input.Stock,
+            Imagen = input.Imagen,
+            CategoriaId = input.CategoriaId,
+            ProveedorCodigo = input.ProveedorCodigo
+        };
+
+        var result = await service.CreateAsync(dto);
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);  // ← errors[] en GraphQL
+
+        return result.Value;
+    }
+
+    [Authorize(policy: "AdminOnly")]
+    public async Task<ProductoDto> UpdateProducto(
+        long id,
+        UpdateProductoInput input,
+        [Service] IProductoService service)
+    {
+        var patch = new ProductoPatchDto
         {
             Nombre = input.Nombre,
             Descripcion = input.Descripcion,
             Precio = input.Precio,
             Stock = input.Stock,
-            CategoriaId = input.CategoriaId
+            Imagen = input.Imagen,
+            CategoriaId = input.CategoriaId,
+            ProveedorCodigo = input.ProveedorCodigo
         };
 
-        return await repository.AddAsync(producto);
+        var result = await service.UpdatePartialAsync(id, patch);  // read-before-write
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);
+
+        return result.Value;
     }
 
-    public async Task<Producto?> UpdateProducto(
-        long id,
-        UpdateProductoInput input,
-        [Service] IProductoRepository repository)
-    {
-        var producto = await repository.FindByIdAsync(id);
-        if (producto == null) return null;
-
-        producto.Nombre = input.Nombre ?? producto.Nombre;
-        producto.Descripcion = input.Descripcion ?? producto.Descripcion;
-        producto.Precio = input.Precio ?? producto.Precio;
-        producto.Stock = input.Stock ?? producto.Stock;
-
-        return await repository.UpdateAsync(producto);
-    }
-
+    [Authorize(policy: "AdminOnly")]
     public async Task<bool> DeleteProducto(
         long id,
-        [Service] IProductoRepository repository)
+        [Service] IProductoService service)
     {
-        return await repository.DeleteAsync(id);
+        var result = await service.DeleteAsync(id);
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);
+
+        return true;
     }
 }
 ```
@@ -997,52 +1066,73 @@ public class Mutation
 Los input types son objetos que agrupan los parámetros de una mutation. Usar input types es preferible a pasar muchos parámetros sueltos porque facilita la evolución del esquema sin romper consultas existentes.
 
 ```csharp
-// Input para crear producto
-public record CreateProductoInput(
-    string Nombre,
-    string? Descripcion,
-    decimal Precio,
-    int Stock,
-    long CategoriaId
-);
+// Inputs del proyecto (GraphQL/Inputs/ProductoInput.cs) — record por clase,
+// todos los campos mutables son init-only. En ambos, ProveedorCodigo es
+// OPCIONAL (null = sin proveedor / no tocar el actual).
+public record CreateProductoInput
+{
+    public string Nombre { get; init; } = string.Empty;
+    public string? Descripcion { get; init; }
+    public decimal Precio { get; init; }
+    public int Stock { get; init; }
+    public string? Imagen { get; init; }
+    public long CategoriaId { get; init; }          // obligatorio, debe existir
+    public string? ProveedorCodigo { get; init; }   // opcional
+}
 
 // Input para actualizar producto (todos los campos son opcionales)
-public record UpdateProductoInput(
-    string? Nombre,
-    string? Descripcion,
-    decimal? Precio,
-    int? Stock
-);
+public record UpdateProductoInput
+{
+    public string? Nombre { get; init; }            // null = no tocar
+    public string? Descripcion { get; init; }
+    public decimal? Precio { get; init; }
+    public int? Stock { get; init; }
+    public string? Imagen { get; init; }
+    public long? CategoriaId { get; init; }
+    public string? ProveedorCodigo { get; init; }
+}
 ```
 
 ### Mutation Completa con Validación
 
-Esta implementación muestra cómo integrar validación y manejo de errores en las mutations, siguiendo el patrón de Result que usa el proyecto.
+Esta implementación muestra cómo integrar validación y manejo de errores en las mutations, siguiendo el patrón de Result que usa el proyecto (el ejemplo real completo está en §19.6 «Proteger Mutations con Roles»):
 
 ```csharp
 public class ProductoMutation
 {
-    public async Task<Result<Producto, DomainError>> CreateProducto(
+    [Authorize(policy: "AdminOnly")]
+    public async Task<ProductoDto> CreateProducto(
         CreateProductoInput input,
         [Service] IProductoService productoService)
     {
-        var dto = new ProductoCreateDto
+        var dto = new ProductoRequestDto
         {
             Nombre = input.Nombre,
-            Descripcion = input.Descripcion,
+            Descripcion = input.Descripcion ?? string.Empty,
             Precio = input.Precio,
             Stock = input.Stock,
-            CategoriaId = input.CategoriaId
+            Imagen = input.Imagen,
+            CategoriaId = input.CategoriaId,
+            ProveedorCodigo = input.ProveedorCodigo
         };
 
-        return await productoService.CreateAsync(dto);
+        var result = await productoService.CreateAsync(dto);
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);   // ← errors[] en GraphQL
+
+        return result.Value;
     }
 
-    public async Task<Result<bool, DomainError>> DeleteProducto(
+    [Authorize(policy: "AdminOnly")]
+    public async Task<bool> DeleteProducto(
         long id,
         [Service] IProductoService productoService)
     {
-        return await productoService.DeleteAsync(id);
+        var result = await productoService.DeleteAsync(id);
+        if (result.IsFailure)
+            throw new Exception(result.Error.Message);
+
+        return true;
     }
 }
 ```
@@ -1050,12 +1140,17 @@ public class ProductoMutation
 ### Registrar Mutations en el Servidor
 
 ```csharp
-builder.Services
+services
     .AddGraphQLServer()
-    .AddQueryType<Query>()
+    .AddQueryType<TiendaQuery>()
     .AddMutationType<ProductoMutation>()  // Añadir mutations
     .AddType<ProductoType>()
-    .AddType<CategoriaType>();
+    .AddType<CategoriaType>()
+    .AddType<ProveedorType>()
+    .AddType<PedidoType>()
+    .AddType<DestinatarioType>()
+    .AddType<DireccionType>()
+    .AddType<PedidoItemType>();
 ```
 
 ### Ejemplos de Mutations en GraphQL
@@ -1174,48 +1269,83 @@ flowchart LR
 
 ### Implementación de Suscripciones
 
+Del archivo `GraphQL/Subscriptions/ProductoSubscription.cs`:
+
 ```csharp
+using HotChocolate;
+using HotChocolate.Types;
+using TiendaApi.Api.GraphQL.Events;
+
+namespace TiendaApi.Api.GraphQL.Subscriptions;
+
 public class ProductoSubscription
 {
     [Subscribe]
-    [Topic]
-    public EventProductoCreated OnProductoCreated(
-        [EventMessage] EventProductoCreated message)
-    {
-        return message;
-    }
-}
+    [Topic("onProductoCreado")]
+    public ProductoCreadoEvent OnProductoCreado(
+        [EventMessage] ProductoCreadoEvent message) => message;
 
-public record EventProductoCreated(
-    long ProductoId,
-    string Nombre,
-    decimal Precio,
-    DateTime CreatedAt
-);
+    [Subscribe]
+    [Topic("onProductoActualizado")]
+    public ProductoActualizadoEvent OnProductoActualizado(
+        [EventMessage] ProductoActualizadoEvent message) => message;
+
+    [Subscribe]
+    [Topic("onProductoEliminado")]
+    public ProductoEliminadoEvent OnProductoEliminado(
+        [EventMessage] ProductoEliminadoEvent message) => message;
+
+    [Subscribe]
+    [Topic("onStockBajo")]
+    public ProductoStockBajoEvent OnStockBajo(
+        [EventMessage] ProductoStockBajoEvent message) => message;
+}
 ```
 
+Los eventos (del archivo `GraphQL/Events/ProductoEvent.cs`) son planos:
+
+```csharp
+public record ProductoCreadoEvent
+{
+    public long ProductoId { get; init; }
+    public string Nombre { get; init; } = string.Empty;
+    public decimal Precio { get; init; }
+    public int Stock { get; init; }
+    public DateTime CreatedAt { get; init; }
+}
+```
+
+> **Nota:** en GraphQL **no hay suscripciones de pedidos**. Los cambios de
+> pedido se transmiten por **WebSocket propio** (`/ws/pedidos`) y
+> **SignalR** (`/hubs/pedidos`), que sí filtran por usuario/rol en el
+> servidor. GraphQL solo suscribe eventos de productos.
+
 ### Registro de Suscripciones
+
+Del archivo `Infrastructures/GraphQLConfig.cs`:
 
 ```csharp
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<Query>()
-    .AddMutationType<Mutation>()
+    .AddAuthorization()
+    .AddQueryType<TiendaQuery>()
+    .AddMutationType<ProductoMutation>()
     .AddSubscriptionType<ProductoSubscription>()
-    .AddWebSocketTransport()
-    .AddInMemorySubscriptions();
+    .AddInMemorySubscriptions()
+    .AddType<ProductoType>()
+    .AddType<CategoriaType>()
+    .AddType<ProveedorType>()
+    .AddType<PedidoType>()
+    .AddType<DestinatarioType>()
+    .AddType<DireccionType>()
+    .AddType<PedidoItemType>()
+    .ModifyOptions(options => options.RemoveUnreachableTypes = true)
+    …;
 ```
 
-### Configuración del Endpoint WebSocket
-
-```csharp
-app.UseWebSockets(new WebSocketOptions
-{
-    KeepAliveInterval = TimeSpan.FromMinutes(2)
-});
-
-app.MapGraphQL();
-```
+`RemoveUnreachableTypes = true` elimina del esquema cualquier tipo
+registrado al que ninguna operación pueda llegar (evita tipos fantasma en
+la introspección).
 
 ### Ejemplo de Suscripción en Cliente
 
@@ -1223,10 +1353,11 @@ app.MapGraphQL();
 
 ```graphql
 subscription OnProductoCreado {
-  onProductoCreated {
+  onProductoCreado {
     productoId
     nombre
     precio
+    stock
     createdAt
   }
 }
@@ -1237,50 +1368,34 @@ subscription OnProductoCreado {
 ```json
 {
   "data": {
-    "onProductoCreated": {
+    "onProductoCreado": {
       "productoId": 11,
       "nombre": "Producto en Tiempo Real",
       "precio": 49.99,
+      "stock": 10,
       "createdAt": "2026-01-17T10:30:00Z"
     }
   }
 }
 ```
 
-### Subscription para Notificaciones por Rol
-
-```csharp
-public class PedidoSubscription
-{
-    [Subscribe]
-    [Topic]
-    public EventPedidoEstadoChanged OnPedidoEstadoChanged(
-        [Topic] long usuarioId,
-        [EventMessage] EventPedidoEstadoChanged message)
-    {
-        return message;
-    }
-}
-
-public record EventPedidoEstadoChanged(
-    long PedidoId,
-    long UsuarioId,
-    string NuevoEstado,
-    DateTime UpdatedAt
-);
-```
-
-### Suscripción Filtrada por Usuario
+### Otras suscripciones disponibles
 
 ```graphql
-subscription OnPedidoUpdate($userId: Long!) {
-  onPedidoEstadoChanged(usuarioId: $userId) {
-    pedidoId
-    nuevoEstado
-    updatedAt
+subscription OnStockBajo {
+  onStockBajo {
+    productoId
+    nombre
+    stockActual
+    umbralStock
+    detectedAt
   }
 }
 ```
+
+También existen `onProductoActualizado` (campos `productoId`, `nombre`,
+`precio`, `stock`, `updatedAt`) y `onProductoEliminado` (`productoId`,
+`deletedAt`).
 
 ---
 
@@ -1338,7 +1453,7 @@ A diferencia de pasar parámetros sueltos, los input types permiten:
 
 **CreateProductoInput:**
 ```csharp
-namespace TiendaApi.Apis.GraphQL.Inputs;
+namespace TiendaApi.Api.GraphQL.Inputs;
 
 public record CreateProductoInput
 {
@@ -1348,6 +1463,7 @@ public record CreateProductoInput
     public int Stock { get; init; }
     public string? Imagen { get; init; }
     public long CategoriaId { get; init; }
+    public string? ProveedorCodigo { get; init; }   // opcional (null = sin proveedor)
 }
 ```
 
@@ -1361,6 +1477,7 @@ public record UpdateProductoInput
     public int? Stock { get; init; }
     public string? Imagen { get; init; }
     public long? CategoriaId { get; init; }
+    public string? ProveedorCodigo { get; init; }   // opcional (null = no tocar)
 }
 ```
 
@@ -1374,6 +1491,7 @@ input CreateProductoInput {
   stock: Int!
   imagen: String
   categoriaId: Long!
+  proveedorCodigo: String
 }
 
 input UpdateProductoInput {
@@ -1383,6 +1501,7 @@ input UpdateProductoInput {
   stock: Int
   imagen: String
   categoriaId: Long
+  proveedorCodigo: String
 }
 ```
 
@@ -1392,7 +1511,7 @@ input UpdateProductoInput {
 |---------|------------|---------------------|
 | Uso | Mutations (entrada) | Queries/Mutations (salida) |
 | Campos | Pueden ser opcionales | Siempre no-nulos en responses |
-| Ejemplo | `CreateProductoInput` | `Producto` |
+| Ejemplo | `CreateProductoInput` | `ProductoDto` |
 
 ---
 
@@ -1488,7 +1607,7 @@ Los **Publishers** son el mecanismo que conecta los eventos con las subscription
 ### IEventPublisher
 
 ```csharp
-namespace TiendaApi.Apis.GraphQL.Publishers;
+namespace TiendaApi.Api.GraphQL.Publishers;
 
 public interface IEventPublisher
 {
@@ -1498,25 +1617,32 @@ public interface IEventPublisher
 
 ### Implementación
 
+Del archivo `GraphQL/Publishers/EventPublisher.cs` (resumen): resuelve un
+ámbito de servicios por publicación para usar el remitente de tópicos
+(HotChocolate lo registra como singleton).
+
 ```csharp
 using HotChocolate.Subscriptions;
 
-namespace TiendaApi.Apis.GraphQL.Publishers;
+namespace TiendaApi.Api.GraphQL.Publishers;
 
 public class EventPublisher : IEventPublisher
 {
-    private readonly ITopicEventSender _eventSender;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public EventPublisher(ITopicEventSender eventSender)
-    {
-        _eventSender = eventSender;
-    }
+    public EventPublisher(IServiceScopeFactory scopeFactory)
+        => _scopeFactory = scopeFactory;
 
     public async Task PublishAsync<T>(string topic, T payload)
     {
-        await _eventSender.SendAsync(topic, payload);
+        using var scope = _scopeFactory.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ITopicEventSender>();
+        await sender.SendAsync(topic, payload);
     }
 }
+
+// Registro (extensión AddGraphQLPubSub, llamada desde GraphQLConfig):
+// services.AddSingleton<IEventPublisher, EventPublisher>();
 ```
 
 ### Integración en el Servicio
@@ -1552,41 +1678,59 @@ public class ProductoService(
     
     // 🎓 El motor vive en ProductoEffects.cs (clase propia inyectada por
     // IProductoEffects); el servicio solo lo llama desde el Tap de arriba.
-    private void EventoSuscripcionProductoCreado(ProductoDto producto)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent
-                {
-                    ProductoId = producto.Id,
-                    Nombre = producto.Nombre,
-                    Precio = producto.Precio,
-                    Stock = producto.Stock,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription");
-            }
-        });
-    }
+    // Internamente (ProductoEffects.cs):
+    //   public void EventoSuscripcionProductoCreado(ProductoDto producto)
+    //   {
+    //       _ = Task.Run(async () =>
+    //       {
+    //           try
+    //           {
+    //               await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent
+    //               {
+    //                   ProductoId = producto.Id,
+    //                   Nombre = producto.Nombre,
+    //                   Precio = producto.Precio,
+    //                   Stock = producto.Stock,
+    //                   CreatedAt = DateTime.UtcNow
+    //               });
+    //           }
+    //           catch (Exception ex)
+    //           {
+    //               logger.LogWarning(ex, "Error publicando evento GraphQL Subscription");
+    //           }
+    //       });
+    //   }
 }
 ```
 
 ### Configuración en GraphQLConfig
 
+Del archivo `Infrastructures/GraphQLConfig.cs`:
+
 ```csharp
-builder.Services
+services.AddGraphQLPubSub();   // ← IEventPublisher (antes del builder)
+
+var builder = services
     .AddGraphQLServer()
+    .AddAuthorization()
     .AddQueryType<TiendaQuery>()
     .AddMutationType<ProductoMutation>()
     .AddSubscriptionType<ProductoSubscription>()
     .AddInMemorySubscriptions()  // ← Necesario para Pub/Sub
     .AddType<ProductoType>()
-    .AddType<CategoriaType>();
+    .AddType<CategoriaType>()
+    .AddType<ProveedorType>()
+    .AddType<PedidoType>()
+    .AddType<DestinatarioType>()
+    .AddType<DireccionType>()
+    .AddType<PedidoItemType>()
+    .ModifyOptions(options => options.RemoveUnreachableTypes = true)
+    .AddMaxExecutionDepthRule(maxAllowedExecutionDepth: 10,
+                              skipIntrospectionFields: true);
+
+// Introspección: solo en desarrollo
+if (!environment.IsDevelopment())
+    builder.DisableIntrospection();
 ```
 
 ---
@@ -1596,13 +1740,13 @@ builder.Services
 ```
 GraphQL/
 ├── Queries/
-│   └── TiendaQuery.cs              # Queries de productos y categorías
+│   └── TiendaQuery.cs              # Queries: productos, categorías y pedidos
 │
 ├── Mutations/
 │   └── ProductoMutation.cs          # Mutations de productos
 │
 ├── Subscriptions/
-│   └── ProductoSubscription.cs      # Suscripciones en tiempo real
+│   └── ProductoSubscription.cs      # Suscripciones en tiempo real (productos)
 │
 ├── Events/
 │   └── ProductoEvent.cs            # Payloads de eventos
@@ -1616,8 +1760,13 @@ GraphQL/
 │   └── EventPublisher.cs           # Implementación Pub/Sub
 │
 └── Types/
-    ├── CategoriaType.cs            # Tipo GraphQL de categoría
-    └── ProductoType.cs              # Tipo GraphQL de producto
+    ├── ProductoType.cs             # Tipo GraphQL de ProductoDto
+    ├── CategoriaType.cs            # Tipo GraphQL de CategoriaDto
+    ├── ProveedorType.cs            # Tipo GraphQL de ProveedorResumenDto
+    ├── PedidoType.cs               # Tipo GraphQL de PedidoDto (solo queries)
+    ├── DestinatarioType.cs         # Tipo GraphQL de DestinatarioDto
+    ├── DireccionType.cs            # Tipo GraphQL de DireccionDto
+    └── PedidoItemType.cs           # Tipo GraphQL de PedidoItemDto
 ```
 
 ### Responsabilidades por Carpeta
@@ -1683,11 +1832,12 @@ await eventPublisher.PublishAsync("onProductoCreado", new ProductoCreadoEvent
 HotChocolate resuelve automáticamente dependencias con `[Service]`:
 
 ```csharp
-public async Task<Producto?> GetProducto(
+public async Task<ProductoDto?> GetProducto(
     long id,
     [Service] IProductoRepository repository)  // ← Inyectado automáticamente
 {
-    return await repository.FindByIdAsync(id);
+    var producto = await repository.FindByIdAsync(id);
+    return producto?.ToDto();
 }
 ```
 
@@ -1745,10 +1895,12 @@ public class ProductoMutation
 |-------|-------------|------|
 | `productos` | Todos los productos | No |
 | `producto(id: Long!)` | Producto por ID | No |
-| `productos(first: Int)` | Productos paginados | No |
+| `productosPaged(page: Int, size: Int)` | Productos paginados (base 1) | No |
 | `categorias` | Todas las categorías | No |
 | `categoria(id: Long!)` | Categoría por ID | No |
-| `categorias(first: Int)` | Categorías paginadas | No |
+| `categoriasPaged(page: Int, size: Int)` | Categorías paginadas (base 1) | No |
+| `pedidos` | Todos los pedidos | **ADMIN** |
+| `misPedidos` | Pedidos del usuario autenticado (claim) | JWT |
 
 ### Mutations Implementadas ✅
 
@@ -1762,10 +1914,10 @@ public class ProductoMutation
 
 | Subscription | Descripción | Auth |
 |--------------|-------------|------|
-| `onProductoCreado` | Notificación cuando se crea un producto | JWT |
-| `onProductoActualizado` | Notificación cuando se actualiza | JWT |
-| `onProductoEliminado` | Notificación cuando se elimina | JWT |
-| `onStockBajo` | Notificación de stock bajo umbral | JWT |
+| `onProductoCreado` | Notificación cuando se crea un producto | No (pública) |
+| `onProductoActualizado` | Notificación cuando se actualiza | No (pública) |
+| `onProductoEliminado` | Notificación cuando se elimina | No (pública) |
+| `onStockBajo` | Notificación de stock bajo umbral | No (pública) |
 
 ### Arquitectura Actual
 
@@ -1777,9 +1929,11 @@ flowchart TD
         S[Subscriptions]
     end
     
-    subgraph "Tipos GraphQL"
-        PT[ProductoType]
-        CT[CategoriaType]
+    subgraph "Tipos GraphQL (sobre DTOs)"
+        PT[ProductoType → ProductoDto]
+        CT[CategoriaType → CategoriaDto]
+        PT2[ProveedorType → ProveedorResumenDto]
+        PTip[PedidoType/DestinatarioType/DireccionType/PedidoItemType]
     end
     
     subgraph "Event System"

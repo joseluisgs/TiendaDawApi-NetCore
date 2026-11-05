@@ -40,6 +40,13 @@ public record CreateProductoInput
     /// </summary>
     /// <example>1</example>
     public long CategoriaId { get; init; }
+
+    /// <summary>
+    /// Código del proveedor (opcional).
+    /// Si se omite, el producto queda sin proveedor asignado.
+    /// </summary>
+    /// <example>Distribuc01</example>
+    public string? ProveedorCodigo { get; init; }
 }
 
 /// <summary>
@@ -90,4 +97,11 @@ public record UpdateProductoInput
     /// </summary>
     /// <example>2</example>
     public long? CategoriaId { get; init; }
+
+    /// <summary>
+    /// Nuevo código de proveedor (opcional).
+    /// Si es null, no se modifica el proveedor actual.
+    /// </summary>
+    /// <example>Distribuc01</example>
+    public string? ProveedorCodigo { get; init; }
 }
