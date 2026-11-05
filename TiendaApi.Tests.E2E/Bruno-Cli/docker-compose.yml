@@ -29,6 +29,7 @@ services:
       - "7 - STORAGE"
       - "10 - GRAPHQL CATEGORÍAS"
       - "11 - GRAPHQL PRODUCTOS"
+      - "17 - GRAPHQL PEDIDOS"
       - "90 - TEARDOWN"
       # environments/docker.bru apunta a host.docker.internal (el localhost del
       # entorno local.bru no es alcanzable desde dentro del contenedor)
