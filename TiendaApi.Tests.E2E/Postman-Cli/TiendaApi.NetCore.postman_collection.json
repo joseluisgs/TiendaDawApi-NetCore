@@ -5620,6 +5620,224 @@
       ]
     },
     {
+      "name": "17 - GRAPHQL PEDIDOS",
+      "item": [
+        {
+          "name": "[072] QUERY - pedidos (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('GraphQL Pedidos Admin - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('GraphQL Pedidos Admin - Devuelve la lista completa', function () {\n  const jsonData = pm.response.json();\n  pm.expect(jsonData.errors).to.be.undefined;\n  pm.expect(jsonData.data.pedidos).to.be.an('array').that.is.not.empty;\n  const primero = jsonData.data.pedidos[0];\n  pm.expect(primero.id).to.be.a('string');\n  pm.expect(primero.userId).to.be.a('number');\n  pm.expect(primero.estado).to.be.a('string');\n  pm.expect(primero.total).to.be.a('number');\n});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { pedidos { id userId estado total } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[073] QUERY - pedidos rol USER - authoriz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('GraphQL pedidos con rol USER - Requiere autorizacion', function () {\n  const jsonData = pm.response.json();\n  pm.expect(jsonData.errors).to.be.an('array').that.is.not.empty;\n  pm.expect(jsonData.errors[0].message.toLowerCase()).to.include('authoriz');\n  pm.expect(jsonData.data).to.not.be.ok;\n});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { pedidos { id } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[074] QUERY - pedidos sin token - authoriz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('GraphQL pedidos sin token - Requiere autorizacion', function () {\n  const jsonData = pm.response.json();\n  pm.expect(jsonData.errors).to.be.an('array').that.is.not.empty;\n  pm.expect(jsonData.errors[0].message.toLowerCase()).to.include('authoriz');\n  pm.expect(jsonData.data).to.not.be.ok;\n});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { pedidos { id } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[075] QUERY - misPedidos (user) - solo suyos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('GraphQL MisPedidos - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('GraphQL MisPedidos - Solo pedidos del usuario autenticado', function () {\n  const jsonData = pm.response.json();\n  pm.expect(jsonData.errors).to.be.undefined;\n  pm.expect(jsonData.data.misPedidos).to.be.an('array');\n  // userToken es de userdaw (id 2, seed): el filtro sale del claim del JWT\n  for (const p of jsonData.data.misPedidos) {\n    pm.expect(p.userId).to.equal(2);\n    pm.expect(p.id).to.be.a('string');\n    pm.expect(p.estado).to.be.a('string');\n  }\n});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { misPedidos { id userId estado } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[076] QUERY - misPedidos sin token - authoriz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('GraphQL misPedidos sin token - Requiere autorizacion', function () {\n  const jsonData = pm.response.json();\n  pm.expect(jsonData.errors).to.be.an('array').that.is.not.empty;\n  pm.expect(jsonData.errors[0].message.toLowerCase()).to.include('authoriz');\n  pm.expect(jsonData.data).to.not.be.ok;\n});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { misPedidos { id } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "90 - TEARDOWN",
       "item": [
         {

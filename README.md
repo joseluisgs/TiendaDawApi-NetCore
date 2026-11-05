@@ -327,9 +327,12 @@ docker compose up --build
 start reports/report.html
 
 # Opción 2: Con Newman local (API ya levantada en :5031)
+# OJO: ejecutar desde el directorio de la colección: newman resuelve los
+# ficheros adjuntos (test-image.png, backup-ejemplo.json) relativos al CWD
 npm install -g newman
-newman run TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_collection.json \
-  -e TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_environment.json \
+cd TiendaApi.Tests.E2E/Postman-Cli
+newman run TiendaApi.NetCore.postman_collection.json \
+  -e TiendaApi.NetCore.postman_environment.json \
   --delay-request 250 \
   -r cli,html,json,junit --reporter-html-export report.html \
   --reporter-json-export report.json \
@@ -349,7 +352,8 @@ newman run TiendaApi.Tests.E2E/Postman-Cli/TiendaApi.NetCore.postman_collection.
 # Opción 1: Con Docker (imagen oficial usebruno/cli; informes en reports/)
 # La colección ejecuta las carpetas del README contra la API del host
 # (host.docker.internal:5031 - ver environments/docker.bru) con delay 250ms
-# (validado empíricamente: 85/85 en ~42s). La API debe estar arriba antes.
+# (validado empíricamente:131/131 peticiones — incluye la carpeta
+# "17 - GRAPHQL PEDIDOS"). La API debe estar arriba antes.
 cd TiendaApi.Tests.E2E/Bruno-Cli
 docker compose run --rm bruno
 start reports/report.html
@@ -359,7 +363,8 @@ npm install -g @usebruno/cli
 cd TiendaApi.Tests.E2E/Bruno-Local
 bru run "0 - SETUP" "1 - AUTHENTICATION" "2 - CATEGORÍAS" "3 - PRODUCTOS" \
   "4 - PEDIDOS (Usuario)" "5 - PEDIDOS (Admin)" "7 - STORAGE" \
-  "10 - GRAPHQL CATEGORÍAS" "11 - GRAPHQL PRODUCTOS" "90 - TEARDOWN" \
+  "10 - GRAPHQL CATEGORÍAS" "11 - GRAPHQL PRODUCTOS" "17 - GRAPHQL PEDIDOS" \
+  "90 - TEARDOWN" \
   --env-file "environments/TiendaApi__NET_-_Environment.json" --delay 250
 # Ejecución sin fallos. Fuera de esta ejecución: "6 - USUARIOS" (no incluida) y
 # "12 - WEBSOCKETS" (la CLI no soporta WS; los cubre el runner Automation nativo)

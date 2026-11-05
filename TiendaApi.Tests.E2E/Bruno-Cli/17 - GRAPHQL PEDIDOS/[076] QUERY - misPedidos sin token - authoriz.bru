@@ -1,0 +1,33 @@
+meta {
+  name: [076] QUERY - misPedidos sin token - authoriz
+  type: graphql
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query { misPedidos { id } }
+}
+
+script:post-response {
+  test("GraphQL MisPedidos NoAuth - Requiere autenticacion", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.an('array').that.is.not.empty;
+      expect(jsonData.errors[0].message.toLowerCase()).to.include('authoriz');
+      expect(jsonData.data).to.not.be.ok;  // data es null en errores de autorizacion
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  GraphQL: misPedidos sin token debe fallar
+}
