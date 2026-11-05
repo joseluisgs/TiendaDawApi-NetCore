@@ -19,7 +19,7 @@
  *     que ÉL haya levantado (si ya estaban corriendo, no se tocan) → no rompe
  *     el entorno de desarrollo.
  *   - Fallback: si `dotnet run` no responde, intenta `docker compose up -d --build`.
- *   - Espera /health primero; si falla acepta /swagger o /api/productos.
+ *   - Espera /health primero; si falla acepta /swagger o /api/v1/productos.
  *   - Rate limit awareness: helper st() → falla CLARO si la API devuelve 429
  *     (100/15s general · 10/min auth · 20/min POST · 200/min graphql).
  *   - Credenciales seed: admin/Admin123!, userdaw/Userdaw123! (iguales en
@@ -39,7 +39,7 @@ const CONFIG = {
   nombre: "TiendaApi .NET · Automation E2E",
   csproj: "TiendaApi.Api/TiendaApi.csproj",
   baseUrl: process.env.BASE_URL || "http://localhost:5031",
-  healthPaths: ["/health", "/swagger", "/api/productos"],
+  healthPaths: ["/health", "/swagger", "/api/v1/productos"],
   env: {
     ASPNETCORE_ENVIRONMENT: "Development",
     ASPNETCORE_URLS: "http://localhost:5031",
@@ -365,7 +365,7 @@ let imagenProductoUrl = null;
 
   // ============================ CATEGORÍAS ============================
   await test("Categorías: GET paged → 200 con items y paginación", async () => {
-    const r = await req("GET", "/api/categorias?page=0&size=2");
+    const r = await req("GET", "/api/v1/categorias?page=0&size=2");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(typeof r.json?.totalCount === "number", "falta totalCount");
@@ -373,19 +373,19 @@ let imagenProductoUrl = null;
   });
 
   await test("Categorías: GET All (sin paginación) → 200 array", async () => {
-    const r = await req("GET", "/api/categorias");
+    const r = await req("GET", "/api/v1/categorias");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items ni array");
   });
 
   await test("Categorías: GET con filtros (nombre) → 200", async () => {
-    const r = await req("GET", "/api/categorias?nombre=Elec&page=0&size=10&sortBy=id&direction=asc");
+    const r = await req("GET", "/api/v1/categorias?nombre=Elec&page=0&size=10&sortBy=id&direction=asc");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items");
   });
 
   await test("Categorías: GET /1 → 200 (semilla)", async () => {
-    const r = await req("GET", "/api/categorias/1");
+    const r = await req("GET", "/api/v1/categorias/1");
     assertEq(st(r), 200, "status");
     assert(r.json?.id !== undefined, "falta id");
   });
@@ -394,7 +394,7 @@ let imagenProductoUrl = null;
     // [OutputCache(Duration=60)] cachea el GET anónimo; la 2ª petición sirve
     // desde caché y lo delata el header Age. (ETag/304 NO está implementado:
     // el middleware no emite ETag; ver doc/README sección caché HTTP.)
-    const url = "/api/categorias?page=0&size=2";
+    const url = "/api/v1/categorias?page=0&size=2";
     const first = await req("GET", url);
     assertEq(st(first), 200, "status inicial");
     const second = await req("GET", url);
@@ -404,20 +404,20 @@ let imagenProductoUrl = null;
   });
 
   await test("Categorías: GET /999999 → 404 con message", async () => {
-    const r = await req("GET", "/api/categorias/999999");
+    const r = await req("GET", "/api/v1/categorias/999999");
     assertEq(st(r), 404, "status");
     assert(r.json?.message, "falta message");
   });
 
   await test("Categorías: POST sin token → 401", async () => {
-    const r = await req("POST", "/api/categorias", {
+    const r = await req("POST", "/api/v1/categorias", {
       body: { nombre: `SinAuth ${ts}`, descripcion: "x" },
     });
     assertEq(st(r), 401, "status");
   });
 
   await test("Categorías: POST rol USER → 403", async () => {
-    const r = await req("POST", "/api/categorias", {
+    const r = await req("POST", "/api/v1/categorias", {
       token: userToken,
       body: { nombre: `UserRol ${ts}`, descripcion: "x" },
     });
@@ -425,7 +425,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Categorías: POST admin → 201 y guarda id", async () => {
-    const r = await req("POST", "/api/categorias", {
+    const r = await req("POST", "/api/v1/categorias", {
       token: adminToken,
       body: { nombre: `Auto Cat ${ts}`, descripcion: "Creada por automation" },
     });
@@ -437,15 +437,15 @@ let imagenProductoUrl = null;
   await test("Categorías: POST nombre duplicado → 409 Conflict", async () => {
     const nombre = `Dup Cat ${ts}`;
     const body = { nombre, descripcion: "Duplicado E2E" };
-    const primero = await req("POST", "/api/categorias", { token: adminToken, body });
+    const primero = await req("POST", "/api/v1/categorias", { token: adminToken, body });
     assertEq(st(primero), 201, "status primer create");
-    const segundo = await req("POST", "/api/categorias", { token: adminToken, body });
+    const segundo = await req("POST", "/api/v1/categorias", { token: adminToken, body });
     assertEq(st(segundo), 409, "status duplicado");
-    await req("DELETE", `/api/categorias/${primero.json.id}`, { token: adminToken });
+    await req("DELETE", `/api/v1/categorias/${primero.json.id}`, { token: adminToken });
   });
 
   await test("Categorías: PUT /999999 → 404", async () => {
-    const r = await req("PUT", "/api/categorias/999999", {
+    const r = await req("PUT", "/api/v1/categorias/999999", {
       token: adminToken,
       body: { nombre: "No existe", descripcion: "x" },
     });
@@ -453,7 +453,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Categorías: PUT /{id} admin → 200", async () => {
-    const r = await req("PUT", `/api/categorias/${categoriaId}`, {
+    const r = await req("PUT", `/api/v1/categorias/${categoriaId}`, {
       token: adminToken,
       body: { nombre: `Auto Cat ${ts} v2`, descripcion: "Actualizada" },
     });
@@ -462,12 +462,12 @@ let imagenProductoUrl = null;
   });
 
   await test("Categorías: DELETE /{id} admin → 204", async () => {
-    const r = await req("DELETE", `/api/categorias/${categoriaId}`, { token: adminToken });
+    const r = await req("DELETE", `/api/v1/categorias/${categoriaId}`, { token: adminToken });
     assertEq(st(r), 204, "status");
   });
 
   await test("Categorías: DELETE /999999 → 404", async () => {
-    const r = await req("DELETE", "/api/categorias/999999", { token: adminToken });
+    const r = await req("DELETE", "/api/v1/categorias/999999", { token: adminToken });
     assertEq(st(r), 404, "status");
   });
 
@@ -477,24 +477,24 @@ let imagenProductoUrl = null;
   let proveedorCodigo = null;
 
   await test("Proveedores: GET sin token → 401", async () => {
-    const r = await req("GET", "/api/proveedores");
+    const r = await req("GET", "/api/v1/proveedores");
     assertEq(st(r), 401, "status");
   });
 
   await test("Proveedores: GET rol USER → 403", async () => {
-    const r = await req("GET", "/api/proveedores", { token: userToken });
+    const r = await req("GET", "/api/v1/proveedores", { token: userToken });
     assertEq(st(r), 403, "status");
   });
 
   await test("Proveedores: GET paged admin → 200 con semilla", async () => {
-    const r = await req("GET", "/api/proveedores?page=0&size=10", { token: adminToken });
+    const r = await req("GET", "/api/v1/proveedores?page=0&size=10", { token: adminToken });
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.json.totalCount >= 3, `semilla esperaba >=3 proveedores, hay ${r.json.totalCount}`);
   });
 
   await test("Proveedores: POST admin sin código → 201 con código de 11 caracteres", async () => {
-    const r = await req("POST", "/api/proveedores", {
+    const r = await req("POST", "/api/v1/proveedores", {
       token: adminToken,
       body: { nombre: `Auto Prov ${ts}`, descripcion: "Creado por automation", contacto: "e2e@tienda.example" },
     });
@@ -504,13 +504,13 @@ let imagenProductoUrl = null;
   });
 
   await test("Proveedores: GET /{codigo} admin → 200", async () => {
-    const r = await req("GET", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    const r = await req("GET", `/api/v1/proveedores/${proveedorCodigo}`, { token: adminToken });
     assertEq(st(r), 200, "status");
     assertEq(r.json?.codigo, proveedorCodigo, "codigo");
   });
 
   await test("Proveedores: POST con código de formato inválido → 400", async () => {
-    const r = await req("POST", "/api/proveedores", {
+    const r = await req("POST", "/api/v1/proveedores", {
       token: adminToken,
       body: { codigo: "no-valido!", nombre: `Invalido ${ts}` },
     });
@@ -519,15 +519,15 @@ let imagenProductoUrl = null;
 
   await test("Proveedores: POST nombre duplicado → 409", async () => {
     const nombre = `Dup Prov ${ts}`;
-    const primero = await req("POST", "/api/proveedores", { token: adminToken, body: { nombre } });
+    const primero = await req("POST", "/api/v1/proveedores", { token: adminToken, body: { nombre } });
     assertEq(st(primero), 201, "status primer create");
-    const segundo = await req("POST", "/api/proveedores", { token: adminToken, body: { nombre } });
+    const segundo = await req("POST", "/api/v1/proveedores", { token: adminToken, body: { nombre } });
     assertEq(st(segundo), 409, "status duplicado");
-    await req("DELETE", `/api/proveedores/${primero.json.codigo}`, { token: adminToken });
+    await req("DELETE", `/api/v1/proveedores/${primero.json.codigo}`, { token: adminToken });
   });
 
   await test("Proveedores: PUT /{codigo} admin → 200", async () => {
-    const r = await req("PUT", `/api/proveedores/${proveedorCodigo}`, {
+    const r = await req("PUT", `/api/v1/proveedores/${proveedorCodigo}`, {
       token: adminToken,
       body: { nombre: `Auto Prov ${ts} v2`, descripcion: "Actualizado" },
     });
@@ -537,17 +537,17 @@ let imagenProductoUrl = null;
 
   await test("Proveedores: DELETE con productos asociados → 422", async () => {
     // Distribuc01 viene de la semilla con productos asignados: no se puede borrar.
-    const r = await req("DELETE", "/api/proveedores/Distribuc01", { token: adminToken });
+    const r = await req("DELETE", "/api/v1/proveedores/Distribuc01", { token: adminToken });
     assertEq(st(r), 422, "status");
   });
 
   await test("Proveedores: DELETE /{codigo} admin → 204", async () => {
-    const r = await req("DELETE", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    const r = await req("DELETE", `/api/v1/proveedores/${proveedorCodigo}`, { token: adminToken });
     assertEq(st(r), 204, "status");
   });
 
   await test("Proveedores: GET /{codigo} tras DELETE → 404", async () => {
-    const r = await req("GET", `/api/proveedores/${proveedorCodigo}`, { token: adminToken });
+    const r = await req("GET", `/api/v1/proveedores/${proveedorCodigo}`, { token: adminToken });
     assertEq(st(r), 404, "status");
   });
 
@@ -556,17 +556,17 @@ let imagenProductoUrl = null;
   // datos se acumulan entre corridas (nunca se afirman cifras absolutas).
 
   await test("Estadisticas: GET sin token → 401", async () => {
-    const r = await req("GET", "/api/estadisticas/resumen");
+    const r = await req("GET", "/api/v1/estadisticas/resumen");
     assertEq(st(r), 401, "status");
   });
 
   await test("Estadisticas: GET rol USER → 403", async () => {
-    const r = await req("GET", "/api/estadisticas/resumen", { token: userToken });
+    const r = await req("GET", "/api/v1/estadisticas/resumen", { token: userToken });
     assertEq(st(r), 403, "status");
   });
 
   await test("Estadisticas: resumen admin → 200 con el shape completo", async () => {
-    const r = await req("GET", "/api/estadisticas/resumen", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/resumen", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assert(d.periodo?.dias >= 1, `dias: ${d.periodo?.dias}`);
@@ -579,7 +579,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: resumen con rango invertido → 400", async () => {
-    const r = await req("GET", "/api/estadisticas/resumen?desde=2026-11-01T00:00:00Z&hasta=2026-01-01T00:00:00Z", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/resumen?desde=2026-11-01T00:00:00Z&hasta=2026-01-01T00:00:00Z", { token: adminToken });
     // El servicio no valida el orden aquí (la ventana se recorta), así que solo se
     // comprueba que no rompe: 200 o 400, nunca un 500.
     assert([200, 400].includes(st(r)), `status ${st(r)}`);
@@ -588,7 +588,7 @@ let imagenProductoUrl = null;
   await test("Estadisticas: resumen con rango amplio → 200 con pedidos (consulta por ventana)", async () => {
     // Cubre FindByRangoFechasAsync con un rango válido: sin él, la ventana se
     // resolvería cargando todo y la consulta acotada quedaría sin probar.
-    const r = await req("GET", "/api/estadisticas/resumen?desde=2020-01-01T00:00:00Z&hasta=2030-01-01T00:00:00Z", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/resumen?desde=2020-01-01T00:00:00Z&hasta=2030-01-01T00:00:00Z", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assert(d.periodo.dias > 3000, `dias: ${d.periodo.dias}`);
@@ -597,7 +597,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: serie por día → 200 con periodos y totales coherentes", async () => {
-    const r = await req("GET", "/api/estadisticas/ventas?agrupar=dia", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/ventas?agrupar=dia", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assertEq(d.agrupar, "dia", "agrupar");
@@ -610,12 +610,12 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: serie con agrupación inválida → 400", async () => {
-    const r = await req("GET", "/api/estadisticas/ventas?agrupar=trimestre", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/ventas?agrupar=trimestre", { token: adminToken });
     assertEq(st(r), 400, "status");
   });
 
   await test("Estadisticas: productos más vendidos → 200 y ranking ordenado", async () => {
-    const r = await req("GET", "/api/estadisticas/productos-mas-vendidos?orden=unidades&top=5", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/productos-mas-vendidos?orden=unidades&top=5", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assertEq(d.orden, "unidades", "orden");
@@ -631,7 +631,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: categorías → 200 con el catálogo completo", async () => {
-    const r = await req("GET", "/api/estadisticas/categorias", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/categorias", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assert(Array.isArray(d.categorias), "categorias es array");
@@ -641,7 +641,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: proveedores → 200 con desglose", async () => {
-    const r = await req("GET", "/api/estadisticas/proveedores", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/proveedores", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assert(Array.isArray(d.proveedores), "proveedores es array");
@@ -652,7 +652,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: estados → 200 con el embudo y los cancelados aparte", async () => {
-    const r = await req("GET", "/api/estadisticas/estados", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/estados", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assert(Array.isArray(d.estados) && d.estados.length >= 1, `estados: ${d.estados?.length}`);
@@ -662,7 +662,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: clientes → 200 con ranking", async () => {
-    const r = await req("GET", "/api/estadisticas/clientes?top=5", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/clientes?top=5", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assert(Array.isArray(d.clientes), "clientes es array");
@@ -673,7 +673,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: inventario → 200 con valor y agotados", async () => {
-    const r = await req("GET", "/api/estadisticas/inventario?stockMax=5", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/inventario?stockMax=5", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assertEq(d.stockMax, 5, "stockMax");
@@ -685,7 +685,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: precios de un producto → 200 con la serie", async () => {
-    const r = await req("GET", "/api/estadisticas/precios?productoId=1", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/precios?productoId=1", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assertEq(d.productoId, 1, "productoId");
@@ -696,7 +696,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Estadisticas: precios de un producto inexistente → 404", async () => {
-    const r = await req("GET", "/api/estadisticas/precios?productoId=999999", { token: adminToken });
+    const r = await req("GET", "/api/v1/estadisticas/precios?productoId=999999", { token: adminToken });
     assertEq(st(r), 404, "status");
   });
 
@@ -705,17 +705,17 @@ let imagenProductoUrl = null;
   // así que el round-trip no cambia datos (sinCambios) y no afecta a otros tests.
 
   await test("Backup: GET formatos sin token → 401", async () => {
-    const r = await req("GET", "/api/backup/formatos");
+    const r = await req("GET", "/api/v1/backup/formatos");
     assertEq(st(r), 401, "status");
   });
 
   await test("Backup: GET formatos rol USER → 403", async () => {
-    const r = await req("GET", "/api/backup/formatos", { token: userToken });
+    const r = await req("GET", "/api/v1/backup/formatos", { token: userToken });
     assertEq(st(r), 403, "status");
   });
 
   await test("Backup: GET formatos admin → 200 con el catálogo", async () => {
-    const r = await req("GET", "/api/backup/formatos", { token: adminToken });
+    const r = await req("GET", "/api/v1/backup/formatos", { token: adminToken });
     assertEq(st(r), 200, "status");
     const d = r.json;
     assert(Array.isArray(d.formatos) && d.formatos.length === 3, `formatos: ${d.formatos?.length}`);
@@ -727,7 +727,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Backup: GET export json → 200 con manifest y entidades", async () => {
-    const r = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    const r = await req("GET", "/api/v1/backup/export?formato=json", { token: adminToken });
     assertEq(st(r), 200, "status");
     assert(String(r.headers.get("content-type")).includes("application/json"), "content-type");
     assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga como fichero");
@@ -743,7 +743,7 @@ let imagenProductoUrl = null;
   await test("Backup: GET export csv → 200 text/csv", async () => {
     // Regresión de E/S síncrona: StreamWriter hace flush sincrono al cerrar y
     // Kestrel lo rechaza si no se habilita; la descarga se cortaba a mitad.
-    const r = await req("GET", "/api/backup/export?formato=csv&entidades=productos", { token: adminToken });
+    const r = await req("GET", "/api/v1/backup/export?formato=csv&entidades=productos", { token: adminToken });
     assertEq(st(r), 200, "status");
     assert(String(r.headers.get("content-type")).includes("text/csv"), "content-type");
     assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga");
@@ -751,36 +751,36 @@ let imagenProductoUrl = null;
   });
 
   await test("Backup: GET export zip → 200 application/zip", async () => {
-    const r = await req("GET", "/api/backup/export?formato=zip", { token: adminToken });
+    const r = await req("GET", "/api/v1/backup/export?formato=zip", { token: adminToken });
     assertEq(st(r), 200, "status");
     assert(String(r.headers.get("content-type")).includes("application/zip"), "content-type");
     assert(String(r.headers.get("content-disposition")).includes("attachment"), "descarga");
   });
 
   await test("Backup: GET export formato desconocido → 400", async () => {
-    const r = await req("GET", "/api/backup/export?formato=xml", { token: adminToken });
+    const r = await req("GET", "/api/v1/backup/export?formato=xml", { token: adminToken });
     assertEq(st(r), 400, "status");
   });
 
   await test("Backup: GET export entidad desconocida → 400", async () => {
-    const r = await req("GET", "/api/backup/export?entidades=usuarios", { token: adminToken });
+    const r = await req("GET", "/api/v1/backup/export?entidades=usuarios", { token: adminToken });
     assertEq(st(r), 400, "status");
   });
 
   await test("Backup: POST import sin fichero → 400", async () => {
-    const r = await req("POST", "/api/backup/import", { token: adminToken, body: {} });
+    const r = await req("POST", "/api/v1/backup/import", { token: adminToken, body: {} });
     assert(st(r) === 400 || st(r) === 415, `status ${st(r)}`);
   });
 
   await test("Backup: POST import dryRun → 200 sin tocar nada", async () => {
     // Se exporta y se reimporta el MISMO contenido: dryRun no escribe y, aun
     // sin dryRun, el round-trip no debería cambiar nada (mismas claves).
-    const descarga = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    const descarga = await req("GET", "/api/v1/backup/export?formato=json", { token: adminToken });
     assertEq(st(descarga), 200, "status del export");
 
     const form = new FormData();
     form.append("file", new Blob([JSON.stringify(descarga.json)], { type: "application/json" }), "backup.json");
-    const r = await req("POST", "/api/backup/import?formato=json&dryRun=true", { token: adminToken, body: form });
+    const r = await req("POST", "/api/v1/backup/import?formato=json&dryRun=true", { token: adminToken, body: form });
     assertEq(st(r), 200, "status del import");
     const informe = r.json;
     assertEq(informe.dryRun, true, "dryRun");
@@ -790,12 +790,12 @@ let imagenProductoUrl = null;
   });
 
   await test("Backup: POST import real (round-trip) → 200 completo", async () => {
-    const descarga = await req("GET", "/api/backup/export?formato=json", { token: adminToken });
+    const descarga = await req("GET", "/api/v1/backup/export?formato=json", { token: adminToken });
     assertEq(st(descarga), 200, "status del export");
 
     const form = new FormData();
     form.append("file", new Blob([JSON.stringify(descarga.json)], { type: "application/json" }), "backup.json");
-    const r = await req("POST", "/api/backup/import?formato=json", { token: adminToken, body: form });
+    const r = await req("POST", "/api/v1/backup/import?formato=json", { token: adminToken, body: form });
     assertEq(st(r), 200, "status del import");
     const informe = r.json;
     assertEq(informe.dryRun, false, "dryRun");
@@ -809,20 +809,20 @@ let imagenProductoUrl = null;
   await test("Backup: POST import con formato desconocido → 400", async () => {
     const form = new FormData();
     form.append("file", new Blob(["<xml/>"], { type: "application/xml" }), "backup.xml");
-    const r = await req("POST", "/api/backup/import?formato=xml", { token: adminToken, body: form });
+    const r = await req("POST", "/api/v1/backup/import?formato=xml", { token: adminToken, body: form });
     assertEq(st(r), 400, "status");
   });
 
   // ============================ PRODUCTOS ============================
   await test("Productos: GET paged → 200 con semilla", async () => {
-    const r = await req("GET", "/api/productos?page=0&size=2");
+    const r = await req("GET", "/api/v1/productos?page=0&size=2");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.json.totalCount >= 3, `semilla esperaba >=3 productos, hay ${r.json.totalCount}`);
   });
 
   await test("Productos: GET /{id} trae categoria y proveedor anidados", async () => {
-    const r = await req("GET", "/api/productos/1");
+    const r = await req("GET", "/api/v1/productos/1");
     assertEq(st(r), 200, "status");
     assert(r.json?.categoria?.id > 0, "falta categoria.id");
     assert(typeof r.json?.categoria?.nombre === "string" && r.json.categoria.nombre.length > 0, "falta categoria.nombre");
@@ -835,45 +835,45 @@ let imagenProductoUrl = null;
   });
 
   await test("Productos: GET All (sin paginación) → 200 array", async () => {
-    const r = await req("GET", "/api/productos");
+    const r = await req("GET", "/api/v1/productos");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items ?? r.json), "respuesta sin items ni array");
   });
 
   await test("Productos: GET paged con filtros (precioMax) → 200", async () => {
-    const r = await req("GET", "/api/productos?precioMax=1000&page=0&size=2");
+    const r = await req("GET", "/api/v1/productos?precioMax=1000&page=0&size=2");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.json.items.every((p) => p.precio <= 1000), "filtro precioMax no aplicado");
   });
 
   await test("Productos: GET /1 → 200 (semilla)", async () => {
-    const r = await req("GET", "/api/productos/1");
+    const r = await req("GET", "/api/v1/productos/1");
     assertEq(st(r), 200, "status");
     assert(r.json?.id !== undefined, "falta id");
   });
 
   await test("Productos: GET /999999 → 404 con message", async () => {
-    const r = await req("GET", "/api/productos/999999");
+    const r = await req("GET", "/api/v1/productos/999999");
     assertEq(st(r), 404, "status");
     assert(r.json?.message, "falta message");
   });
 
   await test("Productos: GET /categoria/1 → 200 array", async () => {
-    const r = await req("GET", "/api/productos/categoria/1");
+    const r = await req("GET", "/api/v1/productos/categoria/1");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json), "no es array");
   });
 
   await test("Productos: POST sin token → 401", async () => {
-    const r = await req("POST", "/api/productos", {
+    const r = await req("POST", "/api/v1/productos", {
       body: { nombre: "SinAuth Prod", precio: 10, stock: 1, categoriaId: 1 },
     });
     assertEq(st(r), 401, "status");
   });
 
   await test("Productos: POST precio 0 → 400 (validación)", async () => {
-    const r = await req("POST", "/api/productos", {
+    const r = await req("POST", "/api/v1/productos", {
       token: adminToken,
       body: { nombre: `Precio cero ${ts}`, descripcion: "x", precio: 0, stock: 1, categoriaId: 1 },
     });
@@ -881,7 +881,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Productos: POST admin → 201 y guarda id", async () => {
-    const r = await req("POST", "/api/productos", {
+    const r = await req("POST", "/api/v1/productos", {
       token: adminToken,
       body: {
         nombre: `Auto Prod ${ts}`, descripcion: "Creado por automation",
@@ -890,7 +890,7 @@ let imagenProductoUrl = null;
     });
 
   await test("Productos: POST con categoriaId inexistente → 400", async () => {
-    const r = await req("POST", "/api/productos", {
+    const r = await req("POST", "/api/v1/productos", {
       token: adminToken,
       body: { nombre: `OrfCat ${ts}`, descripcion: "categoria inexistente", precio: 5, stock: 1, categoriaId: 999999 },
     });
@@ -902,7 +902,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Productos: PUT /{id} → 200", async () => {
-    const r = await req("PUT", `/api/productos/${productoId}`, {
+    const r = await req("PUT", `/api/v1/productos/${productoId}`, {
       token: adminToken,
       body: {
         nombre: `Auto Prod ${ts} v2`, descripcion: "Actualizado",
@@ -914,7 +914,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Productos: PATCH /{id} (parcial) → 200", async () => {
-    const r = await req("PATCH", `/api/productos/${productoId}`, {
+    const r = await req("PATCH", `/api/v1/productos/${productoId}`, {
       token: adminToken,
       body: { precio: 24.99, stock: 3 },
     });
@@ -923,7 +923,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Productos: PATCH /{id}/imagen sin archivo → 400", async () => {
-    const r = await req("PATCH", `/api/productos/${productoId}/imagen`, { token: adminToken });
+    const r = await req("PATCH", `/api/v1/productos/${productoId}/imagen`, { token: adminToken });
     assertEq(st(r), 400, "status");
     assert(r.json?.errors?.image || r.json?.title, "falta errors.image/title");
   });
@@ -935,27 +935,27 @@ let imagenProductoUrl = null;
     );
     const fd = new FormData();
     fd.append("image", new Blob([png], { type: "image/png" }), `auto_${ts}.png`);
-    const r = await req("PATCH", `/api/productos/${productoId}/imagen`, { body: fd, token: adminToken });
+    const r = await req("PATCH", `/api/v1/productos/${productoId}/imagen`, { body: fd, token: adminToken });
     assertEq(st(r), 200, "status");
     assert(r.json?.imagen, "falta campo imagen");
     imagenProductoUrl = r.json.imagen;
   });
 
   await test("Productos: DELETE /{id} → 204", async () => {
-    const r = await req("DELETE", `/api/productos/${productoId}`, { token: adminToken });
+    const r = await req("DELETE", `/api/v1/productos/${productoId}`, { token: adminToken });
     assertEq(st(r), 204, "status");
   });
 
   // ============================ PEDIDOS (USUARIO) ============================
   await test("Pedidos user: POST /me sin auth → 401", async () => {
-    const r = await req("POST", "/api/pedidos/me", {
+    const r = await req("POST", "/api/v1/pedidos/me", {
       body: { destinatario: dest("noauth"), items: [{ productoId: 1, cantidad: 1, precioUnitario: 99.99 }] },
     });
     assertEq(st(r), 401, "status");
   });
 
   await test("Pedidos user: POST /me → 201 y guarda id", async () => {
-    const r = await req("POST", "/api/pedidos/me", {
+    const r = await req("POST", "/api/v1/pedidos/me", {
       token: userToken,
       body: { destinatario: dest("user"), items: [{ productoId: 1, cantidad: 2, precioUnitario: 99.99 }] },
     });
@@ -967,26 +967,26 @@ let imagenProductoUrl = null;
   });
 
   await test("Pedidos user: GET /me → 200 array", async () => {
-    const r = await req("GET", "/api/pedidos/me", { token: userToken });
+    const r = await req("GET", "/api/v1/pedidos/me", { token: userToken });
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json), "no es array");
   });
 
   await test("Pedidos user: GET /me/paged → 200 paginado", async () => {
-    const r = await req("GET", "/api/pedidos/me/paged?page=1&size=2", { token: userToken });
+    const r = await req("GET", "/api/v1/pedidos/me/paged?page=1&size=2", { token: userToken });
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(typeof r.json?.totalCount === "number", "falta totalCount");
   });
 
   await test("Pedidos user: GET /me/{id} → 200", async () => {
-    const r = await req("GET", `/api/pedidos/me/${pedidoId}`, { token: userToken });
+    const r = await req("GET", `/api/v1/pedidos/me/${pedidoId}`, { token: userToken });
     assertEq(st(r), 200, "status");
     assertEq(r.json?.id, pedidoId, "id");
   });
 
   await test("Pedidos user: PUT /me/{id} → 200 (PENDIENTE)", async () => {
-    const r = await req("PUT", `/api/pedidos/me/${pedidoId}`, {
+    const r = await req("PUT", `/api/v1/pedidos/me/${pedidoId}`, {
       token: userToken,
       body: { direccionEnvio: "Actualizado desde automation" },
     });
@@ -996,12 +996,12 @@ let imagenProductoUrl = null;
 
   await test("Pedidos user: GET /me/{id} de otro usuario → 403 Forbidden", async () => {
     assert(autoToken, "falta el token del signup automático");
-    const r = await req("GET", `/api/pedidos/me/${pedidoId}`, { token: autoToken });
+    const r = await req("GET", `/api/v1/pedidos/me/${pedidoId}`, { token: autoToken });
     assertEq(st(r), 403, "status (pedido de otro usuario)");
   });
 
   await test("Pedidos user: PUT /me/{id} de otro usuario → 403 Forbidden", async () => {
-    const r = await req("PUT", `/api/pedidos/me/${pedidoId}`, {
+    const r = await req("PUT", `/api/v1/pedidos/me/${pedidoId}`, {
       token: autoToken,
       body: { direccionEnvio: "Intento de edicion ajena" },
     });
@@ -1009,12 +1009,12 @@ let imagenProductoUrl = null;
   });
 
   await test("Pedidos user: GET /me/{id} inexistente → 404", async () => {
-    const r = await req("GET", "/api/pedidos/me/999999999999999999999999", { token: userToken });
+    const r = await req("GET", "/api/v1/pedidos/me/999999999999999999999999", { token: userToken });
     assertEq(st(r), 404, "status");
   });
 
   await test("Pedidos user: PUT /me/{id} inexistente → 404", async () => {
-    const r = await req("PUT", "/api/pedidos/me/999999999999999999999999", {
+    const r = await req("PUT", "/api/v1/pedidos/me/999999999999999999999999", {
       token: userToken,
       body: { direccionEnvio: "No existe" },
     });
@@ -1022,7 +1022,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Pedidos user: POST /me con producto inexistente → 404", async () => {
-    const r = await req("POST", "/api/pedidos/me", {
+    const r = await req("POST", "/api/v1/pedidos/me", {
       token: userToken,
       body: { destinatario: dest("invalido"), items: [{ productoId: 999999, cantidad: 1, precioUnitario: 9.99 }] },
     });
@@ -1030,48 +1030,48 @@ let imagenProductoUrl = null;
   });
 
   await test("Pedidos user: DELETE /me/{id} (pedido extra) → 204", async () => {
-    const post = await req("POST", "/api/pedidos/me", {
+    const post = await req("POST", "/api/v1/pedidos/me", {
       token: userToken,
       body: { destinatario: dest("cancel"), items: [{ productoId: 1, cantidad: 1, precioUnitario: 99.99 }] },
     });
     assertEq(st(post), 201, "POST extra");
     assert(post.json?.id, "falta id del pedido extra");
-    const r = await req("DELETE", `/api/pedidos/me/${post.json.id}`, { token: userToken });
+    const r = await req("DELETE", `/api/v1/pedidos/me/${post.json.id}`, { token: userToken });
     assertEq(st(r), 204, "status");
   });
 
   // ============================ PEDIDOS (ADMIN) ============================
   await test("Pedidos admin: GET / sin token → 401", async () => {
-    const r = await req("GET", "/api/pedidos");
+    const r = await req("GET", "/api/v1/pedidos");
     assertEq(st(r), 401, "status");
   });
 
   await test("Pedidos admin: GET / rol USER → 403", async () => {
-    const r = await req("GET", "/api/pedidos", { token: userToken });
+    const r = await req("GET", "/api/v1/pedidos", { token: userToken });
     assertEq(st(r), 403, "status");
   });
 
   await test("Pedidos admin: GET / rol ADMIN → 200 array", async () => {
-    const r = await req("GET", "/api/pedidos", { token: adminToken });
+    const r = await req("GET", "/api/v1/pedidos", { token: adminToken });
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json), "no es array");
   });
 
   await test("Pedidos admin: GET /paged → 200 con header Link", async () => {
-    const r = await req("GET", "/api/pedidos/paged?page=1&size=2", { token: adminToken });
+    const r = await req("GET", "/api/v1/pedidos/paged?page=1&size=2", { token: adminToken });
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.headers.get("link"), "falta header Link");
   });
 
   await test("Pedidos admin: GET /{id} → 200", async () => {
-    const r = await req("GET", `/api/pedidos/${pedidoId}`, { token: adminToken });
+    const r = await req("GET", `/api/v1/pedidos/${pedidoId}`, { token: adminToken });
     assertEq(st(r), 200, "status");
     assertEq(r.json?.id, pedidoId, "id");
   });
 
   await test("Pedidos admin: PUT /{id}/estado → 200 ENVIADO", async () => {
-    const r = await req("PUT", `/api/pedidos/${pedidoId}/estado`, {
+    const r = await req("PUT", `/api/v1/pedidos/${pedidoId}/estado`, {
       token: adminToken,
       body: { estado: "ENVIADO" },
     });
@@ -1080,7 +1080,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Pedidos admin: PUT /{id} → 200 (actualizar completo)", async () => {
-    const r = await req("PUT", `/api/pedidos/${pedidoId}`, {
+    const r = await req("PUT", `/api/v1/pedidos/${pedidoId}`, {
       token: adminToken,
       body: { estado: "ENTREGADO", direccionEnvio: "Actualizado completo desde automation" },
     });
@@ -1089,12 +1089,12 @@ let imagenProductoUrl = null;
   });
 
   await test("Pedidos admin: DELETE /{id} → 204", async () => {
-    const r = await req("DELETE", `/api/pedidos/${pedidoId}`, { token: adminToken });
+    const r = await req("DELETE", `/api/v1/pedidos/${pedidoId}`, { token: adminToken });
     assertEq(st(r), 204, "status");
   });
 
   await test("Pedidos admin: POST /me crea pedido propio → 201 PENDIENTE", async () => {
-    const r = await req("POST", "/api/pedidos/me", {
+    const r = await req("POST", "/api/v1/pedidos/me", {
       token: adminToken,
       body: {
         destinatario: {
@@ -1108,41 +1108,41 @@ let imagenProductoUrl = null;
     });
     assertEq(st(r), 201, "status");
     assertEq(r.json?.estado, "PENDIENTE", "estado");
-    if (r.json?.id) { await req("DELETE", `/api/pedidos/me/${r.json.id}`, { token: adminToken }); }
+    if (r.json?.id) { await req("DELETE", `/api/v1/pedidos/me/${r.json.id}`, { token: adminToken }); }
   });
 
   // ============================ USERS (ADMIN) ============================
   await test("Users admin: GET / sin token → 401", async () => {
-    const r = await req("GET", "/api/users");
+    const r = await req("GET", "/api/v1/users");
     assertEq(st(r), 401, "status");
   });
 
   await test("Users admin: GET / rol USER → 403", async () => {
-    const r = await req("GET", "/api/users", { token: userToken });
+    const r = await req("GET", "/api/v1/users", { token: userToken });
     assertEq(st(r), 403, "status");
   });
 
   await test("Users admin: GET / rol ADMIN → 200 paginado", async () => {
-    const r = await req("GET", "/api/users?page=0&size=5", { token: adminToken });
+    const r = await req("GET", "/api/v1/users?page=0&size=5", { token: adminToken });
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json?.items), "items no es array");
     assert(r.json.totalCount >= 2, "semilla esperaba >=2 usuarios");
   });
 
   await test("Users admin: GET /999999 → 404", async () => {
-    const r = await req("GET", "/api/users/999999", { token: adminToken });
+    const r = await req("GET", "/api/v1/users/999999", { token: adminToken });
     assertEq(st(r), 404, "status");
   });
 
   await test("Users admin: GET /{id} → 200 con datos", async () => {
     assert(userIdSignup, "falta el id del signup automático");
-    const r = await req("GET", `/api/users/${userIdSignup}`, { token: adminToken });
+    const r = await req("GET", `/api/v1/users/${userIdSignup}`, { token: adminToken });
     assertEq(st(r), 200, "status");
     assertEq(r.json?.id, userIdSignup, "id");
   });
 
   await test("Users admin: POST → 201 y guarda id", async () => {
-    const r = await req("POST", "/api/users", {
+    const r = await req("POST", "/api/v1/users", {
       token: adminToken,
       body: { username: `autoemp_${ts}`, email: `autoemp_${ts}@test.com`, password: "User1234", role: "USER" },
     });
@@ -1153,7 +1153,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Users admin: PUT /{id} → 200", async () => {
-    const r = await req("PUT", `/api/users/${userIdCreado}`, {
+    const r = await req("PUT", `/api/v1/users/${userIdCreado}`, {
       token: adminToken,
       body: { email: `autoemp_upd_${ts}@test.com` },
     });
@@ -1162,7 +1162,7 @@ let imagenProductoUrl = null;
   });
 
   await test("Users admin: PATCH /{id}/avatar → 200", async () => {
-    const r = await req("PATCH", `/api/users/${userIdCreado}/avatar`, {
+    const r = await req("PATCH", `/api/v1/users/${userIdCreado}/avatar`, {
       token: adminToken,
       body: { avatarUrl: "https://ejemplo.com/avatar.jpg" },
     });
@@ -1171,21 +1171,21 @@ let imagenProductoUrl = null;
   });
 
   await test("Users admin: DELETE /{id} → 204", async () => {
-    const r = await req("DELETE", `/api/users/${userIdCreado}`, { token: adminToken });
+    const r = await req("DELETE", `/api/v1/users/${userIdCreado}`, { token: adminToken });
     assertEq(st(r), 204, "status");
   });
 
   // ============================ USERS (PERFIL) ============================
   await test("Users perfil: GET /me/profile → 200", async () => {
-    const r = await req("GET", "/api/users/me/profile", { token: userToken });
+    const r = await req("GET", "/api/v1/users/me/profile", { token: userToken });
     assertEq(st(r), 200, "status");
     assertEq(r.json?.username, CONFIG.user.username, "username");
   });
 
   await test("Users perfil: PUT /me/profile → 200 (email actual)", async () => {
-    const get = await req("GET", "/api/users/me/profile", { token: userToken });
+    const get = await req("GET", "/api/v1/users/me/profile", { token: userToken });
     assertEq(st(get), 200, "GET previo");
-    const r = await req("PUT", "/api/users/me/profile", {
+    const r = await req("PUT", "/api/v1/users/me/profile", {
       token: userToken,
       body: { email: get.json.email }, // sin cambiar datos: idempotente
     });
@@ -1194,12 +1194,12 @@ let imagenProductoUrl = null;
   });
 
   await test("Users perfil: GET /me/profile sin token → 401", async () => {
-    const r = await req("GET", "/api/users/me/profile");
+    const r = await req("GET", "/api/v1/users/me/profile");
     assertEq(st(r), 401, "status");
   });
 
   await test("Users perfil: PATCH /me/profile/avatar → 200", async () => {
-    const r = await req("PATCH", "/api/users/me/profile/avatar", {
+    const r = await req("PATCH", "/api/v1/users/me/profile/avatar", {
       token: userToken,
       body: { avatarUrl: "https://ejemplo.com/mi-avatar.jpg" },
     });
@@ -1213,7 +1213,7 @@ let imagenProductoUrl = null;
     });
     assertEq(st(su), 201, "signup dedicada");
     assert(su.json?.token, "falta token de la cuenta dedicada");
-    const r = await req("DELETE", "/api/users/me/profile", { token: su.json.token });
+    const r = await req("DELETE", "/api/v1/users/me/profile", { token: su.json.token });
     assertEq(st(r), 204, "status");
   });
 
@@ -1409,7 +1409,7 @@ let imagenProductoUrl = null;
   await test("Realtime WS: /ws/productos (público) recibe broadcast al crear producto", async () => {
     const sock = await wsOpen(wsUrl("/ws/productos"));
     const waiting = wsNextMessage(sock, 6000);
-    const r = await req("POST", "/api/productos", {
+    const r = await req("POST", "/api/v1/productos", {
       token: adminToken,
       body: { nombre: `WS ${ts}`, descripcion: "Broadcast E2E", precio: 7.77, stock: 1, categoriaId: 1 },
     });
@@ -1418,7 +1418,7 @@ let imagenProductoUrl = null;
     assert(msg.includes('"entity":"productos"'), `mensaje inesperado: ${msg.slice(0, 150)}`);
     assert(msg.includes(String(r.json.id)) || msg.includes(`WS ${ts}`),
       `el broadcast no contiene el producto creado: ${msg.slice(0, 200)}`);
-    const del = await req("DELETE", `/api/productos/${r.json.id}`, { token: adminToken });
+    const del = await req("DELETE", `/api/v1/productos/${r.json.id}`, { token: adminToken });
     assertEq(st(del), 204, "cleanup");
     sock.close();
   });
@@ -1444,7 +1444,7 @@ let imagenProductoUrl = null;
     assert(hs.includes("{}"), `handshake inesperado: ${hs.slice(0, 120)}`);
     // Suscripción implícita: el hub emite a Clients.All; esperamos la invocación
     const waiting = wsNextMessage(sock, 6000);
-    const r = await req("POST", "/api/productos", {
+    const r = await req("POST", "/api/v1/productos", {
       token: adminToken,
       body: { nombre: `SIGNALR ${ts}`, descripcion: "Invocación E2E", precio: 8.88, stock: 1, categoriaId: 1 },
     });
@@ -1453,7 +1453,7 @@ let imagenProductoUrl = null;
     assert(msg.includes("ProductoCreado"), `esperaba invocación ProductoCreado: ${msg.slice(0, 200)}`);
     assert(msg.includes(String(r.json.id)) || msg.includes(`SIGNALR ${ts}`),
       `la invocación no contiene el producto: ${msg.slice(0, 200)}`);
-    const del = await req("DELETE", `/api/productos/${r.json.id}`, { token: adminToken });
+    const del = await req("DELETE", `/api/v1/productos/${r.json.id}`, { token: adminToken });
     assertEq(st(del), 204, "cleanup");
     sock.close();
   });
@@ -1478,7 +1478,7 @@ let imagenProductoUrl = null;
   let precioNuevo = null;
 
   await test("Historial: GET serie seed (anon) 200 con >=3 puntos ordenados", async () => {
-    const r = await req("GET", "/api/productos/1/historial-precios?limit=50");
+    const r = await req("GET", "/api/v1/productos/1/historial-precios?limit=50");
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json), "no es array");
     assert(r.json.length >= 3, `la semilla esperaba >=3 puntos, hay ${r.json.length}`);
@@ -1491,13 +1491,13 @@ let imagenProductoUrl = null;
   });
 
   await test("Historial: GET rango invertido 400 con errors.desde", async () => {
-    const r = await req("GET", "/api/productos/1/historial-precios?desde=2026-10-10&hasta=2026-09-01");
+    const r = await req("GET", "/api/v1/productos/1/historial-precios?desde=2026-10-10&hasta=2026-09-01");
     assertEq(st(r), 400, "status");
     assert(r.json?.errors?.desde, `falta errors.desde: ${r.text.slice(0, 150)}`);
   });
 
   await test("Historial: GET id inexistente 404 (lo decide PostgreSQL)", async () => {
-    const r = await req("GET", "/api/productos/999999/historial-precios");
+    const r = await req("GET", "/api/v1/productos/999999/historial-precios");
     assertEq(st(r), 404, "status");
     assert(r.json?.message, "falta message");
   });
@@ -1506,10 +1506,10 @@ let imagenProductoUrl = null;
     // Precio garantizado DISTINTO al actual: el historial ahora solo registra
     // cambios reales de precio (no eventos de edicion), asi que leemos el
     // precio vigente y variamos - random puro podria coincidir y no habria punto.
-    const act = await req("GET", "/api/productos/1");
+    const act = await req("GET", "/api/v1/productos/1");
     assertEq(st(act), 200, "GET precio actual");
     precioNuevo = Math.round((act.json.precio + 1 + Math.random() * 500) * 100) / 100;
-    const put = await req("PUT", "/api/productos/1", {
+    const put = await req("PUT", "/api/v1/productos/1", {
       token: adminToken,
       body: {
         nombre: "Laptop Dell XPS 15", descripcion: "Laptop de alto rendimiento",
@@ -1519,7 +1519,7 @@ let imagenProductoUrl = null;
     assertEq(st(put), 200, "status PUT");
     assertEq(put.json?.precio, precioNuevo, "precio del PUT");
 
-    const r = await req("GET", "/api/productos/1/historial-precios?limit=50");
+    const r = await req("GET", "/api/v1/productos/1/historial-precios?limit=50");
     assertEq(st(r), 200, "status GET serie");
     assert(r.json.length >= serieAntes + 1,
       `la serie no crecio tras el update (${serieAntes} -> ${r.json.length})`);
@@ -1529,13 +1529,13 @@ let imagenProductoUrl = null;
 
   await test("Feed: POST vista de 3 productos 204 cada una", async () => {
     for (const pid of [1, 3, 2]) {
-      const r = await req("POST", `/api/productos/${pid}/vista`, { token: userToken });
+      const r = await req("POST", `/api/v1/productos/${pid}/vista`, { token: userToken });
       assertEq(st(r), 204, `status POST vista ${pid}`);
     }
   });
 
   await test("Feed: GET /me/feed 200 con <=20 entradas ordenadas y nombre copiado", async () => {
-    const r = await req("GET", "/api/users/me/feed", { token: userToken });
+    const r = await req("GET", "/api/v1/users/me/feed", { token: userToken });
     assertEq(st(r), 200, "status");
     assert(Array.isArray(r.json), "no es array");
     assert(r.json.length >= 3, `esperaba al menos las 3 vistas del flujo, hay ${r.json.length}`);
@@ -1549,25 +1549,25 @@ let imagenProductoUrl = null;
   });
 
   await test("Feed: GET /me/feed?limit=5 acota la particion a 5", async () => {
-    const r = await req("GET", "/api/users/me/feed?limit=5", { token: userToken });
+    const r = await req("GET", "/api/v1/users/me/feed?limit=5", { token: userToken });
     assertEq(st(r), 200, "status");
     assert(r.json.length <= 5, `limit=5 excedido: ${r.json.length}`);
   });
 
   await test("Feed: GET /me/feed sin token 401", async () => {
-    const r = await req("GET", "/api/users/me/feed");
+    const r = await req("GET", "/api/v1/users/me/feed");
     assertEq(st(r), 401, "status");
   });
 
   await test("Feed: POST vista de producto inexistente 404", async () => {
-    const r = await req("POST", "/api/productos/999999/vista", { token: userToken });
+    const r = await req("POST", "/api/v1/productos/999999/vista", { token: userToken });
     assertEq(st(r), 404, "status");
   });
 
   // ============================ LIMPIEZA ============================
   await test("Limpieza: DELETE signup automático → 204/404", async () => {
     if (!userIdSignup) return; // signup falló arriba (ya reportado)
-    const r = await req("DELETE", `/api/users/${userIdSignup}`, { token: adminToken });
+    const r = await req("DELETE", `/api/v1/users/${userIdSignup}`, { token: adminToken });
     assert(st(r) === 204 || r.status === 404, `status ${r.status}`);
   });
 }

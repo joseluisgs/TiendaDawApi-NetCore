@@ -26,8 +26,8 @@ Los **background jobs** son tareas que se ejecutan fuera del flujo principal de 
 ```mermaid
 flowchart TB
     subgraph "Solicitudes HTTP"
-        H1["GET /api/productos"]
-        H2["POST /api/pedidos"]
+        H1["GET /api/v1/productos"]
+        H2["POST /api/v1/pedidos"]
     end
     
     subgraph "Background Jobs"

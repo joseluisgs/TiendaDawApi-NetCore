@@ -1182,21 +1182,21 @@ Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` 
 
 | Endpoint               | Método | Auth  | Descripción                       |
 | ---------------------- | ------ | ----- | --------------------------------- |
-| `/api/categorias`      | GET    | No    | Obtener todas (paginado, filtros) |
-| `/api/categorias/{id}` | GET    | No    | Obtener por ID                    |
-| `/api/categorias`      | POST   | ADMIN | Crear categoría                   |
-| `/api/categorias/{id}` | PUT    | ADMIN | Actualizar categoría              |
-| `/api/categorias/{id}` | DELETE | ADMIN | Eliminar categoría                |
+| `/api/v1/categorias`      | GET    | No    | Obtener todas (paginado, filtros) |
+| `/api/v1/categorias/{id}` | GET    | No    | Obtener por ID                    |
+| `/api/v1/categorias`      | POST   | ADMIN | Crear categoría                   |
+| `/api/v1/categorias/{id}` | PUT    | ADMIN | Actualizar categoría              |
+| `/api/v1/categorias/{id}` | DELETE | ADMIN | Eliminar categoría                |
 
 ### Proveedores
 
 | Endpoint                    | Método | Auth  | Descripción                                          |
 | --------------------------- | ------ | ----- | ---------------------------------------------------- |
-| `/api/proveedores`          | GET    | ADMIN | Obtener todos (paginado, filtros)                    |
-| `/api/proveedores/{codigo}` | GET    | ADMIN | Obtener por código (11 caracteres estilo YouTube)    |
-| `/api/proveedores`          | POST   | ADMIN | Crear proveedor (si no se envía código, lo genera)   |
-| `/api/proveedores/{codigo}` | PUT    | ADMIN | Actualizar proveedor (el código es la clave)         |
-| `/api/proveedores/{codigo}` | DELETE | ADMIN | Eliminar proveedor (422 si tiene productos asociados) |
+| `/api/v1/proveedores`          | GET    | ADMIN | Obtener todos (paginado, filtros)                    |
+| `/api/v1/proveedores/{codigo}` | GET    | ADMIN | Obtener por código (11 caracteres estilo YouTube)    |
+| `/api/v1/proveedores`          | POST   | ADMIN | Crear proveedor (si no se envía código, lo genera)   |
+| `/api/v1/proveedores/{codigo}` | PUT    | ADMIN | Actualizar proveedor (el código es la clave)         |
+| `/api/v1/proveedores/{codigo}` | DELETE | ADMIN | Eliminar proveedor (422 si tiene productos asociados) |
 
 ### Estadísticas
 
@@ -1206,15 +1206,15 @@ Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` 
 
 | Endpoint                                   | Método | Auth  | Descripción                                                        |
 | ------------------------------------------ | ------ | ----- | ------------------------------------------------------------------ |
-| `/api/estadisticas/resumen`                | GET    | ADMIN | Resumen general: ventas, estados, inventario y comparativa          |
-| `/api/estadisticas/ventas`                 | GET    | ADMIN | Serie temporal (`agrupar=dia\|semana\|mes`) con huecos a cero        |
-| `/api/estadisticas/productos-mas-vendidos` | GET    | ADMIN | Ranking por `orden=unidades\|recaudacion` (top 1-50)                 |
-| `/api/estadisticas/categorias`             | GET    | ADMIN | Rendimiento por categoría (incluye las que no venden)               |
-| `/api/estadisticas/proveedores`            | GET    | ADMIN | Rendimiento por proveedor                                           |
-| `/api/estadisticas/estados`                | GET    | ADMIN | Embudo de estados; los cancelados se reportan aparte                |
-| `/api/estadisticas/clientes`               | GET    | ADMIN | Clientes con más gasto y su producto favorito                       |
-| `/api/estadisticas/inventario`             | GET    | ADMIN | Valor del stock, agotados y productos con `stockMax` o menos        |
-| `/api/estadisticas/precios`                | GET    | ADMIN | Histórico de precios (mínimo, máximo, media y variación)            |
+| `/api/v1/estadisticas/resumen`                | GET    | ADMIN | Resumen general: ventas, estados, inventario y comparativa          |
+| `/api/v1/estadisticas/ventas`                 | GET    | ADMIN | Serie temporal (`agrupar=dia\|semana\|mes`) con huecos a cero        |
+| `/api/v1/estadisticas/productos-mas-vendidos` | GET    | ADMIN | Ranking por `orden=unidades\|recaudacion` (top 1-50)                 |
+| `/api/v1/estadisticas/categorias`             | GET    | ADMIN | Rendimiento por categoría (incluye las que no venden)               |
+| `/api/v1/estadisticas/proveedores`            | GET    | ADMIN | Rendimiento por proveedor                                           |
+| `/api/v1/estadisticas/estados`                | GET    | ADMIN | Embudo de estados; los cancelados se reportan aparte                |
+| `/api/v1/estadisticas/clientes`               | GET    | ADMIN | Clientes con más gasto y su producto favorito                       |
+| `/api/v1/estadisticas/inventario`             | GET    | ADMIN | Valor del stock, agotados y productos con `stockMax` o menos        |
+| `/api/v1/estadisticas/precios`                | GET    | ADMIN | Histórico de precios (mínimo, máximo, media y variación)            |
 
 ### Backup
 
@@ -1226,63 +1226,63 @@ Los modos 1/2 se eligen con `Auth:Mode`; los 3/4 con `Auth:{Proveedor}:Enabled` 
 
 | Endpoint                  | Método | Auth  | Descripción                                                        |
 | ------------------------- | ------ | ----- | ------------------------------------------------------------------ |
-| `/api/backup/export`      | GET    | ADMIN | Descarga (`formato=zip\|json\|csv`, `entidades=...`, `incluirBorrados`) |
-| `/api/backup/import`      | POST   | ADMIN | Subida multipart con `dryRun` y `formato`; informe de la importación |
-| `/api/backup/formatos`    | GET    | ADMIN | Catálogo: formatos, entidades, límites y reglas                     |
+| `/api/v1/backup/export`      | GET    | ADMIN | Descarga (`formato=zip\|json\|csv`, `entidades=...`, `incluirBorrados`) |
+| `/api/v1/backup/import`      | POST   | ADMIN | Subida multipart con `dryRun` y `formato`; informe de la importación |
+| `/api/v1/backup/formatos`    | GET    | ADMIN | Catálogo: formatos, entidades, límites y reglas                     |
 
 ### Productos
 
 | Endpoint                                 | Método | Auth  | Descripción                       |
 | ---------------------------------------- | ------ | ----- | --------------------------------- |
-| `/api/productos`                         | GET    | No    | Obtener todos (paginado, filtros) |
-| `/api/productos/{id}`                    | GET    | No    | Obtener por ID                    |
-| `/api/productos/categoria/{categoriaId}` | GET    | No    | Productos por categoría           |
-| `/api/productos`                         | POST   | ADMIN | Crear producto                    |
-| `/api/productos/{id}`                    | PUT    | ADMIN | Actualizar producto               |
-| `/api/productos/{id}`                    | DELETE | ADMIN | Eliminar producto                 |
-| `/api/productos/{id}/imagen`             | PATCH  | ADMIN | Actualizar imagen                 |
-| `/api/productos/{id}`                    | PATCH  | ADMIN | Actualizar parcialmente           |
+| `/api/v1/productos`                         | GET    | No    | Obtener todos (paginado, filtros) |
+| `/api/v1/productos/{id}`                    | GET    | No    | Obtener por ID                    |
+| `/api/v1/productos/categoria/{categoriaId}` | GET    | No    | Productos por categoría           |
+| `/api/v1/productos`                         | POST   | ADMIN | Crear producto                    |
+| `/api/v1/productos/{id}`                    | PUT    | ADMIN | Actualizar producto               |
+| `/api/v1/productos/{id}`                    | DELETE | ADMIN | Eliminar producto                 |
+| `/api/v1/productos/{id}/imagen`             | PATCH  | ADMIN | Actualizar imagen                 |
+| `/api/v1/productos/{id}`                    | PATCH  | ADMIN | Actualizar parcialmente           |
 
 ### Pedidos (Administrador)
 
 | Endpoint                   | Método | Auth  | Descripción              |
 | -------------------------- | ------ | ----- | ------------------------ |
-| `/api/pedidos`             | GET    | ADMIN | Obtener todos            |
-| `/api/pedidos/paged`       | GET    | ADMIN | Obtener todos (paginado) |
-| `/api/pedidos/{id}`        | GET    | ADMIN | Obtener por ID           |
-| `/api/pedidos`             | PUT    | ADMIN | Actualizar pedido        |
-| `/api/pedidos/{id}`        | DELETE | ADMIN | Eliminar pedido          |
-| `/api/pedidos/{id}/estado` | PUT    | ADMIN | Actualizar estado        |
+| `/api/v1/pedidos`             | GET    | ADMIN | Obtener todos            |
+| `/api/v1/pedidos/paged`       | GET    | ADMIN | Obtener todos (paginado) |
+| `/api/v1/pedidos/{id}`        | GET    | ADMIN | Obtener por ID           |
+| `/api/v1/pedidos`             | PUT    | ADMIN | Actualizar pedido        |
+| `/api/v1/pedidos/{id}`        | DELETE | ADMIN | Eliminar pedido          |
+| `/api/v1/pedidos/{id}/estado` | PUT    | ADMIN | Actualizar estado        |
 
 ### Pedidos (Usuario - Mis Pedidos)
 
 | Endpoint                | Método | Auth | Descripción                  |
 | ----------------------- | ------ | ---- | ---------------------------- |
-| `/api/pedidos/me`       | GET    | USER | Mis pedidos                  |
-| `/api/pedidos/me/paged` | GET    | USER | Mis pedidos (paginado)       |
-| `/api/pedidos/me/{id}`  | GET    | USER | Obtener pedido propio por ID |
-| `/api/pedidos/me`       | POST   | USER | Crear nuevo pedido           |
-| `/api/pedidos/me/{id}`  | PUT    | USER | Actualizar pedido propio     |
-| `/api/pedidos/me/{id}`  | DELETE | USER | Cancelar pedido propio       |
+| `/api/v1/pedidos/me`       | GET    | USER | Mis pedidos                  |
+| `/api/v1/pedidos/me/paged` | GET    | USER | Mis pedidos (paginado)       |
+| `/api/v1/pedidos/me/{id}`  | GET    | USER | Obtener pedido propio por ID |
+| `/api/v1/pedidos/me`       | POST   | USER | Crear nuevo pedido           |
+| `/api/v1/pedidos/me/{id}`  | PUT    | USER | Actualizar pedido propio     |
+| `/api/v1/pedidos/me/{id}`  | DELETE | USER | Cancelar pedido propio       |
 
 ### Usuarios (Administrador)
 
 | Endpoint                 | Método | Auth  | Descripción                       |
 | ------------------------ | ------ | ----- | --------------------------------- |
-| `/api/users`             | GET    | ADMIN | Obtener todos (paginado, filtros) |
-| `/api/users/{id}`        | GET    | ADMIN | Obtener por ID                    |
-| `/api/users`             | POST   | ADMIN | Crear usuario                     |
-| `/api/users/{id}`        | PUT    | ADMIN | Actualizar usuario                |
-| `/api/users/{id}`        | DELETE | ADMIN | Eliminar usuario                  |
-| `/api/users/{id}/avatar` | PATCH  | USER* | Actualizar avatar                 |
+| `/api/v1/users`             | GET    | ADMIN | Obtener todos (paginado, filtros) |
+| `/api/v1/users/{id}`        | GET    | ADMIN | Obtener por ID                    |
+| `/api/v1/users`             | POST   | ADMIN | Crear usuario                     |
+| `/api/v1/users/{id}`        | PUT    | ADMIN | Actualizar usuario                |
+| `/api/v1/users/{id}`        | DELETE | ADMIN | Eliminar usuario                  |
+| `/api/v1/users/{id}/avatar` | PATCH  | USER* | Actualizar avatar                 |
 
 ### Usuarios (Perfil Propio)
 
 | Endpoint                | Método | Auth | Descripción          |
 | ----------------------- | ------ | ---- | -------------------- |
-| `/api/users/me/profile` | GET    | USER | Obtener mi perfil    |
-| `/api/users/me/profile` | PUT    | USER | Actualizar mi perfil |
-| `/api/users/me/profile` | DELETE | USER | Eliminar mi cuenta   |
+| `/api/v1/users/me/profile` | GET    | USER | Obtener mi perfil    |
+| `/api/v1/users/me/profile` | PUT    | USER | Actualizar mi perfil |
+| `/api/v1/users/me/profile` | DELETE | USER | Eliminar mi cuenta   |
 
 ### Storage (Archivos)
 
@@ -1374,7 +1374,7 @@ query { misPedidos { id estado total items { nombreProducto cantidad } } }
 ```
 
 > ⚠️ Los pedidos **solo se leen** por GraphQL (consultas). Crear, actualizar
-> y cancelar pedidos es cosa de REST (`POST/PUT /api/pedidos...`).
+> y cancelar pedidos es cosa de REST (`POST/PUT /api/v1/pedidos...`).
 
 **Ejemplo de Query: Obtener producto con solo nombre de categoría**
 

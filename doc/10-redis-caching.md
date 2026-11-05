@@ -76,7 +76,7 @@ sequenceDiagram
     participant Cache as Redis Cache
     participant DB as PostgreSQL
 
-    C->>API: GET /api/productos/1
+    C->>API: GET /api/v1/productos/1
     API->>Cache: GET productos:1
     
     alt Cache Hit
@@ -1476,7 +1476,7 @@ sequenceDiagram
     participant C as Cliente
     participant M as Middleware OutputCache
     participant Ctrl as Controlador
-    C->>M: GET /api/productos
+    C->>M: GET /api/v1/productos
     alt TTL vigente en caché
         M-->>C: 200 (respuesta cacheada)
     else sin caché / revalidación
@@ -1487,7 +1487,7 @@ sequenceDiagram
     end
 ```
 
-Comprobación real: segundo `GET /api/productos` → **304**; en los logs de la API: **0 excepciones**.
+Comprobación real: segundo `GET /api/v1/productos` → **304**; en los logs de la API: **0 excepciones**.
 
 ### Qué aporta frente a Redis (cache-aside)
 

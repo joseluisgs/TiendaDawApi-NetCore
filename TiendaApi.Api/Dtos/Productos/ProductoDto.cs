@@ -149,8 +149,8 @@ public record ProductoDto(
 /// Los campos de sistema se gestionan automáticamente por el servidor.
 ///
 /// Casos de uso:
-/// - POST /api/productos: Crear nuevo producto
-/// - PUT /api/productos/{id}: Reemplazar producto existente
+/// - POST /api/v1/productos: Crear nuevo producto
+/// - PUT /api/v1/productos/{id}: Reemplazar producto existente
 /// - Formularios de administración de inventario
 /// </remarks>
 /// </summary>

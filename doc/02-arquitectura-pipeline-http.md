@@ -224,14 +224,14 @@ sequenceDiagram
     participant M5 as Auth
     participant M6 as Controller
     
-    C->>K: GET /api/productos/1
+    C->>K: GET /api/v1/productos/1
     
     K->>M1: Request
     M1->>M2: Request
     M2->>M3: Request
     M3->>M4: Request
     
-    Note over M4: Match route<br/>/api/productos/{id}
+    Note over M4: Match route<br/>/api/v1/productos/{id}
     M4->>M5: Request (with endpoint)
     M5->>M6: Request (with claims)
     
@@ -255,7 +255,7 @@ sequenceDiagram
     participant M2 as Routing
     participant M3 as Controller
     
-    C->>K: GET /api/productos/999
+    C->>K: GET /api/v1/productos/999
     
     K->>M1: Request
     M1->>M2: Request
@@ -342,7 +342,7 @@ El middleware de routing examina la URL de la petición y determina qué endpoin
 app.UseRouting();
 ```
 
-Este middleware establece las propiedades `HttpContext.Request.RouteValues` que contienen los parámetros de la ruta (como `{id}` en `/api/productos/{id}`).
+Este middleware establece las propiedades `HttpContext.Request.RouteValues` que contienen los parámetros de la ruta (como `{id}` en `/api/v1/productos/{id}`).
 
 ### Middleware de CORS
 
@@ -589,17 +589,17 @@ Minimal API es un enfoque simplificado introducido en .NET 6 que permite crear e
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-app.MapGet("/api/productos", () => Results.Ok(new { productos = new[] { "A", "B" } }));
+app.MapGet("/api/v1/productos", () => Results.Ok(new { productos = new[] { "A", "B" } }));
 
-app.MapGet("/api/productos/{id}", (int id) => 
+app.MapGet("/api/v1/productos/{id}", (int id) => 
 {
     if (id == 0) return Results.NotFound();
     return Results.Ok(new { id, nombre = "Producto" });
 });
 
-app.MapPost("/api/productos", (ProductoDto dto) =>
+app.MapPost("/api/v1/productos", (ProductoDto dto) =>
 {
-    return Results.Created($"/api/productos/{dto.Id}", dto);
+    return Results.Created($"/api/v1/productos/{dto.Id}", dto);
 });
 
 app.Run();
@@ -611,7 +611,8 @@ Controller-based API utiliza clases que heredan de ControllerBase o Controller. 
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     private readonly IProductoService _service;
@@ -761,13 +762,13 @@ public class ProductosModule : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/productos", async (IProductoService service) =>
+        app.MapGet("/api/v1/productos", async (IProductoService service) =>
         {
             var productos = await service.GetAllAsync();
             return Results.Ok(productos);
         });
         
-        app.MapGet("/api/productos/{id}", async (long id, IProductoService service) =>
+        app.MapGet("/api/v1/productos/{id}", async (long id, IProductoService service) =>
         {
             var result = await service.GetByIdAsync(id);
             return result.Match(Results.Ok, Results.NotFound);

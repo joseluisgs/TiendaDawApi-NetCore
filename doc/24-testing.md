@@ -1244,7 +1244,7 @@ public class ProductosControllerTests
     public async Task Get_Productos_ReturnsOkWithLista()
     {
         // Act
-        var response = await _client.GetAsync("/api/productos");
+        var response = await _client.GetAsync("/api/v1/productos");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -1260,7 +1260,7 @@ public class ProductosControllerTests
         var productoId = 1L;
 
         // Act
-        var response = await _client.GetAsync($"/api/productos/{productoId}");
+        var response = await _client.GetAsync($"/api/v1/productos/{productoId}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
@@ -1273,7 +1273,7 @@ public class ProductosControllerTests
         var productoId = 99999L;
 
         // Act
-        var response = await _client.GetAsync($"/api/productos/{productoId}");
+        var response = await _client.GetAsync($"/api/v1/productos/{productoId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -1297,7 +1297,7 @@ public class ProductosControllerTests
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/productos", request);
+        var response = await _client.PostAsJsonAsync("/api/v1/productos", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -1320,7 +1320,7 @@ public class ProductosControllerTests
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/productos", request);
+        var response = await _client.PostAsJsonAsync("/api/v1/productos", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -1342,7 +1342,7 @@ public class ProductosControllerTests
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/productos/{productoId}", request);
+        var response = await _client.PutAsJsonAsync($"/api/v1/productos/{productoId}", request);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
@@ -1359,7 +1359,7 @@ public class ProductosControllerTests
         var productoId = 1L;
 
         // Act
-        var response = await _client.DeleteAsync($"/api/productos/{productoId}");
+        var response = await _client.DeleteAsync($"/api/v1/productos/{productoId}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NoContent, HttpStatusCode.NotFound);
@@ -1376,7 +1376,7 @@ public class ProductosControllerTests
         var clientWithoutAuth = _factory.CreateClient();
 
         // Act
-        var response = await clientWithoutAuth.GetAsync("/api/productos");
+        var response = await clientWithoutAuth.GetAsync("/api/v1/productos");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -1394,7 +1394,7 @@ public class ProductosControllerTests
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/productos", request);
+        var response = await _client.PostAsJsonAsync("/api/v1/productos", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -1407,7 +1407,7 @@ public class ProductosControllerTests
         var client = CreateClientWithoutAdminRole();
 
         // Act
-        var response = await client.DeleteAsync("/api/productos/1");
+        var response = await client.DeleteAsync("/api/v1/productos/1");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -1801,23 +1801,23 @@ TiendaApi Collection/
 │   ├── Signin POST /v1/auth/signin
 │   └── Refresh Token POST /v1/auth/refresh
 ├── Categorias/
-│   ├── GET All GET /api/categorias
-│   ├── GET by ID GET /api/categorias/{id}
-│   ├── POST Create POST /api/categorias
-│   ├── PUT Update PUT /api/categorias/{id}
-│   └── DELETE Delete DELETE /api/categorias/{id}
+│   ├── GET All GET /api/v1/categorias
+│   ├── GET by ID GET /api/v1/categorias/{id}
+│   ├── POST Create POST /api/v1/categorias
+│   ├── PUT Update PUT /api/v1/categorias/{id}
+│   └── DELETE Delete DELETE /api/v1/categorias/{id}
 ├── Productos/
-│   ├── GET All GET /api/productos
-│   ├── GET by ID GET /api/productos/{id}
-│   ├── POST Create POST /api/productos
-│   ├── PUT Update PUT /api/productos/{id}
-│   ├── DELETE Delete DELETE /api/productos/{id}
-│   └── GET by Categoria GET /api/productos/categoria/{id}
+│   ├── GET All GET /api/v1/productos
+│   ├── GET by ID GET /api/v1/productos/{id}
+│   ├── POST Create POST /api/v1/productos
+│   ├── PUT Update PUT /api/v1/productos/{id}
+│   ├── DELETE Delete DELETE /api/v1/productos/{id}
+│   └── GET by Categoria GET /api/v1/productos/categoria/{id}
 ├── Pedidos/
-│   ├── GET All GET /api/pedidos
-│   ├── GET by ID GET /api/pedidos/{id}
-│   ├── POST Create POST /api/pedidos
-│   └── PUT Estado PUT /api/pedidos/{id}/estado
+│   ├── GET All GET /api/v1/pedidos
+│   ├── GET by ID GET /api/v1/pedidos/{id}
+│   ├── POST Create POST /api/v1/pedidos
+│   └── PUT Estado PUT /api/v1/pedidos/{id}/estado
 └── Health/
     └── GET Health GET /health
 ```
@@ -1970,7 +1970,7 @@ pm.test("Signin - Token recibido", function () {
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/categorias",
+                            "raw": "{{baseUrl}}/api/v1/categorias",
                             "host": ["{{baseUrl}}"],
                             "path": ["api", "categorias"]
                         }
@@ -2013,7 +2013,7 @@ pm.test("Signin - Token recibido", function () {
                             "raw": "{\n    \"nombre\": \"Electrónica {{$timestamp}}\"\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/api/categorias",
+                            "raw": "{{baseUrl}}/api/v1/categorias",
                             "host": ["{{baseUrl}}"],
                             "path": ["api", "categorias"]
                         }
@@ -2036,7 +2036,7 @@ pm.test("Signin - Token recibido", function () {
                             "raw": "{\n    \"nombre\": \"Laptop Gaming {{$timestamp}}\",\n    \"descripcion\": \"Potente laptop para gaming\",\n    \"precio\": 1499.99,\n    \"stock\": 10,\n    \"categoriaId\": {{categoriaId}}\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/api/productos",
+                            "raw": "{{baseUrl}}/api/v1/productos",
                             "host": ["{{baseUrl}}"],
                             "path": ["api", "productos"]
                         }
@@ -2061,7 +2061,7 @@ pm.test("Signin - Token recibido", function () {
                     "request": {
                         "method": "GET",
                         "url": {
-                            "raw": "{{baseUrl}}/api/productos/{{productoId}}",
+                            "raw": "{{baseUrl}}/api/v1/productos/{{productoId}}",
                             "host": ["{{baseUrl}}"],
                             "path": ["api", "productos", "{{productoId}}"]
                         }
@@ -2079,7 +2079,7 @@ pm.test("Signin - Token recibido", function () {
                             "raw": "{\n    \"nombre\": \"Laptop Gaming Actualizada\",\n    \"precio\": 1299.99\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/api/productos/{{productoId}}",
+                            "raw": "{{baseUrl}}/api/v1/productos/{{productoId}}",
                             "host": ["{{baseUrl}}"],
                             "path": ["api", "productos", "{{productoId}}"]
                         }
@@ -2102,7 +2102,7 @@ pm.test("Signin - Token recibido", function () {
                             "raw": "{\n    \"usuarioId\": 1,\n    \"items\": [\n        {\n            \"productoId\": {{productoId}},\n            \"cantidad\": 2\n        }\n    ]\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/api/pedidos",
+                            "raw": "{{baseUrl}}/api/v1/pedidos",
                             "host": ["{{baseUrl}}"],
                             "path": ["api", "pedidos"]
                         }
@@ -2461,7 +2461,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/productos
+  url: {{baseUrl}}/api/v1/productos
   headers {
     Content-Type: application/json
   }
@@ -2531,7 +2531,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/categorias
+  url: {{baseUrl}}/api/v1/categorias
   headers {
     Content-Type: application/json
     Authorization: Bearer {{adminToken}}
@@ -2562,7 +2562,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/categorias
+  url: {{baseUrl}}/api/v1/categorias
   headers {
     Content-Type: application/json
   }
@@ -2810,7 +2810,7 @@ BASE_URL=http://localhost:5031 node TiendaApi.Tests.E2E/Automation/test-runner.m
 
 const CONFIG = {
   baseUrl: process.env.BASE_URL || "http://localhost:5031",
-  healthPaths: ["/health", "/swagger", "/api/productos"],
+  healthPaths: ["/health", "/swagger", "/api/v1/productos"],
   env: { ASPNETCORE_ENVIRONMENT: "Development", ASPNETCORE_URLS: "http://localhost:5031" },
   dbServices: ["postgres", "mongodb"],
   composeFile: "docker-compose.local.yml",

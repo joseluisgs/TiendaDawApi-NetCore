@@ -22,7 +22,7 @@ public record TotalesDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 1 · GET /api/estadisticas/resumen
+// 1 · GET /api/v1/estadisticas/resumen
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>
@@ -88,7 +88,7 @@ public record ComparativaDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 2 · GET /api/estadisticas/ventas
+// 2 · GET /api/v1/estadisticas/ventas
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>Serie temporal de ventas agrupada por día, semana o mes.</summary>
@@ -109,7 +109,7 @@ public record PuntoSerieDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 3 · GET /api/estadisticas/productos-mas-vendidos
+// 3 · GET /api/v1/estadisticas/productos-mas-vendidos
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>Ranking de productos por unidades vendidas o por recaudación.</summary>
@@ -133,7 +133,7 @@ public record FilaProductoVendidoDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 4 · GET /api/estadisticas/categorias
+// 4 · GET /api/v1/estadisticas/categorias
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>Rendimiento de cada categoría en el periodo.</summary>
@@ -157,7 +157,7 @@ public record FilaCategoriaDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 5 · GET /api/estadisticas/proveedores
+// 5 · GET /api/v1/estadisticas/proveedores
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>Rendimiento de cada proveedor en el periodo.</summary>
@@ -179,7 +179,7 @@ public record FilaProveedorDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 6 · GET /api/estadisticas/estados
+// 6 · GET /api/v1/estadisticas/estados
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>
@@ -208,7 +208,7 @@ public record CanceladosDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 7 · GET /api/estadisticas/clientes
+// 7 · GET /api/v1/estadisticas/clientes
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>Clientes con más gasto en el periodo.</summary>
@@ -231,7 +231,7 @@ public record FilaClienteDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 8 · GET /api/estadisticas/inventario
+// 8 · GET /api/v1/estadisticas/inventario
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>Estado del inventario: valor, agotados y productos con poco stock.</summary>
@@ -280,7 +280,7 @@ public record FilaValorDto(
 );
 
 // ────────────────────────────────────────────────────────────────
-// 9 · GET /api/estadisticas/precios
+// 9 · GET /api/v1/estadisticas/precios
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>Evolución del precio de un producto leída del histórico de Cassandra.</summary>

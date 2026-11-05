@@ -49,7 +49,7 @@ flowchart LR
 
 | Principio | Descripción | Ejemplo |
 |-----------|-------------|---------|
-| **Recursos** | Todo es un recurso identificado por URI | `/api/productos/123` |
+| **Recursos** | Todo es un recurso identificado por URI | `/api/v1/productos/123` |
 | **Operaciones uniformes** | Usar métodos HTTP correctamente | GET, POST, PUT, DELETE |
 | **Representaciones** | Múltiples formatos de respuesta | JSON, XML |
 | **Sin estado** | Cada request independiente | Sin sesiones en servidor |
@@ -72,9 +72,9 @@ flowchart TD
     A --> E["Accept Header"]
     
     B --> B1["GET /api/v1/productos"]
-    C --> C1["GET /api/productos?version=1"]
-    D --> D1["GET /api/productos<br/>X-API-Version: 1"]
-    E --> E1["GET /api/productos<br/>Accept: application/vnd.api.v1+json"]
+    C --> C1["GET /api/v1/productos?version=1"]
+    D --> D1["GET /api/v1/productos<br/>X-API-Version: 1"]
+    E --> E1["GET /api/v1/productos<br/>Accept: application/vnd.api.v1+json"]
 ```
 
 ### Comparación de Estrategias
@@ -104,10 +104,10 @@ builder.Services.AddApiVersioning(options =>
 var app = builder.Build();
 
 // Versionado por URL
-app.MapGroup("/api/v{version:apiVersion}/productos")
+app.MapGroup("/api/v1/v{version:apiVersion}/productos")
    .MapProductsApiV1();
 
-app.MapGroup("/api/v{version:apiVersion}/pedidos")
+app.MapGroup("/api/v1/v{version:apiVersion}/pedidos")
    .MapPedidosApiV1();
 
 app.Run();
@@ -152,7 +152,7 @@ public static class ProductsApiV2
 ### Deprecation Headers
 
 ```csharp
-app.MapGet("/api/productos", () => Results.Ok(new { }))
+app.MapGet("/api/v1/productos", () => Results.Ok(new { }))
     .AddEndpointFilter(async (context, next) =>
     {
         var response = await next(context);
@@ -160,7 +160,7 @@ app.MapGet("/api/productos", () => Results.Ok(new { }))
         response.HttpContext.Response.Headers["Sunset"] = 
             "Thu, 31 Dec 2025 23:59:59 GMT";
         response.HttpContext.Response.Headers["Link"] = 
-            "</api/v2/productos>; rel=\"alternate\"";
+            "</api/v1/v2/productos>; rel=\"alternate\"";
         return response;
     });
 ```
@@ -246,7 +246,7 @@ public async Task<IActionResult> GetProducts([FromQuery] GetProductsQuery query)
 
 private PaginationLinks? CreatePaginationLinks(GetProductsQuery query, int totalItems)
 {
-    var baseUrl = "/api/productos";
+    var baseUrl = "/api/v1/productos";
     var totalPages = (int)Math.Ceiling(totalItems / (double)query.PageSize);
     
     return new PaginationLinks(
@@ -351,7 +351,7 @@ public static class PaginationLinksHelper
 
 ### Paginación real en el proyecto
 
-Antes de paginar en BD los endpoints paginados (`GET /api/pedidos`) cargaban **toda** la colección con `FindAllAsync()` y recortaban en memoria con `.Skip().Take()`: coste proporcional a la tabla completa, trabajo desperdiciado y un `totalCount` también calculado sobre la lista entera. La paginación real se empuja a la BD, **una vez por backend**:
+Antes de paginar en BD los endpoints paginados (`GET /api/v1/pedidos`) cargaban **toda** la colección con `FindAllAsync()` y recortaban en memoria con `.Skip().Take()`: coste proporcional a la tabla completa, trabajo desperdiciado y un `totalCount` también calculado sobre la lista entera. La paginación real se empuja a la BD, **una vez por backend**:
 
 ```csharp
 // EF Core + PostgreSQL (PedidosEfCoreRepository.cs)
@@ -393,7 +393,7 @@ HATEOAS permite que los clientes descubcan las acciones disponibles a través de
 
 ```mermaid
 flowchart LR
-    A["GET /api/pedidos/123"] --> B["Response con links"]
+    A["GET /api/v1/pedidos/123"] --> B["Response con links"]
     B --> C["_links.self.href"]
     B --> D["_links.cancel.href"]
     B --> E["_links.pagar.href"]
@@ -436,18 +436,18 @@ public class HateoasLinkBuilder
         var baseUrl = $"{_httpContext.Request.Scheme}://{_httpContext.Request.Host}";
         
         return new Links(
-            Self: $"{baseUrl}/api/pedidos/{pedido.Id}",
+            Self: $"{baseUrl}/api/v1/pedidos/{pedido.Id}",
             Cancel: pedido.Estado == PedidoEstado.Pendiente 
-                ? $"{baseUrl}/api/pedidos/{pedido.Id}/cancelar" 
+                ? $"{baseUrl}/api/v1/pedidos/{pedido.Id}/cancelar" 
                 : null,
             Pagar: pedido.Estado == PedidoEstado.Pendiente 
-                ? $"{baseUrl}/api/pedidos/{pedido.Id}/pagar" 
+                ? $"{baseUrl}/api/v1/pedidos/{pedido.Id}/pagar" 
                 : null,
             Factura: pedido.Estado == PedidoEstado.Entregado 
-                ? $"{baseUrl}/api/pedidos/{pedido.Id}/factura" 
+                ? $"{baseUrl}/api/v1/pedidos/{pedido.Id}/factura" 
                 : null,
             Tracking: pedido.Estado == PedidoEstado.Enviado 
-                ? $"{baseUrl}/api/pedidos/{pedido.Id}/tracking" 
+                ? $"{baseUrl}/api/v1/pedidos/{pedido.Id}/tracking" 
                 : null
         );
     }
@@ -504,12 +504,12 @@ public record PedidoResponseWithActions(
         {
             "name": "cancelar",
             "method": "DELETE",
-            "href": "/api/pedidos/123"
+            "href": "/api/v1/pedidos/123"
         },
         {
             "name": "pagar",
             "method": "POST",
-            "href": "/api/pedidos/123/pagar",
+            "href": "/api/v1/pedidos/123/pagar",
             "fields": [
                 { "name": "metodoPago", "type": "string", "required": true }
             ]

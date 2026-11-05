@@ -117,13 +117,13 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     Note over Client,DB: ESCENARIO 1: Datos inválidos
-    Client->>Ctrl: POST /api/productos {nombre: "", precio: -5}
+    Client->>Ctrl: POST /api/v1/productos {nombre: "", precio: -5}
     Ctrl->>Svc: CreateAsync(dto)
     Svc-->>Ctrl: Result.Failure(ValidationError)
     Ctrl-->>Client: 400 Bad Request
 
     Note over Client,DB: ESCENARIO 2: Recurso no encontrado
-    Client->>Ctrl: POST /api/productos {nombre: "Laptop", categoriaId: 999}
+    Client->>Ctrl: POST /api/v1/productos {nombre: "Laptop", categoriaId: 999}
     Ctrl->>Svc: CreateAsync(dto)
     Svc->>Repo: FindByIdAsync(999)
     Repo->>DB: SELECT * FROM categorias WHERE id = 999
@@ -133,7 +133,7 @@ sequenceDiagram
     Ctrl-->>Client: 404 Not Found
 
     Note over Client,DB: ESCENARIO 3: Conflicto
-    Client->>Ctrl: POST /api/productos {nombre: "Laptop", precio: 999}
+    Client->>Ctrl: POST /api/v1/productos {nombre: "Laptop", precio: 999}
     Ctrl->>Svc: CreateAsync(dto)
     Svc->>Repo: ExistsByNombreAsync("Laptop")
     Repo->>DB: SELECT EXISTS(...)
@@ -143,7 +143,7 @@ sequenceDiagram
     Ctrl-->>Client: 409 Conflict
 
     Note over Client,DB: ESCENARIO 4: Éxito
-    Client->>Ctrl: POST /api/productos {nombre: "Mouse", precio: 29.99}
+    Client->>Ctrl: POST /api/v1/productos {nombre: "Mouse", precio: 29.99}
     Ctrl->>Svc: CreateAsync(dto)
     Svc->>Repo: SaveAsync(producto)
     Repo->>DB: INSERT INTO productos ...
@@ -821,7 +821,8 @@ La integración del patrón Result con controladores es natural una vez que enti
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     private readonly IProductoService _service;
