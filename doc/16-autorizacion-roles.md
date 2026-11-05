@@ -185,6 +185,7 @@ En el sistema TiendaApi, definimos los siguientes roles:
 ### Roles con Atributos [Authorize]
 
 ```csharp
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 
 namespace TiendaApi.Apis.Controllers;
@@ -193,7 +194,8 @@ namespace TiendaApi.Apis.Controllers;
 /// Controlador de productos con autorización basada en roles
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     private readonly IProductoService _productoService;
@@ -204,7 +206,7 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// GET /api/productos
+    /// GET /api/v1/productos
     /// Acceso: Usuarios autenticados (User, Manager, Admin)
     /// </summary>
     [HttpGet]
@@ -217,7 +219,7 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// GET /api/productos/{id}
+    /// GET /api/v1/productos/{id}
     /// Acceso: Usuarios autenticados
     /// </summary>
     [HttpGet("{id:long}")]
@@ -229,7 +231,7 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// POST /api/productos
+    /// POST /api/v1/productos
     /// Acceso: Solo Admin y Manager
     /// </summary>
     [HttpPost]
@@ -251,7 +253,7 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// PUT /api/productos/{id}
+    /// PUT /api/v1/productos/{id}
     /// Acceso: Solo Admin y Manager
     /// </summary>
     [HttpPut("{id:long}")]
@@ -263,7 +265,7 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// DELETE /api/productos/{id}
+    /// DELETE /api/v1/productos/{id}
     /// Acceso: Solo Admin
     /// </summary>
     [HttpDelete("{id:long}")]
@@ -283,7 +285,7 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// GET /api/productos/export
+    /// GET /api/v1/productos/export
     /// Acceso: Solo Admin (reporte completo)
     /// </summary>
     [HttpGet("export")]
@@ -406,12 +408,14 @@ builder.Services.AddAuthorization(options =>
 ### Uso de Políticas en Controladores
 
 ```csharp
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 
 namespace TiendaApi.Apis.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class AdminController : ControllerBase
 {
     [HttpGet("dashboard")]

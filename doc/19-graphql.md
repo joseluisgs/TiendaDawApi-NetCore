@@ -33,7 +33,7 @@
 ```mermaid
 flowchart LR
     subgraph "REST - Over-fetching"
-        A1["GET /api/productos/1"] --> A2["{id, nombre, precio, ...}"]
+        A1["GET /api/v1/productos/1"] --> A2["{id, nombre, precio, ...}"]
         A2 --> A3["Cliente solo usa 3 campos"]
     end
     
@@ -607,7 +607,7 @@ query {
 
 > **Nota:** este API **no** expone argumentos `where`/`first`/`offset` de
 > HotChocolate Data: los filtros se resuelven en el repositorio (REST
-> `GET /api/productos?precioMax=…`) y GraphQL ofrece paginación explícita
+> `GET /api/v1/productos?precioMax=…`) y GraphQL ofrece paginación explícita
 > con `page`/`size` sobre `productosPaged` y `categoriasPaged`.
 
 ### Tipos de Query en GraphQL
@@ -773,8 +773,8 @@ public async Task<IReadOnlyList<PedidoDto>> GetMisPedidos(
 ```
 
 En CQRS, `GetPedidos` usa `GetAllPedidosListQuery` (la misma query que el
-endpoint REST `GET /api/pedidos` del admin) y `misPedidos` usa
-`GetMyPedidosQuery(userId)` (el de `GET /api/pedidos/me`).
+endpoint REST `GET /api/v1/pedidos` del admin) y `misPedidos` usa
+`GetMyPedidosQuery(userId)` (el de `GET /api/v1/pedidos/me`).
 
 ### Queries expuestas en la raíz
 
@@ -852,7 +852,7 @@ namespace TiendaApi.Api.GraphQL.Types;
 // 🎓 Opción "un solo contrato": sobre el DTO, con BindFieldsExplicitly.
 // El campo `productos` de la entidad NO se expone: el listado de productos
 // de una categoría se pide por la query `productos` (REST: GET
-// /api/productos/categoria/{id}), no por navegación anidada.
+// /api/v1/productos/categoria/{id}), no por navegación anidada.
 public class CategoriaType : ObjectType<CategoriaDto>
 {
     protected override void Configure(IObjectTypeDescriptor<CategoriaDto> descriptor)
@@ -969,7 +969,7 @@ query {
 
 ### Con Filtrado
 
-Los filtros viven en REST (`GET /api/productos?precioMax=…`); GraphQL
+Los filtros viven en REST (`GET /api/v1/productos?precioMax=…`); GraphQL
 ofrece las queries de listado y por ID:
 
 ```graphql

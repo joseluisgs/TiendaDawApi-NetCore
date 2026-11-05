@@ -30,9 +30,9 @@ Dos propiedades lo diferencian de un volcado a medida:
 
 | Endpoint | Método | Auth | Qué hace |
 | --- | --- | --- | --- |
-| `/api/backup/export` | GET | ADMIN | Descarga (`formato=zip\|json\|csv`, `entidades=...`, `incluirBorrados`) |
-| `/api/backup/import` | POST | ADMIN | Subida multipart con `dryRun` y `formato`; devuelve el informe |
-| `/api/backup/formatos` | GET | ADMIN | Catálogo: formatos, entidades, límites y reglas |
+| `/api/v1/backup/export` | GET | ADMIN | Descarga (`formato=zip\|json\|csv`, `entidades=...`, `incluirBorrados`) |
+| `/api/v1/backup/import` | POST | ADMIN | Subida multipart con `dryRun` y `formato`; devuelve el informe |
+| `/api/v1/backup/formatos` | GET | ADMIN | Catálogo: formatos, entidades, límites y reglas |
 
 El catálogo de `formatos` documenta el contrato sin leer el código: qué formatos admite, qué campos tiene cada entidad, qué claves usa el upsert y cuáles son los límites.
 
@@ -40,7 +40,7 @@ El catálogo de `formatos` documenta el contrato sin leer el código: qué forma
 
 ```mermaid
 flowchart TD
-    A["GET /api/backup/export"] --> B{¿Formato válido?<br/>¿Entidades válidas?}
+    A["GET /api/v1/backup/export"] --> B{¿Formato válido?<br/>¿Entidades válidas?}
     B -->|no| C["400 (antes de escribir<br/>una sola línea)"]
     B -->|sí| D[Cargar entidades pedidas<br/>activas y, si se pide, borradas]
     D --> E{formato}
@@ -58,7 +58,7 @@ El manifest (`manifest.json`) viaja dentro del propio backup —versión, fecha 
 
 ```mermaid
 flowchart TD
-    A["POST /api/backup/import<br/>(multipart, campo file)"] --> B{¿Fichero dentro<br/>de los límites?}
+    A["POST /api/v1/backup/import<br/>(multipart, campo file)"] --> B{¿Fichero dentro<br/>de los límites?}
     B -->|no| C[400 / 413]
     B -->|sí| D{Formato}
     D -->|zip| E["ZipCodec: nº de entradas<br/>y descomprimido máximo"]

@@ -433,7 +433,7 @@ for (int attempt = 1; attempt <= MaxRetries; attempt++)
 
 Mismos 3 intentos, mismos logs de reintento… pero sin dependencia de Polly. ¿Por qué no envolverlo?
 
-**2. `EnableRetryOnFailure` de EF Core está deliberadamente OFF.** La transacción explícita de pedidos (`BeginTransactionAsync`, ver 13.2) es **incompatible** con la *retrying strategy* de EF: con retry activo, EF lanza `InvalidOperationException` al abrir una transacción manual. El patrón oficial (`CreateExecutionStrategy().ExecuteAsync(...)`) obligaría a reestructurar el flujo central `POST /api/pedidos/me` — riesgo alto sin beneficio demostrable.
+**2. `EnableRetryOnFailure` de EF Core está deliberadamente OFF.** La transacción explícita de pedidos (`BeginTransactionAsync`, ver 13.2) es **incompatible** con la *retrying strategy* de EF: con retry activo, EF lanza `InvalidOperationException` al abrir una transacción manual. El patrón oficial (`CreateExecutionStrategy().ExecuteAsync(...)`) obligaría a reestructurar el flujo central `POST /api/v1/pedidos/me` — riesgo alto sin beneficio demostrable.
 
 **3. Polly SÍ está, pero sobre el email** (`Infrastructures/PollyConfig.cs`) — el otro I/O externo con fallos transitorios (SMTP). Pipeline v8 `ResiliencePipeline`: Retry(3, 2^n) → CircuitBreaker(3 fallos → 30 s) → Timeout(10 s), todo **en background** vía `EmailBackgroundService`, así que un SMTP caído nunca bloquea ni rompe una respuesta HTTP. Detalle completo en `21-email-services.md`.
 
@@ -913,7 +913,8 @@ public static class Errors
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class PedidosController : ControllerBase
 {
     private readonly PedidoService _pedidoService;

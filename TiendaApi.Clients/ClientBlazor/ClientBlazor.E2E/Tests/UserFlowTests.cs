@@ -433,7 +433,7 @@ public class UserFlowTests : PageTest
 
         // 2. Por defecto está en "productos". Verificar info box
         var infoBox = Page.Locator(".info-box");
-        await Expect(infoBox).ToContainTextAsync("/api/productos");
+        await Expect(infoBox).ToContainTextAsync("/api/v1/productos");
 
         // 3. Cambiar recurso a "Categorías"
         await Page.Locator(".form-group")
@@ -442,7 +442,7 @@ public class UserFlowTests : PageTest
             .SelectOptionAsync(new[] { "categorias" });
 
         // 4. Verificar que la información de ayuda se actualiza
-        await Expect(infoBox).ToContainTextAsync("/api/categorias");
+        await Expect(infoBox).ToContainTextAsync("/api/v1/categorias");
         
         // 5. Verificar que el select de operaciones se resetea a "GET - Listar todos" (comportamiento Blazor)
         var operacionSelect = Page.Locator(".form-group")

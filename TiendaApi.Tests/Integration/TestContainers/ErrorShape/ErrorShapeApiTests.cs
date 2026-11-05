@@ -149,7 +149,7 @@ public class ErrorShapeApiTests
     [Test]
     public async Task Recurso_inexistente_devuelve_404_con_shape_de_dominio()
     {
-        var response = await _client.GetAsync("/api/categorias/999999");
+        var response = await _client.GetAsync("/api/v1/categorias/999999");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
@@ -161,7 +161,7 @@ public class ErrorShapeApiTests
     [Test]
     public async Task Endpoint_protegido_sin_token_devuelve_401_con_www_authenticate()
     {
-        var response = await _client.GetAsync("/api/pedidos");
+        var response = await _client.GetAsync("/api/v1/pedidos");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         response.Headers.WwwAuthenticate.Should().NotBeEmpty();
@@ -205,7 +205,7 @@ public class ErrorShapeApiTests
     [Test]
     public async Task Recurso_duplicado_devuelve_409_con_shape_de_dominio()
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/categorias")
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/categorias")
         {
             Content = JsonContent.Create(new { nombre = "Electrónica" })
         };

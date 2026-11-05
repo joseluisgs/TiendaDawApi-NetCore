@@ -27,7 +27,7 @@ public class GlobalExceptionHandlerTests
         {
             Request =
             {
-                Path = "/api/productos",
+                Path = "/api/v1/productos",
                 Method = HttpMethods.Post
             }
         };
@@ -485,13 +485,13 @@ public class GlobalExceptionHandlerTests
     {
         // Arrange
         var exception = new Exception("Test");
-        _httpContext.Request.Path = "/api/test/path";
+        _httpContext.Request.Path = "/api/v1/test/path";
 
         // Act
         var (_, body) = await ExecuteHandlerAsync(exception);
 
         // Assert
-        body.Should().Contain("/api/test/path");
+        body.Should().Contain("/api/v1/test/path");
     }
 
     [Test]

@@ -6,7 +6,7 @@ namespace TiendaApi.Api.Dtos.Productos;
 ///
 /// <remarks>
 /// Uso típico:
-/// - GET /api/productos?nombre=Laptop&amp;precioMax=1500&amp;stockMin=5
+/// - GET /api/v1/productos?nombre=Laptop&amp;precioMax=1500&amp;stockMin=5
 /// - Catálogos con filtros dinámicos
 /// - Búsquedas avanzadas en tienda
 /// </remarks>

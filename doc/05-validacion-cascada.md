@@ -24,7 +24,7 @@ Cada capa de validación tiene responsabilidades diferentes. Data Annotations ve
 ```mermaid
 flowchart TB
     subgraph "Request HTTP"
-        REQ["POST /api/productos<br/>{ nombre: '', precio: -5 }"]
+        REQ["POST /api/v1/productos<br/>{ nombre: '', precio: -5 }"]
     end
     
     subgraph "Capa 1: Data Annotations"
@@ -66,7 +66,7 @@ sequenceDiagram
     participant Svc as Service
     participant Repo as Repository
     
-    C->>Ctrl: POST /api/productos<br/>{nombre: '', precio: -5}
+    C->>Ctrl: POST /api/v1/productos<br/>{nombre: '', precio: -5}
     
     Note over Ctrl: Data Annotations check<br/>(automático)
     
@@ -169,7 +169,8 @@ Cuando usas `[ApiController]`, ASP.NET Core automáticamente valida los Data Ann
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     private readonly IProductoService _service;
@@ -438,7 +439,7 @@ app.Run();
 ```mermaid
 flowchart LR
     subgraph Request["Request HTTP"]
-        R["POST /api/productos<br/>{ categoriaId: 0 }"]
+        R["POST /api/v1/productos<br/>{ categoriaId: 0 }"]
     end
     
     subgraph Pipeline["Pipeline de validación"]
@@ -568,7 +569,8 @@ builder.Services.AddControllers(options =>
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     private readonly IProductoService _service;
@@ -619,7 +621,8 @@ A veces necesitas validar manualmente, por ejemplo en escenarios complejos o cua
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     private readonly IValidator<ProductoCreateDto> _createValidator;
@@ -995,6 +998,6 @@ Con la validación dominada, el siguiente paso es aprender sobre el patrón Resu
 
 ### Recursos adicionales
 
-- Data Annotations: https://docs.microsoft.com/dotnet/api/system.componentmodel.dataannotations
+- Data Annotations: https://docs.microsoft.com/dotnet/api/v1/system.componentmodel.dataannotations
 - FluentValidation: https://docs.fluentvalidation.net/
 - API Validation: https://docs.microsoft.com/aspnet/core/web-api/?view=aspnetcore-8.0#validation

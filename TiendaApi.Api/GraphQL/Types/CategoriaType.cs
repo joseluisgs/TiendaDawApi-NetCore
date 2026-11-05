@@ -10,7 +10,7 @@ namespace TiendaApi.Api.GraphQL.Types;
 /// 🎓 Opción "un solo contrato": sobre el DTO, con <c>BindFieldsExplicitly</c>.
 /// El campo <c>productos</c> de la entidad NO se expone: el listado de
 /// productos de una categoría se pide por la query <c>productos</c>
-/// (REST: GET /api/productos/categoria/{id}), no por navegación anidada.
+/// (REST: GET /api/v1/productos/categoria/{id}), no por navegación anidada.
 /// </summary>
 public class CategoriaType : ObjectType<CategoriaDto>
 {

@@ -24,13 +24,15 @@ Un controlador es una clase que hereda de ControllerBase (para APIs sin vistas) 
 Un controlador típico tiene tres partes principales: la declaración de la clase con atributos de routing, los servicios inyectados vía constructor primario, y los métodos de acción que manejan las peticiones HTTP. El controlador no contiene lógica de negocio, solo coordina la llamada a servicios y formatea la respuesta.
 
 ```csharp
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using TiendaApi.Core.Interfaces.IServices;
 
 namespace TiendaApi.Apis.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController(
     IProductoService productoService,
     ILogger<ProductosController> logger) : ControllerBase
@@ -43,7 +45,7 @@ public class ProductosController(
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        _logger.LogInformation("GET /api/productos - Obteniendo todos");
+        _logger.LogInformation("GET /api/v1/productos - Obteniendo todos");
         
         var resultado = await _productoService.GetAllAsync();
         
@@ -70,7 +72,7 @@ public class ProductosController(
 
 ### Partes del controlador
 
-La primera parte es la declaración de la clase con sus atributos. El atributo `[ApiController]` activa comportamientos convenientes como la validación automática de modelos y el binding de parámetros especializado. El atributo `[Route("api/[controller]")] define la ruta base del controlador, donde `[controller]` se reemplaza por el nombre de la clase sin el sufijo "Controller".
+La primera parte es la declaración de la clase con sus atributos. El atributo `[ApiController]` activa comportamientos convenientes como la validación automática de modelos y el binding de parámetros especializado. El atributo `[Route("api/v{version:apiVersion}/[controller]")]` define la ruta base del controlador **versionada**: la URL queda como `/api/v1/...` (la versión `1.0` la aporta el atributo `[ApiVersion("1.0")]` siguiente), donde `[controller]` se reemplaza por el nombre de la clase sin el sufijo "Controller".
 
 La segunda parte son los servicios injectados en el constructor primario. Estos servicios contienen la lógica de negocio y son la única dependencia que un controlador debe tener.
 
@@ -83,7 +85,8 @@ ControllerBase es la clase base para APIs y proporciona todas las funcionalidade
 ```csharp
 // ✅ CORRECTO para API REST
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     // Solo métodos relacionados con API
@@ -91,7 +94,8 @@ public class ProductosController : ControllerBase
 
 // ❌ NO NECESARIO para API REST (pero funciona)
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : Controller
 {
     // Hereda funcionalidad extra que no usas
@@ -110,30 +114,31 @@ Con routing por atributos, cada método de acción tiene un atributo que define 
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
-    // GET /api/productos
+    // GET /api/v1/productos
     [HttpGet]
     public async Task<IActionResult> GetAll() { }
     
-    // GET /api/productos/5
+    // GET /api/v1/productos/5
     [HttpGet("{id:long}")]
     public async Task<IActionResult> GetById(long id) { }
     
-    // GET /api/productos/categoria/5
+    // GET /api/v1/productos/categoria/5
     [HttpGet("categoria/{categoriaId:long}")]
     public async Task<IActionResult> GetByCategoria(long categoriaId) { }
     
-    // POST /api/productos
+    // POST /api/v1/productos
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] ProductoDto dto) { }
     
-    // PUT /api/productos/5
+    // PUT /api/v1/productos/5
     [HttpPut("{id:long}")]
     public async Task<IActionResult> Update(long id, [FromBody] ProductoDto dto) { }
     
-    // DELETE /api/productos/5
+    // DELETE /api/v1/productos/5
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> Delete(long id) { }
 }
@@ -145,7 +150,8 @@ Los templates de ruta permiten definir parámetros, restricciones, y valores opc
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class PedidosController : ControllerBase
 {
     // Parámetro simple
@@ -172,7 +178,8 @@ Las restricciones de ruta indican al framework qué tipos de valores acepta cada
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     // long: solo números enteros
@@ -212,7 +219,7 @@ Las áreas organizan controladores en grupos lógicos, útil para APIs grandes:
 [Route("api/[area]/[controller]")]
 public class ProductsController : ControllerBase
 {
-    // Ruta: /api/admin/products
+    // Ruta: /api/v1/admin/products
 }
 
 // Registro de áreas
@@ -232,7 +239,8 @@ ASP.NET Core proporciona atributos para cada verbo HTTP estándar. Cada atributo
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     // GET: Obtener recursos
@@ -276,7 +284,8 @@ DELETE debe usarse para eliminar recursos. Es idempotente (eliminar algo que ya 
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     [HttpGet]
@@ -357,10 +366,11 @@ El binding puede tomar datos de cinco fuentes diferentes, en este orden de prece
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
-    // De la ruta: /api/productos/5
+    // De la ruta: /api/v1/productos/5
     [HttpGet("{id:long}")]
     public async Task<IActionResult> GetById(long id)
     {
@@ -369,7 +379,7 @@ public class ProductosController : ControllerBase
         return Ok(producto);
     }
     
-    // Del query string: /api/productos?categoria=electronica&pagina=1
+    // Del query string: /api/v1/productos?categoria=electronica&pagina=1
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string categoria, 
@@ -472,7 +482,8 @@ A veces necesitas personalizar cómo se bindean los datos. Puedes usar el atribu
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ReportesController : ControllerBase
 {
     // Forzar desde query string aunque haya body
@@ -596,7 +607,8 @@ Los Typed Results proporcionan métodos de extensión strongly-typed como Ok<T>(
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     [HttpGet("{id:long}")]
@@ -672,7 +684,8 @@ ASP.NET Core proporciona métodos helper para devolver respuestas comunes. Estos
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     private readonly IProductoService _service;
@@ -780,7 +793,7 @@ public async Task<ActionResult<ProductoDto>> Create([FromBody] ProductoCreateDto
 {
     var producto = await _service.CreateAsync(dto);
     
-    // Genera: Location: /api/productos/123
+    // Genera: Location: /api/v1/productos/123
     return CreatedAtAction(
         actionName: nameof(GetById),
         routeValues: new { id = producto.Id },
@@ -853,7 +866,8 @@ Los headers HTTP permiten pasar información adicional con la respuesta. Puedes 
 
 ```csharp
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class ProductosController : ControllerBase
 {
     [HttpGet]

@@ -398,8 +398,8 @@ sequenceDiagram
     participant M as Middleware JWT
     participant DB as PostgreSQL
     
-    U->>C: GET /api/productos
-    C->>A: GET /api/productos
+    U->>C: GET /api/v1/productos
+    C->>A: GET /api/v1/productos
     
     Note over C,A: Header: Bearer jwt-token
     
@@ -1981,7 +1981,7 @@ sequenceDiagram
     
     Note over U: Cliente almacena tokens
     
-    U->>A: GET /api/productos (Bearer token)
+    U->>A: GET /api/v1/productos (Bearer token)
     A->>J: ValidateAccessToken(token)
     J-->>A: Claims principal
     A->>DB: Consultar productos

@@ -221,10 +221,10 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     Log.Information("ENDPOINTS REST:");
     Log.Information("  Auth:       POST {BaseUrl}/api/v1/auth/signup, /api/v1/auth/signin", baseUrl);
     Log.Information("  Auth Ext:   GET  {BaseUrl}/api/v1/auth/external/{provider} + /external-callback", baseUrl);
-    Log.Information("  Categorias: GET/POST/PUT/DELETE {BaseUrl}/api/categorias", baseUrl);
-    Log.Information("  Productos:  GET/POST/PUT/DELETE {BaseUrl}/api/productos", baseUrl);
-    Log.Information("  Pedidos:    GET/POST {BaseUrl}/api/pedidos", baseUrl);
-    Log.Information("  Usuarios:   GET/POST/PUT/DELETE {BaseUrl}/api/users", baseUrl);
+    Log.Information("  Categorias: GET/POST/PUT/DELETE {BaseUrl}/api/v1/categorias", baseUrl);
+    Log.Information("  Productos:  GET/POST/PUT/DELETE {BaseUrl}/api/v1/productos", baseUrl);
+    Log.Information("  Pedidos:    GET/POST {BaseUrl}/api/v1/pedidos", baseUrl);
+    Log.Information("  Usuarios:   GET/POST/PUT/DELETE {BaseUrl}/api/v1/users", baseUrl);
 
     // 🔐 Los 4 modos de autenticación del proyecto: 2 de contraseña (Auth:Mode)
     // y 2 de login externo (el callback usa el servicio del modo activo)

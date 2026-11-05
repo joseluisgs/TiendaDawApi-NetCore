@@ -34,7 +34,7 @@ Para el volumen de datos de este proyecto (catálogo pequeño, pedidos acotados)
 
 ```mermaid
 flowchart TD
-    A["GET /api/estadisticas/...<br/>(Bearer ADMIN)"] --> B{¿Rol ADMIN?}
+    A["GET /api/v1/estadisticas/...<br/>(Bearer ADMIN)"] --> B{¿Rol ADMIN?}
     B -->|no| C[401 sin token / 403 sin rol]
     B -->|sí| D[EstadisticasService]
     D --> E{¿Qué endpoint?}
@@ -59,15 +59,15 @@ El controlador solo valida, delega en `EstadisticasService` y devuelve el DTO; e
 
 | Endpoint | Método | Auth | Qué calcula |
 | --- | --- | --- | --- |
-| `/api/estadisticas/resumen` | GET | ADMIN | Resumen general: ventas, estados e inventario |
-| `/api/estadisticas/ventas` | GET | ADMIN | Serie temporal (`agrupar=dia\|semana\|mes`) con huecos a cero |
-| `/api/estadisticas/productos-mas-vendidos` | GET | ADMIN | Ranking de productos por unidades y facturación |
-| `/api/estadisticas/categorias` | GET | ADMIN | Ranking de categorías por ventas |
-| `/api/estadisticas/proveedores` | GET | ADMIN | Ranking de proveedores por ventas |
-| `/api/estadisticas/estados` | GET | ADMIN | Embudo de estados del pedido (cuántos hay de cada uno) |
-| `/api/estadisticas/clientes` | GET | ADMIN | Actividad de clientes (pedidos y gasto) |
-| `/api/estadisticas/inventario` | GET | ADMIN | Productos con stock por debajo de `stockMax` (defecto 5) |
-| `/api/estadisticas/precios` | GET | ADMIN | Histórico de precios por producto (mínimo, máximo, media, variación) |
+| `/api/v1/estadisticas/resumen` | GET | ADMIN | Resumen general: ventas, estados e inventario |
+| `/api/v1/estadisticas/ventas` | GET | ADMIN | Serie temporal (`agrupar=dia\|semana\|mes`) con huecos a cero |
+| `/api/v1/estadisticas/productos-mas-vendidos` | GET | ADMIN | Ranking de productos por unidades y facturación |
+| `/api/v1/estadisticas/categorias` | GET | ADMIN | Ranking de categorías por ventas |
+| `/api/v1/estadisticas/proveedores` | GET | ADMIN | Ranking de proveedores por ventas |
+| `/api/v1/estadisticas/estados` | GET | ADMIN | Embudo de estados del pedido (cuántos hay de cada uno) |
+| `/api/v1/estadisticas/clientes` | GET | ADMIN | Actividad de clientes (pedidos y gasto) |
+| `/api/v1/estadisticas/inventario` | GET | ADMIN | Productos con stock por debajo de `stockMax` (defecto 5) |
+| `/api/v1/estadisticas/precios` | GET | ADMIN | Histórico de precios por producto (mínimo, máximo, media, variación) |
 
 ## 31.5. Reglas de Cálculo
 
