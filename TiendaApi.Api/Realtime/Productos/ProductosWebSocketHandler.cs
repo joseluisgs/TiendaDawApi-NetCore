@@ -45,7 +45,7 @@ public record ProductoNotificacion(
 /// </example>
 public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger)
 {
-        /// <summary>M�ximo de conexiones simult�neas aceptadas.</summary>
+        /// <summary>Máximo de conexiones simultáneas aceptadas.</summary>
     private const int MaxConnections = 1000;
 
     private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
@@ -62,11 +62,11 @@ public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger
     /// <param name="webSocket">Instancia del WebSocket.</param>
     public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket)
     {
-                // ?? L�mite de conexiones: protege contra abuso.
+                // 🎓 Límite de conexiones: protege contra abuso.
         if (_connections.Count >= MaxConnections)
         {
-            _logger.LogWarning("L�mite de conexiones WebSocket alcanzado: {Count}/{Max}", _connections.Count, MaxConnections);
-            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "L�mite de conexiones alcanzado", CancellationToken.None);
+            _logger.LogWarning("LLímite de conexiones WebSocket alcanzado: {Count}/{Max}", _connections.Count, MaxConnections);
+            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "LLímite de conexiones alcanzado", CancellationToken.None);
             return;
         }
 
