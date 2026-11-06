@@ -43,7 +43,7 @@ public class UserFlowTests : PageTest
         // 2. Rellenar formulario de login (usando la extensión TestId)
         // La API espera el Username, que es "userdaw", no el email completo en este caso
         await Page.TestId("email-input").FillAsync("userdaw");
-        await Page.TestId("password-input").FillAsync("userdaw");
+        await Page.TestId("password-input").FillAsync("Userdaw123!");
         
         await Page.ScreenshotAsync(new() { Path = "screenshots/login-2-filled.png" });
 
@@ -129,7 +129,7 @@ public class UserFlowTests : PageTest
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -172,7 +172,7 @@ public class UserFlowTests : PageTest
         // 1. Login previo
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("userdaw");
-        await Page.TestId("password-input").FillAsync("userdaw");
+        await Page.TestId("password-input").FillAsync("Userdaw123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -192,7 +192,7 @@ public class UserFlowTests : PageTest
         // 1. Login como Admin (necesario para POST/PUT/DELETE)
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -238,7 +238,7 @@ public class UserFlowTests : PageTest
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         
         // Verificar que el login fue exitoso antes de navegar
@@ -278,7 +278,7 @@ public class UserFlowTests : PageTest
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -334,7 +334,7 @@ public class UserFlowTests : PageTest
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -459,7 +459,7 @@ public class UserFlowTests : PageTest
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
         
@@ -482,7 +482,7 @@ public class UserFlowTests : PageTest
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
         
@@ -566,7 +566,7 @@ public class UserFlowTests : PageTest
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 

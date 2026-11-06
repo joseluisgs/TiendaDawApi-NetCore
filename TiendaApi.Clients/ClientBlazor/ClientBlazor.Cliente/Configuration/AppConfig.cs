@@ -14,7 +14,7 @@ public static class AppConfig
 public static class AdminUser
     {
         public const string Email = "admin";
-        public const string Password = "admin";
+        public const string Password = "Admin123!";
         public const string Role = "ADMIN";
     }
     
@@ -24,7 +24,7 @@ public static class AdminUser
 public static class RegularUser
     {
         public const string Email = "userdaw";
-        public const string Password = "userdaw";
+        public const string Password = "Userdaw123!";
         public const string Role = "USER";
     }
 }
