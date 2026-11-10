@@ -791,7 +791,7 @@ TiendaDawApi-NetCore/
 │   ├── websocket-client-js/          # Cliente WebSocket en JavaScript
 │   └── graphql-client-js/            # Cliente GraphQL en JavaScript
 │
-├── doc/                              # Documentación técnica (30 guías)
+├── doc/                              # Documentación técnica (32 guías)
 └── README.md                         # Este archivo
 ```
 
