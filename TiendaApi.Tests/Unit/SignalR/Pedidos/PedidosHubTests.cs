@@ -1,9 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.SignalR.Pedidos;
@@ -24,7 +22,7 @@ public class PedidosHubTests {
 
     [Test]
     public void PedidosHub_TieneAuthorize_RequiereAuth() {
-        var attrs = typeof(PedidosHub).GetCustomAttributes(typeof(AuthorizeAttribute), true);
+        object[] attrs = typeof(PedidosHub).GetCustomAttributes(typeof(AuthorizeAttribute), true);
         attrs.Should().NotBeEmpty();
     }
 }

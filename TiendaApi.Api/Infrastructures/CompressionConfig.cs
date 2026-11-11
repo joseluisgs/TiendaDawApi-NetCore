@@ -5,11 +5,11 @@ using Serilog;
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Configuración de compresión HTTP (Brotli + Gzip).
+///     Configuración de compresión HTTP (Brotli + Gzip).
 /// </summary>
 public static class CompressionConfig {
     /// <summary>
-    /// Registra los proveedores de compresión HTTP.
+    ///     Registra los proveedores de compresión HTTP.
     /// </summary>
     public static IServiceCollection AddResponseCompressionConfig(this IServiceCollection services) {
         Log.Information("📦 Configurando compresión HTTP (Brotli + Gzip)...");
@@ -20,7 +20,9 @@ public static class CompressionConfig {
             options.Providers.Add<GzipCompressionProvider>();
 
             options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-                ["application/json", "application/xml", "text/plain", "text/html", "text/css", "application/javascript"]);
+            [
+                "application/json", "application/xml", "text/plain", "text/html", "text/css", "application/javascript"
+            ]);
         });
 
         services.Configure<BrotliCompressionProviderOptions>(options => {

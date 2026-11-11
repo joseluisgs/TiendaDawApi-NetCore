@@ -3,9 +3,9 @@ using Cassandra.Mapping.Attributes;
 namespace TiendaApi.Api.Models;
 
 /// <summary>
-/// Serie temporal de precios: una fila por cada cambio (consulta Q-A).
-/// El orden temporal está GUARDADO en la tabla con CLUSTERING ORDER BY (fecha DESC),
-/// así que "¿a cuánto estuvo el producto hace tres semanas?" sale ordenado de serie.
+///     Serie temporal de precios: una fila por cada cambio (consulta Q-A).
+///     El orden temporal está GUARDADO en la tabla con CLUSTERING ORDER BY (fecha DESC),
+///     así que "¿a cuánto estuvo el producto hace tres semanas?" sale ordenado de serie.
 /// </summary>
 [Table("historial_precios_por_producto")]
 public class HistorialPrecioPorProducto {

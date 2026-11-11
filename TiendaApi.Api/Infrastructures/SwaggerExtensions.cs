@@ -1,14 +1,13 @@
-using Microsoft.AspNetCore.Builder;
 using Serilog;
 
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Extension methods para Swagger UI.
+///     Extension methods para Swagger UI.
 /// </summary>
 public static class SwaggerExtensions {
     /// <summary>
-    /// Configura Swagger UI solo en desarrollo.
+    ///     Configura Swagger UI solo en desarrollo.
     /// </summary>
     public static IApplicationBuilder UseSwaggerUI(this IApplicationBuilder app, bool isDevelopment) {
         if (isDevelopment) {
@@ -19,6 +18,7 @@ public static class SwaggerExtensions {
                 options.RoutePrefix = string.Empty;
             });
         }
+
         return app;
     }
 }

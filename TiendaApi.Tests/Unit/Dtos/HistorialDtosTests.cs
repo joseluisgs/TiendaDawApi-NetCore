@@ -4,9 +4,9 @@ using TiendaApi.Api.Dtos.Historial;
 namespace TiendaApi.Tests.Unit.Dtos;
 
 /// <summary>
-/// Tests de los DTOs de serie y feed: records posicionales (inmutables por
-/// construcción) con igualdad estructural — el mapper de Cassandra los rellena
-/// campo a campo y el controller los serializa tal cual.
+///     Tests de los DTOs de serie y feed: records posicionales (inmutables por
+///     construcción) con igualdad estructural — el mapper de Cassandra los rellena
+///     campo a campo y el controller los serializa tal cual.
 /// </summary>
 public class HistorialDtosTests {
     [Test]
@@ -24,7 +24,7 @@ public class HistorialDtosTests {
     public void HistorialPrecioDto_WithNoMutaElOriginal() {
         var original = new HistorialPrecioDto(DateTime.UtcNow, 1299.99);
 
-        var copia = original with { Precio = 1349.99 };
+        HistorialPrecioDto copia = original with { Precio = 1349.99 };
 
         copia.Precio.Should().Be(1349.99);
         original.Precio.Should().Be(1299.99);

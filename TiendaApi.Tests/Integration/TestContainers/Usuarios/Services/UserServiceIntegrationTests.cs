@@ -1,15 +1,15 @@
 using System.Threading.Channels;
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Usuarios;
-using TiendaApi.Api.Models;
+using TiendaApi.Api.Errors;
 using TiendaApi.Api.Repositories.Usuarios;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
@@ -19,20 +19,13 @@ using TiendaApi.Api.Validators.Usuarios;
 namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Services;
 
 /// <summary>
-/// Tests de integración para UserService con DI completo.
-/// Verifica el servicio con base de datos real usando Testcontainers.
+///     Tests de integración para UserService con DI completo.
+///     Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
 public class UserServiceIntegrationTests {
-    private const string DatabaseName = "it_usuario_service";
-    private string _connectionString = string.Empty;
-    private string _mongoConnectionString = string.Empty;
-    private IServiceProvider? _serviceProvider;
-    private TiendaDbContext? _dbContext;
-    private IUserService? _userService;
-
     [OneTimeSetUp]
     public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
@@ -47,10 +40,10 @@ public class UserServiceIntegrationTests {
 
     [SetUp]
     public async Task Setup() {
-        var connectionString = _connectionString;
-        var mongoConnectionString = _mongoConnectionString;
+        string connectionString = _connectionString;
+        string mongoConnectionString = _mongoConnectionString;
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
@@ -97,9 +90,16 @@ public class UserServiceIntegrationTests {
         }
     }
 
+    private const string DatabaseName = "it_usuario_service";
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
+    private IServiceProvider? _serviceProvider;
+    private TiendaDbContext? _dbContext;
+    private IUserService? _userService;
+
     [Test]
     public async Task FindAllAsync_SinUsuarios_RetornaListaVacia() {
-        var result = await _userService!.FindAllAsync();
+        Result<IEnumerable<UserDto>, DomainError> result = await _userService!.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -107,14 +107,14 @@ public class UserServiceIntegrationTests {
 
     [Test]
     public async Task CreateAsync_ConDatosValidos_RetornaUsuarioCreado() {
-        var uniqueId = Guid.NewGuid().ToString("N")[..8];
+        string uniqueId = Guid.NewGuid().ToString("N")[..8];
         var dto = new RegisterDto {
             Username = $"testuser_{uniqueId}",
             Email = $"test_{uniqueId}@example.com",
             Password = "Test1234"
         };
 
-        var result = await _userService!.CreateAsync(dto);
+        Result<UserDto, DomainError> result = await _userService!.CreateAsync(dto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -129,10 +129,10 @@ public class UserServiceIntegrationTests {
             Email = "buscar@example.com",
             Password = "Test1234"
         };
-        var createResult = await _userService!.CreateAsync(dto);
+        Result<UserDto, DomainError> createResult = await _userService!.CreateAsync(dto);
         createResult.IsSuccess.Should().BeTrue();
 
-        var findResult = await _userService.FindByIdAsync(createResult.Value.Id);
+        Result<UserDto, DomainError> findResult = await _userService.FindByIdAsync(createResult.Value.Id);
 
         findResult.IsSuccess.Should().BeTrue();
         findResult.Value.Username.Should().Be("buscaruser");
@@ -140,7 +140,7 @@ public class UserServiceIntegrationTests {
 
     [Test]
     public async Task FindByIdAsync_ConUsuarioNoExistente_RetornaNotFound() {
-        var result = await _userService!.FindByIdAsync(999999);
+        Result<UserDto, DomainError> result = await _userService!.FindByIdAsync(999999);
 
         result.IsFailure.Should().BeTrue();
     }
@@ -154,7 +154,7 @@ public class UserServiceIntegrationTests {
         };
         await _userService!.CreateAsync(dto);
 
-        var result = await _userService.CreateAsync(new RegisterDto {
+        Result<UserDto, DomainError> result = await _userService.CreateAsync(new RegisterDto {
             Username = "user2",
             Email = "duplicate@example.com",
             Password = "Test1234"
@@ -172,7 +172,7 @@ public class UserServiceIntegrationTests {
         };
         await _userService!.CreateAsync(dto);
 
-        var result = await _userService.CreateAsync(new RegisterDto {
+        Result<UserDto, DomainError> result = await _userService.CreateAsync(new RegisterDto {
             Username = "duplicateuser",
             Email = "user2@example.com",
             Password = "Test1234"
@@ -189,7 +189,7 @@ public class UserServiceIntegrationTests {
             Password = "Test1234"
         };
 
-        var result = await _userService!.CreateAsync(dto);
+        Result<UserDto, DomainError> result = await _userService!.CreateAsync(dto);
 
         result.IsFailure.Should().BeTrue();
     }
@@ -202,7 +202,7 @@ public class UserServiceIntegrationTests {
             Password = "123"
         };
 
-        var result = await _userService!.CreateAsync(dto);
+        Result<UserDto, DomainError> result = await _userService!.CreateAsync(dto);
 
         result.IsFailure.Should().BeTrue();
     }
@@ -215,12 +215,10 @@ public class UserServiceIntegrationTests {
             Password = "Test1234"
         };
 
-        var result = await _userService!.CreateAsync(dto);
+        Result<UserDto, DomainError> result = await _userService!.CreateAsync(dto);
 
         result.IsFailure.Should().BeTrue();
     }
-
-    #region ========== UPDATE ASYNC TESTS ==========
 
     [Test]
     public async Task UpdateAsync_ConUsuarioExistente_ActualizaDatos() {
@@ -230,14 +228,14 @@ public class UserServiceIntegrationTests {
             Email = "update@example.com",
             Password = "Test1234"
         };
-        var createResult = await _userService!.CreateAsync(dto);
+        Result<UserDto, DomainError> createResult = await _userService!.CreateAsync(dto);
         createResult.IsSuccess.Should().BeTrue();
-        var userId = createResult.Value.Id;
+        long userId = createResult.Value.Id;
 
         var updateDto = new UserUpdateDto { Email = "updated@example.com" };
 
         // Act
-        var result = await _userService.UpdateAsync(userId, updateDto);
+        Result<UserDto, DomainError> result = await _userService.UpdateAsync(userId, updateDto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -250,7 +248,7 @@ public class UserServiceIntegrationTests {
         var updateDto = new UserUpdateDto { Email = "updated@example.com" };
 
         // Act
-        var result = await _userService!.UpdateAsync(999999, updateDto);
+        Result<UserDto, DomainError> result = await _userService!.UpdateAsync(999999, updateDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -270,21 +268,17 @@ public class UserServiceIntegrationTests {
             Password = "Test1234"
         };
         await _userService!.CreateAsync(dto1);
-        var createResult = await _userService.CreateAsync(dto2);
-        var userId = createResult.Value.Id;
+        Result<UserDto, DomainError> createResult = await _userService.CreateAsync(dto2);
+        long userId = createResult.Value.Id;
 
         var updateDto = new UserUpdateDto { Email = "user1update@example.com" };
 
         // Act
-        var result = await _userService.UpdateAsync(userId, updateDto);
+        Result<UserDto, DomainError> result = await _userService.UpdateAsync(userId, updateDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
     }
-
-    #endregion
-
-    #region ========== DELETE ASYNC TESTS ==========
 
     [Test]
     public async Task DeleteAsync_ConUsuarioExistente_EliminaUsuario() {
@@ -294,32 +288,28 @@ public class UserServiceIntegrationTests {
             Email = "delete@example.com",
             Password = "Test1234"
         };
-        var createResult = await _userService!.CreateAsync(dto);
+        Result<UserDto, DomainError> createResult = await _userService!.CreateAsync(dto);
         createResult.IsSuccess.Should().BeTrue();
-        var userId = createResult.Value.Id;
+        long userId = createResult.Value.Id;
 
         // Act
-        var result = await _userService.DeleteAsync(userId);
+        UnitResult<DomainError> result = await _userService.DeleteAsync(userId);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
 
-        var findResult = await _userService.FindByIdAsync(userId);
+        Result<UserDto, DomainError> findResult = await _userService.FindByIdAsync(userId);
         findResult.IsFailure.Should().BeTrue();
     }
 
     [Test]
     public async Task DeleteAsync_ConUsuarioNoExistente_RetornaNotFound() {
         // Act
-        var result = await _userService!.DeleteAsync(999999);
+        UnitResult<DomainError> result = await _userService!.DeleteAsync(999999);
 
         // Assert
         result.IsFailure.Should().BeTrue();
     }
-
-    #endregion
-
-    #region ========== UPDATE AVATAR ASYNC TESTS ==========
 
     [Test]
     public async Task UpdateAvatarAsync_ConUsuarioExistente_ActualizaAvatar() {
@@ -329,12 +319,13 @@ public class UserServiceIntegrationTests {
             Email = "avatar@example.com",
             Password = "Test1234"
         };
-        var createResult = await _userService!.CreateAsync(dto);
+        Result<UserDto, DomainError> createResult = await _userService!.CreateAsync(dto);
         createResult.IsSuccess.Should().BeTrue();
-        var userId = createResult.Value.Id;
+        long userId = createResult.Value.Id;
 
         // Act
-        var result = await _userService.UpdateAvatarAsync(userId, "/storage/uploads/avatars/new-avatar.jpg");
+        Result<UserDto, DomainError> result =
+            await _userService.UpdateAvatarAsync(userId, "/storage/uploads/avatars/new-avatar.jpg");
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -344,20 +335,18 @@ public class UserServiceIntegrationTests {
     [Test]
     public async Task UpdateAvatarAsync_ConUsuarioNoExistente_RetornaNotFound() {
         // Act
-        var result = await _userService!.UpdateAvatarAsync(999999, "/uploads/avatars/test.jpg");
+        Result<UserDto, DomainError>
+            result = await _userService!.UpdateAvatarAsync(999999, "/uploads/avatars/test.jpg");
 
         // Assert
         result.IsFailure.Should().BeTrue();
     }
 
-    #endregion
-
-    #region ========== FIND ALL PAGED ASYNC TESTS ==========
-
     [Test]
     public async Task FindAllPagedAsync_SinUsuarios_RetornaPaginaVacia() {
         // Act
-        var result = await _userService!.FindAllPagedAsync(new UserFilterDto(null, null, null, 0, 10));
+        Result<PagedResult<UserDto>, DomainError> result =
+            await _userService!.FindAllPagedAsync(new UserFilterDto(null, null, null));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -378,7 +367,8 @@ public class UserServiceIntegrationTests {
         }
 
         // Act
-        var result = await _userService!.FindAllPagedAsync(new UserFilterDto(null, null, null, 0, 3));
+        Result<PagedResult<UserDto>, DomainError> result =
+            await _userService!.FindAllPagedAsync(new UserFilterDto(null, null, null, 0, 3));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -402,12 +392,11 @@ public class UserServiceIntegrationTests {
         }
 
         // Act
-        var result = await _userService!.FindAllPagedAsync(new UserFilterDto(null, null, null, 1, 3));
+        Result<PagedResult<UserDto>, DomainError> result =
+            await _userService!.FindAllPagedAsync(new UserFilterDto(null, null, null, 1, 3));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Page.Should().Be(2);
     }
-
-    #endregion
 }

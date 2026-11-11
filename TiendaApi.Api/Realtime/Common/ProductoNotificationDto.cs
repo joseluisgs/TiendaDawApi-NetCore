@@ -1,10 +1,10 @@
 namespace TiendaApi.Api.Realtime.Common;
 
 /// <summary>
-/// DTO para notificaciones de productos en tiempo real.
+///     DTO para notificaciones de productos en tiempo real.
 /// </summary>
 /// <example>
-/// var notification = new ProductoNotificationDto { Type = "CREATED", ProductoId = 123, ProductoNombre = "Laptop" };
+///     var notification = new ProductoNotificationDto { Type = "CREATED", ProductoId = 123, ProductoNombre = "Laptop" };
 /// </example>
 public class ProductoNotificationDto {
     /// <summary>Tipo de notificación (CREATED, UPDATED, DELETED).</summary>
@@ -24,7 +24,7 @@ public class ProductoNotificationDto {
 }
 
 /// <summary>
-/// Tipos de notificación para productos.
+///     Tipos de notificación para productos.
 /// </summary>
 public static class NotificationType {
     /// <summary>Producto creado.</summary>

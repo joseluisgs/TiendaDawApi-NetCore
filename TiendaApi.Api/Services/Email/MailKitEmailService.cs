@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using MimeKit;
 using Polly;
 using Polly.CircuitBreaker;
@@ -8,10 +9,10 @@ using TiendaApi.Api.Infrastructures;
 namespace TiendaApi.Api.Services.Email;
 
 /// <summary>
-/// Servicio de email usando MailKit.
-/// Envía emails a través de SMTP.
-/// El envío va envuelto en el pipeline de resiliencia de
-/// <see cref="PollyConfig"/> (Retry 3 + CircuitBreaker + Timeout 10s).
+///     Servicio de email usando MailKit.
+///     Envía emails a través de SMTP.
+///     El envío va envuelto en el pipeline de resiliencia de
+///     <see cref="PollyConfig" /> (Retry 3 + CircuitBreaker + Timeout 10s).
 /// </summary>
 public class MailKitEmailService(
     IConfiguration configuration,
@@ -20,56 +21,35 @@ public class MailKitEmailService(
     ResiliencePipeline? emailPipeline = null
 ) : IEmailService {
     private readonly IConfiguration _configuration = configuration;
-    private readonly ILogger<MailKitEmailService> _logger = logger;
     private readonly Channel<EmailMessage> _emailChannel = emailChannel;
+
     private readonly ResiliencePipeline _emailPipeline =
         emailPipeline ?? PollyConfig.BuildEmailPipeline(logger);
 
-    /// <summary>
-    /// Resuelve la configuración SMTP completa (host, puerto, credenciales y
-    /// remitente). Extraído de SendEmailAsync para que ese método se quede con
-    /// la política de envío (Polly) y el manejo de errores; null = falta
-    /// configuración esencial y no hay nada con lo que conectar.
-    /// </summary>
-    private (string Host, int Port, string User, string Password, string FromEmail, string FromName)? ResolverConfigSmtp() {
-        var host = _configuration["Smtp:Host"];
-        var user = _configuration["Smtp:Username"];
-        var password = _configuration["Smtp:Password"];
-        var fromEmail = _configuration["Smtp:FromEmail"] ?? user;
-
-        if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(user) ||
-            string.IsNullOrEmpty(password) || string.IsNullOrEmpty(fromEmail))
-            return null;
-
-        return (
-            host,
-            int.Parse(_configuration["Smtp:Port"] ?? "587"),
-            user,
-            password,
-            fromEmail,
-            _configuration["Smtp:FromName"] ?? "TiendaApi");
-    }
+    private readonly ILogger<MailKitEmailService> _logger = logger;
 
     /// <summary>
-    /// Envía un email inmediatamente usando SMTP.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation/Internal)
+    ///     Envía un email inmediatamente usando SMTP.
+    ///     Devuelve: UnitResult.Success | UnitResult.Failure(Validation/Internal)
     /// </summary>
     public async Task SendEmailAsync(EmailMessage message) {
         try {
-            var smtp = ResolverConfigSmtp();
+            (string Host, int Port, string User, string Password, string FromEmail, string FromName)? smtp =
+                ResolverConfigSmtp();
             if (smtp is null) {
                 _logger.LogWarning("SMTP no configurado correctamente, omitiendo envío de email");
                 return;
             }
 
-            var mimeMessage = ConstruirMimeMessage(message, new MailboxAddress(smtp.Value.FromName, smtp.Value.FromEmail));
+            MimeMessage mimeMessage =
+                ConstruirMimeMessage(message, new MailboxAddress(smtp.Value.FromName, smtp.Value.FromEmail));
 
             // Polly: cada intento tiene Timeout(10s); hasta 3 reintentos con
             // backoff 2^n; si hay 3 fallos seguidos el CircuitBreaker abre 30s y el
             // envío se omite (BrokenCircuitException) sin agotar los reintentos.
             await _emailPipeline.ExecuteAsync(async _ => {
                 using var client = new SmtpClient();
-                await client.ConnectAsync(smtp.Value.Host, smtp.Value.Port, MailKit.Security.SecureSocketOptions.StartTls);
+                await client.ConnectAsync(smtp.Value.Host, smtp.Value.Port, SecureSocketOptions.StartTls);
                 await client.AuthenticateAsync(smtp.Value.User, smtp.Value.Password);
                 await client.SendAsync(mimeMessage);
                 await client.DisconnectAsync(true);
@@ -91,10 +71,51 @@ public class MailKitEmailService(
     }
 
     /// <summary>
-    /// Construye el mensaje Mime a partir del EmailMessage de dominio (remitente,
-    /// destinatario, asunto y cuerpo HTML/texto). Extraido de SendEmailAsync para
-    /// que ese metodo se quede con la politica de envio (Polly) y el manejo de
-    /// errores, sin la construccion intercalada.
+    ///     Encola un email para procesamiento en segundo plano.
+    ///     Operación no bloqueante que añade al canal.
+    ///     Devuelve: UnitResult.Success | UnitResult.Failure(Internal)
+    /// </summary>
+    public async Task EnqueueEmailAsync(EmailMessage message) {
+        try {
+            await _emailChannel.Writer.WriteAsync(message);
+            _logger.LogInformation("Email encolado para procesamiento en segundo plano a: {To}", message.To);
+        } catch (Exception ex) {
+            _logger.LogError(ex, "Error al encolar email para: {To}", message.To);
+        }
+    }
+
+    /// <summary>
+    ///     Resuelve la configuración SMTP completa (host, puerto, credenciales y
+    ///     remitente). Extraído de SendEmailAsync para que ese método se quede con
+    ///     la política de envío (Polly) y el manejo de errores; null = falta
+    ///     configuración esencial y no hay nada con lo que conectar.
+    /// </summary>
+    private (string Host, int Port, string User, string Password, string FromEmail, string FromName)?
+        ResolverConfigSmtp() {
+        string? host = _configuration["Smtp:Host"];
+        string? user = _configuration["Smtp:Username"];
+        string? password = _configuration["Smtp:Password"];
+        string? fromEmail = _configuration["Smtp:FromEmail"] ?? user;
+
+        if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(user) ||
+            string.IsNullOrEmpty(password) || string.IsNullOrEmpty(fromEmail)) {
+            return null;
+        }
+
+        return (
+            host,
+            int.Parse(_configuration["Smtp:Port"] ?? "587"),
+            user,
+            password,
+            fromEmail,
+            _configuration["Smtp:FromName"] ?? "TiendaApi");
+    }
+
+    /// <summary>
+    ///     Construye el mensaje Mime a partir del EmailMessage de dominio (remitente,
+    ///     destinatario, asunto y cuerpo HTML/texto). Extraido de SendEmailAsync para
+    ///     que ese metodo se quede con la politica de envio (Polly) y el manejo de
+    ///     errores, sin la construccion intercalada.
     /// </summary>
     private static MimeMessage ConstruirMimeMessage(EmailMessage message, MailboxAddress remitente) {
         var mimeMessage = new MimeMessage();
@@ -108,22 +129,9 @@ public class MailKitEmailService(
         } else {
             bodyBuilder.TextBody = message.Body;
         }
+
         mimeMessage.Body = bodyBuilder.ToMessageBody();
 
         return mimeMessage;
-    }
-
-    /// <summary>
-    /// Encola un email para procesamiento en segundo plano.
-    /// Operación no bloqueante que añade al canal.
-    /// Devuelve: UnitResult.Success | UnitResult.Failure(Internal)
-    /// </summary>
-    public async Task EnqueueEmailAsync(EmailMessage message) {
-        try {
-            await _emailChannel.Writer.WriteAsync(message);
-            _logger.LogInformation("Email encolado para procesamiento en segundo plano a: {To}", message.To);
-        } catch (Exception ex) {
-            _logger.LogError(ex, "Error al encolar email para: {To}", message.To);
-        }
     }
 }

@@ -1,20 +1,18 @@
-using HotChocolate.Types;
 using TiendaApi.Api.Dtos.Categorias;
 
 namespace TiendaApi.Api.GraphQL.Types;
 
 /// <summary>
-/// Tipo de GraphQL para <see cref="CategoriaDto"/>: el MISMO contrato de
-/// salida que sirve REST.
-///
-/// 🎓 Opción "un solo contrato": sobre el DTO, con <c>BindFieldsExplicitly</c>.
-/// El campo <c>productos</c> de la entidad NO se expone: el listado de
-/// productos de una categoría se pide por la query <c>productos</c>
-/// (REST: GET /api/v1/productos/categoria/{id}), no por navegación anidada.
+///     Tipo de GraphQL para <see cref="CategoriaDto" />: el MISMO contrato de
+///     salida que sirve REST.
+///     🎓 Opción "un solo contrato": sobre el DTO, con <c>BindFieldsExplicitly</c>.
+///     El campo <c>productos</c> de la entidad NO se expone: el listado de
+///     productos de una categoría se pide por la query <c>productos</c>
+///     (REST: GET /api/v1/productos/categoria/{id}), no por navegación anidada.
 /// </summary>
 public class CategoriaType : ObjectType<CategoriaDto> {
     /// <summary>
-    /// Configura los campos y descripciones del tipo GraphQL de CategoriaDto.
+    ///     Configura los campos y descripciones del tipo GraphQL de CategoriaDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
     protected override void Configure(IObjectTypeDescriptor<CategoriaDto> descriptor) {

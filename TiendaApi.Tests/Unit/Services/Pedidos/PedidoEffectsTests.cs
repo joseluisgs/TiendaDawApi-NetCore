@@ -13,22 +13,22 @@ using TiendaApi.Api.Services.Pedidos;
 namespace TiendaApi.Tests.Unit.Services.Pedidos;
 
 /// <summary>
-/// 🎓 Tests de paridad de canales en los efectos de pedidos: cada evento de
-/// tiempo real debe salir SIEMPRE por WebSocket Y SignalR (los métodos
-/// combinados), y por SignalR a los grupos del dueño y de administradores —
-/// nunca a Clients.All. Regresión de los puntos que antes emitían un solo
-/// canal y del bug de broadcast.
+///     🎓 Tests de paridad de canales en los efectos de pedidos: cada evento de
+///     tiempo real debe salir SIEMPRE por WebSocket Y SignalR (los métodos
+///     combinados), y por SignalR a los grupos del dueño y de administradores —
+///     nunca a Clients.All. Regresión de los puntos que antes emitían un solo
+///     canal y del bug de broadcast.
 /// </summary>
 public class PedidoEffectsTests {
     private const long UserId = 1;
+    private Mock<IClientProxy> _adminsProxy = null!;
+    private Mock<IHubClients> _clients = null!;
+    private PedidoEffects _effects = null!;
+    private Mock<IEmailService> _email = null!;
+    private Mock<IHubContext<PedidosHub>> _hubContext = null!;
+    private Mock<IClientProxy> _userProxy = null!;
 
     private Mock<PedidosWebSocketHandler> _webSocket = null!;
-    private Mock<IHubContext<PedidosHub>> _hubContext = null!;
-    private Mock<IHubClients> _clients = null!;
-    private Mock<IClientProxy> _userProxy = null!;
-    private Mock<IClientProxy> _adminsProxy = null!;
-    private Mock<IEmailService> _email = null!;
-    private PedidoEffects _effects = null!;
 
     [SetUp]
     public void Setup() {
@@ -63,23 +63,25 @@ public class PedidoEffectsTests {
             Mock.Of<ILogger<PedidoEffects>>());
     }
 
-    private static PedidoDto UnPedido() => new(
-        Id: "PED-2024-0001",
-        UserId: UserId,
-        Destinatario: null!,
-        Items: new List<PedidoItemDto>(),
-        Total: 99.5m,
-        Estado: "Pendiente",
-        DireccionEnvio: null,
-        CreatedAt: DateTime.UtcNow);
+    private static PedidoDto UnPedido() {
+        return new PedidoDto(
+            "PED-2024-0001",
+            UserId,
+            null!,
+            new List<PedidoItemDto>(),
+            99.5m,
+            "Pendiente",
+            null,
+            DateTime.UtcNow);
+    }
 
     /// <summary>
-    /// Los envíos son fire-and-forget (Task.Run): se reintenta la verificación
-    /// hasta 2s para no depender de tiempos de ejecución.
+    ///     Los envíos son fire-and-forget (Task.Run): se reintenta la verificación
+    ///     hasta 2s para no depender de tiempos de ejecución.
     /// </summary>
     private static async Task Eventually(Action verify) {
         Exception? ultimoError = null;
-        for (var intento = 0; intento < 200; intento++) {
+        for (int intento = 0; intento < 200; intento++) {
             try {
                 verify();
                 return;
@@ -88,6 +90,7 @@ public class PedidoEffectsTests {
                 await Task.Delay(10);
             }
         }
+
         throw ultimoError!;
     }
 
@@ -100,8 +103,10 @@ public class PedidoEffectsTests {
                 It.Is<PedidoNotificacion>(n =>
                     n.Tipo == PedidoNotificationType.CREADO &&
                     n.PedidoId == "PED-2024-0001")), Times.Once);
-            _userProxy.Verify(p => p.SendCoreAsync("PedidoCreado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
-            _adminsProxy.Verify(p => p.SendCoreAsync("PedidoCreado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
+            _userProxy.Verify(
+                p => p.SendCoreAsync("PedidoCreado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
+            _adminsProxy.Verify(
+                p => p.SendCoreAsync("PedidoCreado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
             _clients.Verify(c => c.All, Times.Never);
         });
     }
@@ -115,8 +120,12 @@ public class PedidoEffectsTests {
                 It.Is<PedidoNotificacion>(n =>
                     n.Tipo == PedidoNotificationType.ESTADO_ACTUALIZADO &&
                     n.Estado == "Enviado")), Times.Once);
-            _userProxy.Verify(p => p.SendCoreAsync("PedidoActualizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
-            _adminsProxy.Verify(p => p.SendCoreAsync("PedidoActualizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
+            _userProxy.Verify(
+                p => p.SendCoreAsync("PedidoActualizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+            _adminsProxy.Verify(
+                p => p.SendCoreAsync("PedidoActualizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Once);
             _clients.Verify(c => c.All, Times.Never);
         });
     }
@@ -130,8 +139,12 @@ public class PedidoEffectsTests {
                 It.Is<PedidoNotificacion>(n =>
                     n.Tipo == PedidoNotificationType.ELIMINADO &&
                     n.Estado == "CANCELADO")), Times.Once);
-            _userProxy.Verify(p => p.SendCoreAsync("PedidoEliminado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
-            _adminsProxy.Verify(p => p.SendCoreAsync("PedidoEliminado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
+            _userProxy.Verify(
+                p => p.SendCoreAsync("PedidoEliminado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+            _adminsProxy.Verify(
+                p => p.SendCoreAsync("PedidoEliminado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Once);
             _clients.Verify(c => c.All, Times.Never);
         });
     }

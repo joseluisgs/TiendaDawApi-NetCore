@@ -1,24 +1,24 @@
+using System.Reflection;
 using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Realtime.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Realtime;
 
 /// <summary>
-/// Tests unitarios para SignalR Hubs (PedidosHub).
+///     Tests unitarios para SignalR Hubs (PedidosHub).
 /// </summary>
 public class PedidosHubTests {
-    private Mock<ILogger<PedidosHub>> _loggerMock = null!;
-    private Mock<IGroupManager> _groupManagerMock = null!;
-    private ClaimsPrincipal _userAdmin = null!;
-    private ClaimsPrincipal _userRegular = null!;
     private HubCallerContext _contextAdmin = null!;
     private HubCallerContext _contextRegular = null!;
+    private Mock<IGroupManager> _groupManagerMock = null!;
+    private Mock<ILogger<PedidosHub>> _loggerMock = null!;
+    private ClaimsPrincipal _userAdmin = null!;
+    private ClaimsPrincipal _userRegular = null!;
 
     [SetUp]
     public void Setup() {
@@ -53,6 +53,18 @@ public class PedidosHubTests {
             c.ConnectionId == "user-connection-id" &&
             c.User == _userRegular);
     }
+
+    #region Helper Methods
+
+    private void SetupHubContext(PedidosHub hub, HubCallerContext context) {
+        FieldInfo? field = typeof(Hub).GetField("_context", BindingFlags.NonPublic | BindingFlags.Instance);
+        field?.SetValue(hub, context);
+
+        FieldInfo? groupsField = typeof(Hub).GetField("_groups", BindingFlags.NonPublic | BindingFlags.Instance);
+        groupsField?.SetValue(hub, _groupManagerMock.Object);
+    }
+
+    #endregion
 
     #region OnConnectedAsync Tests
 
@@ -92,7 +104,7 @@ public class PedidosHubTests {
             new Claim(ClaimTypes.Role, "ADMIN")
         }, "TestAuthType");
 
-        var contextAdminReal = Mock.Of<HubCallerContext>(c =>
+        HubCallerContext contextAdminReal = Mock.Of<HubCallerContext>(c =>
             c.ConnectionId == "admin-real-connection-id" &&
             c.User == new ClaimsPrincipal(adminRealIdentity));
 
@@ -145,7 +157,7 @@ public class PedidosHubTests {
             new Claim(ClaimTypes.Name, "anonymous")
         }, "TestAuthType"));
 
-        var contextWithoutId = Mock.Of<HubCallerContext>(c =>
+        HubCallerContext contextWithoutId = Mock.Of<HubCallerContext>(c =>
             c.ConnectionId == "anonymous-connection-id" &&
             c.User == userWithoutId);
 
@@ -172,7 +184,9 @@ public class PedidosHubTests {
         SetupHubContext(hub, _contextAdmin);
 
         // Act & Assert
-        async Task Act() => await hub.OnDisconnectedAsync(null);
+        async Task Act() {
+            await hub.OnDisconnectedAsync(null);
+        }
 
         // Should not throw
         await Act();
@@ -186,7 +200,9 @@ public class PedidosHubTests {
         var exception = new Exception("Connection lost");
 
         // Act & Assert
-        async Task Act() => await hub.OnDisconnectedAsync(exception);
+        async Task Act() {
+            await hub.OnDisconnectedAsync(exception);
+        }
 
         // Should not throw
         await Act();
@@ -203,15 +219,15 @@ public class PedidosHubTests {
         SetupHubContext(hub, _contextAdmin);
 
         // Act
-        var result = hub.GetConnectionInfo();
+        object result = hub.GetConnectionInfo();
 
         // Assert
         result.Should().NotBeNull();
 
-        var connectionId = result.GetType().GetProperty("connectionId")?.GetValue(result) as string;
-        var userId = result.GetType().GetProperty("userId")?.GetValue(result) as string;
-        var userName = result.GetType().GetProperty("userName")?.GetValue(result) as string;
-        var isAdmin = result.GetType().GetProperty("isAdmin")?.GetValue(result) as bool?;
+        string? connectionId = result.GetType().GetProperty("connectionId")?.GetValue(result) as string;
+        string? userId = result.GetType().GetProperty("userId")?.GetValue(result) as string;
+        string? userName = result.GetType().GetProperty("userName")?.GetValue(result) as string;
+        bool? isAdmin = result.GetType().GetProperty("isAdmin")?.GetValue(result) as bool?;
 
         connectionId.Should().Be("admin-connection-id");
         userId.Should().Be("1");
@@ -226,15 +242,15 @@ public class PedidosHubTests {
         SetupHubContext(hub, _contextRegular);
 
         // Act
-        var result = hub.GetConnectionInfo();
+        object result = hub.GetConnectionInfo();
 
         // Assert
         result.Should().NotBeNull();
 
-        var connectionId = result.GetType().GetProperty("connectionId")?.GetValue(result) as string;
-        var userId = result.GetType().GetProperty("userId")?.GetValue(result) as string;
-        var userName = result.GetType().GetProperty("userName")?.GetValue(result) as string;
-        var isAdmin = result.GetType().GetProperty("isAdmin")?.GetValue(result) as bool?;
+        string? connectionId = result.GetType().GetProperty("connectionId")?.GetValue(result) as string;
+        string? userId = result.GetType().GetProperty("userId")?.GetValue(result) as string;
+        string? userName = result.GetType().GetProperty("userName")?.GetValue(result) as string;
+        bool? isAdmin = result.GetType().GetProperty("isAdmin")?.GetValue(result) as bool?;
 
         connectionId.Should().Be("user-connection-id");
         userId.Should().Be("2");
@@ -249,7 +265,7 @@ public class PedidosHubTests {
     [Test]
     public void PedidosHub_TieneAuthorizeAttribute_Clase() {
         // Arrange & Act
-        var attribute = typeof(PedidosHub)
+        object? attribute = typeof(PedidosHub)
             .GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .FirstOrDefault();
 
@@ -260,25 +276,13 @@ public class PedidosHubTests {
     [Test]
     public void GetConnectionInfo_TieneAuthorizeAttribute_Metodo() {
         // Arrange & Act
-        var methodInfo = typeof(PedidosHub).GetMethod("GetConnectionInfo");
-        var attribute = methodInfo?
+        MethodInfo? methodInfo = typeof(PedidosHub).GetMethod("GetConnectionInfo");
+        object? attribute = methodInfo?
             .GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .FirstOrDefault();
 
         // Assert
         attribute.Should().NotBeNull("El método GetConnectionInfo debe tener [Authorize]");
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    private void SetupHubContext(PedidosHub hub, HubCallerContext context) {
-        var field = typeof(Hub).GetField("_context", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        field?.SetValue(hub, context);
-
-        var groupsField = typeof(Hub).GetField("_groups", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        groupsField?.SetValue(hub, _groupManagerMock.Object);
     }
 
     #endregion

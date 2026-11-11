@@ -1,16 +1,14 @@
 namespace TiendaApi.Api.Dtos.Pedidos;
 
 /// <summary>
-/// DTO de artículo de línea dentro de un pedido.
-/// Representa un producto individual incluido en la orden de compra.
-///
-/// <remarks>
-/// Este DTO es de solo lectura, generado por el servidor al procesar el pedido.
-/// Los valores de precio y subtotal se calculan al momento de la creación.
-/// </remarks>
+///     DTO de artículo de línea dentro de un pedido.
+///     Representa un producto individual incluido en la orden de compra.
+///     <remarks>
+///         Este DTO es de solo lectura, generado por el servidor al procesar el pedido.
+///         Los valores de precio y subtotal se calculan al momento de la creación.
+///     </remarks>
 /// </summary>
-public record PedidoItemDto
-(
+public record PedidoItemDto(
     // <summary>
     // Identificador del producto solicitado.
     // Referencia al catálogo de productos.

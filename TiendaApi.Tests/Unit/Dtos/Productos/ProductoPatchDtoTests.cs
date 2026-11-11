@@ -4,14 +4,38 @@ using TiendaApi.Api.Dtos.Productos;
 namespace TiendaApi.Tests.Unit.Dtos.Productos;
 
 /// <summary>
-/// Tests unitarios para ProductoPatchDto.
-/// Verifica el funcionamiento de la actualización parcial de productos.
+///     Tests unitarios para ProductoPatchDto.
+///     Verifica el funcionamiento de la actualización parcial de productos.
 /// </summary>
 public class ProductoPatchDtoTests {
+    #region Tests de Inmutabilidad del Record
+
+    /// <summary>
+    ///     Verifica que se puede crear una nueva instancia con cambios usando 'with'.
+    /// </summary>
+    [Test]
+    public void With_PuedeCrearNuevaInstanciaConCambios() {
+        // Arrange
+        var original = new ProductoPatchDto {
+            Nombre = "Original",
+            Descripcion = "Descripción original"
+        };
+
+        // Act
+        ProductoPatchDto modificado = original with { Nombre = "Modificado" };
+
+        // Assert
+        modificado.Nombre.Should().Be("Modificado");
+        modificado.Descripcion.Should().Be("Descripción original");
+        original.Nombre.Should().Be("Original");
+    }
+
+    #endregion
+
     #region Tests de Constructor
 
     /// <summary>
-    /// Verifica que el constructor asigna todos los campos correctamente.
+    ///     Verifica que el constructor asigna todos los campos correctamente.
     /// </summary>
     [Test]
     public void Constructor_ConValoresAsignados_AsignaCorrectamente() {
@@ -33,7 +57,7 @@ public class ProductoPatchDtoTests {
     }
 
     /// <summary>
-    /// Verifica que por defecto los campos tienen valores nulos o predeterminados.
+    ///     Verifica que por defecto los campos tienen valores nulos o predeterminados.
     /// </summary>
     [Test]
     public void Constructor_PorDefecto_TieneValoresNulosOPredeterminados() {
@@ -53,7 +77,7 @@ public class ProductoPatchDtoTests {
     #region Tests de Propiedades Individuales
 
     /// <summary>
-    /// Verifica que Nombre puede ser asignado y puesto a null.
+    ///     Verifica que Nombre puede ser asignado y puesto a null.
     /// </summary>
     [Test]
     public void Nombre_PuedeSerAsignadoANulo() {
@@ -71,7 +95,7 @@ public class ProductoPatchDtoTests {
     }
 
     /// <summary>
-    /// Verifica que Descripcion puede ser asignada y puesta a null.
+    ///     Verifica que Descripcion puede ser asignada y puesta a null.
     /// </summary>
     [Test]
     public void Descripcion_PuedeSerAsignadaANula() {
@@ -89,7 +113,7 @@ public class ProductoPatchDtoTests {
     }
 
     /// <summary>
-    /// Verifica que Precio puede ser asignado y puesto a null.
+    ///     Verifica que Precio puede ser asignado y puesto a null.
     /// </summary>
     [Test]
     public void Precio_PuedeSerAsignadoANulo() {
@@ -107,7 +131,7 @@ public class ProductoPatchDtoTests {
     }
 
     /// <summary>
-    /// Verifica que Stock puede ser asignado y puesto a null.
+    ///     Verifica que Stock puede ser asignado y puesto a null.
     /// </summary>
     [Test]
     public void Stock_PuedeSerAsignadoANulo() {
@@ -125,7 +149,7 @@ public class ProductoPatchDtoTests {
     }
 
     /// <summary>
-    /// Verifica que Imagen puede ser asignada y puesta a null.
+    ///     Verifica que Imagen puede ser asignada y puesta a null.
     /// </summary>
     [Test]
     public void Imagen_PuedeSerAsignadaANula() {
@@ -144,34 +168,10 @@ public class ProductoPatchDtoTests {
 
     #endregion
 
-    #region Tests de Inmutabilidad del Record
-
-    /// <summary>
-    /// Verifica que se puede crear una nueva instancia con cambios usando 'with'.
-    /// </summary>
-    [Test]
-    public void With_PuedeCrearNuevaInstanciaConCambios() {
-        // Arrange
-        var original = new ProductoPatchDto {
-            Nombre = "Original",
-            Descripcion = "Descripción original"
-        };
-
-        // Act
-        var modificado = original with { Nombre = "Modificado" };
-
-        // Assert
-        modificado.Nombre.Should().Be("Modificado");
-        modificado.Descripcion.Should().Be("Descripción original");
-        original.Nombre.Should().Be("Original");
-    }
-
-    #endregion
-
     #region Tests de Escenarios de Actualización Parcial
 
     /// <summary>
-    /// Verifica que actualizar solo el nombre no modifica otros campos.
+    ///     Verifica que actualizar solo el nombre no modifica otros campos.
     /// </summary>
     [Test]
     public void Patch_ActualizaSoloNombre_NoModificaOtrosCampos() {
@@ -192,7 +192,7 @@ public class ProductoPatchDtoTests {
     }
 
     /// <summary>
-    /// Verifica que actualizar solo el stock no modifica el precio.
+    ///     Verifica que actualizar solo el stock no modifica el precio.
     /// </summary>
     [Test]
     public void Patch_ActualizaSoloStock_NoModificaPrecio() {
@@ -206,7 +206,7 @@ public class ProductoPatchDtoTests {
     }
 
     /// <summary>
-    /// Verifica que actualizar solo el precio no modifica el stock.
+    ///     Verifica que actualizar solo el precio no modifica el stock.
     /// </summary>
     [Test]
     public void Patch_ActualizaSoloPrecio_NoModificaStock() {
@@ -223,7 +223,7 @@ public class ProductoPatchDtoTests {
     #region Tests de Casos Límite
 
     /// <summary>
-    /// Verifica que un DTO vacío es válido para patch.
+    ///     Verifica que un DTO vacío es válido para patch.
     /// </summary>
     [Test]
     public void DTO_Vacio_EsValidoParaPatch() {
@@ -239,7 +239,7 @@ public class ProductoPatchDtoTests {
     }
 
     /// <summary>
-    /// Verifica que un DTO con todos los campos null es válido.
+    ///     Verifica que un DTO con todos los campos null es válido.
     /// </summary>
     [Test]
     public void DTO_ConTodosLosCamposNull_EsValido() {

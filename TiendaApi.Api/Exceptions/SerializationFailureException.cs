@@ -1,8 +1,8 @@
 namespace TiendaApi.Api.Exceptions;
 
 /// <summary>
-/// Excepción para errores de serialización en PostgreSQL (HTTP 500).
-/// Se usa en el enfoque híbrido Serializable + Retry.
+///     Excepción para errores de serialización en PostgreSQL (HTTP 500).
+///     Se usa en el enfoque híbrido Serializable + Retry.
 /// </summary>
 public class SerializationFailureException : Exception {
     /// <summary>Crea excepción con mensaje.</summary>

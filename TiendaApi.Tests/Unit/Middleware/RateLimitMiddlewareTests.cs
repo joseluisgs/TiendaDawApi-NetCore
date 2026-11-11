@@ -8,8 +8,8 @@ using TiendaApi.Api.Middleware;
 namespace TiendaApi.Tests.Unit.Middleware;
 
 /// <summary>
-/// Tests unitarios para el rate limiting nativo (RateLimitMiddleware).
-/// Cada test usa una ruta única para aislar las particiones entre pruebas.
+///     Tests unitarios para el rate limiting nativo (RateLimitMiddleware).
+///     Cada test usa una ruta única para aislar las particiones entre pruebas.
 /// </summary>
 public class RateLimitMiddlewareTests {
     private readonly RateLimitingState _state = new();
@@ -21,10 +21,14 @@ public class RateLimitMiddlewareTests {
     }
 
     [SetUp]
-    public void Setup() => _nextCalls = 0;
+    public void Setup() {
+        _nextCalls = 0;
+    }
 
     [TearDown]
-    public void TearDown() => _state.Dispose();
+    public void TearDown() {
+        _state.Dispose();
+    }
 
     private static DefaultHttpContext CreateContext(string method, string path, string? ip = null) {
         var context = new DefaultHttpContext();
@@ -37,7 +41,7 @@ public class RateLimitMiddlewareTests {
 
     private async Task<DefaultHttpContext> ExecuteAsync(string method, string path, string? ip = null) {
         var middleware = new RateLimitMiddleware(Next, _state);
-        var context = CreateContext(method, path, ip);
+        DefaultHttpContext context = CreateContext(method, path, ip);
         await middleware.InvokeAsync(context);
         return context;
     }
@@ -51,11 +55,11 @@ public class RateLimitMiddlewareTests {
     [Test]
     public async Task Get_DentroDelLimite_DeberiaPermitirYDevolverCabeceras() {
         // Arrange
-        var path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
+        string path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
 
         // Act
         DefaultHttpContext last = null!;
-        for (var i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             last = await ExecuteAsync(HttpMethods.Get, path);
         }
 
@@ -64,22 +68,22 @@ public class RateLimitMiddlewareTests {
         last.Response.StatusCode.Should().Be(200);
         last.Response.Headers["RateLimit-Limit"].ToString().Should().Be("100");
         last.Response.Headers["RateLimit-Remaining"].ToString().Should().Be("97");
-        int.TryParse(last.Response.Headers["RateLimit-Reset"].ToString(), out var reset).Should().BeTrue();
+        int.TryParse(last.Response.Headers["RateLimit-Reset"].ToString(), out int reset).Should().BeTrue();
         reset.Should().BeGreaterThanOrEqualTo(0);
     }
 
     [Test]
     public async Task Get_LimiteGeneral_DeberiaDevolver429EnLa101() {
         // Arrange
-        var path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
+        string path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
 
         // Act
-        for (var i = 0; i < RateLimitConfig.GeneralLimit; i++) {
-            var ok = await ExecuteAsync(HttpMethods.Get, path);
+        for (int i = 0; i < RateLimitConfig.GeneralLimit; i++) {
+            DefaultHttpContext ok = await ExecuteAsync(HttpMethods.Get, path);
             ok.Response.StatusCode.Should().Be(200);
         }
 
-        var blocked = await ExecuteAsync(HttpMethods.Get, path);
+        DefaultHttpContext blocked = await ExecuteAsync(HttpMethods.Get, path);
 
         // Assert
         _nextCalls.Should().Be(RateLimitConfig.GeneralLimit);
@@ -89,15 +93,15 @@ public class RateLimitMiddlewareTests {
     [Test]
     public async Task Post_LimiteEscritura_DeberiaDevolver429EnLa21() {
         // Arrange
-        var path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
+        string path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
 
         // Act
-        for (var i = 0; i < RateLimitConfig.WriteLimit; i++) {
-            var ok = await ExecuteAsync(HttpMethods.Post, path);
+        for (int i = 0; i < RateLimitConfig.WriteLimit; i++) {
+            DefaultHttpContext ok = await ExecuteAsync(HttpMethods.Post, path);
             ok.Response.StatusCode.Should().Be(200);
         }
 
-        var blocked = await ExecuteAsync(HttpMethods.Post, path);
+        DefaultHttpContext blocked = await ExecuteAsync(HttpMethods.Post, path);
 
         // Assert
         _nextCalls.Should().Be(RateLimitConfig.WriteLimit);
@@ -107,14 +111,14 @@ public class RateLimitMiddlewareTests {
     [Test]
     public async Task Post_En429_DeberiaDevolverJsonConErrorType() {
         // Arrange
-        var path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
-        for (var i = 0; i < RateLimitConfig.WriteLimit; i++) {
+        string path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
+        for (int i = 0; i < RateLimitConfig.WriteLimit; i++) {
             await ExecuteAsync(HttpMethods.Post, path);
         }
 
         // Act
-        var blocked = await ExecuteAsync(HttpMethods.Post, path);
-        var body = await ReadBodyAsync(blocked);
+        DefaultHttpContext blocked = await ExecuteAsync(HttpMethods.Post, path);
+        string body = await ReadBodyAsync(blocked);
 
         // Assert
         blocked.Response.ContentType.Should().Contain("application/json");
@@ -132,32 +136,32 @@ public class RateLimitMiddlewareTests {
     [Test]
     public async Task Post_En429_DeberiaTenerRetryAfterPositivo() {
         // Arrange
-        var path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
-        for (var i = 0; i < RateLimitConfig.WriteLimit; i++) {
+        string path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
+        for (int i = 0; i < RateLimitConfig.WriteLimit; i++) {
             await ExecuteAsync(HttpMethods.Post, path);
         }
 
         // Act
-        var blocked = await ExecuteAsync(HttpMethods.Post, path);
+        DefaultHttpContext blocked = await ExecuteAsync(HttpMethods.Post, path);
 
         // Assert
         blocked.Response.StatusCode.Should().Be(429);
-        int.TryParse(blocked.Response.Headers["Retry-After"].ToString(), out var retryAfter).Should().BeTrue();
+        int.TryParse(blocked.Response.Headers["Retry-After"].ToString(), out int retryAfter).Should().BeTrue();
         retryAfter.Should().BeGreaterThan(0);
     }
 
     [Test]
     public async Task Auth_LimiteDe10_DeberiaDevolver429EnLa11() {
         // Arrange - la ruta de auth aplica aunque el verbo no sea POST
-        var path = $"/api/v1/auth/ratelimit-{Guid.NewGuid():N}";
+        string path = $"/api/v1/auth/ratelimit-{Guid.NewGuid():N}";
 
         // Act
         DefaultHttpContext last = null!;
-        for (var i = 0; i < RateLimitConfig.AuthLimit; i++) {
+        for (int i = 0; i < RateLimitConfig.AuthLimit; i++) {
             last = await ExecuteAsync(HttpMethods.Get, path);
         }
 
-        var blocked = await ExecuteAsync(HttpMethods.Get, path);
+        DefaultHttpContext blocked = await ExecuteAsync(HttpMethods.Get, path);
 
         // Assert
         _nextCalls.Should().Be(RateLimitConfig.AuthLimit);
@@ -168,15 +172,15 @@ public class RateLimitMiddlewareTests {
     [Test]
     public async Task XForwardedFor_LosClientesDeberianTenerContadoresIndependientes() {
         // Arrange - agotar el límite de POST de un cliente
-        var path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
-        for (var i = 0; i < RateLimitConfig.WriteLimit; i++) {
-            await ExecuteAsync(HttpMethods.Post, path, ip: "10.0.0.1");
+        string path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
+        for (int i = 0; i < RateLimitConfig.WriteLimit; i++) {
+            await ExecuteAsync(HttpMethods.Post, path, "10.0.0.1");
         }
 
-        var blocked = await ExecuteAsync(HttpMethods.Post, path, ip: "10.0.0.1");
+        DefaultHttpContext blocked = await ExecuteAsync(HttpMethods.Post, path, "10.0.0.1");
 
         // Act - otro cliente con la misma ruta no debe ver el contador del primero
-        var other = await ExecuteAsync(HttpMethods.Post, path, ip: "10.0.0.2");
+        DefaultHttpContext other = await ExecuteAsync(HttpMethods.Post, path, "10.0.0.2");
 
         // Assert
         blocked.Response.StatusCode.Should().Be(429);
@@ -187,11 +191,12 @@ public class RateLimitMiddlewareTests {
     [Test]
     public async Task En429_NoDeberiaEjecutarElSiguienteMiddleware() {
         // Arrange
-        var path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
-        for (var i = 0; i < RateLimitConfig.WriteLimit; i++) {
+        string path = $"/api/v1/ratelimit-test/{Guid.NewGuid():N}";
+        for (int i = 0; i < RateLimitConfig.WriteLimit; i++) {
             await ExecuteAsync(HttpMethods.Post, path);
         }
-        var callsBefore = _nextCalls;
+
+        int callsBefore = _nextCalls;
 
         // Act
         await ExecuteAsync(HttpMethods.Post, path);

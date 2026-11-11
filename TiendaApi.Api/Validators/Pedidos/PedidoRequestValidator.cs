@@ -4,14 +4,14 @@ using TiendaApi.Api.Dtos.Pedidos;
 namespace TiendaApi.Api.Validators.Pedidos;
 
 /// <summary>
-/// Validador FluentValidation para PedidoRequestDto.
-/// Reglas: Items no vacíos, destinatario válido.
+///     Validador FluentValidation para PedidoRequestDto.
+///     Reglas: Items no vacíos, destinatario válido.
 /// </summary>
 public class PedidoRequestValidator : AbstractValidator<PedidoRequestDto> {
     private static readonly DestinatarioValidator DestinatarioValidator = new();
 
     /// <summary>
-    /// Define reglas de validación para PedidoRequestDto.
+    ///     Define reglas de validación para PedidoRequestDto.
     /// </summary>
     public PedidoRequestValidator() {
         RuleFor(p => p.Items)

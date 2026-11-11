@@ -1,20 +1,21 @@
 using System.Text;
 using FluentAssertions;
-using NUnit.Framework;
 using TiendaApi.Api.Services.Backup;
 
 namespace TiendaApi.Tests.Unit.Services.Backup;
 
 /// <summary>
-/// Tests unitarios de CsvCodec: la escritura y la lectura deben ser inversas
-/// (round-trip), que es donde se rompe un CSV casero.
+///     Tests unitarios de CsvCodec: la escritura y la lectura deben ser inversas
+///     (round-trip), que es donde se rompe un CSV casero.
 /// </summary>
 [TestFixture]
 public class CsvCodecTests {
     private static string Escribir(params string[][] filas) {
         using var texto = new StringWriter();
-        foreach (var fila in filas)
+        foreach (string[] fila in filas) {
             CsvCodec.EscribirFila(texto, fila);
+        }
+
         return texto.ToString();
     }
 
@@ -25,14 +26,14 @@ public class CsvCodecTests {
 
     [Test]
     public void Escritor_CamposSinCaracteresEspeciales_NoEntrecomilla() {
-        var csv = Escribir(["hola", "mundo"]);
+        string csv = Escribir(["hola", "mundo"]);
 
         csv.Should().Be("hola,mundo" + Environment.NewLine);
     }
 
     [Test]
     public void Escritor_CamposConComaComillaOSalto_LosEntrecomilla() {
-        var csv = Escribir(["Laptop, tope de gama", "Di \"s\"count", "linea1\nlinea2"]);
+        string csv = Escribir(["Laptop, tope de gama", "Di \"s\"count", "linea1\nlinea2"]);
 
         csv.Should().StartWith("\"Laptop, tope de gama\",\"Di \"\"s\"\"count\"");
         csv.Should().Contain("\"linea1\nlinea2\"");
@@ -40,15 +41,15 @@ public class CsvCodecTests {
 
     [Test]
     public void RoundTrip_ConComillasComasYSaltos_SeRecuperanIguales() {
-        var original = new[] {
+        string[][] original = new[] {
             new[] { "nombre", "descripcion" },
             new[] { "Camiseta, negra", "Talla \"M\"" },
             new[] { "Saltos\nen línea", "con, coma" },
-            new[] { "normal", "" },
+            new[] { "normal", "" }
         };
 
-        var csv = Escribir(original);
-        var leidas = Leer(csv);
+        string csv = Escribir(original);
+        List<string[]> leidas = Leer(csv);
 
         leidas.Should().HaveCount(original.Length);
         leidas[1][0].Should().Be("Camiseta, negra");
@@ -60,9 +61,9 @@ public class CsvCodecTests {
 
     [Test]
     public void RoundTrip_ConSaltoDeLineaCRLF_SeRecuperanLasFilas() {
-        var csv = "a,b\r\n1,2\r\n3,4\r\n";
+        string csv = "a,b\r\n1,2\r\n3,4\r\n";
 
-        var filas = Leer(csv);
+        List<string[]> filas = Leer(csv);
 
         filas.Should().HaveCount(3);
         filas[1].Should().Equal("1", "2");
@@ -71,7 +72,7 @@ public class CsvCodecTests {
 
     [Test]
     public void Lectura_SinSaltoFinal_NoPierdeLaUltimaFila() {
-        var filas = Leer("a,b\n1,2");
+        List<string[]> filas = Leer("a,b\n1,2");
 
         filas.Should().HaveCount(2, "la última fila no termina en salto de línea");
         filas[1].Should().Equal("1", "2");
@@ -79,7 +80,7 @@ public class CsvCodecTests {
 
     [Test]
     public void Lectura_LineaVacia_NoProduceUnaFilaFantasma() {
-        var filas = Leer("a,b\n\n1,2\n");
+        List<string[]> filas = Leer("a,b\n\n1,2\n");
 
         filas.Should().HaveCount(2);
         filas[1].Should().Equal("1", "2");
@@ -88,12 +89,12 @@ public class CsvCodecTests {
     [Test]
     public void Escritor_EmiteBomDeUtf8ParaExcel() {
         using var memoria = new MemoryStream();
-        using (var escritor = CsvCodec.CrearEscritor(memoria)) {
+        using (StreamWriter escritor = CsvCodec.CrearEscritor(memoria)) {
             CsvCodec.EscribirCabecera(escritor, ["nombre"]);
             CsvCodec.EscribirFila(escritor, ["Electrónica"]);
         }
 
-        var bytes = memoria.ToArray();
+        byte[] bytes = memoria.ToArray();
         bytes[0].Should().Be(0xEF, "BOM UTF-8 para que Excel abra los acentos");
         bytes[1].Should().Be(0xBB);
         bytes[2].Should().Be(0xBF);

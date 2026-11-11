@@ -1,13 +1,10 @@
-using System;
-
 namespace TiendaApi.Api.Services.Cache;
 
 /// <summary>
-/// Contrato del servicio de caché.
-///
-/// 🎓 Regla de diseño: la interfaz solo contiene lo que las implementaciones
-/// pueden hacer de forma razonable. No prometemos RemoveByPattern porque
-/// MemoryCache no lo soporta y Redis lo haría con SCAN (costoso).
+///     Contrato del servicio de caché.
+///     🎓 Regla de diseño: la interfaz solo contiene lo que las implementaciones
+///     pueden hacer de forma razonable. No prometemos RemoveByPattern porque
+///     MemoryCache no lo soporta y Redis lo haría con SCAN (costoso).
 /// </summary>
 public interface ICacheService {
     /// <summary>Obtiene un valor de la caché.</summary>

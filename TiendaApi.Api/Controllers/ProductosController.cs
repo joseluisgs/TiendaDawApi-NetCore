@@ -1,5 +1,5 @@
-using Asp.Versioning;
 using System.Security.Claims;
+using Asp.Versioning;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,8 +16,8 @@ using TiendaApi.Api.Services.Productos;
 namespace TiendaApi.Api.Controllers;
 
 /// <summary>
-/// Controlador de API para gestión de productos.
-/// Endpoints: CRUD paginado, filtrado, búsqueda por categoría.
+///     Controlador de API para gestión de productos.
+///     Endpoints: CRUD paginado, filtrado, búsqueda por categoría.
 /// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
@@ -29,7 +29,7 @@ public class ProductosController(
     ILogger<ProductosController> logger
 ) : ControllerBase {
     /// <summary>
-    /// Obtiene todos los productos paginados con filtros opcionales.
+    ///     Obtiene todos los productos paginados con filtros opcionales.
     /// </summary>
     /// <param name="nombre">Filtrar por nombre (contiene).</param>
     /// <param name="categoria">Filtrar por nombre de categoría.</param>
@@ -57,24 +57,28 @@ public class ProductosController(
         [FromQuery] string direction = "asc") {
         logger.LogInformation("Obteniendo productos paginados - Página: {Page}, Tamaño: {Size}", page, size);
 
-        var filter = new ProductoFilterDto(nombre, categoria, isDeleted, precioMax, stockMin, page, size, sortBy, direction);
+        var filter = new ProductoFilterDto(nombre, categoria, isDeleted, precioMax, stockMin, page, size, sortBy,
+            direction);
 
-        var resultado = await service.FindAllPagedAsync(filter);
+        Result<PagedResult<ProductoDto>, DomainError> resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: productos => {
+            productos => {
                 // ETag lo gestiona OutputCache ([OutputCache] attribute)
-                var linkHeader = PaginationLinksHelper.CreateLinkHeader(productos, Request, sortBy, direction);
-                if (!string.IsNullOrEmpty(linkHeader))
+                string linkHeader = PaginationLinksHelper.CreateLinkHeader(productos, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader)) {
                     Response.Headers.Append("Link", linkHeader);
+                }
+
                 return (ActionResult<PagedResult<ProductoDto>>)productos;
             },
-            onFailure: error => (ActionResult<PagedResult<ProductoDto>>)new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
+            error => (ActionResult<PagedResult<ProductoDto>>)new ObjectResult(new { message = error.Message })
+                { StatusCode = StatusCodes.Status500InternalServerError }
         );
     }
 
     /// <summary>
-    /// Obtiene un producto por su ID.
+    ///     Obtiene un producto por su ID.
     /// </summary>
     /// <param name="id">ID del producto.</param>
     /// <returns>200 OK con el producto, o 404 si no existe.</returns>
@@ -86,16 +90,16 @@ public class ProductosController(
     public async Task<ActionResult<ProductoDto>> GetById(long id) {
         logger.LogInformation("Obteniendo producto con ID: {Id}", id);
 
-        var resultado = await service.FindByIdAsync(id);
+        Result<ProductoDto, DomainError> resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: producto => producto,
-            onFailure: error => error.ToHttpResult<ProductoDto>()
+            producto => producto,
+            error => error.ToHttpResult<ProductoDto>()
         );
     }
 
     /// <summary>
-    /// Obtiene todos los productos de una categoría.
+    ///     Obtiene todos los productos de una categoría.
     /// </summary>
     /// <param name="categoriaId">ID de la categoría.</param>
     /// <returns>200 OK con lista de productos, o 404 si la categoría no existe.</returns>
@@ -107,16 +111,16 @@ public class ProductosController(
     public async Task<ActionResult<IEnumerable<ProductoDto>>> GetByCategoria(long categoriaId) {
         logger.LogInformation("Obteniendo productos de categoría: {CategoriaId}", categoriaId);
 
-        var resultado = await service.FindByCategoriaIdAsync(categoriaId);
+        Result<IEnumerable<ProductoDto>, DomainError> resultado = await service.FindByCategoriaIdAsync(categoriaId);
 
         return resultado.Match(
-            onSuccess: productos => Ok(productos),
-            onFailure: error => error.ToHttpResult<IEnumerable<ProductoDto>>()
+            productos => Ok(productos),
+            error => error.ToHttpResult<IEnumerable<ProductoDto>>()
         );
     }
 
     /// <summary>
-    /// Crea un nuevo producto en el sistema.
+    ///     Crea un nuevo producto en el sistema.
     /// </summary>
     /// <param name="dto">Datos del producto a crear.</param>
     /// <returns>201 Created con el producto creado, o 400/404/409 si hay errores.</returns>
@@ -130,16 +134,16 @@ public class ProductosController(
     public async Task<ActionResult<ProductoDto>> Create([FromBody] ProductoRequestDto dto) {
         logger.LogInformation("Creando nuevo producto: {Nombre}", dto.Nombre);
 
-        var resultado = await service.CreateAsync(dto);
+        Result<ProductoDto, DomainError> resultado = await service.CreateAsync(dto);
 
         return resultado.Match(
-            onSuccess: producto => CreatedAtAction(nameof(GetById), new { id = producto.Id }, producto),
-            onFailure: error => error.ToHttpResult<ProductoDto>()
+            producto => CreatedAtAction(nameof(GetById), new { id = producto.Id }, producto),
+            error => error.ToHttpResult<ProductoDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza un producto existente completamente.
+    ///     Actualiza un producto existente completamente.
     /// </summary>
     /// <param name="id">ID del producto a actualizar.</param>
     /// <param name="dto">Nuevos datos del producto.</param>
@@ -154,16 +158,16 @@ public class ProductosController(
     public async Task<ActionResult<ProductoDto>> Update(long id, [FromBody] ProductoRequestDto dto) {
         logger.LogInformation("Actualizando producto con ID: {Id}", id);
 
-        var resultado = await service.UpdateAsync(id, dto);
+        Result<ProductoDto, DomainError> resultado = await service.UpdateAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: producto => producto,
-            onFailure: error => error.ToHttpResult<ProductoDto>()
+            producto => producto,
+            error => error.ToHttpResult<ProductoDto>()
         );
     }
 
     /// <summary>
-    /// Elimina un producto (soft-delete).
+    ///     Elimina un producto (soft-delete).
     /// </summary>
     /// <param name="id">ID del producto a eliminar.</param>
     /// <returns>204 No Content si tiene éxito, o 404 si no existe.</returns>
@@ -176,12 +180,13 @@ public class ProductosController(
     public async Task<ActionResult> Delete(long id) {
         logger.LogInformation("Eliminando producto con ID: {Id}", id);
 
-        var resultado = await service.DeleteAsync(id);
+        UnitResult<DomainError> resultado = await service.DeleteAsync(id);
 
-        if (resultado.IsSuccess)
+        if (resultado.IsSuccess) {
             return NoContent();
+        }
 
-        var error = resultado.Error;
+        DomainError error = resultado.Error;
         return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
@@ -192,7 +197,7 @@ public class ProductosController(
     }
 
     /// <summary>
-    /// Actualiza la imagen de un producto.
+    ///     Actualiza la imagen de un producto.
     /// </summary>
     /// <param name="id">ID del producto.</param>
     /// <param name="image">Archivo de imagen (JPG, PNG, GIF, WEBP, max 10MB).</param>
@@ -212,21 +217,21 @@ public class ProductosController(
             return BadRequest(new { message = "Debe proporcionar un archivo de imagen" });
         }
 
-        var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+        string[] allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
         if (!allowedTypes.Contains(image.ContentType.ToLowerInvariant())) {
             return BadRequest(new { message = "Tipo de archivo no permitido. Solo se permiten: JPG, PNG, GIF, WEBP" });
         }
 
-        var resultado = await service.UpdateImageAsync(id, image);
+        Result<ProductoDto, DomainError> resultado = await service.UpdateImageAsync(id, image);
 
         return resultado.Match(
-            onSuccess: producto => producto,
-            onFailure: error => error.ToHttpResult<ProductoDto>()
+            producto => producto,
+            error => error.ToHttpResult<ProductoDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza parcialmente un producto (campos específicos).
+    ///     Actualiza parcialmente un producto (campos específicos).
     /// </summary>
     /// <param name="id">ID del producto.</param>
     /// <param name="dto">Campos a actualizar.</param>
@@ -241,21 +246,21 @@ public class ProductosController(
     public async Task<ActionResult<ProductoDto>> UpdatePartial(long id, [FromBody] ProductoPatchDto dto) {
         logger.LogInformation("Actualizando parcialmente producto con ID: {Id}", id);
 
-        var resultado = await service.UpdatePartialAsync(id, dto);
+        Result<ProductoDto, DomainError> resultado = await service.UpdatePartialAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: producto => producto,
-            onFailure: error => error.ToHttpResult<ProductoDto>()
+            producto => producto,
+            error => error.ToHttpResult<ProductoDto>()
         );
     }
 
     /// <summary>
-    /// 🎓 Serie histórica de precios de un producto (Cassandra, consulta Q-A).
-    /// PÚBLICO, como el propio catálogo. El orden (más reciente primero) lo
-    /// guarda la clustering key de la tabla; el 404 lo decide PostgreSQL (fuente
-    /// de verdad), no Cassandra. Sin OutputCache: una serie que cambia con cada
-    /// update no debe servirse cacheada (además ETag/cache y TTL de series se
-    /// pisan; aquí manda la frescura).
+    ///     🎓 Serie histórica de precios de un producto (Cassandra, consulta Q-A).
+    ///     PÚBLICO, como el propio catálogo. El orden (más reciente primero) lo
+    ///     guarda la clustering key de la tabla; el 404 lo decide PostgreSQL (fuente
+    ///     de verdad), no Cassandra. Sin OutputCache: una serie que cambia con cada
+    ///     update no debe servirse cacheada (además ETag/cache y TTL de series se
+    ///     pisan; aquí manda la frescura).
     /// </summary>
     /// <param name="id">Producto.</param>
     /// <param name="desde">Fecha mínima opcional (ISO 8601).</param>
@@ -272,21 +277,22 @@ public class ProductosController(
         [FromQuery] DateTime? desde = null,
         [FromQuery] DateTime? hasta = null,
         [FromQuery] int limit = 50) {
-        var resultado = await historialService.GetHistorialPreciosAsync(id, desde, hasta, limit);
+        Result<IReadOnlyList<HistorialPrecioDto>, DomainError> resultado =
+            await historialService.GetHistorialPreciosAsync(id, desde, hasta, limit);
 
         // Constructor explícito: el operador implícito T -> ActionResult<T> no se
         // aplica cuando T es una interfaz genérica construida (IReadOnlyList<>).
         return resultado.Match(
-            onSuccess: serie => new ActionResult<IReadOnlyList<HistorialPrecioDto>>(serie),
-            onFailure: error => error.ToHttpResult<IReadOnlyList<HistorialPrecioDto>>()
+            serie => new ActionResult<IReadOnlyList<HistorialPrecioDto>>(serie),
+            error => error.ToHttpResult<IReadOnlyList<HistorialPrecioDto>>()
         );
     }
 
     /// <summary>
-    /// Registra que el usuario autenticado ha visto este producto (escritura Q-B,
-    /// alimenta su feed con TTL nativo de 180 días). El 204 lo decide la sesión
-    /// y la existencia del producto: la fila del feed es un dato auxiliar del
-    /// usuario que alimenta una consulta aparte.
+    ///     Registra que el usuario autenticado ha visto este producto (escritura Q-B,
+    ///     alimenta su feed con TTL nativo de 180 días). El 204 lo decide la sesión
+    ///     y la existencia del producto: la fila del feed es un dato auxiliar del
+    ///     usuario que alimenta una consulta aparte.
     /// </summary>
     /// <param name="id">Producto visto.</param>
     /// <returns>204 No Content, 401 sin sesión o 404 si el producto no existe.</returns>
@@ -299,15 +305,17 @@ public class ProductosController(
     // ya no hereda de ActionResult, así que ToHttpResult<T> no es convertible al
     // tipo no genérico. Con T = object el 204/401 y el mapeo de errores siguen iguales.
     public async Task<ActionResult<object>> RegistrarVista(long id) {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        var resultado = await historialService.RegistrarVistaAsync(userId, id);
+        UnitResult<DomainError> resultado = await historialService.RegistrarVistaAsync(userId, id);
 
-        if (resultado.IsSuccess)
+        if (resultado.IsSuccess) {
             return NoContent();
+        }
 
         return resultado.Error.ToHttpResult<object>();
     }

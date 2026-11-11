@@ -1,37 +1,38 @@
+using Microsoft.AspNetCore.Authentication;
 using Serilog;
 
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Puertas de login externo (OAuth2/OIDC), activables por configuración.
-///
-/// Cada puerta solo se registra si Auth:{Proveedor}:Enabled es true: con la
-/// puerta cerrada la app ni siquiera conoce al proveedor. Los ClientId y
-/// ClientSecret van en user-secrets o variables de entorno, nunca en appsettings.json:
-///   dotnet user-secrets set "Google:ClientId" "xxxx.apps.googleusercontent.com"
-///   dotnet user-secrets set "Google:ClientSecret" "GOCSPX-xxxx"
-///
-/// La puerta principal (JWT Bearer) ya está registrada en AuthenticationConfig.
-/// Aquí solo se AÑADEN esquemas de proveedores encima: el default sigue siendo JWT.
+///     Puertas de login externo (OAuth2/OIDC), activables por configuración.
+///     Cada puerta solo se registra si Auth:{Proveedor}:Enabled es true: con la
+///     puerta cerrada la app ni siquiera conoce al proveedor. Los ClientId y
+///     ClientSecret van en user-secrets o variables de entorno, nunca en appsettings.json:
+///     dotnet user-secrets set "Google:ClientId" "xxxx.apps.googleusercontent.com"
+///     dotnet user-secrets set "Google:ClientSecret" "GOCSPX-xxxx"
+///     La puerta principal (JWT Bearer) ya está registrada en AuthenticationConfig.
+///     Aquí solo se AÑADEN esquemas de proveedores encima: el default sigue siendo JWT.
 /// </summary>
 public static class OAuthConfig {
     /// <summary>
-    /// Lee las credenciales OAuth de un proveedor (Google, GitHub, Microsoft) y
-    /// comprueba que estén completas. Extraído de AddOAuthDoors para que ese
-    /// método se quede con el menú de puertas (activar/probar) y no con la
-    /// lectura de config; null = faltan credenciales.
+    ///     Lee las credenciales OAuth de un proveedor (Google, GitHub, Microsoft) y
+    ///     comprueba que estén completas. Extraído de AddOAuthDoors para que ese
+    ///     método se quede con el menú de puertas (activar/probar) y no con la
+    ///     lectura de config; null = faltan credenciales.
     /// </summary>
-    private static (string ClientId, string ClientSecret)? ResolverCredenciales(IConfiguration configuration, string proveedor) {
-        var clientId = configuration[$"{proveedor}:ClientId"];
-        var clientSecret = configuration[$"{proveedor}:ClientSecret"];
-        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+    private static (string ClientId, string ClientSecret)? ResolverCredenciales(IConfiguration configuration,
+        string proveedor) {
+        string? clientId = configuration[$"{proveedor}:ClientId"];
+        string? clientSecret = configuration[$"{proveedor}:ClientSecret"];
+        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret)) {
             return null;
+        }
 
         return (clientId, clientSecret);
     }
 
     /// <summary>
-    /// Registra las puertas externas activadas en la configuración.
+    ///     Registra las puertas externas activadas en la configuración.
     /// </summary>
     /// <param name="services">Colección de servicios.</param>
     /// <param name="configuration">Configuración de la app (sección Auth).</param>
@@ -42,7 +43,7 @@ public static class OAuthConfig {
         // Un único AddAuthentication() como menú de puertas: los esquemas
         // defaults (JWT Bearer) ya los puso AuthenticationConfig, aquí solo se
         // añaden esquemas de proveedores encima.
-        var auth = services.AddAuthentication();
+        AuthenticationBuilder auth = services.AddAuthentication();
 
         if (configuration.GetValue<bool>("Auth:Google:Enabled")) {
             if (ResolverCredenciales(configuration, "Google") is { } google) {
@@ -53,7 +54,8 @@ public static class OAuthConfig {
                 });
                 Log.Information("🚪 Puerta de login externo activa: Google");
             } else {
-                Log.Warning("🚪 Auth:Google:Enabled=true pero falta ClientId/ClientSecret — puerta Google NO registrada");
+                Log.Warning(
+                    "🚪 Auth:Google:Enabled=true pero falta ClientId/ClientSecret — puerta Google NO registrada");
             }
         } else {
             Log.Information("🚪 Auth:Google:Enabled=false — puerta desactivada");
@@ -67,7 +69,8 @@ public static class OAuthConfig {
                 });
                 Log.Information("🚪 Puerta de login externo activa: GitHub");
             } else {
-                Log.Warning("🚪 Auth:GitHub:Enabled=true pero falta ClientId/ClientSecret — puerta GitHub NO registrada");
+                Log.Warning(
+                    "🚪 Auth:GitHub:Enabled=true pero falta ClientId/ClientSecret — puerta GitHub NO registrada");
             }
         } else {
             Log.Information("🚪 Auth:GitHub:Enabled=false — puerta desactivada");
@@ -81,7 +84,8 @@ public static class OAuthConfig {
                 });
                 Log.Information("🚪 Puerta de login externo activa: Microsoft");
             } else {
-                Log.Warning("🚪 Auth:Microsoft:Enabled=true pero falta ClientId/ClientSecret — puerta Microsoft NO registrada");
+                Log.Warning(
+                    "🚪 Auth:Microsoft:Enabled=true pero falta ClientId/ClientSecret — puerta Microsoft NO registrada");
             }
         } else {
             Log.Information("🚪 Auth:Microsoft:Enabled=false — puerta desactivada");

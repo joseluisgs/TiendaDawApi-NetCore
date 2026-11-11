@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Api.Controllers;
-using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Services.Auth;
@@ -16,16 +15,16 @@ using TiendaApi.Api.Services.Cache;
 namespace TiendaApi.Tests.Unit.Controllers;
 
 /// <summary>
-/// Tests unitarios para AuthController.
-/// Verifica el funcionamiento de los endpoints de autenticación.
+///     Tests unitarios para AuthController.
+///     Verifica el funcionamiento de los endpoints de autenticación.
 /// </summary>
 public class AuthControllerTests {
-    private readonly Mock<IAuthService> _mockAuthService;
-    private readonly Mock<ICacheService> _mockCacheService;
-    private readonly Mock<IAuthenticationSchemeProvider> _mockSchemeProvider;
-    private readonly Mock<IAuthenticationService> _mockAuthServiceExtern;
-    private readonly Mock<ILogger<AuthController>> _mockLogger;
     private readonly AuthController _controller;
+    private readonly Mock<IAuthService> _mockAuthService;
+    private readonly Mock<IAuthenticationService> _mockAuthServiceExtern;
+    private readonly Mock<ICacheService> _mockCacheService;
+    private readonly Mock<ILogger<AuthController>> _mockLogger;
+    private readonly Mock<IAuthenticationSchemeProvider> _mockSchemeProvider;
 
     public AuthControllerTests() {
         _mockAuthService = new Mock<IAuthService>();
@@ -40,10 +39,52 @@ public class AuthControllerTests {
             _mockLogger.Object);
     }
 
+    #region Constructor Tests
+
+    /// <summary>
+    ///     Verifica que el controlador se crea correctamente con las dependencias.
+    /// </summary>
+    [Test]
+    public void Constructor_ConDependenciasValidas_CreaControlador() {
+        // Arrange & Act
+        var controller = new AuthController(
+            _mockAuthService.Object,
+            _mockSchemeProvider.Object,
+            _mockAuthServiceExtern.Object,
+            _mockLogger.Object);
+
+        // Assert
+        controller.Should().NotBeNull();
+    }
+
+    #endregion
+
+    /// <summary>
+    ///     Handler falso solo para poder construir AuthenticationScheme en tests
+    ///     (el handler real de Google vive en el paquete OAuth).
+    /// </summary>
+    private sealed class FakeOAuthHandler : IAuthenticationHandler {
+        public Task InitializeAsync(AuthenticationScheme scheme, HttpContext context) {
+            return Task.CompletedTask;
+        }
+
+        public Task<AuthenticateResult> AuthenticateAsync() {
+            return Task.FromResult(AuthenticateResult.NoResult());
+        }
+
+        public Task ChallengeAsync(AuthenticationProperties? properties) {
+            return Task.CompletedTask;
+        }
+
+        public Task ForbidAsync(AuthenticationProperties? properties) {
+            return Task.CompletedTask;
+        }
+    }
+
     #region SignUp Tests
 
     /// <summary>
-    /// Verifica que con datos válidos se retorna Created con la respuesta de autenticación.
+    ///     Verifica que con datos válidos se retorna Created con la respuesta de autenticación.
     /// </summary>
     [Test]
     public async Task SignUp_ConDtoValido_RetornaCreated() {
@@ -61,18 +102,18 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Success<AuthResponseDto, DomainError>(authResponse));
 
         // Act
-        var result = await _controller.SignUp(registerDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignUp(registerDto);
 
         // Assert
-        var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        CreatedAtActionResult createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be("SignUp");
-        var response = createdResult.Value.Should().BeOfType<AuthResponseDto>().Subject;
+        AuthResponseDto response = createdResult.Value.Should().BeOfType<AuthResponseDto>().Subject;
         response.Token.Should().Be("jwt-token-123");
         response.User.Username.Should().Be("nuevousuario");
     }
 
     /// <summary>
-    /// Verifica que con datos inválidos retorna BadRequest.
+    ///     Verifica que con datos inválidos retorna BadRequest.
     /// </summary>
     [Test]
     public async Task SignUp_ConDtoInvalido_RetornaBadRequest() {
@@ -89,15 +130,15 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
 
         // Act
-        var result = await _controller.SignUp(registerDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignUp(registerDto);
 
         // Assert
-        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        BadRequestObjectResult badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
 
     /// <summary>
-    /// Verifica que con usuario duplicado retorna Conflict.
+    ///     Verifica que con usuario duplicado retorna Conflict.
     /// </summary>
     [Test]
     public async Task SignUp_ConUsuarioDuplicado_RetornaConflict() {
@@ -114,15 +155,15 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
 
         // Act
-        var result = await _controller.SignUp(registerDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignUp(registerDto);
 
         // Assert
-        var conflictResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
+        ObjectResult conflictResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         conflictResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
     }
 
     /// <summary>
-    /// Verifica que con email duplicado retorna Conflict.
+    ///     Verifica que con email duplicado retorna Conflict.
     /// </summary>
     [Test]
     public async Task SignUp_ConEmailDuplicado_RetornaConflict() {
@@ -139,15 +180,15 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
 
         // Act
-        var result = await _controller.SignUp(registerDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignUp(registerDto);
 
         // Assert
-        var conflictResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
+        ObjectResult conflictResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         conflictResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
     }
 
     /// <summary>
-    /// Verifica que con error interno retorna StatusCode 500.
+    ///     Verifica que con error interno retorna StatusCode 500.
     /// </summary>
     [Test]
     public async Task SignUp_ConErrorInterno_Retorna500() {
@@ -164,10 +205,10 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
 
         // Act
-        var result = await _controller.SignUp(registerDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignUp(registerDto);
 
         // Assert
-        var statusCodeResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
+        ObjectResult statusCodeResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         statusCodeResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
 
@@ -176,7 +217,7 @@ public class AuthControllerTests {
     #region SignIn Tests
 
     /// <summary>
-    /// Verifica que con credenciales válidas retorna Ok con token JWT.
+    ///     Verifica que con credenciales válidas retorna Ok con token JWT.
     /// </summary>
     [Test]
     public async Task SignIn_ConCredencialesValidas_RetornaOk() {
@@ -193,17 +234,17 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Success<AuthResponseDto, DomainError>(authResponse));
 
         // Act
-        var result = await _controller.SignIn(loginDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignIn(loginDto);
 
         // Assert
-        var okResult = result.Value;
-        var response = okResult.Should().BeOfType<AuthResponseDto>().Subject;
+        AuthResponseDto? okResult = result.Value;
+        AuthResponseDto response = okResult.Should().BeOfType<AuthResponseDto>().Subject;
         response.Token.Should().Be("jwt-token-456");
         response.User.Username.Should().Be("usuariovalido");
     }
 
     /// <summary>
-    /// Verifica que con credenciales inválidas retorna Unauthorized.
+    ///     Verifica que con credenciales inválidas retorna Unauthorized.
     /// </summary>
     [Test]
     public async Task SignIn_ConCredencialesInvalidas_RetornaUnauthorized() {
@@ -219,15 +260,15 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
 
         // Act
-        var result = await _controller.SignIn(loginDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignIn(loginDto);
 
         // Assert
-        var unauthorizedResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
+        ObjectResult unauthorizedResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         unauthorizedResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
     }
 
     /// <summary>
-    /// Verifica que con usuario no encontrado retorna Unauthorized.
+    ///     Verifica que con usuario no encontrado retorna Unauthorized.
     /// </summary>
     [Test]
     public async Task SignIn_ConUsuarioNoExistente_RetornaUnauthorized() {
@@ -243,15 +284,15 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
 
         // Act
-        var result = await _controller.SignIn(loginDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignIn(loginDto);
 
         // Assert
-        var unauthorizedResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
+        ObjectResult unauthorizedResult = result.Result.Should().BeAssignableTo<ObjectResult>().Subject;
         unauthorizedResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
     }
 
     /// <summary>
-    /// Verifica que con validación fallida retorna BadRequest.
+    ///     Verifica que con validación fallida retorna BadRequest.
     /// </summary>
     [Test]
     public async Task SignIn_ConValidacionFallida_RetornaBadRequest() {
@@ -267,15 +308,15 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
 
         // Act
-        var result = await _controller.SignIn(loginDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignIn(loginDto);
 
         // Assert
-        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        BadRequestObjectResult badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
 
     /// <summary>
-    /// Verifica que con error interno retorna StatusCode 500.
+    ///     Verifica que con error interno retorna StatusCode 500.
     /// </summary>
     [Test]
     public async Task SignIn_ConErrorInterno_Retorna500() {
@@ -291,31 +332,11 @@ public class AuthControllerTests {
             .ReturnsAsync(Result.Failure<AuthResponseDto, DomainError>(error));
 
         // Act
-        var result = await _controller.SignIn(loginDto);
+        ActionResult<AuthResponseDto> result = await _controller.SignIn(loginDto);
 
         // Assert
-        var statusCodeResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
+        ObjectResult statusCodeResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
         statusCodeResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-    }
-
-    #endregion
-
-    #region Constructor Tests
-
-    /// <summary>
-    /// Verifica que el controlador se crea correctamente con las dependencias.
-    /// </summary>
-    [Test]
-    public void Constructor_ConDependenciasValidas_CreaControlador() {
-        // Arrange & Act
-        var controller = new AuthController(
-            _mockAuthService.Object,
-            _mockSchemeProvider.Object,
-            _mockAuthServiceExtern.Object,
-            _mockLogger.Object);
-
-        // Assert
-        controller.Should().NotBeNull();
     }
 
     #endregion
@@ -323,14 +344,14 @@ public class AuthControllerTests {
     #region Login Externo Tests
 
     /// <summary>
-    /// Verifica que un proveedor no configurado retorna 404 (puerta cerrada).
+    ///     Verifica que un proveedor no configurado retorna 404 (puerta cerrada).
     /// </summary>
     [Test]
     public async Task ExternalLogin_ProveedorNoConfigurado_RetornaNotFound() {
         _mockSchemeProvider.Setup(x => x.GetSchemeAsync("Google"))
             .ReturnsAsync((AuthenticationScheme?)null);
 
-        var result = await _controller.ExternalLogin("Google");
+        IActionResult result = await _controller.ExternalLogin("Google");
 
         result.Should().BeOfType<NotFoundObjectResult>();
         var notFound = (NotFoundObjectResult)result;
@@ -338,7 +359,7 @@ public class AuthControllerTests {
     }
 
     /// <summary>
-    /// Verifica que un proveedor configurado lanza Challenge (302) hacia el proveedor.
+    ///     Verifica que un proveedor configurado lanza Challenge (302) hacia el proveedor.
     /// </summary>
     [Test]
     public async Task ExternalLogin_ProveedorConfigurado_RetornaChallenge() {
@@ -354,7 +375,7 @@ public class AuthControllerTests {
         };
         _controller.Url = mockUrlHelper.Object;
 
-        var result = await _controller.ExternalLogin("Google");
+        IActionResult result = await _controller.ExternalLogin("Google");
 
         result.Should().BeOfType<ChallengeResult>();
         var challenge = (ChallengeResult)result;
@@ -362,7 +383,7 @@ public class AuthControllerTests {
     }
 
     /// <summary>
-    /// Verifica que sin principal autenticado el callback retorna 400.
+    ///     Verifica que sin principal autenticado el callback retorna 400.
     /// </summary>
     [Test]
     public async Task ExternalLoginCallback_SinPrincipal_RetornaBadRequest() {
@@ -370,28 +391,10 @@ public class AuthControllerTests {
         _mockSchemeProvider.Setup(x => x.GetAllSchemesAsync())
             .ReturnsAsync(new List<AuthenticationScheme>());
 
-        var result = await _controller.ExternalLoginCallback();
+        ActionResult<AuthResponseDto> result = await _controller.ExternalLoginCallback();
 
         result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     #endregion
-
-    /// <summary>
-    /// Handler falso solo para poder construir AuthenticationScheme en tests
-    /// (el handler real de Google vive en el paquete OAuth).
-    /// </summary>
-    private sealed class FakeOAuthHandler : IAuthenticationHandler {
-        public Task InitializeAsync(AuthenticationScheme scheme, HttpContext context)
-            => Task.CompletedTask;
-
-        public Task<AuthenticateResult> AuthenticateAsync()
-            => Task.FromResult(AuthenticateResult.NoResult());
-
-        public Task ChallengeAsync(AuthenticationProperties? properties)
-            => Task.CompletedTask;
-
-        public Task ForbidAsync(AuthenticationProperties? properties)
-            => Task.CompletedTask;
-    }
 }

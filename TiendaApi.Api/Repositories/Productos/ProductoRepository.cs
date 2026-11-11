@@ -9,13 +9,13 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Productos;
 
 /// <summary>
-/// Implementación del repositorio de productos.
+///     Implementación del repositorio de productos.
 /// </summary>
 public class ProductoRepository(
     TiendaDbContext context,
     ILogger<ProductoRepository> logger
 ) : IProductoRepository {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<Producto>> FindAllAsync() {
         logger.LogDebug("Buscando todos los productos");
         return await context.Productos
@@ -26,7 +26,7 @@ public class ProductoRepository(
             .ToListAsync();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public IQueryable<Producto> FindAllAsNoTracking() {
         logger.LogDebug("Obteniendo productos como IQueryable");
         return context.Productos
@@ -36,38 +36,43 @@ public class ProductoRepository(
             .AsNoTracking();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<(IEnumerable<Producto> Items, int TotalCount)> FindAllPagedAsync(ProductoFilterDto filter) {
         logger.LogDebug("Buscando productos paginados con filtros");
 
-        var query = filter.IsDeleted.HasValue
+        IQueryable<Producto> query = filter.IsDeleted.HasValue
             ? context.Productos.IgnoreQueryFilters().Include(p => p.Categoria).Include(p => p.Proveedor).AsQueryable()
             : context.Productos.Include(p => p.Categoria).Include(p => p.Proveedor).AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(filter.Nombre))
+        if (!string.IsNullOrWhiteSpace(filter.Nombre)) {
             query = query.Where(p => EF.Functions.Like(p.Nombre, $"%{filter.Nombre}%"));
+        }
 
-        if (!string.IsNullOrWhiteSpace(filter.Categoria))
+        if (!string.IsNullOrWhiteSpace(filter.Categoria)) {
             query = query.Where(p => EF.Functions.Like(p.Categoria.Nombre, $"%{filter.Categoria}%"));
+        }
 
-        if (filter.IsDeleted.HasValue)
+        if (filter.IsDeleted.HasValue) {
             query = query.Where(p => p.IsDeleted == filter.IsDeleted.Value);
+        }
 
-        if (filter.PrecioMax.HasValue)
+        if (filter.PrecioMax.HasValue) {
             query = query.Where(p => p.Precio <= filter.PrecioMax.Value);
+        }
 
-        if (filter.StockMin.HasValue)
+        if (filter.StockMin.HasValue) {
             query = query.Where(p => p.Stock >= filter.StockMin.Value);
+        }
 
-        var totalCount = await query.CountAsync();
+        int totalCount = await query.CountAsync();
         query = ApplySorting(query, filter.SortBy, filter.Direction);
 
         // 🛡️ Clamp defensivo: GraphQL construye el DTO en código sin pasar
         // por validación REST, así que el límite se ap aquí como única verdad funcional.
-        var size = Math.Clamp(filter.Size, 1, 100);
-        var page = Math.Max(filter.Page, 0);
+        int size = Math.Clamp(filter.Size, 1, 100);
+        int page = Math.Max(filter.Page, 0);
 
-        var items = await query
+        List<Producto> items = await query
             .AsNoTracking()
             .Skip(page * size)
             .Take(size)
@@ -76,7 +81,7 @@ public class ProductoRepository(
         return (items, totalCount);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Producto?> FindByIdAsync(long id) {
         return await context.Productos
             .Include(p => p.Categoria)
@@ -84,11 +89,12 @@ public class ProductoRepository(
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<Producto>> FindByIdsAsync(IEnumerable<long> ids) {
         var lista = ids.Distinct().ToList();
-        if (lista.Count == 0)
+        if (lista.Count == 0) {
             return Array.Empty<Producto>();
+        }
 
         logger.LogDebug("Buscando {Count} productos por ids (precarga de pedido)", lista.Count);
         // Sin AsNoTracking a proposito: el llamador decrementa stock sobre estas
@@ -100,7 +106,7 @@ public class ProductoRepository(
             .ToListAsync();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<Producto>> FindByCategoriaIdAsync(long categoriaId) {
         logger.LogDebug("Buscando productos para categoría: {CategoriaId}", categoriaId);
         return await context.Productos
@@ -112,7 +118,7 @@ public class ProductoRepository(
             .ToListAsync();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Producto> SaveAsync(Producto producto) {
         context.Productos.Add(producto);
         await context.SaveChangesAsync();
@@ -122,7 +128,7 @@ public class ProductoRepository(
         return producto;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task CrearConIdExplicitoAsync(Producto producto) {
         logger.LogDebug("Creando producto con ID explícito: {Id}", producto.Id);
         // GENERATED ALWAYS rechaza valores explícitos: se inserta con OVERRIDING y
@@ -149,7 +155,7 @@ public class ProductoRepository(
             AUtc(producto.UpdatedAt));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task ResincronizarSecuenciaAsync() {
         logger.LogDebug("Re-sincronizando secuencia de productos");
         await context.Database.ExecuteSqlRawAsync(
@@ -159,11 +165,7 @@ public class ProductoRepository(
             """);
     }
 
-    /// <summary>Garantiza Kind=Utc, que Npgsql exige para timestamp with time zone.</summary>
-    private static DateTime AUtc(DateTime valor) =>
-        valor.Kind == DateTimeKind.Utc ? valor : DateTime.SpecifyKind(valor, DateTimeKind.Utc);
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Producto> UpdateAsync(Producto producto) {
         context.Productos.Update(producto);
         await context.SaveChangesAsync();
@@ -173,9 +175,9 @@ public class ProductoRepository(
         return producto;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task DeleteAsync(long id) {
-        var producto = await FindByIdAsync(id);
+        Producto? producto = await FindByIdAsync(id);
         if (producto is not null) {
             producto.IsDeleted = true;
             await context.SaveChangesAsync();
@@ -183,15 +185,15 @@ public class ProductoRepository(
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> ExistsAsync(long id) {
         return await context.Productos.AnyAsync(p => p.Id == id);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> DecrementStockAsync(long productoId, int cantidad, byte[] expectedRowVersion) {
         logger.LogDebug("Decrementando stock para producto: {ProductoId}, cantidad: {Cantidad}", productoId, cantidad);
-        var producto = await context.Productos.FindAsync(productoId);
+        Producto? producto = await context.Productos.FindAsync(productoId);
 
         if (producto is null) {
             logger.LogWarning("Producto no encontrado: {ProductoId}", productoId);
@@ -215,16 +217,16 @@ public class ProductoRepository(
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel) {
-        var transaction = await context.Database.BeginTransactionAsync(isolationLevel);
+        IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(isolationLevel);
         logger.LogDebug("Transacción iniciada con nivel: {IsolationLevel}", isolationLevel);
         return transaction;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<Producto>> GetRecentlyCreatedAsync(int days) {
-        var since = DateTime.UtcNow.AddDays(-days);
+        DateTime since = DateTime.UtcNow.AddDays(-days);
         logger.LogDebug("Buscando productos desde: {Since}", since);
         return await context.Productos
             .Where(p => p.CreatedAt >= since && !p.IsDeleted)
@@ -233,8 +235,13 @@ public class ProductoRepository(
             .ToListAsync();
     }
 
+    /// <summary>Garantiza Kind=Utc, que Npgsql exige para timestamp with time zone.</summary>
+    private static DateTime AUtc(DateTime valor) {
+        return valor.Kind == DateTimeKind.Utc ? valor : DateTime.SpecifyKind(valor, DateTimeKind.Utc);
+    }
+
     private static IQueryable<Producto> ApplySorting(IQueryable<Producto> query, string sortBy, string direction) {
-        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
+        bool isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
         Expression<Func<Producto, object>> keySelector = sortBy.ToLower() switch {
             "nombre" => p => p.Nombre,
             "precio" => p => p.Precio,

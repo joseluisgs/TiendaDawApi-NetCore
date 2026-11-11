@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
@@ -9,39 +10,37 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
-using TiendaApi.Api.Errors.Productos;
 using TiendaApi.Api.GraphQL.Publishers;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Realtime.Productos;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Repositories.Proveedores;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
-using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Services.Storage;
-using TiendaApi.Api.Validators.Productos;
 
 namespace TiendaApi.Tests.Unit.Services.Productos;
 
 /// <summary>
-/// Suite de tests para ProductoService
-/// Prueba el enfoque Result Pattern para operaciones de productos
+///     Suite de tests para ProductoService
+///     Prueba el enfoque Result Pattern para operaciones de productos
 /// </summary>
 public class ProductoServiceTests {
-    private Mock<IProductoRepository> _mockProductoRepo = null!;
-    private Mock<ICategoriaRepository> _mockCategoriaRepo = null!;
-    private Mock<ILogger<ProductoService>> _mockLogger = null!;
     private Mock<ICacheService> _mockCacheService = null!;
-    private Mock<ProductosWebSocketHandler> _mockWebSocketHandler = null!;
-    private Mock<IHubContext<ProductosHub>> _mockHubContext = null!;
-    private Mock<IEmailService> _mockEmailService = null!;
+    private Mock<ICategoriaRepository> _mockCategoriaRepo = null!;
     private Mock<IConfiguration> _mockConfiguration = null!;
-    private Mock<IValidator<ProductoRequestDto>> _mockValidator = null!;
-    private Mock<IStorageService> _mockStorageService = null!;
+    private Mock<IEmailService> _mockEmailService = null!;
     private Mock<IEventPublisher> _mockEventPublisher = null!;
     private Mock<IHistorialRepository> _mockHistorialRepo = null!;
+    private Mock<IHubContext<ProductosHub>> _mockHubContext = null!;
+    private Mock<ILogger<ProductoService>> _mockLogger = null!;
+    private Mock<IProductoRepository> _mockProductoRepo = null!;
+    private Mock<IStorageService> _mockStorageService = null!;
+    private Mock<IValidator<ProductoRequestDto>> _mockValidator = null!;
+    private Mock<ProductosWebSocketHandler> _mockWebSocketHandler = null!;
     private ProductoService _service = null!;
 
     [SetUp]
@@ -62,7 +61,7 @@ public class ProductoServiceTests {
         _mockConfiguration.Setup(c => c["Cache:ProductoCacheTTLMinutes"]).Returns("10");
 
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            .ReturnsAsync(new ValidationResult());
 
         var hubContext = new Mock<IHubContext<ProductosHub>>();
         var eventPublisher = new Mock<IEventPublisher>();
@@ -77,9 +76,99 @@ public class ProductoServiceTests {
             _mockValidator.Object,
             _mockStorageService.Object,
             Mock.Of<IOutputCacheStore>(),
-            new ProductoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, _mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
+            new ProductoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object,
+                _mockConfiguration.Object, _mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
         );
     }
+
+    #region CreateAsync_CategoriaNoExiste_RetornaFailure
+
+    [Test]
+    public async Task CreateAsync_CategoriaNoExiste_RetornaFailure() {
+        // Arrange
+        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
+            .ReturnsAsync((Categoria?)null);
+
+        var dto = new ProductoRequestDto {
+            Nombre = "Test",
+            Precio = 99,
+            Stock = 10,
+            CategoriaId = 999
+        };
+
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+
+        // Act
+        Result<ProductoDto, DomainError> result = await _service.CreateAsync(dto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+        var validationError = (ValidationError)result.Error;
+        validationError.ValidationErrors.Should().ContainKey("CategoriaId");
+    }
+
+    #endregion
+
+    #region CreateAsync_ConStockInvalido_RetornaErrorValidacion
+
+    [Test]
+    public async Task CreateAsync_ConStockInvalido_RetornaErrorValidacion() {
+        // Arrange
+        var dto = new ProductoRequestDto {
+            Nombre = "Test",
+            Precio = 50,
+            Stock = -5,
+            CategoriaId = 1
+        };
+
+        // Configurar mock de categoría para que pase la validación de existencia
+        var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
+        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(categoria);
+
+        // Configurar validator para que falle
+        _mockValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(new[] {
+                new ValidationFailure("Stock", "El stock no puede ser negativo")
+            }));
+
+        // Act
+        Result<ProductoDto, DomainError> result = await _service.CreateAsync(dto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Stock");
+    }
+
+    #endregion
+
+    #region CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado
+
+    [Test]
+    public async Task CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado() {
+        // Arrange
+        var dto = new ProductoRequestDto {
+            Nombre = "Test",
+            Precio = 50,
+            Stock = 5,
+            CategoriaId = 999
+        };
+
+        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
+            .ReturnsAsync((Categoria?)null);
+
+        // Act
+        Result<ProductoDto, DomainError> result = await _service.CreateAsync(dto);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+    }
+
+    #endregion
 
     #region FindAllAsync Tests
 
@@ -97,7 +186,7 @@ public class ProductoServiceTests {
             .ReturnsAsync(productos);
 
         // Act
-        var result = await _service.FindAllAsync();
+        Result<IEnumerable<ProductoDto>, DomainError> result = await _service.FindAllAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -108,14 +197,15 @@ public class ProductoServiceTests {
     public async Task FindAllAsync_ConCache_RetornaDesdeCache() {
         // Arrange
         var cachedDtos = new List<ProductoDto> {
-            new ProductoDto(1, "Cached Product", "", 0, 0, null, new CategoriaResumenDto(0, ""), null, DateTime.UtcNow, DateTime.UtcNow)
+            new(1, "Cached Product", "", 0, 0, null, new CategoriaResumenDto(0, ""), null, DateTime.UtcNow,
+                DateTime.UtcNow)
         };
 
         _mockCacheService.Setup(c => c.GetAsync<IEnumerable<ProductoDto>>("productos:all"))
             .ReturnsAsync(cachedDtos);
 
         // Act
-        var result = await _service.FindAllAsync();
+        Result<IEnumerable<ProductoDto>, DomainError> result = await _service.FindAllAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -143,7 +233,7 @@ public class ProductoServiceTests {
             .ReturnsAsync(producto);
 
         // Act
-        var result = await _service.FindByIdAsync(1);
+        Result<ProductoDto, DomainError> result = await _service.FindByIdAsync(1);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -160,7 +250,7 @@ public class ProductoServiceTests {
             .ReturnsAsync((Producto?)null);
 
         // Act
-        var result = await _service.FindByIdAsync(999);
+        Result<ProductoDto, DomainError> result = await _service.FindByIdAsync(999);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -185,7 +275,7 @@ public class ProductoServiceTests {
             .ReturnsAsync(productos);
 
         // Act
-        var result = await _service.FindByCategoriaIdAsync(1);
+        Result<IEnumerable<ProductoDto>, DomainError> result = await _service.FindByCategoriaIdAsync(1);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -199,7 +289,7 @@ public class ProductoServiceTests {
             .ReturnsAsync((Categoria?)null);
 
         // Act
-        var result = await _service.FindByCategoriaIdAsync(999);
+        Result<IEnumerable<ProductoDto>, DomainError> result = await _service.FindByCategoriaIdAsync(999);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -236,7 +326,7 @@ public class ProductoServiceTests {
             .ReturnsAsync(savedProducto);
 
         // Act
-        var result = await _service.CreateAsync(dto);
+        Result<ProductoDto, DomainError> result = await _service.CreateAsync(dto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -267,7 +357,7 @@ public class ProductoServiceTests {
         // Re-crear servicio con mocks configurados
         _service = new ProductoService(
             _mockProductoRepo.Object,
-            Mock.Of<TiendaApi.Api.Repositories.Historial.IHistorialRepository>(),
+            Mock.Of<IHistorialRepository>(),
             _mockCategoriaRepo.Object,
             Mock.Of<IProveedorRepository>(),
             _mockLogger.Object,
@@ -276,97 +366,9 @@ public class ProductoServiceTests {
             _mockValidator.Object,
             _mockStorageService.Object,
             Mock.Of<IOutputCacheStore>(),
-            new ProductoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, _mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
+            new ProductoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object,
+                _mockConfiguration.Object, _mockEventPublisher.Object, Mock.Of<ILogger<ProductoEffects>>())
         );
-    }
-
-    #endregion
-
-    #region CreateAsync_CategoriaNoExiste_RetornaFailure
-
-    [Test]
-    public async Task CreateAsync_CategoriaNoExiste_RetornaFailure() {
-        // Arrange
-        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
-            .ReturnsAsync((Categoria?)null);
-
-        var dto = new ProductoRequestDto {
-            Nombre = "Test",
-            Precio = 99,
-            Stock = 10,
-            CategoriaId = 999
-        };
-
-        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ProductoRequestDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult());
-
-        // Act
-        var result = await _service.CreateAsync(dto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        var validationError = (ValidationError)result.Error;
-        validationError.ValidationErrors.Should().ContainKey("CategoriaId");
-    }
-
-    #endregion
-
-    #region CreateAsync_ConStockInvalido_RetornaErrorValidacion
-
-    [Test]
-    public async Task CreateAsync_ConStockInvalido_RetornaErrorValidacion() {
-        // Arrange
-        var dto = new ProductoRequestDto {
-            Nombre = "Test",
-            Precio = 50,
-            Stock = -5,
-            CategoriaId = 1
-        };
-
-        // Configurar mock de categoría para que pase la validación de existencia
-        var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
-        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(1))
-            .ReturnsAsync(categoria);
-
-        // Configurar validator para que falle
-        _mockValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new[] {
-                new ValidationFailure("Stock", "El stock no puede ser negativo")
-            }));
-
-        // Act
-        var result = await _service.CreateAsync(dto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        ((ValidationError)result.Error).ValidationErrors.Should().ContainKey("Stock");
-    }
-
-    #endregion
-
-    #region CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado
-
-    [Test]
-    public async Task CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado() {
-        // Arrange
-        var dto = new ProductoRequestDto {
-            Nombre = "Test",
-            Precio = 50,
-            Stock = 5,
-            CategoriaId = 999
-        };
-
-        _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
-            .ReturnsAsync((Categoria?)null);
-
-        // Act
-        var result = await _service.CreateAsync(dto);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
     }
 
     #endregion
@@ -395,7 +397,7 @@ public class ProductoServiceTests {
             .ReturnsAsync(updatedProducto);
 
         // Act
-        var result = await _service.UpdateAsync(1, dto);
+        Result<ProductoDto, DomainError> result = await _service.UpdateAsync(1, dto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -409,7 +411,7 @@ public class ProductoServiceTests {
             .ReturnsAsync((Producto?)null);
 
         // Act
-        var result = await _service.UpdateAsync(999, dto);
+        Result<ProductoDto, DomainError> result = await _service.UpdateAsync(999, dto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -428,7 +430,7 @@ public class ProductoServiceTests {
             .ReturnsAsync(producto);
 
         // Act
-        var result = await _service.DeleteAsync(1);
+        UnitResult<DomainError> result = await _service.DeleteAsync(1);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -441,7 +443,7 @@ public class ProductoServiceTests {
             .ReturnsAsync((Producto?)null);
 
         // Act
-        var result = await _service.DeleteAsync(999);
+        UnitResult<DomainError> result = await _service.DeleteAsync(999);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -462,7 +464,7 @@ public class ProductoServiceTests {
         mockFile.Setup(f => f.Length).Returns(1000);
 
         // Act
-        var result = await _service.UpdateImageAsync(999, mockFile.Object);
+        Result<ProductoDto, DomainError> result = await _service.UpdateImageAsync(999, mockFile.Object);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -491,12 +493,12 @@ public class ProductoServiceTests {
         mockFile.Setup(f => f.Length).Returns(1000);
         mockFile.Setup(f => f.ContentType).Returns("image/png");
 
-        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Api.Errors.DomainError>("/uploads/productos/new.png");
+        var saveResult = Result.Success<string, DomainError>("/uploads/productos/new.png");
         _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
             .ReturnsAsync(saveResult);
 
         // Act
-        var result = await _service.UpdateImageAsync(1, mockFile.Object);
+        Result<ProductoDto, DomainError> result = await _service.UpdateImageAsync(1, mockFile.Object);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -525,16 +527,16 @@ public class ProductoServiceTests {
         mockFile.Setup(f => f.Length).Returns(1000);
         mockFile.Setup(f => f.ContentType).Returns("image/png");
 
-        var saveResult = CSharpFunctionalExtensions.Result.Success<string, TiendaApi.Api.Errors.DomainError>("/uploads/productos/new.png");
+        var saveResult = Result.Success<string, DomainError>("/uploads/productos/new.png");
         _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
             .ReturnsAsync(saveResult);
 
-        var deleteResult = CSharpFunctionalExtensions.Result.Success<bool, TiendaApi.Api.Errors.DomainError>(true);
+        var deleteResult = Result.Success<bool, DomainError>(true);
         _mockStorageService.Setup(s => s.DeleteFileAsync("/storage/uploads/productos/old.png"))
             .ReturnsAsync(deleteResult);
 
         // Act
-        var result = await _service.UpdateImageAsync(1, mockFile.Object);
+        Result<ProductoDto, DomainError> result = await _service.UpdateImageAsync(1, mockFile.Object);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -557,13 +559,13 @@ public class ProductoServiceTests {
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(1000);
 
-        var errorResult = CSharpFunctionalExtensions.Result.Failure<string, DomainError>(
+        var errorResult = Result.Failure<string, DomainError>(
             ValidationError.Create("Archivo no válido"));
         _mockStorageService.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "productos"))
             .ReturnsAsync(errorResult);
 
         // Act
-        var result = await _service.UpdateImageAsync(1, mockFile.Object);
+        Result<ProductoDto, DomainError> result = await _service.UpdateImageAsync(1, mockFile.Object);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -605,7 +607,7 @@ public class ProductoServiceTests {
         };
 
         // Act
-        var result = await _service.UpdatePartialAsync(1, dto);
+        Result<ProductoDto, DomainError> result = await _service.UpdatePartialAsync(1, dto);
 
         // Assert: los6 campos enviados llegan al repositorio
         result.IsSuccess.Should().BeTrue();
@@ -640,7 +642,7 @@ public class ProductoServiceTests {
         var dto = new ProductoPatchDto { Precio = 79.99m };
 
         // Act
-        var result = await _service.UpdatePartialAsync(1, dto);
+        Result<ProductoDto, DomainError> result = await _service.UpdatePartialAsync(1, dto);
 
         // Assert: cambia el precio, los demas campos conservan su valor
         result.IsSuccess.Should().BeTrue();
@@ -671,7 +673,7 @@ public class ProductoServiceTests {
         var dto = new ProductoPatchDto { Nombre = "   ", Precio = 0m, CategoriaId = 0 };
 
         // Act
-        var result = await _service.UpdatePartialAsync(1, dto);
+        Result<ProductoDto, DomainError> result = await _service.UpdatePartialAsync(1, dto);
 
         // Assert: el producto persiste intacto...
         result.IsSuccess.Should().BeTrue();
@@ -696,7 +698,7 @@ public class ProductoServiceTests {
         var dto = new ProductoPatchDto { Stock = 10 };
 
         // Act
-        var result = await _service.UpdatePartialAsync(1, dto);
+        Result<ProductoDto, DomainError> result = await _service.UpdatePartialAsync(1, dto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -714,7 +716,7 @@ public class ProductoServiceTests {
         var dto = new ProductoPatchDto { Nombre = "Nuevo" };
 
         // Act
-        var result = await _service.UpdatePartialAsync(999, dto);
+        Result<ProductoDto, DomainError> result = await _service.UpdatePartialAsync(999, dto);
 
         // Assert: error y ninguna escritura posterior
         result.IsFailure.Should().BeTrue();

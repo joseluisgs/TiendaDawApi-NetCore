@@ -1,8 +1,7 @@
 using System.Security.Claims;
 using FluentAssertions;
-using HotChocolate;
+using MongoDB.Bson;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
@@ -19,10 +18,6 @@ namespace TiendaApi.Tests.Unit.GraphQL;
 [Category("Unit")]
 [Category("GraphQL")]
 public class TiendaQueryTests {
-    private Mock<IProductoRepository> _productoRepoMock = null!;
-    private Mock<ICategoriaRepository> _categoriaRepoMock = null!;
-    private TiendaQuery _query = null!;
-
     [SetUp]
     public void Setup() {
         _productoRepoMock = new Mock<IProductoRepository>();
@@ -30,31 +25,29 @@ public class TiendaQueryTests {
         _query = new TiendaQuery();
     }
 
-    #region GetProductos Tests
+    private Mock<IProductoRepository> _productoRepoMock = null!;
+    private Mock<ICategoriaRepository> _categoriaRepoMock = null!;
+    private TiendaQuery _query = null!;
 
     [Test]
     public async Task GetProductos_RepositoryExists_ReturnsList() {
         _productoRepoMock.Setup(r => r.FindAllAsync())
             .ReturnsAsync(new List<Producto>());
 
-        var result = await _query.GetProductos(_productoRepoMock.Object);
+        IReadOnlyList<ProductoDto> result = await _query.GetProductos(_productoRepoMock.Object);
 
         result.Should().NotBeNull();
     }
 
-    #endregion
-
-    #region GetProducto Tests
-
     [Test]
     public async Task GetProducto_WithId_ReturnsProducto() {
-        var productoId = 1L;
+        long productoId = 1L;
         var producto = new Producto { Id = productoId, Nombre = "Test" };
 
         _productoRepoMock.Setup(r => r.FindByIdAsync(productoId))
             .ReturnsAsync(producto);
 
-        var result = await _query.GetProducto(productoId, _productoRepoMock.Object);
+        ProductoDto? result = await _query.GetProducto(productoId, _productoRepoMock.Object);
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(productoId);
@@ -65,38 +58,30 @@ public class TiendaQueryTests {
         _productoRepoMock.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Producto?)null);
 
-        var result = await _query.GetProducto(999, _productoRepoMock.Object);
+        ProductoDto? result = await _query.GetProducto(999, _productoRepoMock.Object);
 
         result.Should().BeNull();
     }
-
-    #endregion
-
-    #region GetCategorias Tests
 
     [Test]
     public async Task GetCategorias_RepositoryExists_ReturnsList() {
         _categoriaRepoMock.Setup(r => r.FindAllAsync())
             .ReturnsAsync(new List<Categoria>());
 
-        var result = await _query.GetCategorias(_categoriaRepoMock.Object);
+        IReadOnlyList<CategoriaDto> result = await _query.GetCategorias(_categoriaRepoMock.Object);
 
         result.Should().NotBeNull();
     }
 
-    #endregion
-
-    #region GetCategoria Tests
-
     [Test]
     public async Task GetCategoria_WithId_ReturnsCategoria() {
-        var categoriaId = 1L;
+        long categoriaId = 1L;
         var categoria = new Categoria { Id = categoriaId, Nombre = "Test" };
 
         _categoriaRepoMock.Setup(r => r.FindByIdAsync(categoriaId))
             .ReturnsAsync(categoria);
 
-        var result = await _query.GetCategoria(categoriaId, _categoriaRepoMock.Object);
+        CategoriaDto? result = await _query.GetCategoria(categoriaId, _categoriaRepoMock.Object);
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(categoriaId);
@@ -107,14 +92,10 @@ public class TiendaQueryTests {
         _categoriaRepoMock.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Categoria?)null);
 
-        var result = await _query.GetCategoria(999, _categoriaRepoMock.Object);
+        CategoriaDto? result = await _query.GetCategoria(999, _categoriaRepoMock.Object);
 
         result.Should().BeNull();
     }
-
-    #endregion
-
-    #region GetProductosPaged Tests
 
     [Test]
     public async Task GetProductosPaged_WithPage1_ConvertsToZeroBasedFilter() {
@@ -125,7 +106,7 @@ public class TiendaQueryTests {
             .ReturnsAsync((new List<Producto>(), 2));
 
         // Act: GraphQL page=1 (base 1) → el repositorio debe recibir Page=0 (base 0)
-        var result = await _query.GetProductosPaged(_productoRepoMock.Object, 1, 10);
+        PagedResult<ProductoDto> result = await _query.GetProductosPaged(_productoRepoMock.Object);
 
         // Assert
         result.Should().NotBeNull();
@@ -142,15 +123,11 @@ public class TiendaQueryTests {
             .Callback<ProductoFilterDto>(f => capturedFilter = f)
             .ReturnsAsync((new List<Producto>(), 50));
 
-        var result = await _query.GetProductosPaged(_productoRepoMock.Object, 5, 10);
+        PagedResult<ProductoDto> result = await _query.GetProductosPaged(_productoRepoMock.Object, 5);
 
         result.Page.Should().Be(5);
         capturedFilter!.Page.Should().Be(4);
     }
-
-    #endregion
-
-    #region GetCategoriasPaged Tests
 
     [Test]
     public async Task GetCategoriasPaged_WithPage1_ConvertsToZeroBasedFilter() {
@@ -161,7 +138,7 @@ public class TiendaQueryTests {
             .ReturnsAsync((new List<Categoria>(), 2));
 
         // Act
-        var result = await _query.GetCategoriasPaged(_categoriaRepoMock.Object, 1, 10);
+        PagedResult<CategoriaDto> result = await _query.GetCategoriasPaged(_categoriaRepoMock.Object);
 
         // Assert
         result.Should().NotBeNull();
@@ -178,24 +155,22 @@ public class TiendaQueryTests {
             .Callback<CategoriaFilterDto>(f => capturedFilter = f)
             .ReturnsAsync((new List<Categoria>(), 30));
 
-        var result = await _query.GetCategoriasPaged(_categoriaRepoMock.Object, 3, 10);
+        PagedResult<CategoriaDto> result = await _query.GetCategoriasPaged(_categoriaRepoMock.Object, 3);
 
         result.Page.Should().Be(3);
         capturedFilter!.Page.Should().Be(2);
     }
 
-    #endregion
-
-    #region GetPedidos / GetMisPedidos Tests
-
-    private static Pedido UnPedido(long userId) => new() {
-        Id = MongoDB.Bson.ObjectId.GenerateNewId(),
-        UserId = userId,
-        Estado = "Pendiente",
-        Total = 10m,
-        Items = new List<PedidoItem>(),
-        CreatedAt = DateTime.UtcNow
-    };
+    private static Pedido UnPedido(long userId) {
+        return new Pedido {
+            Id = ObjectId.GenerateNewId(),
+            UserId = userId,
+            Estado = "Pendiente",
+            Total = 10m,
+            Items = new List<PedidoItem>(),
+            CreatedAt = DateTime.UtcNow
+        };
+    }
 
     [Test]
     public async Task GetPedidos_ReturnsAllAsDtos() {
@@ -203,7 +178,7 @@ public class TiendaQueryTests {
         repo.Setup(r => r.FindAllAsync())
             .ReturnsAsync(new List<Pedido> { UnPedido(1), UnPedido(2) });
 
-        var result = await _query.GetPedidos(repo.Object);
+        IReadOnlyList<PedidoDto> result = await _query.GetPedidos(repo.Object);
 
         result.Should().HaveCount(2);
         result![0].Should().BeOfType<PedidoDto>();
@@ -221,7 +196,7 @@ public class TiendaQueryTests {
         var user = new ClaimsPrincipal(new ClaimsIdentity(
             new[] { new Claim(ClaimTypes.NameIdentifier, "7") }, "test"));
 
-        var result = await _query.GetMisPedidos(user, repo.Object);
+        IReadOnlyList<PedidoDto> result = await _query.GetMisPedidos(user, repo.Object);
 
         result.Should().HaveCount(1);
         result![0].UserId.Should().Be(7);
@@ -234,12 +209,10 @@ public class TiendaQueryTests {
         var repo = new Mock<IPedidosRepository>();
         var sinClaims = new ClaimsPrincipal(new ClaimsIdentity()); // anónimo
 
-        var act = () => _query.GetMisPedidos(sinClaims, repo.Object);
+        Func<Task<IReadOnlyList<PedidoDto>>> act = () => _query.GetMisPedidos(sinClaims, repo.Object);
 
         await act.Should().ThrowAsync<GraphQLException>()
             .WithMessage("*NameIdentifier*");
         repo.Verify(r => r.FindByUserIdAsync(It.IsAny<long>()), Times.Never);
     }
-
-    #endregion
 }

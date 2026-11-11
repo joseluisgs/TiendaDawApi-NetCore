@@ -6,7 +6,7 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Services.Auth;
 
 /// <summary>
-/// Contrato del servicio de autenticación.
+///     Contrato del servicio de autenticación.
 /// </summary>
 public interface IAuthService {
     /// <summary>Registra un nuevo usuario.</summary>

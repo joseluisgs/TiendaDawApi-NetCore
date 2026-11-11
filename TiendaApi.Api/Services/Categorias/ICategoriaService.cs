@@ -6,7 +6,7 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Services.Categorias;
 
 /// <summary>
-/// Contrato del servicio de categorías.
+///     Contrato del servicio de categorías.
 /// </summary>
 public interface ICategoriaService {
     /// <summary>Obtiene todas las categorías.</summary>

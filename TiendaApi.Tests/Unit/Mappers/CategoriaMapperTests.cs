@@ -6,8 +6,8 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Tests.Unit.Mappers;
 
 /// <summary>
-/// Tests unitarios para el mapeador de categorías.
-/// Prueba todas las conversiones entidad-DTO para el dominio de Categoría.
+///     Tests unitarios para el mapeador de categorías.
+///     Prueba todas las conversiones entidad-DTO para el dominio de Categoría.
 /// </summary>
 public class CategoriaMapperTests {
     #region ToDto Tests
@@ -23,7 +23,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var dto = categoria.ToDto();
+        CategoriaDto dto = categoria.ToDto();
 
         // Assert
         dto.Id.Should().Be(1);
@@ -40,7 +40,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var dto = categoria.ToDto();
+        CategoriaDto dto = categoria.ToDto();
 
         // Assert
         dto.Id.Should().Be(5);
@@ -50,14 +50,14 @@ public class CategoriaMapperTests {
     [Test]
     public void ToDto_ConNombreLargo_MapeaCorrectamente() {
         // Arrange
-        var longNombre = new string('A', 200);
+        string longNombre = new('A', 200);
         var categoria = new Categoria {
             Id = 1,
             Nombre = longNombre
         };
 
         // Act
-        var dto = categoria.ToDto();
+        CategoriaDto dto = categoria.ToDto();
 
         // Assert
         dto.Nombre.Should().Be(longNombre);
@@ -73,7 +73,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var dto = categoria.ToDto();
+        CategoriaDto dto = categoria.ToDto();
 
         // Assert
         dto.Nombre.Should().Be("Electrónica & Electrodomésticos > 100€");
@@ -88,8 +88,8 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var dto1 = categoria.ToDto();
-        var dto2 = categoria.ToDto();
+        CategoriaDto dto1 = categoria.ToDto();
+        CategoriaDto dto2 = categoria.ToDto();
 
         // Assert
         dto1.Should().BeEquivalentTo(dto2);
@@ -107,7 +107,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Categoria entity = dto.ToEntity();
 
         // Assert
         entity.Nombre.Should().Be("Computers & Accessories");
@@ -123,7 +123,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Categoria entity = dto.ToEntity();
 
         // Assert
         entity.Nombre.Should().BeEmpty();
@@ -137,7 +137,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Categoria entity = dto.ToEntity();
 
         // Assert
         entity.Nombre.Should().Be("   ");
@@ -147,11 +147,11 @@ public class CategoriaMapperTests {
     public void ToEntity_DebeEstablecerMarcasDeTiempoPredeterminadas() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Test" };
-        var beforeCreation = DateTime.UtcNow;
+        DateTime beforeCreation = DateTime.UtcNow;
 
         // Act
-        var entity = dto.ToEntity();
-        var afterCreation = DateTime.UtcNow;
+        Categoria entity = dto.ToEntity();
+        DateTime afterCreation = DateTime.UtcNow;
 
         // Assert
         entity.CreatedAt.Should().BeOnOrAfter(beforeCreation);
@@ -169,7 +169,7 @@ public class CategoriaMapperTests {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Old Name" };
         var dto = new CategoriaRequestDto { Nombre = "New Name" };
-        var beforeUpdate = categoria.UpdatedAt;
+        DateTime beforeUpdate = categoria.UpdatedAt;
 
         // Act
         Thread.Sleep(10); // Ensure time difference
@@ -288,7 +288,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var enumerable = categorias.ToDtoList();
+        IEnumerable<CategoriaDto> enumerable = categorias.ToDtoList();
 
         // Assert - enumerable should not be evaluated yet
         enumerable.Should().NotBeNull();
@@ -302,7 +302,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var dtos = categorias.ToDtoList();
+        IEnumerable<CategoriaDto> dtos = categorias.ToDtoList();
         var firstIteration = dtos.ToList();
         var secondIteration = dtos.ToList();
 
@@ -324,9 +324,9 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var dto = original.ToDto();
+        CategoriaDto dto = original.ToDto();
         // Note: ToEntity takes a DTO, not a DTO result
-        var entity = new CategoriaRequestDto { Nombre = dto.Nombre }.ToEntity();
+        Categoria entity = new CategoriaRequestDto { Nombre = dto.Nombre }.ToEntity();
 
         // Assert
         entity.Nombre.Should().Be(original.Nombre);
@@ -338,8 +338,8 @@ public class CategoriaMapperTests {
         var dto = new CategoriaRequestDto { Nombre = "Persistence Test" };
 
         // Act
-        var entity = dto.ToEntity();
-        var resultDto = entity.ToDto();
+        Categoria entity = dto.ToEntity();
+        CategoriaDto resultDto = entity.ToDto();
 
         // Assert
         resultDto.Nombre.Should().Be(dto.Nombre);
@@ -358,7 +358,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var dto = categoria.ToDto();
+        CategoriaDto dto = categoria.ToDto();
 
         // Assert
         dto.Id.Should().Be(long.MaxValue);
@@ -373,7 +373,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var dto = categoria.ToDto();
+        CategoriaDto dto = categoria.ToDto();
 
         // Assert
         dto.Nombre.Should().Be("José María Álvarez Ñúñez");
@@ -387,7 +387,7 @@ public class CategoriaMapperTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Categoria entity = dto.ToEntity();
 
         // Assert
         entity.Nombre.Should().Be("🎉 Unicode Celebration 🎊");

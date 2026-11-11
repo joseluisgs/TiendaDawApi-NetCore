@@ -2,22 +2,17 @@ using System.Threading.Channels;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Containers;
 
 /// <summary>
-/// Tests de integración para Containers de Pedidos.
-/// Verifica la conectividad y configuración de containers Docker (PostgreSQL, MongoDB).
+///     Tests de integración para Containers de Pedidos.
+///     Verifica la conectividad y configuración de containers Docker (PostgreSQL, MongoDB).
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 public class PedidosContainersIntegrationTests {
-    private const string DatabaseName = "it_pedidos_containers";
-    private string _connectionString = string.Empty;
-    private string _mongoConnectionString = string.Empty;
-
     [OneTimeSetUp]
     public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
@@ -30,9 +25,13 @@ public class PedidosContainersIntegrationTests {
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
+    private const string DatabaseName = "it_pedidos_containers";
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
+
     [Test]
     public async Task MongoDBContainer_ShouldBeRunning() {
-        var connectionString = _mongoConnectionString;
+        string connectionString = _mongoConnectionString;
         connectionString.Should().NotBeNullOrEmpty();
         connectionString.Should().Contain("mongodb://");
 
@@ -41,7 +40,7 @@ public class PedidosContainersIntegrationTests {
 
     [Test]
     public async Task PostgreSQLContainer_ShouldBeRunning() {
-        var connectionString = _connectionString;
+        string connectionString = _connectionString;
         connectionString.Should().NotBeNullOrEmpty();
         connectionString.Should().Contain("Host=");
 
@@ -50,7 +49,7 @@ public class PedidosContainersIntegrationTests {
 
     [Test]
     public async Task Configuration_CanBuildServiceProvider() {
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", _connectionString },
                 { "MongoDbSettings:ConnectionString", _mongoConnectionString },
@@ -65,7 +64,7 @@ public class PedidosContainersIntegrationTests {
         services.AddMemoryCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
-        using var provider = services.BuildServiceProvider();
+        using ServiceProvider provider = services.BuildServiceProvider();
         provider.Should().NotBeNull();
 
         await Task.CompletedTask;
@@ -73,8 +72,8 @@ public class PedidosContainersIntegrationTests {
 
     [Test]
     public async Task BothContainers_CanRunTogether() {
-        var postgresConnection = _connectionString;
-        var mongoConnection = _mongoConnectionString;
+        string postgresConnection = _connectionString;
+        string mongoConnection = _mongoConnectionString;
 
         postgresConnection.Should().NotBeNullOrEmpty();
         mongoConnection.Should().NotBeNullOrEmpty();

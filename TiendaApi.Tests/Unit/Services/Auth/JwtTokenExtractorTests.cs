@@ -8,12 +8,12 @@ using TiendaApi.Api.Services.Auth;
 namespace TiendaApi.Tests.Unit.Services.Auth;
 
 /// <summary>
-/// Tests unitarios para JwtTokenExtractor.
-/// Verifica la extracción de información de tokens JWT.
+///     Tests unitarios para JwtTokenExtractor.
+///     Verifica la extracción de información de tokens JWT.
 /// </summary>
 public class JwtTokenExtractorTests {
-    private readonly Mock<ILogger<JwtTokenExtractor>> _mockLogger;
     private readonly JwtTokenExtractor _extractor;
+    private readonly Mock<ILogger<JwtTokenExtractor>> _mockLogger;
 
     public JwtTokenExtractorTests() {
         _mockLogger = new Mock<ILogger<JwtTokenExtractor>>();
@@ -25,10 +25,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractUserId_WithValidToken_ReturnsUserId() {
         // Arrange
-        var token = CreateToken(userId: 123L, role: "cliente");
+        string token = CreateToken(123L, "cliente");
 
         // Act
-        var userId = _extractor.ExtractUserId(token);
+        long? userId = _extractor.ExtractUserId(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(123L));
@@ -37,10 +37,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractUserId_WithInvalidToken_ReturnsNull() {
         // Arrange
-        var token = "invalid.token";
+        string token = "invalid.token";
 
         // Act
-        var userId = _extractor.ExtractUserId(token);
+        long? userId = _extractor.ExtractUserId(token);
 
         // Assert
         Assert.That(userId, Is.Null);
@@ -49,10 +49,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractUserId_WithEmptyToken_ReturnsNull() {
         // Arrange
-        var token = "";
+        string token = "";
 
         // Act
-        var userId = _extractor.ExtractUserId(token);
+        long? userId = _extractor.ExtractUserId(token);
 
         // Assert
         Assert.That(userId, Is.Null);
@@ -61,7 +61,7 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractUserId_WithNullToken_ReturnsNull() {
         // Act
-        var userId = _extractor.ExtractUserId(null!);
+        long? userId = _extractor.ExtractUserId(null!);
 
         // Assert
         Assert.That(userId, Is.Null);
@@ -74,10 +74,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractRole_WithAdminRole_ReturnsAdmin() {
         // Arrange
-        var token = CreateToken(userId: 1L, role: "admin");
+        string token = CreateToken(1L, "admin");
 
         // Act
-        var role = _extractor.ExtractRole(token);
+        string? role = _extractor.ExtractRole(token);
 
         // Assert
         Assert.That(role, Is.EqualTo("admin"));
@@ -86,10 +86,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractRole_WithClientRole_ReturnsCliente() {
         // Arrange
-        var token = CreateToken(userId: 123L, role: "cliente");
+        string token = CreateToken(123L, "cliente");
 
         // Act
-        var role = _extractor.ExtractRole(token);
+        string? role = _extractor.ExtractRole(token);
 
         // Assert
         Assert.That(role, Is.EqualTo("cliente"));
@@ -98,10 +98,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractRole_WithMissingRole_ReturnsNull() {
         // Arrange
-        var token = CreateTokenWithoutRole(userId: 123L);
+        string token = CreateTokenWithoutRole(123L);
 
         // Act
-        var role = _extractor.ExtractRole(token);
+        string? role = _extractor.ExtractRole(token);
 
         // Assert
         Assert.That(role, Is.Null);
@@ -110,10 +110,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractRole_WithInvalidToken_ReturnsNull() {
         // Arrange
-        var token = "invalid.token";
+        string token = "invalid.token";
 
         // Act
-        var role = _extractor.ExtractRole(token);
+        string? role = _extractor.ExtractRole(token);
 
         // Assert
         Assert.That(role, Is.Null);
@@ -126,10 +126,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsAdmin_WithAdminRole_ReturnsTrue() {
         // Arrange
-        var token = CreateToken(userId: 1L, role: "admin");
+        string token = CreateToken(1L, "admin");
 
         // Act
-        var isAdmin = _extractor.IsAdmin(token);
+        bool isAdmin = _extractor.IsAdmin(token);
 
         // Assert
         Assert.That(isAdmin, Is.True);
@@ -138,10 +138,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsAdmin_WithAdminRoleUppercase_ReturnsTrue() {
         // Arrange
-        var token = CreateToken(userId: 1L, role: "ADMIN");
+        string token = CreateToken(1L, "ADMIN");
 
         // Act
-        var isAdmin = _extractor.IsAdmin(token);
+        bool isAdmin = _extractor.IsAdmin(token);
 
         // Assert
         Assert.That(isAdmin, Is.True);
@@ -150,10 +150,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsAdmin_WithClientRole_ReturnsFalse() {
         // Arrange
-        var token = CreateToken(userId: 123L, role: "cliente");
+        string token = CreateToken(123L, "cliente");
 
         // Act
-        var isAdmin = _extractor.IsAdmin(token);
+        bool isAdmin = _extractor.IsAdmin(token);
 
         // Assert
         Assert.That(isAdmin, Is.False);
@@ -162,10 +162,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsAdmin_WithMissingRole_ReturnsFalse() {
         // Arrange
-        var token = CreateTokenWithoutRole(userId: 123L);
+        string token = CreateTokenWithoutRole(123L);
 
         // Act
-        var isAdmin = _extractor.IsAdmin(token);
+        bool isAdmin = _extractor.IsAdmin(token);
 
         // Assert
         Assert.That(isAdmin, Is.False);
@@ -174,10 +174,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsAdmin_WithInvalidToken_ReturnsFalse() {
         // Arrange
-        var token = "invalid.token";
+        string token = "invalid.token";
 
         // Act
-        var isAdmin = _extractor.IsAdmin(token);
+        bool isAdmin = _extractor.IsAdmin(token);
 
         // Assert
         Assert.That(isAdmin, Is.False);
@@ -190,10 +190,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractUserInfo_WithValidToken_ReturnsAllInfo() {
         // Arrange
-        var token = CreateToken(userId: 123L, role: "admin");
+        string token = CreateToken(123L, "admin");
 
         // Act
-        var (userId, isAdmin, role) = _extractor.ExtractUserInfo(token);
+        (long? userId, bool isAdmin, string? role) = _extractor.ExtractUserInfo(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(123L));
@@ -204,10 +204,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractUserInfo_WithInvalidToken_ReturnsNullUserId() {
         // Arrange
-        var token = "invalid.token";
+        string token = "invalid.token";
 
         // Act
-        var (userId, isAdmin, role) = _extractor.ExtractUserInfo(token);
+        (long? userId, bool isAdmin, string? role) = _extractor.ExtractUserInfo(token);
 
         // Assert
         Assert.That(userId, Is.Null);
@@ -218,10 +218,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractUserInfo_WithMissingRole_ReturnsCorrectInfo() {
         // Arrange
-        var token = CreateTokenWithoutRole(userId: 456L);
+        string token = CreateTokenWithoutRole(456L);
 
         // Act
-        var (userId, isAdmin, role) = _extractor.ExtractUserInfo(token);
+        (long? userId, bool isAdmin, string? role) = _extractor.ExtractUserInfo(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(456L));
@@ -236,14 +236,14 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractClaims_WithValidToken_ReturnsClaimsPrincipal() {
         // Arrange
-        var token = CreateToken(userId: 123L, role: "admin", email: "test@example.com");
+        string token = CreateToken(123L, "admin", "test@example.com");
 
         // Act
-        var claims = _extractor.ExtractClaims(token);
+        ClaimsPrincipal? claims = _extractor.ExtractClaims(token);
 
         // Assert
         Assert.That(claims, Is.Not.Null);
-        var c = claims!;   // no-null garantizado por la asercion previa (CS8604)
+        ClaimsPrincipal c = claims!; // no-null garantizado por la asercion previa (CS8604)
         Assert.That(c.FindFirstValue(ClaimTypes.NameIdentifier), Is.EqualTo("123"));
         Assert.That(c.FindFirstValue(ClaimTypes.Role), Is.EqualTo("admin"));
         Assert.That(c.FindFirstValue(ClaimTypes.Email), Is.EqualTo("test@example.com"));
@@ -252,10 +252,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractClaims_WithInvalidToken_ReturnsNull() {
         // Arrange
-        var token = "invalid.token";
+        string token = "invalid.token";
 
         // Act
-        var claims = _extractor.ExtractClaims(token);
+        ClaimsPrincipal? claims = _extractor.ExtractClaims(token);
 
         // Assert
         Assert.That(claims, Is.Null);
@@ -264,10 +264,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractClaims_WithEmptyToken_ReturnsNull() {
         // Arrange
-        var token = "";
+        string token = "";
 
         // Act
-        var claims = _extractor.ExtractClaims(token);
+        ClaimsPrincipal? claims = _extractor.ExtractClaims(token);
 
         // Assert
         Assert.That(claims, Is.Null);
@@ -280,10 +280,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractEmail_WithValidToken_ReturnsEmail() {
         // Arrange
-        var token = CreateToken(userId: 123L, role: "cliente", email: "user@example.com");
+        string token = CreateToken(123L, "cliente", "user@example.com");
 
         // Act
-        var email = _extractor.ExtractEmail(token);
+        string? email = _extractor.ExtractEmail(token);
 
         // Assert
         Assert.That(email, Is.EqualTo("user@example.com"));
@@ -292,10 +292,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractEmail_WithMissingEmail_ReturnsNull() {
         // Arrange
-        var token = CreateToken(userId: 123L, role: "cliente");
+        string token = CreateToken(123L, "cliente");
 
         // Act
-        var email = _extractor.ExtractEmail(token);
+        string? email = _extractor.ExtractEmail(token);
 
         // Assert
         Assert.That(email, Is.Null);
@@ -304,10 +304,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void ExtractEmail_WithInvalidToken_ReturnsNull() {
         // Arrange
-        var token = "invalid.token";
+        string token = "invalid.token";
 
         // Act
-        var email = _extractor.ExtractEmail(token);
+        string? email = _extractor.ExtractEmail(token);
 
         // Assert
         Assert.That(email, Is.Null);
@@ -320,10 +320,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsValidTokenFormat_WithValidToken_ReturnsTrue() {
         // Arrange
-        var token = CreateToken(userId: 123L, role: "cliente");
+        string token = CreateToken(123L, "cliente");
 
         // Act
-        var isValid = _extractor.IsValidTokenFormat(token);
+        bool isValid = _extractor.IsValidTokenFormat(token);
 
         // Assert
         Assert.That(isValid, Is.True);
@@ -332,10 +332,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsValidTokenFormat_WithInvalidToken_ReturnsFalse() {
         // Arrange
-        var token = "invalid.token";
+        string token = "invalid.token";
 
         // Act
-        var isValid = _extractor.IsValidTokenFormat(token);
+        bool isValid = _extractor.IsValidTokenFormat(token);
 
         // Assert
         Assert.That(isValid, Is.False);
@@ -344,10 +344,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsValidTokenFormat_WithEmptyToken_ReturnsFalse() {
         // Arrange
-        var token = "";
+        string token = "";
 
         // Act
-        var isValid = _extractor.IsValidTokenFormat(token);
+        bool isValid = _extractor.IsValidTokenFormat(token);
 
         // Assert
         Assert.That(isValid, Is.False);
@@ -356,7 +356,7 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsValidTokenFormat_WithNullToken_ReturnsFalse() {
         // Act
-        var isValid = _extractor.IsValidTokenFormat(null!);
+        bool isValid = _extractor.IsValidTokenFormat(null!);
 
         // Assert
         Assert.That(isValid, Is.False);
@@ -365,10 +365,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsValidTokenFormat_WithOnlyTwoParts_ReturnsFalse() {
         // Arrange
-        var token = "header.payload"; // Solo 2 partes
+        string token = "header.payload"; // Solo 2 partes
 
         // Act
-        var isValid = _extractor.IsValidTokenFormat(token);
+        bool isValid = _extractor.IsValidTokenFormat(token);
 
         // Assert
         Assert.That(isValid, Is.False);
@@ -377,10 +377,10 @@ public class JwtTokenExtractorTests {
     [Test]
     public void IsValidTokenFormat_WithFourParts_ReturnsFalse() {
         // Arrange
-        var token = "header.payload.signature.extra"; // 4 partes
+        string token = "header.payload.signature.extra"; // 4 partes
 
         // Act
-        var isValid = _extractor.IsValidTokenFormat(token);
+        bool isValid = _extractor.IsValidTokenFormat(token);
 
         // Assert
         Assert.That(isValid, Is.False);
@@ -393,8 +393,8 @@ public class JwtTokenExtractorTests {
     private static string CreateToken(long userId, string role, string? email = null) {
         var handler = new JwtSecurityTokenHandler();
         var claims = new List<Claim> {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim(ClaimTypes.Role, role)
+            new(ClaimTypes.NameIdentifier, userId.ToString()),
+            new(ClaimTypes.Role, role)
         };
 
         if (email != null) {
@@ -406,7 +406,7 @@ public class JwtTokenExtractorTests {
             Expires = DateTime.UtcNow.AddHours(1)
         };
 
-        var token = handler.CreateToken(tokenDescriptor);
+        SecurityToken token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }
 
@@ -419,7 +419,7 @@ public class JwtTokenExtractorTests {
             Expires = DateTime.UtcNow.AddHours(1)
         };
 
-        var token = handler.CreateToken(tokenDescriptor);
+        SecurityToken token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }
 

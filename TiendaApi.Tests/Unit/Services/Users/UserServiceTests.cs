@@ -1,5 +1,7 @@
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -14,16 +16,16 @@ using TiendaApi.Api.Services.Users;
 namespace TiendaApi.Tests.Unit.Services.Users;
 
 /// <summary>
-/// Tests unitarios para UserService usando Result Pattern
-/// Prueba operaciones CRUD, validación y manejo de errores
+///     Tests unitarios para UserService usando Result Pattern
+///     Prueba operaciones CRUD, validación y manejo de errores
 /// </summary>
 public class UserServiceTests {
-    private Mock<IUserRepository> _mockUserRepository = null!;
+    private Mock<ICacheService> _mockCacheService = null!;
+    private Mock<IConfiguration> _mockConfiguration = null!;
     private Mock<ILogger<UserService>> _mockLogger = null!;
     private Mock<IValidator<RegisterDto>> _mockRegisterValidator = null!;
     private Mock<IValidator<UserUpdateDto>> _mockUpdateValidator = null!;
-    private Mock<ICacheService> _mockCacheService = null!;
-    private Mock<IConfiguration> _mockConfiguration = null!;
+    private Mock<IUserRepository> _mockUserRepository = null!;
     private IUserService _userService = null!;
 
     [SetUp]
@@ -36,10 +38,10 @@ public class UserServiceTests {
         _mockConfiguration = new Mock<IConfiguration>();
 
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            .ReturnsAsync(new ValidationResult());
 
         _mockUpdateValidator.Setup(v => v.ValidateAsync(It.IsAny<UserUpdateDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            .ReturnsAsync(new ValidationResult());
 
         _mockCacheService.Setup(x => x.GetAsync<IEnumerable<UserDto>>(It.IsAny<string>()))
             .ReturnsAsync((IEnumerable<UserDto>?)null);
@@ -66,15 +68,15 @@ public class UserServiceTests {
     public async Task FindAllAsync_ConUsuarios_RetornaTodosLosUsuarios() {
         // Arrange
         var users = new List<User> {
-            new User { Id = 1, UserName = "user1", Email = "user1@test.com", IsDeleted = false },
-            new User { Id = 2, UserName = "user2", Email = "user2@test.com", IsDeleted = false },
+            new() { Id = 1, UserName = "user1", Email = "user1@test.com", IsDeleted = false },
+            new() { Id = 2, UserName = "user2", Email = "user2@test.com", IsDeleted = false }
         };
 
         _mockUserRepository.Setup(x => x.FindAllAsync())
             .ReturnsAsync(users);
 
         // Act
-        var result = await _userService.FindAllAsync();
+        Result<IEnumerable<UserDto>, DomainError> result = await _userService.FindAllAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -88,7 +90,7 @@ public class UserServiceTests {
             .ReturnsAsync(new List<User>());
 
         // Act
-        var result = await _userService.FindAllAsync();
+        Result<IEnumerable<UserDto>, DomainError> result = await _userService.FindAllAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -99,15 +101,15 @@ public class UserServiceTests {
     public async Task FindAllAsync_FiltraUsuariosEliminados() {
         // Arrange
         var users = new List<User> {
-            new User { Id = 1, UserName = "user1", Email = "user1@test.com", IsDeleted = false },
-            new User { Id = 2, UserName = "user2", Email = "user2@test.com", IsDeleted = true }, // Deleted
+            new() { Id = 1, UserName = "user1", Email = "user1@test.com", IsDeleted = false },
+            new() { Id = 2, UserName = "user2", Email = "user2@test.com", IsDeleted = true } // Deleted
         };
 
         _mockUserRepository.Setup(x => x.FindAllAsync())
             .ReturnsAsync(users);
 
         // Act
-        var result = await _userService.FindAllAsync();
+        Result<IEnumerable<UserDto>, DomainError> result = await _userService.FindAllAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -128,13 +130,13 @@ public class UserServiceTests {
             IsDeleted = false
         }).ToList();
 
-        var filter = new UserFilterDto(null, null, null, 0, 10, "id", "asc");
+        var filter = new UserFilterDto(null, null, null);
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((users.Take(10).ToList(), 25));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -157,13 +159,13 @@ public class UserServiceTests {
             IsDeleted = false
         }).ToList();
 
-        var filter = new UserFilterDto(null, null, null, 1, 10, "id", "asc");
+        var filter = new UserFilterDto(null, null, null, 1);
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((users.Skip(10).Take(10).ToList(), 25));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -184,13 +186,13 @@ public class UserServiceTests {
             IsDeleted = false
         }).ToList();
 
-        var filter = new UserFilterDto(null, null, null, 2, 10, "id", "asc");
+        var filter = new UserFilterDto(null, null, null, 2);
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((users.Skip(20).Take(5).ToList(), 25));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -203,13 +205,13 @@ public class UserServiceTests {
     [Test]
     public async Task FindAllPagedAsync_SinUsuarios_RetornaListaVacia() {
         // Arrange
-        var filter = new UserFilterDto(null, null, null, 0, 10, "id", "asc");
+        var filter = new UserFilterDto(null, null, null);
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((new List<User>(), 0));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -223,18 +225,18 @@ public class UserServiceTests {
     [Test]
     public async Task FindAllPagedAsync_ConFiltros_RetornaResultadosFiltrados() {
         // Arrange
-        var filter = new UserFilterDto("test", "@test.com", false, 0, 10, "id", "asc");
+        var filter = new UserFilterDto("test", "@test.com", false);
 
         var users = new List<User> {
-            new User { Id = 1, UserName = "testuser1", Email = "user1@test.com", IsDeleted = false },
-            new User { Id = 2, UserName = "testuser2", Email = "user2@test.com", IsDeleted = false },
+            new() { Id = 1, UserName = "testuser1", Email = "user1@test.com", IsDeleted = false },
+            new() { Id = 2, UserName = "testuser2", Email = "user2@test.com", IsDeleted = false }
         };
 
         _mockUserRepository.Setup(x => x.FindAllPagedAsync(filter))
             .ReturnsAsync((users, 2));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -245,7 +247,7 @@ public class UserServiceTests {
     [Test]
     public async Task FindAllPagedAsync_ConPaginacion_RetornaPaginaCorrecta() {
         // Arrange
-        var filter = new UserFilterDto(null, null, null, 2, 10, "id", "asc");
+        var filter = new UserFilterDto(null, null, null, 2);
 
         var users = Enumerable.Range(1, 25).Select(i => new User {
             Id = i,
@@ -258,7 +260,7 @@ public class UserServiceTests {
             .ReturnsAsync((users.Skip(20).Take(5).ToList(), 25));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -282,7 +284,7 @@ public class UserServiceTests {
             .ReturnsAsync((users, 10));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -292,7 +294,7 @@ public class UserServiceTests {
     [Test]
     public async Task FindAllPagedAsync_ConPageSize100_Retorna100Elementos() {
         // Arrange
-        var filter = new UserFilterDto(null, null, null, 0, 100, "id", "asc");
+        var filter = new UserFilterDto(null, null, null, 0, 100);
 
         var users = Enumerable.Range(1, 100).Select(i => new User {
             Id = i,
@@ -305,7 +307,7 @@ public class UserServiceTests {
             .ReturnsAsync((users, 100));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -330,7 +332,7 @@ public class UserServiceTests {
             .ReturnsAsync((users, 10));
 
         // Act
-        var result = await _userService.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> result = await _userService.FindAllPagedAsync(filter);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -355,7 +357,7 @@ public class UserServiceTests {
             .ReturnsAsync(user);
 
         // Act
-        var result = await _userService.FindByIdAsync(1);
+        Result<UserDto, DomainError> result = await _userService.FindByIdAsync(1);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -370,7 +372,7 @@ public class UserServiceTests {
             .ReturnsAsync((User?)null);
 
         // Act
-        var result = await _userService.FindByIdAsync(999);
+        Result<UserDto, DomainError> result = await _userService.FindByIdAsync(999);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -391,7 +393,7 @@ public class UserServiceTests {
             .ReturnsAsync(deletedUser);
 
         // Act
-        var result = await _userService.FindByIdAsync(1);
+        Result<UserDto, DomainError> result = await _userService.FindByIdAsync(1);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -430,7 +432,7 @@ public class UserServiceTests {
             .ReturnsAsync(savedUser);
 
         // Act
-        var result = await _userService.CreateAsync(registerDto);
+        Result<UserDto, DomainError> result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -458,7 +460,7 @@ public class UserServiceTests {
             .ReturnsAsync(existingUser);
 
         // Act
-        var result = await _userService.CreateAsync(registerDto);
+        Result<UserDto, DomainError> result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -488,7 +490,7 @@ public class UserServiceTests {
             .ReturnsAsync(existingUser);
 
         // Act
-        var result = await _userService.CreateAsync(registerDto);
+        Result<UserDto, DomainError> result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -506,12 +508,12 @@ public class UserServiceTests {
         };
 
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] {
-                new FluentValidation.Results.ValidationFailure("Username", "El nombre de usuario es obligatorio")
+            .ReturnsAsync(new ValidationResult(new[] {
+                new ValidationFailure("Username", "El nombre de usuario es obligatorio")
             }));
 
         // Act
-        var result = await _userService.CreateAsync(registerDto);
+        Result<UserDto, DomainError> result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -531,12 +533,12 @@ public class UserServiceTests {
         };
 
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] {
-                new FluentValidation.Results.ValidationFailure("Username", "El nombre de usuario debe tener al menos 3 caracteres")
+            .ReturnsAsync(new ValidationResult(new[] {
+                new ValidationFailure("Username", "El nombre de usuario debe tener al menos 3 caracteres")
             }));
 
         // Act
-        var result = await _userService.CreateAsync(registerDto);
+        Result<UserDto, DomainError> result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -556,12 +558,12 @@ public class UserServiceTests {
         };
 
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] {
-                new FluentValidation.Results.ValidationFailure("Email", "Debe ser un correo electrónico válido")
+            .ReturnsAsync(new ValidationResult(new[] {
+                new ValidationFailure("Email", "Debe ser un correo electrónico válido")
             }));
 
         // Act
-        var result = await _userService.CreateAsync(registerDto);
+        Result<UserDto, DomainError> result = await _userService.CreateAsync(registerDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -608,7 +610,7 @@ public class UserServiceTests {
             .ReturnsAsync(updatedUser);
 
         // Act
-        var result = await _userService.UpdateAsync(1, updateDto);
+        Result<UserDto, DomainError> result = await _userService.UpdateAsync(1, updateDto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -626,7 +628,7 @@ public class UserServiceTests {
             .ReturnsAsync((User?)null);
 
         // Act
-        var result = await _userService.UpdateAsync(999, updateDto);
+        Result<UserDto, DomainError> result = await _userService.UpdateAsync(999, updateDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -660,7 +662,7 @@ public class UserServiceTests {
             .ReturnsAsync(otherUser);
 
         // Act
-        var result = await _userService.UpdateAsync(1, updateDto);
+        Result<UserDto, DomainError> result = await _userService.UpdateAsync(1, updateDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -686,12 +688,12 @@ public class UserServiceTests {
             .ReturnsAsync(existingUser);
 
         _mockUpdateValidator.Setup(v => v.ValidateAsync(It.IsAny<UserUpdateDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] {
-                new FluentValidation.Results.ValidationFailure("Email", "Debe ser un correo electrónico válido")
+            .ReturnsAsync(new ValidationResult(new[] {
+                new ValidationFailure("Email", "Debe ser un correo electrónico válido")
             }));
 
         // Act
-        var result = await _userService.UpdateAsync(1, updateDto);
+        Result<UserDto, DomainError> result = await _userService.UpdateAsync(1, updateDto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -722,7 +724,7 @@ public class UserServiceTests {
             .ReturnsAsync(user);
 
         // Act
-        var result = await _userService.DeleteAsync(1);
+        UnitResult<DomainError> result = await _userService.DeleteAsync(1);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -736,7 +738,7 @@ public class UserServiceTests {
             .ReturnsAsync((User?)null);
 
         // Act
-        var result = await _userService.DeleteAsync(999);
+        UnitResult<DomainError> result = await _userService.DeleteAsync(999);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -756,7 +758,7 @@ public class UserServiceTests {
             .ReturnsAsync(deletedUser);
 
         // Act
-        var result = await _userService.DeleteAsync(1);
+        UnitResult<DomainError> result = await _userService.DeleteAsync(1);
 
         // Assert
         result.IsFailure.Should().BeTrue();

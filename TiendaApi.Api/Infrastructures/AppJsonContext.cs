@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using TiendaApi.Api.Dtos.Auth;
-using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Backup;
+using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Estadisticas;
 using TiendaApi.Api.Dtos.Historial;
@@ -14,7 +14,7 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Contexto de serialización JSON con source-gen para AOT/trimming.
+///     Contexto de serialización JSON con source-gen para AOT/trimming.
 /// </summary>
 [JsonSerializable(typeof(CategoriaDto))]
 [JsonSerializable(typeof(HistorialPrecioDto))]

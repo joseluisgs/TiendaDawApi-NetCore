@@ -1,5 +1,4 @@
 using CSharpFunctionalExtensions;
-using Microsoft.AspNetCore.Http;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
@@ -7,7 +6,7 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Services.Productos;
 
 /// <summary>
-/// Contrato del servicio de productos.
+///     Contrato del servicio de productos.
 /// </summary>
 public interface IProductoService {
     /// <summary>Obtiene todos los productos.</summary>

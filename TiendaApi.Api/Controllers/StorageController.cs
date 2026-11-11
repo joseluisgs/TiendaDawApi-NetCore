@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Path = System.IO.Path;
 
 namespace TiendaApi.Api.Controllers;
 
 /// <summary>
-/// Controlador para servir archivos estáticos (imágenes de productos).
+///     Controlador para servir archivos estáticos (imágenes de productos).
 /// </summary>
 [ApiController]
 [Route("storage")]
@@ -15,7 +16,7 @@ public class StorageController(
     private readonly ILogger<StorageController> _logger = logger;
 
     /// <summary>
-    /// Obtiene un archivo del almacenamiento local.
+    ///     Obtiene un archivo del almacenamiento local.
     /// </summary>
     /// <param name="path">Ruta del archivo dentro de images/ (ej: productos/filename.jpg).</param>
     /// <returns>El archivo como stream o error 404.</returns>
@@ -29,20 +30,22 @@ public class StorageController(
         }
 
         try {
-            var basePath = System.IO.Path.Combine(_environment.ContentRootPath, "wwwroot");
+            string basePath = Path.Combine(_environment.ContentRootPath, "wwwroot");
 
             // 🎓 Anti path traversal: la ruta del cliente NUNCA manda.
             // - Rutas absolutas: Path.Combine descartaría basePath y leería
             //   cualquier fichero del disco (ej: GET /storage//etc/passwd).
             // - "..": segmentos que escapan de wwwroot.
             // - Y además la ruta final debe quedar DENTRO de basePath.
-            if (System.IO.Path.IsPathRooted(path) || path.Contains("..", StringComparison.Ordinal))
+            if (Path.IsPathRooted(path) || path.Contains("..", StringComparison.Ordinal)) {
                 return NotFound();
+            }
 
-            var fullPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(basePath, path));
-            var basePathFull = System.IO.Path.GetFullPath(basePath);
-            if (!fullPath.StartsWith(basePathFull + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            string fullPath = Path.GetFullPath(Path.Combine(basePath, path));
+            string basePathFull = Path.GetFullPath(basePath);
+            if (!fullPath.StartsWith(basePathFull + Path.DirectorySeparatorChar, StringComparison.Ordinal)) {
                 return NotFound();
+            }
 
             if (!System.IO.File.Exists(fullPath)) {
                 _logger.LogWarning("Archivo no encontrado: {Path}", fullPath);
@@ -56,7 +59,7 @@ public class StorageController(
             }
 
             var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            var contentType = GetContentType(fileInfo.Extension);
+            string contentType = GetContentType(fileInfo.Extension);
 
             _logger.LogInformation("Sirviendo archivo: {Path}", path);
             return File(fileStream, contentType);
@@ -70,7 +73,7 @@ public class StorageController(
     }
 
     /// <summary>
-    /// Determina el tipo de contenido MIME según la extensión del archivo.
+    ///     Determina el tipo de contenido MIME según la extensión del archivo.
     /// </summary>
     /// <param name="extension">Extensión del archivo (ej: ".jpg", ".png").</param>
     /// <returns>Tipo MIME correspondiente (ej: "image/jpeg").</returns>

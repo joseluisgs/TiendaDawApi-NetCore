@@ -4,26 +4,26 @@ using System.Text.Json.Serialization;
 namespace TiendaApi.Api.Dtos.Pedidos;
 
 /// <summary>
-/// DTO de destinatario para pedidos.
+///     DTO de destinatario para pedidos.
 /// </summary>
 /// <example>
-/// {
-///   "nombreCompleto": "María García López",
-///   "email": "maria.garcia@email.com",
-///   "telefono": "+34612345678",
-///   "direccion": {
+///     {
+///     "nombreCompleto": "María García López",
+///     "email": "maria.garcia@email.com",
+///     "telefono": "+34612345678",
+///     "direccion": {
 ///     "calle": "Gran Vía",
 ///     "numero": "42",
 ///     "ciudad": "Madrid",
 ///     "provincia": "Madrid",
 ///     "pais": "España",
 ///     "codigoPostal": "28013"
-///   }
-/// }
+///     }
+///     }
 /// </example>
 public class DestinatarioDto {
     /// <summary>
-    /// Nombre completo del destinatario.
+    ///     Nombre completo del destinatario.
     /// </summary>
     /// <example>María García López</example>
     [JsonPropertyName("nombreCompleto")]
@@ -32,7 +32,7 @@ public class DestinatarioDto {
     public string NombreCompleto { get; set; } = string.Empty;
 
     /// <summary>
-    /// Correo electrónico del destinatario.
+    ///     Correo electrónico del destinatario.
     /// </summary>
     /// <example>maria.garcia@email.com</example>
     [JsonPropertyName("email")]
@@ -42,7 +42,7 @@ public class DestinatarioDto {
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Número de teléfono del destinatario.
+    ///     Número de teléfono del destinatario.
     /// </summary>
     /// <example>+34612345678</example>
     [JsonPropertyName("telefono")]
@@ -51,7 +51,7 @@ public class DestinatarioDto {
     public string? Telefono { get; set; }
 
     /// <summary>
-    /// Dirección de entrega del destinatario.
+    ///     Dirección de entrega del destinatario.
     /// </summary>
     [JsonPropertyName("direccion")]
     [Required(ErrorMessage = "La dirección de entrega es obligatoria.")]

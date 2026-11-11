@@ -3,15 +3,13 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.Extensions.Logging;
 using TiendaApi.Api.Dtos.Productos;
-using TiendaApi.Api.Realtime.Common;
 using TiendaApi.Api.Infrastructures;
 
 namespace TiendaApi.Api.Realtime.Productos;
 
 /// <summary>
-/// Tipos de notificación para productos.
+///     Tipos de notificación para productos.
 /// </summary>
 public static class ProductoNotificationType {
     /// <summary>Producto creado.</summary>
@@ -25,7 +23,7 @@ public static class ProductoNotificationType {
 }
 
 /// <summary>
-/// Datos de notificación para eventos de productos.
+///     Datos de notificación para eventos de productos.
 /// </summary>
 public record ProductoNotificacion(
     string Tipo,
@@ -34,25 +32,28 @@ public record ProductoNotificacion(
 );
 
 /// <summary>
-/// Handler de WebSocket para notificaciones de productos (público).
+///     Handler de WebSocket para notificaciones de productos (público).
 /// </summary>
 /// <example>
-/// ws://localhost:5000/ws/productos
-/// const ws = new WebSocket('ws://localhost:5000/ws/productos');
-/// ws.onmessage = (event) => console.log('Notificación:', JSON.parse(event.data));
-/// // Respuesta: {"entity":"productos","type":"PRODUCTO_CREADO","productoId":123,"producto":{...},"timestamp":"2025-01-18T10:30:00Z"}
+///     ws://localhost:5000/ws/productos
+///     const ws = new WebSocket('ws://localhost:5000/ws/productos');
+///     ws.onmessage = (event) => console.log('Notificación:', JSON.parse(event.data));
+///     // Respuesta:
+///     {"entity":"productos","type":"PRODUCTO_CREADO","productoId":123,"producto":{...},"timestamp":"2025-01-18T10:30:00Z"}
 /// </example>
 public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger) {
     /// <summary>Máximo de conexiones simultáneas aceptadas.</summary>
     private const int MaxConnections = 1000;
 
     private readonly ConcurrentDictionary<string, WebSocket> _connections = new();
-    private readonly ILogger<ProductosWebSocketHandler> _logger = logger;
+
     private readonly JsonSerializerOptions _jsonOptions = new() {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         // Source-gen (AppJsonContext) + fallback a reflexión
         TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
     };
+
+    private readonly ILogger<ProductosWebSocketHandler> _logger = logger;
 
     /// <summary>Maneja una conexión WebSocket.</summary>
     /// <param name="context">Contexto HTTP.</param>
@@ -60,21 +61,25 @@ public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger
     public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket) {
         // 🎓 Límite de conexiones: protege contra abuso.
         if (_connections.Count >= MaxConnections) {
-            _logger.LogWarning("LLímite de conexiones WebSocket alcanzado: {Count}/{Max}", _connections.Count, MaxConnections);
-            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "LLímite de conexiones alcanzado", CancellationToken.None);
+            _logger.LogWarning("LLímite de conexiones WebSocket alcanzado: {Count}/{Max}", _connections.Count,
+                MaxConnections);
+            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "LLímite de conexiones alcanzado",
+                CancellationToken.None);
             return;
         }
 
-        var connectionId = Guid.NewGuid().ToString();
+        string connectionId = Guid.NewGuid().ToString();
         _connections.TryAdd(connectionId, webSocket);
         _logger.LogInformation("Conexión WebSocket: {ConnectionId}", connectionId);
 
         try {
-            var buffer = new byte[1024 * 4];
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            byte[] buffer = new byte[1024 * 4];
+            WebSocketReceiveResult result =
+                await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
-            while (!result.CloseStatus.HasValue)
+            while (!result.CloseStatus.HasValue) {
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            }
 
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         } catch (Exception ex) {
@@ -100,29 +105,35 @@ public class ProductosWebSocketHandler(ILogger<ProductosWebSocketHandler> logger
 
     /// <summary>Obtiene el número de conexiones activas.</summary>
     /// <returns>Número de conexiones.</returns>
-    public int GetConnectionCount() => _connections.Count;
+    public int GetConnectionCount() {
+        return _connections.Count;
+    }
 
     private async Task BroadcastNotificationAsync<T>(T notification) {
-        if (_connections.IsEmpty) return;
+        if (_connections.IsEmpty) {
+            return;
+        }
 
-        var json = JsonSerializer.Serialize(notification, _jsonOptions);
-        var bytes = Encoding.UTF8.GetBytes(json);
+        string json = JsonSerializer.Serialize(notification, _jsonOptions);
+        byte[] bytes = Encoding.UTF8.GetBytes(json);
         var buffer = new ArraySegment<byte>(bytes);
         var disconnected = new List<string>();
 
-        foreach (var kvp in _connections) {
+        foreach (KeyValuePair<string, WebSocket> kvp in _connections) {
             try {
-                if (kvp.Value.State == WebSocketState.Open)
+                if (kvp.Value.State == WebSocketState.Open) {
                     await kvp.Value.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-                else
+                } else {
                     disconnected.Add(kvp.Key);
+                }
             } catch (Exception ex) {
                 _logger.LogWarning(ex, "Error al enviar a: {ConnectionId}", kvp.Key);
                 disconnected.Add(kvp.Key);
             }
         }
 
-        foreach (var id in disconnected)
+        foreach (string id in disconnected) {
             _connections.TryRemove(id, out _);
+        }
     }
 }

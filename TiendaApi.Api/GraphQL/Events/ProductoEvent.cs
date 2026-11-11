@@ -1,7 +1,7 @@
 namespace TiendaApi.Api.GraphQL.Events;
 
 /// <summary>
-/// Evento publicado cuando se crea un nuevo producto.
+///     Evento publicado cuando se crea un nuevo producto.
 /// </summary>
 public record ProductoCreadoEvent {
     /// <summary>Identificador del producto creado.</summary>
@@ -21,7 +21,7 @@ public record ProductoCreadoEvent {
 }
 
 /// <summary>
-/// Evento publicado cuando se actualiza un producto.
+///     Evento publicado cuando se actualiza un producto.
 /// </summary>
 public record ProductoActualizadoEvent {
     /// <summary>Identificador del producto actualizado.</summary>
@@ -41,7 +41,7 @@ public record ProductoActualizadoEvent {
 }
 
 /// <summary>
-/// Evento publicado cuando se elimina un producto.
+///     Evento publicado cuando se elimina un producto.
 /// </summary>
 public record ProductoEliminadoEvent {
     /// <summary>Identificador del producto eliminado.</summary>
@@ -52,7 +52,7 @@ public record ProductoEliminadoEvent {
 }
 
 /// <summary>
-/// Evento publicado cuando el stock de un producto está bajo.
+///     Evento publicado cuando el stock de un producto está bajo.
 /// </summary>
 public record ProductoStockBajoEvent {
     /// <summary>Identificador del producto con stock bajo.</summary>

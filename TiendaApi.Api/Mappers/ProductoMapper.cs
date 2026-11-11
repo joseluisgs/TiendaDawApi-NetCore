@@ -4,12 +4,12 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Mappers;
 
 /// <summary>
-/// Mapper para convertir entre Producto y sus DTOs.
+///     Mapper para convertir entre Producto y sus DTOs.
 /// </summary>
 public static class ProductoMapper {
     /// <summary>Convierte Producto a ProductoDto.</summary>
-    public static ProductoDto ToDto(this Producto producto) =>
-        new(
+    public static ProductoDto ToDto(this Producto producto) {
+        return new ProductoDto(
             producto.Id,
             producto.Nombre,
             producto.Descripcion,
@@ -29,24 +29,28 @@ public static class ProductoMapper {
             producto.CreatedAt,
             producto.UpdatedAt
         );
+    }
 
     /// <summary>Convierte lista de Productos a lista de ProductoDto.</summary>
-    public static IEnumerable<ProductoDto> ToDtoList(this IEnumerable<Producto> productos) =>
-        productos.Select(p => p.ToDto());
+    public static IEnumerable<ProductoDto> ToDtoList(this IEnumerable<Producto> productos) {
+        return productos.Select(p => p.ToDto());
+    }
 
     /// <summary>Convierte ProductoRequestDto a Producto.</summary>
-    public static Producto ToEntity(this ProductoRequestDto dto) => new() {
-        Nombre = dto.Nombre,
-        Descripcion = dto.Descripcion,
-        Precio = dto.Precio,
-        Stock = dto.Stock,
-        Imagen = dto.Imagen,
-        CategoriaId = dto.CategoriaId,
-        // Un código vacío no es una clave válida: se trata como "sin proveedor".
-        ProveedorId = string.IsNullOrWhiteSpace(dto.ProveedorCodigo) ? null : dto.ProveedorCodigo,
-        CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow
-    };
+    public static Producto ToEntity(this ProductoRequestDto dto) {
+        return new Producto {
+            Nombre = dto.Nombre,
+            Descripcion = dto.Descripcion,
+            Precio = dto.Precio,
+            Stock = dto.Stock,
+            Imagen = dto.Imagen,
+            CategoriaId = dto.CategoriaId,
+            // Un código vacío no es una clave válida: se trata como "sin proveedor".
+            ProveedorId = string.IsNullOrWhiteSpace(dto.ProveedorCodigo) ? null : dto.ProveedorCodigo,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+    }
 
     /// <summary>Actualiza Producto desde ProductoRequestDto (PUT: reemplaza todos los campos editables).</summary>
     public static void UpdateEntity(this ProductoRequestDto dto, Producto producto) {
@@ -56,7 +60,8 @@ public static class ProductoMapper {
         producto.Stock = dto.Stock;
         producto.CategoriaId = dto.CategoriaId;
         producto.ProveedorId = string.IsNullOrWhiteSpace(dto.ProveedorCodigo) ? null : dto.ProveedorCodigo;
-        if (!string.IsNullOrEmpty(dto.Imagen))
+        if (!string.IsNullOrEmpty(dto.Imagen)) {
             producto.Imagen = dto.Imagen;
+        }
     }
 }

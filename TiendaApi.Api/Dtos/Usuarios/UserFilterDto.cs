@@ -1,18 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TiendaApi.Api.Dtos.Usuarios;
 
 /// <summary>
-/// DTO para filtrar y paginar usuarios.
-/// Permite búsquedas flexibles por diferentes criterios con soporte para paginación.
+///     DTO para filtrar y paginar usuarios.
+///     Permite búsquedas flexibles por diferentes criterios con soporte para paginación.
 /// </summary>
-///
 /// <remarks>
-/// Uso típico:
-/// - GET /api/v1/users?username=juan&amp;page=0&amp;size=10
-/// - Búsquedas administrativas de usuarios
-/// - Reportes filtrados por estado
+///     Uso típico:
+///     - GET /api/v1/users?username=juan&amp;page=0&amp;size=10
+///     - Búsquedas administrativas de usuarios
+///     - Reportes filtrados por estado
 /// </remarks>
-public record UserFilterDto
-(
+public record UserFilterDto(
     // <summary>
     // Filtrar por nombre de usuario (búsqueda parcial).
     // </summary>
@@ -35,14 +35,14 @@ public record UserFilterDto
     // Número de página (base 0).
     // </summary>
     // <default>0</default>
-    [property: System.ComponentModel.DataAnnotations.Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
+    [property: Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
     int Page = 0,
 
     // <summary>
     // Cantidad de elementos por página.
     // </summary>
     // <default>10</default>
-    [property: System.ComponentModel.DataAnnotations.Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
+    [property: Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
     int Size = 10,
 
     // <summary>

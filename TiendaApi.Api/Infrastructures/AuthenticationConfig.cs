@@ -2,30 +2,28 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using TiendaApi.Api.Data;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Services.Auth;
 
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Extensiones de configuración de autenticación y autorización.
-///
-/// Soporta dos modos según Auth:Mode en configuración:
-/// - "Custom" (default): BCrypt manual + JWT Bearer (enfoque propio)
-/// - "Identity": ASP.NET Core Identity (UserManager/SignInManager) + JWT Bearer
-///
-/// En ambos modos el resultado es el mismo: un JWT Bearer que los endpoints validan.
-/// La diferencia es CÓMO se genera y valida la contraseña internamente.
+///     Extensiones de configuración de autenticación y autorización.
+///     Soporta dos modos según Auth:Mode en configuración:
+///     - "Custom" (default): BCrypt manual + JWT Bearer (enfoque propio)
+///     - "Identity": ASP.NET Core Identity (UserManager/SignInManager) + JWT Bearer
+///     En ambos modos el resultado es el mismo: un JWT Bearer que los endpoints validan.
+///     La diferencia es CÓMO se genera y valida la contraseña internamente.
 /// </summary>
 public static class AuthenticationConfig {
     /// <summary>
-    /// Configura autenticación según el modo seleccionado.
+    ///     Configura autenticación según el modo seleccionado.
     /// </summary>
     public static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration configuration) {
-        var authMode = configuration["Auth:Mode"] ?? "Custom";
+        string authMode = configuration["Auth:Mode"] ?? "Custom";
         Log.Information("🔐 Configurando autenticación... Modo: {Mode}", authMode);
 
         if (authMode == "Identity") {
@@ -36,29 +34,30 @@ public static class AuthenticationConfig {
     }
 
     /// <summary>
-    /// Modo Custom: BCrypt manual + JWT Bearer (el enfoque original).
+    ///     Modo Custom: BCrypt manual + JWT Bearer (el enfoque original).
     /// </summary>
-    private static IServiceCollection AddCustomAuthentication(IServiceCollection services, IConfiguration configuration) {
+    private static IServiceCollection
+        AddCustomAuthentication(IServiceCollection services, IConfiguration configuration) {
         Log.Information("🔐 Modo Custom: BCrypt + JWT Bearer");
 
-        var jwtKey = configuration["Jwt:Key"]
-            ?? throw new InvalidOperationException("JWT Key no configurada");
-        var jwtIssuer = configuration["Jwt:Issuer"] ?? "TiendaApi";
-        var jwtAudience = configuration["Jwt:Audience"] ?? "TiendaApi";
+        string jwtKey = configuration["Jwt:Key"]
+                        ?? throw new InvalidOperationException("JWT Key no configurada");
+        string jwtIssuer = configuration["Jwt:Issuer"] ?? "TiendaApi";
+        string jwtAudience = configuration["Jwt:Audience"] ?? "TiendaApi";
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options => {
-            options.TokenValidationParameters = new TokenValidationParameters {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                ValidateIssuer = true,
-                ValidIssuer = jwtIssuer,
-                ValidateAudience = true,
-                ValidAudience = jwtAudience,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-        });
+            .AddJwtBearer(options => {
+                options.TokenValidationParameters = new TokenValidationParameters {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtIssuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtAudience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
 
         AddAuthorizationPolicies(services);
 
@@ -69,16 +68,17 @@ public static class AuthenticationConfig {
     }
 
     /// <summary>
-    /// Modo Identity: ASP.NET Core Identity + JWT Bearer.
-    /// Identity maneja passwords (PBKDF2), lockout, user store, etc.
+    ///     Modo Identity: ASP.NET Core Identity + JWT Bearer.
+    ///     Identity maneja passwords (PBKDF2), lockout, user store, etc.
     /// </summary>
-    private static IServiceCollection AddIdentityAuthentication(IServiceCollection services, IConfiguration configuration) {
+    private static IServiceCollection AddIdentityAuthentication(IServiceCollection services,
+        IConfiguration configuration) {
         Log.Information("🔐 Modo Identity: ASP.NET Core Identity + JWT Bearer");
 
-        var jwtKey = configuration["Jwt:Key"]
-            ?? throw new InvalidOperationException("JWT Key no configurada");
-        var jwtIssuer = configuration["Jwt:Issuer"] ?? "TiendaApi";
-        var jwtAudience = configuration["Jwt:Audience"] ?? "TiendaApi";
+        string jwtKey = configuration["Jwt:Key"]
+                        ?? throw new InvalidOperationException("JWT Key no configurada");
+        string jwtIssuer = configuration["Jwt:Issuer"] ?? "TiendaApi";
+        string jwtAudience = configuration["Jwt:Audience"] ?? "TiendaApi";
 
         // 🎓 Mecanismo OFICIAL de Microsoft para APIs sin UI ("Identity without
         // UI"): AddIdentityCore registra UserManager/validadores/lockout SIN
@@ -89,24 +89,24 @@ public static class AuthenticationConfig {
         // endpoint de admin. AddRoles + AddSignInManager añaden lo necesario
         // para roles y CheckPasswordSignInAsync sin tocar el DefaultScheme.
         services.AddIdentityCore<User>(options => {
-            options.Password.RequireDigit = true;
-            options.Password.RequireLowercase = true;
-            options.Password.RequireUppercase = true;
-            // 🎓 Mínimo de 8 (OWASP: >= 8); con 6 una contraseña corta
-            // de solo letras y dígitos era suficientemente barata.
-            options.Password.RequiredLength = 8;
-            // 🎓 false EXPLÍCITO: el default de Identity es true y dejarlo implícito
-            // hacía que contraseñas fijas de tests/E2E sin símbolos (p.ej. "User1234")
-            // fueran válidas en Custom pero rechazadas en Identity. La política se
-            // declara entera una vez aquí y los validadores DTO la reflejan.
-            options.Password.RequireNonAlphanumeric = false;
-            options.Lockout.MaxFailedAccessAttempts = 5;
-            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-        })
-        .AddRoles<IdentityRole<long>>()
-        .AddSignInManager()
-        .AddEntityFrameworkStores<TiendaApi.Api.Data.TiendaDbContext>()
-        .AddDefaultTokenProviders();
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                // 🎓 Mínimo de 8 (OWASP: >= 8); con 6 una contraseña corta
+                // de solo letras y dígitos era suficientemente barata.
+                options.Password.RequiredLength = 8;
+                // 🎓 false EXPLÍCITO: el default de Identity es true y dejarlo implícito
+                // hacía que contraseñas fijas de tests/E2E sin símbolos (p.ej. "User1234")
+                // fueran válidas en Custom pero rechazadas en Identity. La política se
+                // declara entera una vez aquí y los validadores DTO la reflejan.
+                options.Password.RequireNonAlphanumeric = false;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            })
+            .AddRoles<IdentityRole<long>>()
+            .AddSignInManager()
+            .AddEntityFrameworkStores<TiendaDbContext>()
+            .AddDefaultTokenProviders();
 
         // 🎓 Defensa en profundidad: aunque AddIdentityCore no ensucia el
         // DefaultScheme, lo fijamos explícitamente a Bearer para que ningún
@@ -119,18 +119,18 @@ public static class AuthenticationConfig {
         });
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options => {
-            options.TokenValidationParameters = new TokenValidationParameters {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                ValidateIssuer = true,
-                ValidIssuer = jwtIssuer,
-                ValidateAudience = true,
-                ValidAudience = jwtAudience,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-        });
+            .AddJwtBearer(options => {
+                options.TokenValidationParameters = new TokenValidationParameters {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtIssuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtAudience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
 
         AddAuthorizationPolicies(services);
 
@@ -141,7 +141,7 @@ public static class AuthenticationConfig {
     }
 
     /// <summary>
-    /// Políticas de autorización (comunes a ambos modos).
+    ///     Políticas de autorización (comunes a ambos modos).
     /// </summary>
     private static void AddAuthorizationPolicies(IServiceCollection services) {
         Log.Information("🛡️ Configurando políticas de autorización...");

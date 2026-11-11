@@ -1,8 +1,8 @@
 namespace TiendaApi.Api.Dtos.Estadisticas;
 
 /// <summary>
-/// Ventana temporal de una consulta estadística.
-/// Los dos límites son opcionales: sin ellos se analiza todo el histórico.
+///     Ventana temporal de una consulta estadística.
+///     Los dos límites son opcionales: sin ellos se analiza todo el histórico.
 /// </summary>
 /// <example>{"desde": "2026-01-01T00:00:00Z", "hasta": null, "dias": 305}</example>
 public record PeriodoDto(
@@ -12,7 +12,7 @@ public record PeriodoDto(
 );
 
 /// <summary>
-/// Totales compartidos por las vistas de ranking y de serie.
+///     Totales compartidos por las vistas de ranking y de serie.
 /// </summary>
 public record TotalesDto(
     int Pedidos,
@@ -26,8 +26,8 @@ public record TotalesDto(
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>
-/// Resumen general: ventas, distribución de pedidos por estado, inventario y
-/// comparativa con el periodo inmediatamente anterior de igual duración.
+///     Resumen general: ventas, distribución de pedidos por estado, inventario y
+///     comparativa con el periodo inmediatamente anterior de igual duración.
 /// </summary>
 public record ResumenEstadisticasDto(
     PeriodoDto Periodo,
@@ -77,8 +77,8 @@ public record ResumenUsuariosDto(
 );
 
 /// <summary>
-/// Variación porcentual respecto del periodo anterior de la misma duración.
-/// Null cuando no hay periodo anterior comparable.
+///     Variación porcentual respecto del periodo anterior de la misma duración.
+///     Null cuando no hay periodo anterior comparable.
 /// </summary>
 public record ComparativaDto(
     decimal Recaudacion,
@@ -183,8 +183,8 @@ public record FilaProveedorDto(
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>
-/// Embudo de estados. Los cancelados se apartan: nunca suman en la recaudación
-/// y se reportan con su propio importe no facturado.
+///     Embudo de estados. Los cancelados se apartan: nunca suman en la recaudación
+///     y se reportan con su propio importe no facturado.
 /// </summary>
 public record EstadosEstadisticasDto(
     PeriodoDto Periodo,

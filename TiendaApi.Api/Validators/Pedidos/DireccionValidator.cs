@@ -4,12 +4,12 @@ using TiendaApi.Api.Dtos.Pedidos;
 namespace TiendaApi.Api.Validators.Pedidos;
 
 /// <summary>
-/// Validador FluentValidation para DireccionDto.
-/// Reglas: Calle(oblig, max200), Ciudad(oblig, max100), Pais(oblig, max100), CP(opc, 5 dig).
+///     Validador FluentValidation para DireccionDto.
+///     Reglas: Calle(oblig, max200), Ciudad(oblig, max100), Pais(oblig, max100), CP(opc, 5 dig).
 /// </summary>
 public class DireccionValidator : AbstractValidator<DireccionDto> {
     /// <summary>
-    /// Define reglas de validación para DireccionDto.
+    ///     Define reglas de validación para DireccionDto.
     /// </summary>
     public DireccionValidator() {
         RuleFor(d => d.Calle)

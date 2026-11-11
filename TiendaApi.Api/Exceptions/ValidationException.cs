@@ -1,12 +1,9 @@
 namespace TiendaApi.Api.Exceptions;
 
 /// <summary>
-/// Excepción para errores de validación de datos (HTTP 400).
+///     Excepción para errores de validación de datos (HTTP 400).
 /// </summary>
 public class ValidationException : Exception {
-    /// <summary>Errores de validación por campo.</summary>
-    public Dictionary<string, string[]> Errors { get; }
-
     /// <summary>Crea excepción con mensaje simple.</summary>
     /// <param name="message">Mensaje de error.</param>
     public ValidationException(string message) : base(message) {
@@ -28,4 +25,7 @@ public class ValidationException : Exception {
         : base(message, innerException) {
         Errors = new Dictionary<string, string[]>();
     }
+
+    /// <summary>Errores de validación por campo.</summary>
+    public Dictionary<string, string[]> Errors { get; }
 }

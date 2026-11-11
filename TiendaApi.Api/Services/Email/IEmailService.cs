@@ -1,9 +1,7 @@
-using System.Threading.Tasks;
-
 namespace TiendaApi.Api.Services.Email;
 
 /// <summary>
-/// Mensaje de correo electrónico.
+///     Mensaje de correo electrónico.
 /// </summary>
 public class EmailMessage {
     /// <summary>Destinatario.</summary>
@@ -20,7 +18,7 @@ public class EmailMessage {
 }
 
 /// <summary>
-/// Contrato del servicio de email.
+///     Contrato del servicio de email.
 /// </summary>
 public interface IEmailService {
     /// <summary>Envía un email de forma inmediata.</summary>

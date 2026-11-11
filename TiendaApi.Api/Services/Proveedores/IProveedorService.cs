@@ -6,8 +6,8 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Services.Proveedores;
 
 /// <summary>
-/// Contrato del servicio de proveedores.
-/// Todas las operaciones son exclusivas del rol ADMIN.
+///     Contrato del servicio de proveedores.
+///     Todas las operaciones son exclusivas del rol ADMIN.
 /// </summary>
 public interface IProveedorService {
     /// <summary>Obtiene todos los proveedores.</summary>

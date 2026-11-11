@@ -4,12 +4,12 @@ using TiendaApi.Api.Dtos.Usuarios;
 namespace TiendaApi.Api.Validators.Usuarios;
 
 /// <summary>
-/// Validador FluentValidation para UserUpdateDto.
-/// Reglas opcionales: Email válido, Password(8-100 con mayúscula, minúscula y dígito).
+///     Validador FluentValidation para UserUpdateDto.
+///     Reglas opcionales: Email válido, Password(8-100 con mayúscula, minúscula y dígito).
 /// </summary>
 public class UserUpdateValidator : AbstractValidator<UserUpdateDto> {
     /// <summary>
-    /// Define reglas de validación para UserUpdateDto.
+    ///     Define reglas de validación para UserUpdateDto.
     /// </summary>
     public UserUpdateValidator() {
         RuleFor(u => u.Email)

@@ -1,10 +1,12 @@
+using System.Data;
+using Microsoft.EntityFrameworkCore.Storage;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Api.Repositories.Productos;
 
 /// <summary>
-/// Contrato del repositorio de productos.
+///     Contrato del repositorio de productos.
 /// </summary>
 public interface IProductoRepository {
     /// <summary>Obtiene todos los productos ordenados por nombre.</summary>
@@ -27,11 +29,11 @@ public interface IProductoRepository {
 
     /// <summary>Busca varios productos por ID en una sola consulta.</summary>
     /// <remarks>
-    /// 🎓 La creación de pedido lo usa para leer en UN SELECT los productos de
-    /// todos los items (IDs únicos) en vez de una consulta por item. Se devuelven
-    /// CON tracking (después se decrementa stock y se persiste) y con la
-    /// categoría incluida: UpdateAsync recarga la categoría solo si no viene ya
-    /// cargada, así el Include evita una recarga por item.
+    ///     🎓 La creación de pedido lo usa para leer en UN SELECT los productos de
+    ///     todos los items (IDs únicos) en vez de una consulta por item. Se devuelven
+    ///     CON tracking (después se decrementa stock y se persiste) y con la
+    ///     categoría incluida: UpdateAsync recarga la categoría solo si no viene ya
+    ///     cargada, así el Include evita una recarga por item.
     /// </remarks>
     /// <param name="ids">IDs de los productos (con duplicados admitidos).</param>
     /// <returns>Productos hallados; los inexistentes no aparecen.</returns>
@@ -48,16 +50,16 @@ public interface IProductoRepository {
     Task<Producto> SaveAsync(Producto producto);
 
     /// <summary>
-    /// Crea un producto con un ID concreto, para el restore de un backup.
-    /// La columna de identidad es <c>GENERATED ALWAYS</c>: requiere
-    /// <c>OVERRIDING SYSTEM VALUE</c> y dejar la secuencia al día.
+    ///     Crea un producto con un ID concreto, para el restore de un backup.
+    ///     La columna de identidad es <c>GENERATED ALWAYS</c>: requiere
+    ///     <c>OVERRIDING SYSTEM VALUE</c> y dejar la secuencia al día.
     /// </summary>
     /// <param name="producto">Producto con su ID original.</param>
     Task CrearConIdExplicitoAsync(Producto producto);
 
     /// <summary>
-    /// Re-sincroniza la secuencia de identidad tras altas con ID explícito.
-    /// Sin esto, la siguiente creación generaría un ID ya ocupado.
+    ///     Re-sincroniza la secuencia de identidad tras altas con ID explícito.
+    ///     Sin esto, la siguiente creación generaría un ID ya ocupado.
     /// </summary>
     Task ResincronizarSecuenciaAsync();
 
@@ -85,8 +87,8 @@ public interface IProductoRepository {
     /// <summary>Inicia una transacción.</summary>
     /// <param name="isolationLevel">Nivel de aislamiento.</param>
     /// <returns>Transacción iniciada.</returns>
-    Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync(
-        System.Data.IsolationLevel isolationLevel);
+    Task<IDbContextTransaction> BeginTransactionAsync(
+        IsolationLevel isolationLevel);
 
     /// <summary>Obtiene productos creados recientemente.</summary>
     /// <param name="days">Días hacia atrás.</param>

@@ -1,15 +1,15 @@
 using FluentAssertions;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.DependencyInjection;
-using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Validators.Productos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Productos.Validators;
 
 /// <summary>
-/// Tests de integración para Validators de Productos.
-/// Verifica la validación de DTOs usando FluentValidation.
+///     Tests de integración para Validators de Productos.
+///     Verifica la validación de DTOs usando FluentValidation.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
@@ -19,8 +19,8 @@ public class ProductoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<ProductoRequestDto> validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
         var dto = new ProductoRequestDto {
             Nombre = "Laptop",
@@ -29,7 +29,7 @@ public class ProductoValidatorsIntegrationTests {
             CategoriaId = 1,
             Descripcion = "Una laptop genial"
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeTrue();
 
@@ -41,8 +41,8 @@ public class ProductoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<ProductoRequestDto> validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
         var dto = new ProductoRequestDto {
             Nombre = "Laptop",
@@ -50,7 +50,7 @@ public class ProductoValidatorsIntegrationTests {
             Stock = 10,
             CategoriaId = 1
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -62,8 +62,8 @@ public class ProductoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<ProductoRequestDto> validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
         var dto = new ProductoRequestDto {
             Nombre = "Laptop",
@@ -71,7 +71,7 @@ public class ProductoValidatorsIntegrationTests {
             Stock = -5,
             CategoriaId = 1
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -83,8 +83,8 @@ public class ProductoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<ProductoRequestDto> validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
         var dto = new ProductoRequestDto {
             Nombre = "Laptop",
@@ -92,7 +92,7 @@ public class ProductoValidatorsIntegrationTests {
             Stock = 10,
             CategoriaId = 0
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -104,8 +104,8 @@ public class ProductoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<ProductoRequestDto> validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
         var dto = new ProductoRequestDto {
             Nombre = "Mouse",
@@ -113,7 +113,7 @@ public class ProductoValidatorsIntegrationTests {
             Stock = 50,
             CategoriaId = 1
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeTrue();
 

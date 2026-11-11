@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace TiendaApi.Api.Models;
 
 /// <summary>
-/// Dirección postal estructurada para envíos.
-/// Todos los campos son opcionales para flexibilidad internacional.
+///     Dirección postal estructurada para envíos.
+///     Todos los campos son opcionales para flexibilidad internacional.
 /// </summary>
 public class Direccion {
     /// <summary>Nombre de la calle, avenida, plaza (máx 200 caracteres).</summary>

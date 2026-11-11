@@ -4,18 +4,16 @@ using TiendaApi.Api.Dtos.Proveedores;
 namespace TiendaApi.Api.Validators.Proveedores;
 
 /// <summary>
-/// Validador FluentValidation para ProveedorRequestDto.
-///
-/// El código se valida SOLO por formato: si llega, debe ser un identificador de 11
-/// caracteres Base64url (http 400 si no lo es). Que el código exista ya en base de datos
-/// es una comprobación distinta que hace el servicio al guardar (http 409).
-///
-/// Reglas: Nombre(3-100, obligatorio), Descripcion(max 500), Contacto(max 200),
-/// Codigo(opcional, formato de 11 caracteres).
+///     Validador FluentValidation para ProveedorRequestDto.
+///     El código se valida SOLO por formato: si llega, debe ser un identificador de 11
+///     caracteres Base64url (http 400 si no lo es). Que el código exista ya en base de datos
+///     es una comprobación distinta que hace el servicio al guardar (http 409).
+///     Reglas: Nombre(3-100, obligatorio), Descripcion(max 500), Contacto(max 200),
+///     Codigo(opcional, formato de 11 caracteres).
 /// </summary>
 public class ProveedorRequestValidator : AbstractValidator<ProveedorRequestDto> {
     /// <summary>
-    /// Define reglas de validación para ProveedorRequestDto.
+    ///     Define reglas de validación para ProveedorRequestDto.
     /// </summary>
     public ProveedorRequestValidator() {
         // El código solo se valida por FORMATO, y con tres estados bien distintos:

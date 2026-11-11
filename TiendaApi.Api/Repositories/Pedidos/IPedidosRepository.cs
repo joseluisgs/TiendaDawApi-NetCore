@@ -1,10 +1,9 @@
-using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Api.Repositories.Pedidos;
 
 /// <summary>
-/// Contrato del repositorio de pedidos.
+///     Contrato del repositorio de pedidos.
 /// </summary>
 public interface IPedidosRepository {
     /// <summary>Obtiene todos los pedidos ordenados por fecha.</summary>
@@ -12,7 +11,7 @@ public interface IPedidosRepository {
     Task<IEnumerable<Pedido>> FindAllAsync();
 
     /// <summary>
-    /// Obtiene los pedidos creados en una ventana temporal para las estadísticas.
+    ///     Obtiene los pedidos creados en una ventana temporal para las estadísticas.
     /// </summary>
     /// <param name="desde">Fecha inicial inclusive (UTC).</param>
     /// <param name="hasta">Fecha final exclusiva (UTC).</param>

@@ -1,15 +1,14 @@
-using HotChocolate.Types;
 using TiendaApi.Api.Dtos.Pedidos;
 
 namespace TiendaApi.Api.GraphQL.Types;
 
 /// <summary>
-/// Tipo de GraphQL para <see cref="DestinatarioDto"/>: quién recibe el
-/// pedido (mismo contrato que REST).
+///     Tipo de GraphQL para <see cref="DestinatarioDto" />: quién recibe el
+///     pedido (mismo contrato que REST).
 /// </summary>
 public class DestinatarioType : ObjectType<DestinatarioDto> {
     /// <summary>
-    /// Configura los campos y descripciones del tipo GraphQL de DestinatarioDto.
+    ///     Configura los campos y descripciones del tipo GraphQL de DestinatarioDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
     protected override void Configure(IObjectTypeDescriptor<DestinatarioDto> descriptor) {

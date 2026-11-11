@@ -13,12 +13,11 @@ using TiendaApi.Api.Services.Proveedores;
 namespace TiendaApi.Api.Controllers;
 
 /// <summary>
-/// Controlador de API para gestión de proveedores de productos.
-/// Endpoints: CRUD paginado de proveedores.
-///
-/// A diferencia de categorías, estos endpoints son privados también en lectura: los proveedores
-/// son datos internos de gestión y la lista completa no se expone al público. Por lo mismo no
-/// se cachean las respuestas.
+///     Controlador de API para gestión de proveedores de productos.
+///     Endpoints: CRUD paginado de proveedores.
+///     A diferencia de categorías, estos endpoints son privados también en lectura: los proveedores
+///     son datos internos de gestión y la lista completa no se expone al público. Por lo mismo no
+///     se cachean las respuestas.
 /// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
@@ -30,7 +29,7 @@ public class ProveedoresController(
     ILogger<ProveedoresController> logger
 ) : ControllerBase {
     /// <summary>
-    /// Obtiene todos los proveedores paginados con filtros opcionales.
+    ///     Obtiene todos los proveedores paginados con filtros opcionales.
     /// </summary>
     /// <param name="nombre">Filtrar por nombre (contiene).</param>
     /// <param name="isDeleted">Filtrar por estado de eliminación.</param>
@@ -61,21 +60,23 @@ public class ProveedoresController(
             Direction = direction
         };
 
-        var resultado = await service.FindAllPagedAsync(filter);
+        Result<PagedResult<ProveedorDto>, DomainError> resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: proveedores => {
-                var linkHeader = PaginationLinksHelper.CreateLinkHeader(proveedores, Request, sortBy, direction);
-                if (!string.IsNullOrEmpty(linkHeader))
+            proveedores => {
+                string linkHeader = PaginationLinksHelper.CreateLinkHeader(proveedores, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader)) {
                     Response.Headers.Append("Link", linkHeader);
+                }
+
                 return proveedores;
             },
-            onFailure: error => error.ToHttpResult<PagedResult<ProveedorDto>>()
+            error => error.ToHttpResult<PagedResult<ProveedorDto>>()
         );
     }
 
     /// <summary>
-    /// Obtiene un proveedor por su código.
+    ///     Obtiene un proveedor por su código.
     /// </summary>
     /// <param name="codigo">Código de 11 caracteres estilo YouTube.</param>
     /// <returns>200 OK con el proveedor, o 404 si no existe.</returns>
@@ -87,17 +88,17 @@ public class ProveedoresController(
     public async Task<ActionResult<ProveedorDto>> GetById(string codigo) {
         logger.LogInformation("Obteniendo proveedor con código: {Codigo}", codigo);
 
-        var resultado = await service.FindByIdAsync(codigo);
+        Result<ProveedorDto, DomainError> resultado = await service.FindByIdAsync(codigo);
 
         return resultado.Match(
-            onSuccess: proveedor => proveedor,
-            onFailure: error => error.ToHttpResult<ProveedorDto>()
+            proveedor => proveedor,
+            error => error.ToHttpResult<ProveedorDto>()
         );
     }
 
     /// <summary>
-    /// Crea un nuevo proveedor.
-    /// Si no se envía código, el servidor genera un identificador de 11 caracteres.
+    ///     Crea un nuevo proveedor.
+    ///     Si no se envía código, el servidor genera un identificador de 11 caracteres.
     /// </summary>
     /// <param name="dto">Datos del proveedor a crear.</param>
     /// <returns>201 Created con el proveedor creado, o 400/409 si hay errores.</returns>
@@ -110,17 +111,17 @@ public class ProveedoresController(
     public async Task<ActionResult<ProveedorDto>> Create([FromBody] ProveedorRequestDto dto) {
         logger.LogInformation("Creando nuevo proveedor: {Nombre}", dto.Nombre);
 
-        var resultado = await service.CreateAsync(dto);
+        Result<ProveedorDto, DomainError> resultado = await service.CreateAsync(dto);
 
         return resultado.Match(
-            onSuccess: proveedor => CreatedAtAction(nameof(GetById), new { codigo = proveedor.Codigo }, proveedor),
-            onFailure: error => error.ToHttpResult<ProveedorDto>()
+            proveedor => CreatedAtAction(nameof(GetById), new { codigo = proveedor.Codigo }, proveedor),
+            error => error.ToHttpResult<ProveedorDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza los datos editables de un proveedor.
-    /// El código es la clave del registro y no se modifica.
+    ///     Actualiza los datos editables de un proveedor.
+    ///     El código es la clave del registro y no se modifica.
     /// </summary>
     /// <param name="codigo">Código del proveedor a actualizar.</param>
     /// <param name="dto">Nuevos datos del proveedor.</param>
@@ -135,17 +136,17 @@ public class ProveedoresController(
     public async Task<ActionResult<ProveedorDto>> Update(string codigo, [FromBody] ProveedorRequestDto dto) {
         logger.LogInformation("Actualizando proveedor con código: {Codigo}", codigo);
 
-        var resultado = await service.UpdateAsync(codigo, dto);
+        Result<ProveedorDto, DomainError> resultado = await service.UpdateAsync(codigo, dto);
 
         return resultado.Match(
-            onSuccess: proveedor => proveedor,
-            onFailure: error => error.ToHttpResult<ProveedorDto>()
+            proveedor => proveedor,
+            error => error.ToHttpResult<ProveedorDto>()
         );
     }
 
     /// <summary>
-    /// Elimina un proveedor (soft-delete).
-    /// Se rechaza la operación si el proveedor todavía tiene productos asociados.
+    ///     Elimina un proveedor (soft-delete).
+    ///     Se rechaza la operación si el proveedor todavía tiene productos asociados.
     /// </summary>
     /// <param name="codigo">Código del proveedor a eliminar.</param>
     /// <returns>204 No Content si tiene éxito, o 404/422 si no existe o tiene productos.</returns>
@@ -158,12 +159,13 @@ public class ProveedoresController(
     public async Task<ActionResult> Delete(string codigo) {
         logger.LogInformation("Eliminando proveedor con código: {Codigo}", codigo);
 
-        var resultado = await service.DeleteAsync(codigo);
+        UnitResult<DomainError> resultado = await service.DeleteAsync(codigo);
 
-        if (resultado.IsSuccess)
+        if (resultado.IsSuccess) {
             return NoContent();
+        }
 
-        var error = resultado.Error;
+        DomainError error = resultado.Error;
         return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),

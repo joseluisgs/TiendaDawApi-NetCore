@@ -10,8 +10,8 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Tests.Unit.Mappers;
 
 /// <summary>
-/// Tests para métodos de extensión de mapeo
-/// Asegura que los métodos de extensión funcionen correctamente para conversiones entidad-DTO
+///     Tests para métodos de extensión de mapeo
+///     Asegura que los métodos de extensión funcionen correctamente para conversiones entidad-DTO
 /// </summary>
 public class MapperExtensionTests {
     #region CategoriaMapper Tests
@@ -26,7 +26,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var dto = categoria.ToDto();
+        CategoriaDto dto = categoria.ToDto();
 
         // Assert
         dto.Id.Should().Be(1);
@@ -42,7 +42,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Categoria entity = dto.ToEntity();
 
         // Assert
         entity.Nombre.Should().Be("Books");
@@ -102,7 +102,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Id.Should().Be(1);
@@ -125,7 +125,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Categoria.Nombre.Should().BeEmpty();
@@ -144,7 +144,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Producto entity = dto.ToEntity();
 
         // Assert
         entity.Nombre.Should().Be("Phone");
@@ -188,7 +188,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var dto = user.ToDto();
+        UserDto dto = user.ToDto();
 
         // Assert
         dto.Id.Should().Be(1);
@@ -205,10 +205,10 @@ public class MapperExtensionTests {
             Email = "jane@example.com",
             Password = "password123"
         };
-        var passwordHash = "hashedPassword";
+        string passwordHash = "hashedPassword";
 
         // Act
-        var entity = dto.ToEntity(passwordHash);
+        User entity = dto.ToEntity(passwordHash);
 
         // Assert
         entity.UserName.Should().Be("janedoe");
@@ -256,7 +256,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Id.Should().Be(pedidoId.ToString());
@@ -278,7 +278,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Items.Should().NotBeNull();
@@ -295,10 +295,10 @@ public class MapperExtensionTests {
                 new() { ProductoId = 2, Cantidad = 1 }
             }
         };
-        var userId = 1L;
+        long userId = 1L;
 
         // Act
-        var entity = dto.ToEntity(userId);
+        Pedido entity = dto.ToEntity(userId);
 
         // Assert
         entity.UserId.Should().Be(1);
@@ -312,10 +312,10 @@ public class MapperExtensionTests {
         var dto = new PedidoRequestDto {
             Items = new List<PedidoItemRequestDto>()
         };
-        var userId = 1L;
+        long userId = 1L;
 
         // Act
-        var entity = dto.ToEntity(userId);
+        Pedido entity = dto.ToEntity(userId);
 
         // Assert
         entity.UserId.Should().Be(1);
@@ -358,7 +358,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var dto = item.ToDto();
+        PedidoItemDto dto = item.ToDto();
 
         // Assert
         dto.ProductoId.Should().Be(1);
@@ -377,7 +377,7 @@ public class MapperExtensionTests {
         };
 
         // Act
-        var entity = dto.ToEntity("Product", 15.00m);
+        PedidoItem entity = dto.ToEntity("Product", 15.00m);
 
         // Assert
         entity.ProductoId.Should().Be(1);

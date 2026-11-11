@@ -4,12 +4,12 @@ using TiendaApi.Api.Dtos.Usuarios;
 namespace TiendaApi.Api.Validators.Usuarios;
 
 /// <summary>
-/// Validador FluentValidation para LoginDto.
-/// Reglas: Username y Password obligatorios.
+///     Validador FluentValidation para LoginDto.
+///     Reglas: Username y Password obligatorios.
 /// </summary>
 public class LoginValidator : AbstractValidator<LoginDto> {
     /// <summary>
-    /// Define reglas de validación para LoginDto.
+    ///     Define reglas de validación para LoginDto.
     /// </summary>
     public LoginValidator() {
         RuleFor(l => l.Username)

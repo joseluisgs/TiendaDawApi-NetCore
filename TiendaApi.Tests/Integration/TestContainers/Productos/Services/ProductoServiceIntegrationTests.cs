@@ -1,16 +1,15 @@
+using System.Diagnostics;
 using System.Threading.Channels;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Errors;
@@ -26,25 +25,18 @@ using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Productos;
 using TiendaApi.Api.Services.Storage;
 using TiendaApi.Api.Validators.Productos;
+using Path = System.IO.Path;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Productos.Services;
 
 /// <summary>
-/// Tests de integración para ProductoService con DI completo.
-/// Verifica el servicio con base de datos real usando Testcontainers.
+///     Tests de integración para ProductoService con DI completo.
+///     Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
 public class ProductoServiceIntegrationTests {
-    private const string DatabaseName = "it_producto_service";
-    private string _connectionString = string.Empty;
-    private string _mongoConnectionString = string.Empty;
-    private IServiceProvider? _serviceProvider;
-    private TiendaDbContext? _dbContext;
-    private IProductoService? _productoService;
-    private long _categoriaId;
-
     [OneTimeSetUp]
     public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
@@ -59,10 +51,10 @@ public class ProductoServiceIntegrationTests {
 
     [SetUp]
     public async Task Setup() {
-        var connectionString = _connectionString;
-        var mongoConnectionString = _mongoConnectionString;
+        string connectionString = _connectionString;
+        string mongoConnectionString = _mongoConnectionString;
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
@@ -99,7 +91,7 @@ public class ProductoServiceIntegrationTests {
         services.AddScoped<IStorageService>(sp => {
             var mockStorage = new Mock<IStorageService>();
             mockStorage.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
-                .ReturnsAsync(Result.Success<string, DomainError>(System.IO.Path.Combine("images", "productos", "test.jpg")));
+                .ReturnsAsync(Result.Success<string, DomainError>(Path.Combine("images", "productos", "test.jpg")));
             mockStorage.Setup(s => s.DeleteFileAsync(It.IsAny<string>()))
                 .ReturnsAsync(Result.Success<bool, DomainError>(true));
             mockStorage.Setup(s => s.FileExists(It.IsAny<string>()))
@@ -139,10 +131,10 @@ public class ProductoServiceIntegrationTests {
         _dbContext = _serviceProvider.GetRequiredService<TiendaDbContext>();
         await _dbContext.Database.EnsureCreatedAsync();
 
-        var categoriaRepo = _serviceProvider.GetRequiredService<ICategoriaRepository>();
-        var processId = System.Diagnostics.Process.GetCurrentProcess().Id;
-        var threadId = Environment.CurrentManagedThreadId;
-        var uniqueName = $"Cat_{processId}_{threadId}_{Guid.NewGuid():N}".Substring(0, 40);
+        ICategoriaRepository categoriaRepo = _serviceProvider.GetRequiredService<ICategoriaRepository>();
+        int processId = Process.GetCurrentProcess().Id;
+        int threadId = Environment.CurrentManagedThreadId;
+        string uniqueName = $"Cat_{processId}_{threadId}_{Guid.NewGuid():N}".Substring(0, 40);
         var categoria = new Categoria { Nombre = uniqueName };
         await categoriaRepo.SaveAsync(categoria);
         _categoriaId = categoria.Id;
@@ -158,9 +150,17 @@ public class ProductoServiceIntegrationTests {
         }
     }
 
+    private const string DatabaseName = "it_producto_service";
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
+    private IServiceProvider? _serviceProvider;
+    private TiendaDbContext? _dbContext;
+    private IProductoService? _productoService;
+    private long _categoriaId;
+
     [Test]
     public async Task FindAllAsync_SinProductos_RetornaListaVacia() {
-        var result = await _productoService!.FindAllAsync();
+        Result<IEnumerable<ProductoDto>, DomainError> result = await _productoService!.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -176,7 +176,7 @@ public class ProductoServiceIntegrationTests {
             CategoriaId = _categoriaId
         };
 
-        var result = await _productoService!.CreateAsync(dto);
+        Result<ProductoDto, DomainError> result = await _productoService!.CreateAsync(dto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -193,10 +193,10 @@ public class ProductoServiceIntegrationTests {
             Stock = 5,
             CategoriaId = _categoriaId
         };
-        var createResult = await _productoService!.CreateAsync(dto);
+        Result<ProductoDto, DomainError> createResult = await _productoService!.CreateAsync(dto);
         createResult.IsSuccess.Should().BeTrue();
 
-        var findResult = await _productoService.FindByIdAsync(createResult.Value.Id);
+        Result<ProductoDto, DomainError> findResult = await _productoService.FindByIdAsync(createResult.Value.Id);
 
         findResult.IsSuccess.Should().BeTrue();
         findResult.Value.Nombre.Should().Be("Buscar Test");
@@ -204,7 +204,7 @@ public class ProductoServiceIntegrationTests {
 
     [Test]
     public async Task FindByIdAsync_ConProductoNoExistente_RetornaNotFound() {
-        var result = await _productoService!.FindByIdAsync(999999);
+        Result<ProductoDto, DomainError> result = await _productoService!.FindByIdAsync(999999);
 
         result.IsFailure.Should().BeTrue();
     }
@@ -218,7 +218,7 @@ public class ProductoServiceIntegrationTests {
             Stock = 5,
             CategoriaId = _categoriaId
         };
-        var createResult = await _productoService!.CreateAsync(createDto);
+        Result<ProductoDto, DomainError> createResult = await _productoService!.CreateAsync(createDto);
         createResult.IsSuccess.Should().BeTrue();
 
         var updateDto = new ProductoRequestDto {
@@ -228,7 +228,8 @@ public class ProductoServiceIntegrationTests {
             Stock = 10,
             CategoriaId = _categoriaId
         };
-        var updateResult = await _productoService.UpdateAsync(createResult.Value.Id, updateDto);
+        Result<ProductoDto, DomainError> updateResult =
+            await _productoService.UpdateAsync(createResult.Value.Id, updateDto);
 
         updateResult.IsSuccess.Should().BeTrue();
         updateResult.Value.Nombre.Should().Be("Actualizado");
@@ -243,14 +244,14 @@ public class ProductoServiceIntegrationTests {
             Stock = 3,
             CategoriaId = _categoriaId
         };
-        var createResult = await _productoService!.CreateAsync(createDto);
+        Result<ProductoDto, DomainError> createResult = await _productoService!.CreateAsync(createDto);
         createResult.IsSuccess.Should().BeTrue();
 
-        var deleteResult = await _productoService.DeleteAsync(createResult.Value.Id);
+        UnitResult<DomainError> deleteResult = await _productoService.DeleteAsync(createResult.Value.Id);
 
         deleteResult.IsSuccess.Should().BeTrue();
 
-        var findResult = await _productoService.FindByIdAsync(createResult.Value.Id);
+        Result<ProductoDto, DomainError> findResult = await _productoService.FindByIdAsync(createResult.Value.Id);
         findResult.IsFailure.Should().BeTrue();
     }
 
@@ -264,7 +265,7 @@ public class ProductoServiceIntegrationTests {
             CategoriaId = _categoriaId
         };
 
-        var result = await _productoService!.CreateAsync(dto);
+        Result<ProductoDto, DomainError> result = await _productoService!.CreateAsync(dto);
 
         result.IsFailure.Should().BeTrue();
     }
@@ -279,7 +280,7 @@ public class ProductoServiceIntegrationTests {
             CategoriaId = _categoriaId
         };
 
-        var result = await _productoService!.CreateAsync(dto);
+        Result<ProductoDto, DomainError> result = await _productoService!.CreateAsync(dto);
 
         result.IsFailure.Should().BeTrue();
     }

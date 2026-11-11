@@ -2,28 +2,28 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Infrastructures;
+using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Infrastructures;
 
 /// <summary>
-/// Tests unitarios para RepositoriesConfig.
-/// Verifica que el repositorio de pedidos se registra correctamente según la configuración.
+///     Tests unitarios para RepositoriesConfig.
+///     Verifica que el repositorio de pedidos se registra correctamente según la configuración.
 /// </summary>
 [TestFixture]
 [Category("Unit")]
 [Category("Infrastructure")]
 public class RepositoriesConfigTests {
-    private Mock<IConfiguration> _mockConfiguration = null!;
-    private ServiceCollection _services = null!;
-
     [SetUp]
     public void SetUp() {
         _mockConfiguration = new Mock<IConfiguration>();
         _services = new ServiceCollection();
     }
+
+    private Mock<IConfiguration> _mockConfiguration = null!;
+    private ServiceCollection _services = null!;
 
     [Test]
     public void AddRepositories_MongoDbNative_RegistraPedidosNativeRepository() {
@@ -34,7 +34,8 @@ public class RepositoriesConfigTests {
         _services.AddRepositories(_mockConfiguration.Object);
 
         // Assert
-        var descriptor = _services.Should().Contain(d => d.ServiceType == typeof(IPedidosRepository)).Subject;
+        ServiceDescriptor descriptor =
+            _services.Should().Contain(d => d.ServiceType == typeof(IPedidosRepository)).Subject;
         descriptor.ImplementationType.Should().Be<PedidosNativeRepository>();
     }
 
@@ -47,7 +48,8 @@ public class RepositoriesConfigTests {
         _services.AddRepositories(_mockConfiguration.Object);
 
         // Assert
-        var descriptor = _services.Should().Contain(d => d.ServiceType == typeof(IPedidosRepository)).Subject;
+        ServiceDescriptor descriptor =
+            _services.Should().Contain(d => d.ServiceType == typeof(IPedidosRepository)).Subject;
         descriptor.ImplementationType.Should().Be<PedidosEfCoreRepository>();
     }
 
@@ -60,7 +62,8 @@ public class RepositoriesConfigTests {
         _services.AddRepositories(_mockConfiguration.Object);
 
         // Assert
-        var descriptor = _services.Should().Contain(d => d.ServiceType == typeof(IPedidosRepository)).Subject;
+        ServiceDescriptor descriptor =
+            _services.Should().Contain(d => d.ServiceType == typeof(IPedidosRepository)).Subject;
         descriptor.ImplementationType.Should().Be<PedidosNativeRepository>();
     }
 
@@ -73,6 +76,6 @@ public class RepositoriesConfigTests {
         _services.AddRepositories(_mockConfiguration.Object);
 
         // Assert
-        _services.Should().Contain(d => d.ServiceType == typeof(TiendaApi.Api.Repositories.Categorias.ICategoriaRepository));
+        _services.Should().Contain(d => d.ServiceType == typeof(ICategoriaRepository));
     }
 }

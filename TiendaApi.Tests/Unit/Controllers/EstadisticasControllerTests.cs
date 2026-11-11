@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Controllers;
 using TiendaApi.Api.Dtos.Estadisticas;
 using TiendaApi.Api.Errors;
@@ -13,8 +12,8 @@ using TiendaApi.Api.Services.Estadisticas;
 namespace TiendaApi.Tests.Unit.Controllers;
 
 /// <summary>
-/// Tests unitarios de EstadisticasController: comprueba que el controlador es
-/// delgado y que reparte correctamente éxito (200) y error de dominio.
+///     Tests unitarios de EstadisticasController: comprueba que el controlador es
+///     delgado y que reparte correctamente éxito (200) y error de dominio.
 /// </summary>
 [TestFixture]
 public class EstadisticasControllerTests {
@@ -39,13 +38,13 @@ public class EstadisticasControllerTests {
 
         _controller = new EstadisticasController(
             _mockService.Object, Mock.Of<ILogger<EstadisticasController>>()) {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
     }
 
     [Test]
     public async Task Resumen_ConResultadoOk_Retorna200ConElResumen() {
-        var resultado = await _controller.Resumen(null, null);
+        ActionResult<ResumenEstadisticasDto> resultado = await _controller.Resumen(null, null);
 
         // El éxito viaja en Value (la conversión implícita crea ActionResult<T> con
         // el valor dentro); Result queda vacío.
@@ -63,14 +62,14 @@ public class EstadisticasControllerTests {
             .ReturnsAsync(Result.Failure<ResumenEstadisticasDto, DomainError>(
                 ValidationError.Create("La fecha desde no puede ser posterior a hasta")));
 
-        var resultado = await _controller.Resumen(desde, null);
+        ActionResult<ResumenEstadisticasDto> resultado = await _controller.Resumen(desde, null);
 
         resultado.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Test]
     public async Task Ventas_ConAgrupacionInvalida_Retorna400() {
-        var resultado = await _controller.Ventas(null, null, "trimestre");
+        ActionResult<VentasSerieDto> resultado = await _controller.Ventas(null, null, "trimestre");
 
         resultado.Result.Should().BeOfType<BadRequestObjectResult>();
         _mockService.Verify(s => s.VentasAsync(null, null, "trimestre"), Times.Once);
@@ -84,7 +83,7 @@ public class EstadisticasControllerTests {
                 new ProductosMasVendidosDto(
                     new PeriodoDto(null, null, 0), "recaudacion", [], new TotalesDto(0, 0, 0, 0))));
 
-        await _controller.ProductosMasVendidos(null, null, orden: "recaudacion", top: 5);
+        await _controller.ProductosMasVendidos(null, null, "recaudacion", 5);
 
         _mockService.Verify(s => s.ProductosMasVendidosAsync(null, null, "recaudacion", 5), Times.Once);
     }
@@ -95,7 +94,7 @@ public class EstadisticasControllerTests {
             .ReturnsAsync(Result.Failure<PreciosEstadisticasDto, DomainError>(
                 NotFoundError.FromId(999, "Producto")));
 
-        var resultado = await _controller.Precios(999, null, null);
+        ActionResult<PreciosEstadisticasDto> resultado = await _controller.Precios(999, null, null);
 
         resultado.Result.Should().BeOfType<NotFoundObjectResult>();
     }
@@ -106,7 +105,7 @@ public class EstadisticasControllerTests {
             .ReturnsAsync(Result.Success<InventarioDto, DomainError>(
                 new InventarioDto(8, new InventarioResumenDto(0, 0, 0, 0, 0, 0, 0), [], [], [])));
 
-        await _controller.Inventario(stockMax: 8);
+        await _controller.Inventario(8);
 
         _mockService.Verify(s => s.InventarioAsync(8), Times.Once);
     }

@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
@@ -10,37 +11,17 @@ using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Auth;
 using TiendaApi.Api.Repositories.Usuarios;
 using TiendaApi.Api.Services.Auth;
-using TiendaApi.Api.Validators.Usuarios;
 
 namespace TiendaApi.Tests.Unit.Services.Auth;
 
 /// <summary>
-/// Tests unitarios para AuthService usando Patrón Result.
+///     Tests unitarios para AuthService usando Patrón Result.
 /// </summary>
 [TestFixture]
 [Category("Unit")]
 [Category("Service")]
 [Category("Auth")]
 public class AuthServiceTests {
-    private Mock<IUserRepository> _mockUserRepository = null!;
-    private Mock<IUserLoginRepository> _mockUserLoginRepository = null!;
-    private Mock<IJwtService> _mockJwtService = null!;
-    private Mock<ILogger<AuthService>> _mockLogger = null!;
-    private Mock<IValidator<RegisterDto>> _mockRegisterValidator = null!;
-    private Mock<IValidator<LoginDto>> _mockLoginValidator = null!;
-    private IAuthService _authService = null!;
-
-    private void CreateService() {
-        _authService = new AuthService(
-            _mockUserRepository.Object,
-            _mockUserLoginRepository.Object,
-            _mockJwtService.Object,
-            _mockLogger.Object,
-            _mockRegisterValidator.Object,
-            _mockLoginValidator.Object
-        );
-    }
-
     [SetUp]
     public void Setup() {
         _mockUserRepository = new Mock<IUserRepository>();
@@ -63,7 +44,24 @@ public class AuthServiceTests {
         CreateService();
     }
 
-    #region Tests SignUp
+    private Mock<IUserRepository> _mockUserRepository = null!;
+    private Mock<IUserLoginRepository> _mockUserLoginRepository = null!;
+    private Mock<IJwtService> _mockJwtService = null!;
+    private Mock<ILogger<AuthService>> _mockLogger = null!;
+    private Mock<IValidator<RegisterDto>> _mockRegisterValidator = null!;
+    private Mock<IValidator<LoginDto>> _mockLoginValidator = null!;
+    private IAuthService _authService = null!;
+
+    private void CreateService() {
+        _authService = new AuthService(
+            _mockUserRepository.Object,
+            _mockUserLoginRepository.Object,
+            _mockJwtService.Object,
+            _mockLogger.Object,
+            _mockRegisterValidator.Object,
+            _mockLoginValidator.Object
+        );
+    }
 
     [Test]
     public async Task SignUpAsync_ConDatosValidos_DebeRetornarExito() {
@@ -91,7 +89,7 @@ public class AuthServiceTests {
         _mockUserRepository.Setup(x => x.SaveAsync(It.IsAny<User>()))
             .ReturnsAsync(savedUser);
 
-        var result = await _authService.SignUpAsync(registerDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignUpAsync(registerDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Token.Should().Be("test-jwt-token");
@@ -114,7 +112,7 @@ public class AuthServiceTests {
                 new ValidationFailure("Username", "El nombre de usuario es obligatorio")
             }));
 
-        var result = await _authService.SignUpAsync(registerDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -134,7 +132,7 @@ public class AuthServiceTests {
                 new ValidationFailure("Username", "El nombre de usuario debe tener al menos 3 caracteres")
             }));
 
-        var result = await _authService.SignUpAsync(registerDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -154,7 +152,7 @@ public class AuthServiceTests {
                 new ValidationFailure("Email", "Debe ser un correo electrónico válido")
             }));
 
-        var result = await _authService.SignUpAsync(registerDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -174,7 +172,7 @@ public class AuthServiceTests {
                 new ValidationFailure("Password", "La contraseña debe tener al menos 8 caracteres")
             }));
 
-        var result = await _authService.SignUpAsync(registerDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -198,7 +196,7 @@ public class AuthServiceTests {
         _mockUserRepository.Setup(x => x.FindByUsernameAsync("existinguser"))
             .ReturnsAsync(existingUser);
 
-        var result = await _authService.SignUpAsync(registerDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ConflictError>();
@@ -225,16 +223,12 @@ public class AuthServiceTests {
         _mockUserRepository.Setup(x => x.FindByEmailAsync("existing@test.com"))
             .ReturnsAsync(existingUser);
 
-        var result = await _authService.SignUpAsync(registerDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignUpAsync(registerDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ConflictError>();
         result.Error.Message.Should().Contain("Ya existe un email con el valor");
     }
-
-    #endregion
-
-    #region Tests SignIn
 
     [Test]
     public async Task SignInAsync_ConCredencialesValidas_DebeRetornarExito() {
@@ -243,7 +237,7 @@ public class AuthServiceTests {
             Password = "Password123!"
         };
 
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword("Password123!", workFactor: 11);
+        string passwordHash = BCrypt.Net.BCrypt.HashPassword("Password123!", 11);
 
         var user = new User {
             Id = 1,
@@ -257,7 +251,7 @@ public class AuthServiceTests {
         _mockUserRepository.Setup(x => x.FindByUsernameAsync("testuser"))
             .ReturnsAsync(user);
 
-        var result = await _authService.SignInAsync(loginDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignInAsync(loginDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Token.Should().Be("test-jwt-token");
@@ -276,7 +270,7 @@ public class AuthServiceTests {
                 new ValidationFailure("Username", "El nombre de usuario es obligatorio")
             }));
 
-        var result = await _authService.SignInAsync(loginDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -295,7 +289,7 @@ public class AuthServiceTests {
                 new ValidationFailure("Password", "La contraseña es obligatoria")
             }));
 
-        var result = await _authService.SignInAsync(loginDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -312,7 +306,7 @@ public class AuthServiceTests {
         _mockUserRepository.Setup(x => x.FindByUsernameAsync("nonexistent"))
             .ReturnsAsync((User?)null);
 
-        var result = await _authService.SignInAsync(loginDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<UnauthorizedError>();
@@ -325,7 +319,7 @@ public class AuthServiceTests {
             Password = "WrongPassword123!"
         };
 
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword("Password123!", workFactor: 11);
+        string passwordHash = BCrypt.Net.BCrypt.HashPassword("Password123!", 11);
 
         var user = new User {
             Id = 1,
@@ -338,15 +332,11 @@ public class AuthServiceTests {
         _mockUserRepository.Setup(x => x.FindByUsernameAsync("testuser"))
             .ReturnsAsync(user);
 
-        var result = await _authService.SignInAsync(loginDto);
+        Result<AuthResponseDto, DomainError> result = await _authService.SignInAsync(loginDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<UnauthorizedError>();
     }
-
-    #endregion
-
-    #region Tests LoginExternal
 
     [Test]
     public async Task LoginExternalAsync_UsuarioNuevo_DebeCrearUsuarioYVincular() {
@@ -357,11 +347,14 @@ public class AuthServiceTests {
         _mockUserRepository.Setup(x => x.FindByEmailAsync("nuevo@test.com"))
             .ReturnsAsync((User?)null);
         _mockUserRepository.Setup(x => x.SaveAsync(It.IsAny<User>()))
-            .ReturnsAsync((User u) => { u.Id = 42; return u; });
+            .ReturnsAsync((User u) => {
+                u.Id = 42;
+                return u;
+            });
         _mockUserLoginRepository.Setup(x => x.ExistsAsync("Google", "g-key-1"))
             .ReturnsAsync(false);
 
-        var result = await _authService.LoginExternalAsync(info);
+        Result<AuthResponseDto, DomainError> result = await _authService.LoginExternalAsync(info);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Token.Should().Be("test-jwt-token");
@@ -375,7 +368,7 @@ public class AuthServiceTests {
         // Vinculación guardada
         _mockUserLoginRepository.Verify(x => x.SaveAsync(
             It.Is<UserLogin>(ul => ul.UserId == 42 && ul.LoginProvider == "Google"
-                && ul.ProviderKey == "g-key-1")), Times.Once);
+                                                   && ul.ProviderKey == "g-key-1")), Times.Once);
     }
 
     [Test]
@@ -394,7 +387,7 @@ public class AuthServiceTests {
         _mockUserRepository.Setup(x => x.FindByIdAsync(7))
             .ReturnsAsync(existingUser);
 
-        var result = await _authService.LoginExternalAsync(info);
+        Result<AuthResponseDto, DomainError> result = await _authService.LoginExternalAsync(info);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.User.Username.Should().Be("user@test.com");
@@ -421,7 +414,7 @@ public class AuthServiceTests {
         _mockUserLoginRepository.Setup(x => x.ExistsAsync("Google", "g-key-new"))
             .ReturnsAsync(false);
 
-        var result = await _authService.LoginExternalAsync(info);
+        Result<AuthResponseDto, DomainError> result = await _authService.LoginExternalAsync(info);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.User.Username.Should().Be("yaexiste");
@@ -435,12 +428,10 @@ public class AuthServiceTests {
     public async Task LoginExternalAsync_SinEmail_DebeRetornarBusinessRuleError() {
         var info = new ExternalLoginDto("GitHub", "gh-key-8", null, "Solo nombre", null);
 
-        var result = await _authService.LoginExternalAsync(info);
+        Result<AuthResponseDto, DomainError> result = await _authService.LoginExternalAsync(info);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<BusinessRuleError>();
         result.Error.Message.Should().Contain("email");
     }
-
-    #endregion
 }

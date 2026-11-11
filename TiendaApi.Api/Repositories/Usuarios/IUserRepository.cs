@@ -4,7 +4,7 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Usuarios;
 
 /// <summary>
-/// Contrato del repositorio de usuarios.
+///     Contrato del repositorio de usuarios.
 /// </summary>
 public interface IUserRepository {
     /// <summary>Busca un usuario por ID.</summary>

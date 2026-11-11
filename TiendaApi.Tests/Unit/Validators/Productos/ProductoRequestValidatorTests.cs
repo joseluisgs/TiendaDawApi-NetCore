@@ -1,4 +1,3 @@
-using FluentValidation;
 using FluentValidation.TestHelper;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Validators.Productos;
@@ -6,7 +5,7 @@ using TiendaApi.Api.Validators.Productos;
 namespace TiendaApi.Tests.Unit.Validators.Productos;
 
 /// <summary>
-/// Tests unitarios para ProductoRequestValidator.
+///     Tests unitarios para ProductoRequestValidator.
 /// </summary>
 public class ProductoRequestValidatorTests {
     private readonly ProductoRequestValidator _validator = new();
@@ -22,7 +21,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Nombre)
             .WithErrorMessage("El nombre es obligatorio");
@@ -37,7 +36,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Nombre)
             .WithErrorMessage("El nombre debe tener al menos 3 caracteres");
@@ -52,7 +51,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Nombre)
             .WithErrorMessage("El nombre no puede exceder 200 caracteres");
@@ -67,7 +66,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
     }
@@ -85,7 +84,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Precio)
             .WithErrorMessage("El precio debe ser mayor a 0");
@@ -100,7 +99,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Precio)
             .WithErrorMessage("El precio debe ser mayor a 0");
@@ -115,7 +114,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Precio);
     }
@@ -133,7 +132,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Stock)
             .WithErrorMessage("El stock no puede ser negativo");
@@ -148,7 +147,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Stock);
     }
@@ -162,7 +161,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Stock);
     }
@@ -180,7 +179,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 0
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.CategoriaId)
             .WithErrorMessage("Debe seleccionar una categoría válida");
@@ -195,7 +194,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = -1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.CategoriaId)
             .WithErrorMessage("Debe seleccionar una categoría válida");
@@ -210,7 +209,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
     }
@@ -229,7 +228,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Descripcion)
             .WithErrorMessage("La descripción no puede exceder 1000 caracteres");
@@ -245,7 +244,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -264,7 +263,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "not-a-valid-url"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Imagen);
     }
@@ -279,7 +278,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "http://ejemplo.com/imagen.jpg"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
     }
@@ -294,7 +293,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "https://ejemplo.com/imagen.jpg"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
     }
@@ -309,7 +308,7 @@ public class ProductoRequestValidatorTests {
             Imagen = null
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
     }
@@ -329,7 +328,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "invalid"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Nombre);
         result.ShouldHaveValidationErrorFor(x => x.Descripcion);
@@ -350,7 +349,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "https://ejemplo.com/iphone15.jpg"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -368,7 +367,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
     }
@@ -382,7 +381,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
     }
@@ -396,7 +395,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Precio);
     }
@@ -410,7 +409,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Precio);
     }
@@ -424,7 +423,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Stock);
     }
@@ -438,7 +437,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 999999999
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
     }
@@ -453,7 +452,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "www.ejemplo.com/imagen.jpg"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Imagen);
     }
@@ -468,7 +467,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "https://ejemplo.com/imagen.jpg?width=100&height=200"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
     }
@@ -483,7 +482,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -498,7 +497,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -513,7 +512,7 @@ public class ProductoRequestValidatorTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -529,7 +528,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "https://ejemplo.com/imagen.jpg"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Stock);
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
@@ -550,7 +549,7 @@ public class ProductoRequestValidatorTests {
             Imagen = "https://ejemplo.com/imagen.jpg"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.CategoriaId);
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);

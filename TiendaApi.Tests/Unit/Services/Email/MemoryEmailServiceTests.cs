@@ -6,11 +6,11 @@ using TiendaApi.Api.Services.Email;
 namespace TiendaApi.Tests.Unit.Services.Email;
 
 /// <summary>
-/// Tests unitarios para MemoryEmailService.
+///     Tests unitarios para MemoryEmailService.
 /// </summary>
 public class MemoryEmailServiceTests {
-    private Mock<ILogger<MemoryEmailService>> _mockLogger = null!;
     private MemoryEmailService _emailService = null!;
+    private Mock<ILogger<MemoryEmailService>> _mockLogger = null!;
 
     [SetUp]
     public void Setup() {
@@ -18,13 +18,22 @@ public class MemoryEmailServiceTests {
         _emailService = new MemoryEmailService(_mockLogger.Object);
     }
 
+    private static EmailMessage CreateTestEmail() {
+        return new EmailMessage {
+            To = "admin@tienda.com",
+            Subject = "🛒 Nuevo Pedido #123",
+            Body = "<html><body>Pedido creado exitosamente</body></html>",
+            IsHtml = true
+        };
+    }
+
     #region EnqueueEmailAsync Tests
 
     [Test]
     public async Task EnqueueEmailAsync_EmailValido_LogueaContenido() {
-        var email = CreateTestEmail();
+        EmailMessage email = CreateTestEmail();
 
-        var act = async () => await _emailService.EnqueueEmailAsync(email);
+        Func<Task> act = async () => await _emailService.EnqueueEmailAsync(email);
 
         await act.Should().NotThrowAsync();
 
@@ -47,7 +56,7 @@ public class MemoryEmailServiceTests {
             IsHtml = true
         };
 
-        var act = async () => await _emailService.EnqueueEmailAsync(email);
+        Func<Task> act = async () => await _emailService.EnqueueEmailAsync(email);
 
         await act.Should().NotThrowAsync();
 
@@ -70,7 +79,7 @@ public class MemoryEmailServiceTests {
             IsHtml = false
         };
 
-        var act = async () => await _emailService.EnqueueEmailAsync(email);
+        Func<Task> act = async () => await _emailService.EnqueueEmailAsync(email);
 
         await act.Should().NotThrowAsync();
 
@@ -92,7 +101,7 @@ public class MemoryEmailServiceTests {
             Body = "Body"
         };
 
-        var act = async () => await _emailService.EnqueueEmailAsync(email);
+        Func<Task> act = async () => await _emailService.EnqueueEmailAsync(email);
 
         await act.Should().NotThrowAsync();
 
@@ -112,9 +121,9 @@ public class MemoryEmailServiceTests {
 
     [Test]
     public async Task SendEmailAsync_EmailValido_LogueaContenido() {
-        var email = CreateTestEmail();
+        EmailMessage email = CreateTestEmail();
 
-        var act = async () => await _emailService.SendEmailAsync(email);
+        Func<Task> act = async () => await _emailService.SendEmailAsync(email);
 
         await act.Should().NotThrowAsync();
 
@@ -136,7 +145,7 @@ public class MemoryEmailServiceTests {
             Body = "Body"
         };
 
-        var act = async () => await _emailService.SendEmailAsync(email);
+        Func<Task> act = async () => await _emailService.SendEmailAsync(email);
 
         await act.Should().NotThrowAsync();
 
@@ -159,7 +168,7 @@ public class MemoryEmailServiceTests {
             IsHtml = true
         };
 
-        var act = async () => await _emailService.SendEmailAsync(email);
+        Func<Task> act = async () => await _emailService.SendEmailAsync(email);
 
         await act.Should().NotThrowAsync();
 
@@ -174,13 +183,4 @@ public class MemoryEmailServiceTests {
     }
 
     #endregion
-
-    private static EmailMessage CreateTestEmail() {
-        return new EmailMessage {
-            To = "admin@tienda.com",
-            Subject = "🛒 Nuevo Pedido #123",
-            Body = "<html><body>Pedido creado exitosamente</body></html>",
-            IsHtml = true
-        };
-    }
 }

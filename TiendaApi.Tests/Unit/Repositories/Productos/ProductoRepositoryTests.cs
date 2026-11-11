@@ -1,3 +1,4 @@
+using System.Reflection;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -11,20 +12,22 @@ namespace TiendaApi.Tests.Unit.Repositories.Productos;
 
 public class ProductoRepositoryTests {
     private TiendaDbContext CreateContext(string dbName) {
-        var options = new DbContextOptionsBuilder<TiendaDbContext>()
-            .UseInMemoryDatabase(databaseName: dbName)
+        DbContextOptions<TiendaDbContext> options = new DbContextOptionsBuilder<TiendaDbContext>()
+            .UseInMemoryDatabase(dbName)
             .Options;
 
         return new TiendaDbContext(options);
     }
 
-    private static byte[] NewRowVersion() => new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+    private static byte[] NewRowVersion() {
+        return new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+    }
 
     #region Constructor Tests
 
     [Test]
     public void Constructor_CreaInstanciaCorrectamente() {
-        using var context = CreateContext(nameof(Constructor_CreaInstanciaCorrectamente));
+        using TiendaDbContext context = CreateContext(nameof(Constructor_CreaInstanciaCorrectamente));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
 
         var repository = new ProductoRepository(context, loggerMock.Object);
@@ -38,11 +41,11 @@ public class ProductoRepositoryTests {
 
     [Test]
     public async Task FindAllAsync_SinProductos_RetornaListaVacia() {
-        using var context = CreateContext(nameof(FindAllAsync_SinProductos_RetornaListaVacia));
+        using TiendaDbContext context = CreateContext(nameof(FindAllAsync_SinProductos_RetornaListaVacia));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var result = await repository.FindAllAsync();
+        IEnumerable<Producto> result = await repository.FindAllAsync();
 
         result.Should().BeEmpty();
     }
@@ -53,11 +56,11 @@ public class ProductoRepositoryTests {
 
     [Test]
     public async Task FindByIdAsync_NoExistente_RetornaNull() {
-        using var context = CreateContext(nameof(FindByIdAsync_NoExistente_RetornaNull));
+        using TiendaDbContext context = CreateContext(nameof(FindByIdAsync_NoExistente_RetornaNull));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var result = await repository.FindByIdAsync(999);
+        Producto? result = await repository.FindByIdAsync(999);
 
         result.Should().BeNull();
     }
@@ -68,11 +71,11 @@ public class ProductoRepositoryTests {
 
     [Test]
     public async Task ExistsAsync_NoExistente_RetornaFalse() {
-        using var context = CreateContext(nameof(ExistsAsync_NoExistente_RetornaFalse));
+        using TiendaDbContext context = CreateContext(nameof(ExistsAsync_NoExistente_RetornaFalse));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var result = await repository.ExistsAsync(999);
+        bool result = await repository.ExistsAsync(999);
 
         result.Should().BeFalse();
     }
@@ -83,7 +86,7 @@ public class ProductoRepositoryTests {
 
     [Test]
     public async Task SaveAsync_NuevoProducto_AgregaALaDb() {
-        using var context = CreateContext(nameof(SaveAsync_NuevoProducto_AgregaALaDb));
+        using TiendaDbContext context = CreateContext(nameof(SaveAsync_NuevoProducto_AgregaALaDb));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
@@ -100,48 +103,13 @@ public class ProductoRepositoryTests {
 
     [Test]
     public async Task DeleteAsync_NoExistente_NoLanzaExcepcion() {
-        using var context = CreateContext(nameof(DeleteAsync_NoExistente_NoLanzaExcepcion));
+        using TiendaDbContext context = CreateContext(nameof(DeleteAsync_NoExistente_NoLanzaExcepcion));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var act = async () => await repository.DeleteAsync(999);
+        Func<Task> act = async () => await repository.DeleteAsync(999);
 
         await act.Should().NotThrowAsync();
-    }
-
-    #endregion
-
-    #region FindAllPagedAsync Tests
-
-    [Test]
-    public async Task FindAllPagedAsync_PaginaVacia_RetornaElementosVacios() {
-        using var context = CreateContext(nameof(FindAllPagedAsync_PaginaVacia_RetornaElementosVacios));
-        var loggerMock = new Mock<ILogger<ProductoRepository>>();
-        var repository = new ProductoRepository(context, loggerMock.Object);
-
-        context.Productos.AddRange(
-            new Producto { Id = 1, Nombre = "P1", Precio = 100m, Stock = 10, RowVersion = NewRowVersion() },
-            new Producto { Id = 2, Nombre = "P2", Precio = 200m, Stock = 20, RowVersion = NewRowVersion() }
-        );
-        await context.SaveChangesAsync();
-
-        var filter = new ProductoFilterDto(null, null, null, null, null, 10, 10, "id", "asc");
-
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
-
-        items.Should().BeEmpty();
-        totalCount.Should().Be(2);
-    }
-
-    [Test]
-    public void FindAllPagedAsync_MetodoExiste_EnElRepositorio() {
-        using var context = CreateContext(nameof(FindAllPagedAsync_MetodoExiste_EnElRepositorio));
-        var loggerMock = new Mock<ILogger<ProductoRepository>>();
-        var repository = new ProductoRepository(context, loggerMock.Object);
-
-        var methodInfo = typeof(ProductoRepository).GetMethod("FindAllPagedAsync");
-
-        methodInfo.Should().NotBeNull();
     }
 
     #endregion
@@ -150,11 +118,11 @@ public class ProductoRepositoryTests {
 
     [Test]
     public async Task FindByCategoriaIdAsync_SinProductos_RetornaVacio() {
-        using var context = CreateContext(nameof(FindByCategoriaIdAsync_SinProductos_RetornaVacio));
+        using TiendaDbContext context = CreateContext(nameof(FindByCategoriaIdAsync_SinProductos_RetornaVacio));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var result = await repository.FindByCategoriaIdAsync(1);
+        IEnumerable<Producto> result = await repository.FindByCategoriaIdAsync(1);
 
         result.Should().BeEmpty();
     }
@@ -165,11 +133,11 @@ public class ProductoRepositoryTests {
 
     [Test]
     public void UpdateAsync_MetodoExiste_EnElRepositorio() {
-        using var context = CreateContext(nameof(UpdateAsync_MetodoExiste_EnElRepositorio));
+        using TiendaDbContext context = CreateContext(nameof(UpdateAsync_MetodoExiste_EnElRepositorio));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var methodInfo = typeof(ProductoRepository).GetMethod("UpdateAsync");
+        MethodInfo? methodInfo = typeof(ProductoRepository).GetMethod("UpdateAsync");
 
         methodInfo.Should().NotBeNull();
     }
@@ -180,11 +148,11 @@ public class ProductoRepositoryTests {
 
     [Test]
     public async Task DecrementStockAsync_ProductoNoExistente_RetornaFalse() {
-        using var context = CreateContext(nameof(DecrementStockAsync_ProductoNoExistente_RetornaFalse));
+        using TiendaDbContext context = CreateContext(nameof(DecrementStockAsync_ProductoNoExistente_RetornaFalse));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var result = await repository.DecrementStockAsync(999, 1, NewRowVersion());
+        bool result = await repository.DecrementStockAsync(999, 1, NewRowVersion());
 
         result.Should().BeFalse();
     }
@@ -195,11 +163,11 @@ public class ProductoRepositoryTests {
 
     [Test]
     public async Task GetRecentlyCreatedAsync_SinProductos_RetornaVacio() {
-        using var context = CreateContext(nameof(GetRecentlyCreatedAsync_SinProductos_RetornaVacio));
+        using TiendaDbContext context = CreateContext(nameof(GetRecentlyCreatedAsync_SinProductos_RetornaVacio));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var result = await repository.GetRecentlyCreatedAsync(7);
+        IEnumerable<Producto> result = await repository.GetRecentlyCreatedAsync(7);
 
         result.Should().BeEmpty();
     }
@@ -210,11 +178,11 @@ public class ProductoRepositoryTests {
 
     [Test]
     public void BeginTransactionAsync_MetodoExiste_EnElRepositorio() {
-        using var context = CreateContext(nameof(BeginTransactionAsync_MetodoExiste_EnElRepositorio));
+        using TiendaDbContext context = CreateContext(nameof(BeginTransactionAsync_MetodoExiste_EnElRepositorio));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var methodInfo = typeof(ProductoRepository).GetMethod("BeginTransactionAsync");
+        MethodInfo? methodInfo = typeof(ProductoRepository).GetMethod("BeginTransactionAsync");
 
         methodInfo.Should().NotBeNull();
     }
@@ -225,7 +193,7 @@ public class ProductoRepositoryTests {
 
     [Test]
     public void ImplementsIProductoRepository() {
-        using var context = CreateContext(nameof(ImplementsIProductoRepository));
+        using TiendaDbContext context = CreateContext(nameof(ImplementsIProductoRepository));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
@@ -238,14 +206,49 @@ public class ProductoRepositoryTests {
 
     [Test]
     public void FindAllAsNoTracking_SinProductos_RetornaQueryableVacio() {
-        using var context = CreateContext(nameof(FindAllAsNoTracking_SinProductos_RetornaQueryableVacio));
+        using TiendaDbContext context = CreateContext(nameof(FindAllAsNoTracking_SinProductos_RetornaQueryableVacio));
         var loggerMock = new Mock<ILogger<ProductoRepository>>();
         var repository = new ProductoRepository(context, loggerMock.Object);
 
-        var result = repository.FindAllAsNoTracking();
+        IQueryable<Producto> result = repository.FindAllAsNoTracking();
 
         result.Should().NotBeNull();
         result.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region FindAllPagedAsync Tests
+
+    [Test]
+    public async Task FindAllPagedAsync_PaginaVacia_RetornaElementosVacios() {
+        using TiendaDbContext context = CreateContext(nameof(FindAllPagedAsync_PaginaVacia_RetornaElementosVacios));
+        var loggerMock = new Mock<ILogger<ProductoRepository>>();
+        var repository = new ProductoRepository(context, loggerMock.Object);
+
+        context.Productos.AddRange(
+            new Producto { Id = 1, Nombre = "P1", Precio = 100m, Stock = 10, RowVersion = NewRowVersion() },
+            new Producto { Id = 2, Nombre = "P2", Precio = 200m, Stock = 20, RowVersion = NewRowVersion() }
+        );
+        await context.SaveChangesAsync();
+
+        var filter = new ProductoFilterDto(null, null, null, null, null, 10);
+
+        (IEnumerable<Producto> items, int totalCount) = await repository.FindAllPagedAsync(filter);
+
+        items.Should().BeEmpty();
+        totalCount.Should().Be(2);
+    }
+
+    [Test]
+    public void FindAllPagedAsync_MetodoExiste_EnElRepositorio() {
+        using TiendaDbContext context = CreateContext(nameof(FindAllPagedAsync_MetodoExiste_EnElRepositorio));
+        var loggerMock = new Mock<ILogger<ProductoRepository>>();
+        var repository = new ProductoRepository(context, loggerMock.Object);
+
+        MethodInfo? methodInfo = typeof(ProductoRepository).GetMethod("FindAllPagedAsync");
+
+        methodInfo.Should().NotBeNull();
     }
 
     #endregion

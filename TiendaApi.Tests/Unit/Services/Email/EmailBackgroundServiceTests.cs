@@ -7,7 +7,7 @@ using TiendaApi.Api.Services.Email;
 namespace TiendaApi.Tests.Unit.Services.Email;
 
 /// <summary>
-/// Tests unitarios para EmailBackgroundService.
+///     Tests unitarios para EmailBackgroundService.
 /// </summary>
 public class EmailBackgroundServiceTests {
     private Channel<EmailMessage> _emailChannel = null!;
@@ -22,7 +22,7 @@ public class EmailBackgroundServiceTests {
         var mockServiceProvider = new Mock<IServiceProvider>();
         var mockLogger = new Mock<ILogger<EmailBackgroundService>>();
 
-        var act = () => new EmailBackgroundService(
+        Func<EmailBackgroundService> act = () => new EmailBackgroundService(
             _emailChannel,
             mockServiceProvider.Object,
             mockLogger.Object);

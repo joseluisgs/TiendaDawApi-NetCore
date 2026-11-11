@@ -4,7 +4,7 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Categorias;
 
 /// <summary>
-/// Contrato del repositorio de categorías.
+///     Contrato del repositorio de categorías.
 /// </summary>
 public interface ICategoriaRepository {
     /// <summary>Obtiene todas las categorías ordenadas por nombre.</summary>
@@ -42,16 +42,16 @@ public interface ICategoriaRepository {
     Task<Categoria> CreateAsync(Categoria categoria);
 
     /// <summary>
-    /// Crea una categoría con un ID concreto, para el restore de un backup.
-    /// La columna de identidad es <c>GENERATED ALWAYS</c>: requiere
-    /// <c>OVERRIDING SYSTEM VALUE</c> y dejar la secuencia al día.
+    ///     Crea una categoría con un ID concreto, para el restore de un backup.
+    ///     La columna de identidad es <c>GENERATED ALWAYS</c>: requiere
+    ///     <c>OVERRIDING SYSTEM VALUE</c> y dejar la secuencia al día.
     /// </summary>
     /// <param name="categoria">Categoría con su ID original.</param>
     Task CrearConIdExplicitoAsync(Categoria categoria);
 
     /// <summary>
-    /// Re-sincroniza la secuencia de identidad tras altas con ID explícito.
-    /// Sin esto, la siguiente creación generaría un ID ya ocupado.
+    ///     Re-sincroniza la secuencia de identidad tras altas con ID explícito.
+    ///     Sin esto, la siguiente creación generaría un ID ya ocupado.
     /// </summary>
     Task ResincronizarSecuenciaAsync();
 

@@ -1,17 +1,18 @@
 using FluentValidation;
+using FluentValidation.Results;
 using TiendaApi.Api.Dtos.Pedidos;
 
 namespace TiendaApi.Api.Validators.Pedidos;
 
 /// <summary>
-/// Validador FluentValidation para DestinatarioDto.
-/// Reglas: NombreCompleto(oblig, max200), Email(valido, max254), Telefono(opc, 9-15 dig), Direccion(oblig).
+///     Validador FluentValidation para DestinatarioDto.
+///     Reglas: NombreCompleto(oblig, max200), Email(valido, max254), Telefono(opc, 9-15 dig), Direccion(oblig).
 /// </summary>
 public class DestinatarioValidator : AbstractValidator<DestinatarioDto> {
     private static readonly DireccionValidator DireccionValidator = new();
 
     /// <summary>
-    /// Define reglas de validación para DestinatarioDto.
+    ///     Define reglas de validación para DestinatarioDto.
     /// </summary>
     public DestinatarioValidator() {
         RuleFor(d => d.NombreCompleto)
@@ -36,7 +37,7 @@ public class DestinatarioValidator : AbstractValidator<DestinatarioDto> {
 
     private static bool ValidateDireccion(DireccionDto direccion) {
         var validator = new DireccionValidator();
-        var result = validator.Validate(direccion);
+        ValidationResult result = validator.Validate(direccion);
         return result.IsValid;
     }
 }

@@ -1,15 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using TiendaApi.Api.Data.Abstractions;
 
 namespace TiendaApi.Api.Models;
 
-using TiendaApi.Api.Data.Abstractions;
-
 /// <summary>
-/// Entidad de dominio que representa un pedido.
-/// Documento embebido con items, total y estado.
-/// Estados: PENDIENTE → PROCESANDO → ENVIADO → ENTREGADO | CANCELADO.
+///     Entidad de dominio que representa un pedido.
+///     Documento embebido con items, total y estado.
+///     Estados: PENDIENTE → PROCESANDO → ENVIADO → ENTREGADO | CANCELADO.
 /// </summary>
 public class Pedido : ITimestamped {
     /// <summary>Identificador ObjectId generado automáticamente por MongoDB.</summary>
@@ -48,8 +47,8 @@ public class Pedido : ITimestamped {
 }
 
 /// <summary>
-/// Elemento individual dentro de un pedido.
-/// Registra producto, cantidad, precio y subtotal al momento de la compra.
+///     Elemento individual dentro de un pedido.
+///     Registra producto, cantidad, precio y subtotal al momento de la compra.
 /// </summary>
 public class PedidoItem {
     /// <summary>ID del producto en el catálogo.</summary>
@@ -70,9 +69,9 @@ public class PedidoItem {
 }
 
 /// <summary>
-/// Constantes para los estados de un pedido.
-/// Flujo típico: PENDIENTE → PROCESANDO → ENVIADO → ENTREGADO
-/// Flujo alternativo: PENDIENTE → CANCELADO
+///     Constantes para los estados de un pedido.
+///     Flujo típico: PENDIENTE → PROCESANDO → ENVIADO → ENTREGADO
+///     Flujo alternativo: PENDIENTE → CANCELADO
 /// </summary>
 public static class PedidoEstado {
     /// <summary>Pedido creado pero sin confirmar (estado inicial).</summary>

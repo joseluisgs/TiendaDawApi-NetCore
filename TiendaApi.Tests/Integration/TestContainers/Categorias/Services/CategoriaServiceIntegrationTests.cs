@@ -1,16 +1,15 @@
 using System.Threading.Channels;
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
-using TiendaApi.Api.Models;
+using TiendaApi.Api.Errors;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Categorias;
@@ -20,21 +19,13 @@ using TiendaApi.Api.Validators.Categorias;
 namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Services;
 
 /// <summary>
-/// Tests de integración para CategoriaService con DI completo.
-/// Verifica el servicio con base de datos real usando Testcontainers.
+///     Tests de integración para CategoriaService con DI completo.
+///     Verifica el servicio con base de datos real usando Testcontainers.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
 public class CategoriaServiceIntegrationTests {
-    private const string DatabaseName = "it_categoria_service";
-
-    private string _connectionString = string.Empty;
-    private string _mongoConnectionString = string.Empty;
-    private IServiceProvider? _serviceProvider;
-    private TiendaDbContext? _dbContext;
-    private ICategoriaService? _categoriaService;
-
     [OneTimeSetUp]
     public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
@@ -49,10 +40,10 @@ public class CategoriaServiceIntegrationTests {
 
     [SetUp]
     public async Task Setup() {
-        var connectionString = _connectionString;
-        var mongoConnectionString = _mongoConnectionString;
+        string connectionString = _connectionString;
+        string mongoConnectionString = _mongoConnectionString;
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
@@ -99,9 +90,17 @@ public class CategoriaServiceIntegrationTests {
         }
     }
 
+    private const string DatabaseName = "it_categoria_service";
+
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
+    private IServiceProvider? _serviceProvider;
+    private TiendaDbContext? _dbContext;
+    private ICategoriaService? _categoriaService;
+
     [Test]
     public async Task FindAllAsync_SinCategorias_RetornaListaVacia() {
-        var result = await _categoriaService!.FindAllAsync();
+        Result<IEnumerable<CategoriaDto>, DomainError> result = await _categoriaService!.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -111,7 +110,7 @@ public class CategoriaServiceIntegrationTests {
     public async Task CreateAsync_ConDatosValidos_RetornaCategoriaCreada() {
         var dto = new CategoriaRequestDto { Nombre = "Electronica Test" };
 
-        var result = await _categoriaService!.CreateAsync(dto);
+        Result<CategoriaDto, DomainError> result = await _categoriaService!.CreateAsync(dto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -122,10 +121,10 @@ public class CategoriaServiceIntegrationTests {
     [Test]
     public async Task FindByIdAsync_ConCategoriaExistente_RetornaCategoria() {
         var dto = new CategoriaRequestDto { Nombre = "Buscar Test" };
-        var createResult = await _categoriaService!.CreateAsync(dto);
+        Result<CategoriaDto, DomainError> createResult = await _categoriaService!.CreateAsync(dto);
         createResult.IsSuccess.Should().BeTrue();
 
-        var findResult = await _categoriaService.FindByIdAsync(createResult.Value.Id);
+        Result<CategoriaDto, DomainError> findResult = await _categoriaService.FindByIdAsync(createResult.Value.Id);
 
         findResult.IsSuccess.Should().BeTrue();
         findResult.Value.Nombre.Should().Be("Buscar Test");
@@ -133,7 +132,7 @@ public class CategoriaServiceIntegrationTests {
 
     [Test]
     public async Task FindByIdAsync_ConCategoriaNoExistente_RetornaNotFound() {
-        var result = await _categoriaService!.FindByIdAsync(999999);
+        Result<CategoriaDto, DomainError> result = await _categoriaService!.FindByIdAsync(999999);
 
         result.IsFailure.Should().BeTrue();
     }
@@ -141,11 +140,12 @@ public class CategoriaServiceIntegrationTests {
     [Test]
     public async Task UpdateAsync_ConDatosValidos_RetornaCategoriaActualizada() {
         var createDto = new CategoriaRequestDto { Nombre = "Original" };
-        var createResult = await _categoriaService!.CreateAsync(createDto);
+        Result<CategoriaDto, DomainError> createResult = await _categoriaService!.CreateAsync(createDto);
         createResult.IsSuccess.Should().BeTrue();
 
         var updateDto = new CategoriaRequestDto { Nombre = "Actualizado" };
-        var updateResult = await _categoriaService.UpdateAsync(createResult.Value.Id, updateDto);
+        Result<CategoriaDto, DomainError> updateResult =
+            await _categoriaService.UpdateAsync(createResult.Value.Id, updateDto);
 
         updateResult.IsSuccess.Should().BeTrue();
         updateResult.Value.Nombre.Should().Be("Actualizado");
@@ -154,14 +154,14 @@ public class CategoriaServiceIntegrationTests {
     [Test]
     public async Task DeleteAsync_ConCategoriaExistente_RetornaExito() {
         var createDto = new CategoriaRequestDto { Nombre = "Eliminar Test" };
-        var createResult = await _categoriaService!.CreateAsync(createDto);
+        Result<CategoriaDto, DomainError> createResult = await _categoriaService!.CreateAsync(createDto);
         createResult.IsSuccess.Should().BeTrue();
 
-        var deleteResult = await _categoriaService.DeleteAsync(createResult.Value.Id);
+        UnitResult<DomainError> deleteResult = await _categoriaService.DeleteAsync(createResult.Value.Id);
 
         deleteResult.IsSuccess.Should().BeTrue();
 
-        var findResult = await _categoriaService.FindByIdAsync(createResult.Value.Id);
+        Result<CategoriaDto, DomainError> findResult = await _categoriaService.FindByIdAsync(createResult.Value.Id);
         findResult.IsFailure.Should().BeTrue();
     }
 
@@ -170,7 +170,7 @@ public class CategoriaServiceIntegrationTests {
         var dto = new CategoriaRequestDto { Nombre = "Duplicado Test" };
         await _categoriaService!.CreateAsync(dto);
 
-        var result = await _categoriaService.CreateAsync(dto);
+        Result<CategoriaDto, DomainError> result = await _categoriaService.CreateAsync(dto);
 
         result.IsFailure.Should().BeTrue();
     }
@@ -183,7 +183,7 @@ public class CategoriaServiceIntegrationTests {
         }
 
         var filter = new CategoriaFilterDto { Page = 1, Size = 3 };
-        var result = await _categoriaService!.FindAllPagedAsync(filter);
+        Result<PagedResult<CategoriaDto>, DomainError> result = await _categoriaService!.FindAllPagedAsync(filter);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Items.Should().HaveCount(3);

@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using TiendaApi.Api.Repositories.Auth;
 using TiendaApi.Api.Repositories.Categorias;
@@ -12,11 +10,11 @@ using TiendaApi.Api.Repositories.Usuarios;
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Configuración de repositorios.
+///     Configuración de repositorios.
 /// </summary>
 public static class RepositoriesConfig {
     /// <summary>
-    /// Registra todos los repositorios.
+    ///     Registra todos los repositorios.
     /// </summary>
     /// <param name="services">Colección de servicios.</param>
     /// <param name="configuration">Configuración.</param>
@@ -31,7 +29,7 @@ public static class RepositoriesConfig {
         services.AddScoped<IUserLoginRepository, UserLoginRepository>();
         services.AddScoped<IHistorialRepository, CassandraHistorialRepository>();
 
-        var pedidosRepoType = configuration["Pedidos:RepositoryType"] ?? "MongoDbNative";
+        string pedidosRepoType = configuration["Pedidos:RepositoryType"] ?? "MongoDbNative";
 
         if (pedidosRepoType == "MongoDbNative") {
             services.AddScoped<IPedidosRepository, PedidosNativeRepository>();

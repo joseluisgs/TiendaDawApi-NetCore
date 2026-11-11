@@ -1,15 +1,14 @@
-using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Api.Mappers;
 
 /// <summary>
-/// Mapper para convertir entre entidades de Pedido y DTOs.
+///     Mapper para convertir entre entidades de Pedido y DTOs.
 /// </summary>
 public static class PedidoMapper {
     /// <summary>
-    /// Convierte una entidad Pedido a DTO.
+    ///     Convierte una entidad Pedido a DTO.
     /// </summary>
     /// <param name="pedido">Entidad a convertir.</param>
     /// <returns>DTO del pedido.</returns>
@@ -18,7 +17,7 @@ public static class PedidoMapper {
             pedido.Id.ToString(),
             pedido.UserId,
             pedido.Destinatario?.ToDto() ?? new DestinatarioDto(),
-            pedido.Items?.Select(i => i.ToDto()).ToList() ?? new(),
+            pedido.Items?.Select(i => i.ToDto()).ToList() ?? new List<PedidoItemDto>(),
             pedido.Total,
             pedido.Estado ?? string.Empty,
             pedido.DireccionEnvio,
@@ -27,7 +26,7 @@ public static class PedidoMapper {
     }
 
     /// <summary>
-    /// Convierte una entidad Destinatario a DTO.
+    ///     Convierte una entidad Destinatario a DTO.
     /// </summary>
     /// <param name="destinatario">Entidad a convertir.</param>
     /// <returns>DTO del destinatario.</returns>
@@ -41,7 +40,7 @@ public static class PedidoMapper {
     }
 
     /// <summary>
-    /// Convierte una entidad Direccion a DTO.
+    ///     Convierte una entidad Direccion a DTO.
     /// </summary>
     /// <param name="direccion">Entidad a convertir.</param>
     /// <returns>DTO de la dirección.</returns>
@@ -57,7 +56,7 @@ public static class PedidoMapper {
     }
 
     /// <summary>
-    /// Convierte un DTO Destinatario a entidad.
+    ///     Convierte un DTO Destinatario a entidad.
     /// </summary>
     /// <param name="dto">DTO a convertir.</param>
     /// <returns>Entidad del destinatario.</returns>
@@ -71,13 +70,14 @@ public static class PedidoMapper {
     }
 
     /// <summary>
-    /// Convierte un DTO Direccion a entidad.
+    ///     Convierte un DTO Direccion a entidad.
     /// </summary>
     /// <param name="dto">DTO a convertir.</param>
     /// <returns>Entidad de la dirección.</returns>
     public static Direccion? ToEntity(this DireccionDto? dto) {
-        if (dto == null)
+        if (dto == null) {
             return null;
+        }
 
         return new Direccion {
             Calle = dto.Calle,
@@ -90,7 +90,7 @@ public static class PedidoMapper {
     }
 
     /// <summary>
-    /// Convierte una lista de Pedidos a lista de DTOs.
+    ///     Convierte una lista de Pedidos a lista de DTOs.
     /// </summary>
     /// <param name="pedidos">Lista de entidades.</param>
     /// <returns>Lista de DTOs.</returns>
@@ -99,7 +99,7 @@ public static class PedidoMapper {
     }
 
     /// <summary>
-    /// Convierte un PedidoItem a DTO.
+    ///     Convierte un PedidoItem a DTO.
     /// </summary>
     /// <param name="item">Entidad a convertir.</param>
     /// <returns>DTO del ítem.</returns>
@@ -114,7 +114,7 @@ public static class PedidoMapper {
     }
 
     /// <summary>
-    /// Convierte un PedidoRequestDto a entidad Pedido.
+    ///     Convierte un PedidoRequestDto a entidad Pedido.
     /// </summary>
     /// <param name="dto">DTO del pedido.</param>
     /// <param name="userId">ID del usuario.</param>
@@ -131,13 +131,14 @@ public static class PedidoMapper {
     }
 
     /// <summary>
-    /// Convierte un PedidoItemRequestDto a entidad PedidoItem.
+    ///     Convierte un PedidoItemRequestDto a entidad PedidoItem.
     /// </summary>
     /// <param name="dto">DTO del ítem.</param>
     /// <param name="nombreProducto">Nombre del producto.</param>
     /// <param name="precio">Precio del producto.</param>
     /// <returns>Entidad del ítem.</returns>
-    public static PedidoItem ToEntity(this PedidoItemRequestDto dto, string? nombreProducto = null, decimal? precio = null) {
+    public static PedidoItem ToEntity(this PedidoItemRequestDto dto, string? nombreProducto = null,
+        decimal? precio = null) {
         return new PedidoItem {
             ProductoId = dto.ProductoId,
             NombreProducto = nombreProducto ?? string.Empty,

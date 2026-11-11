@@ -1,6 +1,5 @@
 using FluentAssertions;
 using MongoDB.Bson;
-using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Mappers;
 using TiendaApi.Api.Models;
@@ -8,10 +7,29 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Tests.Unit.Mappers;
 
 /// <summary>
-/// Tests unitarios para el mapeador de pedidos.
-/// Prueba todas las conversiones entidad-DTO para el dominio de Pedido.
+///     Tests unitarios para el mapeador de pedidos.
+///     Prueba todas las conversiones entidad-DTO para el dominio de Pedido.
 /// </summary>
 public class PedidoMapperTests {
+    #region ToEntity with Destinatario Tests
+
+    [Test]
+    public void DestinatarioToEntity_SoloConNombre_MapeaCorrectamente() {
+        var dto = new DestinatarioDto {
+            NombreCompleto = "Juan Pérez"
+        };
+
+        Destinatario destinatario = dto.ToEntity();
+
+        destinatario.Should().NotBeNull();
+        destinatario!.NombreCompleto.Should().Be("Juan Pérez");
+        destinatario.Email.Should().BeEmpty();
+        destinatario.Telefono.Should().BeNull();
+        destinatario.Direccion.Should().NotBeNull();
+    }
+
+    #endregion
+
     #region Pedido ToDto Tests
 
     [Test]
@@ -24,13 +42,15 @@ public class PedidoMapperTests {
             Estado = PedidoEstado.PENDIENTE,
             Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Product 1", Cantidad = 2, Precio = 50, Subtotal = 100 },
-                new() { ProductoId = 2, NombreProducto = "Product 2", Cantidad = 1, Precio = 199.99m, Subtotal = 199.99m }
+                new() {
+                    ProductoId = 2, NombreProducto = "Product 2", Cantidad = 1, Precio = 199.99m, Subtotal = 199.99m
+                }
             },
             CreatedAt = new DateTime(2024, 1, 15, 10, 30, 0)
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Id.Should().Be(pedido.Id.ToString());
@@ -51,7 +71,7 @@ public class PedidoMapperTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Id.Should().Be(ObjectId.Empty.ToString());
@@ -63,7 +83,7 @@ public class PedidoMapperTests {
         var pedido = new Pedido { Id = ObjectId.GenerateNewId() };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Estado.Should().Be(PedidoEstado.PENDIENTE);
@@ -78,7 +98,7 @@ public class PedidoMapperTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Items.Should().NotBeNull();
@@ -94,7 +114,7 @@ public class PedidoMapperTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Items.Should().NotBeNull();
@@ -113,7 +133,7 @@ public class PedidoMapperTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Items[0].Subtotal.Should().Be(30);
@@ -130,7 +150,7 @@ public class PedidoMapperTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Total.Should().Be(0);
@@ -146,7 +166,7 @@ public class PedidoMapperTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Total.Should().Be(999999999.99m);
@@ -155,7 +175,7 @@ public class PedidoMapperTests {
     [Test]
     public void ToDto_ConTodosLosEstados_MapeaCorrectamente() {
         // Arrange
-        var estados = new[] {
+        string[] estados = new[] {
             PedidoEstado.PENDIENTE,
             PedidoEstado.PROCESANDO,
             PedidoEstado.ENVIADO,
@@ -163,14 +183,14 @@ public class PedidoMapperTests {
             PedidoEstado.CANCELADO
         };
 
-        foreach (var estado in estados) {
+        foreach (string estado in estados) {
             var pedido = new Pedido {
                 Id = ObjectId.GenerateNewId(),
                 Estado = estado
             };
 
             // Act
-            var dto = pedido.ToDto();
+            PedidoDto dto = pedido.ToDto();
 
             // Assert
             dto.Estado.Should().Be(estado);
@@ -196,7 +216,7 @@ public class PedidoMapperTests {
         };
 
         // Act
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         // Assert
         dto.Items.Should().HaveCount(100);
@@ -252,7 +272,7 @@ public class PedidoMapperTests {
         var pedidos = new List<Pedido>();
 
         // Act
-        var dtos = pedidos.ToDtoList();
+        IEnumerable<PedidoDto> dtos = pedidos.ToDtoList();
 
         // Assert
         dtos.Should().NotBeNull();
@@ -285,10 +305,10 @@ public class PedidoMapperTests {
                 new() { ProductoId = 2, Cantidad = 3 }
             }
         };
-        var userId = 100L;
+        long userId = 100L;
 
         // Act
-        var pedido = dto.ToEntity(userId);
+        Pedido pedido = dto.ToEntity(userId);
 
         // Assert
         pedido.UserId.Should().Be(userId);
@@ -303,10 +323,10 @@ public class PedidoMapperTests {
         var dto = new PedidoRequestDto {
             Items = new List<PedidoItemRequestDto>()
         };
-        var userId = 1L;
+        long userId = 1L;
 
         // Act
-        var pedido = dto.ToEntity(userId);
+        Pedido pedido = dto.ToEntity(userId);
 
         // Assert
         pedido.Items.Should().NotBeNull();
@@ -322,7 +342,7 @@ public class PedidoMapperTests {
         };
 
         // Act
-        var item = dto.ToEntity();
+        PedidoItem item = dto.ToEntity();
 
         // Assert
         item.ProductoId.Should().Be(5);
@@ -339,11 +359,11 @@ public class PedidoMapperTests {
             ProductoId = 5,
             Cantidad = 10
         };
-        var nombreProducto = "Test Product";
-        var precio = 25.50m;
+        string nombreProducto = "Test Product";
+        decimal precio = 25.50m;
 
         // Act
-        var item = dto.ToEntity(nombreProducto, precio);
+        PedidoItem item = dto.ToEntity(nombreProducto, precio);
 
         // Assert
         item.ProductoId.Should().Be(5);
@@ -360,10 +380,10 @@ public class PedidoMapperTests {
             ProductoId = 1,
             Cantidad = 5
         };
-        var precio = 19.99m;
+        decimal precio = 19.99m;
 
         // Act
-        var item = dto.ToEntity("Product", precio);
+        PedidoItem item = dto.ToEntity("Product", precio);
 
         // Assert
         item.Subtotal.Should().Be(99.95m);
@@ -389,7 +409,7 @@ public class PedidoMapperTests {
             }
         };
 
-        var dto = destinatario.ToDto();
+        DestinatarioDto dto = destinatario.ToDto();
 
         dto.NombreCompleto.Should().Be("María García López");
         dto.Email.Should().Be("maria.garcia@email.com");
@@ -405,7 +425,7 @@ public class PedidoMapperTests {
             NombreCompleto = "Juan Pérez"
         };
 
-        var dto = destinatario.ToDto();
+        DestinatarioDto dto = destinatario.ToDto();
 
         dto.NombreCompleto.Should().Be("Juan Pérez");
         dto.Email.Should().BeEmpty();
@@ -421,7 +441,7 @@ public class PedidoMapperTests {
             Direccion = null
         };
 
-        var dto = destinatario.ToDto();
+        DestinatarioDto dto = destinatario.ToDto();
 
         dto.NombreCompleto.Should().Be("Test User");
         dto.Direccion.Should().NotBeNull();
@@ -443,7 +463,7 @@ public class PedidoMapperTests {
             CodigoPostal = "28013"
         };
 
-        var dto = direccion.ToDto();
+        DireccionDto dto = direccion.ToDto();
 
         dto.Calle.Should().Be("Gran Vía");
         dto.Numero.Should().Be("42");
@@ -459,30 +479,11 @@ public class PedidoMapperTests {
             Calle = "Calle Test"
         };
 
-        var dto = direccion.ToDto();
+        DireccionDto dto = direccion.ToDto();
 
         dto.Calle.Should().Be("Calle Test");
         dto.Numero.Should().BeNull();
         dto.Ciudad.Should().BeEmpty();
-    }
-
-    #endregion
-
-    #region ToEntity with Destinatario Tests
-
-    [Test]
-    public void DestinatarioToEntity_SoloConNombre_MapeaCorrectamente() {
-        var dto = new DestinatarioDto {
-            NombreCompleto = "Juan Pérez"
-        };
-
-        var destinatario = dto.ToEntity();
-
-        destinatario.Should().NotBeNull();
-        destinatario!.NombreCompleto.Should().Be("Juan Pérez");
-        destinatario.Email.Should().BeEmpty();
-        destinatario.Telefono.Should().BeNull();
-        destinatario.Direccion.Should().NotBeNull();
     }
 
     #endregion
@@ -500,7 +501,7 @@ public class PedidoMapperTests {
             CodigoPostal = "28013"
         };
 
-        var direccion = dto.ToEntity();
+        Direccion? direccion = dto.ToEntity();
 
         direccion.Should().NotBeNull();
         direccion!.Calle.Should().Be("Gran Vía");
@@ -513,7 +514,7 @@ public class PedidoMapperTests {
 
     [Test]
     public void DireccionToEntity_Nula_RetornaNull() {
-        var direccion = ((DireccionDto?)null!).ToEntity();
+        Direccion? direccion = ((DireccionDto?)null!).ToEntity();
 
         direccion.Should().BeNull();
     }
@@ -524,7 +525,7 @@ public class PedidoMapperTests {
             Calle = "Calle Test"
         };
 
-        var direccion = dto.ToEntity();
+        Direccion? direccion = dto.ToEntity();
 
         direccion.Should().NotBeNull();
         direccion!.Calle.Should().Be("Calle Test");
@@ -559,7 +560,7 @@ public class PedidoMapperTests {
             CreatedAt = new DateTime(2024, 1, 15, 10, 30, 0)
         };
 
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         dto.Id.Should().Be(pedido.Id.ToString());
         dto.UserId.Should().Be(100);
@@ -582,7 +583,7 @@ public class PedidoMapperTests {
             }
         };
 
-        var dto = pedido.ToDto();
+        PedidoDto dto = pedido.ToDto();
 
         dto.Destinatario.Should().NotBeNull();
         dto.Destinatario!.NombreCompleto.Should().BeEmpty();
@@ -610,9 +611,9 @@ public class PedidoMapperTests {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
-        var userId = 100L;
+        long userId = 100L;
 
-        var pedido = dto.ToEntity(userId);
+        Pedido pedido = dto.ToEntity(userId);
 
         pedido.UserId.Should().Be(userId);
         pedido.Destinatario.Should().NotBeNull();
@@ -634,9 +635,9 @@ public class PedidoMapperTests {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
-        var userId = 100L;
+        long userId = 100L;
 
-        var pedido = dto.ToEntity(userId);
+        Pedido pedido = dto.ToEntity(userId);
 
         pedido.Destinatario.Should().NotBeNull();
     }

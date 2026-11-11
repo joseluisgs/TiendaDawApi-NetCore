@@ -1,9 +1,8 @@
+using System.Reflection;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Data;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Pedidos;
@@ -14,12 +13,10 @@ namespace TiendaApi.Tests.Unit.Repositories.Pedidos;
 [Category("Unit")]
 [Category("Repository")]
 public class PedidosEfCoreRepositoryTests {
-    #region Constructor Tests
-
     [Test]
     public void Constructor_CreaInstanciaCorrectamente() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
@@ -30,67 +27,55 @@ public class PedidosEfCoreRepositoryTests {
         repository.Should().NotBeNull();
     }
 
-    #endregion
-
-    #region FindAllAsync Tests
-
     [Test]
     public async Task FindAllAsync_MetodoExiste_EnElRepositorio() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
         var repository = new PedidosEfCoreRepository(context, loggerMock.Object);
-        var methodInfo = typeof(PedidosEfCoreRepository).GetMethod("FindAllAsync");
+        MethodInfo? methodInfo = typeof(PedidosEfCoreRepository).GetMethod("FindAllAsync");
 
         methodInfo.Should().NotBeNull();
     }
-
-    #endregion
-
-    #region FindByUserIdAsync Tests
 
     [Test]
     public async Task FindByUserIdAsync_MetodoExiste_EnElRepositorio() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
         var repository = new PedidosEfCoreRepository(context, loggerMock.Object);
-        var methodInfo = typeof(PedidosEfCoreRepository).GetMethod("FindByUserIdAsync");
+        MethodInfo? methodInfo = typeof(PedidosEfCoreRepository).GetMethod("FindByUserIdAsync");
 
         methodInfo.Should().NotBeNull();
     }
 
-    #endregion
-
-    #region FindByIdAsync Tests
-
     [Test]
     public async Task FindByIdAsync_MetodoExiste_EnElRepositorio() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
         var repository = new PedidosEfCoreRepository(context, loggerMock.Object);
-        var methodInfo = typeof(PedidosEfCoreRepository).GetMethod("FindByIdAsync");
+        MethodInfo? methodInfo = typeof(PedidosEfCoreRepository).GetMethod("FindByIdAsync");
 
         methodInfo.Should().NotBeNull();
     }
 
     [Test]
     public void FindByIdAsync_IdNoObjectId_LanzaExcepcion() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
@@ -98,76 +83,60 @@ public class PedidosEfCoreRepositoryTests {
 
         var repository = new PedidosEfCoreRepository(context, loggerMock.Object);
 
-        var act = async () => await repository.FindByIdAsync("invalid-id");
+        Func<Task<Pedido?>> act = async () => await repository.FindByIdAsync("invalid-id");
 
         act.Should().ThrowAsync<FormatException>();
     }
 
-    #endregion
-
-    #region FindByUserIdPagedAsync Tests
-
     [Test]
     public async Task FindByUserIdPagedAsync_MetodoExiste_EnElRepositorio() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
         var repository = new PedidosEfCoreRepository(context, loggerMock.Object);
-        var methodInfo = typeof(PedidosEfCoreRepository).GetMethod("FindByUserIdPagedAsync");
+        MethodInfo? methodInfo = typeof(PedidosEfCoreRepository).GetMethod("FindByUserIdPagedAsync");
 
         methodInfo.Should().NotBeNull();
     }
-
-    #endregion
-
-    #region SaveAsync Tests
 
     [Test]
     public async Task SaveAsync_MetodoExiste_EnElRepositorio() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
         var repository = new PedidosEfCoreRepository(context, loggerMock.Object);
-        var methodInfo = typeof(PedidosEfCoreRepository).GetMethod("SaveAsync");
+        MethodInfo? methodInfo = typeof(PedidosEfCoreRepository).GetMethod("SaveAsync");
 
         methodInfo.Should().NotBeNull();
     }
-
-    #endregion
-
-    #region UpdateAsync Tests
 
     [Test]
     public async Task UpdateAsync_MetodoExiste_EnElRepositorio() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
         var loggerMock = new Mock<ILogger<PedidosEfCoreRepository>>();
 
         var repository = new PedidosEfCoreRepository(context, loggerMock.Object);
-        var methodInfo = typeof(PedidosEfCoreRepository).GetMethod("UpdateAsync");
+        MethodInfo? methodInfo = typeof(PedidosEfCoreRepository).GetMethod("UpdateAsync");
 
         methodInfo.Should().NotBeNull();
     }
 
-    #endregion
-
-    #region Interface Implementation Tests
-
     [Test]
     public void ImplementsIPedidosRepository() {
-        var options = new DbContextOptionsBuilder<TiendaMongoContext>()
-            .UseInMemoryDatabase(databaseName: "Test")
+        DbContextOptions<TiendaMongoContext> options = new DbContextOptionsBuilder<TiendaMongoContext>()
+            .UseInMemoryDatabase("Test")
             .Options;
 
         using var context = new TiendaMongoContext(options);
@@ -177,6 +146,4 @@ public class PedidosEfCoreRepositoryTests {
 
         repository.Should().BeAssignableTo<IPedidosRepository>();
     }
-
-    #endregion
 }

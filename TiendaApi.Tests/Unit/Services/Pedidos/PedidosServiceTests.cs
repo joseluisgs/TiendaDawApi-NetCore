@@ -1,3 +1,4 @@
+using System.Data;
 using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
@@ -23,25 +24,24 @@ using TiendaApi.Api.Services.Auth;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 using TiendaApi.Api.Services.Pedidos;
-using TiendaApi.Api.Validators.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Services.Pedidos;
 
 /// <summary>
-/// Tests unitarios para PedidosService usando enfoque híbrido: Serializable + Retry
+///     Tests unitarios para PedidosService usando enfoque híbrido: Serializable + Retry
 /// </summary>
 public class PedidosServiceTests {
+    private Mock<ICacheService> _mockCacheService = null!;
+    private Mock<IConfiguration> _mockConfiguration = null!;
+    private Mock<IEmailService> _mockEmailService = null!;
+    private Mock<IHubContext<PedidosHub>> _mockHubContext = null!;
+    private Mock<IValidator<PedidoItemRequestDto>> _mockItemValidator = null!;
+    private Mock<ILogger<PedidosService>> _mockLogger = null!;
+    private Mock<IValidator<PedidoRequestDto>> _mockPedidoValidator = null!;
     private Mock<IPedidosRepository> _mockPedidosRepo = null!;
     private Mock<IProductoRepository> _mockProductoRepo = null!;
-    private Mock<ILogger<PedidosService>> _mockLogger = null!;
-    private Mock<ICacheService> _mockCacheService = null!;
-    private Mock<IEmailService> _mockEmailService = null!;
-    private Mock<IConfiguration> _mockConfiguration = null!;
-    private Mock<PedidosWebSocketHandler> _mockWebSocketHandler = null!;
-    private Mock<IValidator<PedidoRequestDto>> _mockPedidoValidator = null!;
-    private Mock<IValidator<PedidoItemRequestDto>> _mockItemValidator = null!;
     private Mock<IDbContextTransaction> _mockTransaction = null!;
-    private Mock<IHubContext<PedidosHub>> _mockHubContext = null!;
+    private Mock<PedidosWebSocketHandler> _mockWebSocketHandler = null!;
     private IPedidosService _service = null!;
 
     private void CreateService() {
@@ -53,7 +53,8 @@ public class PedidosServiceTests {
             _mockPedidoValidator.Object,
             _mockItemValidator.Object,
             Mock.Of<IOutputCacheStore>(),
-            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object,
+                _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
     }
 
@@ -97,7 +98,7 @@ public class PedidosServiceTests {
         _mockItemValidator.Setup(v => v.ValidateAsync(It.IsAny<PedidoItemRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
-        _mockProductoRepo.Setup(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.Setup(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ReturnsAsync(_mockTransaction.Object);
 
         _mockTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()));
@@ -116,7 +117,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindAllAsync())
             .ReturnsAsync(pedidos);
 
-        var result = await _service.FindAllAsync();
+        Result<IEnumerable<PedidoDto>, DomainError> result = await _service.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(2);
@@ -154,7 +155,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(100);
@@ -181,10 +182,11 @@ public class PedidosServiceTests {
             _mockPedidoValidator.Object,
             _mockItemValidator.Object,
             Mock.Of<IOutputCacheStore>(),
-            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object,
+                _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -212,10 +214,11 @@ public class PedidosServiceTests {
             _mockPedidoValidator.Object,
             _mockItemValidator.Object,
             Mock.Of<IOutputCacheStore>(),
-            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object,
+                _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -233,7 +236,7 @@ public class PedidosServiceTests {
         _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
             .ReturnsAsync(Array.Empty<Producto>());
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<NotFoundError>();
@@ -259,7 +262,7 @@ public class PedidosServiceTests {
         _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
             .ReturnsAsync(new[] { producto });
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<BusinessRuleError>();
@@ -287,13 +290,13 @@ public class PedidosServiceTests {
         _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
             .ReturnsAsync(new[] { producto });
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(npgsqlException)
             .ThrowsAsync(npgsqlException)
             .ThrowsAsync(npgsqlException)
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ConflictError>();
@@ -333,11 +336,11 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(npgsqlException)
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(100);
@@ -385,7 +388,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(175);
@@ -394,7 +397,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task UpdateEstadoAsync_ConEstadoValido_DebeRetornarPedidoActualizado() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             UserId = 1,
             Total = 100,
@@ -412,7 +415,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoActualizado);
 
-        var result = await _service.UpdateEstadoAsync(pedidoId, "ENVIADO");
+        Result<PedidoDto, DomainError> result = await _service.UpdateEstadoAsync(pedidoId, "ENVIADO");
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Estado.Should().Be(PedidoEstado.ENVIADO);
@@ -420,9 +423,9 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task UpdateEstadoAsync_ConEstadoInvalido_DebeRetornarErrorValidacion() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
 
-        var result = await _service.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
+        Result<PedidoDto, DomainError> result = await _service.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -430,16 +433,39 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task UpdateEstadoAsync_ConPedidoNoExistente_DebeRetornarNotFound() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
 
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync((Pedido?)null);
 
-        var result = await _service.UpdateEstadoAsync(pedidoId, "ENVIADO");
+        Result<PedidoDto, DomainError> result = await _service.UpdateEstadoAsync(pedidoId, "ENVIADO");
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<NotFoundError>();
     }
+
+    #region Tests de FindMyPedidosAsync (User - Paginado)
+
+    [Test]
+    public async Task FindMyPedidosAsync_ConParametros_RetornaPagedResult() {
+        var pedidos = new List<Pedido> {
+            new() { UserId = 1, Total = 100 },
+            new() { UserId = 1, Total = 200 }
+        };
+
+        _mockPedidosRepo.Setup(r => r.FindByUserIdPagedAsync(1, 1, 10))
+            .ReturnsAsync((pedidos, 2));
+
+        Result<PagedResult<PedidoDto>, DomainError> result = await _service.FindMyPedidosAsync(1, 1, 10);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().HaveCount(2);
+        result.Value.TotalCount.Should().Be(2);
+        result.Value.Page.Should().Be(2);
+        result.Value.PageSize.Should().Be(10);
+    }
+
+    #endregion
 
     #region Tests de Deteccion de Errores 40001
 
@@ -478,11 +504,11 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(new SerializationFailureException("serialization failure", dbUpdateException))
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(100);
@@ -522,11 +548,11 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
     }
@@ -565,11 +591,11 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(new SerializationFailureException("error de serializacion", npgsqlException))
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
     }
@@ -633,10 +659,11 @@ public class PedidosServiceTests {
             _mockPedidoValidator.Object,
             _mockItemValidator.Object,
             Mock.Of<IOutputCacheStore>(),
-            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object, _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
+            new PedidoEffects(_mockWebSocketHandler.Object, _mockHubContext.Object, _mockEmailService.Object,
+                _mockConfiguration.Object, Mock.Of<ILogger<PedidoEffects>>())
         );
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -721,11 +748,11 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(npgsqlException)
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(100);
@@ -763,12 +790,12 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(npgsqlException)
             .ThrowsAsync(npgsqlException)
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(100);
@@ -799,7 +826,7 @@ public class PedidosServiceTests {
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync((Producto p) => p);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<BusinessRuleError>();
@@ -833,7 +860,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(125);
@@ -874,7 +901,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(250);
@@ -909,7 +936,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.SaveAsync(It.IsAny<Pedido>()))
             .ReturnsAsync(pedidoGuardado);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Total.Should().Be(99.99m);
@@ -938,13 +965,13 @@ public class PedidosServiceTests {
         _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
             .ReturnsAsync(new[] { producto });
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(genericException)
             .ThrowsAsync(genericException)
             .ThrowsAsync(genericException)
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ConflictError>();
@@ -971,13 +998,13 @@ public class PedidosServiceTests {
         _mockProductoRepo.Setup(r => r.FindByIdsAsync(It.IsAny<IEnumerable<long>>()))
             .ReturnsAsync(new[] { producto });
 
-        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<System.Data.IsolationLevel>()))
+        _mockProductoRepo.SetupSequence(r => r.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
             .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
             .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
             .ThrowsAsync(new SerializationFailureException("serialization failure", npgsqlException))
             .ReturnsAsync(_mockTransaction.Object);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ConflictError>();
@@ -1008,7 +1035,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(0, 2))
             .ReturnsAsync(paged);
 
-        var result = await _service.FindAllPagedAsync(0, 2);
+        Result<PagedResult<PedidoDto>, DomainError> result = await _service.FindAllPagedAsync(0, 2);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Items.Should().HaveCount(2);
@@ -1029,7 +1056,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(1, 2))
             .ReturnsAsync(paged);
 
-        var result = await _service.FindAllPagedAsync(1, 2);
+        Result<PagedResult<PedidoDto>, DomainError> result = await _service.FindAllPagedAsync(1, 2);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Items.Should().HaveCount(1);
@@ -1042,7 +1069,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(0, 10))
             .ReturnsAsync(paged);
 
-        var result = await _service.FindAllPagedAsync(0, 10);
+        Result<PagedResult<PedidoDto>, DomainError> result = await _service.FindAllPagedAsync(0, 10);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Items.Should().BeEmpty();
@@ -1063,7 +1090,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindByUserIdAsync(1))
             .ReturnsAsync(pedidos);
 
-        var result = await _service.FindByUserIdAsync(1);
+        Result<IEnumerable<PedidoDto>, DomainError> result = await _service.FindByUserIdAsync(1);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(2);
@@ -1074,33 +1101,10 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindByUserIdAsync(1))
             .ReturnsAsync(new List<Pedido>());
 
-        var result = await _service.FindByUserIdAsync(1);
+        Result<IEnumerable<PedidoDto>, DomainError> result = await _service.FindByUserIdAsync(1);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEmpty();
-    }
-
-    #endregion
-
-    #region Tests de FindMyPedidosAsync (User - Paginado)
-
-    [Test]
-    public async Task FindMyPedidosAsync_ConParametros_RetornaPagedResult() {
-        var pedidos = new List<Pedido> {
-            new() { UserId = 1, Total = 100 },
-            new() { UserId = 1, Total = 200 }
-        };
-
-        _mockPedidosRepo.Setup(r => r.FindByUserIdPagedAsync(1, 1, 10))
-            .ReturnsAsync((pedidos, 2));
-
-        var result = await _service.FindMyPedidosAsync(1, 1, 10);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Items.Should().HaveCount(2);
-        result.Value.TotalCount.Should().Be(2);
-        result.Value.Page.Should().Be(2);
-        result.Value.PageSize.Should().Be(10);
     }
 
     #endregion
@@ -1109,7 +1113,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task FindMyPedidoAsync_Propietario_RetornaPedido() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedido = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1120,7 +1124,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync(pedido);
 
-        var result = await _service.FindMyPedidoAsync(pedidoId, 1);
+        Result<PedidoDto, DomainError> result = await _service.FindMyPedidoAsync(pedidoId, 1);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Id.Should().Be(pedidoId);
@@ -1128,7 +1132,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task FindMyPedidoAsync_NoPropietario_RetornaForbidden() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedido = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1139,7 +1143,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync(pedido);
 
-        var result = await _service.FindMyPedidoAsync(pedidoId, 2);
+        Result<PedidoDto, DomainError> result = await _service.FindMyPedidoAsync(pedidoId, 2);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ForbiddenError>();
@@ -1147,12 +1151,12 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task FindMyPedidoAsync_PedidoNoExistente_RetornaNotFound() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
 
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync((Pedido?)null);
 
-        var result = await _service.FindMyPedidoAsync(pedidoId, 1);
+        Result<PedidoDto, DomainError> result = await _service.FindMyPedidoAsync(pedidoId, 1);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<NotFoundError>();
@@ -1164,7 +1168,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task UpdateAdminAsync_PedidoExistente_RetornaOk() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1179,7 +1183,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
             .ReturnsAsync((Pedido p) => p);
 
-        var result = await _service.UpdateAdminAsync(pedidoId, updateDto);
+        Result<PedidoDto, DomainError> result = await _service.UpdateAdminAsync(pedidoId, updateDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Estado.Should().Be("PROCESANDO");
@@ -1187,13 +1191,13 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var updateDto = new UpdatePedidoDto();
 
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync((Pedido?)null);
 
-        var result = await _service.UpdateAdminAsync(pedidoId, updateDto);
+        Result<PedidoDto, DomainError> result = await _service.UpdateAdminAsync(pedidoId, updateDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<NotFoundError>();
@@ -1205,7 +1209,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task UpdateMyPedidoAsync_PropietarioYPendiente_RetornaOk() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1220,14 +1224,14 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
             .ReturnsAsync((Pedido p) => p);
 
-        var result = await _service.UpdateMyPedidoAsync(pedidoId, 1, updateDto);
+        Result<PedidoDto, DomainError> result = await _service.UpdateMyPedidoAsync(pedidoId, 1, updateDto);
 
         result.IsSuccess.Should().BeTrue();
     }
 
     [Test]
     public async Task UpdateMyPedidoAsync_NoPropietario_RetornaForbidden() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1240,7 +1244,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync(pedidoExistente);
 
-        var result = await _service.UpdateMyPedidoAsync(pedidoId, 2, updateDto);
+        Result<PedidoDto, DomainError> result = await _service.UpdateMyPedidoAsync(pedidoId, 2, updateDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ForbiddenError>();
@@ -1248,7 +1252,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task UpdateMyPedidoAsync_PedidoNoPendiente_RetornaValidationError() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1261,7 +1265,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync(pedidoExistente);
 
-        var result = await _service.UpdateMyPedidoAsync(pedidoId, 1, updateDto);
+        Result<PedidoDto, DomainError> result = await _service.UpdateMyPedidoAsync(pedidoId, 1, updateDto);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -1273,7 +1277,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task DeleteAdminAsync_PedidoExistente_RetornaOk() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1286,19 +1290,19 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
             .ReturnsAsync((Pedido p) => p);
 
-        var result = await _service.DeleteAdminAsync(pedidoId);
+        UnitResult<DomainError> result = await _service.DeleteAdminAsync(pedidoId);
 
         result.IsSuccess.Should().BeTrue();
     }
 
     [Test]
     public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
 
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync((Pedido?)null);
 
-        var result = await _service.DeleteAdminAsync(pedidoId);
+        UnitResult<DomainError> result = await _service.DeleteAdminAsync(pedidoId);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<NotFoundError>();
@@ -1310,7 +1314,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task DeleteMyPedidoAsync_PropietarioYPendiente_RetornaOk() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1323,14 +1327,14 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.UpdateAsync(It.IsAny<Pedido>()))
             .ReturnsAsync((Pedido p) => p);
 
-        var result = await _service.DeleteMyPedidoAsync(pedidoId, 1);
+        UnitResult<DomainError> result = await _service.DeleteMyPedidoAsync(pedidoId, 1);
 
         result.IsSuccess.Should().BeTrue();
     }
 
     [Test]
     public async Task DeleteMyPedidoAsync_NoPropietario_RetornaForbidden() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1341,7 +1345,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync(pedidoExistente);
 
-        var result = await _service.DeleteMyPedidoAsync(pedidoId, 2);
+        UnitResult<DomainError> result = await _service.DeleteMyPedidoAsync(pedidoId, 2);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ForbiddenError>();
@@ -1349,7 +1353,7 @@ public class PedidosServiceTests {
 
     [Test]
     public async Task DeleteMyPedidoAsync_PedidoNoPendiente_RetornaValidationError() {
-        var pedidoId = ObjectId.GenerateNewId().ToString();
+        string pedidoId = ObjectId.GenerateNewId().ToString();
         var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
@@ -1360,7 +1364,7 @@ public class PedidosServiceTests {
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
             .ReturnsAsync(pedidoExistente);
 
-        var result = await _service.DeleteMyPedidoAsync(pedidoId, 1);
+        UnitResult<DomainError> result = await _service.DeleteMyPedidoAsync(pedidoId, 1);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ValidationError>();
@@ -1406,7 +1410,7 @@ public class PedidosServiceTests {
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         pedidoGuardado.Should().NotBeNull();
@@ -1446,7 +1450,7 @@ public class PedidosServiceTests {
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync(producto);
 
-        var result = await _service.CreateAsync(userId, pedidoDto);
+        Result<PedidoDto, DomainError> result = await _service.CreateAsync(userId, pedidoDto);
 
         result.IsSuccess.Should().BeTrue();
         pedidoGuardado.Should().NotBeNull();

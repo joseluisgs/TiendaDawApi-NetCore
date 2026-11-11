@@ -4,14 +4,13 @@ using TiendaApi.Api.IdGenerators;
 namespace TiendaApi.Api.Dtos.Proveedores;
 
 /// <summary>
-/// DTO de proveedor para respuestas de API.
-/// Inmutable (record) y separado de la entidad de dominio.
-///
-/// Su clave es un identificador estilo YouTube: 11 caracteres Base64url no correlativos,
-/// generados por el servidor en la creación y legibles en URL.
+///     DTO de proveedor para respuestas de API.
+///     Inmutable (record) y separado de la entidad de dominio.
+///     Su clave es un identificador estilo YouTube: 11 caracteres Base64url no correlativos,
+///     generados por el servidor en la creación y legibles en URL.
 /// </summary>
 /// <example>
-/// <code>
+///     <code>
 /// {
 ///   "codigo": "XqZsoesa55w",
 ///   "nombre": "Distribuciones DAW",
@@ -50,19 +49,18 @@ public record ProveedorDto(
 );
 
 /// <summary>
-/// DTO de proveedor para solicitudes de creación (POST) o actualización (PUT).
-///
-/// Validaciones: Nombre obligatorio de 3 a 100 caracteres; Descripcion hasta 500;
-/// Contacto hasta 200; Codigo opcional pero, si viene, debe ser un identificador de
-/// 11 caracteres Base64url (su uso principal es el import de backups: sin código el
-/// servidor genera uno nuevo).
+///     DTO de proveedor para solicitudes de creación (POST) o actualización (PUT).
+///     Validaciones: Nombre obligatorio de 3 a 100 caracteres; Descripcion hasta 500;
+///     Contacto hasta 200; Codigo opcional pero, si viene, debe ser un identificador de
+///     11 caracteres Base64url (su uso principal es el import de backups: sin código el
+///     servidor genera uno nuevo).
 /// </summary>
 public record ProveedorRequestDto {
     /// <summary>
-    /// Identificador de 11 caracteres. Opcional: si se omite, el servidor lo genera.
-    /// Solo se envía explícito al importar un backup existente.
-    /// El formato lo comprueba <see cref="IdGenerators.IdYouTubeAttribute"/>; que el código
-    /// exista ya en base de datos lo comprueba el servicio (conflicto, no validación).
+    ///     Identificador de 11 caracteres. Opcional: si se omite, el servidor lo genera.
+    ///     Solo se envía explícito al importar un backup existente.
+    ///     El formato lo comprueba <see cref="IdGenerators.IdYouTubeAttribute" />; que el código
+    ///     exista ya en base de datos lo comprueba el servicio (conflicto, no validación).
     /// </summary>
     /// <example>XqZsoesa55w</example>
     [IdYouTube]

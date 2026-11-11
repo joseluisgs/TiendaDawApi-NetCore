@@ -8,13 +8,13 @@ using TiendaApi.Api.Services.Email;
 namespace TiendaApi.Tests.Unit.Services.Email;
 
 /// <summary>
-/// Tests unitarios para MailKitEmailService.
+///     Tests unitarios para MailKitEmailService.
 /// </summary>
 public class EmailServiceTests {
-    private Mock<IConfiguration> _mockConfiguration = null!;
-    private Mock<ILogger<MailKitEmailService>> _mockLogger = null!;
     private Channel<EmailMessage> _emailChannel = null!;
     private IEmailService _emailService = null!;
+    private Mock<IConfiguration> _mockConfiguration = null!;
+    private Mock<ILogger<MailKitEmailService>> _mockLogger = null!;
 
     [SetUp]
     public void Setup() {
@@ -31,8 +31,8 @@ public class EmailServiceTests {
     #region Tests EnqueueEmailAsync
 
     /// <summary>
-    /// Dado un mensaje de email válido, cuando se encola, entonces se agrega al canal.
-    /// Returns: Unit.Success (mensaje encolado)
+    ///     Dado un mensaje de email válido, cuando se encola, entonces se agrega al canal.
+    ///     Returns: Unit.Success (mensaje encolado)
     /// </summary>
     [Test]
     public async Task EnqueueEmailAsync_MensajeValido_EncolaCorrectamente() {
@@ -45,7 +45,7 @@ public class EmailServiceTests {
 
         await _emailService.EnqueueEmailAsync(emailMessage);
 
-        var canRead = _emailChannel.Reader.TryRead(out var message);
+        bool canRead = _emailChannel.Reader.TryRead(out EmailMessage? message);
         canRead.Should().BeTrue();
         message.Should().NotBeNull();
         message!.To.Should().Be("test@example.com");
@@ -55,8 +55,8 @@ public class EmailServiceTests {
     }
 
     /// <summary>
-    /// Dado múltiples mensajes, cuando se encolan, entonces se mantienen en orden.
-    /// Returns: Unit.Success (todos los mensajes encolados)
+    ///     Dado múltiples mensajes, cuando se encolan, entonces se mantienen en orden.
+    ///     Returns: Unit.Success (todos los mensajes encolados)
     /// </summary>
     [Test]
     public async Task EnqueueEmailAsync_MultiplesMensajes_MantieneOrden() {
@@ -68,9 +68,9 @@ public class EmailServiceTests {
         await _emailService.EnqueueEmailAsync(message2);
         await _emailService.EnqueueEmailAsync(message3);
 
-        _emailChannel.Reader.TryRead(out var msg1).Should().BeTrue();
-        _emailChannel.Reader.TryRead(out var msg2).Should().BeTrue();
-        _emailChannel.Reader.TryRead(out var msg3).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? msg1).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? msg2).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? msg3).Should().BeTrue();
 
         msg1!.To.Should().Be("test1@example.com");
         msg2!.To.Should().Be("test2@example.com");
@@ -78,8 +78,8 @@ public class EmailServiceTests {
     }
 
     /// <summary>
-    /// Dado un mensaje con body HTML, cuando se encola, entonces IsHtml es true.
-    /// Returns: Unit.Success con IsHtml = true
+    ///     Dado un mensaje con body HTML, cuando se encola, entonces IsHtml es true.
+    ///     Returns: Unit.Success con IsHtml = true
     /// </summary>
     [Test]
     public async Task EnqueueEmailAsync_ConHtml_BodyEsHtml() {
@@ -92,14 +92,14 @@ public class EmailServiceTests {
 
         await _emailService.EnqueueEmailAsync(emailMessage);
 
-        _emailChannel.Reader.TryRead(out var message).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? message).Should().BeTrue();
         message!.IsHtml.Should().BeTrue();
         message.Body.Should().Contain("<h1>");
     }
 
     /// <summary>
-    /// Dado un mensaje con body texto plano, cuando se encola, entonces IsHtml es false.
-    /// Returns: Unit.Success con IsHtml = false
+    ///     Dado un mensaje con body texto plano, cuando se encola, entonces IsHtml es false.
+    ///     Returns: Unit.Success con IsHtml = false
     /// </summary>
     [Test]
     public async Task EnqueueEmailAsync_SinHtml_BodyEsTextoPlano() {
@@ -112,13 +112,13 @@ public class EmailServiceTests {
 
         await _emailService.EnqueueEmailAsync(emailMessage);
 
-        _emailChannel.Reader.TryRead(out var message).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? message).Should().BeTrue();
         message!.IsHtml.Should().BeFalse();
     }
 
     /// <summary>
-    /// Dado un canal vacío, cuando se encola, entonces no bloquea.
-    /// Returns: Unit.Success
+    ///     Dado un canal vacío, cuando se encola, entonces no bloquea.
+    ///     Returns: Unit.Success
     /// </summary>
     [Test]
     public async Task EnqueueEmailAsync_CanalVacio_EncolaSinBloqueo() {
@@ -128,7 +128,7 @@ public class EmailServiceTests {
             Body = "Test"
         };
 
-        var act = async () => await _emailService.EnqueueEmailAsync(emailMessage);
+        Func<Task> act = async () => await _emailService.EnqueueEmailAsync(emailMessage);
         await act.Should().NotThrowAsync();
     }
 
@@ -137,8 +137,8 @@ public class EmailServiceTests {
     #region Tests SendEmailAsync
 
     /// <summary>
-    /// Dado SMTP no configurado (Host null), cuando se envía email, entonces se omite el envío.
-    /// Returns: Unit.Success (omitido por falta de configuración)
+    ///     Dado SMTP no configurado (Host null), cuando se envía email, entonces se omite el envío.
+    ///     Returns: Unit.Success (omitido por falta de configuración)
     /// </summary>
     [Test]
     public async Task SendEmailAsync_SmtpNoConfigurado_OmiteEnvio() {
@@ -163,8 +163,8 @@ public class EmailServiceTests {
     }
 
     /// <summary>
-    /// Dado SMTP configurado pero sin usuario, cuando se envía email, entonces se omite.
-    /// Returns: Unit.Success (omitido por falta de credenciales)
+    ///     Dado SMTP configurado pero sin usuario, cuando se envía email, entonces se omite.
+    ///     Returns: Unit.Success (omitido por falta de credenciales)
     /// </summary>
     [Test]
     public async Task SendEmailAsync_SinUsuario_OmiteEnvio() {
@@ -190,8 +190,8 @@ public class EmailServiceTests {
     }
 
     /// <summary>
-    /// Dado SMTP configurado con todos los valores, cuando se crea el servicio, entonces no lanza excepción.
-    /// Returns: servicio creado correctamente
+    ///     Dado SMTP configurado con todos los valores, cuando se crea el servicio, entonces no lanza excepción.
+    ///     Returns: servicio creado correctamente
     /// </summary>
     [Test]
     public void SendEmailAsync_ConConfiguracionCompleta_ServicioCreado() {

@@ -1,15 +1,15 @@
 using FluentAssertions;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.DependencyInjection;
-using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Validators.Pedidos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Validators;
 
 /// <summary>
-/// Tests de integración para Validators de Pedidos.
-/// Verifica la validación de DTOs usando FluentValidation.
+///     Tests de integración para Validators de Pedidos.
+///     Verifica la validación de DTOs usando FluentValidation.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
@@ -20,8 +20,8 @@ public class PedidoValidatorsIntegrationTests {
         services.AddScoped<IValidator<PedidoRequestDto>, PedidoRequestValidator>();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<PedidoRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<PedidoRequestDto> validator = provider.GetRequiredService<IValidator<PedidoRequestDto>>();
 
         var dto = new PedidoRequestDto {
             Destinatario = new DestinatarioDto {
@@ -37,7 +37,7 @@ public class PedidoValidatorsIntegrationTests {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeTrue();
 
@@ -50,13 +50,13 @@ public class PedidoValidatorsIntegrationTests {
         services.AddScoped<IValidator<PedidoRequestDto>, PedidoRequestValidator>();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<PedidoRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<PedidoRequestDto> validator = provider.GetRequiredService<IValidator<PedidoRequestDto>>();
 
         var dto = new PedidoRequestDto {
             Items = new List<PedidoItemRequestDto>()
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -68,14 +68,14 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<PedidoItemRequestDto> validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
 
         var dto = new PedidoItemRequestDto {
             ProductoId = 0,
             Cantidad = 1
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -87,14 +87,14 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<PedidoItemRequestDto> validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
 
         var dto = new PedidoItemRequestDto {
             ProductoId = 1,
             Cantidad = 0
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -106,14 +106,14 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<PedidoItemRequestDto> validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
 
         var dto = new PedidoItemRequestDto {
             ProductoId = 1,
             Cantidad = -5
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -131,22 +131,22 @@ public class PedidoValidatorsIntegrationTests {
 
     [Test]
     public async Task PedidoDto_AllStates_ShouldBeValid() {
-        var estadosValidos = new[] { "PENDIENTE", "PROCESANDO", "ENVIADO", "ENTREGADO", "CANCELADO" };
+        string[] estadosValidos = new[] { "PENDIENTE", "PROCESANDO", "ENVIADO", "ENTREGADO", "CANCELADO" };
 
-        foreach (var estado in estadosValidos) {
+        foreach (string estado in estadosValidos) {
             var dto = new PedidoDto(
-                Id: "PED-2024-0001",
-                UserId: 1,
-                Destinatario: new DestinatarioDto {
+                "PED-2024-0001",
+                1,
+                new DestinatarioDto {
                     NombreCompleto = "Test",
                     Email = "test@test.com",
                     Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
                 },
-                Items: new List<PedidoItemDto>(),
-                Total: 100m,
-                Estado: estado,
-                DireccionEnvio: "Calle Test 123",
-                CreatedAt: DateTime.UtcNow
+                new List<PedidoItemDto>(),
+                100m,
+                estado,
+                "Calle Test 123",
+                DateTime.UtcNow
             );
 
             dto.Estado.Should().Be(estado);
@@ -202,15 +202,13 @@ public class PedidoValidatorsIntegrationTests {
         await Task.CompletedTask;
     }
 
-    #region DireccionValidator Tests
-
     [Test]
     public async Task DireccionValidator_ConDtoValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DireccionDto> validator = provider.GetRequiredService<IValidator<DireccionDto>>();
 
         var dto = new DireccionDto {
             Calle = "Gran Vía",
@@ -220,7 +218,7 @@ public class PedidoValidatorsIntegrationTests {
             Pais = "España",
             CodigoPostal = "28013"
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeTrue();
 
@@ -232,11 +230,11 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DireccionDto> validator = provider.GetRequiredService<IValidator<DireccionDto>>();
 
         var dto = new DireccionDto { Calle = "" };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -248,11 +246,11 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DireccionDto> validator = provider.GetRequiredService<IValidator<DireccionDto>>();
 
         var dto = new DireccionDto { Calle = "Calle Test", Ciudad = "" };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -264,11 +262,11 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DireccionDto> validator = provider.GetRequiredService<IValidator<DireccionDto>>();
 
         var dto = new DireccionDto { Calle = "Calle Test", Pais = "" };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -280,8 +278,8 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DireccionDto> validator = provider.GetRequiredService<IValidator<DireccionDto>>();
 
         var dto = new DireccionDto {
             Calle = "Calle Test",
@@ -289,24 +287,20 @@ public class PedidoValidatorsIntegrationTests {
             Pais = "España",
             CodigoPostal = "1234"
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
         await Task.CompletedTask;
     }
 
-    #endregion
-
-    #region DestinatarioValidator Tests
-
     [Test]
     public async Task DestinatarioValidator_ConDtoValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DestinatarioDto> validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
 
         var dto = new DestinatarioDto {
             NombreCompleto = "Juan Pérez",
@@ -318,7 +312,7 @@ public class PedidoValidatorsIntegrationTests {
                 Pais = "España"
             }
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeTrue();
 
@@ -330,11 +324,11 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DestinatarioDto> validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
 
         var dto = new DestinatarioDto { NombreCompleto = "" };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -346,14 +340,14 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DestinatarioDto> validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
 
         var dto = new DestinatarioDto {
             NombreCompleto = "Juan Pérez",
             Email = "email-invalido"
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -365,20 +359,18 @@ public class PedidoValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<DestinatarioDto> validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
 
         var dto = new DestinatarioDto {
             NombreCompleto = "Juan Pérez",
             Email = "juan@email.com",
             Direccion = null!
         };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
         await Task.CompletedTask;
     }
-
-    #endregion
 }

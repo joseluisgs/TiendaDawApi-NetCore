@@ -3,16 +3,16 @@ using System.ComponentModel.DataAnnotations;
 namespace TiendaApi.Api.Dtos.Usuarios;
 
 /// <summary>
-/// DTO para actualizar el avatar de un usuario.
+///     DTO para actualizar el avatar de un usuario.
 /// </summary>
 /// <remarks>
-/// Uso típico:
-/// - PATCH /api/v1/usuarios/{id}/avatar
-/// - Actualizar imagen de perfil del usuario
+///     Uso típico:
+///     - PATCH /api/v1/usuarios/{id}/avatar
+///     - Actualizar imagen de perfil del usuario
 /// </remarks>
 public record AvatarUpdateDto {
     /// <summary>
-    /// URL del nuevo avatar.
+    ///     URL del nuevo avatar.
     /// </summary>
     /// <value>URL absoluta (http/https) o ruta local (/storage/).</value>
     /// <example>https://example.com/avatar.jpg</example>

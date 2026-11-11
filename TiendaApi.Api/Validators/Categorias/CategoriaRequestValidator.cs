@@ -4,12 +4,12 @@ using TiendaApi.Api.Dtos.Categorias;
 namespace TiendaApi.Api.Validators.Categorias;
 
 /// <summary>
-/// Validador FluentValidation para CategoriaRequestDto.
-/// Reglas: Nombre(3-100 caracteres, obligatorio).
+///     Validador FluentValidation para CategoriaRequestDto.
+///     Reglas: Nombre(3-100 caracteres, obligatorio).
 /// </summary>
 public class CategoriaRequestValidator : AbstractValidator<CategoriaRequestDto> {
     /// <summary>
-    /// Define reglas de validación para CategoriaRequestDto.
+    ///     Define reglas de validación para CategoriaRequestDto.
     /// </summary>
     public CategoriaRequestValidator() {
         RuleFor(c => c.Nombre)

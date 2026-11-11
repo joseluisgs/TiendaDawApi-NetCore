@@ -1,9 +1,10 @@
+using System.Data;
 using CSharpFunctionalExtensions;
 using FluentValidation;
-using Microsoft.AspNetCore.Http;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
@@ -12,443 +13,35 @@ using TiendaApi.Api.Errors.Pedidos;
 using TiendaApi.Api.Exceptions;
 using TiendaApi.Api.Mappers;
 using TiendaApi.Api.Models;
-using TiendaApi.Api.Realtime.Common;
-using TiendaApi.Api.Realtime.Pedidos;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
-using TiendaApi.Api.Services.Email;
-using TiendaApi.Api.Validators.Pedidos;
 
 namespace TiendaApi.Api.Services.Pedidos;
 
 /// <summary>
-/// Servicio de pedidos que implementa el patrón Service Layer.
+///     Servicio de pedidos que implementa el patrón Service Layer.
 /// </summary>
 public class PedidosService(
-IPedidosRepository pedidosRepository,
-IProductoRepository productoRepository,
-ILogger<PedidosService> logger,
-ICacheService cacheService,
-IValidator<PedidoRequestDto> pedidoValidator,
-IValidator<PedidoItemRequestDto> pedidoItemValidator,
-IOutputCacheStore outputCacheStore,
-IPedidoEffects effects
+    IPedidosRepository pedidosRepository,
+    IProductoRepository productoRepository,
+    ILogger<PedidosService> logger,
+    ICacheService cacheService,
+    IValidator<PedidoRequestDto> pedidoValidator,
+    IValidator<PedidoItemRequestDto> pedidoItemValidator,
+    IOutputCacheStore outputCacheStore,
+    IPedidoEffects effects
 ) : IPedidosService {
     private const int MaxRetries = 3;
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(5);
-
-    #region ========== MÉTODOS PARA ADMINISTRADORES ==========
-
-    /// <summary>
-    /// Obtiene todos los pedidos del sistema (solo administradores).
-    /// </summary>
-    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync() {
-        logger.LogInformation("Obteniendo todos los pedidos");
-
-        var pedidos = await pedidosRepository.FindAllAsync();
-        var dtos = pedidos.ToDtoList();
-
-        return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
-    }
-
-    /// <summary>
-    /// Obtiene los pedidos del sistema de forma paginada (solo administradores).
-    /// </summary>
-    public async Task<Result<PagedResult<PedidoDto>, DomainError>> FindAllPagedAsync(int page, int size) {
-        // 🛡️ Clamp defensivo: GraphQL construye la query en código sin pasar
-        // por validación REST. El límite se aplica aquí como única verdad funcional.
-        size = Math.Clamp(size, 1, 100);
-        page = Math.Max(page, 0);
-
-        logger.LogInformation("Obteniendo pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
-
-        var (pedidos, totalCount) = await pedidosRepository.FindAllPagedAsync(page, size);
-
-        var pagedResult = new PagedResult<PedidoDto> {
-            Items = pedidos.ToDtoList(),
-            TotalCount = totalCount,
-            Page = page + 1,
-            PageSize = size
-        };
-
-        return Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult);
-    }
-
-    /// <summary>
-    /// Busca un pedido por su ID (solo administradores).
-    /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id) {
-        logger.LogInformation("Obteniendo pedido: {Id}", id);
-
-        var cacheKey = $"pedidos:{id}";
-        var cachedPedido = await cacheService.GetAsync<PedidoDto>(cacheKey);
-
-        if (cachedPedido is not null) {
-            logger.LogInformation("Devolviendo pedido desde caché: {Id}", id);
-            return Result.Success<PedidoDto, DomainError>(cachedPedido);
-        }
-
-        var pedido = await pedidosRepository.FindByIdAsync(id);
-
-        if (pedido == null) {
-            logger.LogWarning("Pedido no encontrado: {Id}", id);
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.NotFound(id)
-            );
-        }
-
-        var dto = pedido.ToDto();
-
-        return Result.Success<PedidoDto, DomainError>(dto)
-            .Tap(_ => AñadirCachePedido(cacheKey, dto));
-    }
-
-    /// <summary>
-    /// Actualiza un pedido (solo administradores).
-    /// Los administradores pueden actualizar cualquier pedido sin restricciones de propiedad.
-    /// Envía WebSocket al cliente y Email al admin.
-    /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> UpdateAdminAsync(string id, UpdatePedidoDto dto) {
-        logger.LogInformation("Administrador actualizando pedido: {Id}", id);
-
-        var pedido = await pedidosRepository.FindByIdAsync(id);
-
-        if (pedido is null) {
-            logger.LogWarning("Pedido no encontrado: {Id}", id);
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.NotFound(id)
-            );
-        }
-
-        var estadoAnterior = pedido.Estado;
-        var estadoCambiado = dto.Estado != null && !string.IsNullOrWhiteSpace(dto.Estado)
-            && !string.Equals(estadoAnterior, dto.Estado, StringComparison.OrdinalIgnoreCase);
-
-        if (dto.Estado != null && !string.IsNullOrWhiteSpace(dto.Estado))
-            pedido.Estado = dto.Estado;
-
-        if (dto.DireccionEnvio != null && !string.IsNullOrWhiteSpace(dto.DireccionEnvio))
-            pedido.DireccionEnvio = dto.DireccionEnvio;
-
-        var updated = await pedidosRepository.UpdateAsync(pedido);
-        var resultDto = updated.ToDto();
-
-        await InvalidarCachePedidoAsync($"pedidos:{id}");
-
-        return Result.Success<PedidoDto, DomainError>(resultDto)
-            .Tap(_ => {
-                logger.LogInformation("Pedido {Id} actualizado por administrador", id);
-                effects.NotificarPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
-
-                // Matriz de emails (doc/21): el usuario recibe todo lo que
-                // pasa a su pedido; el admin no se notifica sus propias
-                // acciones. Si cambió el estado → email de estado; si solo
-                // datos → email de modificación.
-                if (estadoCambiado)
-                    effects.EnviarEmailPedidoEstadoActualizado(
-                        id, estadoAnterior ?? "", pedido.Estado ?? "", pedido.Total, resultDto.Destinatario);
-                else
-                    effects.EnviarEmailPedidoModificadoCliente(id, resultDto.Destinatario);
-            });
-    }
-
-    /// <summary>
-    /// Elimina un pedido (solo administradores).
-    /// Envía Email al admin.
-    /// </summary>
-    public async Task<UnitResult<DomainError>> DeleteAdminAsync(string id) {
-        logger.LogInformation("Administrador eliminando pedido: {Id}", id);
-
-        var pedido = await pedidosRepository.FindByIdAsync(id);
-
-        if (pedido is null) {
-            logger.LogWarning("Pedido no encontrado: {Id}", id);
-            return UnitResult.Failure<DomainError>(
-                PedidoError.NotFound(id)
-            );
-        }
-
-        pedido.IsDeleted = true;
-        await pedidosRepository.UpdateAsync(pedido);
-
-        logger.LogInformation("Pedido {Id} eliminado lógicamente por administrador", id);
-
-        await InvalidarCachePedidoAsync($"pedidos:{id}");
-
-        // Matriz de emails: eliminación por admin → aviso al USUARIO; el
-        // admin no se notifica su propia acción (la ve en el panel/realtime).
-        effects.NotificarPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "", pedido.Total);
-        effects.EnviarEmailPedidoCanceladoCliente(id, pedido.Total, pedido.Destinatario.ToDto());
-
-        return UnitResult.Success<DomainError>();
-    }
-
-    /// <summary>
-    /// Actualiza el estado de un pedido (solo administradores).
-    /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado) {
-        logger.LogInformation("Actualizando estado del pedido: {Id} a {Estado}", id, nuevoEstado);
-
-        var validEstados = new[] { PedidoEstado.PENDIENTE, PedidoEstado.PROCESANDO, PedidoEstado.ENVIADO, PedidoEstado.ENTREGADO, PedidoEstado.CANCELADO };
-        if (!validEstados.Contains(nuevoEstado)) {
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.EstadoInvalido(nuevoEstado, validEstados)
-            );
-        }
-
-        var pedido = await pedidosRepository.FindByIdAsync(id);
-
-        if (pedido == null) {
-            logger.LogWarning("Pedido no encontrado: {Id}", id);
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.NotFound(id)
-            );
-        }
-
-        var estadoAnterior = pedido.Estado;
-        pedido.Estado = nuevoEstado;
-
-        var updated = await pedidosRepository.UpdateAsync(pedido);
-        var resultDto = updated.ToDto();
-
-        await InvalidarCachePedidoAsync($"pedidos:{id}");
-
-        return Result.Success<PedidoDto, DomainError>(resultDto)
-            .Tap(_ => {
-                logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id, estadoAnterior, nuevoEstado);
-                effects.NotificarPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
-                effects.EnviarEmailPedidoEstadoActualizado(
-                    pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, resultDto.Destinatario);
-            });
-    }
-
-    #endregion
-
-    #region ========== MÉTODOS PARA USUARIOS (MIS PEDIDOS) ==========
-
-    /// <summary>
-    /// Obtiene todos los pedidos del usuario autenticado (sin paginación).
-    /// </summary>
-    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId) {
-        logger.LogInformation("Obteniendo todos los pedidos del usuario: {UserId}", userId);
-
-        var pedidos = await pedidosRepository.FindByUserIdAsync(userId);
-        var dtos = pedidos.ToDtoList();
-
-        return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
-    }
-
-    /// <summary>
-    /// Obtiene los pedidos del usuario autenticado de forma paginada.
-    /// </summary>
-    public async Task<Result<PagedResult<PedidoDto>, DomainError>> FindMyPedidosAsync(long userId, int page, int size) {
-        // 🛡️ Clamp defensivo: GraphQL construye la query en código sin pasar
-        // por validación REST. El límite se aplica aquí como única verdad funcional.
-        size = Math.Clamp(size, 1, 100);
-        page = Math.Max(page, 0);
-
-        logger.LogInformation("Obteniendo pedidos paginados del usuario: {UserId}, Página: {Page}, Tamaño: {Size}", userId, page, size);
-
-        var (pedidos, totalCount) = await pedidosRepository.FindByUserIdPagedAsync(userId, page, size);
-        var dtos = pedidos.ToDtoList();
-
-        var pagedResult = new PagedResult<PedidoDto> {
-            Items = dtos,
-            TotalCount = totalCount,
-            Page = page + 1,
-            PageSize = size
-        };
-
-        return Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult);
-    }
-
-    /// <summary>
-    /// Busca un pedido propio por su ID.
-    /// Valida que el pedido pertenezca al usuario solicitante.
-    /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> FindMyPedidoAsync(string id, long userId) {
-        logger.LogInformation("Usuario {UserId} solicitando pedido: {Id}", userId, id);
-
-        var pedido = await pedidosRepository.FindByIdAsync(id);
-
-        if (pedido == null) {
-            logger.LogWarning("Pedido no encontrado: {Id}", id);
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.NotFound(id)
-            );
-        }
-
-        if (pedido.UserId != userId) {
-            logger.LogWarning("Usuario {UserId} intentó acceder a pedido {Id} que no le pertenece", userId, id);
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.NoPropietario(userId, id)
-            );
-        }
-
-        var dto = pedido.ToDto();
-        return Result.Success<PedidoDto, DomainError>(dto);
-    }
-
-    /// <summary>
-    /// Crea un nuevo pedido para el usuario autenticado.
-    /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto) {
-        logger.LogInformation("Creando pedido para usuario: {UserId} con {ItemCount} items", userId, dto.Items.Count);
-
-        var validationResult = await ValidatePedidoAsync(dto);
-        if (validationResult.IsFailure) {
-            return Result.Failure<PedidoDto, DomainError>(validationResult.Error);
-        }
-
-        for (int attempt = 1; attempt <= MaxRetries; attempt++) {
-            try {
-                var creado = await CreateWithSerializableTransactionAsync(userId, dto);
-                if (creado.IsSuccess)
-                    await InvalidarCachePedidoAsync();   // sin keys: solo purga el tag, el listado crece
-                return creado;
-            } catch (SerializationFailureException) {
-                if (attempt == MaxRetries) {
-                    logger.LogWarning(
-                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
-                        userId);
-                    return Result.Failure<PedidoDto, DomainError>(
-                        PedidoError.PedidoAdquirido(string.Empty)
-                    );
-                }
-
-                var delayMs = 50 * attempt;
-                logger.LogDebug(
-                    "Reintento {Attempt}/{MaxRetries} tras error de serializacion para usuario {UserId}, delay: {Delay}ms",
-                    attempt, MaxRetries, userId, delayMs);
-
-                await Task.Delay(delayMs);
-            } catch (NpgsqlException ex) when (IsSerializationFailureMessage(ex.Message)) {
-                if (attempt == MaxRetries) {
-                    logger.LogWarning(
-                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
-                        userId);
-                    return Result.Failure<PedidoDto, DomainError>(
-                        PedidoError.PedidoAdquirido(string.Empty)
-                    );
-                }
-
-                var delayMs = 50 * attempt;
-                logger.LogDebug(
-                    "Reintento {Attempt}/{MaxRetries} tras error de serializacion para usuario {UserId}, delay: {Delay}ms",
-                    attempt, MaxRetries, userId, delayMs);
-
-                await Task.Delay(delayMs);
-            }
-        }
-
-        return Result.Failure<PedidoDto, DomainError>(
-            PedidoError.ErrorProcesando()
-        );
-    }
-
-    /// <summary>
-    /// Actualiza un pedido propio.
-    /// Solo permite modificar pedidos en estado PENDIENTE.
-    /// Envía WebSocket al cliente.
-    /// </summary>
-    public async Task<Result<PedidoDto, DomainError>> UpdateMyPedidoAsync(string id, long userId, UpdatePedidoDto dto) {
-        logger.LogInformation("Usuario {UserId} actualizando pedido: {Id}", userId, id);
-
-        var pedido = await pedidosRepository.FindByIdAsync(id);
-
-        if (pedido is null) {
-            logger.LogWarning("Pedido no encontrado: {Id}", id);
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.NotFound(id)
-            );
-        }
-
-        if (pedido.UserId != userId) {
-            logger.LogWarning("Usuario {UserId} intentó actualizar pedido {Id} que no le pertenece", userId, id);
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.NoPropietario(userId, id)
-            );
-        }
-
-        if (pedido.Estado != PedidoEstado.PENDIENTE) {
-            logger.LogWarning("Usuario {UserId} intentó actualizar pedido {Id} en estado {Estado}", userId, id, pedido.Estado);
-            return Result.Failure<PedidoDto, DomainError>(
-                PedidoError.Validacion($"No se puede actualizar un pedido en estado {pedido.Estado}. Solo se permiten pedidos en estado PENDIENTE.")
-            );
-        }
-
-        if (dto.DireccionEnvio != null && !string.IsNullOrWhiteSpace(dto.DireccionEnvio))
-            pedido.DireccionEnvio = dto.DireccionEnvio;
-
-        var updated = await pedidosRepository.UpdateAsync(pedido);
-        var resultDto = updated.ToDto();
-
-        await InvalidarCachePedidoAsync($"pedidos:{id}");
-
-        return Result.Success<PedidoDto, DomainError>(resultDto)
-            .Tap(_ => {
-                logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
-                effects.NotificarPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
-            });
-    }
-
-    /// <summary>
-    /// Cancela y elimina un pedido propio.
-    /// Solo permite eliminar pedidos en estado PENDIENTE.
-    /// Envía Email al admin.
-    /// </summary>
-    public async Task<UnitResult<DomainError>> DeleteMyPedidoAsync(string id, long userId) {
-        logger.LogInformation("Usuario {UserId} eliminando pedido: {Id}", userId, id);
-
-        var pedido = await pedidosRepository.FindByIdAsync(id);
-
-        if (pedido is null) {
-            logger.LogWarning("Pedido no encontrado: {Id}", id);
-            return UnitResult.Failure<DomainError>(
-                PedidoError.NotFound(id)
-            );
-        }
-
-        if (pedido.UserId != userId) {
-            logger.LogWarning("Usuario {UserId} intentó eliminar pedido {Id} que no le pertenece", userId, id);
-            return UnitResult.Failure<DomainError>(
-                PedidoError.NoPropietario(userId, id)
-            );
-        }
-
-        if (pedido.Estado != PedidoEstado.PENDIENTE) {
-            logger.LogWarning("Usuario {UserId} intentó eliminar pedido {Id} en estado {Estado}", userId, id, pedido.Estado);
-            return UnitResult.Failure<DomainError>(
-                PedidoError.Validacion($"No se puede eliminar un pedido en estado {pedido.Estado}. Solo se permiten pedidos en estado PENDIENTE.")
-            );
-        }
-
-        pedido.IsDeleted = true;
-        await pedidosRepository.UpdateAsync(pedido);
-        logger.LogInformation("Pedido {Id} eliminado lógicamente por usuario {UserId}", id, userId);
-
-        await InvalidarCachePedidoAsync($"pedidos:{id}");
-
-        // Matriz de emails: cancelación por usuario → aviso al CLIENTE (es su
-        // pedido) y al ADMIN (debe enterarse: es lo que debe gestionar y no
-        // proviene de él).
-        effects.NotificarPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "", pedido.Total);
-        effects.EnviarEmailPedidoCanceladoCliente(id, pedido.Total, pedido.Destinatario.ToDto());
-        effects.EnviarEmailPedidoCanceladoAdmin(id, pedido.Total, pedido.UserId);
-
-        return UnitResult.Success<DomainError>();
-    }
-
-    #endregion
 
     #region ========== MÉTODOS PRIVADOS - TRANSACCIÓN ==========
 
     private async Task<Result<PedidoDto, DomainError>> CreateWithSerializableTransactionAsync(
         long userId,
         PedidoRequestDto dto) {
-        await using var transaction = await productoRepository.BeginTransactionAsync(
-            System.Data.IsolationLevel.Serializable);
+        await using IDbContextTransaction transaction = await productoRepository.BeginTransactionAsync(
+            IsolationLevel.Serializable);
 
         try {
             var pedidoItems = new List<PedidoItem>();
@@ -460,17 +53,17 @@ IPedidoEffects effects
             // recargarla item a item, y el tracking es el que hace valido el
             // decremento de stock que viene despues.
             var productosPorId = (await productoRepository
-                .FindByIdsAsync(dto.Items.Select(i => i.ProductoId)))
+                    .FindByIdsAsync(dto.Items.Select(i => i.ProductoId)))
                 .ToDictionary(p => p.Id);
 
-            foreach (var itemDto in dto.Items) {
-                var itemValidation = await ValidatePedidoItemAsync(itemDto);
+            foreach (PedidoItemRequestDto itemDto in dto.Items) {
+                UnitResult<DomainError> itemValidation = await ValidatePedidoItemAsync(itemDto);
                 if (itemValidation.IsFailure) {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(itemValidation.Error);
                 }
 
-                if (!productosPorId.TryGetValue(itemDto.ProductoId, out var producto)) {
+                if (!productosPorId.TryGetValue(itemDto.ProductoId, out Producto? producto)) {
                     await transaction.RollbackAsync();
                     return Result.Failure<PedidoDto, DomainError>(
                         PedidoError.ProductoNoEncontrado(itemDto.ProductoId)
@@ -508,7 +101,7 @@ IPedidoEffects effects
                 UpdatedAt = DateTime.UtcNow
             };
 
-            var pedidoGuardado = await pedidosRepository.SaveAsync(pedido);
+            Pedido pedidoGuardado = await pedidosRepository.SaveAsync(pedido);
 
             await transaction.CommitAsync();
 
@@ -516,19 +109,441 @@ IPedidoEffects effects
                 "Pedido creado exitosamente para usuario {UserId}. Total: {Total}, Items: {ItemCount}",
                 userId, total, pedidoItems.Count);
 
-            var dtoResult = pedidoGuardado.ToDto();
+            PedidoDto dtoResult = pedidoGuardado.ToDto();
 
             return Result.Success<PedidoDto, DomainError>(dtoResult)
                 .Tap(_ => {
-                    effects.NotificarPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE, dtoResult);
-                    effects.EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId, dtoResult.Destinatario);
-
+                    effects.NotificarPedidoCreado(pedidoGuardado.Id.ToString(), userId, PedidoEstado.PENDIENTE,
+                        dtoResult);
+                    effects.EnviarEmailPedidoCreado(pedidoGuardado.Id.ToString(), total, pedidoItems.Count, userId,
+                        dtoResult.Destinatario);
                 });
         } catch (Exception ex) {
             await transaction.RollbackAsync();
             logger.LogError(ex, "Error al crear pedido para usuario {UserId}", userId);
             throw;
         }
+    }
+
+    #endregion
+
+    #region ========== MÉTODOS PARA ADMINISTRADORES ==========
+
+    /// <summary>
+    ///     Obtiene todos los pedidos del sistema (solo administradores).
+    /// </summary>
+    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync() {
+        logger.LogInformation("Obteniendo todos los pedidos");
+
+        IEnumerable<Pedido> pedidos = await pedidosRepository.FindAllAsync();
+        IEnumerable<PedidoDto> dtos = pedidos.ToDtoList();
+
+        return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
+    }
+
+    /// <summary>
+    ///     Obtiene los pedidos del sistema de forma paginada (solo administradores).
+    /// </summary>
+    public async Task<Result<PagedResult<PedidoDto>, DomainError>> FindAllPagedAsync(int page, int size) {
+        // 🛡️ Clamp defensivo: GraphQL construye la query en código sin pasar
+        // por validación REST. El límite se aplica aquí como única verdad funcional.
+        size = Math.Clamp(size, 1, 100);
+        page = Math.Max(page, 0);
+
+        logger.LogInformation("Obteniendo pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
+
+        (IEnumerable<Pedido> pedidos, int totalCount) = await pedidosRepository.FindAllPagedAsync(page, size);
+
+        var pagedResult = new PagedResult<PedidoDto> {
+            Items = pedidos.ToDtoList(),
+            TotalCount = totalCount,
+            Page = page + 1,
+            PageSize = size
+        };
+
+        return Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult);
+    }
+
+    /// <summary>
+    ///     Busca un pedido por su ID (solo administradores).
+    /// </summary>
+    public async Task<Result<PedidoDto, DomainError>> FindByIdAsync(string id) {
+        logger.LogInformation("Obteniendo pedido: {Id}", id);
+
+        string cacheKey = $"pedidos:{id}";
+        PedidoDto? cachedPedido = await cacheService.GetAsync<PedidoDto>(cacheKey);
+
+        if (cachedPedido is not null) {
+            logger.LogInformation("Devolviendo pedido desde caché: {Id}", id);
+            return Result.Success<PedidoDto, DomainError>(cachedPedido);
+        }
+
+        Pedido? pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido == null) {
+            logger.LogWarning("Pedido no encontrado: {Id}", id);
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.NotFound(id)
+            );
+        }
+
+        PedidoDto dto = pedido.ToDto();
+
+        return Result.Success<PedidoDto, DomainError>(dto)
+            .Tap(_ => AñadirCachePedido(cacheKey, dto));
+    }
+
+    /// <summary>
+    ///     Actualiza un pedido (solo administradores).
+    ///     Los administradores pueden actualizar cualquier pedido sin restricciones de propiedad.
+    ///     Envía WebSocket al cliente y Email al admin.
+    /// </summary>
+    public async Task<Result<PedidoDto, DomainError>> UpdateAdminAsync(string id, UpdatePedidoDto dto) {
+        logger.LogInformation("Administrador actualizando pedido: {Id}", id);
+
+        Pedido? pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido is null) {
+            logger.LogWarning("Pedido no encontrado: {Id}", id);
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.NotFound(id)
+            );
+        }
+
+        string? estadoAnterior = pedido.Estado;
+        bool estadoCambiado = dto.Estado != null && !string.IsNullOrWhiteSpace(dto.Estado)
+                                                 && !string.Equals(estadoAnterior, dto.Estado,
+                                                     StringComparison.OrdinalIgnoreCase);
+
+        if (dto.Estado != null && !string.IsNullOrWhiteSpace(dto.Estado)) {
+            pedido.Estado = dto.Estado;
+        }
+
+        if (dto.DireccionEnvio != null && !string.IsNullOrWhiteSpace(dto.DireccionEnvio)) {
+            pedido.DireccionEnvio = dto.DireccionEnvio;
+        }
+
+        Pedido updated = await pedidosRepository.UpdateAsync(pedido);
+        PedidoDto resultDto = updated.ToDto();
+
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
+
+        return Result.Success<PedidoDto, DomainError>(resultDto)
+            .Tap(_ => {
+                logger.LogInformation("Pedido {Id} actualizado por administrador", id);
+                effects.NotificarPedidoActualizado(id, pedido.UserId, pedido.Estado ?? "", resultDto);
+
+                // Matriz de emails (doc/21): el usuario recibe todo lo que
+                // pasa a su pedido; el admin no se notifica sus propias
+                // acciones. Si cambió el estado → email de estado; si solo
+                // datos → email de modificación.
+                if (estadoCambiado) {
+                    effects.EnviarEmailPedidoEstadoActualizado(
+                        id, estadoAnterior ?? "", pedido.Estado ?? "", pedido.Total, resultDto.Destinatario);
+                } else {
+                    effects.EnviarEmailPedidoModificadoCliente(id, resultDto.Destinatario);
+                }
+            });
+    }
+
+    /// <summary>
+    ///     Elimina un pedido (solo administradores).
+    ///     Envía Email al admin.
+    /// </summary>
+    public async Task<UnitResult<DomainError>> DeleteAdminAsync(string id) {
+        logger.LogInformation("Administrador eliminando pedido: {Id}", id);
+
+        Pedido? pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido is null) {
+            logger.LogWarning("Pedido no encontrado: {Id}", id);
+            return UnitResult.Failure<DomainError>(
+                PedidoError.NotFound(id)
+            );
+        }
+
+        pedido.IsDeleted = true;
+        await pedidosRepository.UpdateAsync(pedido);
+
+        logger.LogInformation("Pedido {Id} eliminado lógicamente por administrador", id);
+
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
+
+        // Matriz de emails: eliminación por admin → aviso al USUARIO; el
+        // admin no se notifica su propia acción (la ve en el panel/realtime).
+        effects.NotificarPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "", pedido.Total);
+        effects.EnviarEmailPedidoCanceladoCliente(id, pedido.Total, pedido.Destinatario.ToDto());
+
+        return UnitResult.Success<DomainError>();
+    }
+
+    /// <summary>
+    ///     Actualiza el estado de un pedido (solo administradores).
+    /// </summary>
+    public async Task<Result<PedidoDto, DomainError>> UpdateEstadoAsync(string id, string nuevoEstado) {
+        logger.LogInformation("Actualizando estado del pedido: {Id} a {Estado}", id, nuevoEstado);
+
+        string[] validEstados = new[] {
+            PedidoEstado.PENDIENTE, PedidoEstado.PROCESANDO, PedidoEstado.ENVIADO, PedidoEstado.ENTREGADO,
+            PedidoEstado.CANCELADO
+        };
+        if (!validEstados.Contains(nuevoEstado)) {
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.EstadoInvalido(nuevoEstado, validEstados)
+            );
+        }
+
+        Pedido? pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido == null) {
+            logger.LogWarning("Pedido no encontrado: {Id}", id);
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.NotFound(id)
+            );
+        }
+
+        string estadoAnterior = pedido.Estado;
+        pedido.Estado = nuevoEstado;
+
+        Pedido updated = await pedidosRepository.UpdateAsync(pedido);
+        PedidoDto resultDto = updated.ToDto();
+
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
+
+        return Result.Success<PedidoDto, DomainError>(resultDto)
+            .Tap(_ => {
+                logger.LogInformation("Estado del pedido actualizado: {Id}, de {OldEstado} a {NewEstado}", id,
+                    estadoAnterior, nuevoEstado);
+                effects.NotificarPedidoActualizado(id, pedido.UserId, nuevoEstado, resultDto);
+                effects.EnviarEmailPedidoEstadoActualizado(
+                    pedido.Id.ToString(), estadoAnterior, nuevoEstado, pedido.Total, resultDto.Destinatario);
+            });
+    }
+
+    #endregion
+
+    #region ========== MÉTODOS PARA USUARIOS (MIS PEDIDOS) ==========
+
+    /// <summary>
+    ///     Obtiene todos los pedidos del usuario autenticado (sin paginación).
+    /// </summary>
+    public async Task<Result<IEnumerable<PedidoDto>, DomainError>> FindByUserIdAsync(long userId) {
+        logger.LogInformation("Obteniendo todos los pedidos del usuario: {UserId}", userId);
+
+        IEnumerable<Pedido> pedidos = await pedidosRepository.FindByUserIdAsync(userId);
+        IEnumerable<PedidoDto> dtos = pedidos.ToDtoList();
+
+        return Result.Success<IEnumerable<PedidoDto>, DomainError>(dtos);
+    }
+
+    /// <summary>
+    ///     Obtiene los pedidos del usuario autenticado de forma paginada.
+    /// </summary>
+    public async Task<Result<PagedResult<PedidoDto>, DomainError>> FindMyPedidosAsync(long userId, int page, int size) {
+        // 🛡️ Clamp defensivo: GraphQL construye la query en código sin pasar
+        // por validación REST. El límite se aplica aquí como única verdad funcional.
+        size = Math.Clamp(size, 1, 100);
+        page = Math.Max(page, 0);
+
+        logger.LogInformation("Obteniendo pedidos paginados del usuario: {UserId}, Página: {Page}, Tamaño: {Size}",
+            userId, page, size);
+
+        (IEnumerable<Pedido> pedidos, int totalCount) =
+            await pedidosRepository.FindByUserIdPagedAsync(userId, page, size);
+        IEnumerable<PedidoDto> dtos = pedidos.ToDtoList();
+
+        var pagedResult = new PagedResult<PedidoDto> {
+            Items = dtos,
+            TotalCount = totalCount,
+            Page = page + 1,
+            PageSize = size
+        };
+
+        return Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult);
+    }
+
+    /// <summary>
+    ///     Busca un pedido propio por su ID.
+    ///     Valida que el pedido pertenezca al usuario solicitante.
+    /// </summary>
+    public async Task<Result<PedidoDto, DomainError>> FindMyPedidoAsync(string id, long userId) {
+        logger.LogInformation("Usuario {UserId} solicitando pedido: {Id}", userId, id);
+
+        Pedido? pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido == null) {
+            logger.LogWarning("Pedido no encontrado: {Id}", id);
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.NotFound(id)
+            );
+        }
+
+        if (pedido.UserId != userId) {
+            logger.LogWarning("Usuario {UserId} intentó acceder a pedido {Id} que no le pertenece", userId, id);
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.NoPropietario(userId, id)
+            );
+        }
+
+        PedidoDto dto = pedido.ToDto();
+        return Result.Success<PedidoDto, DomainError>(dto);
+    }
+
+    /// <summary>
+    ///     Crea un nuevo pedido para el usuario autenticado.
+    /// </summary>
+    public async Task<Result<PedidoDto, DomainError>> CreateAsync(long userId, PedidoRequestDto dto) {
+        logger.LogInformation("Creando pedido para usuario: {UserId} con {ItemCount} items", userId, dto.Items.Count);
+
+        UnitResult<DomainError> validationResult = await ValidatePedidoAsync(dto);
+        if (validationResult.IsFailure) {
+            return Result.Failure<PedidoDto, DomainError>(validationResult.Error);
+        }
+
+        for (int attempt = 1; attempt <= MaxRetries; attempt++) {
+            try {
+                Result<PedidoDto, DomainError> creado = await CreateWithSerializableTransactionAsync(userId, dto);
+                if (creado.IsSuccess) {
+                    await InvalidarCachePedidoAsync(); // sin keys: solo purga el tag, el listado crece
+                }
+
+                return creado;
+            } catch (SerializationFailureException) {
+                if (attempt == MaxRetries) {
+                    logger.LogWarning(
+                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
+                        userId);
+                    return Result.Failure<PedidoDto, DomainError>(
+                        PedidoError.PedidoAdquirido(string.Empty)
+                    );
+                }
+
+                int delayMs = 50 * attempt;
+                logger.LogDebug(
+                    "Reintento {Attempt}/{MaxRetries} tras error de serializacion para usuario {UserId}, delay: {Delay}ms",
+                    attempt, MaxRetries, userId, delayMs);
+
+                await Task.Delay(delayMs);
+            } catch (NpgsqlException ex) when (IsSerializationFailureMessage(ex.Message)) {
+                if (attempt == MaxRetries) {
+                    logger.LogWarning(
+                        "Maximos reintentos alcanzados por conflicto de serializacion para usuario {UserId}",
+                        userId);
+                    return Result.Failure<PedidoDto, DomainError>(
+                        PedidoError.PedidoAdquirido(string.Empty)
+                    );
+                }
+
+                int delayMs = 50 * attempt;
+                logger.LogDebug(
+                    "Reintento {Attempt}/{MaxRetries} tras error de serializacion para usuario {UserId}, delay: {Delay}ms",
+                    attempt, MaxRetries, userId, delayMs);
+
+                await Task.Delay(delayMs);
+            }
+        }
+
+        return Result.Failure<PedidoDto, DomainError>(
+            PedidoError.ErrorProcesando()
+        );
+    }
+
+    /// <summary>
+    ///     Actualiza un pedido propio.
+    ///     Solo permite modificar pedidos en estado PENDIENTE.
+    ///     Envía WebSocket al cliente.
+    /// </summary>
+    public async Task<Result<PedidoDto, DomainError>> UpdateMyPedidoAsync(string id, long userId, UpdatePedidoDto dto) {
+        logger.LogInformation("Usuario {UserId} actualizando pedido: {Id}", userId, id);
+
+        Pedido? pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido is null) {
+            logger.LogWarning("Pedido no encontrado: {Id}", id);
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.NotFound(id)
+            );
+        }
+
+        if (pedido.UserId != userId) {
+            logger.LogWarning("Usuario {UserId} intentó actualizar pedido {Id} que no le pertenece", userId, id);
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.NoPropietario(userId, id)
+            );
+        }
+
+        if (pedido.Estado != PedidoEstado.PENDIENTE) {
+            logger.LogWarning("Usuario {UserId} intentó actualizar pedido {Id} en estado {Estado}", userId, id,
+                pedido.Estado);
+            return Result.Failure<PedidoDto, DomainError>(
+                PedidoError.Validacion(
+                    $"No se puede actualizar un pedido en estado {pedido.Estado}. Solo se permiten pedidos en estado PENDIENTE.")
+            );
+        }
+
+        if (dto.DireccionEnvio != null && !string.IsNullOrWhiteSpace(dto.DireccionEnvio)) {
+            pedido.DireccionEnvio = dto.DireccionEnvio;
+        }
+
+        Pedido updated = await pedidosRepository.UpdateAsync(pedido);
+        PedidoDto resultDto = updated.ToDto();
+
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
+
+        return Result.Success<PedidoDto, DomainError>(resultDto)
+            .Tap(_ => {
+                logger.LogInformation("Pedido {Id} actualizado por usuario {UserId}", id, userId);
+                effects.NotificarPedidoActualizado(id, userId, pedido.Estado ?? "", resultDto);
+            });
+    }
+
+    /// <summary>
+    ///     Cancela y elimina un pedido propio.
+    ///     Solo permite eliminar pedidos en estado PENDIENTE.
+    ///     Envía Email al admin.
+    /// </summary>
+    public async Task<UnitResult<DomainError>> DeleteMyPedidoAsync(string id, long userId) {
+        logger.LogInformation("Usuario {UserId} eliminando pedido: {Id}", userId, id);
+
+        Pedido? pedido = await pedidosRepository.FindByIdAsync(id);
+
+        if (pedido is null) {
+            logger.LogWarning("Pedido no encontrado: {Id}", id);
+            return UnitResult.Failure<DomainError>(
+                PedidoError.NotFound(id)
+            );
+        }
+
+        if (pedido.UserId != userId) {
+            logger.LogWarning("Usuario {UserId} intentó eliminar pedido {Id} que no le pertenece", userId, id);
+            return UnitResult.Failure<DomainError>(
+                PedidoError.NoPropietario(userId, id)
+            );
+        }
+
+        if (pedido.Estado != PedidoEstado.PENDIENTE) {
+            logger.LogWarning("Usuario {UserId} intentó eliminar pedido {Id} en estado {Estado}", userId, id,
+                pedido.Estado);
+            return UnitResult.Failure<DomainError>(
+                PedidoError.Validacion(
+                    $"No se puede eliminar un pedido en estado {pedido.Estado}. Solo se permiten pedidos en estado PENDIENTE.")
+            );
+        }
+
+        pedido.IsDeleted = true;
+        await pedidosRepository.UpdateAsync(pedido);
+        logger.LogInformation("Pedido {Id} eliminado lógicamente por usuario {UserId}", id, userId);
+
+        await InvalidarCachePedidoAsync($"pedidos:{id}");
+
+        // Matriz de emails: cancelación por usuario → aviso al CLIENTE (es su
+        // pedido) y al ADMIN (debe enterarse: es lo que debe gestionar y no
+        // proviene de él).
+        effects.NotificarPedidoEliminado(id, pedido.UserId, pedido.Estado ?? "", pedido.Total);
+        effects.EnviarEmailPedidoCanceladoCliente(id, pedido.Total, pedido.Destinatario.ToDto());
+        effects.EnviarEmailPedidoCanceladoAdmin(id, pedido.Total, pedido.UserId);
+
+        return UnitResult.Success<DomainError>();
     }
 
     #endregion
@@ -546,19 +561,21 @@ IPedidoEffects effects
     }
 
     private async Task InvalidarCachePedidoAsync(params string[] keys) {
-        foreach (var key in keys) {
-            try { await cacheService.RemoveAsync(key); } catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
+        foreach (string key in keys) {
+            try { await cacheService.RemoveAsync(key); } catch (Exception ex) {
+                logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key);
+            }
         }
 
         // El tag "pedidos" purga el OutputCache de los listados admin
         // (GetAllPedidos/GetAllPedidosPaged): se invalida en TODA escritura,
         // el mismo criterio que productos y categorias.
-        try { await outputCacheStore.EvictByTagAsync("pedidos", CancellationToken.None); } catch (Exception ex) { logger.LogWarning(ex, "Output cache invalidation error: Tag=pedidos"); }
+        try { await outputCacheStore.EvictByTagAsync("pedidos", CancellationToken.None); } catch (Exception ex) {
+            logger.LogWarning(ex, "Output cache invalidation error: Tag=pedidos");
+        }
     }
 
     #endregion
-
-
 
 
     #region ========== UTILIDADES ==========
@@ -579,7 +596,7 @@ IPedidoEffects effects
     #region ========== VALIDACIÓN ==========
 
     private async Task<UnitResult<DomainError>> ValidatePedidoAsync(PedidoRequestDto dto) {
-        var validationResult = await pedidoValidator.ValidateAsync(dto);
+        ValidationResult validationResult = await pedidoValidator.ValidateAsync(dto);
 
         if (!validationResult.IsValid) {
             var errors = validationResult.Errors
@@ -598,7 +615,7 @@ IPedidoEffects effects
     }
 
     private async Task<UnitResult<DomainError>> ValidatePedidoItemAsync(PedidoItemRequestDto dto) {
-        var validationResult = await pedidoItemValidator.ValidateAsync(dto);
+        ValidationResult validationResult = await pedidoItemValidator.ValidateAsync(dto);
 
         if (!validationResult.IsValid) {
             var errors = validationResult.Errors

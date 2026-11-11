@@ -5,7 +5,7 @@ using TiendaApi.Api.Validators.Pedidos;
 namespace TiendaApi.Tests.Unit.Validators.Pedidos;
 
 /// <summary>
-/// Tests unitarios para PedidoItemRequestValidator.
+///     Tests unitarios para PedidoItemRequestValidator.
 /// </summary>
 public class PedidoItemRequestValidatorTests {
     private readonly PedidoItemRequestValidator _validator = new();
@@ -16,7 +16,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConProductoIdCero_DeberiaTenerError() {
         var dto = new PedidoItemRequestDto { ProductoId = 0, Cantidad = 2 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.ProductoId)
             .WithErrorMessage("Debe seleccionar un producto válido");
@@ -26,7 +26,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConProductoIdNegativo_DeberiaTenerError() {
         var dto = new PedidoItemRequestDto { ProductoId = -1, Cantidad = 2 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.ProductoId)
             .WithErrorMessage("Debe seleccionar un producto válido");
@@ -36,7 +36,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConProductoIdValido_DeberiaPasar() {
         var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 2 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.ProductoId);
     }
@@ -45,7 +45,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConProductoIdGrande_DeberiaPasar() {
         var dto = new PedidoItemRequestDto { ProductoId = 999999, Cantidad = 2 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.ProductoId);
     }
@@ -58,7 +58,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConCantidadCero_DeberiaTenerError() {
         var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 0 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Cantidad)
             .WithErrorMessage("La cantidad debe ser mayor a 0");
@@ -68,7 +68,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConCantidadNegativa_DeberiaTenerError() {
         var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = -1 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Cantidad)
             .WithErrorMessage("La cantidad debe ser mayor a 0");
@@ -78,7 +78,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConCantidadUno_DeberiaPasar() {
         var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 1 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Cantidad);
     }
@@ -87,7 +87,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConCantidadGrande_DeberiaPasar() {
         var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 1000 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Cantidad);
     }
@@ -100,7 +100,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConDtoInvalido_DeberiaTenerErrores() {
         var dto = new PedidoItemRequestDto { ProductoId = 0, Cantidad = 0 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.ProductoId);
         result.ShouldHaveValidationErrorFor(x => x.Cantidad);
@@ -110,7 +110,7 @@ public class PedidoItemRequestValidatorTests {
     public void CreateAsync_ConDtoValido_NoDeberiaTenerErrores() {
         var dto = new PedidoItemRequestDto { ProductoId = 1, Cantidad = 5 };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoItemRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveAnyValidationErrors();
     }
