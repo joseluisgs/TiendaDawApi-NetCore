@@ -4,21 +4,21 @@ using System.Text.Json.Serialization;
 namespace TiendaApi.Api.Dtos.Pedidos;
 
 /// <summary>
-/// DTO de dirección postal para envíos.
+///     DTO de dirección postal para envíos.
 /// </summary>
 /// <example>
-/// {
-///   "calle": "Gran Vía",
-///   "numero": "42",
-///   "ciudad": "Madrid",
-///   "provincia": "Madrid",
-///   "pais": "España",
-///   "codigoPostal": "28013"
-/// }
+///     {
+///     "calle": "Gran Vía",
+///     "numero": "42",
+///     "ciudad": "Madrid",
+///     "provincia": "Madrid",
+///     "pais": "España",
+///     "codigoPostal": "28013"
+///     }
 /// </example>
 public class DireccionDto {
     /// <summary>
-    /// Nombre de la calle, avenida, plaza o vía pública.
+    ///     Nombre de la calle, avenida, plaza o vía pública.
     /// </summary>
     /// <example>Gran Vía</example>
     [JsonPropertyName("calle")]
@@ -27,7 +27,7 @@ public class DireccionDto {
     public string Calle { get; set; } = string.Empty;
 
     /// <summary>
-    /// Número del edificio o casa en la calle.
+    ///     Número del edificio o casa en la calle.
     /// </summary>
     /// <example>42</example>
     [JsonPropertyName("numero")]
@@ -35,7 +35,7 @@ public class DireccionDto {
     public string? Numero { get; set; }
 
     /// <summary>
-    /// Nombre de la ciudad, pueblo o municipio.
+    ///     Nombre de la ciudad, pueblo o municipio.
     /// </summary>
     /// <example>Madrid</example>
     [JsonPropertyName("ciudad")]
@@ -44,7 +44,7 @@ public class DireccionDto {
     public string Ciudad { get; set; } = string.Empty;
 
     /// <summary>
-    /// Nombre de la provincia o región administrativa.
+    ///     Nombre de la provincia o región administrativa.
     /// </summary>
     /// <example>Madrid</example>
     [JsonPropertyName("provincia")]
@@ -52,7 +52,7 @@ public class DireccionDto {
     public string? Provincia { get; set; }
 
     /// <summary>
-    /// Nombre del país.
+    ///     Nombre del país.
     /// </summary>
     /// <example>España</example>
     [JsonPropertyName("pais")]
@@ -61,7 +61,7 @@ public class DireccionDto {
     public string Pais { get; set; } = string.Empty;
 
     /// <summary>
-    /// Código postal de 5 dígitos.
+    ///     Código postal de 5 dígitos.
     /// </summary>
     /// <example>28013</example>
     [JsonPropertyName("codigoPostal")]

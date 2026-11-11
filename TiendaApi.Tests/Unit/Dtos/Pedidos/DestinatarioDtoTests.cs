@@ -1,8 +1,6 @@
+using System.Text.Json;
 using FluentAssertions;
-using FluentValidation;
-using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
-using TiendaApi.Api.Validators.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Dtos.Pedidos;
 
@@ -54,8 +52,8 @@ public class DestinatarioDtoTests {
     public void DestinatarioDto_PermiteValoresMaximos() {
         var dto = new DestinatarioDto {
             NombreCompleto = new string('A', 200),
-            Email = new string('a', 244) + "@test.com",  // 244 + 1 (@) + 8 (test.com) = 253
-            Telefono = "+12345678901234567890",  // 21 chars - excede el máximo
+            Email = new string('a', 244) + "@test.com", // 244 + 1 (@) + 8 (test.com) = 253
+            Telefono = "+12345678901234567890", // 21 chars - excede el máximo
             Direccion = new DireccionDto { Calle = "Test", Ciudad = "Madrid", Pais = "España" }
         };
 
@@ -84,7 +82,7 @@ public class DestinatarioDtoTests {
             }
         };
 
-        var json = System.Text.Json.JsonSerializer.Serialize(dto);
+        string json = JsonSerializer.Serialize(dto);
 
         json.Should().Contain("nombreCompleto");
         json.Should().Contain("email");
@@ -94,23 +92,23 @@ public class DestinatarioDtoTests {
 
     [Test]
     public void DestinatarioDto_Deserialize_ConTodosLosCampos() {
-        var json = """
-            {
-                "nombreCompleto": "María García López",
-                "email": "maria.garcia@email.com",
-                "telefono": "+34612345678",
-                "direccion": {
-                    "calle": "Gran Vía",
-                    "numero": "42",
-                    "ciudad": "Madrid",
-                    "provincia": "Madrid",
-                    "pais": "España",
-                    "codigoPostal": "28013"
-                }
-            }
-            """;
+        string json = """
+                      {
+                          "nombreCompleto": "María García López",
+                          "email": "maria.garcia@email.com",
+                          "telefono": "+34612345678",
+                          "direccion": {
+                              "calle": "Gran Vía",
+                              "numero": "42",
+                              "ciudad": "Madrid",
+                              "provincia": "Madrid",
+                              "pais": "España",
+                              "codigoPostal": "28013"
+                          }
+                      }
+                      """;
 
-        var dto = System.Text.Json.JsonSerializer.Deserialize<DestinatarioDto>(json);
+        DestinatarioDto? dto = JsonSerializer.Deserialize<DestinatarioDto>(json);
 
         dto.Should().NotBeNull();
         dto!.NombreCompleto.Should().Be("María García López");
@@ -123,19 +121,19 @@ public class DestinatarioDtoTests {
 
     [Test]
     public void DestinatarioDto_Deserialize_SoloConNombre() {
-        var json = """
-            {
-                "nombreCompleto": "Juan Pérez",
-                "email": "juan@email.com",
-                "direccion": {
-                    "calle": "Calle Test",
-                    "ciudad": "Madrid",
-                    "pais": "España"
-                }
-            }
-            """;
+        string json = """
+                      {
+                          "nombreCompleto": "Juan Pérez",
+                          "email": "juan@email.com",
+                          "direccion": {
+                              "calle": "Calle Test",
+                              "ciudad": "Madrid",
+                              "pais": "España"
+                          }
+                      }
+                      """;
 
-        var dto = System.Text.Json.JsonSerializer.Deserialize<DestinatarioDto>(json);
+        DestinatarioDto? dto = JsonSerializer.Deserialize<DestinatarioDto>(json);
 
         dto.Should().NotBeNull();
         dto!.NombreCompleto.Should().Be("Juan Pérez");
@@ -146,14 +144,14 @@ public class DestinatarioDtoTests {
 
     [Test]
     public void DestinatarioDto_Deserialize_SinDireccion() {
-        var json = """
-            {
-                "nombreCompleto": "Juan Pérez",
-                "email": "juan@email.com"
-            }
-            """;
+        string json = """
+                      {
+                          "nombreCompleto": "Juan Pérez",
+                          "email": "juan@email.com"
+                      }
+                      """;
 
-        var dto = System.Text.Json.JsonSerializer.Deserialize<DestinatarioDto>(json);
+        DestinatarioDto? dto = JsonSerializer.Deserialize<DestinatarioDto>(json);
 
         dto.Should().NotBeNull();
         dto!.NombreCompleto.Should().Be("Juan Pérez");

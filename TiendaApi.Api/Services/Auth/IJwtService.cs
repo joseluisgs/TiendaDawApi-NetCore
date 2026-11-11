@@ -3,7 +3,7 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Services.Auth;
 
 /// <summary>
-/// Servicio para generación y validación de tokens JWT.
+///     Servicio para generación y validación de tokens JWT.
 /// </summary>
 public interface IJwtService {
     /// <summary>Genera un token JWT para un usuario.</summary>

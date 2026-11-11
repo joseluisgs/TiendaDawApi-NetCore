@@ -4,12 +4,12 @@ using TiendaApi.Api.Dtos.Usuarios;
 namespace TiendaApi.Api.Validators.Usuarios;
 
 /// <summary>
-/// Validador FluentValidation para RegisterDto.
-/// Reglas: Username(3-50), Email válido, Password(8-100 con mayúscula, minúscula y dígito).
+///     Validador FluentValidation para RegisterDto.
+///     Reglas: Username(3-50), Email válido, Password(8-100 con mayúscula, minúscula y dígito).
 /// </summary>
 public class RegisterValidator : AbstractValidator<RegisterDto> {
     /// <summary>
-    /// Define reglas de validación para RegisterDto.
+    ///     Define reglas de validación para RegisterDto.
     /// </summary>
     public RegisterValidator() {
         RuleFor(r => r.Username)

@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Net.WebSockets;
 using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,15 +11,15 @@ using TiendaApi.Api.Services.Cache;
 namespace TiendaApi.Tests.Unit.Services.WebSockets;
 
 /// <summary>
-/// Tests unitarios para PedidosWebSocketHandler.
-/// Verifica el comportamiento de las notificaciones selectivas por usuario y el sistema de caché.
+///     Tests unitarios para PedidosWebSocketHandler.
+///     Verifica el comportamiento de las notificaciones selectivas por usuario y el sistema de caché.
 /// </summary>
 public class PedidosWebSocketHandlerTests {
-    private readonly Mock<ILogger<PedidosWebSocketHandler>> _mockLogger;
-    private readonly Mock<IJwtTokenExtractor> _mockTokenExtractor;
+    private readonly PedidosWebSocketHandler _handler;
     private readonly Mock<ICacheService> _mockCacheService;
     private readonly Mock<IConfiguration> _mockConfiguration;
-    private readonly PedidosWebSocketHandler _handler;
+    private readonly Mock<ILogger<PedidosWebSocketHandler>> _mockLogger;
+    private readonly Mock<IJwtTokenExtractor> _mockTokenExtractor;
 
     public PedidosWebSocketHandlerTests() {
         _mockLogger = new Mock<ILogger<PedidosWebSocketHandler>>();
@@ -47,7 +46,7 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void Constructor_InitializesCorrectly() {
         // Arrange & Act
-        var handler = CreateHandler();
+        PedidosWebSocketHandler handler = CreateHandler();
 
         // Assert
         Assert.That(handler.GetConnectionCount(), Is.EqualTo(0));
@@ -85,10 +84,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractUserInfo_WithValidToken_ReturnsUserIdAndRole() {
         // Arrange - Create real JWT token
-        var token = CreateValidJwtToken(123L, "cliente");
+        string token = CreateValidJwtToken(123L, "cliente");
 
         // Act
-        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
+        (long? userId, bool isAdmin, string? role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(123L));
@@ -99,10 +98,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractUserInfo_WithAdminRole_ReturnsIsAdminTrue() {
         // Arrange
-        var token = CreateValidJwtToken(1L, "admin");
+        string token = CreateValidJwtToken(1L, "admin");
 
         // Act
-        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
+        (long? userId, bool isAdmin, string? role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(1L));
@@ -113,10 +112,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractUserInfo_WithAdminRoleUppercase_ReturnsIsAdminTrue() {
         // Arrange
-        var token = CreateValidJwtToken(1L, "ADMIN");
+        string token = CreateValidJwtToken(1L, "ADMIN");
 
         // Act
-        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
+        (long? userId, bool isAdmin, string? role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(1L));
@@ -127,10 +126,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractUserInfo_WithInvalidToken_ReturnsNullUserId() {
         // Arrange
-        var token = "invalid.token.here";
+        string token = "invalid.token.here";
 
         // Act
-        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
+        (long? userId, bool isAdmin, string? role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.Null);
@@ -141,10 +140,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractUserInfo_WithEmptyToken_ReturnsNull() {
         // Arrange
-        var token = "";
+        string token = "";
 
         // Act
-        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
+        (long? userId, bool isAdmin, string? role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.Null);
@@ -155,10 +154,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractUserInfo_WithMalformedToken_ReturnsNull() {
         // Arrange
-        var token = "not-a-jwt";
+        string token = "not-a-jwt";
 
         // Act
-        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
+        (long? userId, bool isAdmin, string? role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.Null);
@@ -169,10 +168,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractUserInfo_WithMissingRoleClaim_ReturnsIsAdminFalse() {
         // Arrange - Token sin rol
-        var token = CreateTokenWithoutRole(123L);
+        string token = CreateTokenWithoutRole(123L);
 
         // Act
-        var (userId, isAdmin, role) = ExtractUserInfoFromToken(token);
+        (long? userId, bool isAdmin, string? role) = ExtractUserInfoFromToken(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(123L));
@@ -183,10 +182,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractEmail_WithValidToken_ReturnsEmail() {
         // Arrange
-        var token = CreateTokenWithEmail(123L, "test@example.com");
+        string token = CreateTokenWithEmail(123L, "test@example.com");
 
         // Act
-        var email = ExtractEmailFromToken(token);
+        string? email = ExtractEmailFromToken(token);
 
         // Assert
         Assert.That(email, Is.EqualTo("test@example.com"));
@@ -195,10 +194,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_IsValidTokenFormat_WithValidToken_ReturnsTrue() {
         // Arrange
-        var token = CreateValidJwtToken(123L, "cliente");
+        string token = CreateValidJwtToken(123L, "cliente");
 
         // Act
-        var isValid = IsValidTokenFormat(token);
+        bool isValid = IsValidTokenFormat(token);
 
         // Assert
         Assert.That(isValid, Is.True);
@@ -207,10 +206,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_IsValidTokenFormat_WithInvalidToken_ReturnsFalse() {
         // Arrange
-        var token = "invalid.token";
+        string token = "invalid.token";
 
         // Act
-        var isValid = IsValidTokenFormat(token);
+        bool isValid = IsValidTokenFormat(token);
 
         // Assert
         Assert.That(isValid, Is.False);
@@ -219,10 +218,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_IsValidTokenFormat_WithEmptyToken_ReturnsFalse() {
         // Arrange
-        var token = "";
+        string token = "";
 
         // Act
-        var isValid = IsValidTokenFormat(token);
+        bool isValid = IsValidTokenFormat(token);
 
         // Assert
         Assert.That(isValid, Is.False);
@@ -231,10 +230,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractUserId_WithValidToken_ReturnsUserId() {
         // Arrange
-        var token = CreateValidJwtToken(456L, "cliente");
+        string token = CreateValidJwtToken(456L, "cliente");
 
         // Act
-        var userId = ExtractUserIdFromToken(token);
+        long? userId = ExtractUserIdFromToken(token);
 
         // Assert
         Assert.That(userId, Is.EqualTo(456L));
@@ -243,10 +242,10 @@ public class PedidosWebSocketHandlerTests {
     [Test]
     public void JwtTokenExtractor_ExtractRole_WithValidToken_ReturnsRole() {
         // Arrange
-        var token = CreateValidJwtToken(123L, "admin");
+        string token = CreateValidJwtToken(123L, "admin");
 
         // Act
-        var role = ExtractRoleFromToken(token);
+        string? role = ExtractRoleFromToken(token);
 
         // Assert
         Assert.That(role, Is.EqualTo("admin"));
@@ -316,7 +315,7 @@ public class PedidosWebSocketHandlerTests {
             Expires = DateTime.UtcNow.AddHours(1)
         };
 
-        var token = handler.CreateToken(tokenDescriptor);
+        SecurityToken token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }
 
@@ -329,7 +328,7 @@ public class PedidosWebSocketHandlerTests {
             Expires = DateTime.UtcNow.AddHours(1)
         };
 
-        var token = handler.CreateToken(tokenDescriptor);
+        SecurityToken token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }
 
@@ -343,7 +342,7 @@ public class PedidosWebSocketHandlerTests {
             Expires = DateTime.UtcNow.AddHours(1)
         };
 
-        var token = handler.CreateToken(tokenDescriptor);
+        SecurityToken token = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(token);
     }
 

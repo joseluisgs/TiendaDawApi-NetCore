@@ -4,24 +4,29 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Mappers;
 
 /// <summary>
-/// Mapper para convertir entre Categoria y sus DTOs.
+///     Mapper para convertir entre Categoria y sus DTOs.
 /// </summary>
 public static class CategoriaMapper {
     /// <summary>Convierte Categoria a CategoriaDto.</summary>
-    public static CategoriaDto ToDto(this Categoria categoria) =>
-        new(categoria.Id, categoria.Nombre, categoria.Descripcion, categoria.CreatedAt, categoria.UpdatedAt);
+    public static CategoriaDto ToDto(this Categoria categoria) {
+        return new CategoriaDto(categoria.Id, categoria.Nombre, categoria.Descripcion, categoria.CreatedAt,
+            categoria.UpdatedAt);
+    }
 
     /// <summary>Convierte lista de Categorias a lista de CategoriaDto.</summary>
-    public static IEnumerable<CategoriaDto> ToDtoList(this IEnumerable<Categoria> categorias) =>
-        categorias.Select(c => c.ToDto());
+    public static IEnumerable<CategoriaDto> ToDtoList(this IEnumerable<Categoria> categorias) {
+        return categorias.Select(c => c.ToDto());
+    }
 
     /// <summary>Convierte CategoriaRequestDto a Categoria.</summary>
-    public static Categoria ToEntity(this CategoriaRequestDto dto) => new() {
-        Nombre = dto.Nombre,
-        Descripcion = dto.Descripcion,
-        CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow
-    };
+    public static Categoria ToEntity(this CategoriaRequestDto dto) {
+        return new Categoria {
+            Nombre = dto.Nombre,
+            Descripcion = dto.Descripcion,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+    }
 
     /// <summary>Actualiza Categoria desde CategoriaRequestDto.</summary>
     public static void UpdateEntity(this CategoriaRequestDto dto, Categoria categoria) {

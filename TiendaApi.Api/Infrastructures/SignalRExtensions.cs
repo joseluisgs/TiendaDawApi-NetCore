@@ -1,17 +1,14 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.DependencyInjection;
 using TiendaApi.Api.Realtime.Pedidos;
 using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Configuración de SignalR.
+///     Configuración de SignalR.
 /// </summary>
 public static class SignalRExtensions {
     /// <summary>
-    /// Configura Hubs de SignalR (ProductosHub, PedidosHub).
+    ///     Configura Hubs de SignalR (ProductosHub, PedidosHub).
     /// </summary>
     /// <param name="services">Colección de servicios.</param>
     /// <returns>IServiceCollection.</returns>
@@ -32,7 +29,7 @@ public static class SignalRExtensions {
     }
 
     /// <summary>
-    /// Mapea endpoints de SignalR (/hubs/productos, /hubs/pedidos).
+    ///     Mapea endpoints de SignalR (/hubs/productos, /hubs/pedidos).
     /// </summary>
     /// <param name="app">Application builder.</param>
     /// <returns>Application builder.</returns>

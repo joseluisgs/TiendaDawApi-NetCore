@@ -1,10 +1,11 @@
 namespace TiendaApi.Api.Realtime.Common;
 
 /// <summary>
-/// DTO para notificaciones de pedidos en tiempo real.
+///     DTO para notificaciones de pedidos en tiempo real.
 /// </summary>
 /// <example>
-/// var notification = new PedidoNotificationDto { Type = "PEDIDO_ESTADO_ACTUALIZADO", PedidoId = "PED-001", Estado = "Enviado" };
+///     var notification = new PedidoNotificationDto { Type = "PEDIDO_ESTADO_ACTUALIZADO", PedidoId = "PED-001", Estado =
+///     "Enviado" };
 /// </example>
 public class PedidoNotificationDto {
     /// <summary>Tipo de notificación.</summary>
@@ -27,7 +28,7 @@ public class PedidoNotificationDto {
 }
 
 /// <summary>
-/// Tipos de notificación para pedidos.
+///     Tipos de notificación para pedidos.
 /// </summary>
 public static class PedidoNotificationType {
     /// <summary>Pedido creado.</summary>

@@ -1,14 +1,15 @@
 using System.Threading.Channels;
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
 using TiendaApi.Api.Data;
+using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Proveedores;
+using TiendaApi.Api.Errors;
 using TiendaApi.Api.IdGenerators;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
@@ -22,22 +23,14 @@ using TiendaApi.Api.Validators.Proveedores;
 namespace TiendaApi.Tests.Integration.TestContainers.Proveedores.Services;
 
 /// <summary>
-/// Tests de integración para ProveedorService con DI completo y base de datos real.
-/// Cubren el ciclo completo: generación del código, unicidad, borrado y la regla que
-/// impide eliminar un proveedor que todavía tiene productos.
+///     Tests de integración para ProveedorService con DI completo y base de datos real.
+///     Cubren el ciclo completo: generación del código, unicidad, borrado y la regla que
+///     impide eliminar un proveedor que todavía tiene productos.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
 public class ProveedorServiceIntegrationTests {
-    private const string DatabaseName = "it_proveedor_service";
-
-    private string _connectionString = string.Empty;
-    private string _mongoConnectionString = string.Empty;
-    private IServiceProvider? _serviceProvider;
-    private TiendaDbContext? _dbContext;
-    private IProveedorService? _proveedorService;
-
     [OneTimeSetUp]
     public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
@@ -52,10 +45,10 @@ public class ProveedorServiceIntegrationTests {
 
     [SetUp]
     public async Task Setup() {
-        var connectionString = _connectionString;
-        var mongoConnectionString = _mongoConnectionString;
+        string connectionString = _connectionString;
+        string mongoConnectionString = _mongoConnectionString;
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
@@ -104,9 +97,17 @@ public class ProveedorServiceIntegrationTests {
         }
     }
 
+    private const string DatabaseName = "it_proveedor_service";
+
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
+    private IServiceProvider? _serviceProvider;
+    private TiendaDbContext? _dbContext;
+    private IProveedorService? _proveedorService;
+
     [Test]
     public async Task FindAllAsync_SinProveedores_RetornaListaVacia() {
-        var result = await _proveedorService!.FindAllAsync();
+        Result<IEnumerable<ProveedorDto>, DomainError> result = await _proveedorService!.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -116,7 +117,7 @@ public class ProveedorServiceIntegrationTests {
     public async Task CreateAsync_SinCodigo_ElServidorGeneraIdentificadorDeOnceCaracteres() {
         var dto = new ProveedorRequestDto { Nombre = "Generado Automaticamente" };
 
-        var result = await _proveedorService!.CreateAsync(dto);
+        Result<ProveedorDto, DomainError> result = await _proveedorService!.CreateAsync(dto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Codigo.Should().HaveLength(IdYouTube.Longitud);
@@ -127,7 +128,7 @@ public class ProveedorServiceIntegrationTests {
     public async Task CreateAsync_ConCodigoExplicito_LoPreserva() {
         var dto = new ProveedorRequestDto { Codigo = "Explicito01", Nombre = "Con Código Explícito" };
 
-        var result = await _proveedorService!.CreateAsync(dto);
+        Result<ProveedorDto, DomainError> result = await _proveedorService!.CreateAsync(dto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Codigo.Should().Be("Explicito01");
@@ -137,16 +138,16 @@ public class ProveedorServiceIntegrationTests {
     public async Task CreateAsync_ConCodigoInvalido_RetornaErrorDeValidacion() {
         var dto = new ProveedorRequestDto { Codigo = "corto", Nombre = "Código Inválido" };
 
-        var result = await _proveedorService!.CreateAsync(dto);
+        Result<ProveedorDto, DomainError> result = await _proveedorService!.CreateAsync(dto);
 
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
     public async Task CreateAsync_ConCodigoDuplicado_RetornaConflicto() {
-        var primero = await _proveedorService!.CreateAsync(
+        Result<ProveedorDto, DomainError> primero = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Codigo = "Duplicado01", Nombre = "Primero" });
-        var segundo = await _proveedorService.CreateAsync(
+        Result<ProveedorDto, DomainError> segundo = await _proveedorService.CreateAsync(
             new ProveedorRequestDto { Codigo = "Duplicado01", Nombre = "Segundo" });
 
         primero.IsSuccess.Should().BeTrue();
@@ -155,21 +156,22 @@ public class ProveedorServiceIntegrationTests {
 
     [Test]
     public async Task CreateAsync_ConNombreDuplicado_RetornaConflicto() {
-        var nombre = "Nombre Repetido";
+        string nombre = "Nombre Repetido";
         await _proveedorService!.CreateAsync(new ProveedorRequestDto { Nombre = nombre });
 
-        var segundo = await _proveedorService.CreateAsync(new ProveedorRequestDto { Nombre = nombre });
+        Result<ProveedorDto, DomainError> segundo =
+            await _proveedorService.CreateAsync(new ProveedorRequestDto { Nombre = nombre });
 
         segundo.IsFailure.Should().BeTrue("dos proveedores no pueden compartir nombre");
     }
 
     [Test]
     public async Task FindByIdAsync_ConCodigoExistente_RetornaProveedor() {
-        var creado = await _proveedorService!.CreateAsync(
+        Result<ProveedorDto, DomainError> creado = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Nombre = "Buscable" });
         creado.IsSuccess.Should().BeTrue();
 
-        var result = await _proveedorService.FindByIdAsync(creado.Value.Codigo);
+        Result<ProveedorDto, DomainError> result = await _proveedorService.FindByIdAsync(creado.Value.Codigo);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Nombre.Should().Be("Buscable");
@@ -177,18 +179,18 @@ public class ProveedorServiceIntegrationTests {
 
     [Test]
     public async Task FindByIdAsync_ConCodigoInexistente_RetornaNotFound() {
-        var result = await _proveedorService!.FindByIdAsync("NoExiste000");
+        Result<ProveedorDto, DomainError> result = await _proveedorService!.FindByIdAsync("NoExiste000");
 
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
     public async Task UpdateAsync_ConDatosValidos_ActualizaSinCambiarElCodigo() {
-        var creado = await _proveedorService!.CreateAsync(
+        Result<ProveedorDto, DomainError> creado = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Nombre = "Original" });
         creado.IsSuccess.Should().BeTrue();
 
-        var result = await _proveedorService.UpdateAsync(
+        Result<ProveedorDto, DomainError> result = await _proveedorService.UpdateAsync(
             creado.Value.Codigo,
             new ProveedorRequestDto { Nombre = "Actualizado", Contacto = "nuevo@tienda.example" });
 
@@ -200,26 +202,26 @@ public class ProveedorServiceIntegrationTests {
 
     [Test]
     public async Task DeleteAsync_SinProductos_RetornaOkYDesaparece() {
-        var creado = await _proveedorService!.CreateAsync(
+        Result<ProveedorDto, DomainError> creado = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Nombre = "Borrable" });
         creado.IsSuccess.Should().BeTrue();
 
-        var delete = await _proveedorService.DeleteAsync(creado.Value.Codigo);
+        UnitResult<DomainError> delete = await _proveedorService.DeleteAsync(creado.Value.Codigo);
         delete.IsSuccess.Should().BeTrue();
 
-        var find = await _proveedorService.FindByIdAsync(creado.Value.Codigo);
+        Result<ProveedorDto, DomainError> find = await _proveedorService.FindByIdAsync(creado.Value.Codigo);
         find.IsFailure.Should().BeTrue("tras el borrado lógico el proveedor no se consulta");
     }
 
     [Test]
     public async Task DeleteAsync_ConProductosAsociados_RetornaReglaDeNegocio() {
-        var creado = await _proveedorService!.CreateAsync(
+        Result<ProveedorDto, DomainError> creado = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Nombre = "Con Productos" });
         creado.IsSuccess.Should().BeTrue();
 
         await CrearProductoAsociadoAsync(creado.Value.Codigo);
 
-        var delete = await _proveedorService.DeleteAsync(creado.Value.Codigo);
+        UnitResult<DomainError> delete = await _proveedorService.DeleteAsync(creado.Value.Codigo);
 
         delete.IsFailure.Should().BeTrue("no se puede eliminar un proveedor con productos");
     }
@@ -229,11 +231,12 @@ public class ProveedorServiceIntegrationTests {
         await _proveedorService!.CreateAsync(new ProveedorRequestDto { Nombre = "Distribuciones Norte" });
         await _proveedorService.CreateAsync(new ProveedorRequestDto { Nombre = "Editorial Sur" });
 
-        var result = await _proveedorService.FindAllPagedAsync(new ProveedorFilterDto {
-            Nombre = "Distribuciones",
-            Page = 0,
-            Size = 10
-        });
+        Result<PagedResult<ProveedorDto>, DomainError> result = await _proveedorService.FindAllPagedAsync(
+            new ProveedorFilterDto {
+                Nombre = "Distribuciones",
+                Page = 0,
+                Size = 10
+            });
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Items.Should().Contain(p => p.Nombre == "Distribuciones Norte");
@@ -241,8 +244,8 @@ public class ProveedorServiceIntegrationTests {
     }
 
     /// <summary>
-    /// Crea directamente una categoría y un producto apuntando al proveedor,
-    /// para ejercitar la regla de borrado con datos reales en la base.
+    ///     Crea directamente una categoría y un producto apuntando al proveedor,
+    ///     para ejercitar la regla de borrado con datos reales en la base.
     /// </summary>
     private async Task CrearProductoAsociadoAsync(string proveedorCodigo) {
         var categoria = new Categoria {

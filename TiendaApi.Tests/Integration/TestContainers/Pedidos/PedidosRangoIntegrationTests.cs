@@ -2,37 +2,29 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
-using NUnit.Framework;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Pedidos;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos;
 
 /// <summary>
-/// Tests de integración del repositorio nativo de pedidos sobre MongoDB.
-///
-/// Se centran en <c>FindByRangoFechasAsync</c>, el método nuevo de la ventana
-/// estadística: el endpoint E2E solo puede probar un rango amplio (todo entra),
-/// así que aquí se comprueba lo interesante — que los pedidos FUERA de la ventana
-/// no se devuelvan y que el orden sea ascendente por fecha.
+///     Tests de integración del repositorio nativo de pedidos sobre MongoDB.
+///     Se centran en <c>FindByRangoFechasAsync</c>, el método nuevo de la ventana
+///     estadística: el endpoint E2E solo puede probar un rango amplio (todo entra),
+///     así que aquí se comprueba lo interesante — que los pedidos FUERA de la ventana
+///     no se devuelvan y que el orden sea ascendente por fecha.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
 public class PedidosRangoIntegrationTests {
-    private const string DatabaseName = "it_pedidos_rango";
-
-    private string _mongoConnectionString = string.Empty;
-    private IServiceProvider? _provider;
-    private IPedidosRepository? _repositorio;
-    private IMongoCollection<Pedido>? _coleccion;
-
     [OneTimeSetUp]
     public void OneTimeSetup() {
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "MongoDbSettings:ConnectionString", _mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", DatabaseName }
@@ -55,7 +47,10 @@ public class PedidosRangoIntegrationTests {
 
     [OneTimeTearDown]
     public void OneTimeTearDown() {
-        if (_provider is IDisposable desechable) desechable.Dispose();
+        if (_provider is IDisposable desechable) {
+            desechable.Dispose();
+        }
+
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
@@ -65,26 +60,34 @@ public class PedidosRangoIntegrationTests {
         await _coleccion!.DeleteManyAsync(FilterDefinition<Pedido>.Empty);
     }
 
-    private static Pedido Pedido(long id, DateTime creado, decimal total = 100m) =>
-        new() {
-            Id = MongoDB.Bson.ObjectId.GenerateNewId(),
+    private const string DatabaseName = "it_pedidos_rango";
+
+    private string _mongoConnectionString = string.Empty;
+    private IServiceProvider? _provider;
+    private IPedidosRepository? _repositorio;
+    private IMongoCollection<Pedido>? _coleccion;
+
+    private static Pedido Pedido(long id, DateTime creado, decimal total = 100m) {
+        return new Pedido {
+            Id = ObjectId.GenerateNewId(),
             UserId = id,
             Total = total,
             Estado = PedidoEstado.ENTREGADO,
             CreatedAt = creado,
             IsDeleted = false,
-            Items = [],
+            Items = []
         };
+    }
 
     [Test]
     public async Task FindByRangoFechas_RetornaSoloLosPedidosDeLaVentana() {
-        var dentro1 = Pedido(1, new DateTime(2026, 10, 10, 9, 0, 0, DateTimeKind.Utc));
-        var dentro2 = Pedido(2, new DateTime(2026, 10, 20, 9, 0, 0, DateTimeKind.Utc));
-        var fueraAntes = Pedido(3, new DateTime(2026, 9, 1, 9, 0, 0, DateTimeKind.Utc));
-        var fueraDespues = Pedido(4, new DateTime(2026, 11, 1, 9, 0, 0, DateTimeKind.Utc));
+        Pedido dentro1 = Pedido(1, new DateTime(2026, 10, 10, 9, 0, 0, DateTimeKind.Utc));
+        Pedido dentro2 = Pedido(2, new DateTime(2026, 10, 20, 9, 0, 0, DateTimeKind.Utc));
+        Pedido fueraAntes = Pedido(3, new DateTime(2026, 9, 1, 9, 0, 0, DateTimeKind.Utc));
+        Pedido fueraDespues = Pedido(4, new DateTime(2026, 11, 1, 9, 0, 0, DateTimeKind.Utc));
         await _coleccion!.InsertManyAsync([dentro1, dentro2, fueraAntes, fueraDespues]);
 
-        var resultado = await _repositorio!.FindByRangoFechasAsync(
+        IEnumerable<Pedido> resultado = await _repositorio!.FindByRangoFechasAsync(
             new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc),
             new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc));
 
@@ -98,7 +101,7 @@ public class PedidosRangoIntegrationTests {
         [
             Pedido(1, new DateTime(2026, 10, 25, 9, 0, 0, DateTimeKind.Utc)),
             Pedido(2, new DateTime(2026, 10, 5, 9, 0, 0, DateTimeKind.Utc)),
-            Pedido(3, new DateTime(2026, 10, 15, 9, 0, 0, DateTimeKind.Utc)),
+            Pedido(3, new DateTime(2026, 10, 15, 9, 0, 0, DateTimeKind.Utc))
         ]);
 
         var resultado = (await _repositorio!.FindByRangoFechasAsync(
@@ -114,8 +117,8 @@ public class PedidosRangoIntegrationTests {
     public async Task FindByRangoFechas_LaVentanaEsExclusivaAlFinal() {
         // El límite superior es exclusivo: un pedido creado exactamente en `hasta`
         // pertenece a la ventana siguiente.
-        var enElLimite = Pedido(1, new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc));
-        var justoAntes = Pedido(2, new DateTime(2026, 10, 31, 23, 59, 59, DateTimeKind.Utc));
+        Pedido enElLimite = Pedido(1, new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc));
+        Pedido justoAntes = Pedido(2, new DateTime(2026, 10, 31, 23, 59, 59, DateTimeKind.Utc));
         await _coleccion!.InsertManyAsync([enElLimite, justoAntes]);
 
         var resultado = (await _repositorio!.FindByRangoFechasAsync(

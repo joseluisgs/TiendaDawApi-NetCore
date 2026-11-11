@@ -1,17 +1,13 @@
-using System;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-
 namespace TiendaApi.Api.Services.Email;
 
 /// <summary>
-/// Implementación de IEmailService para desarrollo que solo loguea los emails.
+///     Implementación de IEmailService para desarrollo que solo loguea los emails.
 /// </summary>
 public class MemoryEmailService : IEmailService {
     private readonly ILogger<MemoryEmailService> _logger;
 
     /// <summary>
-    /// Crea una instancia del servicio de emails en memoria.
+    ///     Crea una instancia del servicio de emails en memoria.
     /// </summary>
     /// <param name="logger">Logger de la instancia.</param>
     public MemoryEmailService(ILogger<MemoryEmailService> logger) {

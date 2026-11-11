@@ -6,13 +6,13 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Pedidos;
 
 /// <summary>
-/// Implementación del repositorio de pedidos con MongoDB EF Core.
+///     Implementación del repositorio de pedidos con MongoDB EF Core.
 /// </summary>
 public class PedidosEfCoreRepository(
     TiendaMongoContext context,
     ILogger<PedidosEfCoreRepository> logger
 ) : IPedidosRepository {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<Pedido>> FindAllAsync() {
         logger.LogDebug("Buscando todos los pedidos");
         // AsNoTracking: estos listados solo se proyectan a DTO y jamas se
@@ -24,7 +24,7 @@ public class PedidosEfCoreRepository(
             .ToListAsync();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<Pedido>> FindByRangoFechasAsync(DateTime desde, DateTime hasta) {
         logger.LogDebug("Buscando pedidos entre {Desde} y {Hasta}", desde, hasta);
         // AsNoTracking: las estadísticas solo agregan, jamás persisten. El rango ya
@@ -36,18 +36,18 @@ public class PedidosEfCoreRepository(
             .ToListAsync();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size) {
         logger.LogDebug("Buscando pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
         // AsNoTracking: listado de solo lectura (ver FindAllAsync).
-        var query = context.Pedidos.AsNoTracking().OrderByDescending(p => p.CreatedAt);
+        IOrderedQueryable<Pedido> query = context.Pedidos.AsNoTracking().OrderByDescending(p => p.CreatedAt);
 
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip(page * size).Take(size).ToListAsync();
+        int totalCount = await query.CountAsync();
+        List<Pedido> items = await query.Skip(page * size).Take(size).ToListAsync();
         return (items, totalCount);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<Pedido>> FindByUserIdAsync(long userId) {
         logger.LogDebug("Buscando pedidos para usuario: {UserId}", userId);
         return await context.Pedidos
@@ -57,28 +57,29 @@ public class PedidosEfCoreRepository(
             .ToListAsync();
     }
 
-    /// <inheritdoc/>
-    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindByUserIdPagedAsync(long userId, int page, int size) {
+    /// <inheritdoc />
+    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindByUserIdPagedAsync(long userId, int page,
+        int size) {
         logger.LogDebug("Buscando pedidos paginados para usuario: {UserId}", userId);
         // AsNoTracking: listado de solo lectura (ver FindAllAsync).
-        var query = context.Pedidos
+        IOrderedQueryable<Pedido> query = context.Pedidos
             .AsNoTracking()
             .Where(p => p.UserId == userId)
             .OrderByDescending(p => p.CreatedAt);
 
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip(page * size).Take(size).ToListAsync();
+        int totalCount = await query.CountAsync();
+        List<Pedido> items = await query.Skip(page * size).Take(size).ToListAsync();
         return (items, totalCount);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Pedido?> FindByIdAsync(string id) {
         logger.LogDebug("Buscando pedido: {Id}", id);
         return await context.Pedidos
             .FirstOrDefaultAsync(p => p.Id == ObjectId.Parse(id));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Pedido> SaveAsync(Pedido pedido) {
         logger.LogDebug("Guardando nuevo pedido");
         context.Pedidos.Add(pedido);
@@ -87,7 +88,7 @@ public class PedidosEfCoreRepository(
         return pedido;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Pedido> UpdateAsync(Pedido pedido) {
         logger.LogDebug("Actualizando pedido: {Id}", pedido.Id);
         context.Pedidos.Update(pedido);

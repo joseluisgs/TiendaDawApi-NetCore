@@ -5,13 +5,13 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Auth;
 
 /// <summary>
-/// Implementación del repositorio de vinculaciones OAuth.
+///     Implementación del repositorio de vinculaciones OAuth.
 /// </summary>
 public class UserLoginRepository(
     TiendaDbContext context,
     ILogger<UserLoginRepository> logger
 ) : IUserLoginRepository {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<UserLogin?> FindByProviderAsync(string loginProvider, string providerKey) {
         // AsNoTracking: la vinculacion hallada solo se lee (UserId); si no
         // existe, la alta es un Add de una entidad NUEVA en SaveAsync.
@@ -21,7 +21,7 @@ public class UserLoginRepository(
                 ul.LoginProvider == loginProvider && ul.ProviderKey == providerKey);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<UserLogin> SaveAsync(UserLogin userLogin) {
         context.ExternalLogins.Add(userLogin);
         await context.SaveChangesAsync();
@@ -30,7 +30,7 @@ public class UserLoginRepository(
         return userLogin;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> ExistsAsync(string loginProvider, string providerKey) {
         return await context.ExternalLogins
             .AnyAsync(ul =>

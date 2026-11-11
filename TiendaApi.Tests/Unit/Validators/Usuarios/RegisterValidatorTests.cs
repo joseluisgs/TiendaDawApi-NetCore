@@ -5,7 +5,7 @@ using TiendaApi.Api.Validators.Usuarios;
 namespace TiendaApi.Tests.Unit.Validators.Usuarios;
 
 /// <summary>
-/// Tests unitarios para RegisterValidator.
+///     Tests unitarios para RegisterValidator.
 /// </summary>
 public class RegisterValidatorTests {
     private readonly RegisterValidator _validator = new();
@@ -16,7 +16,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConUsernameVacio_DeberiaTenerError() {
         var dto = new RegisterDto { Username = "", Email = "test@test.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Username)
             .WithErrorMessage("El nombre de usuario es obligatorio");
@@ -26,7 +26,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConUsernameMuyCorto_DeberiaTenerError() {
         var dto = new RegisterDto { Username = "AB", Email = "test@test.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Username)
             .WithErrorMessage("El nombre de usuario debe tener al menos 3 caracteres");
@@ -40,7 +40,7 @@ public class RegisterValidatorTests {
             Password = "Password123"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Username)
             .WithErrorMessage("El nombre de usuario no puede exceder 50 caracteres");
@@ -54,7 +54,7 @@ public class RegisterValidatorTests {
             Password = "Password123"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Username)
             .WithErrorMessage("Solo se permiten letras, números y guiones bajos");
@@ -64,7 +64,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConUsernameValido_DeberiaPasar() {
         var dto = new RegisterDto { Username = "john_doe", Email = "test@test.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Username);
     }
@@ -73,7 +73,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConUsernameConSoloLetras_DeberiaPasar() {
         var dto = new RegisterDto { Username = "johndoe", Email = "test@test.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Username);
     }
@@ -82,7 +82,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConUsernameConNumeros_DeberiaPasar() {
         var dto = new RegisterDto { Username = "user123", Email = "test@test.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Username);
     }
@@ -91,7 +91,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConUsernameConUnderscore_DeberiaPasar() {
         var dto = new RegisterDto { Username = "john_doe_123", Email = "test@test.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Username);
     }
@@ -104,7 +104,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConEmailVacio_DeberiaTenerError() {
         var dto = new RegisterDto { Username = "johndoe", Email = "", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("El correo electrónico es obligatorio");
@@ -114,7 +114,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConEmailInvalido_DeberiaTenerError() {
         var dto = new RegisterDto { Username = "johndoe", Email = "invalid-email", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("Debe ser un correo electrónico válido");
@@ -124,7 +124,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConEmailSinArroba_DeberiaTenerError() {
         var dto = new RegisterDto { Username = "johndoe", Email = "johndoegmail.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email);
     }
@@ -132,14 +132,14 @@ public class RegisterValidatorTests {
     [Test]
     public void SignUpAsync_ConEmailMuyLargo_DeberiaTenerError() {
         // Email válido en formato pero con más de 100 caracteres totales
-        var localPart = new string('a', 80);
+        string localPart = new('a', 80);
         var dto = new RegisterDto {
             Username = "johndoe",
             Email = $"{localPart}@test.com", // 80 + @test.com = 89 caracteres (bajo el límite)
             Password = "Password123"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         // El EmailAddress validation pasa, verifiquemos que no hay error
         result.ShouldNotHaveValidationErrorFor(x => x.Email);
@@ -151,7 +151,7 @@ public class RegisterValidatorTests {
             Password = "Password123"
         };
 
-        var result2 = _validator.TestValidate(dto2);
+        TestValidationResult<RegisterDto> result2 = _validator.TestValidate(dto2);
         result2.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("El correo no puede exceder 100 caracteres");
     }
@@ -160,7 +160,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConEmailValido_DeberiaPasar() {
         var dto = new RegisterDto { Username = "johndoe", Email = "john.doe@example.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Email);
     }
@@ -169,7 +169,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConEmailConSubdominio_DeberiaPasar() {
         var dto = new RegisterDto { Username = "johndoe", Email = "john@mail.subdomain.com", Password = "Password123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Email);
     }
@@ -182,7 +182,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConPasswordVacio_DeberiaTenerError() {
         var dto = new RegisterDto { Username = "johndoe", Email = "john@test.com", Password = "" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("La contraseña es obligatoria");
@@ -192,7 +192,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConPasswordMuyCorto_DeberiaTenerError() {
         var dto = new RegisterDto { Username = "johndoe", Email = "john@test.com", Password = "12345" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("La contraseña debe tener al menos 8 caracteres");
@@ -206,7 +206,7 @@ public class RegisterValidatorTests {
             Password = new string('A', 101)
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("La contraseña no puede exceder 100 caracteres");
@@ -216,7 +216,7 @@ public class RegisterValidatorTests {
     public void SignUpAsync_ConPasswordValido_DeberiaPasar() {
         var dto = new RegisterDto { Username = "johndoe", Email = "john@test.com", Password = "SecurePass123" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Password);
     }
@@ -226,7 +226,7 @@ public class RegisterValidatorTests {
         // Política completa: ≥8 + mayúscula + minúscula + dígito ("Abc12345").
         var dto = new RegisterDto { Username = "johndoe", Email = "john@test.com", Password = "Abc12345" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Password);
     }
@@ -243,7 +243,7 @@ public class RegisterValidatorTests {
             Password = ""
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Username);
         result.ShouldHaveValidationErrorFor(x => x.Email);
@@ -258,7 +258,7 @@ public class RegisterValidatorTests {
             Password = "SecurePass123"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<RegisterDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveAnyValidationErrors();
     }

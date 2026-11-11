@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentAssertions;
 using TiendaApi.Api.Dtos.Pedidos;
 
@@ -78,7 +79,7 @@ public class DireccionDtoTests {
             CodigoPostal = "28013"
         };
 
-        var json = System.Text.Json.JsonSerializer.Serialize(dto);
+        string json = JsonSerializer.Serialize(dto);
 
         json.Should().Contain("calle");
         json.Should().Contain("Gran Via");
@@ -94,18 +95,18 @@ public class DireccionDtoTests {
 
     [Test]
     public void DireccionDto_Deserialize_ConTodosLosCampos() {
-        var json = """
-            {
-                "calle": "Gran Vía",
-                "numero": "42",
-                "ciudad": "Madrid",
-                "provincia": "Madrid",
-                "pais": "España",
-                "codigoPostal": "28013"
-            }
-            """;
+        string json = """
+                      {
+                          "calle": "Gran Vía",
+                          "numero": "42",
+                          "ciudad": "Madrid",
+                          "provincia": "Madrid",
+                          "pais": "España",
+                          "codigoPostal": "28013"
+                      }
+                      """;
 
-        var dto = System.Text.Json.JsonSerializer.Deserialize<DireccionDto>(json);
+        DireccionDto? dto = JsonSerializer.Deserialize<DireccionDto>(json);
 
         dto.Should().NotBeNull();
         dto!.Calle.Should().Be("Gran Vía");
@@ -118,15 +119,15 @@ public class DireccionDtoTests {
 
     [Test]
     public void DireccionDto_Deserialize_SinCamposOpcionales() {
-        var json = """
-            {
-                "calle": "Calle Principal",
-                "ciudad": "Madrid",
-                "pais": "España"
-            }
-            """;
+        string json = """
+                      {
+                          "calle": "Calle Principal",
+                          "ciudad": "Madrid",
+                          "pais": "España"
+                      }
+                      """;
 
-        var dto = System.Text.Json.JsonSerializer.Deserialize<DireccionDto>(json);
+        DireccionDto? dto = JsonSerializer.Deserialize<DireccionDto>(json);
 
         dto.Should().NotBeNull();
         dto!.Calle.Should().Be("Calle Principal");

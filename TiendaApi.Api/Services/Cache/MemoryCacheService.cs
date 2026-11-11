@@ -1,19 +1,16 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 
 namespace TiendaApi.Api.Services.Cache;
 
 /// <summary>
-/// Implementación de ICacheService usando IMemoryCache para desarrollo local.
+///     Implementación de ICacheService usando IMemoryCache para desarrollo local.
 /// </summary>
 public class MemoryCacheService : ICacheService {
     private readonly IMemoryCache _cache;
     private readonly ILogger<MemoryCacheService> _logger;
 
     /// <summary>
-    /// Crea una instancia del servicio de caché en memoria.
+    ///     Crea una instancia del servicio de caché en memoria.
     /// </summary>
     /// <param name="cache">Caché en memoria.</param>
     /// <param name="logger">Logger de la instancia.</param>
@@ -25,7 +22,7 @@ public class MemoryCacheService : ICacheService {
     /// <inheritdoc />
     public Task<T?> GetAsync<T>(string key) {
         try {
-            var value = _cache.Get<T>(key);
+            T? value = _cache.Get<T>(key);
             return Task.FromResult(value);
         } catch (Exception ex) {
             _logger.LogWarning(ex, "Error obteniendo de caché. Clave={Key}", key);

@@ -9,26 +9,17 @@ using TiendaApi.Api.Data;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Productos;
-using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 
 /// <summary>
-/// Tests de integración para verificar control de concurrencia con RowVersion.
-/// Usa solo PostgreSQL para simplificar.
+///     Tests de integración para verificar control de concurrencia con RowVersion.
+///     Usa solo PostgreSQL para simplificar.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 public class ProductoConcurrencyIntegrationTests {
-    private static readonly ActivitySource ActivitySource = new("ProductoConcurrencyTests");
-    private const string DatabaseName = "it_producto_concurrency";
-    private string _connectionString = string.Empty;
-    private IServiceProvider? _serviceProvider;
-    private TiendaDbContext? _dbContext;
-    private IProductoRepository? _productoRepository;
-    private long _productoId;
-
     [OneTimeSetUp]
     public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
@@ -41,9 +32,9 @@ public class ProductoConcurrencyIntegrationTests {
 
     [SetUp]
     public async Task Setup() {
-        var connectionString = _connectionString;
+        string connectionString = _connectionString;
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString }
             }!)
@@ -70,10 +61,10 @@ public class ProductoConcurrencyIntegrationTests {
         _dbContext = _serviceProvider.GetRequiredService<TiendaDbContext>();
         await _dbContext.Database.EnsureCreatedAsync();
 
-        var productoRepo = _serviceProvider.GetRequiredService<IProductoRepository>();
-        var categoriaRepo = _serviceProvider.GetRequiredService<ICategoriaRepository>();
+        IProductoRepository productoRepo = _serviceProvider.GetRequiredService<IProductoRepository>();
+        ICategoriaRepository categoriaRepo = _serviceProvider.GetRequiredService<ICategoriaRepository>();
 
-        var uniqueName = $"Test Categoria {Guid.NewGuid():N}".Substring(0, 30);
+        string uniqueName = $"Test Categoria {Guid.NewGuid():N}".Substring(0, 30);
         var categoria = new Categoria { Nombre = uniqueName };
         await categoriaRepo.SaveAsync(categoria);
 
@@ -97,6 +88,14 @@ public class ProductoConcurrencyIntegrationTests {
         (_serviceProvider as IDisposable)?.Dispose();
     }
 
+    private static readonly ActivitySource ActivitySource = new("ProductoConcurrencyTests");
+    private const string DatabaseName = "it_producto_concurrency";
+    private string _connectionString = string.Empty;
+    private IServiceProvider? _serviceProvider;
+    private TiendaDbContext? _dbContext;
+    private IProductoRepository? _productoRepository;
+    private long _productoId;
+
     private static void RegisterRepositories(IServiceCollection services) {
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
@@ -113,7 +112,7 @@ public class ProductoConcurrencyIntegrationTests {
             RowVersion = new byte[] { 9, 10, 11, 12, 13, 14, 15, 16 }
         };
 
-        var result = await _productoRepository!.SaveAsync(producto);
+        Producto result = await _productoRepository!.SaveAsync(producto);
 
         result.Id.Should().BeGreaterThan(0);
         result.RowVersion.Should().NotBeNull();
@@ -122,7 +121,7 @@ public class ProductoConcurrencyIntegrationTests {
 
     [Test]
     public async Task FindByIdAsync_RetornaProductoConRowVersion() {
-        var producto = await _productoRepository!.FindByIdAsync(_productoId);
+        Producto? producto = await _productoRepository!.FindByIdAsync(_productoId);
 
         producto.Should().NotBeNull();
         producto!.RowVersion.Should().NotBeNull();
@@ -131,65 +130,66 @@ public class ProductoConcurrencyIntegrationTests {
 
     [Test]
     public async Task DecrementStockAsync_ConStockSuficiente_DecrementaCorrectamente() {
-        var stockInicial = 50;
+        int stockInicial = 50;
         await SetProductoStock(_productoId, stockInicial);
 
-        var producto = await _productoRepository!.FindByIdAsync(_productoId);
+        Producto? producto = await _productoRepository!.FindByIdAsync(_productoId);
         producto.Should().NotBeNull();
 
-        var resultado = await _productoRepository.DecrementStockAsync(_productoId, 10, producto!.RowVersion);
+        bool resultado = await _productoRepository.DecrementStockAsync(_productoId, 10, producto!.RowVersion);
 
         resultado.Should().BeTrue();
 
-        var productoFinal = await _productoRepository.FindByIdAsync(_productoId);
+        Producto? productoFinal = await _productoRepository.FindByIdAsync(_productoId);
         productoFinal!.Stock.Should().Be(stockInicial - 10);
     }
 
     [Test]
     public async Task DecrementStockAsync_ConStockInsuficiente_NoDecrementa() {
-        var stockInicial = 5;
+        int stockInicial = 5;
         await SetProductoStock(_productoId, stockInicial);
 
-        var producto = await _productoRepository!.FindByIdAsync(_productoId);
+        Producto? producto = await _productoRepository!.FindByIdAsync(_productoId);
         producto.Should().NotBeNull();
 
-        var resultado = await _productoRepository.DecrementStockAsync(_productoId, 10, producto!.RowVersion);
+        bool resultado = await _productoRepository.DecrementStockAsync(_productoId, 10, producto!.RowVersion);
 
         resultado.Should().BeFalse();
 
-        var productoFinal = await _productoRepository.FindByIdAsync(_productoId);
+        Producto? productoFinal = await _productoRepository.FindByIdAsync(_productoId);
         productoFinal!.Stock.Should().Be(stockInicial);
     }
 
     [Test]
     public async Task DecrementStockAsync_StockExacto_PermiteDecremento() {
-        var stockInicial = 10;
+        int stockInicial = 10;
         await SetProductoStock(_productoId, stockInicial);
 
-        var producto = await _productoRepository!.FindByIdAsync(_productoId);
+        Producto? producto = await _productoRepository!.FindByIdAsync(_productoId);
         producto.Should().NotBeNull();
 
-        var resultado = await _productoRepository.DecrementStockAsync(_productoId, stockInicial, producto!.RowVersion);
+        bool resultado = await _productoRepository.DecrementStockAsync(_productoId, stockInicial, producto!.RowVersion);
 
         resultado.Should().BeTrue();
 
-        var productoFinal = await _productoRepository.FindByIdAsync(_productoId);
+        Producto? productoFinal = await _productoRepository.FindByIdAsync(_productoId);
         productoFinal!.Stock.Should().Be(0);
     }
 
     [Test]
     public async Task DecrementStockAsync_CantidadMayorStock_Rechaza() {
-        var stockInicial = 10;
+        int stockInicial = 10;
         await SetProductoStock(_productoId, stockInicial);
 
-        var producto = await _productoRepository!.FindByIdAsync(_productoId);
+        Producto? producto = await _productoRepository!.FindByIdAsync(_productoId);
         producto.Should().NotBeNull();
 
-        var resultado = await _productoRepository.DecrementStockAsync(_productoId, stockInicial + 1, producto!.RowVersion);
+        bool resultado =
+            await _productoRepository.DecrementStockAsync(_productoId, stockInicial + 1, producto!.RowVersion);
 
         resultado.Should().BeFalse();
 
-        var productoFinal = await _productoRepository.FindByIdAsync(_productoId);
+        Producto? productoFinal = await _productoRepository.FindByIdAsync(_productoId);
         productoFinal!.Stock.Should().Be(stockInicial);
     }
 
@@ -197,25 +197,25 @@ public class ProductoConcurrencyIntegrationTests {
     public async Task DecrementStockAsync_ConStockCero_Rechaza() {
         await SetProductoStock(_productoId, 0);
 
-        var producto = await _productoRepository!.FindByIdAsync(_productoId);
+        Producto? producto = await _productoRepository!.FindByIdAsync(_productoId);
         producto.Should().NotBeNull();
 
-        var resultado = await _productoRepository.DecrementStockAsync(_productoId, 1, producto!.RowVersion);
+        bool resultado = await _productoRepository.DecrementStockAsync(_productoId, 1, producto!.RowVersion);
 
         resultado.Should().BeFalse();
 
-        var productoFinal = await _productoRepository.FindByIdAsync(_productoId);
+        Producto? productoFinal = await _productoRepository.FindByIdAsync(_productoId);
         productoFinal!.Stock.Should().Be(0);
     }
 
     [Test]
     public async Task FindAllAsync_SinProductos_RetornaListaVacia() {
-        var productos = await _productoRepository!.FindAllAsync();
+        IEnumerable<Producto> productos = await _productoRepository!.FindAllAsync();
         productos.Should().NotBeNull();
     }
 
     private async Task SetProductoStock(long productoId, int stock) {
-        var producto = await _dbContext!.FindAsync<Producto>(productoId);
+        Producto? producto = await _dbContext!.FindAsync<Producto>(productoId);
         producto!.Stock = stock;
         await _dbContext.SaveChangesAsync();
     }

@@ -7,13 +7,13 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Categorias;
 
 /// <summary>
-/// Implementación del repositorio de categorías.
+///     Implementación del repositorio de categorías.
 /// </summary>
 public class CategoriaRepository(
     TiendaDbContext context,
     ILogger<CategoriaRepository> logger
 ) : ICategoriaRepository {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<Categoria>> FindAllAsync() {
         logger.LogDebug("Buscando todas las categorías");
         return await context.Categorias
@@ -22,7 +22,7 @@ public class CategoriaRepository(
             .ToListAsync();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public IQueryable<Categoria> FindAllAsNoTracking() {
         logger.LogDebug("Obteniendo categorías como IQueryable");
         return context.Categorias
@@ -30,32 +30,33 @@ public class CategoriaRepository(
             .AsNoTracking();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<(IEnumerable<Categoria> Items, int TotalCount)> FindAllPagedAsync(CategoriaFilterDto filter) {
         logger.LogDebug("Buscando categorías paginadas con filtros");
 
-        var query = context.Categorias.AsQueryable();
+        IQueryable<Categoria> query = context.Categorias.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(filter.Nombre))
+        if (!string.IsNullOrWhiteSpace(filter.Nombre)) {
             query = query.Where(c => c.Nombre.Contains(filter.Nombre));
+        }
 
         if (filter.IsDeleted.HasValue) {
             query = query.IgnoreQueryFilters();
             query = query.Where(c => c.IsDeleted == filter.IsDeleted.Value);
         }
 
-        var totalCount = await query.CountAsync();
+        int totalCount = await query.CountAsync();
 
-        var orderedQuery = filter.Direction.Equals("desc", StringComparison.OrdinalIgnoreCase)
+        IOrderedQueryable<Categoria> orderedQuery = filter.Direction.Equals("desc", StringComparison.OrdinalIgnoreCase)
             ? query.OrderByDescending(GetSortExpression(filter.SortBy))
             : query.OrderBy(GetSortExpression(filter.SortBy));
 
         // 🛡️ Clamp defensivo: GraphQL construye el DTO en código sin pasar
         // por validación REST, así que el límite se ap aquí como única verdad funcional.
-        var size = Math.Clamp(filter.Size, 1, 100);
-        var page = Math.Max(filter.Page, 0);
+        int size = Math.Clamp(filter.Size, 1, 100);
+        int page = Math.Max(filter.Page, 0);
 
-        var items = await orderedQuery
+        List<Categoria> items = await orderedQuery
             .AsNoTracking()
             .Skip(page * size)
             .Take(size)
@@ -64,26 +65,28 @@ public class CategoriaRepository(
         return (items, totalCount);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Categoria?> FindByIdAsync(long id) {
         logger.LogDebug("Buscando categoría por ID: {Id}", id);
         return await context.Categorias.FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> ExistsByIdAsync(long id) {
         return await context.Categorias.AnyAsync(c => c.Id == id);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> ExistsByNombreAsync(string nombre, long? excludeId = null) {
-        var query = context.Categorias.Where(c => c.Nombre == nombre);
-        if (excludeId.HasValue)
+        IQueryable<Categoria> query = context.Categorias.Where(c => c.Nombre == nombre);
+        if (excludeId.HasValue) {
             query = query.Where(c => c.Id != excludeId.Value);
+        }
+
         return await query.AnyAsync();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Categoria> CreateAsync(Categoria categoria) {
         logger.LogDebug("Creando categoría: {Nombre}", categoria.Nombre);
         context.Categorias.Add(categoria);
@@ -91,7 +94,7 @@ public class CategoriaRepository(
         return categoria;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task CrearConIdExplicitoAsync(Categoria categoria) {
         logger.LogDebug("Creando categoría con ID explícito: {Id}", categoria.Id);
         // GENERATED ALWAYS rechaza valores explícitos: se inserta con OVERRIDING
@@ -111,7 +114,7 @@ public class CategoriaRepository(
             AUtc(categoria.UpdatedAt));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task ResincronizarSecuenciaAsync() {
         logger.LogDebug("Re-sincronizando secuencia de categorías");
         await context.Database.ExecuteSqlRawAsync(
@@ -121,11 +124,7 @@ public class CategoriaRepository(
             """);
     }
 
-    /// <summary>Garantiza Kind=Utc, que Npgsql exige para timestamp with time zone.</summary>
-    private static DateTime AUtc(DateTime valor) =>
-        valor.Kind == DateTimeKind.Utc ? valor : DateTime.SpecifyKind(valor, DateTimeKind.Utc);
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Categoria> UpdateAsync(Categoria categoria) {
         logger.LogDebug("Actualizando categoría ID: {Id}", categoria.Id);
         context.Categorias.Update(categoria);
@@ -133,28 +132,36 @@ public class CategoriaRepository(
         return categoria;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> DeleteAsync(long id) {
         logger.LogDebug("Eliminando categoría ID: {Id}", id);
-        var categoria = await FindByIdAsync(id);
-        if (categoria == null) return false;
+        Categoria? categoria = await FindByIdAsync(id);
+        if (categoria == null) {
+            return false;
+        }
 
         categoria.IsDeleted = true;
         await UpdateAsync(categoria);
         return true;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<Categoria> SaveAsync(Categoria categoria) {
         logger.LogDebug("Guardando categoría: {Nombre}", categoria.Nombre);
-        var existing = await FindByIdAsync(categoria.Id);
+        Categoria? existing = await FindByIdAsync(categoria.Id);
         if (existing != null) {
             context.Entry(existing).CurrentValues.SetValues(categoria);
         } else {
             context.Categorias.Add(categoria);
         }
+
         await context.SaveChangesAsync();
         return categoria;
+    }
+
+    /// <summary>Garantiza Kind=Utc, que Npgsql exige para timestamp with time zone.</summary>
+    private static DateTime AUtc(DateTime valor) {
+        return valor.Kind == DateTimeKind.Utc ? valor : DateTime.SpecifyKind(valor, DateTimeKind.Utc);
     }
 
     private static Expression<Func<Categoria, object>> GetSortExpression(string sortBy) {

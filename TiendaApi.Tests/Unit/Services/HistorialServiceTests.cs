@@ -1,8 +1,10 @@
+using CSharpFunctionalExtensions;
 using FluentAssertions;
+using FluentAssertions.Specialized;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TiendaApi.Api.Dtos.Historial;
 using TiendaApi.Api.Errors;
-using TiendaApi.Api.Errors.Productos;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Historial;
 using TiendaApi.Api.Repositories.Productos;
@@ -11,18 +13,19 @@ using TiendaApi.Api.Services.Historial;
 namespace TiendaApi.Tests.Unit.Services;
 
 /// <summary>
-/// Tests unitarios de HistorialService con los DOS repositorios mockeados
-/// (PostgreSQL = existencia, Cassandra = series). La leccion: la serie es
-/// dato derivado con manejo propio - lecturas tipadas como lista (vacio si
-/// no hay puntos) y escritura con resultado ignorado; el 404 lo decide
-/// siempre PostgreSQL.
+///     Tests unitarios de HistorialService con los DOS repositorios mockeados
+///     (PostgreSQL = existencia, Cassandra = series). La leccion: la serie es
+///     dato derivado con manejo propio - lecturas tipadas como lista (vacio si
+///     no hay puntos) y escritura con resultado ignorado; el 404 lo decide
+///     siempre PostgreSQL.
 /// </summary>
 public class HistorialServiceTests {
+    private Mock<IHistorialRepository> _historialRepository = null!;
+
     // NUnit reutiliza la instancia del fixture entre tests: los mocks se
     // rehacen en [SetUp] para que las verificaciones (Times.Never) solo
     // vean las invocaciones del test en curso.
     private Mock<IProductoRepository> _productoRepository = null!;
-    private Mock<IHistorialRepository> _historialRepository = null!;
     private HistorialService _service = null!;
 
     [SetUp]
@@ -32,7 +35,7 @@ public class HistorialServiceTests {
         _service = new HistorialService(
             _productoRepository.Object,
             _historialRepository.Object,
-            Mock.Of<Microsoft.Extensions.Logging.ILogger<HistorialService>>());
+            Mock.Of<ILogger<HistorialService>>());
     }
 
     // ===================== GetHistorialPreciosAsync =====================
@@ -41,14 +44,16 @@ public class HistorialServiceTests {
     public async Task GetHistorialPrecios_ProductoNoExiste_DevuelveNotFoundDePostgres() {
         _productoRepository.Setup(r => r.FindByIdAsync(999)).ReturnsAsync((Producto?)null);
 
-        var result = await _service.GetHistorialPreciosAsync(999, null, null, 50);
+        Result<IReadOnlyList<HistorialPrecioDto>, DomainError> result =
+            await _service.GetHistorialPreciosAsync(999, null, null, 50);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<NotFoundError>();
         result.Error.Message.Should().Contain("999");
         // La fuente de verdad no certifica el producto: ni se toca Cassandra.
         _historialRepository.Verify(
-            h => h.GetHistorialPreciosAsync(It.IsAny<long>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>()),
+            h => h.GetHistorialPreciosAsync(It.IsAny<long>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(),
+                It.IsAny<int>()),
             Times.Never);
     }
 
@@ -56,7 +61,7 @@ public class HistorialServiceTests {
     public async Task GetHistorialPrecios_RangoInvertido_DevuelveValidationErrorDeDesde() {
         _productoRepository.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop" });
 
-        var result = await _service.GetHistorialPreciosAsync(
+        Result<IReadOnlyList<HistorialPrecioDto>, DomainError> result = await _service.GetHistorialPreciosAsync(
             1, new DateTime(2026, 10, 10), new DateTime(2026, 9, 1), 50);
 
         result.IsFailure.Should().BeTrue();
@@ -75,7 +80,8 @@ public class HistorialServiceTests {
         _historialRepository.Setup(h => h.GetHistorialPreciosAsync(1, null, null, 50))
             .ReturnsAsync(serie);
 
-        var result = await _service.GetHistorialPreciosAsync(1, null, null, 50);
+        Result<IReadOnlyList<HistorialPrecioDto>, DomainError> result =
+            await _service.GetHistorialPreciosAsync(1, null, null, 50);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEquivalentTo(serie);
@@ -107,11 +113,15 @@ public class HistorialServiceTests {
     [Test]
     public async Task GetHistorialPrecios_CassandraCaida_NoLanza_Y_DevuelveVacia() {
         _productoRepository.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop" });
-        _historialRepository.Setup(h => h.GetHistorialPreciosAsync(It.IsAny<long>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>()))
+        _historialRepository.Setup(h =>
+                h.GetHistorialPreciosAsync(It.IsAny<long>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(),
+                    It.IsAny<int>()))
             .ThrowsAsync(new InvalidOperationException("No hay contact points"));
 
-        var act = async () => await _service.GetHistorialPreciosAsync(1, null, null, 50);
-        var result = await act.Should().NotThrowAsync();
+        Func<Task<Result<IReadOnlyList<HistorialPrecioDto>, DomainError>>> act = async () =>
+            await _service.GetHistorialPreciosAsync(1, null, null, 50);
+        AndWhichConstraint<GenericAsyncFunctionAssertions<Result<IReadOnlyList<HistorialPrecioDto>, DomainError>>,
+            Result<IReadOnlyList<HistorialPrecioDto>, DomainError>> result = await act.Should().NotThrowAsync();
 
         result.Which.IsSuccess.Should().BeTrue();
         result.Which.Value.Should().BeEmpty();
@@ -123,7 +133,7 @@ public class HistorialServiceTests {
     public async Task RegistrarVista_ProductoNoExiste_DevuelveNotFoundDePostgres() {
         _productoRepository.Setup(r => r.FindByIdAsync(999)).ReturnsAsync((Producto?)null);
 
-        var result = await _service.RegistrarVistaAsync(2, 999);
+        UnitResult<DomainError> result = await _service.RegistrarVistaAsync(2, 999);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<NotFoundError>();
@@ -139,7 +149,7 @@ public class HistorialServiceTests {
         _historialRepository.Setup(h => h.RegistrarVistaAsync(2, 1, "Laptop Dell XPS 15"))
             .Returns(Task.CompletedTask);
 
-        var result = await _service.RegistrarVistaAsync(2, 1);
+        UnitResult<DomainError> result = await _service.RegistrarVistaAsync(2, 1);
 
         result.IsSuccess.Should().BeTrue();
         // El nombre viaja COPIADO a la fila (el feed no hara cruces).
@@ -153,8 +163,9 @@ public class HistorialServiceTests {
         _historialRepository.Setup(h => h.RegistrarVistaAsync(It.IsAny<long>(), It.IsAny<long>(), It.IsAny<string>()))
             .ThrowsAsync(new InvalidOperationException("Nodo caido"));
 
-        var act = async () => await _service.RegistrarVistaAsync(2, 1);
-        var result = await act.Should().NotThrowAsync();
+        Func<Task<UnitResult<DomainError>>> act = async () => await _service.RegistrarVistaAsync(2, 1);
+        AndWhichConstraint<GenericAsyncFunctionAssertions<UnitResult<DomainError>>, UnitResult<DomainError>> result =
+            await act.Should().NotThrowAsync();
 
         // El resultado de la escritura en serie no cambia la respuesta: el
         // metodo termina bien con el repositorio mockeado.
@@ -171,7 +182,7 @@ public class HistorialServiceTests {
         };
         _historialRepository.Setup(h => h.GetFeedVistasAsync(2, 20)).ReturnsAsync(feed);
 
-        var result = await _service.GetFeedVistasAsync(2, 20);
+        IReadOnlyList<VistaFeedDto> result = await _service.GetFeedVistasAsync(2, 20);
 
         result.Should().BeEquivalentTo(feed);
     }
@@ -191,8 +202,9 @@ public class HistorialServiceTests {
         _historialRepository.Setup(h => h.GetFeedVistasAsync(It.IsAny<long>(), It.IsAny<int>()))
             .ThrowsAsync(new InvalidOperationException("Nodo caido"));
 
-        var act = async () => await _service.GetFeedVistasAsync(2, 20);
-        var result = await act.Should().NotThrowAsync();
+        Func<Task<IReadOnlyList<VistaFeedDto>>> act = async () => await _service.GetFeedVistasAsync(2, 20);
+        AndWhichConstraint<GenericAsyncFunctionAssertions<IReadOnlyList<VistaFeedDto>>, IReadOnlyList<VistaFeedDto>>
+            result = await act.Should().NotThrowAsync();
 
         // Particion vacia = lista vacia: la respuesta canonica de una serie
         // sin puntos (aqui, con el repositorio mockeado).

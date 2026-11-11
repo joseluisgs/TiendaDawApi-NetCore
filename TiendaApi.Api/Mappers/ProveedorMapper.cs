@@ -4,22 +4,24 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Mappers;
 
 /// <summary>
-/// Mapper para convertir entre Proveedor y sus DTOs.
+///     Mapper para convertir entre Proveedor y sus DTOs.
 /// </summary>
 public static class ProveedorMapper {
     /// <summary>Convierte Proveedor a ProveedorDto.</summary>
-    public static ProveedorDto ToDto(this Proveedor proveedor) =>
-        new(proveedor.Codigo, proveedor.Nombre, proveedor.Descripcion, proveedor.Contacto,
+    public static ProveedorDto ToDto(this Proveedor proveedor) {
+        return new ProveedorDto(proveedor.Codigo, proveedor.Nombre, proveedor.Descripcion, proveedor.Contacto,
             proveedor.CreatedAt, proveedor.UpdatedAt);
+    }
 
     /// <summary>Convierte lista de Proveedores a lista de ProveedorDto.</summary>
-    public static IEnumerable<ProveedorDto> ToDtoList(this IEnumerable<Proveedor> proveedores) =>
-        proveedores.Select(p => p.ToDto());
+    public static IEnumerable<ProveedorDto> ToDtoList(this IEnumerable<Proveedor> proveedores) {
+        return proveedores.Select(p => p.ToDto());
+    }
 
     /// <summary>
-    /// Convierte ProveedorRequestDto a Proveedor.
-    /// El código solo se copia si viene en la petición; si queda a null, Entity Framework
-    /// genera el identificador con el generador de IDs estilo YouTube al registrar la entidad.
+    ///     Convierte ProveedorRequestDto a Proveedor.
+    ///     El código solo se copia si viene en la petición; si queda a null, Entity Framework
+    ///     genera el identificador con el generador de IDs estilo YouTube al registrar la entidad.
     /// </summary>
     public static Proveedor ToEntity(this ProveedorRequestDto dto) {
         var proveedor = new Proveedor {
@@ -30,8 +32,9 @@ public static class ProveedorMapper {
             UpdatedAt = DateTime.UtcNow
         };
 
-        if (!string.IsNullOrWhiteSpace(dto.Codigo))
+        if (!string.IsNullOrWhiteSpace(dto.Codigo)) {
             proveedor.Codigo = dto.Codigo;
+        }
 
         return proveedor;
     }

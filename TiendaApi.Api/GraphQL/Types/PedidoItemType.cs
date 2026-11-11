@@ -1,15 +1,14 @@
-using HotChocolate.Types;
 using TiendaApi.Api.Dtos.Pedidos;
 
 namespace TiendaApi.Api.GraphQL.Types;
 
 /// <summary>
-/// Tipo de GraphQL para <see cref="PedidoItemDto"/>: línea de artículo del
-/// pedido (mismo contrato que REST).
+///     Tipo de GraphQL para <see cref="PedidoItemDto" />: línea de artículo del
+///     pedido (mismo contrato que REST).
 /// </summary>
 public class PedidoItemType : ObjectType<PedidoItemDto> {
     /// <summary>
-    /// Configura los campos y descripciones del tipo GraphQL de PedidoItemDto.
+    ///     Configura los campos y descripciones del tipo GraphQL de PedidoItemDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
     protected override void Configure(IObjectTypeDescriptor<PedidoItemDto> descriptor) {

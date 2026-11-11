@@ -6,21 +6,20 @@ using ISession = Cassandra.ISession;
 namespace TiendaApi.Api.Data.Seed.Cassandra;
 
 /// <summary>
-/// Seeder de Cassandra: serie histórica de precios (Q-A) y feed de actividad (Q-B).
-///
-/// 🎓 Va DESPUÉS de <c>InitializeCassandraAsync</c>: necesita el esquema creado.
-/// Como <c>MongoDbSeeder</c>, es idempotente (si la partición ya tiene filas lo
-/// omite), y su trabajo vive en un try propio: son datos de ejemplo, no un
-/// prerequisito del arranque de la API.
-/// Ojo con el ciclo de vida en desarrollo: PostgreSQL se ELIMINA y recrea en cada
-/// arranque, pero el keyspace NO (CREATE IF NOT EXISTS + datos persistentes);
-/// por eso la comprobación de "¿ya sembrado?" es obligatoria, no opcional.
+///     Seeder de Cassandra: serie histórica de precios (Q-A) y feed de actividad (Q-B).
+///     🎓 Va DESPUÉS de <c>InitializeCassandraAsync</c>: necesita el esquema creado.
+///     Como <c>MongoDbSeeder</c>, es idempotente (si la partición ya tiene filas lo
+///     omite), y su trabajo vive en un try propio: son datos de ejemplo, no un
+///     prerequisito del arranque de la API.
+///     Ojo con el ciclo de vida en desarrollo: PostgreSQL se ELIMINA y recrea en cada
+///     arranque, pero el keyspace NO (CREATE IF NOT EXISTS + datos persistentes);
+///     por eso la comprobación de "¿ya sembrado?" es obligatoria, no opcional.
 /// </summary>
 public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger) {
     /// <summary>
-    /// Siembra historial y feed si sus particiones están vacías: comprueba el
-    /// estado antes de escribir para poder repetirse en cada arranque sin
-    /// duplicar puntos.
+    ///     Siembra historial y feed si sus particiones están vacías: comprueba el
+    ///     estado antes de escribir para poder repetirse en cada arranque sin
+    ///     duplicar puntos.
     /// </summary>
     public async Task SeedAsync() {
         try {
@@ -38,11 +37,11 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger) 
     }
 
     /// <summary>
-    /// Serie de precios de los 3 productos seed. Cada serie termina en el precio
-    /// vigente del catálogo (el punto más reciente enlaza con el precio actual).
+    ///     Serie de precios de los 3 productos seed. Cada serie termina en el precio
+    ///     vigente del catálogo (el punto más reciente enlaza con el precio actual).
     /// </summary>
     private async Task SeedHistorialAsync(Table<HistorialPrecioPorProducto> historial) {
-        var yaSembrado = (await historial
+        bool yaSembrado = (await historial
             .Where(h => h.ProductoId == 1)
             .Take(1)
             .ExecuteAsync()).Any();
@@ -62,11 +61,11 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger) 
             (3, [(95, 46.99), (60, 44.99), (20, 42.99)])
         };
 
-        var totalPuntos = 0;
+        int totalPuntos = 0;
 
-        foreach (var (productoId, puntos) in series) {
-            foreach (var (dias, precio) in puntos) {
-                var fecha = DateTime.UtcNow.AddDays(-dias);
+        foreach ((long productoId, (int Dias, double Precio)[] puntos) in series) {
+            foreach ((int dias, double precio) in puntos) {
+                DateTime fecha = DateTime.UtcNow.AddDays(-dias);
 
                 // Dual-write EXACTO de RegistrarPrecioAsync (Q-A + Q-C) pero con la
                 // fecha backdateada: la firma del repo pone UtcNow a propósito (son
@@ -94,11 +93,11 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger) 
     }
 
     /// <summary>
-    /// Vistas de ejemplo del usuario seed userdaw (id 2, el mismo que usa
-    /// MongoDbSeeder) para que el feed arranque con contenido ordenado.
+    ///     Vistas de ejemplo del usuario seed userdaw (id 2, el mismo que usa
+    ///     MongoDbSeeder) para que el feed arranque con contenido ordenado.
     /// </summary>
     private async Task SeedVistasAsync(Table<VistaPorUsuario> vistas) {
-        var yaSembrado = (await vistas
+        bool yaSembrado = (await vistas
             .Where(v => v.UsuarioId == 2)
             .Take(1)
             .ExecuteAsync()).Any();
@@ -121,7 +120,7 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger) 
             (50, 3, "Clean Code")
         };
 
-        foreach (var (horas, productoId, nombre) in vistasSeed) {
+        foreach ((int horas, long productoId, string nombre) in vistasSeed) {
             await vistas.Insert(new VistaPorUsuario {
                 UsuarioId = 2,
                 Fecha = DateTime.UtcNow.AddHours(-horas),

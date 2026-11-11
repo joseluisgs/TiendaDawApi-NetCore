@@ -1,5 +1,4 @@
 using FluentValidation.TestHelper;
-using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Validators.Pedidos;
 
@@ -14,7 +13,7 @@ public class DestinatarioValidatorTests {
     public void NombreCompleto_ConLongitudExcedida_DeberiaTenerError() {
         var dto = new DestinatarioDto { NombreCompleto = new string('A', 201) };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.NombreCompleto)
             .WithErrorMessage("El nombre completo no puede superar los 200 caracteres");
@@ -24,7 +23,7 @@ public class DestinatarioValidatorTests {
     public void NombreCompleto_ConLongitudMaxima_DeberiaPasar() {
         var dto = new DestinatarioDto { NombreCompleto = new string('A', 200) };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.NombreCompleto);
     }
@@ -33,7 +32,7 @@ public class DestinatarioValidatorTests {
     public void NombreCompleto_Vacio_DeberiaTenerError() {
         var dto = new DestinatarioDto { NombreCompleto = string.Empty };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.NombreCompleto);
     }
@@ -42,7 +41,7 @@ public class DestinatarioValidatorTests {
     public void NombreCompleto_ConValorValido_DeberiaPasar() {
         var dto = new DestinatarioDto { NombreCompleto = "Test User" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.NombreCompleto);
     }
@@ -55,7 +54,7 @@ public class DestinatarioValidatorTests {
     public void Email_ConLongitudExcedida_DeberiaTenerError() {
         var dto = new DestinatarioDto { Email = new string('a', 250) + "@test.com" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("El email no puede superar los 254 caracteres");
@@ -65,7 +64,7 @@ public class DestinatarioValidatorTests {
     public void Email_ConFormatoInvalido_DeberiaTenerError() {
         var dto = new DestinatarioDto { Email = "email-invalido" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("El email del destinatario no es válido");
@@ -75,7 +74,7 @@ public class DestinatarioValidatorTests {
     public void Email_SinArroba_DeberiaTenerError() {
         var dto = new DestinatarioDto { Email = "emailtest.com" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("El email del destinatario no es válido");
@@ -85,7 +84,7 @@ public class DestinatarioValidatorTests {
     public void Email_ConFormatoValido_DeberiaPasar() {
         var dto = new DestinatarioDto { Email = "test@email.com" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Email);
     }
@@ -94,7 +93,7 @@ public class DestinatarioValidatorTests {
     public void Email_Vacio_DeberiaTenerError() {
         var dto = new DestinatarioDto { Email = string.Empty };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Email);
     }
@@ -108,10 +107,10 @@ public class DestinatarioValidatorTests {
         var dto = new DestinatarioDto {
             NombreCompleto = "Test User",
             Email = "test@email.com",
-            Telefono = "+12345678901234567890"  // 21 characters
+            Telefono = "+12345678901234567890" // 21 characters
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Telefono)
             .WithErrorMessage("El teléfono no puede superar los 20 caracteres");
@@ -122,10 +121,10 @@ public class DestinatarioValidatorTests {
         var dto = new DestinatarioDto {
             NombreCompleto = "Test User",
             Email = "test@email.com",
-            Telefono = "+34612"  // Solo 5 dígitos
+            Telefono = "+34612" // Solo 5 dígitos
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Telefono)
             .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos");
@@ -139,7 +138,7 @@ public class DestinatarioValidatorTests {
             Telefono = "+3461234567890123456"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Telefono)
             .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos");
@@ -153,7 +152,7 @@ public class DestinatarioValidatorTests {
             Telefono = "+34abcde678"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Telefono)
             .WithErrorMessage("El teléfono debe tener entre 9 y 15 dígitos");
@@ -163,7 +162,7 @@ public class DestinatarioValidatorTests {
     public void Telefono_ConPrefijoInternacionalValido_DeberiaPasar() {
         var dto = new DestinatarioDto { Telefono = "+34612345678" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Telefono);
     }
@@ -172,7 +171,7 @@ public class DestinatarioValidatorTests {
     public void Telefono_SinPrefijoValido_DeberiaPasar() {
         var dto = new DestinatarioDto { Telefono = "612345678" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Telefono);
     }
@@ -181,7 +180,7 @@ public class DestinatarioValidatorTests {
     public void Telefono_Null_DeberiaPasar() {
         var dto = new DestinatarioDto { Telefono = null };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Telefono);
     }
@@ -190,7 +189,7 @@ public class DestinatarioValidatorTests {
     public void Telefono_Vacio_DeberiaPasar() {
         var dto = new DestinatarioDto { Telefono = string.Empty };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Telefono);
     }
@@ -205,7 +204,7 @@ public class DestinatarioValidatorTests {
             Direccion = new DireccionDto()
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Direccion);
     }
@@ -216,7 +215,7 @@ public class DestinatarioValidatorTests {
             Direccion = new DireccionDto { CodigoPostal = "1234" }
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Direccion)
             .WithErrorMessage("La dirección del destinatario no es válida");
@@ -237,7 +236,7 @@ public class DestinatarioValidatorTests {
             }
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Direccion);
     }
@@ -262,7 +261,7 @@ public class DestinatarioValidatorTests {
             }
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -279,7 +278,7 @@ public class DestinatarioValidatorTests {
             }
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<DestinatarioDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveAnyValidationErrors();
     }

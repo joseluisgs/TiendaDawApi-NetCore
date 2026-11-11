@@ -1,12 +1,11 @@
 using FluentValidation.TestHelper;
-using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Validators.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Validators.Pedidos;
 
 /// <summary>
-/// Tests unitarios para PedidoRequestValidator.
+///     Tests unitarios para PedidoRequestValidator.
 /// </summary>
 public class PedidoRequestValidatorTests {
     private readonly PedidoRequestValidator _validator = new();
@@ -17,7 +16,7 @@ public class PedidoRequestValidatorTests {
     public void CreateAsync_ConItemsNulo_DeberiaTenerError() {
         var dto = new PedidoRequestDto { Items = null! };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Items)
             .WithErrorMessage("El pedido debe contener al menos un artículo");
@@ -27,7 +26,7 @@ public class PedidoRequestValidatorTests {
     public void CreateAsync_ConItemsVacios_DeberiaTenerError() {
         var dto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Items)
             .WithErrorMessage("El pedido debe contener al menos un artículo");
@@ -41,7 +40,7 @@ public class PedidoRequestValidatorTests {
             }
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Items);
     }
@@ -56,7 +55,7 @@ public class PedidoRequestValidatorTests {
             }
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Items);
     }
@@ -69,7 +68,7 @@ public class PedidoRequestValidatorTests {
     public void CreateAsync_ConDtoInvalido_DeberiaTenerError() {
         var dto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveAnyValidationError();
     }
@@ -91,7 +90,7 @@ public class PedidoRequestValidatorTests {
             }
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<PedidoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveAnyValidationErrors();
     }

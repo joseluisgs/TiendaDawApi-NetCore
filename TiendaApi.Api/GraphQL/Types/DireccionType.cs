@@ -1,15 +1,14 @@
-using HotChocolate.Types;
 using TiendaApi.Api.Dtos.Pedidos;
 
 namespace TiendaApi.Api.GraphQL.Types;
 
 /// <summary>
-/// Tipo de GraphQL para <see cref="DireccionDto"/>: dirección de entrega
-/// (mismo contrato que REST).
+///     Tipo de GraphQL para <see cref="DireccionDto" />: dirección de entrega
+///     (mismo contrato que REST).
 /// </summary>
 public class DireccionType : ObjectType<DireccionDto> {
     /// <summary>
-    /// Configura los campos y descripciones del tipo GraphQL de DireccionDto.
+    ///     Configura los campos y descripciones del tipo GraphQL de DireccionDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
     protected override void Configure(IObjectTypeDescriptor<DireccionDto> descriptor) {

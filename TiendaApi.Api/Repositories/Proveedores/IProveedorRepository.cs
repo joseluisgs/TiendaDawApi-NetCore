@@ -4,8 +4,8 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Proveedores;
 
 /// <summary>
-/// Contrato del repositorio de proveedores.
-/// La clave es un identificador de 11 caracteres generado por la aplicación.
+///     Contrato del repositorio de proveedores.
+///     La clave es un identificador de 11 caracteres generado por la aplicación.
 /// </summary>
 public interface IProveedorRepository {
     /// <summary>Obtiene todos los proveedores ordenados por nombre.</summary>

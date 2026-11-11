@@ -5,14 +5,14 @@ using TiendaApi.Api.IdGenerators;
 namespace TiendaApi.Tests.Unit.IdGenerators;
 
 /// <summary>
-/// Tests unitarios del generador de identificadores estilo YouTube y de su atributo de validación.
+///     Tests unitarios del generador de identificadores estilo YouTube y de su atributo de validación.
 /// </summary>
 public class IdYouTubeTests {
     #region Generación
 
     [Test]
     public void Next_DeveGenerarIdentificadorDeOnceCaracteres() {
-        var id = IdYouTube.Next();
+        string id = IdYouTube.Next();
 
         id.Should().HaveLength(11);
     }
@@ -21,16 +21,18 @@ public class IdYouTubeTests {
     public void Next_DeveUsarSoloElAlfabetoBase64Url() {
         var permitidos = new HashSet<char>("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_");
 
-        for (var i = 0; i < 200; i++)
+        for (int i = 0; i < 200; i++) {
             IdYouTube.Next().Should().Match(id => id.All(permitidos.Contains));
+        }
     }
 
     [Test]
     public void Next_DeveGenerarIdentificadoresSinRepetir() {
         var generados = new HashSet<string>();
 
-        for (var i = 0; i < 1000; i++)
+        for (int i = 0; i < 1000; i++) {
             generados.Add(IdYouTube.Next()).Should().BeTrue($"el identificador {i} se repitió");
+        }
     }
 
     [Test]
@@ -62,7 +64,7 @@ public class IdYouTubeTests {
 
     [Test]
     public void EsValido_ConLongitudDistinta_DeveDevolverFalse() {
-        IdYouTube.EsValido("abcdefghij").Should().BeFalse();   // 10
+        IdYouTube.EsValido("abcdefghij").Should().BeFalse(); // 10
         IdYouTube.EsValido("abcdefghijkl").Should().BeFalse(); // 12
     }
 
@@ -86,8 +88,7 @@ public class IdYouTubeTests {
     #region Atributo de validación
 
     private sealed class Contenedor {
-        [IdYouTube]
-        public string? Codigo { get; set; }
+        [IdYouTube] public string? Codigo { get; set; }
     }
 
     private static ValidationResult? Validar(string? valor) {
@@ -116,7 +117,7 @@ public class IdYouTubeTests {
 
     [Test]
     public void Atributo_ConIdentificadorInvalido_DebeDevolverError() {
-        var resultado = Validar("corto");
+        ValidationResult? resultado = Validar("corto");
 
         resultado.Should().NotBeNull();
         resultado!.ErrorMessage.Should().Be(IdYouTube.MensajeFormato);

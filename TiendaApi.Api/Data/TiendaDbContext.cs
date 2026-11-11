@@ -2,23 +2,23 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Api.Data.Interceptors;
+using TiendaApi.Api.IdGenerators;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Api.Data;
 
 /// <summary>
-/// DbContext de Entity Framework Core para PostgreSQL.
-/// Gestiona Categorías, Productos y Usuarios.
-/// Hereda de IdentityDbContext para soportar ASP.NET Core Identity.
+///     DbContext de Entity Framework Core para PostgreSQL.
+///     Gestiona Categorías, Productos y Usuarios.
+///     Hereda de IdentityDbContext para soportar ASP.NET Core Identity.
 /// </summary>
 public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long> {
     private static readonly TimestampInterceptor _timestampInterceptor = new();
 
     /// <summary>
-    /// Constructor con opciones de configuración.
+    ///     Constructor con opciones de configuración.
     /// </summary>
-    public TiendaDbContext(DbContextOptions<TiendaDbContext> options) : base(options) {
-    }
+    public TiendaDbContext(DbContextOptions<TiendaDbContext> options) : base(options) { }
 
     /// <summary>DbSet de Categorías.</summary>
     public DbSet<Categoria> Categorias { get; set; } = null!;
@@ -32,12 +32,14 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
     /// <summary>DbSet de Usuarios.</summary>
     public new DbSet<User> Users { get; set; } = null!;
 
-    /// <summary>DbSet de vinculaciones OAuth (logins externos). No confundir con
-    /// UserLogins de IdentityDbContext (AspNetUserLogins).</summary>
+    /// <summary>
+    ///     DbSet de vinculaciones OAuth (logins externos). No confundir con
+    ///     UserLogins de IdentityDbContext (AspNetUserLogins).
+    /// </summary>
     public DbSet<UserLogin> ExternalLogins { get; set; } = null!;
 
     /// <summary>
-    /// Configura el contexto (interceptores de marcas de tiempo).
+    ///     Configura el contexto (interceptores de marcas de tiempo).
     /// </summary>
     /// <param name="optionsBuilder">Constructor de opciones del contexto.</param>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
@@ -46,11 +48,11 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
     }
 
     /// <summary>
-    /// Define el modelo del esquema: entidades, relaciones, índices y filtros globales.
+    ///     Define el modelo del esquema: entidades, relaciones, índices y filtros globales.
     /// </summary>
     /// <param name="modelBuilder">Constructor del modelo.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
-        base.OnModelCreating(modelBuilder);  // ← Identity necesita esto para crear sus tablas AspNet*
+        base.OnModelCreating(modelBuilder); // ← Identity necesita esto para crear sus tablas AspNet*
 
         modelBuilder.Entity<Categoria>(entity => {
             entity.ToTable("categorias");
@@ -102,9 +104,9 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
             // entidad. ValueGeneratedOnAdd es obligatorio para claves string: sin él EF Core
             // no invoca al generador y rechaza la entidad por clave nula.
             entity.Property(p => p.Codigo)
-                .HasMaxLength(IdGenerators.IdYouTube.Longitud)
+                .HasMaxLength(IdYouTube.Longitud)
                 .ValueGeneratedOnAdd()
-                .HasValueGenerator<IdGenerators.YouTubeIdValueGenerator>();
+                .HasValueGenerator<YouTubeIdValueGenerator>();
 
             entity.Property(p => p.Nombre).IsRequired().HasMaxLength(100);
             entity.Property(p => p.Descripcion).HasMaxLength(500);

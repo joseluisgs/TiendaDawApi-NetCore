@@ -7,58 +7,61 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Usuarios;
 
 /// <summary>
-/// Implementación del repositorio de usuarios.
+///     Implementación del repositorio de usuarios.
 /// </summary>
 public class UserRepository(
     TiendaDbContext context,
     ILogger<UserRepository> logger
 ) : IUserRepository {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<User?> FindByIdAsync(long id) {
         return await context.Users.FindAsync(id);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<User?> FindByUsernameAsync(string username) {
         return await context.Users.FirstOrDefaultAsync(u => u.UserName == username);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<User?> FindByEmailAsync(string email) {
         return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<User>> FindAllAsync() {
         return await context.Users.AsNoTracking().ToListAsync();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<(IEnumerable<User> Items, int TotalCount)> FindAllPagedAsync(UserFilterDto filter) {
         logger.LogDebug("Buscando usuarios paginados");
 
-        var query = filter.IsDeleted.HasValue
+        IQueryable<User> query = filter.IsDeleted.HasValue
             ? context.Users.IgnoreQueryFilters().AsQueryable()
             : context.Users.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(filter.Username))
+        if (!string.IsNullOrWhiteSpace(filter.Username)) {
             query = query.Where(u => EF.Functions.Like(u.UserName, $"%{filter.Username}%"));
+        }
 
-        if (!string.IsNullOrWhiteSpace(filter.Email))
+        if (!string.IsNullOrWhiteSpace(filter.Email)) {
             query = query.Where(u => EF.Functions.Like(u.Email, $"%{filter.Email}%"));
+        }
 
-        if (filter.IsDeleted.HasValue)
+        if (filter.IsDeleted.HasValue) {
             query = query.Where(u => u.IsDeleted == filter.IsDeleted.Value);
+        }
 
-        var totalCount = await query.CountAsync();
+        int totalCount = await query.CountAsync();
         query = ApplySorting(query, filter.SortBy, filter.Direction);
 
         // 🛡️ Clamp defensivo: GraphQL construye el DTO en código sin pasar
         // por validación REST, así que el límite se ap aquí como única verdad funcional.
-        var size = Math.Clamp(filter.Size, 1, 100);
-        var page = Math.Max(filter.Page, 0);
+        int size = Math.Clamp(filter.Size, 1, 100);
+        int page = Math.Max(filter.Page, 0);
 
-        var items = await query
+        List<User> items = await query
             .AsNoTracking()
             .Skip(page * size)
             .Take(size)
@@ -67,7 +70,7 @@ public class UserRepository(
         return (items, totalCount);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<User> SaveAsync(User user) {
         context.Users.Add(user);
         await context.SaveChangesAsync();
@@ -75,7 +78,7 @@ public class UserRepository(
         return user;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<User> UpdateAsync(User user) {
         context.Users.Update(user);
         await context.SaveChangesAsync();
@@ -83,9 +86,9 @@ public class UserRepository(
         return user;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task DeleteAsync(long id) {
-        var user = await FindByIdAsync(id);
+        User? user = await FindByIdAsync(id);
         if (user is not null) {
             user.IsDeleted = true;
             await context.SaveChangesAsync();
@@ -93,7 +96,7 @@ public class UserRepository(
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IEnumerable<User>> GetActiveUsersAsync() {
         logger.LogDebug("Obteniendo usuarios activos");
         return await context.Users
@@ -104,7 +107,7 @@ public class UserRepository(
     }
 
     private static IQueryable<User> ApplySorting(IQueryable<User> query, string sortBy, string direction) {
-        var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
+        bool isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
         Expression<Func<User, object>> keySelector = sortBy.ToLower() switch {
             "username" => u => u.UserName ?? string.Empty,
             "email" => u => u.Email ?? string.Empty,

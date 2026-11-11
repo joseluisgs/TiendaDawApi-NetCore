@@ -6,27 +6,29 @@ using TiendaApi.Api.Infrastructures;
 namespace TiendaApi.Api.Services.Cache;
 
 /// <summary>
-/// Implementación de caché usando Redis.
-/// Implementa el patrón cache-aside.
+///     Implementación de caché usando Redis.
+///     Implementa el patrón cache-aside.
 /// </summary>
 public class RedisCacheService(
     IDistributedCache cache,
     ILogger<RedisCacheService> logger
 ) : ICacheService {
     private readonly IDistributedCache _cache = cache;
-    private readonly ILogger<RedisCacheService> _logger = logger;
+
     private readonly JsonSerializerOptions _jsonOptions = new() {
         PropertyNameCaseInsensitive = true,
         // Source-gen (AppJsonContext) + fallback a reflexión
         TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
     };
 
+    private readonly ILogger<RedisCacheService> _logger = logger;
+
     /// <summary>
-    /// Obtiene un valor de la caché, deserializando desde JSON.
+    ///     Obtiene un valor de la caché, deserializando desde JSON.
     /// </summary>
     public async Task<T?> GetAsync<T>(string key) {
         try {
-            var cachedValue = await _cache.GetStringAsync(key);
+            string? cachedValue = await _cache.GetStringAsync(key);
 
             if (string.IsNullOrEmpty(cachedValue)) {
                 _logger.LogDebug("Cache miss para clave: {Key}", key);
@@ -42,12 +44,12 @@ public class RedisCacheService(
     }
 
     /// <summary>
-    /// Guarda un valor en la caché, serializando a JSON.
-    /// Expiración por defecto: 5 minutos.
+    ///     Guarda un valor en la caché, serializando a JSON.
+    ///     Expiración por defecto: 5 minutos.
     /// </summary>
     public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) {
         try {
-            var jsonValue = JsonSerializer.Serialize(value, _jsonOptions);
+            string jsonValue = JsonSerializer.Serialize(value, _jsonOptions);
 
             var options = new DistributedCacheEntryOptions {
                 AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(5)
@@ -63,7 +65,7 @@ public class RedisCacheService(
     }
 
     /// <summary>
-    /// Elimina un valor de la caché por clave.
+    ///     Elimina un valor de la caché por clave.
     /// </summary>
     public async Task RemoveAsync(string key) {
         try {

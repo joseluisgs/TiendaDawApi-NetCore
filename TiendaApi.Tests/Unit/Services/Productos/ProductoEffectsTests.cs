@@ -11,18 +11,18 @@ using TiendaApi.Api.Services.Productos;
 namespace TiendaApi.Tests.Unit.Services.Productos;
 
 /// <summary>
-/// 🎓 Tests de paridad de canales en los efectos de productos: cada evento de
-/// tiempo real debe salir SIEMPRE por WebSocket Y SignalR (los métodos
-/// combinados). Antes, la actualización por imagen/PATCH solo emitía por
-/// WebSocket y se perdía el evento SignalR (incluido el mutation GraphQL que
-/// delega en UpdatePartialAsync).
+///     🎓 Tests de paridad de canales en los efectos de productos: cada evento de
+///     tiempo real debe salir SIEMPRE por WebSocket Y SignalR (los métodos
+///     combinados). Antes, la actualización por imagen/PATCH solo emitía por
+///     WebSocket y se perdía el evento SignalR (incluido el mutation GraphQL que
+///     delega en UpdatePartialAsync).
 /// </summary>
 public class ProductoEffectsTests {
-    private Mock<ProductosWebSocketHandler> _webSocket = null!;
-    private Mock<IHubContext<ProductosHub>> _hubContext = null!;
-    private Mock<IHubClients> _clients = null!;
     private Mock<IClientProxy> _allProxy = null!;
+    private Mock<IHubClients> _clients = null!;
     private ProductoEffects _effects = null!;
+    private Mock<IHubContext<ProductosHub>> _hubContext = null!;
+    private Mock<ProductosWebSocketHandler> _webSocket = null!;
 
     [SetUp]
     public void Setup() {
@@ -45,25 +45,27 @@ public class ProductoEffectsTests {
             Mock.Of<ILogger<ProductoEffects>>());
     }
 
-    private static ProductoDto UnProducto() => new(
-        Id: 42,
-        Nombre: "Teclado",
-        Descripcion: "Mecánico",
-        Precio: 25.5m,
-        Stock: 10,
-        Imagen: null,
-        Categoria: null!,
-        Proveedor: null,
-        CreatedAt: DateTime.UtcNow,
-        UpdatedAt: DateTime.UtcNow);
+    private static ProductoDto UnProducto() {
+        return new ProductoDto(
+            42,
+            "Teclado",
+            "Mecánico",
+            25.5m,
+            10,
+            null,
+            null!,
+            null,
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+    }
 
     /// <summary>
-    /// Los envíos son fire-and-forget (Task.Run): se reintenta la verificación
-    /// hasta 2s para no depender de tiempos de ejecución.
+    ///     Los envíos son fire-and-forget (Task.Run): se reintenta la verificación
+    ///     hasta 2s para no depender de tiempos de ejecución.
     /// </summary>
     private static async Task Eventually(Action verify) {
         Exception? ultimoError = null;
-        for (var intento = 0; intento < 200; intento++) {
+        for (int intento = 0; intento < 200; intento++) {
             try {
                 verify();
                 return;
@@ -72,6 +74,7 @@ public class ProductoEffectsTests {
                 await Task.Delay(10);
             }
         }
+
         throw ultimoError!;
     }
 
@@ -82,7 +85,9 @@ public class ProductoEffectsTests {
         await Eventually(() => {
             _webSocket.Verify(h => h.NotifyAsync(
                 It.Is<ProductoNotificacion>(n => n.ProductoId == 42)), Times.Once);
-            _allProxy.Verify(p => p.SendCoreAsync("ProductoCreado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
+            _allProxy.Verify(
+                p => p.SendCoreAsync("ProductoCreado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         });
     }
 
@@ -93,7 +98,9 @@ public class ProductoEffectsTests {
         await Eventually(() => {
             _webSocket.Verify(h => h.NotifyAsync(
                 It.Is<ProductoNotificacion>(n => n.ProductoId == 42)), Times.Once);
-            _allProxy.Verify(p => p.SendCoreAsync("ProductoActualizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
+            _allProxy.Verify(
+                p => p.SendCoreAsync("ProductoActualizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         });
     }
 
@@ -104,7 +111,9 @@ public class ProductoEffectsTests {
         await Eventually(() => {
             _webSocket.Verify(h => h.NotifyAsync(
                 It.Is<ProductoNotificacion>(n => n.ProductoId == 42)), Times.Once);
-            _allProxy.Verify(p => p.SendCoreAsync("ProductoEliminado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
+            _allProxy.Verify(
+                p => p.SendCoreAsync("ProductoEliminado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         });
     }
 }

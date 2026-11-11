@@ -11,8 +11,8 @@ namespace TiendaApi.Tests.Unit.Repositories.Usuarios;
 
 public class UserRepositoryInMemoryTests {
     private TiendaDbContext CreateContext(string dbName) {
-        var options = new DbContextOptionsBuilder<TiendaDbContext>()
-            .UseInMemoryDatabase(databaseName: dbName)
+        DbContextOptions<TiendaDbContext> options = new DbContextOptionsBuilder<TiendaDbContext>()
+            .UseInMemoryDatabase(dbName)
             .Options;
 
         return new TiendaDbContext(options);
@@ -20,14 +20,14 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindByIdAsync_Existe_RetornaUsuario() {
-        using var context = CreateContext(nameof(FindByIdAsync_Existe_RetornaUsuario));
+        using TiendaDbContext context = CreateContext(nameof(FindByIdAsync_Existe_RetornaUsuario));
 
         context.Users.Add(new User { Id = 1, UserName = "admin", Email = "admin@test.com" });
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
 
-        var result = await repository.FindByIdAsync(1);
+        User? result = await repository.FindByIdAsync(1);
 
         result.Should().NotBeNull();
         result!.UserName.Should().Be("admin");
@@ -35,25 +35,25 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindByIdAsync_NoExiste_RetornaNull() {
-        using var context = CreateContext(nameof(FindByIdAsync_NoExiste_RetornaNull));
+        using TiendaDbContext context = CreateContext(nameof(FindByIdAsync_NoExiste_RetornaNull));
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
 
-        var result = await repository.FindByIdAsync(999);
+        User? result = await repository.FindByIdAsync(999);
 
         result.Should().BeNull();
     }
 
     [Test]
     public async Task FindByUsernameAsync_Existe_RetornaUsuario() {
-        using var context = CreateContext(nameof(FindByUsernameAsync_Existe_RetornaUsuario));
+        using TiendaDbContext context = CreateContext(nameof(FindByUsernameAsync_Existe_RetornaUsuario));
 
         context.Users.Add(new User { Id = 1, UserName = "admin", Email = "admin@test.com" });
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
 
-        var result = await repository.FindByUsernameAsync("admin");
+        User? result = await repository.FindByUsernameAsync("admin");
 
         result.Should().NotBeNull();
         result!.UserName.Should().Be("admin");
@@ -61,25 +61,25 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindByUsernameAsync_NoExiste_RetornaNull() {
-        using var context = CreateContext(nameof(FindByUsernameAsync_NoExiste_RetornaNull));
+        using TiendaDbContext context = CreateContext(nameof(FindByUsernameAsync_NoExiste_RetornaNull));
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
 
-        var result = await repository.FindByUsernameAsync("noexiste");
+        User? result = await repository.FindByUsernameAsync("noexiste");
 
         result.Should().BeNull();
     }
 
     [Test]
     public async Task FindByEmailAsync_Existe_RetornaUsuario() {
-        using var context = CreateContext(nameof(FindByEmailAsync_Existe_RetornaUsuario));
+        using TiendaDbContext context = CreateContext(nameof(FindByEmailAsync_Existe_RetornaUsuario));
 
         context.Users.Add(new User { Id = 1, UserName = "admin", Email = "admin@test.com" });
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
 
-        var result = await repository.FindByEmailAsync("admin@test.com");
+        User? result = await repository.FindByEmailAsync("admin@test.com");
 
         result.Should().NotBeNull();
         result!.Email.Should().Be("admin@test.com");
@@ -87,12 +87,12 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task SaveAsync_NuevoUsuario_RetornaConId() {
-        using var context = CreateContext(nameof(SaveAsync_NuevoUsuario_RetornaConId));
+        using TiendaDbContext context = CreateContext(nameof(SaveAsync_NuevoUsuario_RetornaConId));
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
         var user = new User { UserName = "newuser", Email = "new@test.com", PasswordHash = "hash" };
 
-        var result = await repository.SaveAsync(user);
+        User result = await repository.SaveAsync(user);
 
         result.Id.Should().BeGreaterThan(0);
         result.UserName.Should().Be("newuser");
@@ -100,23 +100,23 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task UpdateAsync_Existente_ActualizaDatos() {
-        using var context = CreateContext(nameof(UpdateAsync_Existente_ActualizaDatos));
+        using TiendaDbContext context = CreateContext(nameof(UpdateAsync_Existente_ActualizaDatos));
 
         context.Users.Add(new User { Id = 1, UserName = "original", Email = "original@test.com" });
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var user = await repository.FindByIdAsync(1);
+        User? user = await repository.FindByIdAsync(1);
         user!.UserName = "actualizado";
 
-        var result = await repository.UpdateAsync(user);
+        User result = await repository.UpdateAsync(user);
 
         result.UserName.Should().Be("actualizado");
     }
 
     [Test]
     public async Task FindAllAsync_ConUsuarios_RetornaLista() {
-        using var context = CreateContext(nameof(FindAllAsync_ConUsuarios_RetornaLista));
+        using TiendaDbContext context = CreateContext(nameof(FindAllAsync_ConUsuarios_RetornaLista));
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "admin", Email = "test@test.com" },
@@ -133,7 +133,7 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllAsync_NoMuestraEliminados_SoftDelete() {
-        using var context = CreateContext(nameof(FindAllAsync_NoMuestraEliminados_SoftDelete));
+        using TiendaDbContext context = CreateContext(nameof(FindAllAsync_NoMuestraEliminados_SoftDelete));
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "activo", Email = "test@test.com" },
@@ -153,18 +153,19 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_Con20Usuarios_Pagina1_Size10_Retorna10() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         for (int i = 1; i <= 20; i++) {
             context.Users.Add(new User { Id = i, UserName = $"user{i}", Email = $"user{i}@test.com" });
         }
+
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto(null, null, null, 0, 10, "id", "asc");
+        var filter = new UserFilterDto(null, null, null);
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.Should().HaveCount(10);
         totalCount.Should().Be(20);
@@ -172,18 +173,19 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_Pagina2_Size5_RetornaSiguientes5() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         for (int i = 1; i <= 20; i++) {
             context.Users.Add(new User { Id = i, UserName = $"user{i}", Email = $"user{i}@test.com" });
         }
+
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto(null, null, null, 1, 5, "id", "asc");
+        var filter = new UserFilterDto(null, null, null, 1, 5);
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.Should().HaveCount(5);
         items.First().Id.Should().Be(6);
@@ -192,8 +194,8 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_ConFiltroUsername_RetornaSoloCoincidentes() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "admin", Email = "admin@test.com" },
@@ -204,9 +206,9 @@ public class UserRepositoryInMemoryTests {
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto("admin", null, null, 0, 10, "id", "asc");
+        var filter = new UserFilterDto("admin", null, null);
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.Should().HaveCount(2);
         totalCount.Should().Be(2);
@@ -214,8 +216,8 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_ConFiltroEmail_RetornaSoloCoincidentes() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "user1", Email = "admin@empresa.com" },
@@ -225,9 +227,9 @@ public class UserRepositoryInMemoryTests {
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto(null, "empresa.com", null, 0, 10, "id", "asc");
+        var filter = new UserFilterDto(null, "empresa.com", null);
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.Should().HaveCount(2);
         totalCount.Should().Be(2);
@@ -235,8 +237,8 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "activo", Email = "activo@test.com", IsDeleted = false },
@@ -246,9 +248,9 @@ public class UserRepositoryInMemoryTests {
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto(null, null, true, 0, 10, "id", "asc");
+        var filter = new UserFilterDto(null, null, true);
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.Should().HaveCount(2);
         items.All(u => u.IsDeleted).Should().BeTrue();
@@ -256,8 +258,8 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "aaa", Email = "test@test.com" },
@@ -269,7 +271,7 @@ public class UserRepositoryInMemoryTests {
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
         var filter = new UserFilterDto(null, null, null, 0, 10, "id", "desc");
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.First().Id.Should().Be(3);
         items.Last().Id.Should().Be(1);
@@ -277,8 +279,8 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_OrdenacionPorUsername_RetornaOrdenadoPorUsername() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "zebra", Email = "test@test.com" },
@@ -288,9 +290,9 @@ public class UserRepositoryInMemoryTests {
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto(null, null, null, 0, 10, "username", "asc");
+        var filter = new UserFilterDto(null, null, null, 0, 10, "username");
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.First().UserName.Should().Be("alfa");
         items.Skip(1).First().UserName.Should().Be("beta");
@@ -299,8 +301,8 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "user1", Email = "test@test.com" },
@@ -309,9 +311,9 @@ public class UserRepositoryInMemoryTests {
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto(null, null, null, 10, 10, "id", "asc");
+        var filter = new UserFilterDto(null, null, null, 10);
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.Should().BeEmpty();
         totalCount.Should().Be(2);
@@ -319,8 +321,8 @@ public class UserRepositoryInMemoryTests {
 
     [Test]
     public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto() {
-        var dbName = Guid.NewGuid().ToString();
-        using var context = CreateContext(dbName);
+        string dbName = Guid.NewGuid().ToString();
+        using TiendaDbContext context = CreateContext(dbName);
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "admin", Email = "admin@test.com", IsDeleted = false },
@@ -331,12 +333,13 @@ public class UserRepositoryInMemoryTests {
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
-        var filter = new UserFilterDto("admin", "test.com", false, 0, 10, "id", "asc");
+        var filter = new UserFilterDto("admin", "test.com", false);
 
-        var (items, totalCount) = await repository.FindAllPagedAsync(filter);
+        (IEnumerable<User> items, int totalCount) = await repository.FindAllPagedAsync(filter);
 
         items.Should().HaveCount(2);
-        items.All(u => u.UserName?.Contains("admin") == true && u.Email?.Contains("test.com") == true && !u.IsDeleted).Should().BeTrue();
+        items.All(u => u.UserName?.Contains("admin") == true && u.Email?.Contains("test.com") == true && !u.IsDeleted)
+            .Should().BeTrue();
         totalCount.Should().Be(2);
     }
 
@@ -345,11 +348,12 @@ public class UserRepositoryInMemoryTests {
     #region GetActiveUsersAsync Tests
 
     /// <summary>
-    /// Verifica que retorna solo usuarios activos.
+    ///     Verifica que retorna solo usuarios activos.
     /// </summary>
     [Test]
     public async Task GetActiveUsersAsync_ConUsuariosActivos_RetornaSoloActivos() {
-        using var context = CreateContext(nameof(GetActiveUsersAsync_ConUsuariosActivos_RetornaSoloActivos));
+        using TiendaDbContext context =
+            CreateContext(nameof(GetActiveUsersAsync_ConUsuariosActivos_RetornaSoloActivos));
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "admin", Email = "admin@test.com" },
@@ -365,11 +369,12 @@ public class UserRepositoryInMemoryTests {
     }
 
     /// <summary>
-    /// Verifica que excluye usuarios eliminados lógicamente.
+    ///     Verifica que excluye usuarios eliminados lógicamente.
     /// </summary>
     [Test]
     public async Task GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados() {
-        using var context = CreateContext(nameof(GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados));
+        using TiendaDbContext context =
+            CreateContext(nameof(GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados));
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "activo", Email = "activo@test.com", IsDeleted = false },
@@ -387,11 +392,11 @@ public class UserRepositoryInMemoryTests {
     }
 
     /// <summary>
-    /// Verifica que retorna lista vacía cuando no hay usuarios activos.
+    ///     Verifica que retorna lista vacía cuando no hay usuarios activos.
     /// </summary>
     [Test]
     public async Task GetActiveUsersAsync_SoloEliminados_RetornaListaVacia() {
-        using var context = CreateContext(nameof(GetActiveUsersAsync_SoloEliminados_RetornaListaVacia));
+        using TiendaDbContext context = CreateContext(nameof(GetActiveUsersAsync_SoloEliminados_RetornaListaVacia));
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "eliminado1", Email = "del1@test.com", IsDeleted = true },
@@ -407,11 +412,11 @@ public class UserRepositoryInMemoryTests {
     }
 
     /// <summary>
-    /// Verifica que retorna lista vacía cuando no hay usuarios.
+    ///     Verifica que retorna lista vacía cuando no hay usuarios.
     /// </summary>
     [Test]
     public async Task GetActiveUsersAsync_SinUsuarios_RetornaListaVacia() {
-        using var context = CreateContext(nameof(GetActiveUsersAsync_SinUsuarios_RetornaListaVacia));
+        using TiendaDbContext context = CreateContext(nameof(GetActiveUsersAsync_SinUsuarios_RetornaListaVacia));
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
 
@@ -421,11 +426,11 @@ public class UserRepositoryInMemoryTests {
     }
 
     /// <summary>
-    /// Verifica que usuarios están ordenados por Email.
+    ///     Verifica que usuarios están ordenados por Email.
     /// </summary>
     [Test]
     public async Task GetActiveUsersAsync_MultiplesUsuarios_OrdenadosPorEmail() {
-        using var context = CreateContext(nameof(GetActiveUsersAsync_MultiplesUsuarios_OrdenadosPorEmail));
+        using TiendaDbContext context = CreateContext(nameof(GetActiveUsersAsync_MultiplesUsuarios_OrdenadosPorEmail));
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "zebra", Email = "zebra@test.com" },
@@ -445,11 +450,11 @@ public class UserRepositoryInMemoryTests {
     }
 
     /// <summary>
-    /// Verifica que con usuarios mixtos solo retorna activos.
+    ///     Verifica que con usuarios mixtos solo retorna activos.
     /// </summary>
     [Test]
     public async Task GetActiveUsersAsync_UsuariosMixtos_RetornaSoloActivos() {
-        using var context = CreateContext(nameof(GetActiveUsersAsync_UsuariosMixtos_RetornaSoloActivos));
+        using TiendaDbContext context = CreateContext(nameof(GetActiveUsersAsync_UsuariosMixtos_RetornaSoloActivos));
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "a1", Email = "a1@test.com", IsDeleted = false },
@@ -469,11 +474,11 @@ public class UserRepositoryInMemoryTests {
     }
 
     /// <summary>
-    /// Verifica que retorna un solo usuario activo.
+    ///     Verifica que retorna un solo usuario activo.
     /// </summary>
     [Test]
     public async Task GetActiveUsersAsync_UnUsuarioActivo_RetornaEseUsuario() {
-        using var context = CreateContext(nameof(GetActiveUsersAsync_UnUsuarioActivo_RetornaEseUsuario));
+        using TiendaDbContext context = CreateContext(nameof(GetActiveUsersAsync_UnUsuarioActivo_RetornaEseUsuario));
 
         context.Users.AddRange(
             new User { Id = 1, UserName = "solo", Email = "solo@test.com", IsDeleted = false },

@@ -3,7 +3,7 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Repositories.Auth;
 
 /// <summary>
-/// Contrato del repositorio de vinculaciones OAuth (logins externos).
+///     Contrato del repositorio de vinculaciones OAuth (logins externos).
 /// </summary>
 public interface IUserLoginRepository {
     /// <summary>Busca una vinculación por proveedor y provider key.</summary>

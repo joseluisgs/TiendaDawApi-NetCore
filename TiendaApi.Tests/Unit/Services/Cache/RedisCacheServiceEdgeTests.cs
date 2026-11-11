@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -9,9 +7,9 @@ using TiendaApi.Api.Services.Cache;
 namespace TiendaApi.Tests.Unit.Services.Cache;
 
 public class RedisCacheServiceEdgeTests {
+    private RedisCacheService _cacheService = null!;
     private Mock<IDistributedCache> _mockCache = null!;
     private Mock<ILogger<RedisCacheService>> _mockLogger = null!;
-    private RedisCacheService _cacheService = null!;
 
     [SetUp]
     public void Setup() {
@@ -27,7 +25,7 @@ public class RedisCacheServiceEdgeTests {
         _mockCache.Setup(c => c.Get(It.IsAny<string>()))
             .Returns((byte[]?)null);
 
-        var result = await _cacheService.GetAsync<string>("non-existent");
+        string? result = await _cacheService.GetAsync<string>("non-existent");
 
         result.Should().BeNull();
     }
@@ -37,7 +35,7 @@ public class RedisCacheServiceEdgeTests {
         _mockCache.Setup(c => c.Get(It.IsAny<string>()))
             .Returns(Array.Empty<byte>());
 
-        var result = await _cacheService.GetAsync<string>("test-key");
+        string? result = await _cacheService.GetAsync<string>("test-key");
 
         result.Should().BeNull();
     }
@@ -47,7 +45,7 @@ public class RedisCacheServiceEdgeTests {
         _mockCache.Setup(c => c.Get(It.IsAny<string>()))
             .Throws(new Exception("Cache error"));
 
-        var result = await _cacheService.GetAsync<string>("test-key");
+        string? result = await _cacheService.GetAsync<string>("test-key");
 
         result.Should().BeNull();
     }
@@ -58,42 +56,42 @@ public class RedisCacheServiceEdgeTests {
 
     [Test]
     public async Task SetAsync_ConKeyVacio_NoLanzaExcepcion() {
-        var act = async () => await _cacheService.SetAsync("", "value");
+        Func<Task> act = async () => await _cacheService.SetAsync("", "value");
         await act.Should().NotThrowAsync();
     }
 
     [Test]
     public async Task SetAsync_ConExpiracionNegativa_UsaExpiracionPorDefecto() {
-        var key = "test-key";
-        var value = "test-value";
+        string key = "test-key";
+        string value = "test-value";
         var negativeExpiration = TimeSpan.FromMinutes(-1);
 
-        var act = async () => await _cacheService.SetAsync(key, value, negativeExpiration);
+        Func<Task> act = async () => await _cacheService.SetAsync(key, value, negativeExpiration);
         await act.Should().NotThrowAsync();
     }
 
     [Test]
     public async Task SetAsync_ConExpiracionCero_UsaExpiracionPorDefecto() {
-        var key = "test-key";
-        var value = "test-value";
+        string key = "test-key";
+        string value = "test-value";
 
-        var act = async () => await _cacheService.SetAsync(key, value, TimeSpan.Zero);
+        Func<Task> act = async () => await _cacheService.SetAsync(key, value, TimeSpan.Zero);
         await act.Should().NotThrowAsync();
     }
 
     [Test]
     public async Task SetAsync_ConExpiracionMuyLarga_NoLanzaExcepcion() {
-        var key = "test-key";
-        var value = "test-value";
+        string key = "test-key";
+        string value = "test-value";
         var longExpiration = TimeSpan.FromDays(365);
 
-        var act = async () => await _cacheService.SetAsync(key, value, longExpiration);
+        Func<Task> act = async () => await _cacheService.SetAsync(key, value, longExpiration);
         await act.Should().NotThrowAsync();
     }
 
     [Test]
     public async Task SetAsync_ConObjetoVacio_NoLanzaExcepcion() {
-        var act = async () => await _cacheService.SetAsync("key", new EmptyCacheData());
+        Func<Task> act = async () => await _cacheService.SetAsync("key", new EmptyCacheData());
         await act.Should().NotThrowAsync();
     }
 
@@ -101,13 +99,13 @@ public class RedisCacheServiceEdgeTests {
     public async Task SetAsync_ConPropiedadesNulas_NoLanzaExcepcion() {
         var data = new CacheTestDataWithNulls { Id = 1, Name = null };
 
-        var act = async () => await _cacheService.SetAsync("key", data);
+        Func<Task> act = async () => await _cacheService.SetAsync("key", data);
         await act.Should().NotThrowAsync();
     }
 
     [Test]
     public async Task SetAsync_ConColeccionVacia_NoLanzaExcepcion() {
-        var act = async () => await _cacheService.SetAsync("key", new List<string>());
+        Func<Task> act = async () => await _cacheService.SetAsync("key", new List<string>());
         await act.Should().NotThrowAsync();
     }
 
@@ -115,24 +113,24 @@ public class RedisCacheServiceEdgeTests {
     public async Task SetAsync_ConDiccionario_NoLanzaExcepcion() {
         var dict = new Dictionary<string, int> { { "key1", 1 }, { "key2", 2 } };
 
-        var act = async () => await _cacheService.SetAsync("key", dict);
+        Func<Task> act = async () => await _cacheService.SetAsync("key", dict);
         await act.Should().NotThrowAsync();
     }
 
     [Test]
     public async Task SetAsync_ConCaracteresEspeciales_NoLanzaExcepcion() {
-        var specialChars = "value with \"quotes\" & <brackets>";
-        var key = "key:with:special:chars";
+        string specialChars = "value with \"quotes\" & <brackets>";
+        string key = "key:with:special:chars";
 
-        var act = async () => await _cacheService.SetAsync(key, specialChars);
+        Func<Task> act = async () => await _cacheService.SetAsync(key, specialChars);
         await act.Should().NotThrowAsync();
     }
 
     [Test]
     public async Task SetAsync_ConUnicode_NoLanzaExcepcion() {
-        var unicodeValue = "Value with áéí characters 🎉";
+        string unicodeValue = "Value with áéí characters 🎉";
 
-        var act = async () => await _cacheService.SetAsync("key", unicodeValue);
+        Func<Task> act = async () => await _cacheService.SetAsync("key", unicodeValue);
         await act.Should().NotThrowAsync();
     }
 
@@ -142,15 +140,15 @@ public class RedisCacheServiceEdgeTests {
 
     [Test]
     public async Task RemoveAsync_ConKeyVacio_NoLanzaExcepcion() {
-        var act = async () => await _cacheService.RemoveAsync("");
+        Func<Task> act = async () => await _cacheService.RemoveAsync("");
         await act.Should().NotThrowAsync();
     }
 
     [Test]
     public async Task RemoveAsync_ConKeyMuyLargo_NoLanzaExcepcion() {
-        var longKey = new string('A', 10000);
+        string longKey = new('A', 10000);
 
-        var act = async () => await _cacheService.RemoveAsync(longKey);
+        Func<Task> act = async () => await _cacheService.RemoveAsync(longKey);
         await act.Should().NotThrowAsync();
     }
 
@@ -159,7 +157,7 @@ public class RedisCacheServiceEdgeTests {
         _mockCache.Setup(c => c.RemoveAsync("non-existent", It.IsAny<CancellationToken>()))
             .Throws(new Exception("Key not found"));
 
-        var act = async () => await _cacheService.RemoveAsync("non-existent");
+        Func<Task> act = async () => await _cacheService.RemoveAsync("non-existent");
         await act.Should().NotThrowAsync();
     }
 
@@ -168,7 +166,7 @@ public class RedisCacheServiceEdgeTests {
         _mockCache.Setup(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Throws(new Exception("Cache error"));
 
-        var act = async () => await _cacheService.RemoveAsync("test-key");
+        Func<Task> act = async () => await _cacheService.RemoveAsync("test-key");
         await act.Should().NotThrowAsync();
     }
 
@@ -189,8 +187,7 @@ public class NestedCacheObject {
     public string Value { get; set; } = string.Empty;
 }
 
-public class EmptyCacheData {
-}
+public class EmptyCacheData { }
 
 public class CacheTestDataWithNulls {
     public int Id { get; set; }

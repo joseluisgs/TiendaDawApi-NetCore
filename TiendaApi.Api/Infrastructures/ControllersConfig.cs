@@ -1,43 +1,42 @@
 using System.Text.Json.Serialization.Metadata;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Extensiones de configuración de controladores MVC y validación FluentValidation.
+///     Extensiones de configuración de controladores MVC y validación FluentValidation.
 /// </summary>
 public static class ControllersConfig {
     /// <summary>
-    /// Configura los controladores MVC con negociación de contenido.
+    ///     Configura los controladores MVC con negociación de contenido.
     /// </summary>
     public static IMvcBuilder AddMvcControllers(this IServiceCollection services) {
         Log.Information("📦 Configurando controladores MVC...");
         return services.AddControllers(options => {
-            options.RespectBrowserAcceptHeader = true;
-            options.ReturnHttpNotAcceptable = true;
-        })
-        // Serialización con source-gen (AppJsonContext) + fallback a reflexión
-        .AddJsonOptions(options => options.JsonSerializerOptions.TypeInfoResolver =
-            JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver()));
+                options.RespectBrowserAcceptHeader = true;
+                options.ReturnHttpNotAcceptable = true;
+            })
+            // Serialización con source-gen (AppJsonContext) + fallback a reflexión
+            .AddJsonOptions(options => options.JsonSerializerOptions.TypeInfoResolver =
+                JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver()));
         //.AddXmlSerializerFormatters()
         //.AddXmlDataContractSerializerFormatters();
     }
 
     /// <summary>
-    /// Registra validadores y configura auto-validación en el pipeline MVC.
+    ///     Registra validadores y configura auto-validación en el pipeline MVC.
     /// </summary>
     /// <remarks>
-    /// Data Annotations valida formato básico (requerido, rango, email). FluentValidation complementa
-    /// con reglas de negocio complejas (condicionales, múltiples campos). Ambos se ejecutan antes del controller.
+    ///     Data Annotations valida formato básico (requerido, rango, email). FluentValidation complementa
+    ///     con reglas de negocio complejas (condicionales, múltiples campos). Ambos se ejecutan antes del controller.
     /// </remarks>
     public static IServiceCollection AddFluentValidationServices(this IServiceCollection services) {
         Log.Information("✓ Configurando FluentValidation...");
         return services
-            .AddValidatorsFromAssemblyContaining<Program>()  // Busca validadores en el ensamblado
-            .AddFluentValidationAutoValidation()            // Auto-evalúa en cada request (ahorra validación manual en servicio)
-            .AddFluentValidationClientsideAdapters();         // Genera scripts JS para cliente (opcional para REST)
+            .AddValidatorsFromAssemblyContaining<Program>() // Busca validadores en el ensamblado
+            .AddFluentValidationAutoValidation() // Auto-evalúa en cada request (ahorra validación manual en servicio)
+            .AddFluentValidationClientsideAdapters(); // Genera scripts JS para cliente (opcional para REST)
     }
 }

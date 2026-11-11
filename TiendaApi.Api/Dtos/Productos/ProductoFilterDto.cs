@@ -1,18 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TiendaApi.Api.Dtos.Productos;
 
 /// <summary>
-/// DTO de filtros para búsqueda y paginación de productos.
-/// Proporciona criterios flexibles para filtrar productos por múltiples condiciones.
-///
-/// <remarks>
-/// Uso típico:
-/// - GET /api/v1/productos?nombre=Laptop&amp;precioMax=1500&amp;stockMin=5
-/// - Catálogos con filtros dinámicos
-/// - Búsquedas avanzadas en tienda
-/// </remarks>
+///     DTO de filtros para búsqueda y paginación de productos.
+///     Proporciona criterios flexibles para filtrar productos por múltiples condiciones.
+///     <remarks>
+///         Uso típico:
+///         - GET /api/v1/productos?nombre=Laptop&amp;precioMax=1500&amp;stockMin=5
+///         - Catálogos con filtros dinámicos
+///         - Búsquedas avanzadas en tienda
+///     </remarks>
 /// </summary>
-public record ProductoFilterDto
-(
+public record ProductoFilterDto(
     // <summary>
     // Filtrar productos por nombre (búsqueda parcial, sensible a mayúsculas/minúsculas).
     // Busca coincidencias en el nombre del producto.
@@ -52,7 +52,7 @@ public record ProductoFilterDto
     // </summary>
     // <default>0</default>
     // <example>0</example>
-    [property: System.ComponentModel.DataAnnotations.Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
+    [property: Range(0, int.MaxValue, ErrorMessage = "La página no puede ser negativa")]
     int Page = 0,
 
     // <summary>
@@ -60,7 +60,7 @@ public record ProductoFilterDto
     // </summary>
     // <default>10</default>
     // <example>10</example>
-    [property: System.ComponentModel.DataAnnotations.Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
+    [property: Range(1, 100, ErrorMessage = "El tamaño de página debe estar entre 1 y 100")]
     int Size = 10,
 
     // <summary>

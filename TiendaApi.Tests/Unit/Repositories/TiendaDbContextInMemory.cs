@@ -1,17 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using TiendaApi.Api.Data;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Tests.Unit.Repositories;
 
 /// <summary>
-/// DbContext para tests con InMemory.
-/// Solo incluye entidades de PostgreSQL (sin MongoDB).
+///     DbContext para tests con InMemory.
+///     Solo incluye entidades de PostgreSQL (sin MongoDB).
 /// </summary>
 public class TiendaDbContextInMemory : DbContext {
     public TiendaDbContextInMemory(DbContextOptions<TiendaDbContextInMemory> options)
-        : base(options) {
-    }
+        : base(options) { }
 
     public DbSet<Categoria> Categorias { get; set; } = null!;
     public DbSet<Producto> Productos { get; set; } = null!;

@@ -6,10 +6,36 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Tests.Unit.Mappers;
 
 /// <summary>
-/// Tests unitarios para el mapeador de productos.
-/// Prueba todas las conversiones entidad-DTO para el dominio de Producto.
+///     Tests unitarios para el mapeador de productos.
+///     Prueba todas las conversiones entidad-DTO para el dominio de Producto.
 /// </summary>
 public class ProductoMapperTests {
+    #region Roundtrip Tests
+
+    [Test]
+    public void ToEntity_LuegoToDto_DebePreservarDatosBasicos() {
+        // Arrange
+        var dto = new ProductoRequestDto {
+            Nombre = "Roundtrip Test",
+            Descripcion = "Testing roundtrip",
+            Precio = 150.00m,
+            Stock = 10,
+            CategoriaId = 5
+        };
+
+        // Act
+        Producto entity = dto.ToEntity();
+        ProductoDto resultDto = entity.ToDto();
+
+        // Assert
+        resultDto.Nombre.Should().Be(dto.Nombre);
+        resultDto.Precio.Should().Be(dto.Precio);
+        resultDto.Stock.Should().Be(dto.Stock);
+        resultDto.Categoria.Id.Should().Be(dto.CategoriaId);
+    }
+
+    #endregion
+
     #region ToDto Tests
 
     [Test]
@@ -30,7 +56,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Id.Should().Be(100);
@@ -53,7 +79,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Categoria.Nombre.Should().BeEmpty();
@@ -69,7 +95,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Categoria.Nombre.Should().BeEmpty();
@@ -85,7 +111,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Precio.Should().Be(123.456789m);
@@ -101,7 +127,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Stock.Should().Be(0);
@@ -117,7 +143,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Imagen.Should().BeNull();
@@ -136,7 +162,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.CreatedAt.Should().Be(createdAt);
@@ -160,7 +186,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Producto entity = dto.ToEntity();
 
         // Assert
         entity.Nombre.Should().Be("New Product");
@@ -175,11 +201,11 @@ public class ProductoMapperTests {
     public void ToEntity_DebeEstablecerMarcasDeTiempo() {
         // Arrange
         var dto = new ProductoRequestDto { Nombre = "Test" };
-        var before = DateTime.UtcNow;
+        DateTime before = DateTime.UtcNow;
 
         // Act
-        var entity = dto.ToEntity();
-        var after = DateTime.UtcNow;
+        Producto entity = dto.ToEntity();
+        DateTime after = DateTime.UtcNow;
 
         // Assert
         entity.CreatedAt.Should().BeOnOrAfter(before);
@@ -197,7 +223,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Producto entity = dto.ToEntity();
 
         // Assert
         entity.Descripcion.Should().BeEmpty();
@@ -212,7 +238,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Producto entity = dto.ToEntity();
 
         // Assert
         entity.Precio.Should().Be(0m);
@@ -227,7 +253,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var entity = dto.ToEntity();
+        Producto entity = dto.ToEntity();
 
         // Assert
         entity.Stock.Should().Be(-10);
@@ -394,32 +420,6 @@ public class ProductoMapperTests {
 
     #endregion
 
-    #region Roundtrip Tests
-
-    [Test]
-    public void ToEntity_LuegoToDto_DebePreservarDatosBasicos() {
-        // Arrange
-        var dto = new ProductoRequestDto {
-            Nombre = "Roundtrip Test",
-            Descripcion = "Testing roundtrip",
-            Precio = 150.00m,
-            Stock = 10,
-            CategoriaId = 5
-        };
-
-        // Act
-        var entity = dto.ToEntity();
-        var resultDto = entity.ToDto();
-
-        // Assert
-        resultDto.Nombre.Should().Be(dto.Nombre);
-        resultDto.Precio.Should().Be(dto.Precio);
-        resultDto.Stock.Should().Be(dto.Stock);
-        resultDto.Categoria.Id.Should().Be(dto.CategoriaId);
-    }
-
-    #endregion
-
     #region Edge Cases Tests
 
     [Test]
@@ -432,7 +432,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Precio.Should().Be(decimal.MaxValue);
@@ -448,7 +448,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Stock.Should().Be(int.MaxValue);
@@ -457,7 +457,7 @@ public class ProductoMapperTests {
     [Test]
     public void ToDto_ConDescripcionMuyLarga_MapeaCorrectamente() {
         // Arrange
-        var longDesc = new string('X', 5000);
+        string longDesc = new('X', 5000);
         var producto = new Producto {
             Id = 1,
             Nombre = "Long Description",
@@ -465,7 +465,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Descripcion.Should().Be(longDesc);
@@ -482,7 +482,7 @@ public class ProductoMapperTests {
         };
 
         // Act
-        var dto = producto.ToDto();
+        ProductoDto dto = producto.ToDto();
 
         // Assert
         dto.Nombre.Should().Be("🎁 Gift Box 🎁");

@@ -1,15 +1,15 @@
 using FluentAssertions;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.DependencyInjection;
 using TiendaApi.Api.Dtos.Categorias;
-using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Validators.Categorias;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Validators;
 
 /// <summary>
-/// Tests de integración para Validators de Categorías.
-/// Verifica la validación de DTOs usando FluentValidation.
+///     Tests de integración para Validators de Categorías.
+///     Verifica la validación de DTOs usando FluentValidation.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
@@ -19,11 +19,11 @@ public class CategoriaValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<CategoriaRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<CategoriaRequestDto> validator = provider.GetRequiredService<IValidator<CategoriaRequestDto>>();
 
         var dto = new CategoriaRequestDto { Nombre = "Electrónica" };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeTrue();
 
@@ -35,11 +35,11 @@ public class CategoriaValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<CategoriaRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<CategoriaRequestDto> validator = provider.GetRequiredService<IValidator<CategoriaRequestDto>>();
 
         var dto = new CategoriaRequestDto { Nombre = "" };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().NotBeEmpty();
@@ -52,11 +52,11 @@ public class CategoriaValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<CategoriaRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<CategoriaRequestDto> validator = provider.GetRequiredService<IValidator<CategoriaRequestDto>>();
 
         var dto = new CategoriaRequestDto { Nombre = "AB" };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeFalse();
 
@@ -68,11 +68,11 @@ public class CategoriaValidatorsIntegrationTests {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
 
-        using var provider = services.BuildServiceProvider();
-        var validator = provider.GetRequiredService<IValidator<CategoriaRequestDto>>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IValidator<CategoriaRequestDto> validator = provider.GetRequiredService<IValidator<CategoriaRequestDto>>();
 
         var dto = new CategoriaRequestDto { Nombre = new string('A', 50) };
-        var result = await validator.ValidateAsync(dto);
+        ValidationResult result = await validator.ValidateAsync(dto);
 
         result.IsValid.Should().BeTrue();
 

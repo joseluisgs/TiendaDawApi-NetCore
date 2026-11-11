@@ -6,7 +6,7 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Services.Users;
 
 /// <summary>
-/// Contrato del servicio de usuarios.
+///     Contrato del servicio de usuarios.
 /// </summary>
 public interface IUserService {
     /// <summary>Obtiene todos los usuarios activos.</summary>

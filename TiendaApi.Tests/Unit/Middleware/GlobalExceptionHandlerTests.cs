@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -7,17 +7,18 @@ using Moq;
 using Npgsql;
 using TiendaApi.Api.Exceptions;
 using TiendaApi.Api.Middleware;
+using KeyNotFoundException = System.Collections.Generic.KeyNotFoundException;
 
 namespace TiendaApi.Tests.Unit.Middleware;
 
 /// <summary>
-/// Tests unitarios para GlobalExceptionHandler.
+///     Tests unitarios para GlobalExceptionHandler.
 /// </summary>
 public class GlobalExceptionHandlerTests {
-    private readonly Mock<RequestDelegate> _mockNext = new();
-    private readonly Mock<ILogger<GlobalExceptionHandler>> _mockLogger = new();
     private readonly GlobalExceptionHandler _handler;
     private readonly DefaultHttpContext _httpContext;
+    private readonly Mock<ILogger<GlobalExceptionHandler>> _mockLogger = new();
+    private readonly Mock<RequestDelegate> _mockNext = new();
 
     public GlobalExceptionHandlerTests() {
         _handler = new GlobalExceptionHandler(_mockNext.Object, _mockLogger.Object);
@@ -47,10 +48,201 @@ public class GlobalExceptionHandlerTests {
 
         _httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
         using var reader = new StreamReader(_httpContext.Response.Body);
-        var body = await reader.ReadToEndAsync();
+        string body = await reader.ReadToEndAsync();
 
         return (_httpContext.Response.StatusCode, body);
     }
+
+    #region BusinessException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConBusinessException_DeberiaRetornar400() {
+        // Arrange
+        var exception = new BusinessException("Stock insuficiente");
+
+        // Act
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        statusCode.Should().Be(400);
+        body.Should().Contain("Stock insuficiente");
+        body.Should().Contain("BusinessRule");
+    }
+
+    #endregion
+
+    #region UnauthorizedAccessException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConUnauthorizedAccessException_DeberiaRetornar401() {
+        // Arrange
+        var exception = new UnauthorizedAccessException("Token inválido");
+
+        // Act
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        statusCode.Should().Be(401);
+        body.Should().Contain("No autorizado");
+        body.Should().Contain("Unauthorized");
+    }
+
+    #endregion
+
+    #region ArgumentException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConArgumentException_DeberiaRetornar400() {
+        // Arrange
+        var exception = new ArgumentException("El argumento es inválido");
+
+        // Act
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        statusCode.Should().Be(400);
+        body.Should().Contain("errorType\":\"Validation");
+    }
+
+    #endregion
+
+    #region TimeoutException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConTimeoutException_DeberiaRetornar408() {
+        // Arrange
+        var exception = new TimeoutException("La operación tardó demasiado");
+
+        // Act
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        statusCode.Should().Be(408);
+        body.Should().Contain("Tiempo de espera agotado");
+    }
+
+    #endregion
+
+    #region DbUpdateException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConDbUpdateException_DeberiaRetornar409() {
+        // Arrange
+        var exception = new DbUpdateException("Error de base de datos");
+
+        // Act
+        (int StatusCode, string Body) result = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        result.StatusCode.Should().Be(409);
+        result.Body.Should().Contain("Error al actualizar la base de datos");
+    }
+
+    #endregion
+
+    #region InvalidOperationException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConInvalidOperationException_DeberiaRetornar500() {
+        // Arrange
+        var exception = new InvalidOperationException("Operación inválida");
+
+        // Act
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        statusCode.Should().Be(500);
+        body.Should().Contain("Ha ocurrido un error interno");
+    }
+
+    #endregion
+
+    #region ArgumentNullException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConArgumentNullException_DeberiaRetornar400() {
+        // Arrange
+        var exception = new ArgumentNullException("parameterName", "El argumento no puede ser null");
+
+        // Act
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        statusCode.Should().Be(400);
+        body.Should().Contain("errorType\":\"Validation");
+    }
+
+    #endregion
+
+    #region KeyNotFoundException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConKeyNotFoundException_DeberiaRetornar500() {
+        // Arrange
+        var exception = new KeyNotFoundException("La clave no existe");
+
+        // Act
+        (int StatusCode, string Body) result = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        result.StatusCode.Should().Be(500);
+        result.Body.Should().Contain("Ha ocurrido un error interno");
+    }
+
+    #endregion
+
+    #region OperationCanceledException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConOperationCanceledException_DeberiaRetornar500() {
+        // Arrange
+        var exception = new OperationCanceledException("La operación fue cancelada");
+
+        // Act
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        statusCode.Should().Be(500);
+        body.Should().Contain("Ha ocurrido un error interno");
+    }
+
+    #endregion
+
+    #region JsonException Tests
+
+    [Test]
+    public async Task InvokeAsync_ConJsonException_DeberiaRetornar500() {
+        // Arrange
+        var exception = new JsonException("Error al parsear JSON");
+
+        // Act
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
+
+        // Assert
+        statusCode.Should().Be(500);
+        body.Should().Contain("Ha ocurrido un error interno");
+    }
+
+    #endregion
+
+    #region ErrorId Tests
+
+    [Test]
+    public async Task InvokeAsync_ErrorId_DeberiaSerUnico() {
+        // Arrange
+        var exception1 = new Exception("Error 1");
+        var exception2 = new Exception("Error 2");
+
+        // Act
+        (_, string body1) = await ExecuteHandlerAsync(exception1);
+        _httpContext.Response.Body = new MemoryStream();
+        (_, string body2) = await ExecuteHandlerAsync(exception2);
+
+        // Assert - Los errorId deberían ser diferentes
+        body1.Should().NotBeEquivalentTo(body2);
+    }
+
+    #endregion
 
     #region NotFoundException Tests
 
@@ -60,7 +252,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new NotFoundException("Producto no encontrado");
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         statusCode.Should().Be(404);
@@ -74,7 +266,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new NotFoundException("Categoría no encontrada");
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("errorId");
@@ -86,7 +278,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new NotFoundException("Usuario no encontrado");
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("timestamp");
@@ -106,7 +298,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new ValidationException("Errores de validación", errors);
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         statusCode.Should().Be(400);
@@ -123,81 +315,11 @@ public class GlobalExceptionHandlerTests {
         var exception = new ValidationException("Errores de validación", errors);
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("errors");
         body.Should().Contain("Nombre");
-    }
-
-    #endregion
-
-    #region BusinessException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConBusinessException_DeberiaRetornar400() {
-        // Arrange
-        var exception = new BusinessException("Stock insuficiente");
-
-        // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        statusCode.Should().Be(400);
-        body.Should().Contain("Stock insuficiente");
-        body.Should().Contain("BusinessRule");
-    }
-
-    #endregion
-
-    #region UnauthorizedAccessException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConUnauthorizedAccessException_DeberiaRetornar401() {
-        // Arrange
-        var exception = new UnauthorizedAccessException("Token inválido");
-
-        // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        statusCode.Should().Be(401);
-        body.Should().Contain("No autorizado");
-        body.Should().Contain("Unauthorized");
-    }
-
-    #endregion
-
-    #region ArgumentException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConArgumentException_DeberiaRetornar400() {
-        // Arrange
-        var exception = new ArgumentException("El argumento es inválido");
-
-        // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        statusCode.Should().Be(400);
-        body.Should().Contain("errorType\":\"Validation");
-    }
-
-    #endregion
-
-    #region TimeoutException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConTimeoutException_DeberiaRetornar408() {
-        // Arrange
-        var exception = new TimeoutException("La operación tardó demasiado");
-
-        // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        statusCode.Should().Be(408);
-        body.Should().Contain("Tiempo de espera agotado");
     }
 
     #endregion
@@ -210,7 +332,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new Exception("Error inesperado");
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         statusCode.Should().Be(500);
@@ -223,7 +345,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new NullReferenceException("Object reference not set to an instance of an object.");
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         statusCode.Should().Be(500);
@@ -238,7 +360,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new InvalidOperationException("Operación inválida");
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("errorId");
@@ -289,23 +411,6 @@ public class GlobalExceptionHandlerTests {
 
     #endregion
 
-    #region DbUpdateException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConDbUpdateException_DeberiaRetornar409() {
-        // Arrange
-        var exception = new DbUpdateException("Error de base de datos");
-
-        // Act
-        var result = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        result.StatusCode.Should().Be(409);
-        result.Body.Should().Contain("Error al actualizar la base de datos");
-    }
-
-    #endregion
-
     #region NpgsqlException Tests
 
     [Test]
@@ -314,7 +419,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new NpgsqlException("Connection timeout");
 
         // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
+        (int statusCode, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         statusCode.Should().Be(500);
@@ -327,95 +432,10 @@ public class GlobalExceptionHandlerTests {
         var exception = new NpgsqlException("Error de PostgreSQL");
 
         // Act
-        var (_, body) = await ExecuteHandlerAsync(exception);
+        (_, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("errorId");
-    }
-
-    #endregion
-
-    #region InvalidOperationException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConInvalidOperationException_DeberiaRetornar500() {
-        // Arrange
-        var exception = new InvalidOperationException("Operación inválida");
-
-        // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        statusCode.Should().Be(500);
-        body.Should().Contain("Ha ocurrido un error interno");
-    }
-
-    #endregion
-
-    #region ArgumentNullException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConArgumentNullException_DeberiaRetornar400() {
-        // Arrange
-        var exception = new ArgumentNullException("parameterName", "El argumento no puede ser null");
-
-        // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        statusCode.Should().Be(400);
-        body.Should().Contain("errorType\":\"Validation");
-    }
-
-    #endregion
-
-    #region KeyNotFoundException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConKeyNotFoundException_DeberiaRetornar500() {
-        // Arrange
-        var exception = new System.Collections.Generic.KeyNotFoundException("La clave no existe");
-
-        // Act
-        var result = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        result.StatusCode.Should().Be(500);
-        result.Body.Should().Contain("Ha ocurrido un error interno");
-    }
-
-    #endregion
-
-    #region OperationCanceledException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConOperationCanceledException_DeberiaRetornar500() {
-        // Arrange
-        var exception = new OperationCanceledException("La operación fue cancelada");
-
-        // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        statusCode.Should().Be(500);
-        body.Should().Contain("Ha ocurrido un error interno");
-    }
-
-    #endregion
-
-    #region JsonException Tests
-
-    [Test]
-    public async Task InvokeAsync_ConJsonException_DeberiaRetornar500() {
-        // Arrange
-        var exception = new System.Text.Json.JsonException("Error al parsear JSON");
-
-        // Act
-        var (statusCode, body) = await ExecuteHandlerAsync(exception);
-
-        // Assert
-        statusCode.Should().Be(500);
-        body.Should().Contain("Ha ocurrido un error interno");
     }
 
     #endregion
@@ -453,7 +473,7 @@ public class GlobalExceptionHandlerTests {
         _httpContext.Request.Path = "/api/v1/test/path";
 
         // Act
-        var (_, body) = await ExecuteHandlerAsync(exception);
+        (_, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("/api/v1/test/path");
@@ -466,7 +486,7 @@ public class GlobalExceptionHandlerTests {
         _httpContext.Request.Method = HttpMethods.Post;
 
         // Act
-        var (_, body) = await ExecuteHandlerAsync(exception);
+        (_, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("POST");
@@ -478,7 +498,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new Exception("Test");
 
         // Act
-        var (_, body) = await ExecuteHandlerAsync(exception);
+        (_, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("timestamp");
@@ -488,32 +508,13 @@ public class GlobalExceptionHandlerTests {
     public async Task InvokeAsync_Response_Timestamp_DeberiaSerValido() {
         // Arrange
         var exception = new Exception("Test");
-        var before = DateTime.UtcNow;
+        DateTime before = DateTime.UtcNow;
 
         // Act
-        var (_, body) = await ExecuteHandlerAsync(exception);
+        (_, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().MatchRegex(@"""timestamp"":\s*""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}");
-    }
-
-    #endregion
-
-    #region ErrorId Tests
-
-    [Test]
-    public async Task InvokeAsync_ErrorId_DeberiaSerUnico() {
-        // Arrange
-        var exception1 = new Exception("Error 1");
-        var exception2 = new Exception("Error 2");
-
-        // Act
-        var (_, body1) = await ExecuteHandlerAsync(exception1);
-        _httpContext.Response.Body = new MemoryStream();
-        var (_, body2) = await ExecuteHandlerAsync(exception2);
-
-        // Assert - Los errorId deberían ser diferentes
-        body1.Should().NotBeEquivalentTo(body2);
     }
 
     #endregion
@@ -526,7 +527,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new NotFoundException("Producto específico no encontrado");
 
         // Act
-        var (_, body) = await ExecuteHandlerAsync(exception);
+        (_, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert - El JSON contiene el mensaje escapado
         body.Should().Contain("message");
@@ -543,7 +544,7 @@ public class GlobalExceptionHandlerTests {
         var exception = new ValidationException("Errores de validación", errors);
 
         // Act
-        var (_, body) = await ExecuteHandlerAsync(exception);
+        (_, string body) = await ExecuteHandlerAsync(exception);
 
         // Assert
         body.Should().Contain("Campo1");

@@ -7,12 +7,12 @@ using TiendaApi.Api.Services.Cache;
 namespace TiendaApi.Tests.Unit.Services.Cache;
 
 /// <summary>
-/// Tests unitarios para MemoryCacheService.
+///     Tests unitarios para MemoryCacheService.
 /// </summary>
 public class MemoryCacheServiceTests {
+    private MemoryCacheService _cacheService = null!;
     private IMemoryCache _memoryCache = null!;
     private Mock<ILogger<MemoryCacheService>> _mockLogger = null!;
-    private MemoryCacheService _cacheService = null!;
 
     [SetUp]
     public void Setup() {
@@ -30,31 +30,31 @@ public class MemoryCacheServiceTests {
 
     [Test]
     public async Task GetAsync_ClaveExistente_RetornaValor() {
-        var key = "test-key";
-        var expectedValue = "test-value";
+        string key = "test-key";
+        string expectedValue = "test-value";
 
         _memoryCache.Set(key, expectedValue);
 
-        var result = await _cacheService.GetAsync<string>(key);
+        string? result = await _cacheService.GetAsync<string>(key);
 
         result.Should().Be(expectedValue);
     }
 
     [Test]
     public async Task GetAsync_ClaveNoExistente_RetornaNull() {
-        var result = await _cacheService.GetAsync<string>("non-existent-key");
+        string? result = await _cacheService.GetAsync<string>("non-existent-key");
 
         result.Should().BeNull();
     }
 
     [Test]
     public async Task GetAsync_ObjetoComplejo_RetornaObjeto() {
-        var key = "complex-key";
+        string key = "complex-key";
         var expectedObject = new TestCacheObject { Id = 1, Name = "Test" };
 
         _memoryCache.Set(key, expectedObject);
 
-        var result = await _cacheService.GetAsync<TestCacheObject>(key);
+        TestCacheObject? result = await _cacheService.GetAsync<TestCacheObject>(key);
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(1);
@@ -67,55 +67,55 @@ public class MemoryCacheServiceTests {
 
     [Test]
     public async Task SetAsync_ValorValido_GuardaEnCache() {
-        var key = "new-key";
-        var value = "new-value";
+        string key = "new-key";
+        string value = "new-value";
 
-        var act = async () => await _cacheService.SetAsync(key, value);
+        Func<Task> act = async () => await _cacheService.SetAsync(key, value);
 
         await act.Should().NotThrowAsync();
 
-        var result = _memoryCache.Get<string>(key);
+        string? result = _memoryCache.Get<string>(key);
         result.Should().Be(value);
     }
 
     [Test]
     public async Task SetAsync_ConExpiracion_AplicaExpiracion() {
-        var key = "expiring-key";
-        var value = "expiring-value";
+        string key = "expiring-key";
+        string value = "expiring-value";
         var expiration = TimeSpan.FromSeconds(1);
 
         await _cacheService.SetAsync(key, value, expiration);
 
-        var result = _memoryCache.Get<string>(key);
+        string? result = _memoryCache.Get<string>(key);
         result.Should().Be(value);
 
         await Task.Delay(1100);
 
-        var expiredResult = _memoryCache.Get<string>(key);
+        string? expiredResult = _memoryCache.Get<string>(key);
         expiredResult.Should().BeNull();
     }
 
     [Test]
     public async Task SetAsync_SinExpiracion_UsaExpiracionPorDefecto() {
-        var key = "default-expiry-key";
-        var value = "value";
+        string key = "default-expiry-key";
+        string value = "value";
 
         await _cacheService.SetAsync(key, value);
 
-        var result = _memoryCache.Get<string>(key);
+        string? result = _memoryCache.Get<string>(key);
         result.Should().Be(value);
     }
 
     [Test]
     public async Task SetAsync_ObjetoComplejo_SerializaCorrectamente() {
-        var key = "complex-object-key";
+        string key = "complex-object-key";
         var value = new TestCacheObject { Id = 42, Name = "Complex Test" };
 
-        var act = async () => await _cacheService.SetAsync(key, value);
+        Func<Task> act = async () => await _cacheService.SetAsync(key, value);
 
         await act.Should().NotThrowAsync();
 
-        var result = _memoryCache.Get<TestCacheObject>(key);
+        TestCacheObject? result = _memoryCache.Get<TestCacheObject>(key);
         result.Should().NotBeNull();
         result!.Id.Should().Be(42);
         result.Name.Should().Be("Complex Test");
@@ -127,20 +127,20 @@ public class MemoryCacheServiceTests {
 
     [Test]
     public async Task RemoveAsync_ClaveExistente_Elimina() {
-        var key = "key-to-remove";
+        string key = "key-to-remove";
         _memoryCache.Set(key, "value");
 
-        var act = async () => await _cacheService.RemoveAsync(key);
+        Func<Task> act = async () => await _cacheService.RemoveAsync(key);
 
         await act.Should().NotThrowAsync();
 
-        var result = _memoryCache.Get<string>(key);
+        string? result = _memoryCache.Get<string>(key);
         result.Should().BeNull();
     }
 
     [Test]
     public async Task RemoveAsync_ClaveNoExistente_NoLanzaExcepcion() {
-        var act = async () => await _cacheService.RemoveAsync("non-existent-key");
+        Func<Task> act = async () => await _cacheService.RemoveAsync("non-existent-key");
 
         await act.Should().NotThrowAsync();
     }
@@ -149,7 +149,7 @@ public class MemoryCacheServiceTests {
 }
 
 /// <summary>
-/// Clase de prueba para serialización.
+///     Clase de prueba para serialización.
 /// </summary>
 public class TestCacheObject {
     public int Id { get; set; }

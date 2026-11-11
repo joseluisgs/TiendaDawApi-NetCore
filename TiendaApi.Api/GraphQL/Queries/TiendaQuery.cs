@@ -1,13 +1,11 @@
 using System.Security.Claims;
-using HotChocolate;
 using HotChocolate.Authorization;
-using HotChocolate.Types;
-using Microsoft.EntityFrameworkCore;
 using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Dtos.Productos;
 using TiendaApi.Api.Mappers;
+using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Repositories.Pedidos;
 using TiendaApi.Api.Repositories.Productos;
@@ -15,10 +13,9 @@ using TiendaApi.Api.Repositories.Productos;
 namespace TiendaApi.Api.GraphQL.Queries;
 
 /// <summary>
-/// Consultas GraphQL de la tienda.
-///
-/// 🎓 Seguridad: GraphQL solo expone DTOs, nunca entidades del modelo de escritura.
-/// Esto evita que el cliente componga consultas arbitrarias sobre la BD interna.
+///     Consultas GraphQL de la tienda.
+///     🎓 Seguridad: GraphQL solo expone DTOs, nunca entidades del modelo de escritura.
+///     Esto evita que el cliente componga consultas arbitrarias sobre la BD interna.
 /// </summary>
 public class TiendaQuery {
     /// <summary>Obtiene todos los productos como DTOs.</summary>
@@ -26,7 +23,7 @@ public class TiendaQuery {
     /// <returns>Lista de productos (DTOs, no entidades).</returns>
     public async Task<IReadOnlyList<ProductoDto>> GetProductos(
         [Service] IProductoRepository productoRepository) {
-        var productos = await productoRepository.FindAllAsync();
+        IEnumerable<Producto> productos = await productoRepository.FindAllAsync();
         return productos.ToDtoList().ToList();
     }
 
@@ -37,7 +34,7 @@ public class TiendaQuery {
     public async Task<ProductoDto?> GetProducto(
         long id,
         [Service] IProductoRepository productoRepository) {
-        var producto = await productoRepository.FindByIdAsync(id);
+        Producto? producto = await productoRepository.FindByIdAsync(id);
         return producto?.ToDto();
     }
 
@@ -52,15 +49,15 @@ public class TiendaQuery {
         int size = 10) {
         // GraphQL expone paginación base 1; el repositorio trabaja con base 0 (Skip(Page*Size))
         var filter = new ProductoFilterDto(
-            Nombre: null,
-            Categoria: null,
-            IsDeleted: null,
-            PrecioMax: null,
-            StockMin: null,
-            Page: Math.Max(page - 1, 0),
-            Size: size);
+            null,
+            null,
+            null,
+            null,
+            null,
+            Math.Max(page - 1, 0),
+            size);
 
-        var result = await productoRepository.FindAllPagedAsync(filter);
+        (IEnumerable<Producto> Items, int TotalCount) result = await productoRepository.FindAllPagedAsync(filter);
         return new PagedResult<ProductoDto> {
             Items = result.Items.Select(p => p.ToDto()),
             TotalCount = result.TotalCount,
@@ -74,7 +71,7 @@ public class TiendaQuery {
     /// <returns>Lista de categorías (DTOs, no entidades).</returns>
     public async Task<IReadOnlyList<CategoriaDto>> GetCategorias(
         [Service] ICategoriaRepository categoriaRepository) {
-        var categorias = await categoriaRepository.FindAllAsync();
+        IEnumerable<Categoria> categorias = await categoriaRepository.FindAllAsync();
         return categorias.Select(c => c.ToDto()).ToList();
     }
 
@@ -85,7 +82,7 @@ public class TiendaQuery {
     public async Task<CategoriaDto?> GetCategoria(
         long id,
         [Service] ICategoriaRepository categoriaRepository) {
-        var categoria = await categoriaRepository.FindByIdAsync(id);
+        Categoria? categoria = await categoriaRepository.FindByIdAsync(id);
         return categoria?.ToDto();
     }
 
@@ -104,7 +101,7 @@ public class TiendaQuery {
             Page = Math.Max(page - 1, 0),
             Size = size
         };
-        var result = await categoriaRepository.FindAllPagedAsync(filter);
+        (IEnumerable<Categoria> Items, int TotalCount) result = await categoriaRepository.FindAllPagedAsync(filter);
         return new PagedResult<CategoriaDto> {
             Items = result.Items.Select(c => new CategoriaDto(c.Id, c.Nombre, c.Descripcion, c.CreatedAt, c.UpdatedAt)),
             TotalCount = result.TotalCount,
@@ -122,22 +119,22 @@ public class TiendaQuery {
     //                     (un usuario jamás ve pedidos ajenos por GraphQL).
 
     /// <summary>
-    /// Obtiene TODOS los pedidos. Solo administradores.
+    ///     Obtiene TODOS los pedidos. Solo administradores.
     /// </summary>
     /// <param name="pedidosRepository">Repositorio de pedidos.</param>
     /// <returns>Lista de pedidos (DTOs, no entidades).</returns>
-    [Authorize(policy: "AdminOnly")]
+    [Authorize("AdminOnly")]
     public async Task<IReadOnlyList<PedidoDto>> GetPedidos(
         [Service] IPedidosRepository pedidosRepository) {
-        var pedidos = await pedidosRepository.FindAllAsync();
+        IEnumerable<Pedido> pedidos = await pedidosRepository.FindAllAsync();
         return pedidos.Select(p => p.ToDto()).ToList();
     }
 
     /// <summary>
-    /// Obtiene MIS pedidos: los del usuario autenticado (cualquier usuario
-    /// logueado). El userId sale del claim del JWT (inyectado por
-    /// HotChocolate como parámetro) y el repositorio filtra por él: nunca se
-    /// devuelven pedidos de otros usuarios.
+    ///     Obtiene MIS pedidos: los del usuario autenticado (cualquier usuario
+    ///     logueado). El userId sale del claim del JWT (inyectado por
+    ///     HotChocolate como parámetro) y el repositorio filtra por él: nunca se
+    ///     devuelven pedidos de otros usuarios.
     /// </summary>
     /// <param name="user">Usuario autenticado (claims del JWT).</param>
     /// <param name="pedidosRepository">Repositorio de pedidos.</param>
@@ -146,11 +143,13 @@ public class TiendaQuery {
     public async Task<IReadOnlyList<PedidoDto>> GetMisPedidos(
         ClaimsPrincipal user,
         [Service] IPedidosRepository pedidosRepository) {
-        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (claim is null || !long.TryParse(claim, out var userId))
-            throw new GraphQLException("No se pudo identificar al usuario autenticado (falta el claim NameIdentifier).");
+        string? claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (claim is null || !long.TryParse(claim, out long userId)) {
+            throw new GraphQLException(
+                "No se pudo identificar al usuario autenticado (falta el claim NameIdentifier).");
+        }
 
-        var pedidos = await pedidosRepository.FindByUserIdAsync(userId);
+        IEnumerable<Pedido> pedidos = await pedidosRepository.FindByUserIdAsync(userId);
         return pedidos.Select(p => p.ToDto()).ToList();
     }
 }

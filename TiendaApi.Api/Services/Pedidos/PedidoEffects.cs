@@ -7,19 +7,19 @@ using TiendaApi.Api.Services.Email;
 namespace TiendaApi.Api.Services.Pedidos;
 
 /// <summary>
-/// 🎓 Efectos secundarios de PEDIDOS: WebSocket, SignalR y emails de estado
-/// (cliente y administrador). Viven fuera de PedidosService para que ese
-/// servicio se quede con la lógica de negocio (transacción, stock, estados) y
-/// este sea el único sitio que cambia si cambia un canal: SRP + DIP (se
-/// inyecta por IPedidoEffects). El reparto equivalente en el proyecto CQRS
-/// son sus notifications + handlers.
+///     🎓 Efectos secundarios de PEDIDOS: WebSocket, SignalR y emails de estado
+///     (cliente y administrador). Viven fuera de PedidosService para que ese
+///     servicio se quede con la lógica de negocio (transacción, stock, estados) y
+///     este sea el único sitio que cambia si cambia un canal: SRP + DIP (se
+///     inyecta por IPedidoEffects). El reparto equivalente en el proyecto CQRS
+///     son sus notifications + handlers.
 /// </summary>
 /// <remarks>
-/// 🎓 Cada evento de tiempo real tiene un método PÚBLICO combinado que llama
-/// a los dos canales (WebSocket + SignalR), del mismo modo que
-/// <c>PedidosWebSocketHandler.NotifyUserAndAdminsAsync</c> llama a
-/// NotifyUserAsync + NotifyAdminsAsync. Los métodos por canal son privados:
-/// así ningún consumidor puede invocar un solo canal y olvidar el otro.
+///     🎓 Cada evento de tiempo real tiene un método PÚBLICO combinado que llama
+///     a los dos canales (WebSocket + SignalR), del mismo modo que
+///     <c>PedidosWebSocketHandler.NotifyUserAndAdminsAsync</c> llama a
+///     NotifyUserAsync + NotifyAdminsAsync. Los métodos por canal son privados:
+///     así ningún consumidor puede invocar un solo canal y olvidar el otro.
 /// </remarks>
 public class PedidoEffects(
     PedidosWebSocketHandler webSocketHandler,
@@ -31,8 +31,8 @@ public class PedidoEffects(
     #region ========== MÉTODOS PÚBLICOS - TIEMPO REAL (WS + SIGNALR) ==========
 
     /// <summary>
-    /// Notifica la creación de un pedido por WebSocket Y SignalR.
-    /// La reciben el usuario que creó el pedido y todos los administradores.
+    ///     Notifica la creación de un pedido por WebSocket Y SignalR.
+    ///     La reciben el usuario que creó el pedido y todos los administradores.
     /// </summary>
     /// <param name="pedidoId">Identificador del pedido creado.</param>
     /// <param name="userId">ID del usuario que creó el pedido.</param>
@@ -44,8 +44,8 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Notifica la actualización de un pedido por WebSocket Y SignalR.
-    /// La reciben el usuario dueño del pedido y todos los administradores.
+    ///     Notifica la actualización de un pedido por WebSocket Y SignalR.
+    ///     La reciben el usuario dueño del pedido y todos los administradores.
     /// </summary>
     /// <param name="pedidoId">Identificador del pedido.</param>
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
@@ -57,8 +57,8 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Notifica la eliminación/cancelación de un pedido por WebSocket Y SignalR.
-    /// La reciben el usuario dueño del pedido y todos los administradores.
+    ///     Notifica la eliminación/cancelación de un pedido por WebSocket Y SignalR.
+    ///     La reciben el usuario dueño del pedido y todos los administradores.
     /// </summary>
     /// <param name="pedidoId">Identificador del pedido.</param>
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
@@ -74,8 +74,8 @@ public class PedidoEffects(
     #region ========== MÉTODOS PRIVADOS - WEBSOCKET ==========
 
     /// <summary>
-    /// Notifica vía WebSocket la creación de un pedido.
-    /// Envía notificación al usuario que creó el pedido y a todos los administradores.
+    ///     Notifica vía WebSocket la creación de un pedido.
+    ///     Envía notificación al usuario que creó el pedido y a todos los administradores.
     /// </summary>
     /// <param name="pedidoId">Identificador del pedido creado.</param>
     /// <param name="userId">ID del usuario que creó el pedido.</param>
@@ -99,8 +99,8 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Notifica vía WebSocket la actualización del estado de un pedido.
-    /// Envía notificación al usuario afectado y a todos los administradores.
+    ///     Notifica vía WebSocket la actualización del estado de un pedido.
+    ///     Envía notificación al usuario afectado y a todos los administradores.
     /// </summary>
     /// <param name="pedidoId">Identificador del pedido.</param>
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
@@ -124,8 +124,8 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Notifica vía WebSocket la eliminación/cancelación de un pedido.
-    /// Envía notificación al usuario afectado y a todos los administradores.
+    ///     Notifica vía WebSocket la eliminación/cancelación de un pedido.
+    ///     Envía notificación al usuario afectado y a todos los administradores.
     /// </summary>
     /// <param name="pedidoId">Identificador del pedido.</param>
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
@@ -152,8 +152,8 @@ public class PedidoEffects(
     #region ========== MÉTODOS PRIVADOS - SIGNALR ==========
 
     /// <summary>
-    /// Notifica via SignalR la creacion de un pedido.
-    /// Envía al grupo del usuario dueño y al grupo de administradores.
+    ///     Notifica via SignalR la creacion de un pedido.
+    ///     Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
     private void NotificarSignalRPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido) {
         _ = Task.Run(async () => {
@@ -176,8 +176,8 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Notifica via SignalR la actualizacion de un pedido.
-    /// Envía al grupo del usuario dueño y al grupo de administradores.
+    ///     Notifica via SignalR la actualizacion de un pedido.
+    ///     Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
     private void NotificarSignalRPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido) {
         _ = Task.Run(async () => {
@@ -199,8 +199,8 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Notifica via SignalR la eliminacion de un pedido.
-    /// Envía al grupo del usuario dueño y al grupo de administradores.
+    ///     Notifica via SignalR la eliminacion de un pedido.
+    ///     Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
     private void NotificarSignalRPedidoEliminado(string pedidoId, long userId, string estado, decimal total) {
         _ = Task.Run(async () => {
@@ -226,23 +226,24 @@ public class PedidoEffects(
     #region ========== MÉTODOS PRIVADOS - EMAIL ==========
 
     /// <summary>
-    /// Encola el email de confirmación al cliente y el aviso de nuevo pedido
-    /// al administrador tras crear un pedido.
+    ///     Encola el email de confirmación al cliente y el aviso de nuevo pedido
+    ///     al administrador tras crear un pedido.
     /// </summary>
     /// <remarks>
-    /// 🎓 Antes solo se enviaba el aviso a <c>Smtp:AdminEmail</c> y el cliente
-    /// no recibía nada (aunque la plantilla estaba redactada para él). Ahora
-    /// salen DOS emails: confirmación al destinatario del pedido y aviso al
-    /// admin. El email al cliente no depende de la config del admin.
+    ///     🎓 Antes solo se enviaba el aviso a <c>Smtp:AdminEmail</c> y el cliente
+    ///     no recibía nada (aunque la plantilla estaba redactada para él). Ahora
+    ///     salen DOS emails: confirmación al destinatario del pedido y aviso al
+    ///     admin. El email al cliente no depende de la config del admin.
     /// </remarks>
-    public void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId, DestinatarioDto? destinatario) {
+    public void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId,
+        DestinatarioDto? destinatario) {
         _ = Task.Run(async () => {
             try {
                 // 1) Confirmación AL CLIENTE (dirección del pedido)
                 if (!string.IsNullOrWhiteSpace(destinatario?.Email)) {
-                    var contentCliente = EmailTemplates.PedidoConfirmacionCliente(
+                    string contentCliente = EmailTemplates.PedidoConfirmacionCliente(
                         pedidoId, total, itemCount, destinatario.NombreCompleto);
-                    var bodyCliente = EmailTemplates.CreateBase($"Pedido #{pedidoId} confirmado", contentCliente);
+                    string bodyCliente = EmailTemplates.CreateBase($"Pedido #{pedidoId} confirmado", contentCliente);
 
                     await emailService.EnqueueEmailAsync(new EmailMessage {
                         To = destinatario.Email,
@@ -254,11 +255,13 @@ public class PedidoEffects(
                 }
 
                 // 2) Aviso AL ADMINISTRADOR
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
+                string? adminEmail = configuration["Smtp:AdminEmail"];
+                if (string.IsNullOrEmpty(adminEmail)) {
+                    return;
+                }
 
-                var content = EmailTemplates.PedidoCreado(pedidoId, total, itemCount, userId);
-                var body = EmailTemplates.CreateBase("Nuevo Pedido Recibido", content);
+                string content = EmailTemplates.PedidoCreado(pedidoId, total, itemCount, userId);
+                string body = EmailTemplates.CreateBase("Nuevo Pedido Recibido", content);
 
                 var emailMessage = new EmailMessage {
                     To = adminEmail,
@@ -275,20 +278,23 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Encola el email de cambio de estado AL CLIENTE del pedido.
+    ///     Encola el email de cambio de estado AL CLIENTE del pedido.
     /// </summary>
     /// <remarks>
-    /// 📧 Matriz de emails: el usuario es quien debe enterarse de los cambios
-    /// de estado. El admin NO recibe este email porque los cambios de estado
-    /// los provoca él desde el panel (ver doc/21-email-services.md).
+    ///     📧 Matriz de emails: el usuario es quien debe enterarse de los cambios
+    ///     de estado. El admin NO recibe este email porque los cambios de estado
+    ///     los provoca él desde el panel (ver doc/21-email-services.md).
     /// </remarks>
-    public void EnviarEmailPedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, DestinatarioDto? destinatario) {
+    public void EnviarEmailPedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado,
+        decimal total, DestinatarioDto? destinatario) {
         _ = Task.Run(async () => {
             try {
-                if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
+                if (string.IsNullOrWhiteSpace(destinatario?.Email)) {
+                    return;
+                }
 
-                var content = EmailTemplates.PedidoEstadoActualizado(pedidoId, estadoAnterior, nuevoEstado, total);
-                var body = EmailTemplates.CreateBase("Cambio de Estado de Pedido", content);
+                string content = EmailTemplates.PedidoEstadoActualizado(pedidoId, estadoAnterior, nuevoEstado, total);
+                string body = EmailTemplates.CreateBase("Cambio de Estado de Pedido", content);
 
                 var emailMessage = new EmailMessage {
                     To = destinatario.Email,
@@ -305,16 +311,18 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Encola el email de aviso AL CLIENTE cuando un administrador modifica
-    /// datos de su pedido sin cambiar el estado.
+    ///     Encola el email de aviso AL CLIENTE cuando un administrador modifica
+    ///     datos de su pedido sin cambiar el estado.
     /// </summary>
     public void EnviarEmailPedidoModificadoCliente(string pedidoId, DestinatarioDto? destinatario) {
         _ = Task.Run(async () => {
             try {
-                if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
+                if (string.IsNullOrWhiteSpace(destinatario?.Email)) {
+                    return;
+                }
 
-                var content = EmailTemplates.PedidoModificadoCliente(pedidoId, destinatario.NombreCompleto);
-                var body = EmailTemplates.CreateBase($"Pedido #{pedidoId} modificado", content);
+                string content = EmailTemplates.PedidoModificadoCliente(pedidoId, destinatario.NombreCompleto);
+                string body = EmailTemplates.CreateBase($"Pedido #{pedidoId} modificado", content);
 
                 await emailService.EnqueueEmailAsync(new EmailMessage {
                     To = destinatario.Email,
@@ -322,24 +330,28 @@ public class PedidoEffects(
                     Body = body,
                     IsHtml = true
                 });
-                logger.LogDebug("Email de aviso de modificación encolado para el cliente del pedido {PedidoId}", pedidoId);
+                logger.LogDebug("Email de aviso de modificación encolado para el cliente del pedido {PedidoId}",
+                    pedidoId);
             } catch (Exception ex) {
-                logger.LogWarning(ex, "Error al encolar email de aviso de modificación para pedido {PedidoId}", pedidoId);
+                logger.LogWarning(ex, "Error al encolar email de aviso de modificación para pedido {PedidoId}",
+                    pedidoId);
             }
         });
     }
 
     /// <summary>
-    /// Encola el email de cancelación AL CLIENTE (cancelación propia o
-    /// eliminación por administrador).
+    ///     Encola el email de cancelación AL CLIENTE (cancelación propia o
+    ///     eliminación por administrador).
     /// </summary>
     public void EnviarEmailPedidoCanceladoCliente(string pedidoId, decimal total, DestinatarioDto? destinatario) {
         _ = Task.Run(async () => {
             try {
-                if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
+                if (string.IsNullOrWhiteSpace(destinatario?.Email)) {
+                    return;
+                }
 
-                var content = EmailTemplates.PedidoCanceladoCliente(pedidoId, total, destinatario.NombreCompleto);
-                var body = EmailTemplates.CreateBase($"Pedido #{pedidoId} cancelado", content);
+                string content = EmailTemplates.PedidoCanceladoCliente(pedidoId, total, destinatario.NombreCompleto);
+                string body = EmailTemplates.CreateBase($"Pedido #{pedidoId} cancelado", content);
 
                 await emailService.EnqueueEmailAsync(new EmailMessage {
                     To = destinatario.Email,
@@ -355,18 +367,20 @@ public class PedidoEffects(
     }
 
     /// <summary>
-    /// Encola el aviso AL ADMINISTRADOR cuando un usuario cancela su propio
-    /// pedido (matriz de emails: es lo único que el admin debe gestionar y
-    /// no proviene de él, junto con la creación).
+    ///     Encola el aviso AL ADMINISTRADOR cuando un usuario cancela su propio
+    ///     pedido (matriz de emails: es lo único que el admin debe gestionar y
+    ///     no proviene de él, junto con la creación).
     /// </summary>
     public void EnviarEmailPedidoCanceladoAdmin(string pedidoId, decimal total, long userId) {
         _ = Task.Run(async () => {
             try {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
+                string? adminEmail = configuration["Smtp:AdminEmail"];
+                if (string.IsNullOrEmpty(adminEmail)) {
+                    return;
+                }
 
-                var content = EmailTemplates.PedidoEliminadoAdmin(pedidoId, total, userId);
-                var body = EmailTemplates.CreateBase("Pedido Cancelado por Usuario", content);
+                string content = EmailTemplates.PedidoEliminadoAdmin(pedidoId, total, userId);
+                string body = EmailTemplates.CreateBase("Pedido Cancelado por Usuario", content);
 
                 var emailMessage = new EmailMessage {
                     To = adminEmail,
@@ -377,11 +391,11 @@ public class PedidoEffects(
                 await emailService.EnqueueEmailAsync(emailMessage);
                 logger.LogDebug("Aviso de cancelación encolado para el administrador del pedido {PedidoId}", pedidoId);
             } catch (Exception ex) {
-                logger.LogWarning(ex, "Error al encolar aviso de cancelación para el administrador: {PedidoId}", pedidoId);
+                logger.LogWarning(ex, "Error al encolar aviso de cancelación para el administrador: {PedidoId}",
+                    pedidoId);
             }
         });
     }
 
     #endregion
-
 }

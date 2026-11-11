@@ -4,14 +4,34 @@ using TiendaApi.Api.Dtos.Usuarios;
 namespace TiendaApi.Tests.Unit.Dtos.Usuarios;
 
 /// <summary>
-/// Tests unitarios para AvatarUpdateDto.
-/// Verifica el funcionamiento del DTO de actualización de avatar de usuario.
+///     Tests unitarios para AvatarUpdateDto.
+///     Verifica el funcionamiento del DTO de actualización de avatar de usuario.
 /// </summary>
 public class AvatarUpdateDtoTests {
+    #region Tests de Inmutabilidad del Record
+
+    /// <summary>
+    ///     Verifica que se puede crear una nueva instancia con cambios usando 'with'.
+    /// </summary>
+    [Test]
+    public void With_PuedeCrearNuevaInstanciaConCambios() {
+        // Arrange
+        var original = new AvatarUpdateDto { AvatarUrl = "original.jpg" };
+
+        // Act
+        AvatarUpdateDto modificado = original with { AvatarUrl = "nuevo.jpg" };
+
+        // Assert
+        modificado.AvatarUrl.Should().Be("nuevo.jpg");
+        original.AvatarUrl.Should().Be("original.jpg");
+    }
+
+    #endregion
+
     #region Tests de Constructor
 
     /// <summary>
-    /// Verifica que el constructor asigna la URL correctamente.
+    ///     Verifica que el constructor asigna la URL correctamente.
     /// </summary>
     [Test]
     public void Constructor_ConUrlValido_AsignaCorrectamente() {
@@ -23,7 +43,7 @@ public class AvatarUpdateDtoTests {
     }
 
     /// <summary>
-    /// Verifica que por defecto devuelve una cadena vacía.
+    ///     Verifica que por defecto devuelve una cadena vacía.
     /// </summary>
     [Test]
     public void Constructor_PorDefecto_RetornaCadenaVacia() {
@@ -35,7 +55,7 @@ public class AvatarUpdateDtoTests {
     }
 
     /// <summary>
-    /// Verifica que el constructor asigna una cadena vacía correctamente.
+    ///     Verifica que el constructor asigna una cadena vacía correctamente.
     /// </summary>
     [Test]
     public void Constructor_ConUrlVacia_AsignaCadenaVacia() {
@@ -51,7 +71,7 @@ public class AvatarUpdateDtoTests {
     #region Tests de Propiedades
 
     /// <summary>
-    /// Verifica que soporta URLs con protocolo https.
+    ///     Verifica que soporta URLs con protocolo https.
     /// </summary>
     [Test]
     public void AvatarUrl_PuedeContenerUrlsHttps() {
@@ -64,7 +84,7 @@ public class AvatarUpdateDtoTests {
     }
 
     /// <summary>
-    /// Verifica que soporta URLs con protocolo http.
+    ///     Verifica que soporta URLs con protocolo http.
     /// </summary>
     [Test]
     public void AvatarUrl_PuedeContenerUrlsHttp() {
@@ -76,7 +96,7 @@ public class AvatarUpdateDtoTests {
     }
 
     /// <summary>
-    /// Verifica que rutas locales son aceptadas (sin esquema http/https).
+    ///     Verifica que rutas locales son aceptadas (sin esquema http/https).
     /// </summary>
     [Test]
     public void AvatarUrl_PuedeContenerRutasLocales() {
@@ -88,12 +108,12 @@ public class AvatarUpdateDtoTests {
     }
 
     /// <summary>
-    /// Verifica que soporta URLs largas.
+    ///     Verifica que soporta URLs largas.
     /// </summary>
     [Test]
     public void AvatarUrl_SoportaUrlsLargas() {
         // Arrange
-        var urlLarga = "https://example.com/ruta/muy/larga/hacia/el/avatar/imagen/nombre/con/muchos/segmentos.png";
+        string urlLarga = "https://example.com/ruta/muy/larga/hacia/el/avatar/imagen/nombre/con/muchos/segmentos.png";
 
         // Act
         var dto = new AvatarUpdateDto { AvatarUrl = urlLarga };
@@ -104,30 +124,10 @@ public class AvatarUpdateDtoTests {
 
     #endregion
 
-    #region Tests de Inmutabilidad del Record
-
-    /// <summary>
-    /// Verifica que se puede crear una nueva instancia con cambios usando 'with'.
-    /// </summary>
-    [Test]
-    public void With_PuedeCrearNuevaInstanciaConCambios() {
-        // Arrange
-        var original = new AvatarUpdateDto { AvatarUrl = "original.jpg" };
-
-        // Act
-        var modificado = original with { AvatarUrl = "nuevo.jpg" };
-
-        // Assert
-        modificado.AvatarUrl.Should().Be("nuevo.jpg");
-        original.AvatarUrl.Should().Be("original.jpg");
-    }
-
-    #endregion
-
     #region Tests de Equality
 
     /// <summary>
-    /// Verifica que dos DTOs con los mismos valores son iguales.
+    ///     Verifica que dos DTOs con los mismos valores son iguales.
     /// </summary>
     [Test]
     public void Equals_ConMismosValores_RetornaTrue() {
@@ -140,7 +140,7 @@ public class AvatarUpdateDtoTests {
     }
 
     /// <summary>
-    /// Verifica que dos DTOs con valores distintos no son iguales.
+    ///     Verifica que dos DTOs con valores distintos no son iguales.
     /// </summary>
     [Test]
     public void Equals_ConValoresDistintos_RetornaFalse() {
@@ -153,7 +153,7 @@ public class AvatarUpdateDtoTests {
     }
 
     /// <summary>
-    /// Verifica que dos DTOs vacíos son iguales.
+    ///     Verifica que dos DTOs vacíos son iguales.
     /// </summary>
     [Test]
     public void Equals_ConValoresVacios_RetornaTrue() {

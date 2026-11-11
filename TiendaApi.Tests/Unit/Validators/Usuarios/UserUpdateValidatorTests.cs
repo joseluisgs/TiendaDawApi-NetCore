@@ -1,13 +1,13 @@
 using FluentAssertions;
-using FluentValidation;
+using FluentValidation.Results;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Validators.Usuarios;
 
 namespace TiendaApi.Tests.Unit.Validators.Usuarios;
 
 /// <summary>
-/// Tests unitarios para UserUpdateValidator.
-/// Verifica la validación de los campos de actualización de usuario.
+///     Tests unitarios para UserUpdateValidator.
+///     Verifica la validación de los campos de actualización de usuario.
 /// </summary>
 public class UserUpdateValidatorTests {
     private readonly UserUpdateValidator _validator;
@@ -19,7 +19,7 @@ public class UserUpdateValidatorTests {
     #region Validación de Email
 
     /// <summary>
-    /// Verifica que un email válido no produce errores de validación.
+    ///     Verifica que un email válido no produce errores de validación.
     /// </summary>
     [Test]
     public void Validate_ConEmailValido_NoTieneErrores() {
@@ -27,7 +27,7 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Email = "test@example.com" };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -35,7 +35,7 @@ public class UserUpdateValidatorTests {
     }
 
     /// <summary>
-    /// Verifica que un email vacío es válido (el campo es opcional).
+    ///     Verifica que un email vacío es válido (el campo es opcional).
     /// </summary>
     [Test]
     public void Validate_ConEmailVacio_NoTieneErrores() {
@@ -43,14 +43,14 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Email = "" };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     /// <summary>
-    /// Verifica que un email null es válido (el campo es opcional).
+    ///     Verifica que un email null es válido (el campo es opcional).
     /// </summary>
     [Test]
     public void Validate_ConEmailNull_NoTieneErrores() {
@@ -58,14 +58,14 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Email = null };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     /// <summary>
-    /// Verifica que un email inválido produce un error de validación.
+    ///     Verifica que un email inválido produce un error de validación.
     /// </summary>
     [Test]
     public void Validate_ConEmailInvalido_TieneError() {
@@ -73,7 +73,7 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Email = "invalid-email" };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -81,7 +81,7 @@ public class UserUpdateValidatorTests {
     }
 
     /// <summary>
-    /// Verifica que un email sin arroba produce un error de validación.
+    ///     Verifica que un email sin arroba produce un error de validación.
     /// </summary>
     [Test]
     public void Validate_ConEmailSinArroba_TieneError() {
@@ -89,23 +89,23 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Email = "testexample.com" };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeFalse();
     }
 
     /// <summary>
-    /// Verifica que un email que excede 100 caracteres produce un error de validación.
+    ///     Verifica que un email que excede 100 caracteres produce un error de validación.
     /// </summary>
     [Test]
     public void Validate_ConEmailMuyLargo_TieneError() {
         // Arrange
-        var email = new string('a', 100) + "@example.com";
+        string email = new string('a', 100) + "@example.com";
         var dto = new UserUpdateDto { Email = email };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -117,7 +117,7 @@ public class UserUpdateValidatorTests {
     #region Validación de Password
 
     /// <summary>
-    /// Verifica que un password válido no produce errores de validación.
+    ///     Verifica que un password válido no produce errores de validación.
     /// </summary>
     [Test]
     public void Validate_ConPasswordValido_NoTieneErrores() {
@@ -125,7 +125,7 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Password = "Password123" };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -133,7 +133,7 @@ public class UserUpdateValidatorTests {
     }
 
     /// <summary>
-    /// Verifica que un password vacío es válido (el campo es opcional).
+    ///     Verifica que un password vacío es válido (el campo es opcional).
     /// </summary>
     [Test]
     public void Validate_ConPasswordVacio_NoTieneErrores() {
@@ -141,14 +141,14 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Password = "" };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     /// <summary>
-    /// Verifica que un password null es válido (el campo es opcional).
+    ///     Verifica que un password null es válido (el campo es opcional).
     /// </summary>
     [Test]
     public void Validate_ConPasswordNull_NoTieneErrores() {
@@ -156,14 +156,14 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Password = null };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     /// <summary>
-    /// Verifica que un password con menos de 8 caracteres produce un error de validación.
+    ///     Verifica que un password con menos de 8 caracteres produce un error de validación.
     /// </summary>
     [Test]
     public void Validate_ConPasswordMuyCorto_TieneError() {
@@ -171,7 +171,7 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Password = "12345" };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -179,7 +179,7 @@ public class UserUpdateValidatorTests {
     }
 
     /// <summary>
-    /// Verifica que un password mínimo válido (≥8 + mayúscula + minúscula + dígito) pasa.
+    ///     Verifica que un password mínimo válido (≥8 + mayúscula + minúscula + dígito) pasa.
     /// </summary>
     [Test]
     public void Validate_ConPasswordMinimaValida_EsValido() {
@@ -187,14 +187,14 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Password = "Abc12345" };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     /// <summary>
-    /// Verifica que un password que excede 100 caracteres produce un error de validación.
+    ///     Verifica que un password que excede 100 caracteres produce un error de validación.
     /// </summary>
     [Test]
     public void Validate_ConPasswordMuyLargo_TieneError() {
@@ -202,7 +202,7 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto { Password = new string('a', 101) };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -214,7 +214,7 @@ public class UserUpdateValidatorTests {
     #region Validación Combinada
 
     /// <summary>
-    /// Verifica que un email y password válidos no producen errores de validación.
+    ///     Verifica que un email y password válidos no producen errores de validación.
     /// </summary>
     [Test]
     public void Validate_ConEmailYPasswordValidos_NoTieneErrores() {
@@ -225,14 +225,14 @@ public class UserUpdateValidatorTests {
         };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     /// <summary>
-    /// Verifica que con email inválido y password válido solo se produce error de email.
+    ///     Verifica que con email inválido y password válido solo se produce error de email.
     /// </summary>
     [Test]
     public void Validate_ConEmailInvalidoYPasswordValido_TieneSoloErrorDeEmail() {
@@ -243,7 +243,7 @@ public class UserUpdateValidatorTests {
         };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -252,7 +252,7 @@ public class UserUpdateValidatorTests {
     }
 
     /// <summary>
-    /// Verifica que con email válido y password corto solo se produce error de password.
+    ///     Verifica que con email válido y password corto solo se produce error de password.
     /// </summary>
     [Test]
     public void Validate_ConEmailValidoYPasswordCorto_TieneSoloErrorDePassword() {
@@ -263,7 +263,7 @@ public class UserUpdateValidatorTests {
         };
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -272,7 +272,7 @@ public class UserUpdateValidatorTests {
     }
 
     /// <summary>
-    /// Verifica que con ambos campos vacíos no se producen errores de validación.
+    ///     Verifica que con ambos campos vacíos no se producen errores de validación.
     /// </summary>
     [Test]
     public void Validate_ConAmbosCamposVacios_NoTieneErrores() {
@@ -280,7 +280,7 @@ public class UserUpdateValidatorTests {
         var dto = new UserUpdateDto();
 
         // Act
-        var result = _validator.Validate(dto);
+        ValidationResult result = _validator.Validate(dto);
 
         // Assert
         result.IsValid.Should().BeTrue();

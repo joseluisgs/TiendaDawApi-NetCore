@@ -12,7 +12,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.IsLocalImage();
+        bool result = producto.IsLocalImage();
 
         // Assert
         result.Should().BeTrue();
@@ -26,7 +26,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.IsLocalImage();
+        bool result = producto.IsLocalImage();
 
         // Assert
         result.Should().BeTrue();
@@ -40,7 +40,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.IsLocalImage();
+        bool result = producto.IsLocalImage();
 
         // Assert
         result.Should().BeFalse();
@@ -54,7 +54,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.IsLocalImage();
+        bool result = producto.IsLocalImage();
 
         // Assert
         result.Should().BeFalse();
@@ -68,7 +68,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.IsLocalImage();
+        bool result = producto.IsLocalImage();
 
         // Assert
         result.Should().BeFalse();
@@ -82,7 +82,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.IsLocalImage();
+        bool result = producto.IsLocalImage();
 
         // Assert
         result.Should().BeFalse();
@@ -96,7 +96,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.HasDefaultImage();
+        bool result = producto.HasDefaultImage();
 
         // Assert
         result.Should().BeTrue();
@@ -110,7 +110,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.HasDefaultImage();
+        bool result = producto.HasDefaultImage();
 
         // Assert
         result.Should().BeTrue();
@@ -124,7 +124,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.HasDefaultImage();
+        bool result = producto.HasDefaultImage();
 
         // Assert
         result.Should().BeTrue();
@@ -138,7 +138,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.HasDefaultImage();
+        bool result = producto.HasDefaultImage();
 
         // Assert
         result.Should().BeFalse();
@@ -152,7 +152,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.GetImagenUrl();
+        string result = producto.GetImagenUrl();
 
         // Assert
         result.Should().Be(Producto.IMAGE_DEFAULT);
@@ -166,7 +166,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.GetImagenUrl();
+        string result = producto.GetImagenUrl();
 
         // Assert
         result.Should().Be("http://ejemplo.com/imagen.jpg");
@@ -180,7 +180,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.GetImagenUrl();
+        string result = producto.GetImagenUrl();
 
         // Assert
         result.Should().Be("https://ejemplo.com/imagen.jpg");
@@ -194,7 +194,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.GetImagenUrl();
+        string result = producto.GetImagenUrl();
 
         // Assert
         result.Should().Be("/storage/uploads/productos/test.jpg");
@@ -208,7 +208,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.GetImagenUrl();
+        string result = producto.GetImagenUrl();
 
         // Assert
         result.Should().Be("/storage/uploads/productos/test.jpg");
@@ -222,7 +222,7 @@ public class ProductoImageTests {
         };
 
         // Act
-        var result = producto.GetImagenUrl();
+        string result = producto.GetImagenUrl();
 
         // Assert
         result.Should().Be(Producto.IMAGE_LOCAL_PREFIX + "test.jpg");

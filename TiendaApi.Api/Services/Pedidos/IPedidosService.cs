@@ -6,7 +6,7 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Services.Pedidos;
 
 /// <summary>
-/// Contrato del servicio de pedidos.
+///     Contrato del servicio de pedidos.
 /// </summary>
 public interface IPedidosService {
     /// <summary>Obtiene todos los pedidos (admin).</summary>

@@ -1,45 +1,45 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <IsPackable>false</IsPackable>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <!-- HotChocolate 16 inyecta HotChocolate.Types.Composite (clase 'Is') que colisiona con NUnit.Framework.Is -->
-    <HotChocolateCompositeImplicitUsings>disable</HotChocolateCompositeImplicitUsings>
-    <CollectCoverage>true</CollectCoverage>
-    <CoverageThreshold>0</CoverageThreshold>
-    <CoverletOutputFormat>json,lcov,opencover</CoverletOutputFormat>
-    <CoverletOutput>./coverage/</CoverletOutput>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <!-- HotChocolate 16 inyecta HotChocolate.Types.Composite (clase 'Is') que colisiona con NUnit.Framework.Is -->
+        <HotChocolateCompositeImplicitUsings>disable</HotChocolateCompositeImplicitUsings>
+        <CollectCoverage>true</CollectCoverage>
+        <CoverageThreshold>0</CoverageThreshold>
+        <CoverletOutputFormat>json,lcov,opencover</CoverletOutputFormat>
+        <CoverletOutput>./coverage/</CoverletOutput>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Versiones centralizadas en Directory.Packages.props -->
-    <PackageReference Include="coverlet.collector" />
-    <PackageReference Include="coverlet.msbuild" />
-    <PackageReference Include="CSharpFunctionalExtensions" />
-    <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="HotChocolate.AspNetCore" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Moq" />
-    <PackageReference Include="NUnit" />
-    <PackageReference Include="NUnit.Analyzers" />
-    <PackageReference Include="NUnit3TestAdapter" />
-    <PackageReference Include="Testcontainers.MongoDb" />
-    <PackageReference Include="Testcontainers.PostgreSql" />
-    <PackageReference Include="Testcontainers.Cassandra" />
-    <PackageReference Include="MongoDB.Driver" />
-  </ItemGroup>
+    <ItemGroup>
+        <!-- Versiones centralizadas en Directory.Packages.props -->
+        <PackageReference Include="coverlet.collector"/>
+        <PackageReference Include="coverlet.msbuild"/>
+        <PackageReference Include="CSharpFunctionalExtensions"/>
+        <PackageReference Include="FluentAssertions"/>
+        <PackageReference Include="HotChocolate.AspNetCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing"/>
+        <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+        <PackageReference Include="Moq"/>
+        <PackageReference Include="NUnit"/>
+        <PackageReference Include="NUnit.Analyzers"/>
+        <PackageReference Include="NUnit3TestAdapter"/>
+        <PackageReference Include="Testcontainers.MongoDb"/>
+        <PackageReference Include="Testcontainers.PostgreSql"/>
+        <PackageReference Include="Testcontainers.Cassandra"/>
+        <PackageReference Include="MongoDB.Driver"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="NUnit.Framework" />
-  </ItemGroup>
+    <ItemGroup>
+        <Using Include="NUnit.Framework"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TiendaApi.Api\TiendaApi.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\TiendaApi.Api\TiendaApi.csproj"/>
+    </ItemGroup>
 
 </Project>

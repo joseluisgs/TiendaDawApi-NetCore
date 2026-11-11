@@ -5,15 +5,15 @@ namespace TiendaApi.Api.Dtos.Historial;
 // System.Decimal: con double el mapeo es directo (misma decision del ejemplo 26).
 
 /// <summary>
-/// Punto del histórico de precios de un producto (consulta Q-A de Cassandra).
+///     Punto del histórico de precios de un producto (consulta Q-A de Cassandra).
 /// </summary>
 /// <param name="Fecha">Momento del cambio (UTC). El orden lo da la clustering key de la tabla.</param>
 /// <param name="Precio">Precio del producto en ese momento.</param>
 public record HistorialPrecioDto(DateTime Fecha, double Precio);
 
 /// <summary>
-/// Entrada del feed de actividad: un producto visto por un usuario (consulta Q-B).
-/// El nombre viene DENORMALIZADO de la tabla: el feed se pinta sin ningún cruce.
+///     Entrada del feed de actividad: un producto visto por un usuario (consulta Q-B).
+///     El nombre viene DENORMALIZADO de la tabla: el feed se pinta sin ningún cruce.
 /// </summary>
 /// <param name="Fecha">Momento de la vista (UTC).</param>
 /// <param name="ProductoId">Producto visto.</param>
@@ -21,7 +21,7 @@ public record HistorialPrecioDto(DateTime Fecha, double Precio);
 public record VistaFeedDto(DateTime Fecha, long ProductoId, string Nombre);
 
 /// <summary>
-/// Cambio de precio registrado en el informe por día (consulta Q-C).
+///     Cambio de precio registrado en el informe por día (consulta Q-C).
 /// </summary>
 /// <param name="Fecha">Día del cambio (bucket de la partición).</param>
 /// <param name="ProductoId">Producto que cambió de precio.</param>

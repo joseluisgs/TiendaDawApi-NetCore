@@ -1,6 +1,5 @@
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using TiendaApi.Api.Dtos.Auth;
 using TiendaApi.Api.Dtos.Usuarios;
 using TiendaApi.Api.Errors;
@@ -10,16 +9,14 @@ using AuthErrors = TiendaApi.Api.Errors.Auth.AuthError;
 namespace TiendaApi.Api.Services.Auth;
 
 /// <summary>
-/// Servicio de autenticación con ASP.NET Core Identity (Auth:Mode = "Identity").
-///
-/// A diferencia de <see cref="AuthService"/> (BCrypt manual + JWT), este servicio
-/// delega en UserManager/SignInManager de Identity para:
-/// - Hash de contraseñas (PBKDF2 en vez de BCrypt)
-/// - Validación de credenciales
-/// - Gestión de usuarios (CRUD con validaciones integradas)
-///
-/// El JWT se genera igual que en modo Custom: el middleware solo valida el token,
-/// no sabe cómo se creó la sesión.
+///     Servicio de autenticación con ASP.NET Core Identity (Auth:Mode = "Identity").
+///     A diferencia de <see cref="AuthService" /> (BCrypt manual + JWT), este servicio
+///     delega en UserManager/SignInManager de Identity para:
+///     - Hash de contraseñas (PBKDF2 en vez de BCrypt)
+///     - Validación de credenciales
+///     - Gestión de usuarios (CRUD con validaciones integradas)
+///     El JWT se genera igual que en modo Custom: el middleware solo valida el token,
+///     no sabe cómo se creó la sesión.
 /// </summary>
 public class IdentityAuthService(
     UserManager<User> userManager,
@@ -28,7 +25,7 @@ public class IdentityAuthService(
     ILogger<IdentityAuthService> logger
 ) : IAuthService {
     /// <summary>
-    /// Registra un nuevo usuario con Identity.
+    ///     Registra un nuevo usuario con Identity.
     /// </summary>
     public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto) {
         logger.LogInformation("SignUp (Identity) para: {Username}", dto.Username);
@@ -39,14 +36,15 @@ public class IdentityAuthService(
             Role = UserRoles.USER
         };
 
-        var result = await userManager.CreateAsync(user, dto.Password!);
+        IdentityResult result = await userManager.CreateAsync(user, dto.Password!);
 
         if (!result.Succeeded) {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            string errors = string.Join(", ", result.Errors.Select(e => e.Description));
             logger.LogWarning("SignUp falló: {Errors}", errors);
 
-            if (result.Errors.Any(e => e.Code.Contains("Duplicate")))
+            if (result.Errors.Any(e => e.Code.Contains("Duplicate"))) {
                 return Result.Failure<AuthResponseDto, DomainError>(AuthErrors.EmailExistente(dto.Email!));
+            }
 
             return Result.Failure<AuthResponseDto, DomainError>(
                 new BusinessRuleError(errors));
@@ -57,20 +55,20 @@ public class IdentityAuthService(
     }
 
     /// <summary>
-    /// Inicia sesión con Identity (verifica contraseña con PBKDF2).
+    ///     Inicia sesión con Identity (verifica contraseña con PBKDF2).
     /// </summary>
     public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto) {
         logger.LogInformation("SignIn (Identity) para: {Username}", dto.Username);
 
-        var user = await userManager.FindByNameAsync(dto.Username!)
-            ?? await userManager.FindByEmailAsync(dto.Username!);
+        User? user = await userManager.FindByNameAsync(dto.Username!)
+                     ?? await userManager.FindByEmailAsync(dto.Username!);
 
         if (user is null) {
             logger.LogWarning("SignIn falló: usuario no encontrado");
             return Result.Failure<AuthResponseDto, DomainError>(AuthErrors.CredencialesInvalidas());
         }
 
-        var result = await signInManager.CheckPasswordSignInAsync(user, dto.Password!, lockoutOnFailure: false);
+        SignInResult result = await signInManager.CheckPasswordSignInAsync(user, dto.Password!, false);
 
         if (!result.Succeeded) {
             logger.LogWarning("SignIn falló: contraseña inválida");
@@ -82,17 +80,18 @@ public class IdentityAuthService(
     }
 
     /// <summary>
-    /// Inicia sesión con proveedor externo (OAuth 2.0) usando Identity.
+    ///     Inicia sesión con proveedor externo (OAuth 2.0) usando Identity.
     /// </summary>
     public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(
-        Dtos.Auth.ExternalLoginDto info) {
+        ExternalLoginDto info) {
         logger.LogInformation("Login externo (Identity) con {Provider}", info.LoginProvider);
 
-        if (string.IsNullOrWhiteSpace(info.Email))
+        if (string.IsNullOrWhiteSpace(info.Email)) {
             return Result.Failure<AuthResponseDto, DomainError>(
                 new BusinessRuleError("El proveedor no devolvió email"));
+        }
 
-        var user = await userManager.FindByEmailAsync(info.Email);
+        User? user = await userManager.FindByEmailAsync(info.Email);
 
         if (user is null) {
             user = new User {
@@ -106,7 +105,7 @@ public class IdentityAuthService(
 
         // Vincular login externo
         var loginInfo = new UserLoginInfo(info.LoginProvider, info.ProviderKey, info.LoginProvider);
-        var existingLogins = await userManager.GetLoginsAsync(user);
+        IList<UserLoginInfo> existingLogins = await userManager.GetLoginsAsync(user);
         if (!existingLogins.Any(l => l.LoginProvider == info.LoginProvider)) {
             await userManager.AddLoginAsync(user, loginInfo);
         }
@@ -115,10 +114,10 @@ public class IdentityAuthService(
     }
 
     /// <summary>
-    /// Genera la respuesta con JWT (mismo flujo que modo Custom).
+    ///     Genera la respuesta con JWT (mismo flujo que modo Custom).
     /// </summary>
     private AuthResponseDto GenerateAuthResponse(User user) {
-        var token = jwtService.GenerateToken(user);
+        string token = jwtService.GenerateToken(user);
 
         var userDto = new UserDto(
             user.Id,

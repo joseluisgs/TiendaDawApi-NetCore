@@ -3,18 +3,17 @@ using System.ComponentModel.DataAnnotations;
 namespace TiendaApi.Api.Dtos.Usuarios;
 
 /// <summary>
-/// DTO de usuario para respuestas de API.
-/// Expone información pública del usuario sin datos sensibles como contraseñas.
-///
-/// <remarks>
-/// Roles disponibles:
-/// - "ADMIN": Acceso total al sistema
-/// - "USER": Acceso limitado a recursos propios
-/// </remarks>
+///     DTO de usuario para respuestas de API.
+///     Expone información pública del usuario sin datos sensibles como contraseñas.
+///     <remarks>
+///         Roles disponibles:
+///         - "ADMIN": Acceso total al sistema
+///         - "USER": Acceso limitado a recursos propios
+///     </remarks>
 /// </summary>
 /// <example>
-/// Respuesta JSON típica:
-/// <code>
+///     Respuesta JSON típica:
+///     <code>
 /// {
 ///   "id": 1,
 ///   "username": "juanperez",
@@ -69,25 +68,24 @@ public record UserDto(
 );
 
 /// <summary>
-/// DTO para el registro de nuevos usuarios.
-/// Define los datos necesarios para crear una nueva cuenta.
+///     DTO para el registro de nuevos usuarios.
+///     Define los datos necesarios para crear una nueva cuenta.
 /// </summary>
-///
 /// <remarks>
-/// Validaciones de contraseña:
-/// - Mínimo 8 caracteres
-/// - Se recomienda incluir mayúsculas, minúsculas, números y símbolos
+///     Validaciones de contraseña:
+///     - Mínimo 8 caracteres
+///     - Se recomienda incluir mayúsculas, minúsculas, números y símbolos
 /// </remarks>
 public record RegisterDto {
     /// <summary>
-    /// Nombre de usuario único.
-    /// Identificador público del usuario en el sistema.
+    ///     Nombre de usuario único.
+    ///     Identificador público del usuario en el sistema.
     /// </summary>
     /// <remarks>
-    /// Restricciones:
-    /// - Solo letras, números y guiones bajos
-    /// - Sin espacios ni caracteres especiales
-    /// - Debe ser único en el sistema
+    ///     Restricciones:
+    ///     - Solo letras, números y guiones bajos
+    ///     - Sin espacios ni caracteres especiales
+    ///     - Debe ser único en el sistema
     /// </remarks>
     /// <example>juanperez</example>
     [Required(ErrorMessage = "El nombre de usuario es obligatorio")]
@@ -97,8 +95,8 @@ public record RegisterDto {
     public string Username { get; init; } = string.Empty;
 
     /// <summary>
-    /// Correo electrónico del usuario.
-    /// Utilizado para notificaciones y recuperación de contraseña.
+    ///     Correo electrónico del usuario.
+    ///     Utilizado para notificaciones y recuperación de contraseña.
     /// </summary>
     /// <example>juan@example.com</example>
     [Required(ErrorMessage = "El correo electrónico es obligatorio")]
@@ -107,8 +105,8 @@ public record RegisterDto {
     public string Email { get; init; } = string.Empty;
 
     /// <summary>
-    /// Contraseña del usuario.
-    /// Almacenada de forma hasheada por seguridad.
+    ///     Contraseña del usuario.
+    ///     Almacenada de forma hasheada por seguridad.
     /// </summary>
     /// <example>Contraseña123!</example>
     [Required(ErrorMessage = "La contraseña es obligatoria")]
@@ -118,21 +116,21 @@ public record RegisterDto {
 }
 
 /// <summary>
-/// DTO para el inicio de sesión de usuarios.
-/// Credenciales necesarias para obtener token JWT.
+///     DTO para el inicio de sesión de usuarios.
+///     Credenciales necesarias para obtener token JWT.
 /// </summary>
 public record LoginDto {
     /// <summary>
-    /// Nombre de usuario o correo electrónico.
-    /// Identifica al usuario en el sistema.
+    ///     Nombre de usuario o correo electrónico.
+    ///     Identifica al usuario en el sistema.
     /// </summary>
     /// <example>juanperez</example>
     [Required(ErrorMessage = "El nombre de usuario es obligatorio")]
     public string Username { get; init; } = string.Empty;
 
     /// <summary>
-    /// Contraseña del usuario.
-    /// Verificada contra el hash almacenado.
+    ///     Contraseña del usuario.
+    ///     Verificada contra el hash almacenado.
     /// </summary>
     /// <example>Contraseña123!</example>
     [Required(ErrorMessage = "La contraseña es obligatoria")]
@@ -140,13 +138,12 @@ public record LoginDto {
 }
 
 /// <summary>
-/// DTO de respuesta de autenticación con JWT.
-/// Devuelto tras login o registro exitoso.
+///     DTO de respuesta de autenticación con JWT.
+///     Devuelto tras login o registro exitoso.
 /// </summary>
-///
 /// <remarks>
-/// El token JWT debe enviarse en el header Authorization de solicitudes subsecuentes:
-/// Authorization: Bearer &lt;token&gt;
+///     El token JWT debe enviarse en el header Authorization de solicitudes subsecuentes:
+///     Authorization: Bearer &lt;token&gt;
 /// </remarks>
 public record AuthResponseDto(
     // <summary>
@@ -162,13 +159,13 @@ public record AuthResponseDto(
 );
 
 /// <summary>
-/// DTO para actualizar datos de usuario.
-/// Campos opcionales: solo los presentes se actualizan.
+///     DTO para actualizar datos de usuario.
+///     Campos opcionales: solo los presentes se actualizan.
 /// </summary>
 public record UserUpdateDto {
     /// <summary>
-    /// Nuevo correo electrónico del usuario (opcional).
-    /// Debe ser un email válido y único.
+    ///     Nuevo correo electrónico del usuario (opcional).
+    ///     Debe ser un email válido y único.
     /// </summary>
     /// <example>nuevo@example.com</example>
     [EmailAddress(ErrorMessage = "Debe ser un correo electrónico válido")]
@@ -176,8 +173,8 @@ public record UserUpdateDto {
     public string? Email { get; init; }
 
     /// <summary>
-    /// Nueva contraseña del usuario (opcional).
-    /// Mínimo 8 caracteres.
+    ///     Nueva contraseña del usuario (opcional).
+    ///     Mínimo 8 caracteres.
     /// </summary>
     /// <example>NuevaContraseña456!</example>
     [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres")]

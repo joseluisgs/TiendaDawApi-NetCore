@@ -3,24 +3,23 @@ using System.ComponentModel.DataAnnotations;
 namespace TiendaApi.Api.Dtos.Categorias;
 
 /// <summary>
-/// DTO (Data Transfer Object) de categoría para respuestas de API.
-/// Este objeto se utiliza para transferir datos de categorías desde el servidor hacia el cliente.
-/// Separa la entidad interna de dominio del contrato de API, permitiendo independencia de la estructura de base de datos.
-///
-/// Esta clase es inmutable (record) para garantizar la integridad de los datos en tránsito.
-/// Se genera automáticamente a partir de la entidad de dominio mediante mapeo en la capa de aplicación.
-///
-/// <remarks>
-/// Uso típico:
-/// - Listar categorías en catálogos
-/// - Mostrar detalles de una categoría específica
-/// - Construir menús de navegación
-/// - Relacionar productos con sus categorías
-/// </remarks>
+///     DTO (Data Transfer Object) de categoría para respuestas de API.
+///     Este objeto se utiliza para transferir datos de categorías desde el servidor hacia el cliente.
+///     Separa la entidad interna de dominio del contrato de API, permitiendo independencia de la estructura de base de
+///     datos.
+///     Esta clase es inmutable (record) para garantizar la integridad de los datos en tránsito.
+///     Se genera automáticamente a partir de la entidad de dominio mediante mapeo en la capa de aplicación.
+///     <remarks>
+///         Uso típico:
+///         - Listar categorías en catálogos
+///         - Mostrar detalles de una categoría específica
+///         - Construir menús de navegación
+///         - Relacionar productos con sus categorías
+///     </remarks>
 /// </summary>
 /// <example>
-/// Respuesta JSON típica:
-/// <code>
+///     Respuesta JSON típica:
+///     <code>
 /// {
 ///   "id": 1,
 ///   "nombre": "Electrónica",
@@ -67,31 +66,29 @@ public record CategoriaDto(
 );
 
 /// <summary>
-/// DTO de categoría para solicitudes de creación o actualización.
-/// Objeto de transferencia utilizado para recibir datos del cliente hacia el servidor.
-/// Designado para operaciones POST (creación) y PUT/PATCH (actualización).
-///
-/// <remarks>
-/// Diferencias con CategoriaDto:
-/// - No incluye campos de solo lectura (Id, CreatedAt, UpdatedAt)
-/// - Enfocado únicamente en datos modificables por el usuario
-/// - Validaciones específicas para garantizar integridad de datos
-///
-/// Validaciones aplicadas:
-/// - Nombre: Obligatorio, entre 3 y 100 caracteres
-/// </remarks>
+///     DTO de categoría para solicitudes de creación o actualización.
+///     Objeto de transferencia utilizado para recibir datos del cliente hacia el servidor.
+///     Designado para operaciones POST (creación) y PUT/PATCH (actualización).
+///     <remarks>
+///         Diferencias con CategoriaDto:
+///         - No incluye campos de solo lectura (Id, CreatedAt, UpdatedAt)
+///         - Enfocado únicamente en datos modificables por el usuario
+///         - Validaciones específicas para garantizar integridad de datos
+///         Validaciones aplicadas:
+///         - Nombre: Obligatorio, entre 3 y 100 caracteres
+///     </remarks>
 /// </summary>
 public record CategoriaRequestDto {
     /// <summary>
-    /// Nombre de la categoría.
-    /// Representa el nombre público que verán los usuarios.
-    /// Debe ser descriptivo y conciso para facilitar la navegación.
+    ///     Nombre de la categoría.
+    ///     Representa el nombre público que verán los usuarios.
+    ///     Debe ser descriptivo y conciso para facilitar la navegación.
     /// </summary>
     /// <remarks>
-    /// Restricciones de negocio:
-    /// - No puede contener solo espacios en blanco
-    /// - Se recomienda evitar caracteres especiales
-    /// - El sistema puede normalizar espacios extras
+    ///     Restricciones de negocio:
+    ///     - No puede contener solo espacios en blanco
+    ///     - Se recomienda evitar caracteres especiales
+    ///     - El sistema puede normalizar espacios extras
     /// </remarks>
     /// <example>Electrónica</example>
     [Required(ErrorMessage = "El nombre es obligatorio")]
@@ -100,7 +97,7 @@ public record CategoriaRequestDto {
     public string Nombre { get; init; } = string.Empty;
 
     /// <summary>
-    /// Descripción de la categoría.
+    ///     Descripción de la categoría.
     /// </summary>
     [MaxLength(500, ErrorMessage = "La descripción no puede exceder 500 caracteres")]
     public string? Descripcion { get; init; }

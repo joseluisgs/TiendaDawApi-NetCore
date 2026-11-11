@@ -1,9 +1,9 @@
-using Asp.Versioning;
 using System.Security.Claims;
+using Asp.Versioning;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Errors;
@@ -15,8 +15,8 @@ using TiendaApi.Api.Services.Pedidos;
 namespace TiendaApi.Api.Controllers;
 
 /// <summary>
-/// Controlador REST para la gestión de pedidos.
-/// Separa endpoints para administradores (todos los pedidos) y usuarios (sus pedidos).
+///     Controlador REST para la gestión de pedidos.
+///     Separa endpoints para administradores (todos los pedidos) y usuarios (sus pedidos).
 /// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
@@ -26,7 +26,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     #region ========== ENDPOINTS DE ADMINISTRADORES ==========
 
     /// <summary>
-    /// Obtiene todos los pedidos del sistema (solo administradores).
+    ///     Obtiene todos los pedidos del sistema (solo administradores).
     /// </summary>
     [HttpGet]
     [OutputCache(Duration = 60, Tags = new[] { "pedidos" })]
@@ -35,16 +35,17 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<PedidoDto>>> GetAllPedidos() {
-        var resultado = await service.FindAllAsync();
+        Result<IEnumerable<PedidoDto>, DomainError> resultado = await service.FindAllAsync();
 
         return resultado.Match(
-            onSuccess: pedidos => Ok(pedidos),
-            onFailure: error => (ActionResult<IEnumerable<PedidoDto>>)new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
+            pedidos => Ok(pedidos),
+            error => (ActionResult<IEnumerable<PedidoDto>>)new ObjectResult(new { message = error.Message })
+                { StatusCode = StatusCodes.Status500InternalServerError }
         );
     }
 
     /// <summary>
-    /// Obtiene los pedidos del sistema de forma paginada (solo administradores).
+    ///     Obtiene los pedidos del sistema de forma paginada (solo administradores).
     /// </summary>
     /// <param name="page">Número de página (1-indexed).</param>
     /// <param name="size">Elementos por página.</param>
@@ -62,21 +63,24 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         [FromQuery] int size = 10,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? direction = null) {
-        var resultado = await service.FindAllPagedAsync(page - 1, size);
+        Result<PagedResult<PedidoDto>, DomainError> resultado = await service.FindAllPagedAsync(page - 1, size);
 
         return resultado.Match(
-            onSuccess: pedidos => {
-                var linkHeader = PaginationLinksHelper.CreateLinkHeader(pedidos, Request, sortBy, direction);
-                if (!string.IsNullOrEmpty(linkHeader))
+            pedidos => {
+                string linkHeader = PaginationLinksHelper.CreateLinkHeader(pedidos, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader)) {
                     Response.Headers.Append("Link", linkHeader);
+                }
+
                 return (ActionResult<PagedResult<PedidoDto>>)pedidos;
             },
-            onFailure: error => (ActionResult<PagedResult<PedidoDto>>)new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
+            error => (ActionResult<PagedResult<PedidoDto>>)new ObjectResult(new { message = error.Message })
+                { StatusCode = StatusCodes.Status500InternalServerError }
         );
     }
 
     /// <summary>
-    /// Obtiene un pedido específico por su ID (solo administradores).
+    ///     Obtiene un pedido específico por su ID (solo administradores).
     /// </summary>
     /// <param name="id">ID del pedido.</param>
     /// <returns>200 OK con el pedido, o 404 si no existe.</returns>
@@ -87,17 +91,17 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> GetPedidoById(string id) {
-        var resultado = await service.FindByIdAsync(id);
+        Result<PedidoDto, DomainError> resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: pedido => pedido,
-            onFailure: error => error.ToHttpResult<PedidoDto>()
+            pedido => pedido,
+            error => error.ToHttpResult<PedidoDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza un pedido (solo administradores).
-    /// Los administradores pueden actualizar cualquier pedido.
+    ///     Actualiza un pedido (solo administradores).
+    ///     Los administradores pueden actualizar cualquier pedido.
     /// </summary>
     /// <param name="id">ID del pedido.</param>
     /// <param name="dto">Nuevos datos del pedido.</param>
@@ -110,16 +114,16 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> UpdatePedidoAdmin(string id, [FromBody] UpdatePedidoDto dto) {
-        var resultado = await service.UpdateAdminAsync(id, dto);
+        Result<PedidoDto, DomainError> resultado = await service.UpdateAdminAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: pedido => pedido,
-            onFailure: error => error.ToHttpResult<PedidoDto>()
+            pedido => pedido,
+            error => error.ToHttpResult<PedidoDto>()
         );
     }
 
     /// <summary>
-    /// Elimina un pedido (solo administradores).
+    ///     Elimina un pedido (solo administradores).
     /// </summary>
     /// <param name="id">ID del pedido a eliminar.</param>
     /// <returns>204 No Content si tiene éxito, o 404 si no existe.</returns>
@@ -130,12 +134,13 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeletePedidoAdmin(string id) {
-        var resultado = await service.DeleteAdminAsync(id);
+        UnitResult<DomainError> resultado = await service.DeleteAdminAsync(id);
 
-        if (resultado.IsSuccess)
+        if (resultado.IsSuccess) {
             return NoContent();
+        }
 
-        var error = resultado.Error;
+        DomainError error = resultado.Error;
         return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
@@ -146,7 +151,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     }
 
     /// <summary>
-    /// Actualiza el estado de un pedido (solo administradores).
+    ///     Actualiza el estado de un pedido (solo administradores).
     /// </summary>
     /// <param name="id">ID del pedido.</param>
     /// <param name="dto">Nuevo estado del pedido.</param>
@@ -159,11 +164,11 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> UpdatePedidoEstado(string id, [FromBody] UpdateEstadoDto dto) {
-        var resultado = await service.UpdateEstadoAsync(id, dto.Estado);
+        Result<PedidoDto, DomainError> resultado = await service.UpdateEstadoAsync(id, dto.Estado);
 
         return resultado.Match(
-            onSuccess: pedido => pedido,
-            onFailure: error => error.ToHttpResult<PedidoDto>()
+            pedido => pedido,
+            error => error.ToHttpResult<PedidoDto>()
         );
     }
 
@@ -172,7 +177,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     #region ========== ENDPOINTS DE USUARIOS (MIS PEDIDOS) ==========
 
     /// <summary>
-    /// Obtiene todos los pedidos del usuario autenticado (sin paginación).
+    ///     Obtiene todos los pedidos del usuario autenticado (sin paginación).
     /// </summary>
     /// <returns>200 OK con lista de pedidos del usuario.</returns>
     [HttpGet("me")]
@@ -183,21 +188,23 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         logger.LogInformation("GetMyPedidos - User: {User}", User?.Identity?.Name);
         logger.LogInformation("GetMyPedidos - IsAuthenticated: {IsAuth}", User?.Identity?.IsAuthenticated);
 
-        if (!TryGetUserId(out var userId))
+        if (!TryGetUserId(out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
         logger.LogInformation("GetMyPedidos - NameIdentifier claim: {Claim}", userId);
 
-        var resultado = await service.FindByUserIdAsync(userId);
+        Result<IEnumerable<PedidoDto>, DomainError> resultado = await service.FindByUserIdAsync(userId);
 
         return resultado.Match(
-            onSuccess: pedidos => Ok(pedidos),
-            onFailure: error => (ActionResult<IEnumerable<PedidoDto>>)new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
+            pedidos => Ok(pedidos),
+            error => (ActionResult<IEnumerable<PedidoDto>>)new ObjectResult(new { message = error.Message })
+                { StatusCode = StatusCodes.Status500InternalServerError }
         );
     }
 
     /// <summary>
-    /// Obtiene los pedidos del usuario autenticado de forma paginada.
+    ///     Obtiene los pedidos del usuario autenticado de forma paginada.
     /// </summary>
     /// <param name="page">Número de página (1-indexed).</param>
     /// <param name="size">Elementos por página.</param>
@@ -213,24 +220,29 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         [FromQuery] int size = 10,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? direction = null) {
-        if (!TryGetUserId(out var userId))
+        if (!TryGetUserId(out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        var resultado = await service.FindMyPedidosAsync(userId, page - 1, size);
+        Result<PagedResult<PedidoDto>, DomainError>
+            resultado = await service.FindMyPedidosAsync(userId, page - 1, size);
 
         return resultado.Match(
-            onSuccess: pedidos => {
-                var linkHeader = PaginationLinksHelper.CreateLinkHeader(pedidos, Request, sortBy, direction);
-                if (!string.IsNullOrEmpty(linkHeader))
+            pedidos => {
+                string linkHeader = PaginationLinksHelper.CreateLinkHeader(pedidos, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader)) {
                     Response.Headers.Append("Link", linkHeader);
+                }
+
                 return (ActionResult<PagedResult<PedidoDto>>)pedidos;
             },
-            onFailure: error => (ActionResult<PagedResult<PedidoDto>>)new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
+            error => (ActionResult<PagedResult<PedidoDto>>)new ObjectResult(new { message = error.Message })
+                { StatusCode = StatusCodes.Status500InternalServerError }
         );
     }
 
     /// <summary>
-    /// Crea un nuevo pedido para el usuario autenticado.
+    ///     Crea un nuevo pedido para el usuario autenticado.
     /// </summary>
     /// <param name="dto">Datos del pedido a crear.</param>
     /// <returns>201 Created con el pedido creado, o 400/404 si hay errores.</returns>
@@ -241,13 +253,14 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> CreateMyPedido([FromBody] PedidoRequestDto dto) {
-        if (!TryGetUserId(out var userId))
+        if (!TryGetUserId(out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        var resultado = await service.CreateAsync(userId, dto);
+        Result<PedidoDto, DomainError> resultado = await service.CreateAsync(userId, dto);
 
         if (resultado.IsSuccess) {
-            var pedido = resultado.Value;
+            PedidoDto pedido = resultado.Value;
             return CreatedAtAction(nameof(GetMyPedidoById), new { id = pedido.Id }, pedido);
         }
 
@@ -255,7 +268,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     }
 
     /// <summary>
-    /// Obtiene un pedido propio por su ID.
+    ///     Obtiene un pedido propio por su ID.
     /// </summary>
     /// <param name="id">ID del pedido.</param>
     /// <returns>200 OK con el pedido, o 404 si no existe o no es suyo.</returns>
@@ -266,20 +279,21 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> GetMyPedidoById(string id) {
-        if (!TryGetUserId(out var userId))
+        if (!TryGetUserId(out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        var resultado = await service.FindMyPedidoAsync(id, userId);
+        Result<PedidoDto, DomainError> resultado = await service.FindMyPedidoAsync(id, userId);
 
         return resultado.Match(
-            onSuccess: pedido => pedido,
-            onFailure: error => error.ToHttpResult<PedidoDto>()
+            pedido => pedido,
+            error => error.ToHttpResult<PedidoDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza un pedido propio.
-    /// Solo permite modificar pedidos en estado PENDIENTE.
+    ///     Actualiza un pedido propio.
+    ///     Solo permite modificar pedidos en estado PENDIENTE.
     /// </summary>
     /// <param name="id">ID del pedido.</param>
     /// <param name="dto">Nuevos datos del pedido.</param>
@@ -292,20 +306,21 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PedidoDto>> UpdateMyPedido(string id, [FromBody] UpdatePedidoDto dto) {
-        if (!TryGetUserId(out var userId))
+        if (!TryGetUserId(out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        var resultado = await service.UpdateMyPedidoAsync(id, userId, dto);
+        Result<PedidoDto, DomainError> resultado = await service.UpdateMyPedidoAsync(id, userId, dto);
 
         return resultado.Match(
-            onSuccess: pedido => pedido,
-            onFailure: error => error.ToHttpResult<PedidoDto>()
+            pedido => pedido,
+            error => error.ToHttpResult<PedidoDto>()
         );
     }
 
     /// <summary>
-    /// Cancela y elimina un pedido propio.
-    /// Solo permite eliminar pedidos en estado PENDIENTE.
+    ///     Cancela y elimina un pedido propio.
+    ///     Solo permite eliminar pedidos en estado PENDIENTE.
     /// </summary>
     /// <param name="id">ID del pedido a eliminar.</param>
     /// <returns>204 No Content si tiene éxito, o 400/404 si hay errores.</returns>
@@ -317,15 +332,17 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteMyPedido(string id) {
-        if (!TryGetUserId(out var userId))
+        if (!TryGetUserId(out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        var resultado = await service.DeleteMyPedidoAsync(id, userId);
+        UnitResult<DomainError> resultado = await service.DeleteMyPedidoAsync(id, userId);
 
-        if (resultado.IsSuccess)
+        if (resultado.IsSuccess) {
             return NoContent();
+        }
 
-        var error = resultado.Error;
+        DomainError error = resultado.Error;
         return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
@@ -336,18 +353,20 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     }
 
     /// <summary>
-    /// Lee el id de la sesión actual (claim NameIdentifier). Devuelve false
-    /// cuando no hay sesión o el claim no es numérico: agrupa el patrón que
-    /// repiten las seis acciones "me/" de este controller y cada acción
-    /// responde 401 con una sola línea.
+    ///     Lee el id de la sesión actual (claim NameIdentifier). Devuelve false
+    ///     cuando no hay sesión o el claim no es numérico: agrupa el patrón que
+    ///     repiten las seis acciones "me/" de este controller y cada acción
+    ///     responde 401 con una sola línea.
     /// </summary>
     private bool TryGetUserId(out long userId) {
         userId = 0;
-        if (User?.Identity == null || !User.Identity.IsAuthenticated)
+        if (User?.Identity == null || !User.Identity.IsAuthenticated) {
             return false;
+        }
 
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return !string.IsNullOrEmpty(claim) && long.TryParse(claim, out userId);
     }
+
     #endregion
 }

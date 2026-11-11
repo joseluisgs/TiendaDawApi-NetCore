@@ -1,15 +1,15 @@
 using Cassandra;
 using FluentAssertions;
-using TiendaApi.Api.Models;
+using TiendaApi.Api.Dtos.Historial;
 using TiendaApi.Api.Repositories.Historial;
 using Path = System.IO.Path;
 
 namespace TiendaApi.Tests.Integration.TestContainers.Historial;
 
 /// <summary>
-/// Integración de la pila de series contra Cassandra REAL (Testcontainers,
-/// el mismo esquema de producción creado por InitializeSchemaAsync). Sin mocks:
-/// se verifican las 5 garantías del diseño de la pizarra.
+///     Integración de la pila de series contra Cassandra REAL (Testcontainers,
+///     el mismo esquema de producción creado por InitializeSchemaAsync). Sin mocks:
+///     se verifican las 5 garantías del diseño de la pizarra.
 /// </summary>
 public class CassandraHistorialRepositoryTests {
     // IDs y usuarios EXCLUSIVOS de estos tests: no pisan a los seeds ni a otros
@@ -42,7 +42,8 @@ public class CassandraHistorialRepositoryTests {
 
     [Test]
     public async Task GetHistorialPrecios_ParticionVacia_DevuelveListaVacia_NoError() {
-        var serie = await _repositorio.GetHistorialPreciosAsync(ProductoSerie, null, null, 50);
+        IReadOnlyList<HistorialPrecioDto> serie =
+            await _repositorio.GetHistorialPreciosAsync(ProductoSerie, null, null, 50);
 
         // Una partición que nunca se escribió no es un error: es una lista vacía.
         serie.Should().BeEmpty();
@@ -50,7 +51,7 @@ public class CassandraHistorialRepositoryTests {
 
     [Test]
     public async Task GetFeedVistas_ParticionVacia_DevuelveListaVacia_NoError() {
-        var feed = await _repositorio.GetFeedVistasAsync(UsuarioFeed, 20);
+        IReadOnlyList<VistaFeedDto> feed = await _repositorio.GetFeedVistasAsync(UsuarioFeed, 20);
 
         feed.Should().BeEmpty();
     }
@@ -60,7 +61,8 @@ public class CassandraHistorialRepositoryTests {
         await _repositorio.RegistrarPrecioAsync(ProductoDual, 1299.99);
 
         // Q-A: el punto aparece en la serie del producto.
-        var serie = await _repositorio.GetHistorialPreciosAsync(ProductoDual, null, null, 10);
+        IReadOnlyList<HistorialPrecioDto> serie =
+            await _repositorio.GetHistorialPreciosAsync(ProductoDual, null, null, 10);
         serie.Should().ContainSingle(p => p.Precio == 1299.99);
 
         // Q-C: la MISMA escritura también cayó en el bucket del día. Dos INSERT
@@ -81,7 +83,8 @@ public class CassandraHistorialRepositoryTests {
         await InsertarPuntoAsync(ProductoSerie, DateTime.UtcNow.AddDays(-10), 200.0);
         await InsertarPuntoAsync(ProductoSerie, DateTime.UtcNow.AddDays(-1), 300.0);
 
-        var serie = await _repositorio.GetHistorialPreciosAsync(ProductoSerie, null, null, 50);
+        IReadOnlyList<HistorialPrecioDto> serie =
+            await _repositorio.GetHistorialPreciosAsync(ProductoSerie, null, null, 50);
 
         serie.Should().HaveCount(3);
         // Mas reciente primero SIN ORDER BY en el SELECT: lo garantiza la
@@ -91,9 +94,10 @@ public class CassandraHistorialRepositoryTests {
 
         // Bonus: rango sobre la clustering key (desde/hasta) = solo el punto del
         // medio, sin ALLOW FILTERING y sin tocar otras particiones.
-        var desde = DateTime.UtcNow.AddDays(-20);
-        var hasta = DateTime.UtcNow.AddDays(-5);
-        var rango = await _repositorio.GetHistorialPreciosAsync(ProductoSerie, desde, hasta, 50);
+        DateTime desde = DateTime.UtcNow.AddDays(-20);
+        DateTime hasta = DateTime.UtcNow.AddDays(-5);
+        IReadOnlyList<HistorialPrecioDto> rango =
+            await _repositorio.GetHistorialPreciosAsync(ProductoSerie, desde, hasta, 50);
         rango.Should().ContainSingle().Which.Precio.Should().Be(200.0);
     }
 
@@ -102,17 +106,17 @@ public class CassandraHistorialRepositoryTests {
         await _repositorio.RegistrarVistaAsync(UsuarioFeed, ProductoDual, "Laptop de prueba");
 
         // Q-B: la fila trae el nombre COPIADO (el feed se pinta sin cruces).
-        var feed = await _repositorio.GetFeedVistasAsync(UsuarioFeed, 20);
+        IReadOnlyList<VistaFeedDto> feed = await _repositorio.GetFeedVistasAsync(UsuarioFeed, 20);
         feed.Should().ContainSingle();
         feed[0].Nombre.Should().Be("Laptop de prueba");
         feed[0].ProductoId.Should().Be(ProductoDual);
 
         // TTL nativo de la tabla (default_time_to_live = 180 dias): la columna no
         // primaria expira sola; recien escrita debe rondar el maximo de segundos.
-        var fila = (await _session.ExecuteAsync(new SimpleStatement(
+        Row fila = (await _session.ExecuteAsync(new SimpleStatement(
             "SELECT ttl(nombre) AS ttl FROM vistas_por_usuario WHERE usuario_id = ? LIMIT 1",
             UsuarioFeed))).First();
-        var ttl = fila.GetValue<int?>("ttl");
+        int? ttl = fila.GetValue<int?>("ttl");
         ttl.Should().NotBeNull("la columna del feed debe llevar TTL de tabla");
         ttl.Should().BeGreaterThan(0);
         ttl.Should().BeLessThanOrEqualTo(180 * 24 * 60 * 60);
@@ -120,8 +124,8 @@ public class CassandraHistorialRepositoryTests {
 
     [Test]
     public void CodigoDeLasSeries_SinAllowFiltering() {
-        var api = EncontrarRaizDelApi();
-        var carpetas = new[] {
+        string api = EncontrarRaizDelApi();
+        string[] carpetas = new[] {
             Path.Combine(api, "Repositories", "Historial"),
             Path.Combine(api, "Services", "Historial"),
             Path.Combine(api, "Data", "Seed", "Cassandra")
@@ -134,7 +138,7 @@ public class CassandraHistorialRepositoryTests {
 
         ficheros.Should().NotBeEmpty("deben existir los ficheros de series del proyecto Api");
 
-        foreach (var fichero in ficheros) {
+        foreach (string fichero in ficheros) {
             // Anti-patrón: ALLOW FILTERING escanea la tabla entera; el
             // diseno por particiones no debe necesitarlo jamas.
             File.ReadAllText(fichero).ToUpperInvariant().Should().NotContain("ALLOW FILTERING",
@@ -142,17 +146,18 @@ public class CassandraHistorialRepositoryTests {
         }
     }
 
-    private async Task InsertarPuntoAsync(long productoId, DateTime fecha, double precio)
-        => await _session.ExecuteAsync(new SimpleStatement(
+    private async Task InsertarPuntoAsync(long productoId, DateTime fecha, double precio) {
+        await _session.ExecuteAsync(new SimpleStatement(
             "INSERT INTO historial_precios_por_producto (producto_id, fecha, precio) VALUES (?, ?, ?)",
             productoId, fecha, precio));
+    }
 
     /// <summary>
-    /// LocalDate del día de hoy (UTC), al ESTILO del repositorio: el driver
-    /// 3.23 no expone LocalDate.FromDateTime, se construye con los tres números.
+    ///     LocalDate del día de hoy (UTC), al ESTILO del repositorio: el driver
+    ///     3.23 no expone LocalDate.FromDateTime, se construye con los tres números.
     /// </summary>
     private static LocalDate HoyUtc() {
-        var hoy = DateTime.UtcNow;
+        DateTime hoy = DateTime.UtcNow;
         return new LocalDate(hoy.Year, hoy.Month, hoy.Day);
     }
 
@@ -160,9 +165,10 @@ public class CassandraHistorialRepositoryTests {
         // Desde bin/Debug/net10.0 caminamos hacia arriba hasta el csproj del Api.
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null) {
-            var csproj = Path.Combine(dir.FullName, "TiendaApi.Api", "TiendaApi.csproj");
-            if (File.Exists(csproj))
+            string csproj = Path.Combine(dir.FullName, "TiendaApi.Api", "TiendaApi.csproj");
+            if (File.Exists(csproj)) {
                 return Path.Combine(dir.FullName, "TiendaApi.Api");
+            }
 
             dir = dir.Parent;
         }

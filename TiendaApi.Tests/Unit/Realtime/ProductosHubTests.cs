@@ -1,17 +1,17 @@
+using System.Reflection;
 using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Realtime;
 
 public class ProductosHubTests {
-    private Mock<ILogger<ProductosHub>> _loggerMock = null!;
     private HubCallerContext _context = null!;
+    private Mock<ILogger<ProductosHub>> _loggerMock = null!;
 
     [SetUp]
     public void Setup() {
@@ -37,11 +37,20 @@ public class ProductosHubTests {
 
     #endregion
 
+    #region Helper Methods
+
+    private void SetupHubContext(ProductosHub hub, HubCallerContext context) {
+        FieldInfo? field = typeof(Hub).GetField("_context", BindingFlags.NonPublic | BindingFlags.Instance);
+        field?.SetValue(hub, context);
+    }
+
+    #endregion
+
     #region Attribute Tests
 
     [Test]
     public void ProductosHub_TieneAllowAnonymousAttribute_Clase() {
-        var attribute = typeof(ProductosHub)
+        object? attribute = typeof(ProductosHub)
             .GetCustomAttributes(typeof(AllowAnonymousAttribute), true)
             .FirstOrDefault();
 
@@ -50,7 +59,7 @@ public class ProductosHubTests {
 
     [Test]
     public void ProductosHub_NoTieneAuthorizeAttribute_Clase() {
-        var attribute = typeof(ProductosHub)
+        object? attribute = typeof(ProductosHub)
             .GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .FirstOrDefault();
 
@@ -83,10 +92,10 @@ public class ProductosHubTests {
         var hub1 = new ProductosHub(_loggerMock.Object);
         var hub2 = new ProductosHub(_loggerMock.Object);
 
-        var context1 = Mock.Of<HubCallerContext>(c =>
+        HubCallerContext context1 = Mock.Of<HubCallerContext>(c =>
             c.ConnectionId == "connection-1" &&
             c.User == new ClaimsPrincipal(new ClaimsIdentity()));
-        var context2 = Mock.Of<HubCallerContext>(c =>
+        HubCallerContext context2 = Mock.Of<HubCallerContext>(c =>
             c.ConnectionId == "connection-2" &&
             c.User == new ClaimsPrincipal(new ClaimsIdentity()));
 
@@ -144,7 +153,7 @@ public class ProductosHubTests {
         var hub = new ProductosHub(_loggerMock.Object);
         SetupHubContext(hub, _context);
 
-        var act = async () => await hub.OnDisconnectedAsync(null);
+        Func<Task> act = async () => await hub.OnDisconnectedAsync(null);
         await act.Should().NotThrowAsync();
     }
 
@@ -154,17 +163,8 @@ public class ProductosHubTests {
         SetupHubContext(hub, _context);
         var exception = new Exception("Test exception");
 
-        var act = async () => await hub.OnDisconnectedAsync(exception);
+        Func<Task> act = async () => await hub.OnDisconnectedAsync(exception);
         await act.Should().NotThrowAsync();
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    private void SetupHubContext(ProductosHub hub, HubCallerContext context) {
-        var field = typeof(Hub).GetField("_context", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        field?.SetValue(hub, context);
     }
 
     #endregion

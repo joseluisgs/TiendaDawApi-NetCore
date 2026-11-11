@@ -1,19 +1,17 @@
 using System.Threading.Channels;
 using FluentAssertions;
-using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MimeKit;
 using Moq;
 using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Unit.Services.Email;
 
 public class MailKitEmailServiceTests {
-    private Mock<IConfiguration> _mockConfiguration = null!;
-    private Mock<ILogger<MailKitEmailService>> _mockLogger = null!;
     private Channel<EmailMessage> _emailChannel = null!;
     private MailKitEmailService _emailService = null!;
+    private Mock<IConfiguration> _mockConfiguration = null!;
+    private Mock<ILogger<MailKitEmailService>> _mockLogger = null!;
 
     private void SetupConfiguration(bool valid = true) {
         _mockConfiguration = new Mock<IConfiguration>();
@@ -35,11 +33,44 @@ public class MailKitEmailServiceTests {
             _emailChannel);
     }
 
+    #region Interface Implementation Tests
+
+    [Test]
+    public void ImplementsIEmailService() {
+        SetupConfiguration();
+
+        _emailService.Should().BeAssignableTo<IEmailService>();
+    }
+
+    #endregion
+
+    #region Port Configuration Tests
+
+    [Test]
+    public void Constructor_ConPuertoDefault_Usa587() {
+        _mockConfiguration = new Mock<IConfiguration>();
+        _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
+        _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns((string?)null);
+        _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns("user@test.com");
+        _mockConfiguration.Setup(c => c["Smtp:Password"]).Returns("password");
+        _emailChannel = Channel.CreateUnbounded<EmailMessage>();
+        _mockLogger = new Mock<ILogger<MailKitEmailService>>();
+
+        var service = new MailKitEmailService(
+            _mockConfiguration.Object,
+            _mockLogger.Object,
+            _emailChannel);
+
+        service.Should().NotBeNull();
+    }
+
+    #endregion
+
     #region Constructor Tests
 
     [Test]
     public void Constructor_ConParametrosValidos_CreaInstancia() {
-        SetupConfiguration(valid: true);
+        SetupConfiguration(true);
 
         _emailService.Should().NotBeNull();
     }
@@ -78,7 +109,7 @@ public class MailKitEmailServiceTests {
 
         await _emailService.EnqueueEmailAsync(emailMessage);
 
-        var canRead = _emailChannel.Reader.TryRead(out var message);
+        bool canRead = _emailChannel.Reader.TryRead(out EmailMessage? message);
         canRead.Should().BeTrue();
         message!.To.Should().Be("destinatario@test.com");
         message.Subject.Should().Be("Test Subject");
@@ -97,7 +128,7 @@ public class MailKitEmailServiceTests {
 
         await _emailService.EnqueueEmailAsync(emailMessage);
 
-        var canRead = _emailChannel.Reader.TryRead(out var message);
+        bool canRead = _emailChannel.Reader.TryRead(out EmailMessage? message);
         canRead.Should().BeTrue();
         message!.IsHtml.Should().BeTrue();
     }
@@ -105,19 +136,19 @@ public class MailKitEmailServiceTests {
     [Test]
     public async Task EnqueueEmailAsync_MultiplesMensajes_EncolaTodos() {
         SetupConfiguration();
-        var messages = new[] {
+        EmailMessage[] messages = new[] {
             new EmailMessage { To = "test1@test.com", Subject = "Test 1", Body = "Body 1" },
             new EmailMessage { To = "test2@test.com", Subject = "Test 2", Body = "Body 2" },
             new EmailMessage { To = "test3@test.com", Subject = "Test 3", Body = "Body 3" }
         };
 
-        foreach (var msg in messages) {
+        foreach (EmailMessage msg in messages) {
             await _emailService.EnqueueEmailAsync(msg);
         }
 
-        _emailChannel.Reader.TryRead(out var first).Should().BeTrue();
-        _emailChannel.Reader.TryRead(out var second).Should().BeTrue();
-        _emailChannel.Reader.TryRead(out var third).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? first).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? second).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? third).Should().BeTrue();
     }
 
     [Test]
@@ -140,7 +171,7 @@ public class MailKitEmailServiceTests {
 
         boundedChannel.Writer.Complete(new Exception("Channel closed"));
 
-        var act = async () => await serviceWithBoundedChannel.EnqueueEmailAsync(emailMessage);
+        Func<Task> act = async () => await serviceWithBoundedChannel.EnqueueEmailAsync(emailMessage);
         await act.Should().NotThrowAsync();
     }
 
@@ -235,7 +266,7 @@ public class MailKitEmailServiceTests {
             Body = "Test"
         };
 
-        var act = async () => await _emailService.SendEmailAsync(emailMessage);
+        Func<Task> act = async () => await _emailService.SendEmailAsync(emailMessage);
 
         await act.Should().ThrowAsync<Exception>();
     }
@@ -249,20 +280,9 @@ public class MailKitEmailServiceTests {
             Body = "Test"
         };
 
-        var act = async () => await _emailService.SendEmailAsync(emailMessage);
+        Func<Task> act = async () => await _emailService.SendEmailAsync(emailMessage);
 
         await act.Should().ThrowAsync<Exception>();
-    }
-
-    #endregion
-
-    #region Interface Implementation Tests
-
-    [Test]
-    public void ImplementsIEmailService() {
-        SetupConfiguration();
-
-        _emailService.Should().BeAssignableTo<IEmailService>();
     }
 
     #endregion
@@ -294,7 +314,7 @@ public class MailKitEmailServiceTests {
 
         await _emailService.EnqueueEmailAsync(emailMessage);
 
-        _emailChannel.Reader.TryRead(out var message).Should().BeTrue();
+        _emailChannel.Reader.TryRead(out EmailMessage? message).Should().BeTrue();
         message!.Subject.Length.Should().Be(500);
     }
 
@@ -331,28 +351,6 @@ public class MailKitEmailServiceTests {
         _mockConfiguration.Setup(c => c["Smtp:Password"]).Returns("password");
         _mockConfiguration.Setup(c => c["Smtp:FromEmail"]).Returns("from@test.com");
         _mockConfiguration.Setup(c => c["Smtp:FromName"]).Returns((string?)null);
-        _emailChannel = Channel.CreateUnbounded<EmailMessage>();
-        _mockLogger = new Mock<ILogger<MailKitEmailService>>();
-
-        var service = new MailKitEmailService(
-            _mockConfiguration.Object,
-            _mockLogger.Object,
-            _emailChannel);
-
-        service.Should().NotBeNull();
-    }
-
-    #endregion
-
-    #region Port Configuration Tests
-
-    [Test]
-    public void Constructor_ConPuertoDefault_Usa587() {
-        _mockConfiguration = new Mock<IConfiguration>();
-        _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
-        _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns((string?)null);
-        _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns("user@test.com");
-        _mockConfiguration.Setup(c => c["Smtp:Password"]).Returns("password");
         _emailChannel = Channel.CreateUnbounded<EmailMessage>();
         _mockLogger = new Mock<ILogger<MailKitEmailService>>();
 

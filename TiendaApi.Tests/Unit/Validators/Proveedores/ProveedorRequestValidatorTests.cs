@@ -1,4 +1,3 @@
-using FluentAssertions;
 using FluentValidation.TestHelper;
 using TiendaApi.Api.Dtos.Proveedores;
 using TiendaApi.Api.Validators.Proveedores;
@@ -6,10 +5,9 @@ using TiendaApi.Api.Validators.Proveedores;
 namespace TiendaApi.Tests.Unit.Validators.Proveedores;
 
 /// <summary>
-/// Tests unitarios para ProveedorRequestValidator.
-///
-/// El validador separa dos compuertas distintas: el FORMATO del código (aquí, 400)
-/// y la EXISTENCIA del código en base de datos (la comprueba el servicio, 409).
+///     Tests unitarios para ProveedorRequestValidator.
+///     El validador separa dos compuertas distintas: el FORMATO del código (aquí, 400)
+///     y la EXISTENCIA del código en base de datos (la comprueba el servicio, 409).
 /// </summary>
 public class ProveedorRequestValidatorTests {
     private readonly ProveedorRequestValidator _validator = new();
@@ -20,7 +18,7 @@ public class ProveedorRequestValidatorTests {
     public void Codigo_Omitido_NoDebeTenerError() {
         var dto = new ProveedorRequestDto { Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Codigo);
     }
@@ -30,7 +28,7 @@ public class ProveedorRequestValidatorTests {
         // Un vacío no es "omitir el campo": el validador lo rechaza.
         var dto = new ProveedorRequestDto { Codigo = "", Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Codigo)
             .WithErrorMessage("El código no puede estar vacío: omítalo y el servidor generará uno");
@@ -40,7 +38,7 @@ public class ProveedorRequestValidatorTests {
     public void Codigo_SoloEspacios_DebeTenerError() {
         var dto = new ProveedorRequestDto { Codigo = "           ", Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Codigo);
     }
@@ -49,7 +47,7 @@ public class ProveedorRequestValidatorTests {
     public void Codigo_DiezCaracteres_DebeTenerErrorDeFormato() {
         var dto = new ProveedorRequestDto { Codigo = "abcdefghij", Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Codigo);
     }
@@ -58,7 +56,7 @@ public class ProveedorRequestValidatorTests {
     public void Codigo_DoceCaracteres_DebeTenerErrorDeFormato() {
         var dto = new ProveedorRequestDto { Codigo = "abcdefghijkl", Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Codigo);
     }
@@ -67,7 +65,7 @@ public class ProveedorRequestValidatorTests {
     public void Codigo_ConCaracteresFueraDelAlfabeto_DebeTenerError() {
         var dto = new ProveedorRequestDto { Codigo = "abc/def?ghi", Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Codigo);
     }
@@ -76,7 +74,7 @@ public class ProveedorRequestValidatorTests {
     public void Codigo_DeOnceCaracteresValidos_NoDebeTenerError() {
         var dto = new ProveedorRequestDto { Codigo = "XqZsoesa55w", Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Codigo);
     }
@@ -85,7 +83,7 @@ public class ProveedorRequestValidatorTests {
     public void Codigo_DeOnceCaracteresConGuionesYSubrayado_NoDebeTenerError() {
         var dto = new ProveedorRequestDto { Codigo = "aB3-_zY9_Qw", Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Codigo);
     }
@@ -96,7 +94,7 @@ public class ProveedorRequestValidatorTests {
         // un sufijo basura pasaría por válido.
         var dto = new ProveedorRequestDto { Codigo = "abcdefghijkSOBRA", Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Codigo);
     }
@@ -109,7 +107,7 @@ public class ProveedorRequestValidatorTests {
     public void Nombre_Vacio_DebeTenerError() {
         var dto = new ProveedorRequestDto { Nombre = "" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Nombre)
             .WithErrorMessage("El nombre es obligatorio");
@@ -119,7 +117,7 @@ public class ProveedorRequestValidatorTests {
     public void Nombre_DeDosCaracteres_DebeTenerError() {
         var dto = new ProveedorRequestDto { Nombre = "DA" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Nombre);
     }
@@ -128,7 +126,7 @@ public class ProveedorRequestValidatorTests {
     public void Nombre_DeCienCaracteres_NoDebeTenerError() {
         var dto = new ProveedorRequestDto { Nombre = new string('N', 100) };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
     }
@@ -137,7 +135,7 @@ public class ProveedorRequestValidatorTests {
     public void Nombre_DeCientoUnCaracteres_DebeTenerError() {
         var dto = new ProveedorRequestDto { Nombre = new string('N', 101) };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Nombre);
     }
@@ -150,7 +148,7 @@ public class ProveedorRequestValidatorTests {
     public void Descripcion_DeQuinientosCaracteres_NoDebeTenerError() {
         var dto = new ProveedorRequestDto { Nombre = "Distribuciones DAW", Descripcion = new string('D', 500) };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -159,7 +157,7 @@ public class ProveedorRequestValidatorTests {
     public void Descripcion_DeQuinientosUnoCaracteres_DebeTenerError() {
         var dto = new ProveedorRequestDto { Nombre = "Distribuciones DAW", Descripcion = new string('D', 501) };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -168,7 +166,7 @@ public class ProveedorRequestValidatorTests {
     public void Contacto_DeDoscientosUnoCaracteres_DebeTenerError() {
         var dto = new ProveedorRequestDto { Nombre = "Distribuciones DAW", Contacto = new string('C', 201) };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Contacto);
     }
@@ -186,7 +184,7 @@ public class ProveedorRequestValidatorTests {
             Contacto = "pedidos@distribucionesdaw.example"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -195,7 +193,7 @@ public class ProveedorRequestValidatorTests {
     public void PeticiónSinCodigo_NoDebeTenerNingunError() {
         var dto = new ProveedorRequestDto { Nombre = "Distribuciones DAW" };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProveedorRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveAnyValidationErrors();
     }

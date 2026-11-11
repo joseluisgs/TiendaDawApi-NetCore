@@ -3,25 +3,19 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Repositories.Pedidos;
 
 /// <summary>
-/// Tests unitarios para PedidosNativeRepository.
-/// Verifica el repositorio con driver nativo de MongoDB.
+///     Tests unitarios para PedidosNativeRepository.
+///     Verifica el repositorio con driver nativo de MongoDB.
 /// </summary>
 [TestFixture]
 [Category("Unit")]
 [Category("Repository")]
 public class PedidosNativeRepositoryTests {
-    private Mock<IMongoDatabase> _mockDatabase = null!;
-    private Mock<IMongoCollection<Pedido>> _mockCollection = null!;
-    private Mock<ILogger<PedidosNativeRepository>> _mockLogger = null!;
-    private PedidosNativeRepository _repository = null!;
-
     [SetUp]
     public void SetUp() {
         _mockDatabase = new Mock<IMongoDatabase>();
@@ -33,6 +27,11 @@ public class PedidosNativeRepositoryTests {
 
         _repository = new PedidosNativeRepository(_mockDatabase.Object, _mockLogger.Object);
     }
+
+    private Mock<IMongoDatabase> _mockDatabase = null!;
+    private Mock<IMongoCollection<Pedido>> _mockCollection = null!;
+    private Mock<ILogger<PedidosNativeRepository>> _mockLogger = null!;
+    private PedidosNativeRepository _repository = null!;
 
     [Test]
     public async Task FindAllAsync_ConPedidos_RetornaListaOrdenada() {
@@ -49,13 +48,13 @@ public class PedidosNativeRepositoryTests {
             .Returns(Task.FromResult(false));
 
         _mockCollection.Setup(c => c.FindAsync(
-            It.IsAny<FilterDefinition<Pedido>>(),
-            It.IsAny<FindOptions<Pedido>>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<Pedido>>(),
+                It.IsAny<FindOptions<Pedido>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.FindAllAsync();
+        IEnumerable<Pedido> result = await _repository.FindAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -72,13 +71,13 @@ public class PedidosNativeRepositoryTests {
             .Returns(Task.FromResult(false));
 
         _mockCollection.Setup(c => c.FindAsync(
-            It.IsAny<FilterDefinition<Pedido>>(),
-            It.IsAny<FindOptions<Pedido>>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<Pedido>>(),
+                It.IsAny<FindOptions<Pedido>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.FindAllAsync();
+        IEnumerable<Pedido> result = await _repository.FindAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -98,13 +97,13 @@ public class PedidosNativeRepositoryTests {
             .Returns(Task.FromResult(false));
 
         _mockCollection.Setup(c => c.FindAsync(
-            It.IsAny<FilterDefinition<Pedido>>(),
-            It.IsAny<FindOptions<Pedido>>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<Pedido>>(),
+                It.IsAny<FindOptions<Pedido>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.FindByIdAsync(id.ToString());
+        Pedido? result = await _repository.FindByIdAsync(id.ToString());
 
         // Assert
         result.Should().NotBeNull();
@@ -123,13 +122,13 @@ public class PedidosNativeRepositoryTests {
             .Returns(Task.FromResult(false));
 
         _mockCollection.Setup(c => c.FindAsync(
-            It.IsAny<FilterDefinition<Pedido>>(),
-            It.IsAny<FindOptions<Pedido>>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<Pedido>>(),
+                It.IsAny<FindOptions<Pedido>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.FindByIdAsync(id.ToString());
+        Pedido? result = await _repository.FindByIdAsync(id.ToString());
 
         // Assert
         result.Should().BeNull();
@@ -138,7 +137,7 @@ public class PedidosNativeRepositoryTests {
     [Test]
     public async Task FindByIdAsync_ConIdInvalido_RetornaNull() {
         // Act
-        var result = await _repository.FindByIdAsync("id-invalido");
+        Pedido? result = await _repository.FindByIdAsync("id-invalido");
 
         // Assert
         result.Should().BeNull();
@@ -160,13 +159,13 @@ public class PedidosNativeRepositoryTests {
             .Returns(Task.FromResult(false));
 
         _mockCollection.Setup(c => c.FindAsync(
-            It.IsAny<FilterDefinition<Pedido>>(),
-            It.IsAny<FindOptions<Pedido>>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<Pedido>>(),
+                It.IsAny<FindOptions<Pedido>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.FindByUserIdAsync(userId);
+        IEnumerable<Pedido> result = await _repository.FindByUserIdAsync(userId);
 
         // Assert
         result.Should().NotBeNull();
@@ -180,13 +179,13 @@ public class PedidosNativeRepositoryTests {
         var pedido = new Pedido { UserId = 1 };
 
         _mockCollection.Setup(c => c.InsertOneAsync(
-            It.IsAny<Pedido>(),
-            It.IsAny<InsertOneOptions>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<Pedido>(),
+                It.IsAny<InsertOneOptions>(),
+                It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _repository.SaveAsync(pedido);
+        Pedido result = await _repository.SaveAsync(pedido);
 
         // Assert
         result.Should().NotBeNull();
@@ -200,14 +199,14 @@ public class PedidosNativeRepositoryTests {
         var pedido = new Pedido { Id = id, UserId = 1 };
 
         _mockCollection.Setup(c => c.ReplaceOneAsync(
-            It.IsAny<FilterDefinition<Pedido>>(),
-            It.IsAny<Pedido>(),
-            It.IsAny<ReplaceOptions>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<Pedido>>(),
+                It.IsAny<Pedido>(),
+                It.IsAny<ReplaceOptions>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReplaceOneResult.Acknowledged(1, 1, null));
 
         // Act
-        var result = await _repository.UpdateAsync(pedido);
+        Pedido result = await _repository.UpdateAsync(pedido);
 
         // Assert
         result.Should().NotBeNull();
@@ -223,9 +222,9 @@ public class PedidosNativeRepositoryTests {
         };
 
         _mockCollection.Setup(c => c.CountDocumentsAsync(
-            It.IsAny<FilterDefinition<Pedido>>(),
-            It.IsAny<CountOptions>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<Pedido>>(),
+                It.IsAny<CountOptions>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(10);
 
         var mockCursor = new Mock<IAsyncCursor<Pedido>>();
@@ -235,13 +234,13 @@ public class PedidosNativeRepositoryTests {
             .Returns(Task.FromResult(false));
 
         _mockCollection.Setup(c => c.FindAsync(
-            It.IsAny<FilterDefinition<Pedido>>(),
-            It.IsAny<FindOptions<Pedido>>(),
-            It.IsAny<CancellationToken>()))
+                It.IsAny<FilterDefinition<Pedido>>(),
+                It.IsAny<FindOptions<Pedido>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockCursor.Object);
 
         // Act
-        var result = await _repository.FindByUserIdPagedAsync(userId, 0, 10);
+        (IEnumerable<Pedido> Items, int TotalCount) result = await _repository.FindByUserIdPagedAsync(userId, 0, 10);
 
         // Assert
         result.Items.Should().HaveCount(1);

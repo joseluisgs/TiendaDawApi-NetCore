@@ -1,12 +1,8 @@
 using System.Text;
 using System.Text.Json.Serialization.Metadata;
 using Serilog;
-using Serilog.Extensions.Logging;
-using TiendaApi.Api;
-using TiendaApi.Api.Data;
 using TiendaApi.Api.Data.Seed;
 using TiendaApi.Api.Data.Seed.Cassandra;
-using TiendaApi.Api.Data.Seed.Mongo;
 using TiendaApi.Api.Infrastructures;
 using TiendaApi.Api.Middleware;
 
@@ -15,7 +11,7 @@ Console.OutputEncoding = Encoding.UTF8;
 // Configuración de Serilog (antes del builder)
 Log.Logger = SerilogConfig.Configure().CreateLogger();
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Serilog como provider principal de logging (unifica ASP.NET Core + Serilog)
 builder.Logging.AddSerilog(Log.Logger);
@@ -27,9 +23,9 @@ Log.Information("🚀 Inicializando TiendaApi...");
 // 🔧 CONFIGURACIÓN DE SERVICIOS (Extension Methods en Infrastructure)
 // ============================================================================
 
-var services = builder.Services;
-var configuration = builder.Configuration;
-var environment = builder.Environment;
+IServiceCollection services = builder.Services;
+ConfigurationManager configuration = builder.Configuration;
+IWebHostEnvironment environment = builder.Environment;
 
 // Core - Controllers
 services.AddMvcControllers();
@@ -94,8 +90,8 @@ services.AddAutoMapper();
 // 🚀 CONSTRUCCIÓN DE LA APLICACIÓN
 // ============================================================================
 
-var app = builder.Build();
-var isDevelopment = app.Environment.IsDevelopment();
+WebApplication app = builder.Build();
+bool isDevelopment = app.Environment.IsDevelopment();
 
 Log.Information("✅ Aplicación construida");
 
@@ -120,6 +116,7 @@ if (!isDevelopment) {
 } else {
     Log.Information("🔓 Modo desarrollo: HTTP permitido (sin redirección HTTPS)");
 }
+
 app.UseCorsPolicy();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -154,10 +151,11 @@ await app.InitializeCassandraAsync(isDevelopment);
 // ejemplo. Va DESPUÉS del esquema y con scope propio: son datos de ejemplo,
 // no un prerequisito del arranque (mismo criterio que el resto de seeders).
 if (isDevelopment) {
-    using var cassandraScope = app.Services.CreateScope();
-    var cassandraSeeder = cassandraScope.ServiceProvider.GetService<CassandraSeeder>();
-    if (cassandraSeeder != null)
+    using IServiceScope cassandraScope = app.Services.CreateScope();
+    CassandraSeeder? cassandraSeeder = cassandraScope.ServiceProvider.GetService<CassandraSeeder>();
+    if (cassandraSeeder != null) {
         await cassandraSeeder.SeedAsync();
+    }
 }
 
 PrintStartupInfo(isDevelopment, configuration);
@@ -182,14 +180,14 @@ try {
 // <param name="isDevelopment">Indica si el entorno es de desarrollo.</param>
 // <param name="configuration">La configuración de la aplicación.</param>
 static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration) {
-    var urls = configuration["ASPNETCORE_URLS"]?.Split(';') ?? new[] { "http://localhost:5000" };
-    var firstUrl = urls.FirstOrDefault() ?? "http://localhost:5000";
-    var protocol = firstUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
-    var host = firstUrl.Contains("://") ? firstUrl.Split("://")[1].Split(':')[0] : "localhost";
-    var port = firstUrl.Contains(':') ? firstUrl.Split(':').Last() : "5000";
+    string[] urls = configuration["ASPNETCORE_URLS"]?.Split(';') ?? new[] { "http://localhost:5000" };
+    string firstUrl = urls.FirstOrDefault() ?? "http://localhost:5000";
+    string protocol = firstUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
+    string host = firstUrl.Contains("://") ? firstUrl.Split("://")[1].Split(':')[0] : "localhost";
+    string port = firstUrl.Contains(':') ? firstUrl.Split(':').Last() : "5000";
 
-    var mode = isDevelopment ? "DESARROLLO" : "PRODUCCION";
-    var baseUrl = $"{protocol}://{host}:{port}";
+    string mode = isDevelopment ? "DESARROLLO" : "PRODUCCION";
+    string baseUrl = $"{protocol}://{host}:{port}";
 
     Log.Information("=================================================================");
     Log.Information("TiendaApi - API REST Educativa");
@@ -218,7 +216,7 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration) {
 
     // 🔐 Los 4 modos de autenticación del proyecto: 2 de contraseña (Auth:Mode)
     // y 2 de login externo (el callback usa el servicio del modo activo)
-    var authMode = configuration["Auth:Mode"] ?? "Custom";
+    string authMode = configuration["Auth:Mode"] ?? "Custom";
     Log.Information("=================================================================");
     Log.Information("AUTENTICACIÓN:");
     if (authMode == "Identity") {
@@ -228,15 +226,18 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration) {
         Log.Information("  Contraseña:  JWT Manual (BCrypt) [Auth:Mode=Custom]");
         Log.Information("  Callback OAuth: AuthService (vincula en user_logins, dummy hash OAUTH-*)");
     }
-    foreach (var provider in new[] { "Google", "GitHub", "Microsoft" }) {
-        var enabled = string.Equals(configuration[$"Auth:{provider}:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
-        var hasCreds = !string.IsNullOrEmpty(configuration[$"{provider}:ClientId"])
-                       && !string.IsNullOrEmpty(configuration[$"{provider}:ClientSecret"]);
-        var estado = !enabled ? "desactivada"
+
+    foreach (string provider in new[] { "Google", "GitHub", "Microsoft" }) {
+        bool enabled = string.Equals(configuration[$"Auth:{provider}:Enabled"], "true",
+            StringComparison.OrdinalIgnoreCase);
+        bool hasCreds = !string.IsNullOrEmpty(configuration[$"{provider}:ClientId"])
+                        && !string.IsNullOrEmpty(configuration[$"{provider}:ClientSecret"]);
+        string estado = !enabled ? "desactivada"
             : hasCreds ? "ACTIVA"
             : "habilitada sin credenciales (puerta cerrada)";
         Log.Information("  OAuth {Provider,-9}: {Estado}", provider, estado);
     }
+
     Log.Information("=================================================================");
     Log.Information("DATOS SEMBRADOS (Seed):");
     Log.Information("  PostgreSQL: usuarios seed con hash {Hash} (credenciales idénticas en ambos modos)",
@@ -246,8 +247,10 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration) {
     Log.Information("  MongoDB:    3 pedidos de ejemplo");
     Log.Information("=================================================================");
     Log.Information("CREDENCIALES DE PRUEBA (idénticas en Custom e Identity):");
-    Log.Information("  Admin:   {User} / {Pass} (ROLE_ADMIN)", SeedCredentials.AdminUsername, SeedCredentials.AdminPassword);
-    Log.Information("  Usuario: {User} / {Pass} (ROLE_USER)", SeedCredentials.UserUsername, SeedCredentials.UserPassword);
+    Log.Information("  Admin:   {User} / {Pass} (ROLE_ADMIN)", SeedCredentials.AdminUsername,
+        SeedCredentials.AdminPassword);
+    Log.Information("  Usuario: {User} / {Pass} (ROLE_USER)", SeedCredentials.UserUsername,
+        SeedCredentials.UserPassword);
     Log.Information("=================================================================");
     Log.Information("🚀 Aplicacion iniciada correctamente en {BaseUrl} ({Mode})",
         baseUrl, mode);
@@ -255,7 +258,7 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration) {
 }
 
 /// <summary>
-/// Declaración parcial del programa para que los tests de integración
-/// puedan crear la aplicación con <c>WebApplicationFactory&lt;Program&gt;</c>.
+///     Declaración parcial del programa para que los tests de integración
+///     puedan crear la aplicación con <c>WebApplicationFactory&lt;Program&gt;</c>.
 /// </summary>
 public partial class Program;

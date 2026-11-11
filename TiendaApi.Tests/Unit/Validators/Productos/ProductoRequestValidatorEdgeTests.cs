@@ -18,7 +18,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
     }
@@ -32,7 +32,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
     }
@@ -46,7 +46,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Nombre);
     }
@@ -60,7 +60,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
     }
@@ -74,7 +74,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Nombre);
     }
@@ -92,7 +92,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Precio);
     }
@@ -106,7 +106,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Precio);
     }
@@ -120,7 +120,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Precio);
     }
@@ -138,7 +138,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Stock);
     }
@@ -152,7 +152,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Stock);
     }
@@ -170,7 +170,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
     }
@@ -184,7 +184,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 999999999
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
     }
@@ -198,7 +198,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = -1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.CategoriaId);
     }
@@ -217,7 +217,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -232,7 +232,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -247,7 +247,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -262,7 +262,7 @@ public class ProductoRequestValidatorEdgeTests {
             CategoriaId = 1
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Descripcion);
     }
@@ -281,7 +281,7 @@ public class ProductoRequestValidatorEdgeTests {
             Imagen = string.Empty
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
     }
@@ -296,7 +296,7 @@ public class ProductoRequestValidatorEdgeTests {
             Imagen = null!
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
     }
@@ -311,7 +311,7 @@ public class ProductoRequestValidatorEdgeTests {
             Imagen = "https://subdominio.dominio.com/pagina/ruta?param1=valor1&param2=valor2"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(x => x.Imagen);
     }
@@ -326,7 +326,7 @@ public class ProductoRequestValidatorEdgeTests {
             Imagen = "ftp://ftp.ejemplo.com/imagen.jpg"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Imagen);
     }
@@ -341,7 +341,7 @@ public class ProductoRequestValidatorEdgeTests {
             Imagen = "file:///C:/imagen.jpg"
         };
 
-        var result = _validator.TestValidate(dto);
+        TestValidationResult<ProductoRequestDto> result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(x => x.Imagen);
     }

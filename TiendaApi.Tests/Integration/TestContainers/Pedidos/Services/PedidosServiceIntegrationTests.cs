@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.OutputCaching;
 using System.Diagnostics;
 using System.Threading.Channels;
 using CSharpFunctionalExtensions;
@@ -10,9 +9,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Data;
+using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
+using TiendaApi.Api.Errors;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Realtime.Pedidos;
 using TiendaApi.Api.Repositories.Categorias;
@@ -27,23 +27,13 @@ using TiendaApi.Api.Validators.Pedidos;
 namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 
 /// <summary>
-/// Tests de integración para PedidosService con DI completo.
-/// Verifica el servicio con bases de datos reales usando Testcontainers.
+///     Tests de integración para PedidosService con DI completo.
+///     Verifica el servicio con bases de datos reales usando Testcontainers.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
 public class PedidosServiceIntegrationTests {
-    private static readonly ActivitySource ActivitySource = new("PedidosServiceIntegrationTests");
-    private const string DatabaseName = "it_pedidos_service";
-    private string _connectionString = string.Empty;
-    private string _mongoConnectionString = string.Empty;
-    private IServiceProvider? _serviceProvider;
-    private TiendaDbContext? _dbContext;
-    private IPedidosService? _pedidosService;
-    private long _productoId;
-    private long _userId;
-
     [OneTimeSetUp]
     public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
@@ -58,10 +48,10 @@ public class PedidosServiceIntegrationTests {
 
     [SetUp]
     public async Task Setup() {
-        var connectionString = _connectionString;
-        var mongoConnectionString = _mongoConnectionString;
+        string connectionString = _connectionString;
+        string mongoConnectionString = _mongoConnectionString;
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
@@ -95,8 +85,8 @@ public class PedidosServiceIntegrationTests {
         _dbContext = _serviceProvider.GetRequiredService<TiendaDbContext>();
         await _dbContext.Database.EnsureCreatedAsync();
 
-        var productoRepo = _serviceProvider.GetRequiredService<IProductoRepository>();
-        var categoriaRepo = _serviceProvider.GetRequiredService<ICategoriaRepository>();
+        IProductoRepository productoRepo = _serviceProvider.GetRequiredService<IProductoRepository>();
+        ICategoriaRepository categoriaRepo = _serviceProvider.GetRequiredService<ICategoriaRepository>();
         var categoria = new Categoria { Nombre = $"Test Categoria {Guid.NewGuid():N}".Substring(0, 20) };
         await categoriaRepo.SaveAsync(categoria);
 
@@ -128,6 +118,16 @@ public class PedidosServiceIntegrationTests {
         (_serviceProvider as IDisposable)?.Dispose();
     }
 
+    private static readonly ActivitySource ActivitySource = new("PedidosServiceIntegrationTests");
+    private const string DatabaseName = "it_pedidos_service";
+    private string _connectionString = string.Empty;
+    private string _mongoConnectionString = string.Empty;
+    private IServiceProvider? _serviceProvider;
+    private TiendaDbContext? _dbContext;
+    private IPedidosService? _pedidosService;
+    private long _productoId;
+    private long _userId;
+
     private static void RegisterRepositories(IServiceCollection services, string mongoConnectionString) {
         services.AddScoped<ILogger<ProductoRepository>, Logger<ProductoRepository>>();
         services.AddScoped<ILogger<CategoriaRepository>, Logger<CategoriaRepository>>();
@@ -141,14 +141,14 @@ public class PedidosServiceIntegrationTests {
         // Mock para IJwtTokenExtractor (requerido por PedidosWebSocketHandler)
         var mockJwtExtractor = new Mock<IJwtTokenExtractor>();
         mockJwtExtractor.Setup(x => x.ExtractUserId(It.IsAny<string>())).Returns(1L);
-        services.AddSingleton<IJwtTokenExtractor>(mockJwtExtractor.Object);
+        services.AddSingleton(mockJwtExtractor.Object);
 
         // Mock para IHubContext (requerido por PedidosService)
         var mockClients = new Mock<IHubClients>();
         mockClients.Setup(c => c.All).Returns(Mock.Of<IClientProxy>());
         var mockHubContext = new Mock<IHubContext<PedidosHub>>();
         mockHubContext.Setup(c => c.Clients).Returns(mockClients.Object);
-        services.AddSingleton<IHubContext<PedidosHub>>(mockHubContext.Object);
+        services.AddSingleton(mockHubContext.Object);
 
         services.AddScoped<ILogger<PedidosService>, Logger<PedidosService>>();
         services.AddScoped<PedidosWebSocketHandler>();
@@ -166,21 +166,21 @@ public class PedidosServiceIntegrationTests {
 
     [Test]
     public async Task FindAllAsync_SinPedidos_RetornaListaVacia() {
-        var result = await _pedidosService!.FindAllAsync();
+        Result<IEnumerable<PedidoDto>, DomainError> result = await _pedidosService!.FindAllAsync();
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
     }
 
     [Test]
     public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia() {
-        var result = await _pedidosService!.FindByUserIdAsync(_userId);
+        Result<IEnumerable<PedidoDto>, DomainError> result = await _pedidosService!.FindByUserIdAsync(_userId);
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
     }
 
     [Test]
     public async Task FindByIdAsync_SinPedidos_RetornaNotFound() {
-        var result = await _pedidosService!.FindByIdAsync("507f1f77bcf86cd799439011");
+        Result<PedidoDto, DomainError> result = await _pedidosService!.FindByIdAsync("507f1f77bcf86cd799439011");
         result.IsFailure.Should().BeTrue();
     }
 
@@ -201,7 +201,7 @@ public class PedidosServiceIntegrationTests {
             }
         };
 
-        var result = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(_userId, dto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -219,7 +219,7 @@ public class PedidosServiceIntegrationTests {
             },
             Items = new List<PedidoItemRequestDto>()
         };
-        var result = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(_userId, dto);
         result.IsFailure.Should().BeTrue();
     }
 
@@ -235,7 +235,7 @@ public class PedidosServiceIntegrationTests {
                 new() { ProductoId = 999999, Cantidad = 1 }
             }
         };
-        var result = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(_userId, dto);
         result.IsFailure.Should().BeTrue();
     }
 
@@ -254,7 +254,7 @@ public class PedidosServiceIntegrationTests {
             }
         };
 
-        var result = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(_userId, dto);
         result.IsFailure.Should().BeTrue();
     }
 
@@ -273,13 +273,13 @@ public class PedidosServiceIntegrationTests {
             }
         };
 
-        var result = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(_userId, dto);
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
     public async Task CreateAsync_ConStockSuficiente_DecrementaStockCorrectamente() {
-        var stockInicial = 50;
+        int stockInicial = 50;
         await SetProductoStock(_productoId, stockInicial);
 
         var dto = new PedidoRequestDto {
@@ -293,16 +293,16 @@ public class PedidosServiceIntegrationTests {
             }
         };
 
-        var result = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(_userId, dto);
         result.IsSuccess.Should().BeTrue();
 
-        var productoActualizado = await _dbContext!.FindAsync<Producto>(_productoId);
+        Producto? productoActualizado = await _dbContext!.FindAsync<Producto>(_productoId);
         productoActualizado!.Stock.Should().Be(stockInicial - 5);
     }
 
     [Test]
     public async Task CreateAsync_CantidadExactaStock_PermitePedido() {
-        var stockInicial = 10;
+        int stockInicial = 10;
         await SetProductoStock(_productoId, stockInicial);
 
         var dto = new PedidoRequestDto {
@@ -316,16 +316,16 @@ public class PedidosServiceIntegrationTests {
             }
         };
 
-        var result = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(_userId, dto);
         result.IsSuccess.Should().BeTrue();
 
-        var productoFinal = await _dbContext!.FindAsync<Producto>(_productoId);
+        Producto? productoFinal = await _dbContext!.FindAsync<Producto>(_productoId);
         productoFinal!.Stock.Should().Be(0);
     }
 
     [Test]
     public async Task CreateAsync_CantidadMayorStock_RechazaPedido() {
-        var stockInicial = 10;
+        int stockInicial = 10;
         await SetProductoStock(_productoId, stockInicial);
 
         var dto = new PedidoRequestDto {
@@ -339,10 +339,10 @@ public class PedidosServiceIntegrationTests {
             }
         };
 
-        var result = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(_userId, dto);
         result.IsFailure.Should().BeTrue();
 
-        var productoFinal = await _dbContext!.FindAsync<Producto>(_productoId);
+        Producto? productoFinal = await _dbContext!.FindAsync<Producto>(_productoId);
         productoFinal!.Stock.Should().Be(stockInicial);
     }
 
@@ -354,47 +354,45 @@ public class PedidosServiceIntegrationTests {
             }
         };
 
-        var result = await _pedidosService!.CreateAsync(999999, dto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.CreateAsync(999999, dto);
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
     public async Task DecrementStockAsync_StockInsuficiente_NoDecrementa() {
-        var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
+        IProductoRepository productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
         await SetProductoStock(_productoId, 3);
 
-        var producto = await productoRepo.FindByIdAsync(_productoId);
+        Producto? producto = await productoRepo.FindByIdAsync(_productoId);
         producto.Should().NotBeNull();
 
-        var resultado = await productoRepo.DecrementStockAsync(_productoId, 5, producto!.RowVersion);
+        bool resultado = await productoRepo.DecrementStockAsync(_productoId, 5, producto!.RowVersion);
         resultado.Should().BeFalse();
 
-        var productoFinal = await productoRepo.FindByIdAsync(_productoId);
+        Producto? productoFinal = await productoRepo.FindByIdAsync(_productoId);
         productoFinal!.Stock.Should().Be(3);
     }
 
     [Test]
     public async Task DecrementStockAsync_StockSuficiente_Decrementa() {
-        var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
+        IProductoRepository productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
         await SetProductoStock(_productoId, 10);
 
-        var producto = await productoRepo.FindByIdAsync(_productoId);
+        Producto? producto = await productoRepo.FindByIdAsync(_productoId);
         producto.Should().NotBeNull();
 
-        var resultado = await productoRepo.DecrementStockAsync(_productoId, 3, producto!.RowVersion);
+        bool resultado = await productoRepo.DecrementStockAsync(_productoId, 3, producto!.RowVersion);
         resultado.Should().BeTrue();
 
-        var productoFinal = await productoRepo.FindByIdAsync(_productoId);
+        Producto? productoFinal = await productoRepo.FindByIdAsync(_productoId);
         productoFinal!.Stock.Should().Be(7);
     }
 
-    #region ========== TESTS ADICIONALES - MÉTODOS DE ADMINISTRADOR (IGNORADOS - BUG EF-272) ==========
-
     [Test]
     public async Task FindAllPagedAsync_ConPaginacion_RetornaPedidosPaginados() {
-        var page = 0;
-        var size = 10;
-        var result = await _pedidosService!.FindAllPagedAsync(page, size);
+        int page = 0;
+        int size = 10;
+        Result<PagedResult<PedidoDto>, DomainError> result = await _pedidosService!.FindAllPagedAsync(page, size);
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Page.Should().Be(1);
@@ -402,9 +400,9 @@ public class PedidosServiceIntegrationTests {
 
     [Test]
     public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta() {
-        var page = 1;
-        var size = 5;
-        var result = await _pedidosService!.FindAllPagedAsync(page, size);
+        int page = 1;
+        int size = 5;
+        Result<PagedResult<PedidoDto>, DomainError> result = await _pedidosService!.FindAllPagedAsync(page, size);
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Page.Should().Be(2);
@@ -421,12 +419,12 @@ public class PedidosServiceIntegrationTests {
             Items = new List<PedidoItemRequestDto> { new() { ProductoId = _productoId, Cantidad = 1 } }
         };
 
-        var createResult = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> createResult = await _pedidosService!.CreateAsync(_userId, dto);
         createResult.IsSuccess.Should().BeTrue();
-        var pedidoId = createResult.Value.Id;
+        string pedidoId = createResult.Value.Id;
 
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Calle Nueva 123" };
-        var result = await _pedidosService!.UpdateAdminAsync(pedidoId, updateDto);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.UpdateAdminAsync(pedidoId, updateDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.DireccionEnvio.Should().Contain("Calle Nueva");
@@ -435,7 +433,8 @@ public class PedidosServiceIntegrationTests {
     [Test]
     public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound() {
         var updateDto = new UpdatePedidoDto { Estado = "ENVIADO" };
-        var result = await _pedidosService!.UpdateAdminAsync("507f1f77bcf86cd799439011", updateDto);
+        Result<PedidoDto, DomainError> result =
+            await _pedidosService!.UpdateAdminAsync("507f1f77bcf86cd799439011", updateDto);
         result.IsFailure.Should().BeTrue();
     }
 
@@ -450,19 +449,20 @@ public class PedidosServiceIntegrationTests {
             Items = new List<PedidoItemRequestDto> { new() { ProductoId = _productoId, Cantidad = 1 } }
         };
 
-        var createResult = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> createResult = await _pedidosService!.CreateAsync(_userId, dto);
         createResult.IsSuccess.Should().BeTrue();
-        var pedidoId = createResult.Value.Id;
+        string pedidoId = createResult.Value.Id;
 
-        var result = await _pedidosService!.UpdateEstadoAsync(pedidoId, PedidoEstado.ENVIADO);
+        Result<PedidoDto, DomainError>
+            result = await _pedidosService!.UpdateEstadoAsync(pedidoId, PedidoEstado.ENVIADO);
         result.IsSuccess.Should().BeTrue();
         result.Value.Estado.Should().Be(PedidoEstado.ENVIADO);
     }
 
     [Test]
     public async Task UpdateEstadoAsync_EstadoInvalido_RetornaError() {
-        var pedidoId = "507f1f77bcf86cd799439011";
-        var result = await _pedidosService!.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
+        string pedidoId = "507f1f77bcf86cd799439011";
+        Result<PedidoDto, DomainError> result = await _pedidosService!.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
         result.IsFailure.Should().BeTrue();
     }
 
@@ -477,23 +477,19 @@ public class PedidosServiceIntegrationTests {
             Items = new List<PedidoItemRequestDto> { new() { ProductoId = _productoId, Cantidad = 1 } }
         };
 
-        var createResult = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> createResult = await _pedidosService!.CreateAsync(_userId, dto);
         createResult.IsSuccess.Should().BeTrue();
-        var pedidoId = createResult.Value.Id;
+        string pedidoId = createResult.Value.Id;
 
-        var result = await _pedidosService!.DeleteAdminAsync(pedidoId);
+        UnitResult<DomainError> result = await _pedidosService!.DeleteAdminAsync(pedidoId);
         result.IsSuccess.Should().BeTrue();
     }
 
     [Test]
     public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound() {
-        var result = await _pedidosService!.DeleteAdminAsync("507f1f77bcf86cd799439011");
+        UnitResult<DomainError> result = await _pedidosService!.DeleteAdminAsync("507f1f77bcf86cd799439011");
         result.IsFailure.Should().BeTrue();
     }
-
-    #endregion
-
-    #region ========== TESTS ADICIONALES - MÉTODOS DE USUARIO (IGNORADOS - BUG EF-272) ==========
 
     [Test]
     public async Task FindMyPedidosAsync_ConPedidos_RetornaPedidosDelUsuario() {
@@ -507,7 +503,7 @@ public class PedidosServiceIntegrationTests {
         };
 
         await _pedidosService!.CreateAsync(_userId, dto);
-        var result = await _pedidosService!.FindByUserIdAsync(_userId);
+        Result<IEnumerable<PedidoDto>, DomainError> result = await _pedidosService!.FindByUserIdAsync(_userId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -516,17 +512,18 @@ public class PedidosServiceIntegrationTests {
 
     [Test]
     public async Task FindMyPedidosAsync_SinPedidos_RetornaListaVacia() {
-        var nuevoUserId = 999999L;
-        var result = await _pedidosService!.FindByUserIdAsync(nuevoUserId);
+        long nuevoUserId = 999999L;
+        Result<IEnumerable<PedidoDto>, DomainError> result = await _pedidosService!.FindByUserIdAsync(nuevoUserId);
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEmpty();
     }
 
     [Test]
     public async Task FindMyPedidosPagedAsync_ConPaginacion_RetornaPedidosPaginados() {
-        var page = 0;
-        var size = 10;
-        var result = await _pedidosService!.FindMyPedidosAsync(_userId, page, size);
+        int page = 0;
+        int size = 10;
+        Result<PagedResult<PedidoDto>, DomainError> result =
+            await _pedidosService!.FindMyPedidosAsync(_userId, page, size);
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Page.Should().Be(1);
@@ -543,20 +540,20 @@ public class PedidosServiceIntegrationTests {
             Items = new List<PedidoItemRequestDto> { new() { ProductoId = _productoId, Cantidad = 1 } }
         };
 
-        var createResult = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> createResult = await _pedidosService!.CreateAsync(_userId, dto);
         createResult.IsSuccess.Should().BeTrue();
-        var pedidoId = createResult.Value.Id;
+        string pedidoId = createResult.Value.Id;
 
-        var result = await _pedidosService!.FindMyPedidoAsync(pedidoId, _userId);
+        Result<PedidoDto, DomainError> result = await _pedidosService!.FindMyPedidoAsync(pedidoId, _userId);
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
     }
 
     [Test]
     public async Task FindMyPedidoAsync_PedidoAjeno_RetornaError() {
-        var pedidoId = "507f1f77bcf86cd799439011";
-        var otroUserId = 999999L;
-        var result = await _pedidosService!.FindMyPedidoAsync(pedidoId, otroUserId);
+        string pedidoId = "507f1f77bcf86cd799439011";
+        long otroUserId = 999999L;
+        Result<PedidoDto, DomainError> result = await _pedidosService!.FindMyPedidoAsync(pedidoId, otroUserId);
         result.IsFailure.Should().BeTrue();
     }
 
@@ -571,12 +568,13 @@ public class PedidosServiceIntegrationTests {
             Items = new List<PedidoItemRequestDto> { new() { ProductoId = _productoId, Cantidad = 1 } }
         };
 
-        var createResult = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> createResult = await _pedidosService!.CreateAsync(_userId, dto);
         createResult.IsSuccess.Should().BeTrue();
-        var pedidoId = createResult.Value.Id;
+        string pedidoId = createResult.Value.Id;
 
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva Direccion 456" };
-        var result = await _pedidosService!.UpdateMyPedidoAsync(pedidoId, _userId, updateDto);
+        Result<PedidoDto, DomainError>
+            result = await _pedidosService!.UpdateMyPedidoAsync(pedidoId, _userId, updateDto);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.DireccionEnvio.Should().Contain("Nueva Direccion");
@@ -593,14 +591,15 @@ public class PedidosServiceIntegrationTests {
             Items = new List<PedidoItemRequestDto> { new() { ProductoId = _productoId, Cantidad = 1 } }
         };
 
-        var createResult = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> createResult = await _pedidosService!.CreateAsync(_userId, dto);
         createResult.IsSuccess.Should().BeTrue();
-        var pedidoId = createResult.Value.Id;
+        string pedidoId = createResult.Value.Id;
 
         await _pedidosService!.UpdateEstadoAsync(pedidoId, PedidoEstado.ENVIADO);
 
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva Direccion" };
-        var result = await _pedidosService!.UpdateMyPedidoAsync(pedidoId, _userId, updateDto);
+        Result<PedidoDto, DomainError>
+            result = await _pedidosService!.UpdateMyPedidoAsync(pedidoId, _userId, updateDto);
 
         result.IsFailure.Should().BeTrue();
     }
@@ -616,11 +615,11 @@ public class PedidosServiceIntegrationTests {
             Items = new List<PedidoItemRequestDto> { new() { ProductoId = _productoId, Cantidad = 1 } }
         };
 
-        var createResult = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> createResult = await _pedidosService!.CreateAsync(_userId, dto);
         createResult.IsSuccess.Should().BeTrue();
-        var pedidoId = createResult.Value.Id;
+        string pedidoId = createResult.Value.Id;
 
-        var result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, _userId);
+        UnitResult<DomainError> result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, _userId);
         result.IsSuccess.Should().BeTrue();
     }
 
@@ -635,33 +634,27 @@ public class PedidosServiceIntegrationTests {
             Items = new List<PedidoItemRequestDto> { new() { ProductoId = _productoId, Cantidad = 1 } }
         };
 
-        var createResult = await _pedidosService!.CreateAsync(_userId, dto);
+        Result<PedidoDto, DomainError> createResult = await _pedidosService!.CreateAsync(_userId, dto);
         createResult.IsSuccess.Should().BeTrue();
-        var pedidoId = createResult.Value.Id;
+        string pedidoId = createResult.Value.Id;
 
         await _pedidosService!.UpdateEstadoAsync(pedidoId, PedidoEstado.ENVIADO);
 
-        var result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, _userId);
+        UnitResult<DomainError> result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, _userId);
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
     public async Task DeleteMyPedidoAsync_PedidoAjeno_RetornaError() {
-        var pedidoId = "507f1f77bcf86cd799439011";
-        var otroUserId = 999999L;
-        var result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, otroUserId);
+        string pedidoId = "507f1f77bcf86cd799439011";
+        long otroUserId = 999999L;
+        UnitResult<DomainError> result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, otroUserId);
         result.IsFailure.Should().BeTrue();
     }
 
-    #endregion
-
-    #region ========== UTILIDADES ==========
-
     private async Task SetProductoStock(long productoId, int stock) {
-        var producto = await _dbContext!.FindAsync<Producto>(productoId);
+        Producto? producto = await _dbContext!.FindAsync<Producto>(productoId);
         producto!.Stock = stock;
         await _dbContext.SaveChangesAsync();
     }
-
-    #endregion
 }

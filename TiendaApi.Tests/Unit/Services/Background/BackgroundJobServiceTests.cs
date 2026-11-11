@@ -1,9 +1,9 @@
+using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using TiendaApi.Api.Services.Background.Host;
 
 namespace TiendaApi.Tests.Unit.Services.Background;
@@ -11,7 +11,8 @@ namespace TiendaApi.Tests.Unit.Services.Background;
 public class BackgroundJobServiceTests {
     private Mock<ILogger<BackgroundJobService>> _loggerMock = null!;
 
-    private BackgroundJobService CreateService(bool isDevelopment = true, int intervalMinutes = 1, int intervalHours = 168) {
+    private BackgroundJobService CreateService(bool isDevelopment = true, int intervalMinutes = 1,
+        int intervalHours = 168) {
         _loggerMock = new Mock<ILogger<BackgroundJobService>>();
 
         var inMemorySettings = new Dictionary<string, string?> {
@@ -20,7 +21,7 @@ public class BackgroundJobServiceTests {
             { "Scheduler:ExecutionIntervalHours", intervalHours.ToString() }
         };
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings!)
             .Build();
 
@@ -30,11 +31,65 @@ public class BackgroundJobServiceTests {
             configuration);
     }
 
+    #region ExecuteAsync Tests
+
+    [Test]
+    public async Task ExecuteAsync_CancellationRequested_SaleDelLoop() {
+        BackgroundJobService service = CreateService();
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await service.StopAsync(cts.Token);
+
+        service.Should().NotBeNull();
+    }
+
+    #endregion
+
+    #region BackgroundService Properties Tests
+
+    [Test]
+    public void BackgroundService_ImplementaIBackgroundService() {
+        BackgroundJobService service = CreateService();
+
+        service.Should().BeAssignableTo<BackgroundService>();
+    }
+
+    #endregion
+
+    #region ExecuteAsync Method Tests
+
+    [Test]
+    public void ExecuteAsync_MetodoProtegido_PuedeSerSobreescrito() {
+        BackgroundJobService service = CreateService();
+        MethodInfo? methodInfo = service.GetType().GetMethod("ExecuteAsync",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+
+        methodInfo.Should().NotBeNull();
+        methodInfo!.ReturnType.Should().Be(typeof(Task));
+    }
+
+    #endregion
+
+    #region ExecuteJobsAsync Method Tests
+
+    [Test]
+    public void ExecuteJobsAsync_MetodoPrivado_ExisteEnServicio() {
+        BackgroundJobService service = CreateService();
+        MethodInfo? methodInfo = service.GetType().GetMethod("ExecuteJobsAsync",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+
+        methodInfo.Should().NotBeNull();
+    }
+
+    #endregion
+
     #region Constructor Tests
 
     [Test]
     public void Constructor_CreaInstanciaCorrectamente() {
-        var service = CreateService();
+        BackgroundJobService service = CreateService();
 
         service.Should().NotBeNull();
     }
@@ -46,7 +101,7 @@ public class BackgroundJobServiceTests {
             { "Scheduler:ExecutionIntervalMinutes", "1" }
         };
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings!)
             .Build();
 
@@ -65,70 +120,16 @@ public class BackgroundJobServiceTests {
 
     [Test]
     public void IsDevelopment_ConfiguracionDesarrollo_RetornaTrue() {
-        var service = CreateService(isDevelopment: true);
+        BackgroundJobService service = CreateService();
 
         service.Should().NotBeNull();
     }
 
     [Test]
     public void IsDevelopment_ConfiguracionProduccion_RetornaFalse() {
-        var service = CreateService(isDevelopment: false);
+        BackgroundJobService service = CreateService(false);
 
         service.Should().NotBeNull();
-    }
-
-    #endregion
-
-    #region ExecuteAsync Tests
-
-    [Test]
-    public async Task ExecuteAsync_CancellationRequested_SaleDelLoop() {
-        var service = CreateService();
-
-        using var cts = new CancellationTokenSource();
-        cts.Cancel();
-
-        await service.StopAsync(cts.Token);
-
-        service.Should().NotBeNull();
-    }
-
-    #endregion
-
-    #region BackgroundService Properties Tests
-
-    [Test]
-    public void BackgroundService_ImplementaIBackgroundService() {
-        var service = CreateService();
-
-        service.Should().BeAssignableTo<BackgroundService>();
-    }
-
-    #endregion
-
-    #region ExecuteAsync Method Tests
-
-    [Test]
-    public void ExecuteAsync_MetodoProtegido_PuedeSerSobreescrito() {
-        var service = CreateService();
-        var methodInfo = service.GetType().GetMethod("ExecuteAsync",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-        methodInfo.Should().NotBeNull();
-        methodInfo!.ReturnType.Should().Be(typeof(Task));
-    }
-
-    #endregion
-
-    #region ExecuteJobsAsync Method Tests
-
-    [Test]
-    public void ExecuteJobsAsync_MetodoPrivado_ExisteEnServicio() {
-        var service = CreateService();
-        var methodInfo = service.GetType().GetMethod("ExecuteJobsAsync",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-        methodInfo.Should().NotBeNull();
     }
 
     #endregion
@@ -142,7 +143,7 @@ public class BackgroundJobServiceTests {
             { "Scheduler:ExecutionIntervalMinutes", "5" }
         };
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings!)
             .Build();
 
@@ -162,7 +163,7 @@ public class BackgroundJobServiceTests {
             { "Scheduler:ExecutionIntervalHours", "24" }
         };
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings!)
             .Build();
 
@@ -181,14 +182,14 @@ public class BackgroundJobServiceTests {
 
     [Test]
     public void ServiceProvider_InyectadoCorrectamente() {
-        var service = CreateService();
+        BackgroundJobService service = CreateService();
 
         service.Should().NotBeNull();
     }
 
     [Test]
     public void Configuration_InyectadoCorrectamente() {
-        var service = CreateService();
+        BackgroundJobService service = CreateService();
 
         service.Should().NotBeNull();
     }

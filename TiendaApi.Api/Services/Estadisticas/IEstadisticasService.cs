@@ -5,11 +5,10 @@ using TiendaApi.Api.Errors;
 namespace TiendaApi.Api.Services.Estadisticas;
 
 /// <summary>
-/// Contrato del servicio de estadísticas.
-///
-/// 🎓 Todas las vistas se calculan al vuelo sobre los datos existentes: no hay
-/// tablas de agregados, trabajos de fondo ni materialización. Cada llamada carga
-/// la ventana pedida y delega el cálculo en <see cref="EstadisticasCalculator"/>.
+///     Contrato del servicio de estadísticas.
+///     🎓 Todas las vistas se calculan al vuelo sobre los datos existentes: no hay
+///     tablas de agregados, trabajos de fondo ni materialización. Cada llamada carga
+///     la ventana pedida y delega el cálculo en <see cref="EstadisticasCalculator" />.
 /// </summary>
 public interface IEstadisticasService {
     /// <summary>Resumen general con comparativa frente al periodo anterior.</summary>

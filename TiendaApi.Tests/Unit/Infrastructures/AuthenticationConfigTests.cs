@@ -1,6 +1,6 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TiendaApi.Api.Infrastructures;
@@ -10,11 +10,10 @@ using TiendaApi.Api.Services.Auth;
 namespace TiendaApi.Tests.Unit.Infrastructures;
 
 /// <summary>
-/// Tests del switch Auth:Mode en AuthenticationConfig.
-///
-/// 🎓 Patrón Strategy: la configuración "Auth:Mode" decide qué implementación de
-/// IAuthService se registra en el contenedor. Estos tests verifican que el switch
-/// selecciona el servicio correcto y que el default es "Custom".
+///     Tests del switch Auth:Mode en AuthenticationConfig.
+///     🎓 Patrón Strategy: la configuración "Auth:Mode" decide qué implementación de
+///     IAuthService se registra en el contenedor. Estos tests verifican que el switch
+///     selecciona el servicio correcto y que el default es "Custom".
 /// </summary>
 [TestFixture]
 [Category("Unit")]
@@ -30,8 +29,9 @@ public class AuthenticationConfigTests {
             ["Jwt:Audience"] = "TiendaApiTest"
         };
 
-        if (authMode is not null)
+        if (authMode is not null) {
             data["Auth:Mode"] = authMode;
+        }
 
         return new ConfigurationBuilder()
             .AddInMemoryCollection(data)
@@ -39,7 +39,7 @@ public class AuthenticationConfigTests {
     }
 
     private static Type? GetRegisteredAuthServiceImplementation(IServiceCollection services) {
-        var descriptor = services.LastOrDefault(d => d.ServiceType == typeof(IAuthService));
+        ServiceDescriptor? descriptor = services.LastOrDefault(d => d.ServiceType == typeof(IAuthService));
         return descriptor?.ImplementationType;
     }
 
@@ -81,7 +81,7 @@ public class AuthenticationConfigTests {
         var services = new ServiceCollection();
 
         // Sin "Auth:Mode" en configuración → default "Custom"
-        services.AddAuthentication(BuildConfiguration(authMode: null));
+        services.AddAuthentication(BuildConfiguration(null));
 
         GetRegisteredAuthServiceImplementation(services)
             .Should().Be(typeof(AuthService), "el modo por defecto debe ser Custom (BCrypt)");
@@ -91,7 +91,7 @@ public class AuthenticationConfigTests {
     public void AddAuthentication_AmbosModos_DebeRegistrarElMismoMiddlewareJwt() {
         // El middleware JWT es idéntico en ambos modos: la diferencia es SOLO
         // cómo se valida la contraseña, no cómo se valida el token.
-        foreach (var mode in new[] { "Custom", "Identity" }) {
+        foreach (string mode in new[] { "Custom", "Identity" }) {
             var services = new ServiceCollection();
 
             services.AddAuthentication(BuildConfiguration(mode));
@@ -104,11 +104,11 @@ public class AuthenticationConfigTests {
     [Test]
     public void AddAuthentication_SinJwtKey_DebeLanzarInvalidOperationException() {
         var services = new ServiceCollection();
-        var configWithoutKey = new ConfigurationBuilder()
+        IConfigurationRoot configWithoutKey = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Auth:Mode"] = "Custom" })
             .Build();
 
-        var act = () => services.AddAuthentication(configWithoutKey);
+        Func<IServiceCollection> act = () => services.AddAuthentication(configWithoutKey);
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*JWT Key*");

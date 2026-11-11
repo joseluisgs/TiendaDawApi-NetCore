@@ -1,8 +1,8 @@
 namespace TiendaApi.Api.Dtos.Backup;
 
 /// <summary>
-/// Descriptor de un backup: qué contiene, cuándo se generó y con qué formato.
-/// Va dentro del propio backup (manifest.json) para poder leerlo sin contexto.
+///     Descriptor de un backup: qué contiene, cuándo se generó y con qué formato.
+///     Va dentro del propio backup (manifest.json) para poder leerlo sin contexto.
 /// </summary>
 public record ManifestBackupDto(
     string Version,
@@ -13,8 +13,8 @@ public record ManifestBackupDto(
 );
 
 /// <summary>
-/// Un producto tal como se guarda en el backup: plano, con las claves foráneas
-/// tal cual (categoriaId y proveedorId) para poder reinsertarlo sin ambigüedad.
+///     Un producto tal como se guarda en el backup: plano, con las claves foráneas
+///     tal cual (categoriaId y proveedorId) para poder reinsertarlo sin ambigüedad.
 /// </summary>
 public record BackupProductoDto(
     long Id,
@@ -52,7 +52,7 @@ public record BackupProveedorDto(
 );
 
 /// <summary>
-/// Contenido de un backup en formato JSON. Las entidades no pedidas llegan a null.
+///     Contenido de un backup en formato JSON. Las entidades no pedidas llegan a null.
 /// </summary>
 public record BackupDto(
     ManifestBackupDto Manifest,
@@ -66,8 +66,8 @@ public record BackupDto(
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>
-/// Informe de una importación. Los errores de fila NO abortan: se acumulan aquí
-/// y <c>Completo</c> indica si se escribió todo sin incidencias.
+///     Informe de una importación. Los errores de fila NO abortan: se acumulan aquí
+///     y <c>Completo</c> indica si se escribió todo sin incidencias.
 /// </summary>
 public record ImportReportDto(
     bool DryRun,
@@ -99,8 +99,8 @@ public record ErrorFilaDto(
 // ────────────────────────────────────────────────────────────────
 
 /// <summary>
-/// Lo que la API admite en backup: formatos, entidades, límites y reglas.
-/// Pensado para documentar el contrato sin tener que leer la fuente.
+///     Lo que la API admite en backup: formatos, entidades, límites y reglas.
+///     Pensado para documentar el contrato sin tener que leer la fuente.
 /// </summary>
 public record CatalogoFormatosDto(
     IReadOnlyList<FormatoDto> Formatos,

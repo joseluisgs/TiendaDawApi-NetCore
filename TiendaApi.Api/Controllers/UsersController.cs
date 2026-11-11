@@ -1,5 +1,5 @@
-using Asp.Versioning;
 using System.Security.Claims;
+using Asp.Versioning;
 using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,8 +16,8 @@ using TiendaApi.Api.Services.Users;
 namespace TiendaApi.Api.Controllers;
 
 /// <summary>
-/// Controlador de API para gestión de usuarios.
-/// Endpoints: CRUD paginado, solo accesibles por administradores.
+///     Controlador de API para gestión de usuarios.
+///     Endpoints: CRUD paginado, solo accesibles por administradores.
 /// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
@@ -29,7 +29,7 @@ public class UsersController(
     ILogger<UsersController> logger
 ) : ControllerBase {
     /// <summary>
-    /// Obtiene todos los usuarios paginados con filtros opcionales.
+    ///     Obtiene todos los usuarios paginados con filtros opcionales.
     /// </summary>
     /// <param name="username">Filtrar por nombre de usuario (contiene).</param>
     /// <param name="email">Filtrar por email (contiene).</param>
@@ -64,21 +64,24 @@ public class UsersController(
             direction
         );
 
-        var resultado = await service.FindAllPagedAsync(filter);
+        Result<PagedResult<UserDto>, DomainError> resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: pagedResult => {
-                var linkHeader = PaginationLinksHelper.CreateLinkHeader(pagedResult, Request, sortBy, direction);
-                if (!string.IsNullOrEmpty(linkHeader))
+            pagedResult => {
+                string linkHeader = PaginationLinksHelper.CreateLinkHeader(pagedResult, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader)) {
                     Response.Headers.Append("Link", linkHeader);
+                }
+
                 return (ActionResult<PagedResult<UserDto>>)pagedResult;
             },
-            onFailure: error => (ActionResult<PagedResult<UserDto>>)new ObjectResult(new { message = error.Message }) { StatusCode = StatusCodes.Status500InternalServerError }
+            error => (ActionResult<PagedResult<UserDto>>)new ObjectResult(new { message = error.Message })
+                { StatusCode = StatusCodes.Status500InternalServerError }
         );
     }
 
     /// <summary>
-    /// Obtiene un usuario por su ID.
+    ///     Obtiene un usuario por su ID.
     /// </summary>
     /// <param name="id">ID del usuario.</param>
     /// <returns>200 OK con el usuario, o 404 si no existe.</returns>
@@ -91,16 +94,16 @@ public class UsersController(
     public async Task<ActionResult<UserDto>> GetById(long id) {
         logger.LogInformation("Obteniendo usuario con ID: {Id}", id);
 
-        var resultado = await service.FindByIdAsync(id);
+        Result<UserDto, DomainError> resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: usuario => usuario,
-            onFailure: error => error.ToHttpResult<UserDto>()
+            usuario => usuario,
+            error => error.ToHttpResult<UserDto>()
         );
     }
 
     /// <summary>
-    /// Crea un nuevo usuario en el sistema.
+    ///     Crea un nuevo usuario en el sistema.
     /// </summary>
     /// <param name="dto">Datos del usuario a crear.</param>
     /// <returns>201 Created con el usuario creado, o 400/409 si hay errores.</returns>
@@ -114,16 +117,16 @@ public class UsersController(
     public async Task<ActionResult<UserDto>> Create([FromBody] RegisterDto dto) {
         logger.LogInformation("Creando nuevo usuario: {Username}", dto.Username);
 
-        var resultado = await service.CreateAsync(dto);
+        Result<UserDto, DomainError> resultado = await service.CreateAsync(dto);
 
         return resultado.Match(
-            onSuccess: usuario => CreatedAtAction(nameof(GetById), new { id = usuario.Id }, usuario),
-            onFailure: error => error.ToHttpResult<UserDto>()
+            usuario => CreatedAtAction(nameof(GetById), new { id = usuario.Id }, usuario),
+            error => error.ToHttpResult<UserDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza un usuario existente.
+    ///     Actualiza un usuario existente.
     /// </summary>
     /// <param name="id">ID del usuario.</param>
     /// <param name="dto">Nuevos datos del usuario.</param>
@@ -139,16 +142,16 @@ public class UsersController(
     public async Task<ActionResult<UserDto>> Update(long id, [FromBody] UserUpdateDto dto) {
         logger.LogInformation("Actualizando usuario con ID: {Id}", id);
 
-        var resultado = await service.UpdateAsync(id, dto);
+        Result<UserDto, DomainError> resultado = await service.UpdateAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: usuario => usuario,
-            onFailure: error => error.ToHttpResult<UserDto>()
+            usuario => usuario,
+            error => error.ToHttpResult<UserDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza el avatar de un usuario.
+    ///     Actualiza el avatar de un usuario.
     /// </summary>
     /// <param name="id">ID del usuario.</param>
     /// <param name="dto">URL del nuevo avatar.</param>
@@ -163,25 +166,27 @@ public class UsersController(
     public async Task<ActionResult<UserDto>> UpdateAvatar(long id, [FromBody] AvatarUpdateDto dto) {
         logger.LogInformation("Actualizando avatar de usuario con ID: {Id}", id);
 
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var currentUserId))
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long currentUserId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        if (id != currentUserId && userRole != UserRoles.ADMIN)
+        if (id != currentUserId && userRole != UserRoles.ADMIN) {
             return Forbid();
+        }
 
-        var resultado = await service.UpdateAvatarAsync(id, dto.AvatarUrl);
+        Result<UserDto, DomainError> resultado = await service.UpdateAvatarAsync(id, dto.AvatarUrl);
 
         return resultado.Match(
-            onSuccess: usuario => usuario,
-            onFailure: error => error.ToHttpResult<UserDto>()
+            usuario => usuario,
+            error => error.ToHttpResult<UserDto>()
         );
     }
 
     /// <summary>
-    /// Elimina un usuario (soft-delete).
+    ///     Elimina un usuario (soft-delete).
     /// </summary>
     /// <param name="id">ID del usuario a eliminar.</param>
     /// <returns>204 No Content si tiene éxito, o 404 si no existe.</returns>
@@ -194,12 +199,13 @@ public class UsersController(
     public async Task<ActionResult> Delete(long id) {
         logger.LogInformation("Eliminando usuario con ID: {Id}", id);
 
-        var resultado = await service.DeleteAsync(id);
+        UnitResult<DomainError> resultado = await service.DeleteAsync(id);
 
-        if (resultado.IsSuccess)
+        if (resultado.IsSuccess) {
             return NoContent();
+        }
 
-        var error = resultado.Error;
+        DomainError error = resultado.Error;
         return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
@@ -210,7 +216,7 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Obtiene el perfil del usuario autenticado.
+    ///     Obtiene el perfil del usuario autenticado.
     /// </summary>
     /// <returns>200 OK con los datos del usuario.</returns>
     [HttpGet("me/profile")]
@@ -218,21 +224,22 @@ public class UsersController(
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserDto>> GetMyProfile() {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        var resultado = await service.FindByIdAsync(userId);
+        Result<UserDto, DomainError> resultado = await service.FindByIdAsync(userId);
 
         return resultado.Match(
-            onSuccess: usuario => usuario,
-            onFailure: error => error.ToHttpResult<UserDto>()
+            usuario => usuario,
+            error => error.ToHttpResult<UserDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza el perfil del usuario autenticado.
+    ///     Actualiza el perfil del usuario autenticado.
     /// </summary>
     /// <param name="dto">Nuevos datos del perfil.</param>
     /// <returns>200 OK con el usuario actualizado, o 400/404 si hay errores.</returns>
@@ -243,23 +250,24 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserDto>> UpdateMyProfile([FromBody] UserUpdateDto dto) {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
         logger.LogInformation("Usuario {UserId} actualizando su perfil", userId);
 
-        var resultado = await service.UpdateAsync(userId, dto);
+        Result<UserDto, DomainError> resultado = await service.UpdateAsync(userId, dto);
 
         return resultado.Match(
-            onSuccess: usuario => usuario,
-            onFailure: error => error.ToHttpResult<UserDto>()
+            usuario => usuario,
+            error => error.ToHttpResult<UserDto>()
         );
     }
 
     /// <summary>
-    /// Elimina la cuenta del usuario autenticado (soft-delete).
+    ///     Elimina la cuenta del usuario autenticado (soft-delete).
     /// </summary>
     /// <returns>204 No Content si tiene éxito.</returns>
     [HttpDelete("me/profile")]
@@ -267,19 +275,21 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> DeleteMyProfile() {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
         logger.LogInformation("Usuario {UserId} eliminando su cuenta", userId);
 
-        var resultado = await service.DeleteAsync(userId);
+        UnitResult<DomainError> resultado = await service.DeleteAsync(userId);
 
-        if (resultado.IsSuccess)
+        if (resultado.IsSuccess) {
             return NoContent();
+        }
 
-        var error = resultado.Error;
+        DomainError error = resultado.Error;
         return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
@@ -290,7 +300,7 @@ public class UsersController(
     }
 
     /// <summary>
-    /// Actualiza el avatar del usuario autenticado.
+    ///     Actualiza el avatar del usuario autenticado.
     /// </summary>
     /// <param name="dto">URL del nuevo avatar.</param>
     /// <returns>200 OK con el usuario actualizado, o 400/404 si hay errores.</returns>
@@ -302,25 +312,26 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserDto>> UpdateMyAvatar([FromBody] AvatarUpdateDto dto) {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
         logger.LogInformation("Usuario {UserId} actualizando su avatar", userId);
 
-        var resultado = await service.UpdateAvatarAsync(userId, dto.AvatarUrl);
+        Result<UserDto, DomainError> resultado = await service.UpdateAvatarAsync(userId, dto.AvatarUrl);
 
         return resultado.Match(
-            onSuccess: usuario => usuario,
-            onFailure: error => error.ToHttpResult<UserDto>()
+            usuario => usuario,
+            error => error.ToHttpResult<UserDto>()
         );
     }
 
     /// <summary>
-    /// Feed de actividad del usuario autenticado: últimos productos vistos
-    /// (Cassandra, consulta Q-B, TTL nativo de 180 días). Una partición vacía
-    /// responde lista vacía, no 404: el usuario existe (está autenticado).
+    ///     Feed de actividad del usuario autenticado: últimos productos vistos
+    ///     (Cassandra, consulta Q-B, TTL nativo de 180 días). Una partición vacía
+    ///     responde lista vacía, no 404: el usuario existe (está autenticado).
     /// </summary>
     /// <param name="limit">Tamaño del feed (1..100, por defecto 20).</param>
     /// <returns>200 con el feed (más reciente primero) o 401 sin sesión.</returns>
@@ -330,12 +341,13 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IReadOnlyList<VistaFeedDto>>> GetMyFeed(
         [FromQuery] int limit = 20) {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId)) {
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
+        }
 
-        var feed = await historialService.GetFeedVistasAsync(userId, limit);
+        IReadOnlyList<VistaFeedDto> feed = await historialService.GetFeedVistasAsync(userId, limit);
         // Constructor explícito: el operador implícito no se aplica con T = interfaz.
         return new ActionResult<IReadOnlyList<VistaFeedDto>>(feed);
     }

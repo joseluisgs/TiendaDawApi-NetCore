@@ -3,10 +3,10 @@ using Cassandra.Mapping.Attributes;
 namespace TiendaApi.Api.Models;
 
 /// <summary>
-/// Fila del feed de actividad: un producto visto por un usuario (consulta Q-B).
-/// Partición por usuario con orden temporal gratis. La tabla declara
-/// default_time_to_live = 180 días: el TTL caduca las filas SOLO, sin
-/// trabajos de limpieza programados, y acota el crecimiento de la partición.
+///     Fila del feed de actividad: un producto visto por un usuario (consulta Q-B).
+///     Partición por usuario con orden temporal gratis. La tabla declara
+///     default_time_to_live = 180 días: el TTL caduca las filas SOLO, sin
+///     trabajos de limpieza programados, y acota el crecimiento de la partición.
 /// </summary>
 [Table("vistas_por_usuario")]
 public class VistaPorUsuario {

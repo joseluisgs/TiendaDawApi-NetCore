@@ -3,14 +3,26 @@ using System.Text.Json.Serialization;
 namespace TiendaApi.Api.Realtime.Common;
 
 /// <summary>
-/// DTO genérico de notificación para broadcasts en tiempo real.
+///     DTO genérico de notificación para broadcasts en tiempo real.
 /// </summary>
 /// <example>
-/// var notificacion = Notificacion&lt;ProductoDto&gt;.Create("productos", Tipo.CREATE, productoDto);
-/// // Serialización: {"entity":"productos","type":"CREATE","data":{...},"createdAt":"2025-01-18T10:30:00Z"}
+///     var notificacion = Notificacion&lt;ProductoDto&gt;.Create("productos", Tipo.CREATE, productoDto);
+///     // Serialización: {"entity":"productos","type":"CREATE","data":{...},"createdAt":"2025-01-18T10:30:00Z"}
 /// </example>
 /// <typeparam name="T">Tipo de datos.</typeparam>
 public record Notificacion<T> {
+    /// <summary>Tipos de operación soportados.</summary>
+    public enum Tipo {
+        /// <summary>Creación de una entidad nueva.</summary>
+        CREATE,
+
+        /// <summary>Modificación de una entidad existente.</summary>
+        UPDATE,
+
+        /// <summary>Eliminación de una entidad.</summary>
+        DELETE
+    }
+
     /// <summary>Nombre de la entidad afectada.</summary>
     [JsonPropertyName("entity")]
     public string Entity { get; init; } = string.Empty;
@@ -27,27 +39,17 @@ public record Notificacion<T> {
     [JsonPropertyName("createdAt")]
     public string CreatedAt { get; init; } = string.Empty;
 
-    /// <summary>Tipos de operación soportados.</summary>
-    public enum Tipo {
-        /// <summary>Creación de una entidad nueva.</summary>
-        CREATE,
-
-        /// <summary>Modificación de una entidad existente.</summary>
-        UPDATE,
-
-        /// <summary>Eliminación de una entidad.</summary>
-        DELETE
-    }
-
     /// <summary>Crea una nueva notificación.</summary>
     /// <param name="entity">Nombre de la entidad.</param>
     /// <param name="type">Tipo de operación.</param>
     /// <param name="data">Datos de la notificación.</param>
     /// <returns>Nueva instancia.</returns>
-    public static Notificacion<T> Create(string entity, Tipo type, T data) => new() {
-        Entity = entity,
-        Type = type,
-        Data = data,
-        CreatedAt = DateTime.UtcNow.ToString("o")
-    };
+    public static Notificacion<T> Create(string entity, Tipo type, T data) {
+        return new Notificacion<T> {
+            Entity = entity,
+            Type = type,
+            Data = data,
+            CreatedAt = DateTime.UtcNow.ToString("o")
+        };
+    }
 }

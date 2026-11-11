@@ -1,30 +1,27 @@
 using Cassandra;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ISession = Cassandra.ISession;
 
 namespace TiendaApi.Api.Infrastructures;
 
 /// <summary>
-/// Creación del keyspace en Cassandra. En Cassandra no hay migraciones de EF:
-/// el esquema se declara con CREATE ... IF NOT EXISTS y se puede ampliar en caliente,
-/// sin plan de migraciones ni scripts de actualización.
+///     Creación del keyspace en Cassandra. En Cassandra no hay migraciones de EF:
+///     el esquema se declara con CREATE ... IF NOT EXISTS y se puede ampliar en caliente,
+///     sin plan de migraciones ni scripts de actualización.
 /// </summary>
 public static class CassandraSchemaExtensions {
     /// <summary>
-    /// Espera a que el nodo acepte conexiones y crea el keyspace si no existe.
-    ///
-    /// La imagen oficial de Cassandra tarda ~30-60 s en estar lista (es una JVM):
-    /// por eso el primer statement se reintenta hasta 30 veces con 2 s de espera
-    /// en vez de rendirse al primer intento.
+    ///     Espera a que el nodo acepte conexiones y crea el keyspace si no existe.
+    ///     La imagen oficial de Cassandra tarda ~30-60 s en estar lista (es una JVM):
+    ///     por eso el primer statement se reintenta hasta 30 veces con 2 s de espera
+    ///     en vez de rendirse al primer intento.
     /// </summary>
     /// <param name="session">Sesión de Cassandra.</param>
     /// <param name="keyspace">Keyspace de la aplicación.</param>
     /// <param name="isDevelopment">true = elimina el keyspace antes de crearlo (reset de desarrollo).</param>
     /// <returns>Tarea asíncrona.</returns>
     public static async Task InitializeSchemaAsync(this ISession session, string keyspace, bool isDevelopment = false) {
-        for (var intento = 1; ; intento++) {
+        for (int intento = 1;; intento++) {
             try {
                 await session.ExecuteAsync(new SimpleStatement("SELECT now() FROM system.local"));
                 break;
@@ -41,7 +38,8 @@ public static class CassandraSchemaExtensions {
         // la sesión aún no ha hecho ChangeKeyspace, así que el DROP es seguro.
         if (isDevelopment) {
             await session.ExecuteAsync(new SimpleStatement($"DROP KEYSPACE IF EXISTS {keyspace}"));
-            Log.Information("🗂️ [DESARROLLO] Keyspace '{Keyspace}' eliminado (se re-crea con datos de semilla)", keyspace);
+            Log.Information("🗂️ [DESARROLLO] Keyspace '{Keyspace}' eliminado (se re-crea con datos de semilla)",
+                keyspace);
         }
 
         // SimpleStrategy y factor 1: suficiente para un nodo único de desarrollo.
@@ -59,57 +57,57 @@ public static class CassandraSchemaExtensions {
         // Sin bucket por producto: un producto cambia de precio unas pocas veces
         // al año, la partición no crece.
         await session.ExecuteAsync(new SimpleStatement("""
-            CREATE TABLE IF NOT EXISTS historial_precios_por_producto (
-                producto_id bigint,
-                fecha timestamp,
-                precio double,
-                PRIMARY KEY (producto_id, fecha)
-            ) WITH CLUSTERING ORDER BY (fecha DESC)
-            """));
+                                                       CREATE TABLE IF NOT EXISTS historial_precios_por_producto (
+                                                           producto_id bigint,
+                                                           fecha timestamp,
+                                                           precio double,
+                                                           PRIMARY KEY (producto_id, fecha)
+                                                       ) WITH CLUSTERING ORDER BY (fecha DESC)
+                                                       """));
 
         // ── Q-C: qué precios cambiaron en un día (alimenta informes) ────────
         // Bucketing de serie temporal: la partición es EL DÍA (date),
         // no el timestamp exacto — si fuera timestamp cada instante sería una
         // partición diminuta e infinita. Acota el crecimiento por diseño.
         await session.ExecuteAsync(new SimpleStatement("""
-            CREATE TABLE IF NOT EXISTS cambios_precio_por_fecha (
-                fecha date,
-                producto_id bigint,
-                precio double,
-                PRIMARY KEY (fecha, producto_id)
-            )
-            """));
+                                                       CREATE TABLE IF NOT EXISTS cambios_precio_por_fecha (
+                                                           fecha date,
+                                                           producto_id bigint,
+                                                           precio double,
+                                                           PRIMARY KEY (fecha, producto_id)
+                                                       )
+                                                       """));
 
         // ── Q-B: feed de actividad, últimos productos vistos por usuario ────
         // Partición por usuario con orden temporal gratis. El TTL nativo (180
         // días) caduca las filas SOLO, sin jobs de purga, y acota el
         // crecimiento de la partición.
         await session.ExecuteAsync(new SimpleStatement("""
-            CREATE TABLE IF NOT EXISTS vistas_por_usuario (
-                usuario_id bigint,
-                fecha timestamp,
-                producto_id bigint,
-                nombre text,
-                PRIMARY KEY (usuario_id, fecha)
-            ) WITH CLUSTERING ORDER BY (fecha DESC)
-                AND default_time_to_live = 15552000
-            """));
+                                                       CREATE TABLE IF NOT EXISTS vistas_por_usuario (
+                                                           usuario_id bigint,
+                                                           fecha timestamp,
+                                                           producto_id bigint,
+                                                           nombre text,
+                                                           PRIMARY KEY (usuario_id, fecha)
+                                                       ) WITH CLUSTERING ORDER BY (fecha DESC)
+                                                           AND default_time_to_live = 15552000
+                                                       """));
 
         Log.Information("Esquema de Cassandra listo en el keyspace {Keyspace}", keyspace);
     }
 
     /// <summary>
-    /// Arranque de Cassandra en la aplicación: espera al nodo (hasta ~60 s) y
-    /// crea el esquema con CREATE IF NOT EXISTS. Vive en un try propio porque
-    /// el resto de la API no depende de Cassandra: solo el histórico de precios
-    /// y el feed de actividad.
+    ///     Arranque de Cassandra en la aplicación: espera al nodo (hasta ~60 s) y
+    ///     crea el esquema con CREATE IF NOT EXISTS. Vive en un try propio porque
+    ///     el resto de la API no depende de Cassandra: solo el histórico de precios
+    ///     y el feed de actividad.
     /// </summary>
     /// <param name="app">Aplicación en arranque (antes de app.Run()).</param>
     /// <param name="isDevelopment">true = reset del keyspace en desarrollo.</param>
     /// <returns>Tarea asíncrona.</returns>
     public static async Task InitializeCassandraAsync(this WebApplication app, bool isDevelopment) {
         try {
-            var settings = app.Services.GetRequiredService<CassandraSettings>();
+            CassandraSettings settings = app.Services.GetRequiredService<CassandraSettings>();
             await app.Services.GetRequiredService<ISession>().InitializeSchemaAsync(settings.Keyspace, isDevelopment);
         } catch (Exception ex) {
             Log.Warning(ex,

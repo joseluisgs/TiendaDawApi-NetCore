@@ -1,29 +1,27 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using TiendaApi.Api.Models;
 
 namespace TiendaApi.Api.Data.Seed.Sql;
 
 /// <summary>
-/// Seeder para datos iniciales de PostgreSQL.
-/// Crea usuarios, categorías y productos de ejemplo.
-///
-/// Los usuarios se crean condicionalmente según Auth:Mode:
-/// - "Custom" (default): hash BCrypt calculado de <see cref="SeedCredentials"/>
-/// - "Identity": UserManager (PBKDF2) con las MISMAS credenciales
-/// El modo solo cambia el algoritmo del hash: mismo usuario y contraseña en ambos.
+///     Seeder para datos iniciales de PostgreSQL.
+///     Crea usuarios, categorías y productos de ejemplo.
+///     Los usuarios se crean condicionalmente según Auth:Mode:
+///     - "Custom" (default): hash BCrypt calculado de <see cref="SeedCredentials" />
+///     - "Identity": UserManager (PBKDF2) con las MISMAS credenciales
+///     El modo solo cambia el algoritmo del hash: mismo usuario y contraseña en ambos.
 /// </summary>
 public class SqlSeeder {
+    private readonly IConfiguration _configuration;
     private readonly TiendaDbContext _context;
     private readonly ILogger<SqlSeeder> _logger;
-    private readonly IConfiguration _configuration;
     private readonly IServiceScopeFactory _scopeFactory;
 
     /// <summary>
-    /// Crea una instancia del seeder de PostgreSQL.
+    ///     Crea una instancia del seeder de PostgreSQL.
     /// </summary>
-    public SqlSeeder(TiendaDbContext context, ILogger<SqlSeeder> logger, IConfiguration configuration, IServiceScopeFactory scopeFactory) {
+    public SqlSeeder(TiendaDbContext context, ILogger<SqlSeeder> logger, IConfiguration configuration,
+        IServiceScopeFactory scopeFactory) {
         _context = context;
         _logger = logger;
         _configuration = configuration;
@@ -31,7 +29,7 @@ public class SqlSeeder {
     }
 
     /// <summary>
-    /// Sembrar datos iniciales si no existen.
+    ///     Sembrar datos iniciales si no existen.
     /// </summary>
     public async Task SeedAsync() {
         try {
@@ -49,17 +47,18 @@ public class SqlSeeder {
     }
 
     private async Task SeedUsersAsync() {
-        var authMode = _configuration["Auth:Mode"] ?? "Custom";
+        string authMode = _configuration["Auth:Mode"] ?? "Custom";
 
         if (authMode == "Identity") {
             // 🎓 Modo Identity: usar UserManager para generar hashes PBKDF2 compatibles.
             // Los hashes BCrypt hardcoded NO funcionan con Identity (usa PBKDF2).
-            using var scope = _scopeFactory.CreateScope();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<long>>>();
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            UserManager<User> userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            RoleManager<IdentityRole<long>> roleManager =
+                scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<long>>>();
 
             // AddToRoleAsync lanza excepción si el rol no existe → crearlos antes.
-            foreach (var role in new[] { UserRoles.ADMIN, UserRoles.USER }) {
+            foreach (string role in new[] { UserRoles.ADMIN, UserRoles.USER }) {
                 if (!await roleManager.RoleExistsAsync(role)) {
                     await roleManager.CreateAsync(new IdentityRole<long>(role));
                     _logger.LogInformation("Rol Identity creado: {Role}", role);
@@ -72,17 +71,19 @@ public class SqlSeeder {
             // El modelo User no tiene campos de perfil (username/email/rol/credencial):
             // la semilla solo fija esos.
             var identityUsers = new List<(User User, string Password)> {
-                (new() { UserName = SeedCredentials.AdminUsername, Email = "admin@tienda.com", Role = UserRoles.ADMIN },
+                (new User { UserName = SeedCredentials.AdminUsername, Email = "admin@tienda.com", Role = UserRoles.ADMIN },
                     SeedCredentials.AdminPassword),
-                (new() { UserName = SeedCredentials.UserUsername, Email = "userdaw@tienda.com", Role = UserRoles.USER },
+                (new User { UserName = SeedCredentials.UserUsername, Email = "userdaw@tienda.com", Role = UserRoles.USER },
                     SeedCredentials.UserPassword)
             };
 
-            foreach (var (user, password) in identityUsers) {
-                var result = await userManager.CreateAsync(user, password);
+            foreach ((User user, string password) in identityUsers) {
+                IdentityResult result = await userManager.CreateAsync(user, password);
                 if (result.Succeeded) {
-                    if (user.Role == UserRoles.ADMIN)
+                    if (user.Role == UserRoles.ADMIN) {
                         await userManager.AddToRoleAsync(user, UserRoles.ADMIN);
+                    }
+
                     _logger.LogInformation("Usuario Identity creado: {Email} (contraseña seed: {Password})",
                         user.Email, password);
                 } else {
@@ -90,6 +91,7 @@ public class SqlSeeder {
                         user.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
             }
+
             return;
         }
 
@@ -100,7 +102,7 @@ public class SqlSeeder {
             new() {
                 UserName = SeedCredentials.AdminUsername,
                 Email = "admin@tienda.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(SeedCredentials.AdminPassword, workFactor: 11),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(SeedCredentials.AdminPassword, 11),
                 Role = UserRoles.ADMIN,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
@@ -109,7 +111,7 @@ public class SqlSeeder {
             new() {
                 UserName = SeedCredentials.UserUsername,
                 Email = "userdaw@tienda.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(SeedCredentials.UserPassword, workFactor: 11),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(SeedCredentials.UserPassword, 11),
                 Role = UserRoles.USER,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow,
@@ -157,34 +159,34 @@ public class SqlSeeder {
         // los tests E2E puedan referenciarlos. La generación aleatoria estilo YouTube es el
         // camino por defecto cuando un cliente crea un proveedor sin enviar código.
         var proveedores = new List<Proveedor> {
-                new() {
-                    Codigo = "TiendaDAW01",
-                    Nombre = "Tienda DAW Interna",
-                    Descripcion = "Proveedor interno para material de laboratorio",
-                    Contacto = "lab@tiendadaw.example",
-                    IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new() {
-                    Codigo = "Distribuc01",
-                    Nombre = "Distribuciones DAW",
-                    Descripcion = "Distribuidor general de electrónica y periféricos",
-                    Contacto = "pedidos@distribucionesdaw.example",
-                    IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new() {
-                    Codigo = "Editorial01",
-                    Nombre = "Editorial Código Limpio",
-                    Descripcion = "Librería técnica especializada",
-                    Contacto = "ventas@editorialcodigolimpio.example",
-                    IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                }
-            };
+            new() {
+                Codigo = "TiendaDAW01",
+                Nombre = "Tienda DAW Interna",
+                Descripcion = "Proveedor interno para material de laboratorio",
+                Contacto = "lab@tiendadaw.example",
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new() {
+                Codigo = "Distribuc01",
+                Nombre = "Distribuciones DAW",
+                Descripcion = "Distribuidor general de electrónica y periféricos",
+                Contacto = "pedidos@distribucionesdaw.example",
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new() {
+                Codigo = "Editorial01",
+                Nombre = "Editorial Código Limpio",
+                Descripcion = "Librería técnica especializada",
+                Contacto = "ventas@editorialcodigolimpio.example",
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            }
+        };
 
         await _context.Proveedores.AddRangeAsync(proveedores);
         await _context.SaveChangesAsync();

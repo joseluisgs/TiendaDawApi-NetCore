@@ -1,39 +1,29 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
-using NUnit.Framework;
 using TiendaApi.Api.Data.Seed;
 
 namespace TiendaApi.Tests.Integration.TestContainers.ErrorShape;
 
 /// <summary>
-/// Tests de forma de las respuestas de la API servidas por la aplicación real
-/// (<c>WebApplicationFactory</c>): códigos de error 400/401/404/409/429 con su
-/// cuerpo JSON, más los endpoints de salud (<c>/health</c>) y versión (<c>/version</c>).
-/// Usa los contenedores compartidos del assembly con una base de datos propia.
+///     Tests de forma de las respuestas de la API servidas por la aplicación real
+///     (<c>WebApplicationFactory</c>): códigos de error 400/401/404/409/429 con su
+///     cuerpo JSON, más los endpoints de salud (<c>/health</c>) y versión (<c>/version</c>).
+///     Usa los contenedores compartidos del assembly con una base de datos propia.
 /// </summary>
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
 public class ErrorShapeApiTests {
-    private const string DatabaseName = "it_error_shape";
-    private const string AdminUsuario = "admin";
-    // Credenciales unificadas: las MISMAS en Custom e Identity (SeedCredentials).
-    private const string AdminPassword = SeedCredentials.AdminPassword;
-    private const string IpRateLimit = "172.16.9.9";
-
-    private WebApplicationFactory<Program>? _factory;
-    private HttpClient _client = null!;
-    private string _adminToken = string.Empty;
-
     [OneTimeSetUp]
     public async Task OneTimeSetup() {
-        var connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
-        var mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
+        string connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
+        string mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
 
         // Forzar connection strings como environment variables ANTES de crear la factory
         Environment.SetEnvironmentVariable(
@@ -60,13 +50,13 @@ public class ErrorShapeApiTests {
 
         _client = _factory.CreateClient();
 
-        var login = await _client.PostAsJsonAsync(
+        HttpResponseMessage login = await _client.PostAsJsonAsync(
             "/api/v1/auth/signin",
             new { username = AdminUsuario, password = AdminPassword });
         login.StatusCode.Should().Be(HttpStatusCode.OK,
             "el seed de desarrollo debe crear el usuario admin");
 
-        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await login.Content.ReadFromJsonAsync<JsonElement>();
         _adminToken = body.GetProperty("token").GetString()!;
     }
 
@@ -81,13 +71,25 @@ public class ErrorShapeApiTests {
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
+    private const string DatabaseName = "it_error_shape";
+
+    private const string AdminUsuario = "admin";
+
+    // Credenciales unificadas: las MISMAS en Custom e Identity (SeedCredentials).
+    private const string AdminPassword = SeedCredentials.AdminPassword;
+    private const string IpRateLimit = "172.16.9.9";
+
+    private WebApplicationFactory<Program>? _factory;
+    private HttpClient _client = null!;
+    private string _adminToken = string.Empty;
+
     [Test]
     public async Task Version_devuelve_200_con_metadatos() {
-        var response = await _client.GetAsync("/version");
+        HttpResponseMessage response = await _client.GetAsync("/version");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("version").GetString().Should().NotBeNullOrWhiteSpace();
         body.GetProperty("fileVersion").GetString().Should().NotBeNullOrWhiteSpace();
         body.GetProperty("runtime").GetString().Should().NotBeNullOrWhiteSpace();
@@ -96,12 +98,12 @@ public class ErrorShapeApiTests {
 
     [Test]
     public async Task Health_devuelve_200_con_checks_de_postgres_y_mongo() {
-        var response = await _client.GetAsync("/health");
+        HttpResponseMessage response = await _client.GetAsync("/health");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("status").GetString().Should().Be("OK");
 
         var checks = body.GetProperty("checks").EnumerateArray()
@@ -113,42 +115,42 @@ public class ErrorShapeApiTests {
 
     [Test]
     public async Task HealthLive_devuelve_OK_sin_dependencias() {
-        var response = await _client.GetAsync("/health/live");
+        HttpResponseMessage response = await _client.GetAsync("/health/live");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("status").GetString().Should().Be("OK");
     }
 
     [Test]
     public async Task HealthReady_devuelve_OK_con_dependencias_listas() {
-        var response = await _client.GetAsync("/health/ready");
+        HttpResponseMessage response = await _client.GetAsync("/health/ready");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("status").GetString().Should().Be("OK");
 
-        var checks = body.GetProperty("checks").EnumerateArray()
+        IEnumerable<string?> checks = body.GetProperty("checks").EnumerateArray()
             .Select(c => c.GetProperty("name").GetString());
         checks.Should().Contain(new[] { "postgresql", "mongodb" });
     }
 
     [Test]
     public async Task Recurso_inexistente_devuelve_404_con_shape_de_dominio() {
-        var response = await _client.GetAsync("/api/v1/categorias/999999");
+        HttpResponseMessage response = await _client.GetAsync("/api/v1/categorias/999999");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("message").GetString().Should().NotBeNullOrWhiteSpace();
     }
 
     [Test]
     public async Task Endpoint_protegido_sin_token_devuelve_401_con_www_authenticate() {
-        var response = await _client.GetAsync("/api/v1/pedidos");
+        HttpResponseMessage response = await _client.GetAsync("/api/v1/pedidos");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         response.Headers.WwwAuthenticate.Should().NotBeEmpty();
@@ -157,31 +159,31 @@ public class ErrorShapeApiTests {
 
     [Test]
     public async Task Cuerpo_invalido_devuelve_400_con_problem_details() {
-        var response = await _client.PostAsJsonAsync(
+        HttpResponseMessage response = await _client.PostAsJsonAsync(
             "/api/v1/auth/signin",
             new Dictionary<string, string>());
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("status").GetInt32().Should().Be(400);
         body.GetProperty("title").GetString().Should().NotBeNullOrWhiteSpace();
-        body.TryGetProperty("errors", out var errors).Should().BeTrue(
+        body.TryGetProperty("errors", out JsonElement errors).Should().BeTrue(
             "la validación de [ApiController] debe agrupar errores por campo");
         errors.EnumerateObject().Should().NotBeEmpty();
     }
 
     [Test]
     public async Task Credenciales_invalidas_devuelve_401_con_shape_de_dominio() {
-        var response = await _client.PostAsJsonAsync(
+        HttpResponseMessage response = await _client.PostAsJsonAsync(
             "/api/v1/auth/signin",
             new { username = "usuario_que_no_existe", password = "noimporta" });
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("message").GetString().Should().NotBeNullOrWhiteSpace();
         body.TryGetProperty("errorId", out _).Should().BeFalse(
             "los errores de dominio no pasan por el manejador global de excepciones");
@@ -193,31 +195,31 @@ public class ErrorShapeApiTests {
             Content = JsonContent.Create(new { nombre = "Electrónica" })
         };
         request.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _adminToken);
+            new AuthenticationHeaderValue("Bearer", _adminToken);
 
-        var response = await _client.SendAsync(request);
+        HttpResponseMessage response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict,
             "el seed crea la categoría Electrónica, volver a crearla debe dar 409");
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("message").GetString().Should().NotBeNullOrWhiteSpace();
     }
 
     [Test]
     public async Task Limite_de_peticiones_devuelve_429_con_headers_y_cuerpo() {
-        using var client = _factory!.CreateClient();
+        using HttpClient client = _factory!.CreateClient();
         HttpResponseMessage? rechazada = null;
         HttpResponseMessage? permitida = null;
 
-        for (var i = 0; i < 12 && rechazada is null; i++) {
+        for (int i = 0; i < 12 && rechazada is null; i++) {
             var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/auth/signin") {
                 Content = JsonContent.Create(new { username = "sonda_rate_limit", password = "noimporta" })
             };
             request.Headers.Add("X-Forwarded-For", IpRateLimit);
 
-            var response = await client.SendAsync(request);
+            HttpResponseMessage response = await client.SendAsync(request);
             if (response.StatusCode == HttpStatusCode.TooManyRequests) {
                 rechazada = response;
             } else {
@@ -229,7 +231,7 @@ public class ErrorShapeApiTests {
         rechazada!.Headers.RetryAfter.Should().NotBeNull();
         rechazada.Headers.RetryAfter!.Delta.GetValueOrDefault().TotalSeconds.Should().BeGreaterThanOrEqualTo(1);
 
-        var body = await rechazada.Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement body = await rechazada.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("errorType").GetString().Should().Be("RateLimitError");
         body.GetProperty("message").GetString().Should().NotBeNullOrWhiteSpace();
         body.GetProperty("path").GetString().Should().Be("/api/v1/auth/signin");

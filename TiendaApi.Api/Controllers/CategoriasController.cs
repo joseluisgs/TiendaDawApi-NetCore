@@ -14,8 +14,8 @@ using TiendaApi.Api.Services.Categorias;
 namespace TiendaApi.Api.Controllers;
 
 /// <summary>
-/// Controlador de API para gestión de categorías de productos.
-/// Endpoints: CRUD paginado de categorías.
+///     Controlador de API para gestión de categorías de productos.
+///     Endpoints: CRUD paginado de categorías.
 /// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
@@ -26,7 +26,7 @@ public class CategoriasController(
     ILogger<CategoriasController> logger
 ) : ControllerBase {
     /// <summary>
-    /// Obtiene todas las categorías paginadas con filtros opcionales.
+    ///     Obtiene todas las categorías paginadas con filtros opcionales.
     /// </summary>
     /// <param name="nombre">Filtrar por nombre (contiene).</param>
     /// <param name="isDeleted">Filtrar por estado de eliminación.</param>
@@ -57,23 +57,25 @@ public class CategoriasController(
             Direction = direction
         };
 
-        var resultado = await service.FindAllPagedAsync(filter);
+        Result<PagedResult<CategoriaDto>, DomainError> resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: categorias => {
+            categorias => {
                 // Caché la cachea OutputCache ([OutputCache] attribute): la 2ª petición
                 // sirve desde caché (header Age). ETag/304 no está implementado.
-                var linkHeader = PaginationLinksHelper.CreateLinkHeader(categorias, Request, sortBy, direction);
-                if (!string.IsNullOrEmpty(linkHeader))
+                string linkHeader = PaginationLinksHelper.CreateLinkHeader(categorias, Request, sortBy, direction);
+                if (!string.IsNullOrEmpty(linkHeader)) {
                     Response.Headers.Append("Link", linkHeader);
+                }
+
                 return categorias;
             },
-            onFailure: error => error.ToHttpResult<PagedResult<CategoriaDto>>()
+            error => error.ToHttpResult<PagedResult<CategoriaDto>>()
         );
     }
 
     /// <summary>
-    /// Obtiene una categoría por su ID.
+    ///     Obtiene una categoría por su ID.
     /// </summary>
     /// <param name="id">ID de la categoría.</param>
     /// <returns>200 OK con la categoría, o 404 si no existe.</returns>
@@ -85,16 +87,16 @@ public class CategoriasController(
     public async Task<ActionResult<CategoriaDto>> GetById(long id) {
         logger.LogInformation("Obteniendo categoría con ID: {Id}", id);
 
-        var resultado = await service.FindByIdAsync(id);
+        Result<CategoriaDto, DomainError> resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
-            onSuccess: categoria => categoria,
-            onFailure: error => error.ToHttpResult<CategoriaDto>()
+            categoria => categoria,
+            error => error.ToHttpResult<CategoriaDto>()
         );
     }
 
     /// <summary>
-    /// Crea una nueva categoría.
+    ///     Crea una nueva categoría.
     /// </summary>
     /// <param name="dto">Datos de la categoría a crear.</param>
     /// <returns>201 Created con la categoría creada, o 400/409 si hay errores.</returns>
@@ -108,16 +110,16 @@ public class CategoriasController(
     public async Task<ActionResult<CategoriaDto>> Create([FromBody] CategoriaRequestDto dto) {
         logger.LogInformation("Creando nueva categoría: {Nombre}", dto.Nombre);
 
-        var resultado = await service.CreateAsync(dto);
+        Result<CategoriaDto, DomainError> resultado = await service.CreateAsync(dto);
 
         return resultado.Match(
-            onSuccess: categoria => CreatedAtAction(nameof(GetById), new { id = categoria.Id }, categoria),
-            onFailure: error => error.ToHttpResult<CategoriaDto>()
+            categoria => CreatedAtAction(nameof(GetById), new { id = categoria.Id }, categoria),
+            error => error.ToHttpResult<CategoriaDto>()
         );
     }
 
     /// <summary>
-    /// Actualiza una categoría existente.
+    ///     Actualiza una categoría existente.
     /// </summary>
     /// <param name="id">ID de la categoría.</param>
     /// <param name="dto">Nuevos datos de la categoría.</param>
@@ -133,16 +135,16 @@ public class CategoriasController(
     public async Task<ActionResult<CategoriaDto>> Update(long id, [FromBody] CategoriaRequestDto dto) {
         logger.LogInformation("Actualizando categoría con ID: {Id}", id);
 
-        var resultado = await service.UpdateAsync(id, dto);
+        Result<CategoriaDto, DomainError> resultado = await service.UpdateAsync(id, dto);
 
         return resultado.Match(
-            onSuccess: categoria => categoria,
-            onFailure: error => error.ToHttpResult<CategoriaDto>()
+            categoria => categoria,
+            error => error.ToHttpResult<CategoriaDto>()
         );
     }
 
     /// <summary>
-    /// Elimina una categoría (soft-delete).
+    ///     Elimina una categoría (soft-delete).
     /// </summary>
     /// <param name="id">ID de la categoría a eliminar.</param>
     /// <returns>204 No Content si tiene éxito, o 404 si no existe.</returns>
@@ -155,12 +157,13 @@ public class CategoriasController(
     public async Task<ActionResult> Delete(long id) {
         logger.LogInformation("Eliminando categoría con ID: {Id}", id);
 
-        var resultado = await service.DeleteAsync(id);
+        UnitResult<DomainError> resultado = await service.DeleteAsync(id);
 
-        if (resultado.IsSuccess)
+        if (resultado.IsSuccess) {
             return NoContent();
+        }
 
-        var error = resultado.Error;
+        DomainError error = resultado.Error;
         return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),

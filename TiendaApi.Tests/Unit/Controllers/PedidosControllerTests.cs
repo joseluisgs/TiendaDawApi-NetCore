@@ -9,14 +9,13 @@ using TiendaApi.Api.Controllers;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Dtos.Pedidos;
 using TiendaApi.Api.Errors;
-using TiendaApi.Api.Models;
 using TiendaApi.Api.Services.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 
 /// <summary>
-/// Tests unitarios para PedidosController.
-/// Verifica los endpoints separados para administradores y usuarios.
+///     Tests unitarios para PedidosController.
+///     Verifica los endpoints separados para administradores y usuarios.
 /// </summary>
 public class PedidosControllerTests {
     private readonly Mock<IPedidosService> _mockService;
@@ -27,15 +26,17 @@ public class PedidosControllerTests {
         _controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
     }
 
-    private static DestinatarioDto CreateValidDestinatario() => new() {
-        NombreCompleto = "Test Destinatario",
-        Email = "test@email.com",
-        Direccion = new DireccionDto {
-            Calle = "Calle Test",
-            Ciudad = "Madrid",
-            Pais = "España"
-        }
-    };
+    private static DestinatarioDto CreateValidDestinatario() {
+        return new DestinatarioDto {
+            NombreCompleto = "Test Destinatario",
+            Email = "test@email.com",
+            Direccion = new DireccionDto {
+                Calle = "Calle Test",
+                Ciudad = "Madrid",
+                Pais = "España"
+            }
+        };
+    }
 
     private void SetupUserClaims(long userId, string role = "USER") {
         var claims = new List<Claim> {
@@ -59,14 +60,16 @@ public class PedidosControllerTests {
     public async Task GetAllPedidos_AdminAutenticado_RetornaOk() {
         SetupUserClaims(1, "ADMIN");
         var pedidos = new List<PedidoDto> {
-            new("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow),
-            new("456", 2, CreateValidDestinatario(), new List<PedidoItemDto>(), 200m, "ENTREGADO", null, DateTime.UtcNow)
+            new("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null,
+                DateTime.UtcNow),
+            new("456", 2, CreateValidDestinatario(), new List<PedidoItemDto>(), 200m, "ENTREGADO", null,
+                DateTime.UtcNow)
         };
 
         _mockService.Setup(s => s.FindAllAsync())
             .ReturnsAsync(Result.Success<IEnumerable<PedidoDto>, DomainError>(pedidos));
 
-        var result = await _controller.GetAllPedidos();
+        ActionResult<IEnumerable<PedidoDto>> result = await _controller.GetAllPedidos();
 
         result.Result.Should().BeOfType<OkObjectResult>();
         var okResult = result.Result as OkObjectResult;
@@ -80,7 +83,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindAllAsync())
             .ReturnsAsync(Result.Success<IEnumerable<PedidoDto>, DomainError>(new List<PedidoDto>()));
 
-        var result = await _controller.GetAllPedidos();
+        ActionResult<IEnumerable<PedidoDto>> result = await _controller.GetAllPedidos();
 
         result.Result.Should().BeOfType<OkObjectResult>();
         var okResult = result.Result as OkObjectResult;
@@ -95,7 +98,7 @@ public class PedidosControllerTests {
             .ReturnsAsync(Result.Failure<IEnumerable<PedidoDto>, DomainError>(
                 new InternalError("Error interno")));
 
-        var result = await _controller.GetAllPedidos();
+        ActionResult<IEnumerable<PedidoDto>> result = await _controller.GetAllPedidos();
 
         result.Result.Should().BeOfType<ObjectResult>();
         var objectResult = result.Result as ObjectResult;
@@ -111,7 +114,8 @@ public class PedidosControllerTests {
         SetupUserClaims(1, "ADMIN");
         var pagedResult = new PagedResult<PedidoDto> {
             Items = new List<PedidoDto> {
-                new("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow)
+                new("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null,
+                    DateTime.UtcNow)
             },
             TotalCount = 1,
             Page = 1,
@@ -121,10 +125,10 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindAllPagedAsync(0, 10))
             .ReturnsAsync(Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult));
 
-        var result = await _controller.GetAllPedidosPaged(1, 10);
+        ActionResult<PagedResult<PedidoDto>> result = await _controller.GetAllPedidosPaged();
 
         result.Value.Should().NotBeNull();
-        var okResult = result.Value;
+        PagedResult<PedidoDto> okResult = result.Value;
         okResult.Should().BeEquivalentTo(pagedResult);
     }
 
@@ -141,7 +145,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindAllPagedAsync(4, 20))
             .ReturnsAsync(Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult));
 
-        var result = await _controller.GetAllPedidosPaged(5, 20);
+        ActionResult<PagedResult<PedidoDto>> result = await _controller.GetAllPedidosPaged(5, 20);
 
         result.Value.Should().NotBeNull();
     }
@@ -153,15 +157,16 @@ public class PedidosControllerTests {
     [Test]
     public async Task GetPedidoById_AdminPuedeVerCualquierPedido_RetornaOk() {
         SetupUserClaims(2, "ADMIN");
-        var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
+        var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE",
+            null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindByIdAsync("123"))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedido));
 
-        var result = await _controller.GetPedidoById("123");
+        ActionResult<PedidoDto> result = await _controller.GetPedidoById("123");
 
         result.Value.Should().NotBeNull();
-        var returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
+        PedidoDto returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
         returnedPedido.Id.Should().Be("123");
     }
 
@@ -173,7 +178,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindByIdAsync("999"))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
 
-        var result = await _controller.GetPedidoById("999");
+        ActionResult<PedidoDto> result = await _controller.GetPedidoById("999");
 
         result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
@@ -186,15 +191,16 @@ public class PedidosControllerTests {
     public async Task UpdatePedidoAdmin_ConDtoValido_RetornaOk() {
         SetupUserClaims(1, "ADMIN");
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección", Estado = "PROCESANDO" };
-        var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PROCESANDO", "Nueva dirección", DateTime.UtcNow);
+        var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m,
+            "PROCESANDO", "Nueva dirección", DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateAdminAsync("123", updateDto))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
 
-        var result = await _controller.UpdatePedidoAdmin("123", updateDto);
+        ActionResult<PedidoDto> result = await _controller.UpdatePedidoAdmin("123", updateDto);
 
         result.Value.Should().NotBeNull();
-        var returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
+        PedidoDto returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
         returnedPedido.Estado.Should().Be("PROCESANDO");
     }
 
@@ -206,7 +212,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.UpdateAdminAsync("999", updateDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(new NotFoundError("Pedido no encontrado")));
 
-        var result = await _controller.UpdatePedidoAdmin("999", updateDto);
+        ActionResult<PedidoDto> result = await _controller.UpdatePedidoAdmin("999", updateDto);
 
         result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
@@ -222,7 +228,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.DeleteAdminAsync("123"))
             .ReturnsAsync(UnitResult.Success<DomainError>());
 
-        var result = await _controller.DeletePedidoAdmin("123");
+        ActionResult result = await _controller.DeletePedidoAdmin("123");
 
         result.Should().BeOfType<NoContentResult>();
     }
@@ -234,7 +240,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.DeleteAdminAsync("999"))
             .ReturnsAsync(UnitResult.Failure<DomainError>(new NotFoundError("Pedido no encontrado")));
 
-        var result = await _controller.DeletePedidoAdmin("999");
+        ActionResult result = await _controller.DeletePedidoAdmin("999");
 
         result.Should().BeOfType<NotFoundObjectResult>();
     }
@@ -246,15 +252,17 @@ public class PedidosControllerTests {
     [Test]
     public async Task UpdatePedidoEstado_ConEstadoValido_RetornaOk() {
         SetupUserClaims(1, "ADMIN");
-        var pedidoDto = new PedidoDto("123", 0, CreateValidDestinatario(), new List<PedidoItemDto>(), 0m, "ENVIADO", null, DateTime.UtcNow);
+        var pedidoDto = new PedidoDto("123", 0, CreateValidDestinatario(), new List<PedidoItemDto>(), 0m, "ENVIADO",
+            null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateEstadoAsync("123", "ENVIADO"))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
 
-        var result = await _controller.UpdatePedidoEstado("123", new UpdateEstadoDto { Estado = "ENVIADO" });
+        ActionResult<PedidoDto> result =
+            await _controller.UpdatePedidoEstado("123", new UpdateEstadoDto { Estado = "ENVIADO" });
 
         result.Value.Should().NotBeNull();
-        var returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
+        PedidoDto returnedPedido = result.Value!.Should().BeAssignableTo<PedidoDto>().Subject;
         returnedPedido.Estado.Should().Be("ENVIADO");
     }
 
@@ -266,7 +274,8 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.UpdateEstadoAsync("123", "INVALIDO"))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
 
-        var result = await _controller.UpdatePedidoEstado("123", new UpdateEstadoDto { Estado = "INVALIDO" });
+        ActionResult<PedidoDto> result =
+            await _controller.UpdatePedidoEstado("123", new UpdateEstadoDto { Estado = "INVALIDO" });
 
         result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
@@ -290,11 +299,12 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindByUserIdAsync(1))
             .ReturnsAsync(Result.Success<IEnumerable<PedidoDto>, DomainError>(pedidos));
 
-        var result = await _controller.GetMyPedidos();
+        ActionResult<IEnumerable<PedidoDto>> result = await _controller.GetMyPedidos();
 
         result.Result.Should().BeOfType<OkObjectResult>();
         var okResult = result.Result as OkObjectResult;
-        var returnedPedidos = okResult!.Value.Should().BeAssignableTo<IEnumerable<PedidoDto>>().Subject;
+        IEnumerable<PedidoDto> returnedPedidos =
+            okResult!.Value.Should().BeAssignableTo<IEnumerable<PedidoDto>>().Subject;
         returnedPedidos.Should().HaveCount(2);
     }
 
@@ -305,11 +315,12 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindByUserIdAsync(1))
             .ReturnsAsync(Result.Success<IEnumerable<PedidoDto>, DomainError>(new List<PedidoDto>()));
 
-        var result = await _controller.GetMyPedidos();
+        ActionResult<IEnumerable<PedidoDto>> result = await _controller.GetMyPedidos();
 
         result.Result.Should().BeOfType<OkObjectResult>();
         var okResult = result.Result as OkObjectResult;
-        var returnedPedidos = okResult!.Value.Should().BeAssignableTo<IEnumerable<PedidoDto>>().Subject;
+        IEnumerable<PedidoDto> returnedPedidos =
+            okResult!.Value.Should().BeAssignableTo<IEnumerable<PedidoDto>>().Subject;
         returnedPedidos.Should().BeEmpty();
     }
 
@@ -317,7 +328,7 @@ public class PedidosControllerTests {
     public async Task GetMyPedidos_SinAutenticacion_RetornaUnauthorized() {
         var controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
 
-        var result = await controller.GetMyPedidos();
+        ActionResult<IEnumerable<PedidoDto>> result = await controller.GetMyPedidos();
 
         result.Result.Should().BeAssignableTo<ObjectResult>();
         var objectResult = (ObjectResult)result.Result!;
@@ -333,7 +344,8 @@ public class PedidosControllerTests {
         SetupUserClaims(1);
         var pagedResult = new PagedResult<PedidoDto> {
             Items = new List<PedidoDto> {
-                new("1", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow)
+                new("1", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null,
+                    DateTime.UtcNow)
             },
             TotalCount = 1,
             Page = 1,
@@ -343,10 +355,10 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindMyPedidosAsync(1, 0, 10))
             .ReturnsAsync(Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult));
 
-        var result = await _controller.GetMyPedidosPaged(1, 10);
+        ActionResult<PagedResult<PedidoDto>> result = await _controller.GetMyPedidosPaged();
 
         result.Value.Should().NotBeNull();
-        var okResult = result.Value;
+        PagedResult<PedidoDto> okResult = result.Value;
         okResult.Should().BeEquivalentTo(pagedResult);
     }
 
@@ -363,7 +375,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindMyPedidosAsync(1, 0, 10))
             .ReturnsAsync(Result.Success<PagedResult<PedidoDto>, DomainError>(pagedResult));
 
-        var result = await _controller.GetMyPedidosPaged();
+        ActionResult<PagedResult<PedidoDto>> result = await _controller.GetMyPedidosPaged();
 
         result.Value.Should().NotBeNull();
     }
@@ -380,14 +392,15 @@ public class PedidosControllerTests {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
-        var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
+        var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE",
+            null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
 
-        var result = await _controller.CreateMyPedido(requestDto);
+        ActionResult<PedidoDto> result = await _controller.CreateMyPedido(requestDto);
 
-        var createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        CreatedAtActionResult createdResult = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be("GetMyPedidoById");
     }
 
@@ -425,12 +438,13 @@ public class PedidosControllerTests {
                 CodigoPostal = "28013"
             }
         };
-        var pedidoDto = new PedidoDto("123", 1, destinatarioDto, new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
+        var pedidoDto = new PedidoDto("123", 1, destinatarioDto, new List<PedidoItemDto>(), 100m, "PENDIENTE", null,
+            DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
 
-        var result = await _controller.CreateMyPedido(requestDto);
+        ActionResult<PedidoDto> result = await _controller.CreateMyPedido(requestDto);
 
         result.Result.Should().BeOfType<CreatedAtActionResult>();
     }
@@ -444,7 +458,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
 
-        var result = await _controller.CreateMyPedido(requestDto);
+        ActionResult<PedidoDto> result = await _controller.CreateMyPedido(requestDto);
 
         result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
@@ -462,7 +476,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
 
-        var result = await _controller.CreateMyPedido(requestDto);
+        ActionResult<PedidoDto> result = await _controller.CreateMyPedido(requestDto);
 
         // BusinessRuleError → 422 Unprocessable Entity (regla de negocio, no malformación)
         result.Result.Should().BeOfType<ObjectResult>();
@@ -478,7 +492,7 @@ public class PedidosControllerTests {
             }
         };
 
-        var result = await controller.CreateMyPedido(requestDto);
+        ActionResult<PedidoDto> result = await controller.CreateMyPedido(requestDto);
 
         result.Result.Should().BeAssignableTo<ObjectResult>();
         var objectResult = (ObjectResult)result.Result!;
@@ -492,27 +506,29 @@ public class PedidosControllerTests {
     [Test]
     public async Task GetMyPedidoById_Propietario_RetornaOk() {
         SetupUserClaims(1);
-        var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
+        var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE",
+            null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindMyPedidoAsync("123", 1))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedido));
 
-        var result = await _controller.GetMyPedidoById("123");
+        ActionResult<PedidoDto> result = await _controller.GetMyPedidoById("123");
 
-        var okResult = result.Value;
-        var returnedPedido = okResult.Should().BeAssignableTo<PedidoDto>().Subject;
+        PedidoDto? okResult = result.Value;
+        PedidoDto returnedPedido = okResult.Should().BeAssignableTo<PedidoDto>().Subject;
         returnedPedido.Id.Should().Be("123");
     }
 
     [Test]
     public async Task GetMyPedidoById_NoPropietario_RetornaForbidden() {
         SetupUserClaims(2);
-        var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
+        var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE",
+            null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindMyPedidoAsync("123", 2))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(new ForbiddenError("No eres propietario")));
 
-        var result = await _controller.GetMyPedidoById("123");
+        ActionResult<PedidoDto> result = await _controller.GetMyPedidoById("123");
 
         result.Result.Should().BeOfType<ObjectResult>();
         var objectResult = (ObjectResult)result.Result!;
@@ -527,7 +543,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.FindMyPedidoAsync("999", 1))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
 
-        var result = await _controller.GetMyPedidoById("999");
+        ActionResult<PedidoDto> result = await _controller.GetMyPedidoById("999");
 
         result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
@@ -540,12 +556,13 @@ public class PedidosControllerTests {
     public async Task UpdateMyPedido_PropietarioYPendiente_RetornaOk() {
         SetupUserClaims(1);
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección" };
-        var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", "Nueva dirección", DateTime.UtcNow);
+        var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE",
+            "Nueva dirección", DateTime.UtcNow);
 
         _mockService.Setup(s => s.UpdateMyPedidoAsync("123", 1, updateDto))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
 
-        var result = await _controller.UpdateMyPedido("123", updateDto);
+        ActionResult<PedidoDto> result = await _controller.UpdateMyPedido("123", updateDto);
 
         result.Value.Should().NotBeNull();
     }
@@ -558,7 +575,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.UpdateMyPedidoAsync("123", 2, updateDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(new ForbiddenError("No eres propietario")));
 
-        var result = await _controller.UpdateMyPedido("123", updateDto);
+        ActionResult<PedidoDto> result = await _controller.UpdateMyPedido("123", updateDto);
 
         result.Result.Should().BeOfType<ObjectResult>();
         var objectResult = (ObjectResult)result.Result!;
@@ -572,9 +589,10 @@ public class PedidosControllerTests {
 
         _mockService.Setup(s => s.UpdateMyPedidoAsync("123", 1, updateDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(
-                new ValidationError("No se puede actualizar un pedido en estado ENVIADO", new Dictionary<string, string[]>())));
+                new ValidationError("No se puede actualizar un pedido en estado ENVIADO",
+                    new Dictionary<string, string[]>())));
 
-        var result = await _controller.UpdateMyPedido("123", updateDto);
+        ActionResult<PedidoDto> result = await _controller.UpdateMyPedido("123", updateDto);
 
         result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
@@ -587,7 +605,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.UpdateMyPedidoAsync("999", 1, updateDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(new NotFoundError("Pedido no encontrado")));
 
-        var result = await _controller.UpdateMyPedido("999", updateDto);
+        ActionResult<PedidoDto> result = await _controller.UpdateMyPedido("999", updateDto);
 
         result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
@@ -603,7 +621,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.DeleteMyPedidoAsync("123", 1))
             .ReturnsAsync(UnitResult.Success<DomainError>());
 
-        var result = await _controller.DeleteMyPedido("123");
+        ActionResult result = await _controller.DeleteMyPedido("123");
 
         result.Should().BeOfType<NoContentResult>();
     }
@@ -615,7 +633,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.DeleteMyPedidoAsync("123", 2))
             .ReturnsAsync(UnitResult.Failure<DomainError>(new ForbiddenError("No eres propietario")));
 
-        var result = await _controller.DeleteMyPedido("123");
+        ActionResult result = await _controller.DeleteMyPedido("123");
 
         result.Should().BeOfType<ObjectResult>();
         var objectResult = (ObjectResult)result;
@@ -628,9 +646,10 @@ public class PedidosControllerTests {
 
         _mockService.Setup(s => s.DeleteMyPedidoAsync("123", 1))
             .ReturnsAsync(UnitResult.Failure<DomainError>(
-                new ValidationError("No se puede eliminar un pedido en estado ENVIADO", new Dictionary<string, string[]>())));
+                new ValidationError("No se puede eliminar un pedido en estado ENVIADO",
+                    new Dictionary<string, string[]>())));
 
-        var result = await _controller.DeleteMyPedido("123");
+        ActionResult result = await _controller.DeleteMyPedido("123");
 
         // El switch devuelve ObjectResult con StatusCode 400 (ValidationError → default)
         result.Should().BeOfType<ObjectResult>();
@@ -646,7 +665,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.DeleteMyPedidoAsync("999", 1))
             .ReturnsAsync(UnitResult.Failure<DomainError>(new NotFoundError("Pedido no encontrado")));
 
-        var result = await _controller.DeleteMyPedido("999");
+        ActionResult result = await _controller.DeleteMyPedido("999");
 
         result.Should().BeOfType<NotFoundObjectResult>();
     }
@@ -668,7 +687,7 @@ public class PedidosControllerTests {
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Failure<PedidoDto, DomainError>(error));
 
-        var result = await _controller.CreateMyPedido(requestDto);
+        ActionResult<PedidoDto> result = await _controller.CreateMyPedido(requestDto);
 
         result.Result.Should().BeOfType<ObjectResult>();
         var objectResult = (ObjectResult)result.Result!;
@@ -684,12 +703,13 @@ public class PedidosControllerTests {
                 new() { ProductoId = 2, Cantidad = 3 }
             }
         };
-        var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 175m, "PENDIENTE", null, DateTime.UtcNow);
+        var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 175m, "PENDIENTE",
+            null, DateTime.UtcNow);
 
         _mockService.Setup(s => s.CreateAsync(1, requestDto))
             .ReturnsAsync(Result.Success<PedidoDto, DomainError>(pedidoDto));
 
-        var result = await _controller.CreateMyPedido(requestDto);
+        ActionResult<PedidoDto> result = await _controller.CreateMyPedido(requestDto);
 
         result.Result.Should().BeOfType<CreatedAtActionResult>();
     }
@@ -698,7 +718,7 @@ public class PedidosControllerTests {
     public async Task GetMyPedidosPaged_SinAutenticacion_RetornaUnauthorized() {
         var controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
 
-        var result = await controller.GetMyPedidosPaged();
+        ActionResult<PagedResult<PedidoDto>> result = await controller.GetMyPedidosPaged();
 
         result.Result.Should().BeAssignableTo<ObjectResult>();
         var objectResult = (ObjectResult)result.Result!;

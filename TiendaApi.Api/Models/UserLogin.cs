@@ -3,10 +3,10 @@ using TiendaApi.Api.Data.Abstractions;
 namespace TiendaApi.Api.Models;
 
 /// <summary>
-/// Vinculación entre un usuario local y un login externo (OAuth 2.0).
-/// Un usuario puede tener múltiples logins externos (Google + GitHub, por ejemplo).
-/// La unicidad es (LoginProvider, ProviderKey): un proveedor externo solo puede
-/// estar vinculado a un único usuario local.
+///     Vinculación entre un usuario local y un login externo (OAuth 2.0).
+///     Un usuario puede tener múltiples logins externos (Google + GitHub, por ejemplo).
+///     La unicidad es (LoginProvider, ProviderKey): un proveedor externo solo puede
+///     estar vinculado a un único usuario local.
 /// </summary>
 public class UserLogin : ITimestamped {
     /// <summary>ID único del registro (PK en PostgreSQL).</summary>

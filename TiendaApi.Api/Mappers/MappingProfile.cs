@@ -8,12 +8,12 @@ using TiendaApi.Api.Models;
 namespace TiendaApi.Api.Mappers;
 
 /// <summary>
-/// Perfiles de AutoMapper para mapeos entidad-DTO.
-/// Convierte automáticamente entre entidades y DTOs.
+///     Perfiles de AutoMapper para mapeos entidad-DTO.
+///     Convierte automáticamente entre entidades y DTOs.
 /// </summary>
 public class MappingProfile : Profile {
     /// <summary>
-    /// Registra los mapeos entre entidades y DTOs de la API.
+    ///     Registra los mapeos entre entidades y DTOs de la API.
     /// </summary>
     public MappingProfile() {
         // Mapeos de categoría

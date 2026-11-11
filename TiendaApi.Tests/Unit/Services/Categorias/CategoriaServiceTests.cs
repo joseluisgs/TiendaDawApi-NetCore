@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
@@ -11,20 +12,19 @@ using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Categorias;
-using TiendaApi.Api.Validators.Categorias;
 
 namespace TiendaApi.Tests.Unit.Services.Categorias;
 
 /// <summary>
-/// Suite de tests para CategoriaService
-/// Prueba el enfoque Result Pattern para operaciones de categorías
+///     Suite de tests para CategoriaService
+///     Prueba el enfoque Result Pattern para operaciones de categorías
 /// </summary>
 public class CategoriaServiceTests {
-    private Mock<ICategoriaRepository> _mockRepository = null!;
-    private Mock<ILogger<CategoriaService>> _mockLogger = null!;
-    private Mock<IValidator<CategoriaRequestDto>> _mockValidator = null!;
     private Mock<ICacheService> _mockCacheService = null!;
     private Mock<IConfiguration> _mockConfiguration = null!;
+    private Mock<ILogger<CategoriaService>> _mockLogger = null!;
+    private Mock<ICategoriaRepository> _mockRepository = null!;
+    private Mock<IValidator<CategoriaRequestDto>> _mockValidator = null!;
     private CategoriaService _service = null!;
 
     private void CreateService() {
@@ -74,7 +74,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync(categorias);
 
         // Act
-        var result = await _service.FindAllAsync();
+        Result<IEnumerable<CategoriaDto>, DomainError> result = await _service.FindAllAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -88,7 +88,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync(new List<Categoria>());
 
         // Act
-        var result = await _service.FindAllAsync();
+        Result<IEnumerable<CategoriaDto>, DomainError> result = await _service.FindAllAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -107,7 +107,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync(categoria);
 
         // Act
-        var result = await _service.FindByIdAsync(1);
+        Result<CategoriaDto, DomainError> result = await _service.FindByIdAsync(1);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -122,7 +122,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync((Categoria?)null);
 
         // Act
-        var result = await _service.FindByIdAsync(999);
+        Result<CategoriaDto, DomainError> result = await _service.FindByIdAsync(999);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -145,7 +145,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync(categoriaGuardada);
 
         // Act
-        var result = await _service.CreateAsync(dto);
+        Result<CategoriaDto, DomainError> result = await _service.CreateAsync(dto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -173,7 +173,7 @@ public class CategoriaServiceTests {
             Mock.Of<IOutputCacheStore>());
 
         // Act
-        var result = await _service.CreateAsync(dto);
+        Result<CategoriaDto, DomainError> result = await _service.CreateAsync(dto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -190,7 +190,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync(true);
 
         // Act
-        var result = await _service.CreateAsync(dto);
+        Result<CategoriaDto, DomainError> result = await _service.CreateAsync(dto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -216,7 +216,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync(categoriaActualizada);
 
         // Act
-        var result = await _service.UpdateAsync(1, dto);
+        Result<CategoriaDto, DomainError> result = await _service.UpdateAsync(1, dto);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -234,7 +234,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync((Categoria?)null);
 
         // Act
-        var result = await _service.UpdateAsync(999, dto);
+        Result<CategoriaDto, DomainError> result = await _service.UpdateAsync(999, dto);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -255,7 +255,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync(true);
 
         // Act
-        var result = await _service.DeleteAsync(1);
+        UnitResult<DomainError> result = await _service.DeleteAsync(1);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -268,7 +268,7 @@ public class CategoriaServiceTests {
             .ReturnsAsync((Categoria?)null);
 
         // Act
-        var result = await _service.DeleteAsync(999);
+        UnitResult<DomainError> result = await _service.DeleteAsync(999);
 
         // Assert
         result.IsFailure.Should().BeTrue();

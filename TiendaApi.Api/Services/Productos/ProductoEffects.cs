@@ -9,20 +9,20 @@ using TiendaApi.Api.Services.Email;
 namespace TiendaApi.Api.Services.Productos;
 
 /// <summary>
-/// 🎓 Efectos secundarios de PRODUCTOS: WebSocket, SignalR, email de aviso al
-/// administrador y eventos de suscripción GraphQL. Viven fuera de
-/// ProductoService para que ese servicio se quede con lo que es (leer,
-/// escribir, validar, cachear) y este sea el único sitio que cambia si cambia
-/// un canal de notificación: SRP + DIP (se inyecta por IProductoEffects). El
-/// reparto equivalente en el proyecto CQRS son sus notifications + handlers.
+///     🎓 Efectos secundarios de PRODUCTOS: WebSocket, SignalR, email de aviso al
+///     administrador y eventos de suscripción GraphQL. Viven fuera de
+///     ProductoService para que ese servicio se quede con lo que es (leer,
+///     escribir, validar, cachear) y este sea el único sitio que cambia si cambia
+///     un canal de notificación: SRP + DIP (se inyecta por IProductoEffects). El
+///     reparto equivalente en el proyecto CQRS son sus notifications + handlers.
 /// </summary>
 /// <remarks>
-/// 🎓 Cada evento de tiempo real tiene un método PÚBLICO combinado que llama
-/// a los dos canales (WebSocket + SignalR), del mismo modo que
-/// <c>PedidosWebSocketHandler.NotifyUserAndAdminsAsync</c> llama a
-/// NotifyUserAsync + NotifyAdminsAsync. Los métodos por canal son privados:
-/// así ningún consumidor puede invocar un solo canal y olvidar el otro.
-/// Los productos se difunden a todos los clientes en ambos canales.
+///     🎓 Cada evento de tiempo real tiene un método PÚBLICO combinado que llama
+///     a los dos canales (WebSocket + SignalR), del mismo modo que
+///     <c>PedidosWebSocketHandler.NotifyUserAndAdminsAsync</c> llama a
+///     NotifyUserAsync + NotifyAdminsAsync. Los métodos por canal son privados:
+///     así ningún consumidor puede invocar un solo canal y olvidar el otro.
+///     Los productos se difunden a todos los clientes en ambos canales.
 /// </remarks>
 public class ProductoEffects(
     ProductosWebSocketHandler webSocketHandler,
@@ -32,183 +32,22 @@ public class ProductoEffects(
     IEventPublisher eventPublisher,
     ILogger<ProductoEffects> logger
 ) : IProductoEffects {
-    #region Métodos Públicos - Tiempo Real (WS + SignalR)
-
-    /// <summary>
-    /// Notifica la creación de un producto por WebSocket Y SignalR
-    /// (broadcast: catálogo público).
-    /// </summary>
-    public void NotificarProductoCreado(ProductoDto producto) {
-        NotificarWebSocketProductoCreado(producto);
-        NotificarSignalRProductoCreado(producto);
-    }
-
-    /// <summary>
-    /// Notifica la actualización de un producto por WebSocket Y SignalR
-    /// (broadcast: catálogo público).
-    /// </summary>
-    public void NotificarProductoActualizado(ProductoDto producto) {
-        NotificarWebSocketProductoActualizado(producto);
-        NotificarSignalRProductoActualizado(producto);
-    }
-
-    /// <summary>
-    /// Notifica la eliminación de un producto por WebSocket Y SignalR
-    /// (broadcast: catálogo público).
-    /// </summary>
-    public void NotificarProductoEliminado(long productoId) {
-        NotificarWebSocketProductoEliminado(productoId);
-        NotificarSignalRProductoEliminado(productoId);
-    }
-
-    #endregion
-
-    #region Métodos Privados - WebSocket Nativo
-
-    /// <summary>
-    /// Notifica vía WebSocket la creación de un producto.
-    /// </summary>
-    private void NotificarWebSocketProductoCreado(ProductoDto producto) {
-        _ = Task.Run(async () => {
-            try {
-                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                    ProductoNotificationType.CREATED,
-                    producto.Id,
-                    producto
-                ));
-                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto creado ID={ProductoId}", producto.Id);
-            } catch (Exception ex) {
-                logger.LogWarning(ex, "Error en notificación WebSocket al crear producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Notifica vía WebSocket la actualización de un producto.
-    /// </summary>
-    private void NotificarWebSocketProductoActualizado(ProductoDto producto) {
-        _ = Task.Run(async () => {
-            try {
-                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                    ProductoNotificationType.UPDATED,
-                    producto.Id,
-                    producto
-                ));
-                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto actualizado ID={ProductoId}", producto.Id);
-            } catch (Exception ex) {
-                logger.LogWarning(ex, "Error en notificación WebSocket al actualizar producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Notifica vía WebSocket la eliminación de un producto.
-    /// </summary>
-    private void NotificarWebSocketProductoEliminado(long productoId) {
-        _ = Task.Run(async () => {
-            try {
-                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
-                    ProductoNotificationType.DELETED,
-                    productoId,
-                    null
-                ));
-                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto eliminado ID={ProductoId}", productoId);
-            } catch (Exception ex) {
-                logger.LogWarning(ex, "Error en notificación WebSocket al eliminar producto: {ProductoId}", productoId);
-            }
-        });
-    }
-
-    #endregion
-
-    #region Métodos Privados - SignalR
-
-    /// <summary>
-    /// Notifica vía SignalR la creación de un producto.
-    /// </summary>
-    private void NotificarSignalRProductoCreado(ProductoDto producto) {
-        _ = Task.Run(async () => {
-            try {
-                var payload = new {
-                    productoId = producto.Id,
-                    nombre = producto.Nombre,
-                    descripcion = producto.Descripcion,
-                    precio = producto.Precio,
-                    stock = producto.Stock,
-                    imagen = producto.Imagen,
-                    categoria = producto.Categoria,
-                    proveedor = producto.Proveedor,
-                    tipo = "PRODUCTO_CREADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoCreado", payload);
-                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto creado ID={ProductoId}", producto.Id);
-            } catch (Exception ex) {
-                logger.LogWarning(ex, "Error en notificación SignalR al crear producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Notifica vía SignalR la actualización de un producto.
-    /// </summary>
-    private void NotificarSignalRProductoActualizado(ProductoDto producto) {
-        _ = Task.Run(async () => {
-            try {
-                var payload = new {
-                    productoId = producto.Id,
-                    nombre = producto.Nombre,
-                    descripcion = producto.Descripcion,
-                    precio = producto.Precio,
-                    stock = producto.Stock,
-                    imagen = producto.Imagen,
-                    categoria = producto.Categoria,
-                    proveedor = producto.Proveedor,
-                    tipo = "PRODUCTO_ACTUALIZADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoActualizado", payload);
-                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto actualizado ID={ProductoId}", producto.Id);
-            } catch (Exception ex) {
-                logger.LogWarning(ex, "Error en notificación SignalR al actualizar producto: {ProductoId}", producto.Id);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Notifica vía SignalR la eliminación de un producto.
-    /// </summary>
-    private void NotificarSignalRProductoEliminado(long productoId) {
-        _ = Task.Run(async () => {
-            try {
-                var payload = new {
-                    productoId,
-                    tipo = "PRODUCTO_ELIMINADO",
-                    timestamp = DateTime.UtcNow
-                };
-                await productosHubContext.Clients.All.SendAsync("ProductoEliminado", payload);
-                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto eliminado ID={ProductoId}", productoId);
-            } catch (Exception ex) {
-                logger.LogWarning(ex, "Error en notificación SignalR al eliminar producto: {ProductoId}", productoId);
-            }
-        });
-    }
-
-    #endregion
-
     #region Métodos Privados - Email
 
     /// <summary>
-    /// Envía email de notificación cuando se crea un producto.
+    ///     Envía email de notificación cuando se crea un producto.
     /// </summary>
     public void EnviarEmailProductoCreado(Producto producto) {
         _ = Task.Run(async () => {
             try {
-                var adminEmail = configuration["Smtp:AdminEmail"];
-                if (string.IsNullOrEmpty(adminEmail)) return;
+                string? adminEmail = configuration["Smtp:AdminEmail"];
+                if (string.IsNullOrEmpty(adminEmail)) {
+                    return;
+                }
 
-                var content = EmailTemplates.ProductoCreado(producto.Nombre, producto.Precio, producto.Stock, producto.Id);
-                var body = EmailTemplates.CreateBase("Nuevo Producto Creado", content);
+                string content =
+                    EmailTemplates.ProductoCreado(producto.Nombre, producto.Precio, producto.Stock, producto.Id);
+                string body = EmailTemplates.CreateBase("Nuevo Producto Creado", content);
 
                 var emailMessage = new EmailMessage {
                     To = adminEmail,
@@ -226,10 +65,182 @@ public class ProductoEffects(
 
     #endregion
 
+    #region Métodos Públicos - Tiempo Real (WS + SignalR)
+
+    /// <summary>
+    ///     Notifica la creación de un producto por WebSocket Y SignalR
+    ///     (broadcast: catálogo público).
+    /// </summary>
+    public void NotificarProductoCreado(ProductoDto producto) {
+        NotificarWebSocketProductoCreado(producto);
+        NotificarSignalRProductoCreado(producto);
+    }
+
+    /// <summary>
+    ///     Notifica la actualización de un producto por WebSocket Y SignalR
+    ///     (broadcast: catálogo público).
+    /// </summary>
+    public void NotificarProductoActualizado(ProductoDto producto) {
+        NotificarWebSocketProductoActualizado(producto);
+        NotificarSignalRProductoActualizado(producto);
+    }
+
+    /// <summary>
+    ///     Notifica la eliminación de un producto por WebSocket Y SignalR
+    ///     (broadcast: catálogo público).
+    /// </summary>
+    public void NotificarProductoEliminado(long productoId) {
+        NotificarWebSocketProductoEliminado(productoId);
+        NotificarSignalRProductoEliminado(productoId);
+    }
+
+    #endregion
+
+    #region Métodos Privados - WebSocket Nativo
+
+    /// <summary>
+    ///     Notifica vía WebSocket la creación de un producto.
+    /// </summary>
+    private void NotificarWebSocketProductoCreado(ProductoDto producto) {
+        _ = Task.Run(async () => {
+            try {
+                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                    ProductoNotificationType.CREATED,
+                    producto.Id,
+                    producto
+                ));
+                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto creado ID={ProductoId}",
+                    producto.Id);
+            } catch (Exception ex) {
+                logger.LogWarning(ex, "Error en notificación WebSocket al crear producto: {ProductoId}", producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    ///     Notifica vía WebSocket la actualización de un producto.
+    /// </summary>
+    private void NotificarWebSocketProductoActualizado(ProductoDto producto) {
+        _ = Task.Run(async () => {
+            try {
+                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                    ProductoNotificationType.UPDATED,
+                    producto.Id,
+                    producto
+                ));
+                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto actualizado ID={ProductoId}",
+                    producto.Id);
+            } catch (Exception ex) {
+                logger.LogWarning(ex, "Error en notificación WebSocket al actualizar producto: {ProductoId}",
+                    producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    ///     Notifica vía WebSocket la eliminación de un producto.
+    /// </summary>
+    private void NotificarWebSocketProductoEliminado(long productoId) {
+        _ = Task.Run(async () => {
+            try {
+                await webSocketHandler.NotifyAsync(new ProductoNotificacion(
+                    ProductoNotificationType.DELETED,
+                    productoId,
+                    null
+                ));
+                logger.LogInformation("📡 [WEBSOCKET] Notificación enviada: Producto eliminado ID={ProductoId}",
+                    productoId);
+            } catch (Exception ex) {
+                logger.LogWarning(ex, "Error en notificación WebSocket al eliminar producto: {ProductoId}", productoId);
+            }
+        });
+    }
+
+    #endregion
+
+    #region Métodos Privados - SignalR
+
+    /// <summary>
+    ///     Notifica vía SignalR la creación de un producto.
+    /// </summary>
+    private void NotificarSignalRProductoCreado(ProductoDto producto) {
+        _ = Task.Run(async () => {
+            try {
+                var payload = new {
+                    productoId = producto.Id,
+                    nombre = producto.Nombre,
+                    descripcion = producto.Descripcion,
+                    precio = producto.Precio,
+                    stock = producto.Stock,
+                    imagen = producto.Imagen,
+                    categoria = producto.Categoria,
+                    proveedor = producto.Proveedor,
+                    tipo = "PRODUCTO_CREADO",
+                    timestamp = DateTime.UtcNow
+                };
+                await productosHubContext.Clients.All.SendAsync("ProductoCreado", payload);
+                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto creado ID={ProductoId}",
+                    producto.Id);
+            } catch (Exception ex) {
+                logger.LogWarning(ex, "Error en notificación SignalR al crear producto: {ProductoId}", producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    ///     Notifica vía SignalR la actualización de un producto.
+    /// </summary>
+    private void NotificarSignalRProductoActualizado(ProductoDto producto) {
+        _ = Task.Run(async () => {
+            try {
+                var payload = new {
+                    productoId = producto.Id,
+                    nombre = producto.Nombre,
+                    descripcion = producto.Descripcion,
+                    precio = producto.Precio,
+                    stock = producto.Stock,
+                    imagen = producto.Imagen,
+                    categoria = producto.Categoria,
+                    proveedor = producto.Proveedor,
+                    tipo = "PRODUCTO_ACTUALIZADO",
+                    timestamp = DateTime.UtcNow
+                };
+                await productosHubContext.Clients.All.SendAsync("ProductoActualizado", payload);
+                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto actualizado ID={ProductoId}",
+                    producto.Id);
+            } catch (Exception ex) {
+                logger.LogWarning(ex, "Error en notificación SignalR al actualizar producto: {ProductoId}",
+                    producto.Id);
+            }
+        });
+    }
+
+    /// <summary>
+    ///     Notifica vía SignalR la eliminación de un producto.
+    /// </summary>
+    private void NotificarSignalRProductoEliminado(long productoId) {
+        _ = Task.Run(async () => {
+            try {
+                var payload = new {
+                    productoId,
+                    tipo = "PRODUCTO_ELIMINADO",
+                    timestamp = DateTime.UtcNow
+                };
+                await productosHubContext.Clients.All.SendAsync("ProductoEliminado", payload);
+                logger.LogInformation("📟 [SIGNALR] Notificación enviada: Producto eliminado ID={ProductoId}",
+                    productoId);
+            } catch (Exception ex) {
+                logger.LogWarning(ex, "Error en notificación SignalR al eliminar producto: {ProductoId}", productoId);
+            }
+        });
+    }
+
+    #endregion
+
     #region Métodos Privados - GraphQL Subscriptions
 
     /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se crea un producto.
+    ///     Publica evento de GraphQL Subscription cuando se crea un producto.
     /// </summary>
     public void EventoSuscripcionProductoCreado(ProductoDto producto) {
         _ = Task.Run(async () => {
@@ -241,15 +252,17 @@ public class ProductoEffects(
                     Stock = producto.Stock,
                     CreatedAt = DateTime.UtcNow
                 });
-                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto creado ID={ProductoId}", producto.Id);
+                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto creado ID={ProductoId}",
+                    producto.Id);
             } catch (Exception ex) {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al crear producto: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al crear producto: {ProductoId}",
+                    producto.Id);
             }
         });
     }
 
     /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se actualiza un producto.
+    ///     Publica evento de GraphQL Subscription cuando se actualiza un producto.
     /// </summary>
     public void EventoSuscripcionProductoActualizado(ProductoDto producto) {
         _ = Task.Run(async () => {
@@ -261,15 +274,17 @@ public class ProductoEffects(
                     Stock = producto.Stock,
                     UpdatedAt = DateTime.UtcNow
                 });
-                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto actualizado ID={ProductoId}", producto.Id);
+                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto actualizado ID={ProductoId}",
+                    producto.Id);
             } catch (Exception ex) {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al actualizar producto: {ProductoId}", producto.Id);
+                logger.LogWarning(ex,
+                    "Error publicando evento GraphQL Subscription al actualizar producto: {ProductoId}", producto.Id);
             }
         });
     }
 
     /// <summary>
-    /// Publica evento de GraphQL Subscription cuando se elimina un producto.
+    ///     Publica evento de GraphQL Subscription cuando se elimina un producto.
     /// </summary>
     public void EventoSuscripcionProductoEliminado(long productoId) {
         _ = Task.Run(async () => {
@@ -278,18 +293,22 @@ public class ProductoEffects(
                     ProductoId = productoId,
                     DeletedAt = DateTime.UtcNow
                 });
-                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto eliminado ID={ProductoId}", productoId);
+                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Producto eliminado ID={ProductoId}",
+                    productoId);
             } catch (Exception ex) {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al eliminar producto: {ProductoId}", productoId);
+                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription al eliminar producto: {ProductoId}",
+                    productoId);
             }
         });
     }
 
     /// <summary>
-    /// Publica evento de GraphQL Subscription cuando el stock está bajo.
+    ///     Publica evento de GraphQL Subscription cuando el stock está bajo.
     /// </summary>
     public void EventoSuscripcionStockBajo(ProductoDto producto, int umbralStock) {
-        if (producto.Stock > umbralStock) return;
+        if (producto.Stock > umbralStock) {
+            return;
+        }
 
         _ = Task.Run(async () => {
             try {
@@ -300,13 +319,15 @@ public class ProductoEffects(
                     UmbralStock = umbralStock,
                     DetectedAt = DateTime.UtcNow
                 });
-                logger.LogInformation("🔄 [GRAPHQL] Evento Subscription enviado: Stock bajo ID={ProductoId}, Stock={Stock}", producto.Id, producto.Stock);
+                logger.LogInformation(
+                    "🔄 [GRAPHQL] Evento Subscription enviado: Stock bajo ID={ProductoId}, Stock={Stock}", producto.Id,
+                    producto.Stock);
             } catch (Exception ex) {
-                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription de stock bajo: {ProductoId}", producto.Id);
+                logger.LogWarning(ex, "Error publicando evento GraphQL Subscription de stock bajo: {ProductoId}",
+                    producto.Id);
             }
         });
     }
 
     #endregion
-
 }

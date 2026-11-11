@@ -3,20 +3,19 @@ using System.ComponentModel.DataAnnotations;
 namespace TiendaApi.Api.Dtos.Usuarios;
 
 /// <summary>
-/// DTO para actualización parcial de usuario (PATCH).
-/// Permite modificar campos específicos sin enviar todos los datos.
+///     DTO para actualización parcial de usuario (PATCH).
+///     Permite modificar campos específicos sin enviar todos los datos.
 /// </summary>
-///
 /// <remarks>
-/// Uso típico:
-/// - PATCH /api/v1/users/{id}
-/// - Actualizar perfil de usuario
-/// - Cambiar avatar
+///     Uso típico:
+///     - PATCH /api/v1/users/{id}
+///     - Actualizar perfil de usuario
+///     - Cambiar avatar
 /// </remarks>
 public record UserPatchDto {
     /// <summary>
-    /// Nuevo correo electrónico del usuario (opcional).
-    /// Debe ser un email válido y único en el sistema.
+    ///     Nuevo correo electrónico del usuario (opcional).
+    ///     Debe ser un email válido y único en el sistema.
     /// </summary>
     /// <example>nuevo@example.com</example>
     [EmailAddress(ErrorMessage = "Debe ser un correo electrónico válido")]
@@ -24,8 +23,8 @@ public record UserPatchDto {
     public string? Email { get; init; }
 
     /// <summary>
-    /// Nueva contraseña del usuario (opcional).
-    /// Mínimo 8 caracteres.
+    ///     Nueva contraseña del usuario (opcional).
+    ///     Mínimo 8 caracteres.
     /// </summary>
     /// <example>NuevaContraseña456!</example>
     [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres")]
@@ -33,8 +32,8 @@ public record UserPatchDto {
     public string? Password { get; init; }
 
     /// <summary>
-    /// Nueva URL del avatar del usuario (opcional).
-    /// Enlace a la imagen de perfil del usuario.
+    ///     Nueva URL del avatar del usuario (opcional).
+    ///     Enlace a la imagen de perfil del usuario.
     /// </summary>
     /// <example>https://ejemplo.com/avatars/nuevo-avatar.jpg</example>
     [MaxLength(500, ErrorMessage = "La URL del avatar no puede exceder 500 caracteres")]

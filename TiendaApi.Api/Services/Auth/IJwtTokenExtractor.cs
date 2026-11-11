@@ -3,7 +3,7 @@ using System.Security.Claims;
 namespace TiendaApi.Api.Services.Auth;
 
 /// <summary>
-/// Interfaz para extraer información de tokens JWT.
+///     Interfaz para extraer información de tokens JWT.
 /// </summary>
 public interface IJwtTokenExtractor {
     /// <summary>Extrae el ID del usuario del token.</summary>
