@@ -471,6 +471,18 @@ let imagenProductoUrl = null;
     assertEq(st(r), 404, "status");
   });
 
+  await test("Categorías: DELETE con productos asociados → 422 y sigue viva", async () => {
+    // La categoría 1 de la semilla tiene productos: el borrado se rechaza en vez
+    // de dejar los productos apuntando a una categoría borrada.
+    const del = await req("DELETE", "/api/v1/categorias/1", { token: adminToken });
+    assertEq(st(del), 422, "status (tiene productos)");
+    assert(String(del.json?.message ?? "").includes("productos asociados"),
+      `message: ${del.json?.message}`);
+    const get = await req("GET", "/api/v1/categorias/1");
+    assertEq(st(get), 200, "status (sigue viva tras el 422)");
+    assert(get.json?.id === 1, "la categoria 1 debe seguir intacta");
+  });
+
   // ============================ PROVEEDORES ============================
   // El controlador de proveedores es ADMIN también en lectura: los GET anónimos
   // y con rol USER deben rechazarse.
@@ -549,6 +561,35 @@ let imagenProductoUrl = null;
   await test("Proveedores: GET /{codigo} tras DELETE → 404", async () => {
     const r = await req("GET", `/api/v1/proveedores/${proveedorCodigo}`, { token: adminToken });
     assertEq(st(r), 404, "status");
+  });
+
+  await test("Proveedores: renombrar Distribuc01 → el producto lo refleja → restaurar", async () => {
+    // Regresión: el producto lleva el proveedor embebido; al renombrarlo, el
+    // producto debe devolver el nombre nuevo (y al final se restaura la semilla).
+    const antes = await req("GET", "/api/v1/productos/1");
+    assertEq(st(antes), 200, "GET producto");
+    assertEq(antes.json?.proveedor?.codigo, "Distribuc01", "producto 1 -> Distribuc01");
+    const original = antes.json?.proveedor?.nombre;
+    const originalDesc = antes.json?.proveedor?.descripcion ?? "";
+    const nuevo = "Distri E2E Renombrada";
+
+    const put = await req("PUT", "/api/v1/proveedores/Distribuc01", {
+      token: adminToken,
+      body: { nombre: nuevo, descripcion: "Renombrada por la suite E2E" },
+    });
+    assertEq(st(put), 200, "PUT renombrar");
+
+    const despues = await req("GET", "/api/v1/productos/1");
+    assertEq(st(despues), 200, "GET producto");
+    assertEq(despues.json?.proveedor?.nombre, nuevo, "proveedor.nombre no reflejado en el producto");
+
+    const rest = await req("PUT", "/api/v1/proveedores/Distribuc01", {
+      token: adminToken,
+      body: { nombre: original, descripcion: originalDesc },
+    });
+    assertEq(st(rest), 200, "PUT restaurar");
+    const final = await req("GET", "/api/v1/productos/1");
+    assertEq(final.json?.proveedor?.nombre, original, "restauración del nombre original");
   });
 
   // ============================ ESTADISTICAS ============================
@@ -828,6 +869,7 @@ let imagenProductoUrl = null;
     assert(typeof r.json?.categoria?.nombre === "string" && r.json.categoria.nombre.length > 0, "falta categoria.nombre");
     assert(typeof r.json?.proveedor?.codigo === "string", "falta proveedor.codigo");
     assert(String(r.json?.proveedor?.codigo).length === 11, "el código del proveedor debe tener 11 caracteres");
+    assertEq(r.json?.proveedor?.codigo, "Distribuc01", "codigo del proveedor del producto 1");
     assert(typeof r.json?.proveedor?.nombre === "string" && r.json.proveedor.nombre.length > 0, "falta proveedor.nombre");
     // Los campos planos desaparecieron del contrato.
     assert(r.json?.categoriaNombre === undefined, "categoriaNombre ya no debe existir");
@@ -1038,6 +1080,35 @@ let imagenProductoUrl = null;
     assert(post.json?.id, "falta id del pedido extra");
     const r = await req("DELETE", `/api/v1/pedidos/me/${post.json.id}`, { token: userToken });
     assertEq(st(r), 204, "status");
+  });
+
+  await test("Pedidos user: el pedido sobrevive al borrar su producto (snapshot)", async () => {
+    // Producto propio para no tocar la semilla: se pide, se borra y el pedido
+    // debe conservar el nombre y el precio fijados en la compra.
+    const prod = await req("POST", "/api/v1/productos", {
+      token: adminToken,
+      body: { nombre: "Prod Snapshot E2E", descripcion: "Snapshot test", precio: 123.45, stock: 5, categoriaId: 1 },
+    });
+    assertEq(st(prod), 201, "POST producto");
+    const pid = prod.json?.id;
+    assert(pid, "falta id del producto snapshot");
+
+    const ped = await req("POST", "/api/v1/pedidos/me", {
+      token: userToken,
+      body: { destinatario: dest("snapshot"), items: [{ productoId: pid, cantidad: 1, precioUnitario: 123.45 }] },
+    });
+    assertEq(st(ped), 201, "POST pedido");
+
+    const del = await req("DELETE", `/api/v1/productos/${pid}`, { token: adminToken });
+    assertEq(st(del), 204, "DELETE producto");
+
+    const get = await req("GET", `/api/v1/pedidos/me/${ped.json.id}`, { token: userToken });
+    assertEq(st(get), 200, "GET pedido");
+    const item = get.json?.items?.[0];
+    assert(item, "el pedido debe conservar su item");
+    assertEq(item.nombreProducto, "Prod Snapshot E2E", "nombre fijado en el pedido");
+    assertEq(item.precio, 123.45, "precio fijado en el pedido");
+    assertEq(item.subtotal, 123.45, "subtotal fijado en el pedido");
   });
 
   // ============================ PEDIDOS (ADMIN) ============================
@@ -1259,12 +1330,18 @@ let imagenProductoUrl = null;
 
   await test("GraphQL: query producto(id:1) → 200 con objeto", async () => {
     const r = await req("POST", "/graphql", {
-      body: { query: "query($id: Long!) { producto(id: $id) { id nombre precio stock } }", variables: { id: 1 } },
+      body: { query: "query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { id nombre } proveedor { codigo nombre } } }", variables: { id: 1 } },
     });
     assertEq(st(r), 200, "status");
     assert(r.json?.data?.producto && typeof r.json.data.producto === "object", "data.producto no es objeto");
     const pid = r.json.data.producto.id;
     assert(typeof pid === "number" || (typeof pid === "string" && pid.length > 0), `id inesperado: ${JSON.stringify(pid)}`);
+    assert(!r.json?.errors, `errors: ${JSON.stringify(r.json.errors)}`);
+    assert(typeof r.json.data.producto.categoria?.nombre === "string" && r.json.data.producto.categoria.nombre.length > 0,
+      "falta categoria.nombre");
+    assertEq(r.json.data.producto.proveedor?.codigo, "Distribuc01", "proveedor.codigo");
+    assert(typeof r.json.data.producto.proveedor?.nombre === "string" && r.json.data.producto.proveedor.nombre.length > 0,
+      "falta proveedor.nombre");
   });
 
   await test("GraphQL: query pedidos con admin → 200 con datos", async () => {

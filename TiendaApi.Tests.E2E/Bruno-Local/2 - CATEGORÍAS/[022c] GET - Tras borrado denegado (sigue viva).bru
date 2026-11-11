@@ -1,0 +1,33 @@
+meta {
+  name: [022c] GET - Tras borrado denegado (sigue viva)
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/api/v1/categorias/1
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("Categoria SigueViva - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Categoria SigueViva - Conserva sus datos", function () {
+      const d = res.getBody();
+      expect(d.id).to.equal(1);
+      expect(d.nombre).to.be.a('string');
+      expect(d.nombre.length).to.be.greaterThan(0);
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Verificacion del [022b]: el intento de borrado denegado (422) no altero la
+  categoria: sigue consultable con sus datos.
+}

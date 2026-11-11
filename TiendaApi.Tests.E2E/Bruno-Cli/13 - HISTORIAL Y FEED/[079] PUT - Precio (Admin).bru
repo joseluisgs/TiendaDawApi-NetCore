@@ -24,13 +24,22 @@ body:json {
       "descripcion": "Laptop de alto rendimiento",
       "precio": 1111.11,
       "stock": 10,
-      "categoriaId": 1
+      "categoriaId": 1,
+      "proveedorCodigo": "Distribuc01"
   }
 }
 
 script:post-response {
   test("Historial PUT - Status 200", function () {
       expect(res.getStatus()).to.equal(200);
+  });
+
+  // El PUT es de reemplazo completo: si no se envía proveedorCodigo se DESVINCULA
+  // el proveedor del producto (rompe a [065] GraphQL después). Se envía y verifica.
+  test("Historial PUT - Conserva el proveedor Distribuc01", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.proveedor).to.be.an('object');
+      expect(jsonData.proveedor.codigo).to.equal('Distribuc01');
   });
 
   // Guardar el precio nuevo para comprobar que aparece en la serie.

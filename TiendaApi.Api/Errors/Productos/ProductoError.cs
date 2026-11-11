@@ -28,13 +28,6 @@ public static class ProductoError {
             $"Stock insuficiente para el producto '{nombre}'. Disponible: {disponible}, Solicitado: {solicitado}");
     }
 
-    /// <summary>Crea error si el producto tiene pedidos asociados.</summary>
-    /// <param name="id">ID del producto.</param>
-    /// <returns>BusinessRuleError (HTTP 422).</returns>
-    public static BusinessRuleError NoSePuedeEliminarConPedidos(long id) {
-        return new BusinessRuleError($"No se puede eliminar el producto con ID {id} porque tiene pedidos asociados");
-    }
-
     /// <summary>Crea error si el producto fue adquirido por otro.</summary>
     /// <param name="productoId">ID del producto.</param>
     /// <returns>ConflictError (HTTP 409).</returns>

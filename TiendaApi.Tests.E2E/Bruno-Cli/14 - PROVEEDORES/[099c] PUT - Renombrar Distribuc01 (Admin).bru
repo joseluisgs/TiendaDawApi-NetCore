@@ -1,0 +1,47 @@
+meta {
+  name: [099c] PUT - Renombrar Distribuc01 (Admin)
+  type: http
+  seq: 12
+}
+
+put {
+  url: {{baseUrl}}/api/v1/proveedores/Distribuc01
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Distri E2E Renombrada",
+      "descripcion": "Renombrada por la suite E2E"
+  }
+}
+
+script:post-response {
+  test("RenameProveedor - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("RenameProveedor - El nombre cambio", function () {
+      const d = res.getBody();
+      expect(d.nombre).to.equal('Distri E2E Renombrada');
+      expect(d.codigo).to.equal('Distribuc01');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Paso 2: renombra el proveedor Distribuc01 (el de los productos de la
+  semilla). El siguiente test comprueba que el producto refleja el cambio.
+}

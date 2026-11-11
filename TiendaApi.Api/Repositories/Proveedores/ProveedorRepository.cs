@@ -86,8 +86,11 @@ public class ProveedorRepository(
 
     /// <inheritdoc />
     public async Task<int> CountProductosAsync(string codigo) {
-        // Los productos tienen filtro global de borrado lógico: solo se cuentan los activos.
-        return await context.Productos.CountAsync(p => p.ProveedorId == codigo);
+        // Cuenta TODOS los productos, incluidos los borrados lógicos: el filtro
+        // global los excluye, pero un proveedor referenciado por cualquiera no
+        // debe poder eliminarse (así los productos no quedan apuntando a un
+        // proveedor borrado).
+        return await context.Productos.IgnoreQueryFilters().CountAsync(p => p.ProveedorId == codigo);
     }
 
     /// <inheritdoc />

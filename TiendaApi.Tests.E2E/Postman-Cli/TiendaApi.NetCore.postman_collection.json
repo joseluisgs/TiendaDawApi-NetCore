@@ -1264,6 +1264,78 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "[022b] DELETE - Con productos (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Categorias DeleteConProductos - Status 422 Unprocessable', function () { pm.response.to.have.status(422); });",
+                  "pm.test('Categorias DeleteConProductos - Explica el motivo', function () { const d = pm.response.json(); pm.expect(d.message).to.be.a('string'); pm.expect(d.message).to.include('productos asociados'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categorias/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categorias",
+                "1"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[022c] GET - Tras borrado denegado (sigue viva)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Categoria SigueViva - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Categoria SigueViva - Conserva sus datos', function () { const d = pm.response.json(); pm.expect(d.id).to.equal(1); pm.expect(d.nombre).to.be.a('string'); pm.expect(d.nombre.length).to.be.greaterThan(0); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categorias/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categorias",
+                "1"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -1368,7 +1440,8 @@
                   "      proveedor: { type: [\"object\", \"null\"] }",
                   "    }",
                   "  });",
-                  "});"
+                  "});",
+                  "pm.test('Productos GetById - Trae categoria.nombre y proveedor anidados', function () { const d = pm.response.json(); pm.expect(d.categoria.nombre).to.be.a('string'); pm.expect(d.categoria.nombre.length).to.be.greaterThan(0); pm.expect(d.proveedor).to.be.an('object'); pm.expect(d.proveedor.codigo).to.equal('Distribuc01'); pm.expect(d.proveedor.nombre).to.be.a('string'); pm.expect(d.proveedor.nombre.length).to.be.greaterThan(0); });"
                 ],
                 "type": "text/javascript"
               }
@@ -2268,6 +2341,171 @@
           },
           "response": [],
           "protocolProfileBehavior": {}
+        },
+        {
+          "name": "[099b] GET - Producto con Distribuc01 (setup)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RenameSetup - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('RenameSetup - El producto 1 tiene el proveedor Distribuc01', function () { const d = pm.response.json(); pm.expect(d.proveedor).to.be.an('object'); pm.expect(d.proveedor.codigo).to.equal('Distribuc01'); pm.expect(d.proveedor.nombre).to.be.a('string'); });",
+                  "if (pm.response.code === 200) { const d = pm.response.json(); pm.environment.set('provNombreOriginal', d.proveedor.nombre); pm.environment.set('provDescOriginal', d.proveedor.descripcion ?? ''); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[099c] PUT - Renombrar Distribuc01 (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RenameProveedor - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('RenameProveedor - El nombre cambio', function () { const d = pm.response.json(); pm.expect(d.nombre).to.equal('Distri E2E Renombrada'); pm.expect(d.codigo).to.equal('Distribuc01'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proveedores/Distribuc01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proveedores",
+                "Distribuc01"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Distri E2E Renombrada\",\n  \"descripcion\": \"Renombrada por la suite E2E\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[099d] GET - Producto refleja el renombrado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RenameReflejado - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('RenameReflejado - El producto muestra el NUEVO nombre del proveedor', function () { const x = pm.response.json(); pm.expect(x.proveedor).to.be.an('object'); pm.expect(x.proveedor.codigo).to.equal('Distribuc01'); pm.expect(x.proveedor.nombre).to.equal('Distri E2E Renombrada'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[099e] PUT - Restaurar nombre original (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RenameRestore - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('RenameRestore - Volvio al nombre original', function () { const x = pm.response.json(); pm.expect(x.nombre).to.equal(pm.environment.get('provNombreOriginal')); pm.expect(x.codigo).to.equal('Distribuc01'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proveedores/Distribuc01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proveedores",
+                "Distribuc01"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{provNombreOriginal}}\",\n  \"descripcion\": \"{{provDescOriginal}}\"\n}"
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -3431,7 +3669,8 @@
               "script": {
                 "exec": [
                   "pm.test('Historial PUT - Status 200', function () { pm.response.to.have.status(200); });",
-                  "if (pm.response.code === 200) { const jsonData = pm.response.json(); pm.environment.set('precioNuevo', String(jsonData.precio)); }"
+                  "if (pm.response.code === 200) { const jsonData = pm.response.json(); pm.environment.set('precioNuevo', String(jsonData.precio)); }",
+                  "pm.test('Historial PUT - Conserva el proveedor Distribuc01', function () { const d = pm.response.json(); pm.expect(d.proveedor).to.be.an('object'); pm.expect(d.proveedor.codigo).to.equal('Distribuc01'); });"
                 ],
                 "type": "text/javascript"
               }
@@ -3459,7 +3698,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Laptop Dell XPS 15\",\n  \"descripcion\": \"Laptop de alto rendimiento\",\n  \"precio\": 1844,\n  \"stock\": 10,\n  \"categoriaId\": 1\n}",
+              "raw": "{\n  \"nombre\": \"Laptop Dell XPS 15\",\n  \"descripcion\": \"Laptop de alto rendimiento\",\n  \"precio\": 1844,\n  \"stock\": 10,\n  \"categoriaId\": 1,\n  \"proveedorCodigo\": \"Distribuc01\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -4280,6 +4519,191 @@
             },
             "auth": {
               "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[036b] POST - Producto para snapshot (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('SnapshotProd - Status 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('SnapshotProd - Creado con precio 123.45', function () { const d = pm.response.json(); pm.expect(d.nombre).to.equal('Prod Snapshot E2E'); pm.expect(d.precio).to.equal(123.45); });",
+                  "if (pm.response.code === 201) { pm.environment.set('productoSnapId', String(pm.response.json().id)); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Prod Snapshot E2E\",\n  \"descripcion\": \"Producto para verificar que el pedido fija nombre y precio\",\n  \"precio\": 123.45,\n  \"stock\": 5,\n  \"categoriaId\": 1\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[036c] POST - Pedido con el producto snapshot",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('SnapshotPedido - Status 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('SnapshotPedido - Estado PENDIENTE e item presente', function () { const d = pm.response.json(); pm.expect(d.estado).to.equal('PENDIENTE'); pm.expect(d.items).to.be.an('array'); pm.expect(d.items.length).to.be.greaterThan(0); });",
+                  "if (pm.response.code === 201) { pm.environment.set('pedidoSnapId', pm.response.json().id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pedidos",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destinatario\": {\n    \"nombreCompleto\": \"Juan Perez\",\n    \"email\": \"juanperez@test.com\",\n    \"telefono\": \"+34123456789\",\n    \"direccion\": {\n      \"calle\": \"Calle Mayor\",\n      \"numero\": \"10\",\n      \"ciudad\": \"Madrid\",\n      \"provincia\": \"Madrid\",\n      \"pais\": \"España\",\n      \"codigoPostal\": \"28001\"\n    }\n  },\n  \"items\": [\n    {\n      \"productoId\": \"{{productoSnapId}}\",\n      \"cantidad\": 1,\n      \"precioUnitario\": 123.45\n    }\n  ]\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[036d] DELETE - Borrar el producto del pedido (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('SnapshotBorrarProducto - Status 204 No Content', function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos/{{productoSnapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos",
+                "{{productoSnapId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "[036e] GET - Pedido intacto tras borrar el producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('SnapshotPedidoIntacto - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('SnapshotPedidoIntacto - El item conserva nombre y precio de la compra', function () { const d = pm.response.json(); pm.expect(d.items).to.be.an('array'); pm.expect(d.items.length).to.be.greaterThan(0); const item = d.items[0]; pm.expect(item.nombreProducto).to.equal('Prod Snapshot E2E'); pm.expect(item.precio).to.equal(123.45); pm.expect(item.subtotal).to.equal(123.45); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/me/{{pedidoSnapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pedidos",
+                "me",
+                "{{pedidoSnapId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "response": []
@@ -5452,7 +5876,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('GraphQL Producto ById - Status 200 OK', function () { pm.response.to.have.status(200); });"
+                  "pm.test('GraphQL Producto ById - Status 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('GraphQL ProductoById - Trae categoria y proveedor anidados', function () { const d = pm.response.json(); pm.expect(d.errors).to.be.undefined; pm.expect(d.data.producto.categoria.nombre).to.be.a('string'); pm.expect(d.data.producto.categoria.nombre.length).to.be.greaterThan(0); pm.expect(d.data.producto.proveedor).to.be.an('object'); pm.expect(d.data.producto.proveedor.codigo).to.equal('Distribuc01'); pm.expect(d.data.producto.proveedor.nombre).to.be.a('string'); pm.expect(d.data.producto.proveedor.nombre.length).to.be.greaterThan(0); });"
                 ],
                 "type": "text/javascript"
               }
@@ -5468,7 +5893,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"query\":\"query($id: Long!) { producto(id: $id) { id nombre precio stock } }\",\"variables\":{\"id\":1}}"
+              "raw": "{\"query\":\"query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { id nombre } proveedor { codigo nombre } } }\",\"variables\":{\"id\":1}}"
             },
             "url": {
               "raw": "{{baseUrl}}/graphql",

@@ -1,0 +1,57 @@
+meta {
+  name: [036b] POST - Producto para snapshot (Admin)
+  type: http
+  seq: 90
+}
+
+post {
+  url: {{baseUrl}}/api/v1/productos
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "Prod Snapshot E2E",
+      "descripcion": "Producto para verificar que el pedido fija nombre y precio",
+      "precio": 123.45,
+      "stock": 5,
+      "categoriaId": 1
+  }
+}
+
+script:post-response {
+  test("SnapshotProd - Status 201 Created", function () {
+      expect(res.getStatus()).to.equal(201);
+  });
+
+  test("SnapshotProd - Creado con precio 123.45", function () {
+      const d = res.getBody();
+      expect(d.nombre).to.equal('Prod Snapshot E2E');
+      expect(d.precio).to.equal(123.45);
+  });
+
+  if (res.getStatus() === 201) {
+      const d = res.getBody();
+      bru.setVar("productoSnapId", d.id.toString());
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Paso 1 del test de snapshot: crea un producto propio para no tocar los de la
+  semilla (los siguientes tests lo pediran, lo borraran y veran que el pedido
+  conserva sus datos).
+}

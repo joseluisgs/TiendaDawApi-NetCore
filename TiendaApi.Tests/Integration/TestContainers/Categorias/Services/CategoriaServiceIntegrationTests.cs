@@ -11,6 +11,7 @@ using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Dtos.Common;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Categorias;
 using TiendaApi.Api.Services.Email;
@@ -71,6 +72,7 @@ public class CategoriaServiceIntegrationTests {
 
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<ICategoriaService, CategoriaService>();
+        services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
         services.AddScoped<ICacheService, MemoryCacheService>();
 

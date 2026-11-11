@@ -9,6 +9,7 @@ using TiendaApi.Api.Errors.Categorias;
 using TiendaApi.Api.Mappers;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
 
 namespace TiendaApi.Api.Services.Categorias;
@@ -18,6 +19,7 @@ namespace TiendaApi.Api.Services.Categorias;
 /// </summary>
 public class CategoriaService(
     ICategoriaRepository repository,
+    IProductoRepository productos,
     ILogger<CategoriaService> logger,
     IValidator<CategoriaRequestDto> categoriaValidator,
     ICacheService cacheService,
@@ -134,6 +136,17 @@ public class CategoriaService(
 
         await InvalidarCacheCategoriaAsync($"categorias:{id}");
 
+        // Los DTO de producto embeben el nombre de la categoría: al renombrar
+        // hay que invalidar SUS claves de caché (ICacheService no admite
+        // patrones) o el producto sirve el nombre viejo hasta el TTL.
+        foreach (long productoId in (await productos.FindByCategoriaIdAsync(id)).Select(p => p.Id)) {
+            try {
+                await cacheService.RemoveAsync($"productos:{productoId}");
+            } catch (Exception ex) {
+                logger.LogWarning(ex, "Cache invalidation error: Key=productos:{Id}", productoId);
+            }
+        }
+
         return Result.Success<CategoriaDto, DomainError>(result);
     }
 
@@ -144,6 +157,11 @@ public class CategoriaService(
         Categoria? categoria = await repository.FindByIdAsync(id);
         if (categoria is null) {
             return UnitResult.Failure<DomainError>(CategoriaError.NotFound(id));
+        }
+
+        int productosCount = await repository.CountProductosAsync(id);
+        if (productosCount > 0) {
+            return UnitResult.Failure<DomainError>(CategoriaError.TieneProductos(id, productosCount));
         }
 
         await repository.DeleteAsync(id);

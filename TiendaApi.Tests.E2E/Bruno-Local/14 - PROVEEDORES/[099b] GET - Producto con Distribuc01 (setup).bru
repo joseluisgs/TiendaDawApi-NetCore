@@ -1,0 +1,40 @@
+meta {
+  name: [099b] GET - Producto con Distribuc01 (setup)
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/v1/productos/1
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("RenameSetup - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("RenameSetup - El producto 1 tiene el proveedor Distribuc01", function () {
+      const d = res.getBody();
+      expect(d.proveedor).to.be.an('object');
+      expect(d.proveedor.codigo).to.equal('Distribuc01');
+      expect(d.proveedor.nombre).to.be.a('string');
+  });
+
+  // Guardar nombre y descripcion originales para restaurarlos al final
+  if (res.getStatus() === 200) {
+      const d = res.getBody();
+      bru.setVar("provNombreOriginal", d.proveedor.nombre);
+      bru.setVar("provDescOriginal", d.proveedor.descripcion ?? "");
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Paso 1 de la regresion de renombrado: toma el nombre original del proveedor
+  Distribuc01 (tiene productos en la semilla) desde el producto 1.
+}

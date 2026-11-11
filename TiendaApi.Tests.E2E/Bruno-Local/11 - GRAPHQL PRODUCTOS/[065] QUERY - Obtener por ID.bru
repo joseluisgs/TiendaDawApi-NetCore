@@ -11,7 +11,7 @@ post {
 }
 
 body:graphql {
-  query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { id nombre } } }
+  query($id: Long!) { producto(id: $id) { id nombre precio stock categoria { id nombre } proveedor { codigo nombre } } }
 }
 
 body:graphql:vars {
@@ -28,6 +28,17 @@ script:post-response {
       expect(jsonData.data.producto).to.be.an('object');
       expect(jsonData.data.producto.id).to.satisfy(v => typeof v === 'string' || typeof v === 'number');
       expect(jsonData.data.producto.nombre).to.be.a('string');
+  });
+
+  test("GraphQL ProductoById - Trae categoria y proveedor anidados", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.errors).to.be.undefined;
+      expect(jsonData.data.producto.categoria.nombre).to.be.a('string');
+      expect(jsonData.data.producto.categoria.nombre.length).to.be.greaterThan(0);
+      expect(jsonData.data.producto.proveedor).to.be.an('object');
+      expect(jsonData.data.producto.proveedor.codigo).to.equal('Distribuc01');
+      expect(jsonData.data.producto.proveedor.nombre).to.be.a('string');
+      expect(jsonData.data.producto.proveedor.nombre.length).to.be.greaterThan(0);
   });
 }
 

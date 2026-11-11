@@ -91,10 +91,48 @@ public sealed class AssemblyContainerFixture {
             return _cassandraSession;
         }
 
+        CassandraContainer cassandra = await EnsureCassandraContainerAsync();
+
         await _cassandraLock.WaitAsync();
         try {
             if (_cassandraSession is not null) {
                 return _cassandraSession;
+            }
+
+            Cluster cluster = Cluster.Builder()
+                .AddContactPoints(cassandra.Hostname)
+                .WithPort(cassandra.GetMappedPublicPort(9042))
+                .Build();
+
+            ISession session = cluster.Connect();
+            await session.InitializeSchemaAsync(keyspace);
+
+            _cassandraSession = session;
+            return _cassandraSession;
+        } finally {
+            _cassandraLock.Release();
+        }
+    }
+
+    /// <summary>
+    ///     Arranca (bajo demanda, una sola vez por assembly) el contenedor
+    ///     Cassandra compartido y lo devuelve.
+    ///     🎓 Dos consumidores: los tests de series (vía <see cref="GetCassandraSessionAsync" />)
+    ///     y los tests que arrancan la app en proceso, que con sus datos sobreescriben
+    ///     <c>Cassandra__Hosts__0</c>/<c>Cassandra__Port</c> para que la app hable con
+    ///     el contenedor en vez de con <c>localhost:9042</c> del compose — así la suite
+    ///     funciona SIN el compose levantado (mismo criterio que Postgres y Mongo).
+    ///     Coste: ~1 min de JVM, solo cuando alguien lo pide.
+    /// </summary>
+    internal static async Task<CassandraContainer> EnsureCassandraContainerAsync() {
+        if (_cassandra is not null) {
+            return _cassandra;
+        }
+
+        await _cassandraLock.WaitAsync();
+        try {
+            if (_cassandra is not null) {
+                return _cassandra;
             }
 
             _cassandra = new CassandraBuilder(TestContainerImages.Cassandra)
@@ -103,17 +141,7 @@ public sealed class AssemblyContainerFixture {
                 .Build();
 
             await _cassandra.StartAsync();
-
-            Cluster cluster = Cluster.Builder()
-                .AddContactPoints(_cassandra.Hostname)
-                .WithPort(_cassandra.GetMappedPublicPort(9042))
-                .Build();
-
-            ISession session = cluster.Connect();
-            await session.InitializeSchemaAsync(keyspace);
-
-            _cassandraSession = session;
-            return _cassandraSession;
+            return _cassandra;
         } finally {
             _cassandraLock.Release();
         }

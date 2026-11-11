@@ -119,6 +119,15 @@ public class ProductoRepository(
     }
 
     /// <inheritdoc />
+    public async Task<List<long>> FindIdsByProveedorAsync(string codigo) {
+        logger.LogDebug("Buscando IDs de productos del proveedor: {Codigo}", codigo);
+        return await context.Productos
+            .Where(p => p.ProveedorId == codigo)
+            .Select(p => p.Id)
+            .ToListAsync();
+    }
+
+    /// <inheritdoc />
     public async Task<Producto> SaveAsync(Producto producto) {
         context.Productos.Add(producto);
         await context.SaveChangesAsync();

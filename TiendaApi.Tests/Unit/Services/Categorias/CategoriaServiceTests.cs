@@ -10,6 +10,7 @@ using TiendaApi.Api.Dtos.Categorias;
 using TiendaApi.Api.Errors;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Categorias;
+using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
 using TiendaApi.Api.Services.Categorias;
 
@@ -26,10 +27,12 @@ public class CategoriaServiceTests {
     private Mock<ICategoriaRepository> _mockRepository = null!;
     private Mock<IValidator<CategoriaRequestDto>> _mockValidator = null!;
     private CategoriaService _service = null!;
+    private Mock<IProductoRepository> _mockProductoRepository = null!;
 
     private void CreateService() {
         _service = new CategoriaService(
             _mockRepository.Object,
+            _mockProductoRepository.Object,
             _mockLogger.Object,
             _mockValidator.Object,
             _mockCacheService.Object,
@@ -44,6 +47,9 @@ public class CategoriaServiceTests {
         _mockValidator = new Mock<IValidator<CategoriaRequestDto>>();
         _mockCacheService = new Mock<ICacheService>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockProductoRepository = new Mock<IProductoRepository>();
+        _mockProductoRepository.Setup(r => r.FindByCategoriaIdAsync(It.IsAny<long>()))
+            .ReturnsAsync(Array.Empty<Producto>());
 
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<CategoriaRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
@@ -166,6 +172,7 @@ public class CategoriaServiceTests {
         // Re-crear servicio con mock configurado
         _service = new CategoriaService(
             _mockRepository.Object,
+            _mockProductoRepository.Object,
             _mockLogger.Object,
             _mockValidator.Object,
             _mockCacheService.Object,
@@ -226,6 +233,27 @@ public class CategoriaServiceTests {
     }
 
     [Test]
+    public async Task UpdateAsync_ConProductosAsociados_InvalidaLasClavesDeProductoEnCaché() {
+        // El DTO de producto embebe el nombre de la categoría: al renombrar
+        // deben invalidarse sus claves "productos:{id}" (sin patrones en ICacheService).
+        var dto = new CategoriaRequestDto { Nombre = "Renombrada E2E", Descripcion = "x" };
+        var categoria = new Categoria { Id = 1, Nombre = "Old" };
+
+        _mockRepository.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(categoria);
+        _mockRepository.Setup(r => r.ExistsByNombreAsync("Renombrada E2E", 1)).ReturnsAsync(false);
+        _mockRepository.Setup(r => r.UpdateAsync(It.IsAny<Categoria>()))
+            .ReturnsAsync((Categoria c) => c);
+        _mockProductoRepository.Setup(r => r.FindByCategoriaIdAsync(1))
+            .ReturnsAsync(new List<Producto> { new() { Id = 5 }, new() { Id = 6 } });
+
+        Result<CategoriaDto, DomainError> result = await _service.UpdateAsync(1, dto);
+
+        result.IsSuccess.Should().BeTrue();
+        _mockCacheService.Verify(c => c.RemoveAsync("productos:5"), Times.Once);
+        _mockCacheService.Verify(c => c.RemoveAsync("productos:6"), Times.Once);
+    }
+
+    [Test]
     public async Task UpdateAsync_ConCategoriaNoExistente_RetornaNotFound() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Updated Category" };
@@ -273,6 +301,25 @@ public class CategoriaServiceTests {
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<NotFoundError>();
+    }
+
+    [Test]
+    public async Task DeleteAsync_ConProductosAsociados_RetornaTieneProductosSinBorrar() {
+        // Arrange
+        var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
+        _mockRepository.Setup(r => r.FindByIdAsync(1))
+            .ReturnsAsync(categoria);
+        _mockRepository.Setup(r => r.CountProductosAsync(1))
+            .ReturnsAsync(3);
+
+        // Act
+        UnitResult<DomainError> result = await _service.DeleteAsync(1);
+
+        // Assert:422 de regla de negocio y NO se toca el borrado
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<BusinessRuleError>();
+        result.Error.Message.Should().Contain("productos asociados");
+        _mockRepository.Verify(r => r.DeleteAsync(It.IsAny<long>()), Times.Never);
     }
 
     #endregion

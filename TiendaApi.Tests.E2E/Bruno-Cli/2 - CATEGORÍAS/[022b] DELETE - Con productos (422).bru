@@ -1,0 +1,37 @@
+meta {
+  name: [022b] DELETE - Con productos (422)
+  type: http
+  seq: 13
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/categorias/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("Categorias DeleteConProductos - Status 422 Unprocessable", function () {
+      expect(res.getStatus()).to.equal(422);
+  });
+
+  test("Categorias DeleteConProductos - Explica el motivo", function () {
+      const d = res.getBody();
+      expect(d.message).to.be.a('string');
+      expect(d.message).to.include('productos asociados');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  La categoria 1 de la semilla tiene productos asociados: el borrado se
+  rechaza con 422 (BusinessRuleError) en vez de borrar y dejar los productos
+  apuntando a una categoria borrada. El siguiente test verifica que sigue viva.
+}
