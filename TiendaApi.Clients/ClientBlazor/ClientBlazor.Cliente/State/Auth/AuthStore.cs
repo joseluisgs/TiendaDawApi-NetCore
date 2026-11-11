@@ -6,13 +6,11 @@ namespace ClientBlazor.Cliente.State.Auth;
 /// <summary>
 /// Implementación concreta del almacén de autenticación usando BehaviorSubject.
 /// </summary>
-public class AuthStore : IAuthStore
-{
+public class AuthStore : IAuthStore {
     /// <summary>
     /// Representa el estado inmutable de la autenticación.
     /// </summary>
-    public record AuthState
-    {
+    public record AuthState {
         public string? Token { get; init; } = null;
         public string Email { get; init; } = "";
         public string Nombre { get; init; } = "";
@@ -26,7 +24,7 @@ public class AuthStore : IAuthStore
     }
 
     private readonly BehaviorSubject<AuthState> _state;
-    
+
     /// <inheritdoc cref="IAuthStore.State" />
     public IObservable<AuthState> State => _state.AsObservable();
 
@@ -54,8 +52,7 @@ public class AuthStore : IAuthStore
     /// <inheritdoc cref="IAuthStore.ErrorObservable" />
     public IObservable<string?> ErrorObservable => _state.Select(s => s.Error).DistinctUntilChanged();
 
-    public AuthStore()
-    {
+    public AuthStore() {
         _state = new BehaviorSubject<AuthState>(new AuthState());
     }
 
@@ -63,10 +60,8 @@ public class AuthStore : IAuthStore
     public AuthState GetState() => _state.Value;
 
     /// <inheritdoc cref="IAuthStore.SetAuth(string, string, string, string)" />
-    public void SetAuth(string token, string email, string nombre, string role)
-    {
-        _state.OnNext(_state.Value with
-        {
+    public void SetAuth(string token, string email, string nombre, string role) {
+        _state.OnNext(_state.Value with {
             Token = token,
             Email = email,
             Nombre = nombre,
@@ -76,38 +71,32 @@ public class AuthStore : IAuthStore
     }
 
     /// <inheritdoc cref="IAuthStore.SetToken(string)" />
-    public void SetToken(string token)
-    {
+    public void SetToken(string token) {
         _state.OnNext(_state.Value with { Token = token });
     }
 
     /// <inheritdoc cref="IAuthStore.Logout" />
-    public void Logout()
-    {
+    public void Logout() {
         _state.OnNext(new AuthState());
     }
 
     /// <inheritdoc cref="IAuthStore.SetLoading(bool)" />
-    public void SetLoading(bool isLoading)
-    {
+    public void SetLoading(bool isLoading) {
         _state.OnNext(_state.Value with { IsLoading = isLoading });
     }
 
     /// <inheritdoc cref="IAuthStore.SetError(string?)" />
-    public void SetError(string? error)
-    {
+    public void SetError(string? error) {
         _state.OnNext(_state.Value with { Error = error });
     }
 
     /// <inheritdoc cref="IAuthStore.ClearError" />
-    public void ClearError()
-    {
+    public void ClearError() {
         _state.OnNext(_state.Value with { Error = null });
     }
 
     /// <inheritdoc cref="IAuthStore.Select{T}(Func{AuthState, T})" />
-    public IObservable<T> Select<T>(Func<AuthState, T> selector)
-    {
+    public IObservable<T> Select<T>(Func<AuthState, T> selector) {
         return _state.Select(selector).DistinctUntilChanged();
     }
 }

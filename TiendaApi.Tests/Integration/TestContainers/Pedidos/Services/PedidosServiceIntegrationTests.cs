@@ -33,8 +33,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class PedidosServiceIntegrationTests
-{
+public class PedidosServiceIntegrationTests {
     private static readonly ActivitySource ActivitySource = new("PedidosServiceIntegrationTests");
     private const string DatabaseName = "it_pedidos_service";
     private string _connectionString = string.Empty;
@@ -46,28 +45,24 @@ public class PedidosServiceIntegrationTests
     private long _userId;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
-    public async Task Setup()
-    {
+    public async Task Setup() {
         var connectionString = _connectionString;
         var mongoConnectionString = _mongoConnectionString;
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", DatabaseName },
@@ -81,8 +76,7 @@ public class PedidosServiceIntegrationTests
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
         services.AddSingleton(ActivitySource);
 
-        services.AddLogging(builder =>
-        {
+        services.AddLogging(builder => {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Information);
         });
@@ -106,8 +100,7 @@ public class PedidosServiceIntegrationTests
         var categoria = new Categoria { Nombre = $"Test Categoria {Guid.NewGuid():N}".Substring(0, 20) };
         await categoriaRepo.SaveAsync(categoria);
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Nombre = $"Producto Test {Guid.NewGuid():N}".Substring(0, 20),
             Descripcion = "Producto para pedidos",
             Precio = 99.99m,
@@ -118,8 +111,7 @@ public class PedidosServiceIntegrationTests
         await productoRepo.SaveAsync(producto);
         _productoId = producto.Id;
 
-        var user = new User
-        {
+        var user = new User {
             UserName = $"testuser_{Guid.NewGuid():N}".Substring(0, 15),
             Email = "test@example.com",
             PasswordHash = "$2a$11$test",
@@ -131,14 +123,12 @@ public class PedidosServiceIntegrationTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
+    public void TearDown() {
         _dbContext?.Dispose();
         (_serviceProvider as IDisposable)?.Dispose();
     }
 
-    private static void RegisterRepositories(IServiceCollection services, string mongoConnectionString)
-    {
+    private static void RegisterRepositories(IServiceCollection services, string mongoConnectionString) {
         services.AddScoped<ILogger<ProductoRepository>, Logger<ProductoRepository>>();
         services.AddScoped<ILogger<CategoriaRepository>, Logger<CategoriaRepository>>();
         services.AddScoped<ILogger<PedidosEfCoreRepository>, Logger<PedidosEfCoreRepository>>();
@@ -147,8 +137,7 @@ public class PedidosServiceIntegrationTests
         services.AddScoped<IPedidosRepository, PedidosEfCoreRepository>();
     }
 
-    private static void RegisterServices(IServiceCollection services)
-    {
+    private static void RegisterServices(IServiceCollection services) {
         // Mock para IJwtTokenExtractor (requerido por PedidosWebSocketHandler)
         var mockJwtExtractor = new Mock<IJwtTokenExtractor>();
         mockJwtExtractor.Setup(x => x.ExtractUserId(It.IsAny<string>())).Returns(1L);
@@ -176,46 +165,38 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindAllAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinPedidos_RetornaListaVacia() {
         var result = await _pedidosService!.FindAllAsync();
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
     }
 
     [Test]
-    public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia() {
         var result = await _pedidosService!.FindByUserIdAsync(_userId);
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
     }
 
     [Test]
-    public async Task FindByIdAsync_SinPedidos_RetornaNotFound()
-    {
+    public async Task FindByIdAsync_SinPedidos_RetornaNotFound() {
         var result = await _pedidosService!.FindByIdAsync("507f1f77bcf86cd799439011");
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    public async Task CreateAsync_ConItemsValidos_RetornaPedidoCreado()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task CreateAsync_ConItemsValidos_RetornaPedidoCreado() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test Destinatario",
                 Email = "test@email.com",
-                Direccion = new DireccionDto
-                {
+                Direccion = new DireccionDto {
                     Calle = "Calle Test",
                     Ciudad = "Madrid",
                     Pais = "España"
                 }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 2 }
             }
         };
@@ -229,12 +210,9 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConItemsVacios_RetornaError()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task CreateAsync_ConItemsVacios_RetornaError() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -246,18 +224,14 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConProductoNoExistente_RetornaError()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task CreateAsync_ConProductoNoExistente_RetornaError() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 999999, Cantidad = 1 }
             }
         };
@@ -266,20 +240,16 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConStockCero_RetornaErrorDeStock()
-    {
+    public async Task CreateAsync_ConStockCero_RetornaErrorDeStock() {
         await SetProductoStock(_productoId, 0);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 1 }
             }
         };
@@ -289,20 +259,16 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConStockInsuficiente_RetornaErrorDeStock()
-    {
+    public async Task CreateAsync_ConStockInsuficiente_RetornaErrorDeStock() {
         await SetProductoStock(_productoId, 5);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 10 }
             }
         };
@@ -312,21 +278,17 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConStockSuficiente_DecrementaStockCorrectamente()
-    {
+    public async Task CreateAsync_ConStockSuficiente_DecrementaStockCorrectamente() {
         var stockInicial = 50;
         await SetProductoStock(_productoId, stockInicial);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test Destinatario",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 5 }
             }
         };
@@ -339,21 +301,17 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_CantidadExactaStock_PermitePedido()
-    {
+    public async Task CreateAsync_CantidadExactaStock_PermitePedido() {
         var stockInicial = 10;
         await SetProductoStock(_productoId, stockInicial);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = stockInicial }
             }
         };
@@ -366,21 +324,17 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_CantidadMayorStock_RechazaPedido()
-    {
+    public async Task CreateAsync_CantidadMayorStock_RechazaPedido() {
         var stockInicial = 10;
         await SetProductoStock(_productoId, stockInicial);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = stockInicial + 1 }
             }
         };
@@ -393,12 +347,9 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_UsuarioNoExistente_RetornaError()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+    public async Task CreateAsync_UsuarioNoExistente_RetornaError() {
+        var dto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 1 }
             }
         };
@@ -408,8 +359,7 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task DecrementStockAsync_StockInsuficiente_NoDecrementa()
-    {
+    public async Task DecrementStockAsync_StockInsuficiente_NoDecrementa() {
         var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
         await SetProductoStock(_productoId, 3);
 
@@ -424,8 +374,7 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task DecrementStockAsync_StockSuficiente_Decrementa()
-    {
+    public async Task DecrementStockAsync_StockSuficiente_Decrementa() {
         var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
         await SetProductoStock(_productoId, 10);
 
@@ -442,8 +391,7 @@ public class PedidosServiceIntegrationTests
     #region ========== TESTS ADICIONALES - MÉTODOS DE ADMINISTRADOR (IGNORADOS - BUG EF-272) ==========
 
     [Test]
-    public async Task FindAllPagedAsync_ConPaginacion_RetornaPedidosPaginados()
-    {
+    public async Task FindAllPagedAsync_ConPaginacion_RetornaPedidosPaginados() {
         var page = 0;
         var size = 10;
         var result = await _pedidosService!.FindAllPagedAsync(page, size);
@@ -453,8 +401,7 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta()
-    {
+    public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta() {
         var page = 1;
         var size = 5;
         var result = await _pedidosService!.FindAllPagedAsync(page, size);
@@ -464,12 +411,9 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateAdminAsync_ConDireccion_ActualizaPedido()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task UpdateAdminAsync_ConDireccion_ActualizaPedido() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle Original", Ciudad = "Madrid", Pais = "España" }
@@ -489,20 +433,16 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound() {
         var updateDto = new UpdatePedidoDto { Estado = "ENVIADO" };
         var result = await _pedidosService!.UpdateAdminAsync("507f1f77bcf86cd799439011", updateDto);
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_EstadoValido_ActualizaEstado()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task UpdateEstadoAsync_EstadoValido_ActualizaEstado() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -520,20 +460,16 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_EstadoInvalido_RetornaError()
-    {
+    public async Task UpdateEstadoAsync_EstadoInvalido_RetornaError() {
         var pedidoId = "507f1f77bcf86cd799439011";
         var result = await _pedidosService!.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    public async Task DeleteAdminAsync_PedidoExistente_MarcaComoEliminado()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task DeleteAdminAsync_PedidoExistente_MarcaComoEliminado() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -550,8 +486,7 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound() {
         var result = await _pedidosService!.DeleteAdminAsync("507f1f77bcf86cd799439011");
         result.IsFailure.Should().BeTrue();
     }
@@ -561,12 +496,9 @@ public class PedidosServiceIntegrationTests
     #region ========== TESTS ADICIONALES - MÉTODOS DE USUARIO (IGNORADOS - BUG EF-272) ==========
 
     [Test]
-    public async Task FindMyPedidosAsync_ConPedidos_RetornaPedidosDelUsuario()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task FindMyPedidosAsync_ConPedidos_RetornaPedidosDelUsuario() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -583,8 +515,7 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindMyPedidosAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindMyPedidosAsync_SinPedidos_RetornaListaVacia() {
         var nuevoUserId = 999999L;
         var result = await _pedidosService!.FindByUserIdAsync(nuevoUserId);
         result.IsSuccess.Should().BeTrue();
@@ -592,8 +523,7 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindMyPedidosPagedAsync_ConPaginacion_RetornaPedidosPaginados()
-    {
+    public async Task FindMyPedidosPagedAsync_ConPaginacion_RetornaPedidosPaginados() {
         var page = 0;
         var size = 10;
         var result = await _pedidosService!.FindMyPedidosAsync(_userId, page, size);
@@ -603,12 +533,9 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindMyPedidoAsync_PedidoPropio_RetornaPedido()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task FindMyPedidoAsync_PedidoPropio_RetornaPedido() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -626,8 +553,7 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindMyPedidoAsync_PedidoAjeno_RetornaError()
-    {
+    public async Task FindMyPedidoAsync_PedidoAjeno_RetornaError() {
         var pedidoId = "507f1f77bcf86cd799439011";
         var otroUserId = 999999L;
         var result = await _pedidosService!.FindMyPedidoAsync(pedidoId, otroUserId);
@@ -635,12 +561,9 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateMyPedidoAsync_EstadoPendiente_ActualizaDireccion()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task UpdateMyPedidoAsync_EstadoPendiente_ActualizaDireccion() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle Original", Ciudad = "Madrid", Pais = "España" }
@@ -660,12 +583,9 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateMyPedidoAsync_EstadoNoPendiente_RetornaError()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task UpdateMyPedidoAsync_EstadoNoPendiente_RetornaError() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -686,12 +606,9 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteMyPedidoAsync_EstadoPendiente_MarcaEliminado()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task DeleteMyPedidoAsync_EstadoPendiente_MarcaEliminado() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -708,12 +625,9 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteMyPedidoAsync_EstadoNoPendiente_RetornaError()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task DeleteMyPedidoAsync_EstadoNoPendiente_RetornaError() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -732,8 +646,7 @@ public class PedidosServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteMyPedidoAsync_PedidoAjeno_RetornaError()
-    {
+    public async Task DeleteMyPedidoAsync_PedidoAjeno_RetornaError() {
         var pedidoId = "507f1f77bcf86cd799439011";
         var otroUserId = 999999L;
         var result = await _pedidosService!.DeleteMyPedidoAsync(pedidoId, otroUserId);
@@ -744,8 +657,7 @@ public class PedidosServiceIntegrationTests
 
     #region ========== UTILIDADES ==========
 
-    private async Task SetProductoStock(long productoId, int stock)
-    {
+    private async Task SetProductoStock(long productoId, int stock) {
         var producto = await _dbContext!.FindAsync<Producto>(productoId);
         producto!.Stock = stock;
         await _dbContext.SaveChangesAsync();

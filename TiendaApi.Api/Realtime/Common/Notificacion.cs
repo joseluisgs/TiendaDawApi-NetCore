@@ -10,8 +10,7 @@ namespace TiendaApi.Api.Realtime.Common;
 /// // Serialización: {"entity":"productos","type":"CREATE","data":{...},"createdAt":"2025-01-18T10:30:00Z"}
 /// </example>
 /// <typeparam name="T">Tipo de datos.</typeparam>
-public record Notificacion<T>
-{
+public record Notificacion<T> {
     /// <summary>Nombre de la entidad afectada.</summary>
     [JsonPropertyName("entity")]
     public string Entity { get; init; } = string.Empty;
@@ -29,8 +28,7 @@ public record Notificacion<T>
     public string CreatedAt { get; init; } = string.Empty;
 
     /// <summary>Tipos de operación soportados.</summary>
-    public enum Tipo
-    {
+    public enum Tipo {
         /// <summary>Creación de una entidad nueva.</summary>
         CREATE,
 
@@ -46,8 +44,7 @@ public record Notificacion<T>
     /// <param name="type">Tipo de operación.</param>
     /// <param name="data">Datos de la notificación.</param>
     /// <returns>Nueva instancia.</returns>
-    public static Notificacion<T> Create(string entity, Tipo type, T data) => new()
-    {
+    public static Notificacion<T> Create(string entity, Tipo type, T data) => new() {
         Entity = entity,
         Type = type,
         Data = data,

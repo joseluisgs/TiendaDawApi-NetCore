@@ -10,16 +10,14 @@ namespace TiendaApi.Tests.Unit.Services.Email;
 /// <summary>
 /// Tests unitarios para MailKitEmailService.
 /// </summary>
-public class EmailServiceTests
-{
+public class EmailServiceTests {
     private Mock<IConfiguration> _mockConfiguration = null!;
     private Mock<ILogger<MailKitEmailService>> _mockLogger = null!;
     private Channel<EmailMessage> _emailChannel = null!;
     private IEmailService _emailService = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _mockConfiguration = new Mock<IConfiguration>();
         _emailChannel = Channel.CreateUnbounded<EmailMessage>();
         _mockLogger = new Mock<ILogger<MailKitEmailService>>();
@@ -37,10 +35,8 @@ public class EmailServiceTests
     /// Returns: Unit.Success (mensaje encolado)
     /// </summary>
     [Test]
-    public async Task EnqueueEmailAsync_MensajeValido_EncolaCorrectamente()
-    {
-        var emailMessage = new EmailMessage
-        {
+    public async Task EnqueueEmailAsync_MensajeValido_EncolaCorrectamente() {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Test Subject",
             Body = "Test Body",
@@ -63,8 +59,7 @@ public class EmailServiceTests
     /// Returns: Unit.Success (todos los mensajes encolados)
     /// </summary>
     [Test]
-    public async Task EnqueueEmailAsync_MultiplesMensajes_MantieneOrden()
-    {
+    public async Task EnqueueEmailAsync_MultiplesMensajes_MantieneOrden() {
         var message1 = new EmailMessage { To = "test1@example.com", Subject = "Test 1", Body = "Body 1" };
         var message2 = new EmailMessage { To = "test2@example.com", Subject = "Test 2", Body = "Body 2" };
         var message3 = new EmailMessage { To = "test3@example.com", Subject = "Test 3", Body = "Body 3" };
@@ -87,10 +82,8 @@ public class EmailServiceTests
     /// Returns: Unit.Success con IsHtml = true
     /// </summary>
     [Test]
-    public async Task EnqueueEmailAsync_ConHtml_BodyEsHtml()
-    {
-        var emailMessage = new EmailMessage
-        {
+    public async Task EnqueueEmailAsync_ConHtml_BodyEsHtml() {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "HTML Email",
             Body = "<h1>Título</h1><p>Párrafo</p>",
@@ -109,10 +102,8 @@ public class EmailServiceTests
     /// Returns: Unit.Success con IsHtml = false
     /// </summary>
     [Test]
-    public async Task EnqueueEmailAsync_SinHtml_BodyEsTextoPlano()
-    {
-        var emailMessage = new EmailMessage
-        {
+    public async Task EnqueueEmailAsync_SinHtml_BodyEsTextoPlano() {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Plain Text Email",
             Body = "Este es un email de texto plano",
@@ -130,10 +121,8 @@ public class EmailServiceTests
     /// Returns: Unit.Success
     /// </summary>
     [Test]
-    public async Task EnqueueEmailAsync_CanalVacio_EncolaSinBloqueo()
-    {
-        var emailMessage = new EmailMessage
-        {
+    public async Task EnqueueEmailAsync_CanalVacio_EncolaSinBloqueo() {
+        var emailMessage = new EmailMessage {
             To = "block@test.com",
             Subject = "Test",
             Body = "Test"
@@ -152,12 +141,10 @@ public class EmailServiceTests
     /// Returns: Unit.Success (omitido por falta de configuración)
     /// </summary>
     [Test]
-    public async Task SendEmailAsync_SmtpNoConfigurado_OmiteEnvio()
-    {
+    public async Task SendEmailAsync_SmtpNoConfigurado_OmiteEnvio() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns((string?)null);
 
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Test",
             Body = "Test Body"
@@ -180,13 +167,11 @@ public class EmailServiceTests
     /// Returns: Unit.Success (omitido por falta de credenciales)
     /// </summary>
     [Test]
-    public async Task SendEmailAsync_SinUsuario_OmiteEnvio()
-    {
+    public async Task SendEmailAsync_SinUsuario_OmiteEnvio() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.example.com");
         _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns((string?)null);
 
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Test",
             Body = "Test Body"
@@ -209,8 +194,7 @@ public class EmailServiceTests
     /// Returns: servicio creado correctamente
     /// </summary>
     [Test]
-    public void SendEmailAsync_ConConfiguracionCompleta_ServicioCreado()
-    {
+    public void SendEmailAsync_ConConfiguracionCompleta_ServicioCreado() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns("587");
         _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns("user@test.com");

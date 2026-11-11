@@ -8,8 +8,7 @@ namespace TiendaApi.Api.Services.Users;
 /// <summary>
 /// Contrato del servicio de usuarios.
 /// </summary>
-public interface IUserService
-{
+public interface IUserService {
     /// <summary>Obtiene todos los usuarios activos.</summary>
     /// <returns>Resultado con colección de usuarios.</returns>
     Task<Result<IEnumerable<UserDto>, DomainError>> FindAllAsync();

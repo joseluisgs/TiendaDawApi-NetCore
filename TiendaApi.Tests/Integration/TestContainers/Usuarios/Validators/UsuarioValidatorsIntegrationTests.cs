@@ -13,19 +13,16 @@ namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Validators;
 /// </summary>
 [TestFixture]
 [Category("Integration")]
-public class UsuarioValidatorsIntegrationTests
-{
+public class UsuarioValidatorsIntegrationTests {
     [Test]
-    public async Task RegisterValidator_ConDtoValido_PasaValidacion()
-    {
+    public async Task RegisterValidator_ConDtoValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<RegisterDto>, RegisterValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<RegisterDto>>();
 
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "juanperez",
             Email = "juan@test.com",
             Password = "Password123"
@@ -38,16 +35,14 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task RegisterValidator_ConEmailInvalido_FallaValidacion()
-    {
+    public async Task RegisterValidator_ConEmailInvalido_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<RegisterDto>, RegisterValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<RegisterDto>>();
 
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "juanperez",
             Email = "email-invalido",
             Password = "Password123"
@@ -60,16 +55,14 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task RegisterValidator_ConPasswordCorto_FallaValidacion()
-    {
+    public async Task RegisterValidator_ConPasswordCorto_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<RegisterDto>, RegisterValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<RegisterDto>>();
 
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "juanperez",
             Email = "juan@test.com",
             Password = "123"
@@ -82,16 +75,14 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task RegisterValidator_ConUsernameVacio_FallaValidacion()
-    {
+    public async Task RegisterValidator_ConUsernameVacio_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<RegisterDto>, RegisterValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<RegisterDto>>();
 
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "",
             Email = "juan@test.com",
             Password = "Password123"
@@ -104,16 +95,14 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task RegisterValidator_ConEmailVacio_FallaValidacion()
-    {
+    public async Task RegisterValidator_ConEmailVacio_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<RegisterDto>, RegisterValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<RegisterDto>>();
 
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "juanperez",
             Email = "",
             Password = "Password123"
@@ -126,16 +115,14 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task RegisterValidator_ConPasswordVacio_FallaValidacion()
-    {
+    public async Task RegisterValidator_ConPasswordVacio_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<RegisterDto>, RegisterValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<RegisterDto>>();
 
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "juanperez",
             Email = "juan@test.com",
             Password = ""
@@ -148,16 +135,14 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task LoginValidator_ConDtoValido_PasaValidacion()
-    {
+    public async Task LoginValidator_ConDtoValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<LoginDto>, LoginValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<LoginDto>>();
 
-        var dto = new LoginDto
-        {
+        var dto = new LoginDto {
             Username = "juanperez",
             Password = "Password123"
         };
@@ -169,16 +154,14 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task LoginValidator_ConUsernameVacio_FallaValidacion()
-    {
+    public async Task LoginValidator_ConUsernameVacio_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<LoginDto>, LoginValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<LoginDto>>();
 
-        var dto = new LoginDto
-        {
+        var dto = new LoginDto {
             Username = "",
             Password = "Password123"
         };
@@ -190,16 +173,14 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task LoginValidator_ConPasswordVacio_FallaValidacion()
-    {
+    public async Task LoginValidator_ConPasswordVacio_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<LoginDto>, LoginValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<LoginDto>>();
 
-        var dto = new LoginDto
-        {
+        var dto = new LoginDto {
             Username = "juanperez",
             Password = ""
         };
@@ -211,8 +192,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task UserFilterDto_DefaultValues_AreCorrect()
-    {
+    public async Task UserFilterDto_DefaultValues_AreCorrect() {
         var filter = new UserFilterDto(null, null, null, 0, 10, "id", "asc");
 
         filter.Page.Should().Be(0);
@@ -226,8 +206,7 @@ public class UsuarioValidatorsIntegrationTests
     #region AvatarUpdateValidator Tests
 
     [Test]
-    public async Task AvatarUpdateValidator_ConUrlHttpsValida_PasaValidacion()
-    {
+    public async Task AvatarUpdateValidator_ConUrlHttpsValida_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
 
@@ -243,8 +222,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task AvatarUpdateValidator_ConUrlHttpValida_PasaValidacion()
-    {
+    public async Task AvatarUpdateValidator_ConUrlHttpValida_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
 
@@ -260,8 +238,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task AvatarUpdateValidator_ConUrlVacia_FallaValidacion()
-    {
+    public async Task AvatarUpdateValidator_ConUrlVacia_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
 
@@ -277,8 +254,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task AvatarUpdateValidator_ConUrlSinProtocolo_FallaValidacion()
-    {
+    public async Task AvatarUpdateValidator_ConUrlSinProtocolo_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
 
@@ -294,8 +270,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task AvatarUpdateValidator_ConUrlFtp_FallaValidacion()
-    {
+    public async Task AvatarUpdateValidator_ConUrlFtp_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
 
@@ -311,8 +286,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task AvatarUpdateValidator_ConUrlExcede500Caracteres_FallaValidacion()
-    {
+    public async Task AvatarUpdateValidator_ConUrlExcede500Caracteres_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<AvatarUpdateDto>, AvatarUpdateValidator>();
 
@@ -333,8 +307,7 @@ public class UsuarioValidatorsIntegrationTests
     #region UserUpdateValidator Tests
 
     [Test]
-    public async Task UserUpdateValidator_ConEmailValido_PasaValidacion()
-    {
+    public async Task UserUpdateValidator_ConEmailValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
 
@@ -350,8 +323,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task UserUpdateValidator_ConEmailInvalido_FallaValidacion()
-    {
+    public async Task UserUpdateValidator_ConEmailInvalido_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
 
@@ -367,8 +339,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task UserUpdateValidator_ConPasswordValido_PasaValidacion()
-    {
+    public async Task UserUpdateValidator_ConPasswordValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
 
@@ -384,8 +355,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task UserUpdateValidator_ConPasswordCorto_FallaValidacion()
-    {
+    public async Task UserUpdateValidator_ConPasswordCorto_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
 
@@ -401,8 +371,7 @@ public class UsuarioValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task UserUpdateValidator_SinCampos_PasaValidacion()
-    {
+    public async Task UserUpdateValidator_SinCampos_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<UserUpdateDto>, UserUpdateValidator>();
 

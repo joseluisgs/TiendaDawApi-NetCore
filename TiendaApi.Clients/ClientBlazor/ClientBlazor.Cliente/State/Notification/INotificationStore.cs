@@ -6,8 +6,7 @@ namespace ClientBlazor.Cliente.State.Notifications;
 /// <summary>
 /// Define los tipos de notificaciones visuales soportadas por el sistema.
 /// </summary>
-public enum NotificationType
-{
+public enum NotificationType {
     Info,
     Success,
     Warning,
@@ -17,8 +16,7 @@ public enum NotificationType
 /// <summary>
 /// Representa una notificación individual enviada al sistema.
 /// </summary>
-public record Notification
-{
+public record Notification {
     public string Id { get; init; } = "";
     public NotificationType Type { get; init; } = NotificationType.Info;
     public string Message { get; init; } = "";
@@ -34,8 +32,7 @@ public record Notification
 /// <summary>
 /// Representa el estado inmutable de la cola de notificaciones.
 /// </summary>
-public record NotificationState
-{
+public record NotificationState {
     public List<Notification> Notifications { get; init; } = new();
     public Notification? Current { get; init; } = null;
     public bool IsLoading { get; init; } = false;
@@ -49,12 +46,11 @@ public record NotificationState
 /// <summary>
 /// Define el contrato para el almacén de notificaciones globales.
 /// </summary>
-public interface INotificationStore
-{
+public interface INotificationStore {
     IObservable<NotificationState> State { get; }
     IObservable<List<Notification>> Notifications { get; }
     IObservable<Notification?> Current { get; }
-    
+
     NotificationState GetState();
     void Info(string message, string? title = null, int durationMs = 3000);
     void Success(string message, string? title = null, int durationMs = 3000);

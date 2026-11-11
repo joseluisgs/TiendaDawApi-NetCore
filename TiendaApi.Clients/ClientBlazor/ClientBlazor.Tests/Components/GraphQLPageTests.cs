@@ -13,16 +13,14 @@ using CSharpFunctionalExtensions;
 namespace ClientBlazor.Tests.Components;
 
 [TestFixture]
-public class GraphQLPageTests
-{
+public class GraphQLPageTests {
     private BunitContext _ctx = null!;
     private Mock<IGraphQLService> _gqlServiceMock = null!;
     private Mock<INotificationStore> _notificationStoreMock = null!;
     private Mock<IAuthStore> _authStoreMock = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _ctx = new BunitContext();
         _gqlServiceMock = new Mock<IGraphQLService>();
         _notificationStoreMock = new Mock<INotificationStore>();
@@ -31,7 +29,7 @@ public class GraphQLPageTests
         _ctx.Services.AddSingleton(_gqlServiceMock.Object);
         _ctx.Services.AddSingleton(_notificationStoreMock.Object);
         _ctx.Services.AddSingleton(_authStoreMock.Object);
-        
+
         _authStoreMock.Setup(s => s.IsAuthenticatedObservable).Returns(System.Reactive.Linq.Observable.Return(false));
     }
 
@@ -39,8 +37,7 @@ public class GraphQLPageTests
     public void TearDown() => _ctx.Dispose();
 
     [Test]
-    public void GraphQLPage_Should_Render_Query_Section_By_Default()
-    {
+    public void GraphQLPage_Should_Render_Query_Section_By_Default() {
         // Act - Calificamos el nombre para evitar colisión con el namespace
         var cut = _ctx.Render<ClientBlazor.Cliente.Components.Pages.GraphQL>();
 
@@ -50,8 +47,7 @@ public class GraphQLPageTests
     }
 
     [Test]
-    public void Changing_To_Mutation_Should_Show_Warning()
-    {
+    public void Changing_To_Mutation_Should_Show_Warning() {
         // Act
         var cut = _ctx.Render<ClientBlazor.Cliente.Components.Pages.GraphQL>();
         cut.Find("select").Change("mutation");
@@ -61,12 +57,11 @@ public class GraphQLPageTests
     }
 
     [Test]
-    public async Task Clicking_Execute_Should_Call_Service()
-    {
+    public async Task Clicking_Execute_Should_Call_Service() {
         // Arrange
         _gqlServiceMock.Setup(s => s.ExecuteQueryAsync<object>(It.IsAny<string>(), It.IsAny<object>()))
             .ReturnsAsync(Result.Success<object, DomainError>(new { data = "ok" }));
-        
+
         var cut = _ctx.Render<ClientBlazor.Cliente.Components.Pages.GraphQL>();
 
         // Act

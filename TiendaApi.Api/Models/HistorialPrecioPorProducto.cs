@@ -8,8 +8,7 @@ namespace TiendaApi.Api.Models;
 /// así que "¿a cuánto estuvo el producto hace tres semanas?" sale ordenado de serie.
 /// </summary>
 [Table("historial_precios_por_producto")]
-public class HistorialPrecioPorProducto
-{
+public class HistorialPrecioPorProducto {
     /// <summary>Partition key: el histórico de un producto vive entero en su partición.</summary>
     [Column("producto_id")]
     [PartitionKey]

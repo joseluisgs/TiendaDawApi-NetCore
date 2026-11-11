@@ -11,8 +11,7 @@ namespace TiendaApi.Api.Infrastructures;
 /// el esquema se declara con CREATE ... IF NOT EXISTS y se puede ampliar en caliente,
 /// sin plan de migraciones ni scripts de actualización.
 /// </summary>
-public static class CassandraSchemaExtensions
-{
+public static class CassandraSchemaExtensions {
     /// <summary>
     /// Espera a que el nodo acepte conexiones y crea el keyspace si no existe.
     ///
@@ -24,17 +23,12 @@ public static class CassandraSchemaExtensions
     /// <param name="keyspace">Keyspace de la aplicación.</param>
     /// <param name="isDevelopment">true = elimina el keyspace antes de crearlo (reset de desarrollo).</param>
     /// <returns>Tarea asíncrona.</returns>
-    public static async Task InitializeSchemaAsync(this ISession session, string keyspace, bool isDevelopment = false)
-    {
-        for (var intento = 1; ; intento++)
-        {
-            try
-            {
+    public static async Task InitializeSchemaAsync(this ISession session, string keyspace, bool isDevelopment = false) {
+        for (var intento = 1; ; intento++) {
+            try {
                 await session.ExecuteAsync(new SimpleStatement("SELECT now() FROM system.local"));
                 break;
-            }
-            catch (NoHostAvailableException) when (intento < 30)
-            {
+            } catch (NoHostAvailableException) when (intento < 30) {
                 Log.Information("Cassandra aún no acepta conexiones (intento {Intento}/30)...", intento);
                 await Task.Delay(TimeSpan.FromSeconds(2));
             }
@@ -45,8 +39,7 @@ public static class CassandraSchemaExtensions
         // E2E nazcan siempre de los datos de semilla (histórico y feed).
         // Va tras la espera al nodo (DROP necesita conexión) y antes del CREATE;
         // la sesión aún no ha hecho ChangeKeyspace, así que el DROP es seguro.
-        if (isDevelopment)
-        {
+        if (isDevelopment) {
             await session.ExecuteAsync(new SimpleStatement($"DROP KEYSPACE IF EXISTS {keyspace}"));
             Log.Information("🗂️ [DESARROLLO] Keyspace '{Keyspace}' eliminado (se re-crea con datos de semilla)", keyspace);
         }
@@ -114,15 +107,11 @@ public static class CassandraSchemaExtensions
     /// <param name="app">Aplicación en arranque (antes de app.Run()).</param>
     /// <param name="isDevelopment">true = reset del keyspace en desarrollo.</param>
     /// <returns>Tarea asíncrona.</returns>
-    public static async Task InitializeCassandraAsync(this WebApplication app, bool isDevelopment)
-    {
-        try
-        {
+    public static async Task InitializeCassandraAsync(this WebApplication app, bool isDevelopment) {
+        try {
             var settings = app.Services.GetRequiredService<CassandraSettings>();
             await app.Services.GetRequiredService<ISession>().InitializeSchemaAsync(settings.Keyspace, isDevelopment);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             Log.Warning(ex,
                 "Cassandra no disponible tras los reintentos: la API arranca en modo degradado (sin historial de precios ni feed)");
         }

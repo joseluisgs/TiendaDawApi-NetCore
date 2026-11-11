@@ -4,8 +4,7 @@ namespace ClientBlazor.Cliente.Services.SignalR;
 /// Define el contrato para el servicio de comunicación mediante Hubs de SignalR.
 /// Gestiona la conexión persistente, reconexiones automáticas y suscripción a métodos del servidor.
 /// </summary>
-public interface ISignalRService
-{
+public interface ISignalRService {
     /// <summary>
     /// Indica si la conexión con el Hub de SignalR está actualmente activa.
     /// </summary>

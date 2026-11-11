@@ -10,8 +10,7 @@ namespace TiendaApi.Api.Dtos.Usuarios;
 /// - PATCH /api/v1/usuarios/{id}/avatar
 /// - Actualizar imagen de perfil del usuario
 /// </remarks>
-public record AvatarUpdateDto
-{
+public record AvatarUpdateDto {
     /// <summary>
     /// URL del nuevo avatar.
     /// </summary>

@@ -7,8 +7,7 @@ namespace ClientBlazor.Cliente.Services.GraphQL;
 /// Define el contrato para el servicio de comunicación GraphQL.
 /// Soporta operaciones de lectura (Queries), escritura (Mutations) y tiempo real (Subscriptions).
 /// </summary>
-public interface IGraphQLService
-{
+public interface IGraphQLService {
     /// <summary>
     /// Ejecuta una consulta de lectura en el grafo de la API.
     /// </summary>

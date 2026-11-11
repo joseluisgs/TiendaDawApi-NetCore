@@ -11,15 +11,13 @@ namespace TiendaApi.Api.Data;
 /// Gestiona Categorías, Productos y Usuarios.
 /// Hereda de IdentityDbContext para soportar ASP.NET Core Identity.
 /// </summary>
-public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
-{
+public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long> {
     private static readonly TimestampInterceptor _timestampInterceptor = new();
 
     /// <summary>
     /// Constructor con opciones de configuración.
     /// </summary>
-    public TiendaDbContext(DbContextOptions<TiendaDbContext> options) : base(options)
-    {
+    public TiendaDbContext(DbContextOptions<TiendaDbContext> options) : base(options) {
     }
 
     /// <summary>DbSet de Categorías.</summary>
@@ -42,8 +40,7 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
     /// Configura el contexto (interceptores de marcas de tiempo).
     /// </summary>
     /// <param name="optionsBuilder">Constructor de opciones del contexto.</param>
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
         base.OnConfiguring(optionsBuilder);
         optionsBuilder.AddInterceptors(_timestampInterceptor);
     }
@@ -52,12 +49,10 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
     /// Define el modelo del esquema: entidades, relaciones, índices y filtros globales.
     /// </summary>
     /// <param name="modelBuilder">Constructor del modelo.</param>
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
+    protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);  // ← Identity necesita esto para crear sus tablas AspNet*
 
-        modelBuilder.Entity<Categoria>(entity =>
-        {
+        modelBuilder.Entity<Categoria>(entity => {
             entity.ToTable("categorias");
             entity.HasKey(c => c.Id);
             entity.Property(c => c.Id).UseIdentityAlwaysColumn();
@@ -69,8 +64,7 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
             entity.HasQueryFilter(c => !c.IsDeleted);
         });
 
-        modelBuilder.Entity<Producto>(entity =>
-        {
+        modelBuilder.Entity<Producto>(entity => {
             entity.ToTable("productos");
             entity.HasKey(p => p.Id);
             entity.Property(p => p.Id).UseIdentityAlwaysColumn();
@@ -100,8 +94,7 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
             entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
-        modelBuilder.Entity<Proveedor>(entity =>
-        {
+        modelBuilder.Entity<Proveedor>(entity => {
             entity.ToTable("proveedores");
             entity.HasKey(p => p.Codigo);
 
@@ -122,8 +115,7 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
             entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
-        modelBuilder.Entity<User>(entity =>
-        {
+        modelBuilder.Entity<User>(entity => {
             entity.ToTable("users");
             entity.HasKey(u => u.Id);
             entity.Property(u => u.Id).UseIdentityAlwaysColumn();
@@ -144,8 +136,7 @@ public class TiendaDbContext : IdentityDbContext<User, IdentityRole<long>, long>
             entity.HasQueryFilter(u => !u.IsDeleted);
         });
 
-        modelBuilder.Entity<UserLogin>(entity =>
-        {
+        modelBuilder.Entity<UserLogin>(entity => {
             entity.ToTable("user_logins");
             entity.HasKey(ul => ul.Id);
             entity.Property(ul => ul.Id).UseIdentityAlwaysColumn();

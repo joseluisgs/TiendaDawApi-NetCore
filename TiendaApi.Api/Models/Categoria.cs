@@ -6,8 +6,7 @@ using TiendaApi.Api.Data.Abstractions;
 /// Entidad de dominio que representa una categoría de productos.
 /// Relación uno-a-muchos con productos. Soporta soft-delete.
 /// </summary>
-public class Categoria : ITimestamped
-{
+public class Categoria : ITimestamped {
     /// <summary>ID único de la categoría (PK en PostgreSQL).</summary>
     public long Id { get; set; }
 

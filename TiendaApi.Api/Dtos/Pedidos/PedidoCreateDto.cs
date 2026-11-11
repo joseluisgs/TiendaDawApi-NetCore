@@ -26,8 +26,7 @@ namespace TiendaApi.Api.Dtos.Pedidos;
 ///   ]
 /// }
 /// </example>
-public record PedidoRequestDto
-{
+public record PedidoRequestDto {
     /// <summary>
     /// Información del destinatario del pedido.
     /// Este campo es obligatorio y define quién recibirá el paquete.
@@ -69,8 +68,7 @@ public record PedidoRequestDto
 /// <summary>
 /// DTO de artículo de pedido para solicitudes.
 /// </summary>
-public record PedidoItemRequestDto
-{
+public record PedidoItemRequestDto {
     /// <summary>
     /// Identificador del producto a incluir en el pedido.
     /// Debe corresponder a un producto existente y activo en el catálogo.
@@ -93,8 +91,7 @@ public record PedidoItemRequestDto
 /// <summary>
 /// DTO para actualizar el estado de un pedido.
 /// </summary>
-public record UpdateEstadoDto
-{
+public record UpdateEstadoDto {
     /// <summary>
     /// Nuevo estado para el pedido.
     /// Debe ser un estado válido según las transiciones permitidas.
@@ -110,8 +107,7 @@ public record UpdateEstadoDto
 /// <summary>
 /// DTO para actualizar datos de un pedido.
 /// </summary>
-public record UpdatePedidoDto
-{
+public record UpdatePedidoDto {
     /// <summary>
     /// Nuevo estado del pedido (opcional).
     /// Solo administradores pueden modificar estados.

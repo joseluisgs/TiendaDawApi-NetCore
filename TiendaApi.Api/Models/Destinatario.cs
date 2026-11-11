@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Models;
 /// Información del destinatario de un pedido (nombre, email, teléfono, dirección).
 /// Si es null, el destinatario es el mismo usuario que realizó el pedido.
 /// </summary>
-public class Destinatario
-{
+public class Destinatario {
     /// <summary>Nombre completo del destinatario (máx 200 caracteres).</summary>
     [MaxLength(200)]
     public string? NombreCompleto { get; set; }

@@ -17,8 +17,7 @@ namespace TiendaApi.Tests.Unit.Services;
 /// no hay puntos) y escritura con resultado ignorado; el 404 lo decide
 /// siempre PostgreSQL.
 /// </summary>
-public class HistorialServiceTests
-{
+public class HistorialServiceTests {
     // NUnit reutiliza la instancia del fixture entre tests: los mocks se
     // rehacen en [SetUp] para que las verificaciones (Times.Never) solo
     // vean las invocaciones del test en curso.
@@ -27,8 +26,7 @@ public class HistorialServiceTests
     private HistorialService _service = null!;
 
     [SetUp]
-    public void SetUp()
-    {
+    public void SetUp() {
         _productoRepository = new Mock<IProductoRepository>();
         _historialRepository = new Mock<IHistorialRepository>();
         _service = new HistorialService(
@@ -40,8 +38,7 @@ public class HistorialServiceTests
     // ===================== GetHistorialPreciosAsync =====================
 
     [Test]
-    public async Task GetHistorialPrecios_ProductoNoExiste_DevuelveNotFoundDePostgres()
-    {
+    public async Task GetHistorialPrecios_ProductoNoExiste_DevuelveNotFoundDePostgres() {
         _productoRepository.Setup(r => r.FindByIdAsync(999)).ReturnsAsync((Producto?)null);
 
         var result = await _service.GetHistorialPreciosAsync(999, null, null, 50);
@@ -56,8 +53,7 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task GetHistorialPrecios_RangoInvertido_DevuelveValidationErrorDeDesde()
-    {
+    public async Task GetHistorialPrecios_RangoInvertido_DevuelveValidationErrorDeDesde() {
         _productoRepository.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop" });
 
         var result = await _service.GetHistorialPreciosAsync(
@@ -70,11 +66,9 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task GetHistorialPrecios_SerieOk_DevuelveLaSerieDelRepositorio()
-    {
+    public async Task GetHistorialPrecios_SerieOk_DevuelveLaSerieDelRepositorio() {
         _productoRepository.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop" });
-        var serie = new List<HistorialPrecioDto>
-        {
+        var serie = new List<HistorialPrecioDto> {
             new(DateTime.UtcNow.AddDays(-1), 1299.99),
             new(DateTime.UtcNow.AddDays(-10), 1349.99)
         };
@@ -88,8 +82,7 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task GetHistorialPrecios_LimitCero_SeAcotaA1()
-    {
+    public async Task GetHistorialPrecios_LimitCero_SeAcotaA1() {
         _productoRepository.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop" });
         _historialRepository.Setup(h => h.GetHistorialPreciosAsync(1, null, null, 1))
             .ReturnsAsync(new List<HistorialPrecioDto>());
@@ -101,8 +94,7 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task GetHistorialPrecios_LimitExcesivo_SeAcotaA200()
-    {
+    public async Task GetHistorialPrecios_LimitExcesivo_SeAcotaA200() {
         _productoRepository.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop" });
         _historialRepository.Setup(h => h.GetHistorialPreciosAsync(1, null, null, 200))
             .ReturnsAsync(new List<HistorialPrecioDto>());
@@ -113,8 +105,7 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task GetHistorialPrecios_CassandraCaida_NoLanza_Y_DevuelveVacia()
-    {
+    public async Task GetHistorialPrecios_CassandraCaida_NoLanza_Y_DevuelveVacia() {
         _productoRepository.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop" });
         _historialRepository.Setup(h => h.GetHistorialPreciosAsync(It.IsAny<long>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>()))
             .ThrowsAsync(new InvalidOperationException("No hay contact points"));
@@ -129,8 +120,7 @@ public class HistorialServiceTests
     // ====================== RegistrarVistaAsync =======================
 
     [Test]
-    public async Task RegistrarVista_ProductoNoExiste_DevuelveNotFoundDePostgres()
-    {
+    public async Task RegistrarVista_ProductoNoExiste_DevuelveNotFoundDePostgres() {
         _productoRepository.Setup(r => r.FindByIdAsync(999)).ReturnsAsync((Producto?)null);
 
         var result = await _service.RegistrarVistaAsync(2, 999);
@@ -143,8 +133,7 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task RegistrarVista_RegistroOk_DevuelveSuccess_Y_DenormalizaElNombre()
-    {
+    public async Task RegistrarVista_RegistroOk_DevuelveSuccess_Y_DenormalizaElNombre() {
         _productoRepository.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop Dell XPS 15" });
         _historialRepository.Setup(h => h.RegistrarVistaAsync(2, 1, "Laptop Dell XPS 15"))
@@ -158,8 +147,7 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task RegistrarVista_CassandraCaida_NoLanza_DevuelveSuccess()
-    {
+    public async Task RegistrarVista_CassandraCaida_NoLanza_DevuelveSuccess() {
         _productoRepository.Setup(r => r.FindByIdAsync(1))
             .ReturnsAsync(new Producto { Id = 1, Nombre = "Laptop" });
         _historialRepository.Setup(h => h.RegistrarVistaAsync(It.IsAny<long>(), It.IsAny<long>(), It.IsAny<string>()))
@@ -176,10 +164,8 @@ public class HistorialServiceTests
     // ======================= GetFeedVistasAsync =======================
 
     [Test]
-    public async Task GetFeedVistas_FeedOk_DevuelveLaListaDelRepositorio()
-    {
-        var feed = new List<VistaFeedDto>
-        {
+    public async Task GetFeedVistas_FeedOk_DevuelveLaListaDelRepositorio() {
+        var feed = new List<VistaFeedDto> {
             new(DateTime.UtcNow.AddHours(-1), 1, "Laptop Dell XPS 15"),
             new(DateTime.UtcNow.AddHours(-4), 3, "Clean Code")
         };
@@ -191,8 +177,7 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task GetFeedVistas_LimitSeAcotaA100()
-    {
+    public async Task GetFeedVistas_LimitSeAcotaA100() {
         _historialRepository.Setup(h => h.GetFeedVistasAsync(2, 100))
             .ReturnsAsync(new List<VistaFeedDto>());
 
@@ -202,8 +187,7 @@ public class HistorialServiceTests
     }
 
     [Test]
-    public async Task GetFeedVistas_CassandraCaida_NoLanza_DevuelveVacia()
-    {
+    public async Task GetFeedVistas_CassandraCaida_NoLanza_DevuelveVacia() {
         _historialRepository.Setup(h => h.GetFeedVistasAsync(It.IsAny<long>(), It.IsAny<int>()))
             .ThrowsAsync(new InvalidOperationException("Nodo caido"));
 

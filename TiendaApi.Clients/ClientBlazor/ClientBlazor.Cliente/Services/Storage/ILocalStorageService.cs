@@ -4,8 +4,7 @@ namespace ClientBlazor.Cliente.Services.Storage;
 /// Define el contrato para el almacenamiento persistente en el cliente.
 /// Proporciona una abstracción sobre el LocalStorage del navegador.
 /// </summary>
-public interface ILocalStorageService
-{
+public interface ILocalStorageService {
     /// <summary>
     /// Guarda un objeto serializado en el almacenamiento local.
     /// </summary>

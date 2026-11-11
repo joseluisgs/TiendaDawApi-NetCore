@@ -5,8 +5,7 @@ namespace TiendaApi.Api.Services.Auth;
 /// <summary>
 /// Interfaz para extraer información de tokens JWT.
 /// </summary>
-public interface IJwtTokenExtractor
-{
+public interface IJwtTokenExtractor {
     /// <summary>Extrae el ID del usuario del token.</summary>
     /// <param name="token">Token JWT.</param>
     /// <returns>ID del usuario o null si es inválido.</returns>

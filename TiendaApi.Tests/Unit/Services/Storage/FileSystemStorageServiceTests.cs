@@ -14,22 +14,19 @@ namespace TiendaApi.Tests.Unit.Services.Storage;
 /// Tests unitarios para FileSystemStorageService.
 /// Verifica la gestión de archivos en el sistema de archivos local.
 /// </summary>
-public class FileSystemStorageServiceTests
-{
+public class FileSystemStorageServiceTests {
     private readonly Mock<ILogger<FileSystemStorageService>> _mockLogger;
     private readonly Mock<IWebHostEnvironment> _mockEnv;
     private readonly IConfiguration _configuration;
     private readonly FileSystemStorageService _storageService;
 
-    public FileSystemStorageServiceTests()
-    {
+    public FileSystemStorageServiceTests() {
         _mockLogger = new Mock<ILogger<FileSystemStorageService>>();
         _mockEnv = new Mock<IWebHostEnvironment>();
         _mockEnv.Setup(e => e.ContentRootPath).Returns(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tienda-tests"));
         _mockEnv.Setup(e => e.WebRootPath).Returns(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tienda-tests", "wwwroot"));
 
-        var inMemorySettings = new Dictionary<string, string>
-        {
+        var inMemorySettings = new Dictionary<string, string> {
             { "Storage:UploadPath", "uploads" },
             { "Storage:MaxFileSize", "5242880" },
             { "Storage:AllowedExtensions", ".jpg,.jpeg,.png,.gif" },
@@ -49,8 +46,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que guardar un archivo válido retorna la ruta relativa.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConArchivoValido_RetornaRutaRelativa()
-    {
+    public async Task SaveFileAsync_ConArchivoValido_RetornaRutaRelativa() {
         var file = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -64,8 +60,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que guardar un archivo vacío retorna error de validación.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConArchivoVacio_RetornaError()
-    {
+    public async Task SaveFileAsync_ConArchivoVacio_RetornaError() {
         var file = CreateMockFormFile("test.jpg", "image/jpeg", 0);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -78,8 +73,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que guardar un archivo nulo retorna error de validación.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConArchivoNulo_RetornaError()
-    {
+    public async Task SaveFileAsync_ConArchivoNulo_RetornaError() {
         var result = await _storageService.SaveFileAsync(null!, "productos");
 
         result.IsFailure.Should().BeTrue();
@@ -90,8 +84,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que guardar un archivo con extensión no permitida retorna error.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConExtensionNoPermitida_RetornaError()
-    {
+    public async Task SaveFileAsync_ConExtensionNoPermitida_RetornaError() {
         var file = CreateMockFormFile("test.pdf", "application/pdf", 1024);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -104,8 +97,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que guardar un archivo con tipo de contenido no permitido retorna error.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConTipoContenidoNoPermitido_RetornaError()
-    {
+    public async Task SaveFileAsync_ConTipoContenidoNoPermitido_RetornaError() {
         var file = CreateMockFormFile("test.jpg", "image/webp", 1024);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -118,8 +110,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que la validación de tamaño máximo funciona correctamente.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConArchivoMuyGrande_RetornaError()
-    {
+    public async Task SaveFileAsync_ConArchivoMuyGrande_RetornaError() {
         var file = CreateMockFormFile("test.jpg", "image/jpeg", 10 * 1024 * 1024);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -132,8 +123,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que la validación de tamaño máximo acepta archivos dentro del límite.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConArchivoEnLimite_RetornaExito()
-    {
+    public async Task SaveFileAsync_ConArchivoEnLimite_RetornaExito() {
         var file = CreateMockFormFile("test.jpg", "image/jpeg", 4 * 1024 * 1024);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -145,8 +135,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que la validación de tamaño máximo acepta archivos de 5MB exactos.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConArchivoDe5MB_RetornaExito()
-    {
+    public async Task SaveFileAsync_ConArchivoDe5MB_RetornaExito() {
         var file = CreateMockFormFile("test.jpg", "image/jpeg", 5 * 1024 * 1024);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -158,8 +147,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que guardar un archivo PNG retorna la ruta correcta.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConArchivoPng_RetornaRutaCorrecta()
-    {
+    public async Task SaveFileAsync_ConArchivoPng_RetornaRutaCorrecta() {
         var file = CreateMockFormFile("imagen.png", "image/png", 2048);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -172,8 +160,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que guardar un archivo GIF retorna la ruta correcta.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ConArchivoGif_RetornaRutaCorrecta()
-    {
+    public async Task SaveFileAsync_ConArchivoGif_RetornaRutaCorrecta() {
         var file = CreateMockFormFile("animacion.gif", "image/gif", 512);
 
         var result = await _storageService.SaveFileAsync(file, "categorias");
@@ -187,8 +174,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que el nombre de archivo generado es único.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_GuardaDosArchivos_GeneraNombresUnicos()
-    {
+    public async Task SaveFileAsync_GuardaDosArchivos_GeneraNombresUnicos() {
         var file1 = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
         var file2 = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
 
@@ -208,8 +194,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que eliminar un archivo vacío retorna éxito.
     /// </summary>
     [Test]
-    public async Task DeleteFileAsync_ConNombreVacio_RetornaTrue()
-    {
+    public async Task DeleteFileAsync_ConNombreVacio_RetornaTrue() {
         var result = await _storageService.DeleteFileAsync(string.Empty);
 
         result.IsSuccess.Should().BeTrue();
@@ -220,8 +205,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que eliminar un archivo nulo retorna éxito.
     /// </summary>
     [Test]
-    public async Task DeleteFileAsync_ConNombreNulo_RetornaTrue()
-    {
+    public async Task DeleteFileAsync_ConNombreNulo_RetornaTrue() {
         var result = await _storageService.DeleteFileAsync(null!);
 
         result.IsSuccess.Should().BeTrue();
@@ -232,8 +216,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que eliminar un archivo que no existe retorna éxito (sin excepción).
     /// </summary>
     [Test]
-    public async Task DeleteFileAsync_ArchivoNoExistente_RetornaTrue()
-    {
+    public async Task DeleteFileAsync_ArchivoNoExistente_RetornaTrue() {
         var result = await _storageService.DeleteFileAsync("/uploads/productos/noexiste.jpg");
 
         result.IsSuccess.Should().BeTrue();
@@ -244,8 +227,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que la eliminación de un archivo manejable retorna éxito.
     /// </summary>
     [Test]
-    public async Task DeleteFileAsync_ConPathRelativo_RetornaTrue()
-    {
+    public async Task DeleteFileAsync_ConPathRelativo_RetornaTrue() {
         var file = CreateMockFormFile("to-delete.jpg", "image/jpeg", 1024);
         var saveResult = await _storageService.SaveFileAsync(file, "productos");
         saveResult.IsSuccess.Should().BeTrue();
@@ -264,8 +246,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que FileExists retorna false para nombre vacío.
     /// </summary>
     [Test]
-    public void FileExists_ConNombreVacio_RetornaFalse()
-    {
+    public void FileExists_ConNombreVacio_RetornaFalse() {
         var result = _storageService.FileExists(string.Empty);
 
         result.Should().BeFalse();
@@ -275,8 +256,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que FileExists retorna false para nombre nulo.
     /// </summary>
     [Test]
-    public void FileExists_ConNombreNulo_RetornaFalse()
-    {
+    public void FileExists_ConNombreNulo_RetornaFalse() {
         var result = _storageService.FileExists(null!);
 
         result.Should().BeFalse();
@@ -286,8 +266,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que FileExists retorna false para archivo que no existe.
     /// </summary>
     [Test]
-    public void FileExists_ArchivoNoExistente_RetornaFalse()
-    {
+    public void FileExists_ArchivoNoExistente_RetornaFalse() {
         var result = _storageService.FileExists("/uploads/productos/noexiste.jpg");
 
         result.Should().BeFalse();
@@ -301,8 +280,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que GetFullPath retorna la ruta completa correcta.
     /// </summary>
     [Test]
-    public void GetFullPath_ConPathRelativo_RetornaRutaCompleta()
-    {
+    public void GetFullPath_ConPathRelativo_RetornaRutaCompleta() {
         var path = _storageService.GetFullPath("/uploads/productos/test.jpg");
 
         path.Should().Contain("uploads");
@@ -314,8 +292,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que GetFullPath limpia el prefijo /storage/.
     /// </summary>
     [Test]
-    public void GetFullPath_ConPrefijoStorage_RetornaPathLimpio()
-    {
+    public void GetFullPath_ConPrefijoStorage_RetornaPathLimpio() {
         var path = _storageService.GetFullPath("/storage/uploads/productos/test.jpg");
 
         path.Should().Contain("uploads");
@@ -326,8 +303,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que GetFullPath con ruta absoluta la retorna sin modificación.
     /// </summary>
     [Test]
-    public void GetFullPath_ConRutaAbsoluta_RetornaMismaRuta()
-    {
+    public void GetFullPath_ConRutaAbsoluta_RetornaMismaRuta() {
         var absolutePath = "C:\\temp\\uploads\\productos\\test.jpg";
 
         var path = _storageService.GetFullPath(absolutePath);
@@ -343,8 +319,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que GetRelativePath retorna la ruta relativa correcta.
     /// </summary>
     [Test]
-    public void GetRelativePath_ConFolderProducto_RetornaRutaCorrecta()
-    {
+    public void GetRelativePath_ConFolderProducto_RetornaRutaCorrecta() {
         var path = _storageService.GetRelativePath("test.jpg", "productos");
 
         path.Should().Be("/uploads/productos/test.jpg");
@@ -354,8 +329,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que GetRelativePath usa "productos" como carpeta por defecto.
     /// </summary>
     [Test]
-    public void GetRelativePath_SinFolder_UsaProductoComoDefecto()
-    {
+    public void GetRelativePath_SinFolder_UsaProductoComoDefecto() {
         var path = _storageService.GetRelativePath("test.jpg");
 
         path.Should().Be("/uploads/productos/test.jpg");
@@ -365,8 +339,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que GetRelativePath funciona con diferentes carpetas.
     /// </summary>
     [Test]
-    public void GetRelativePath_ConFolderCategoria_RetornaRutaCorrecta()
-    {
+    public void GetRelativePath_ConFolderCategoria_RetornaRutaCorrecta() {
         var path = _storageService.GetRelativePath("categoria.jpg", "categorias");
 
         path.Should().Be("/uploads/categorias/categoria.jpg");
@@ -380,8 +353,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que la validación acepta extensiones en mayúsculas.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_ExtensionMayuscula_RetornaExito()
-    {
+    public async Task SaveFileAsync_ExtensionMayuscula_RetornaExito() {
         var file = CreateMockFormFile("test.JPG", "image/jpeg", 1024);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -393,8 +365,7 @@ public class FileSystemStorageServiceTests
     /// Verifica que la validación acepta tipos de contenido con case insensitive.
     /// </summary>
     [Test]
-    public async Task SaveFileAsync_TipoContenidoMayuscula_RetornaExito()
-    {
+    public async Task SaveFileAsync_TipoContenidoMayuscula_RetornaExito() {
         var file = CreateMockFormFile("test.jpg", "IMAGE/JPEG", 1024);
 
         var result = await _storageService.SaveFileAsync(file, "productos");
@@ -409,14 +380,12 @@ public class FileSystemStorageServiceTests
     /// <summary>
     /// Crea un objeto IFormFile simulado para testing.
     /// </summary>
-    private static IFormFile CreateMockFormFile(string fileName, string contentType, long length)
-    {
+    private static IFormFile CreateMockFormFile(string fileName, string contentType, long length) {
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns(fileName);
         mockFile.Setup(f => f.ContentType).Returns(contentType);
         mockFile.Setup(f => f.Length).Returns(length);
-        mockFile.Setup(f => f.OpenReadStream()).Returns(() =>
-        {
+        mockFile.Setup(f => f.OpenReadStream()).Returns(() => {
             var stream = new MemoryStream();
             var writer = new StreamWriter(stream);
             writer.Write(new byte[length]);

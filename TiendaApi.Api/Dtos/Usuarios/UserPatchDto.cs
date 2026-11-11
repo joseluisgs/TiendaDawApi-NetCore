@@ -13,8 +13,7 @@ namespace TiendaApi.Api.Dtos.Usuarios;
 /// - Actualizar perfil de usuario
 /// - Cambiar avatar
 /// </remarks>
-public record UserPatchDto
-{
+public record UserPatchDto {
     /// <summary>
     /// Nuevo correo electrónico del usuario (opcional).
     /// Debe ser un email válido y único en el sistema.

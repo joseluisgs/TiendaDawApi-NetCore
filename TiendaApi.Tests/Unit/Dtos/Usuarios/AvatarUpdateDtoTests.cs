@@ -7,16 +7,14 @@ namespace TiendaApi.Tests.Unit.Dtos.Usuarios;
 /// Tests unitarios para AvatarUpdateDto.
 /// Verifica el funcionamiento del DTO de actualización de avatar de usuario.
 /// </summary>
-public class AvatarUpdateDtoTests
-{
+public class AvatarUpdateDtoTests {
     #region Tests de Constructor
 
     /// <summary>
     /// Verifica que el constructor asigna la URL correctamente.
     /// </summary>
     [Test]
-    public void Constructor_ConUrlValido_AsignaCorrectamente()
-    {
+    public void Constructor_ConUrlValido_AsignaCorrectamente() {
         // Arrange & Act
         var dto = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar.jpg" };
 
@@ -28,8 +26,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que por defecto devuelve una cadena vacía.
     /// </summary>
     [Test]
-    public void Constructor_PorDefecto_RetornaCadenaVacia()
-    {
+    public void Constructor_PorDefecto_RetornaCadenaVacia() {
         // Arrange & Act
         var dto = new AvatarUpdateDto();
 
@@ -41,8 +38,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que el constructor asigna una cadena vacía correctamente.
     /// </summary>
     [Test]
-    public void Constructor_ConUrlVacia_AsignaCadenaVacia()
-    {
+    public void Constructor_ConUrlVacia_AsignaCadenaVacia() {
         // Arrange & Act
         var dto = new AvatarUpdateDto { AvatarUrl = "" };
 
@@ -58,8 +54,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que soporta URLs con protocolo https.
     /// </summary>
     [Test]
-    public void AvatarUrl_PuedeContenerUrlsHttps()
-    {
+    public void AvatarUrl_PuedeContenerUrlsHttps() {
         // Arrange & Act
         var dto = new AvatarUpdateDto { AvatarUrl = "https://cdn.example.com/avatars/usuario123.png" };
 
@@ -72,8 +67,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que soporta URLs con protocolo http.
     /// </summary>
     [Test]
-    public void AvatarUrl_PuedeContenerUrlsHttp()
-    {
+    public void AvatarUrl_PuedeContenerUrlsHttp() {
         // Arrange & Act
         var dto = new AvatarUpdateDto { AvatarUrl = "http://example.com/avatar.jpg" };
 
@@ -85,8 +79,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que rutas locales son aceptadas (sin esquema http/https).
     /// </summary>
     [Test]
-    public void AvatarUrl_PuedeContenerRutasLocales()
-    {
+    public void AvatarUrl_PuedeContenerRutasLocales() {
         // Arrange & Act
         var dto = new AvatarUpdateDto { AvatarUrl = "/storage/usuarios/avatar.png" };
 
@@ -98,8 +91,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que soporta URLs largas.
     /// </summary>
     [Test]
-    public void AvatarUrl_SoportaUrlsLargas()
-    {
+    public void AvatarUrl_SoportaUrlsLargas() {
         // Arrange
         var urlLarga = "https://example.com/ruta/muy/larga/hacia/el/avatar/imagen/nombre/con/muchos/segmentos.png";
 
@@ -118,8 +110,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que se puede crear una nueva instancia con cambios usando 'with'.
     /// </summary>
     [Test]
-    public void With_PuedeCrearNuevaInstanciaConCambios()
-    {
+    public void With_PuedeCrearNuevaInstanciaConCambios() {
         // Arrange
         var original = new AvatarUpdateDto { AvatarUrl = "original.jpg" };
 
@@ -139,8 +130,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que dos DTOs con los mismos valores son iguales.
     /// </summary>
     [Test]
-    public void Equals_ConMismosValores_RetornaTrue()
-    {
+    public void Equals_ConMismosValores_RetornaTrue() {
         // Arrange
         var dto1 = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar.jpg" };
         var dto2 = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar.jpg" };
@@ -153,8 +143,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que dos DTOs con valores distintos no son iguales.
     /// </summary>
     [Test]
-    public void Equals_ConValoresDistintos_RetornaFalse()
-    {
+    public void Equals_ConValoresDistintos_RetornaFalse() {
         // Arrange
         var dto1 = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar1.jpg" };
         var dto2 = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar2.jpg" };
@@ -167,8 +156,7 @@ public class AvatarUpdateDtoTests
     /// Verifica que dos DTOs vacíos son iguales.
     /// </summary>
     [Test]
-    public void Equals_ConValoresVacios_RetornaTrue()
-    {
+    public void Equals_ConValoresVacios_RetornaTrue() {
         // Arrange
         var dto1 = new AvatarUpdateDto();
         var dto2 = new AvatarUpdateDto();

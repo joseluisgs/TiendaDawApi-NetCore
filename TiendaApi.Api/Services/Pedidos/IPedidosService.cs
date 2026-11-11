@@ -8,8 +8,7 @@ namespace TiendaApi.Api.Services.Pedidos;
 /// <summary>
 /// Contrato del servicio de pedidos.
 /// </summary>
-public interface IPedidosService
-{
+public interface IPedidosService {
     /// <summary>Obtiene todos los pedidos (admin).</summary>
     /// <returns>Resultado con colección de pedidos.</returns>
     Task<Result<IEnumerable<PedidoDto>, DomainError>> FindAllAsync();

@@ -10,8 +10,7 @@ namespace ClientBlazor.Cliente.Services.Rest;
 /// Define el contrato para el servicio principal de comunicación REST.
 /// Gestiona las operaciones CRUD sobre los recursos de la API.
 /// </summary>
-public interface IRestService
-{
+public interface IRestService {
     /// <summary>
     /// Obtiene una lista paginada de productos filtrada por diversos criterios.
     /// </summary>

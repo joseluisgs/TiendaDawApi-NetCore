@@ -10,33 +10,28 @@ namespace TiendaApi.Tests.Unit.Services.Backup;
 /// (round-trip), que es donde se rompe un CSV casero.
 /// </summary>
 [TestFixture]
-public class CsvCodecTests
-{
-    private static string Escribir(params string[][] filas)
-    {
+public class CsvCodecTests {
+    private static string Escribir(params string[][] filas) {
         using var texto = new StringWriter();
         foreach (var fila in filas)
             CsvCodec.EscribirFila(texto, fila);
         return texto.ToString();
     }
 
-    private static List<string[]> Leer(string contenido)
-    {
+    private static List<string[]> Leer(string contenido) {
         using var lector = new StringReader(contenido);
         return CsvCodec.Leer(lector);
     }
 
     [Test]
-    public void Escritor_CamposSinCaracteresEspeciales_NoEntrecomilla()
-    {
+    public void Escritor_CamposSinCaracteresEspeciales_NoEntrecomilla() {
         var csv = Escribir(["hola", "mundo"]);
 
         csv.Should().Be("hola,mundo" + Environment.NewLine);
     }
 
     [Test]
-    public void Escritor_CamposConComaComillaOSalto_LosEntrecomilla()
-    {
+    public void Escritor_CamposConComaComillaOSalto_LosEntrecomilla() {
         var csv = Escribir(["Laptop, tope de gama", "Di \"s\"count", "linea1\nlinea2"]);
 
         csv.Should().StartWith("\"Laptop, tope de gama\",\"Di \"\"s\"\"count\"");
@@ -44,10 +39,8 @@ public class CsvCodecTests
     }
 
     [Test]
-    public void RoundTrip_ConComillasComasYSaltos_SeRecuperanIguales()
-    {
-        var original = new[]
-        {
+    public void RoundTrip_ConComillasComasYSaltos_SeRecuperanIguales() {
+        var original = new[] {
             new[] { "nombre", "descripcion" },
             new[] { "Camiseta, negra", "Talla \"M\"" },
             new[] { "Saltos\nen línea", "con, coma" },
@@ -66,8 +59,7 @@ public class CsvCodecTests
     }
 
     [Test]
-    public void RoundTrip_ConSaltoDeLineaCRLF_SeRecuperanLasFilas()
-    {
+    public void RoundTrip_ConSaltoDeLineaCRLF_SeRecuperanLasFilas() {
         var csv = "a,b\r\n1,2\r\n3,4\r\n";
 
         var filas = Leer(csv);
@@ -78,8 +70,7 @@ public class CsvCodecTests
     }
 
     [Test]
-    public void Lectura_SinSaltoFinal_NoPierdeLaUltimaFila()
-    {
+    public void Lectura_SinSaltoFinal_NoPierdeLaUltimaFila() {
         var filas = Leer("a,b\n1,2");
 
         filas.Should().HaveCount(2, "la última fila no termina en salto de línea");
@@ -87,8 +78,7 @@ public class CsvCodecTests
     }
 
     [Test]
-    public void Lectura_LineaVacia_NoProduceUnaFilaFantasma()
-    {
+    public void Lectura_LineaVacia_NoProduceUnaFilaFantasma() {
         var filas = Leer("a,b\n\n1,2\n");
 
         filas.Should().HaveCount(2);
@@ -96,11 +86,9 @@ public class CsvCodecTests
     }
 
     [Test]
-    public void Escritor_EmiteBomDeUtf8ParaExcel()
-    {
+    public void Escritor_EmiteBomDeUtf8ParaExcel() {
         using var memoria = new MemoryStream();
-        using (var escritor = CsvCodec.CrearEscritor(memoria))
-        {
+        using (var escritor = CsvCodec.CrearEscritor(memoria)) {
             CsvCodec.EscribirCabecera(escritor, ["nombre"]);
             CsvCodec.EscribirFila(escritor, ["Electrónica"]);
         }
@@ -113,16 +101,14 @@ public class CsvCodecTests
     }
 
     [Test]
-    public void Formatear_NumerosYFechas_UsanCulturaInvariante()
-    {
+    public void Formatear_NumerosYFechas_UsanCulturaInvariante() {
         CsvCodec.Formatear(1234.56m).Should().Be("1234.56", "punto decimal, sin depender del idioma");
         CsvCodec.Formatear(new DateTime(2026, 11, 2, 10, 30, 0, DateTimeKind.Utc))
             .Should().Be("2026-11-02T10:30:00Z");
     }
 
     [Test]
-    public void Parseadores_ConValoresRaros_DevuelvenNull()
-    {
+    public void Parseadores_ConValoresRaros_DevuelvenNull() {
         CsvCodec.ADecimal("").Should().BeNull();
         CsvCodec.AEnteroLargo("no-numero").Should().BeNull();
         CsvCodec.AFecha("").Should().BeNull();

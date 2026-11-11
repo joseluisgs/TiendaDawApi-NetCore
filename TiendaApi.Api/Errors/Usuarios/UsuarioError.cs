@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.Usuarios;
 /// <summary>
 /// Errores del dominio de usuarios (HTTP 404, 409, 401, 400, 422).
 /// </summary>
-public static class UsuarioError
-{
+public static class UsuarioError {
     /// <summary>Crea error para usuario no encontrado.</summary>
     /// <param name="id">ID del usuario.</param>
     /// <returns>NotFoundError (HTTP 404).</returns>

@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.Estadisticas;
 /// <summary>
 /// Errores del dominio de estadísticas (HTTP 400 y 404).
 /// </summary>
-public static class ErrorEstadisticas
-{
+public static class ErrorEstadisticas {
     /// <summary>Crea error cuando la agrupación temporal no está soportada.</summary>
     /// <param name="agrupar">Valor recibido en la query string.</param>
     /// <returns>ValidationError (HTTP 400).</returns>

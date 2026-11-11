@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Repositories.Usuarios;
 /// <summary>
 /// Contrato del repositorio de usuarios.
 /// </summary>
-public interface IUserRepository
-{
+public interface IUserRepository {
     /// <summary>Busca un usuario por ID.</summary>
     /// <param name="id">ID del usuario.</param>
     /// <returns>Usuario o null.</returns>

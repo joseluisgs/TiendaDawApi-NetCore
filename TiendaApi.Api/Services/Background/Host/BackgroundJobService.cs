@@ -12,8 +12,7 @@ public class BackgroundJobService(
 IServiceProvider serviceProvider,
 ILogger<BackgroundJobService> logger,
 IConfiguration configuration
-) : BackgroundService
-{
+) : BackgroundService {
     private readonly bool _isDevelopment = configuration.GetValue<bool>("IsDevelopment");
     private readonly int _executionIntervalMinutes = configuration.GetValue<int>("Scheduler:ExecutionIntervalMinutes", 1440);
     private readonly int _executionIntervalHours = configuration.GetValue<int>("Scheduler:ExecutionIntervalHours", 168);
@@ -21,8 +20,7 @@ IConfiguration configuration
     /// <summary>
     /// Ejecuta el loop principal del servicio de fondo.
     /// </summary>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         logger.LogInformation("BackgroundJobService iniciado - Modo: {Modo}",
             _isDevelopment ? "DESARROLLO" : "PRODUCCION");
 
@@ -34,18 +32,12 @@ IConfiguration configuration
 
         await Task.Delay(interval, stoppingToken);
 
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
+        while (!stoppingToken.IsCancellationRequested) {
+            try {
                 await ExecuteJobsAsync(stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
+            } catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) {
                 break;
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogError(ex, "Error en BackgroundJobService");
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
@@ -57,8 +49,7 @@ IConfiguration configuration
     /// <summary>
     /// Ejecuta todos los jobs registrados.
     /// </summary>
-    private async Task ExecuteJobsAsync(CancellationToken ct)
-    {
+    private async Task ExecuteJobsAsync(CancellationToken ct) {
         using var scope = serviceProvider.CreateScope();
         var productoTask = scope.ServiceProvider.GetRequiredService<IProductoReportTask>();
 

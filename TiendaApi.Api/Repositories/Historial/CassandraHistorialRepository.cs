@@ -15,16 +15,14 @@ namespace TiendaApi.Api.Repositories.Historial;
 /// 3.23 no mapea desde <c>DateTime</c>/<c>DateOnly</c> ("Unknown Cassandra target
 /// type"): para <c>date</c> el tipo del driver es <c>Cassandra.LocalDate</c>.
 /// </remarks>
-public class CassandraHistorialRepository(ISession session) : IHistorialRepository
-{
+public class CassandraHistorialRepository(ISession session) : IHistorialRepository {
     // El session ya está en el keyspace (ChangeKeyspace en InitializeSchemaAsync).
     private readonly Table<HistorialPrecioPorProducto> _historial = new(session);
     private readonly Table<VistaPorUsuario> _vistas = new(session);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<HistorialPrecioDto>> GetHistorialPreciosAsync(
-        long productoId, DateTime? desde, DateTime? hasta, int limit)
-    {
+        long productoId, DateTime? desde, DateTime? hasta, int limit) {
         // SELECT * FROM historial_precios_por_producto WHERE producto_id = ?
         //   [AND fecha >= ? AND fecha <= ?]   <- rango sobre CLUSTERING key: permitido
         //   LIMIT ?                           <- sin ORDER BY: el DESC lo guarda la tabla
@@ -44,8 +42,7 @@ public class CassandraHistorialRepository(ISession session) : IHistorialReposito
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<VistaFeedDto>> GetFeedVistasAsync(long usuarioId, int limit)
-    {
+    public async Task<IReadOnlyList<VistaFeedDto>> GetFeedVistasAsync(long usuarioId, int limit) {
         // SELECT * FROM vistas_por_usuario WHERE usuario_id = ? LIMIT ?
         // Orden DESC de serie (clustering) y TTL de 180 días aplicado por la tabla.
         var filas = await _vistas
@@ -59,8 +56,7 @@ public class CassandraHistorialRepository(ISession session) : IHistorialReposito
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CambioPrecioDto>> GetCambiosPrecioAsync(DateOnly desde, DateOnly hasta)
-    {
+    public async Task<IReadOnlyList<CambioPrecioDto>> GetCambiosPrecioAsync(DateOnly desde, DateOnly hasta) {
         // 🎓 Un rango (>=, <=) sobre la PARTITION key está prohibido en CQL:
         // solo caben igualdades e IN. "Los cambios de esta semana" se resuelve
         // como IN con los días concretos = lookup puntual de N particiones.
@@ -82,8 +78,7 @@ public class CassandraHistorialRepository(ISession session) : IHistorialReposito
             $"SELECT fecha, producto_id, precio FROM cambios_precio_por_fecha WHERE fecha IN ({inDias})"));
 
         var cambios = new List<CambioPrecioDto>();
-        foreach (var fila in resultado)
-        {
+        foreach (var fila in resultado) {
             cambios.Add(new CambioPrecioDto(
                 DateOnlyFrom(fila.GetValue<LocalDate>("fecha")),
                 fila.GetValue<long>("producto_id"),
@@ -98,13 +93,11 @@ public class CassandraHistorialRepository(ISession session) : IHistorialReposito
     }
 
     /// <inheritdoc />
-    public async Task RegistrarPrecioAsync(long productoId, double precio)
-    {
+    public async Task RegistrarPrecioAsync(long productoId, double precio) {
         var ahora = DateTime.UtcNow;
 
         // 1) Q-A: una fila más en el histórico del producto (append-only, sin updates).
-        await _historial.Insert(new HistorialPrecioPorProducto
-        {
+        await _historial.Insert(new HistorialPrecioPorProducto {
             ProductoId = productoId,
             Fecha = ahora,
             Precio = precio
@@ -121,12 +114,10 @@ public class CassandraHistorialRepository(ISession session) : IHistorialReposito
     }
 
     /// <inheritdoc />
-    public async Task RegistrarVistaAsync(long usuarioId, long productoId, string nombre)
-    {
+    public async Task RegistrarVistaAsync(long usuarioId, long productoId, string nombre) {
         // El nombre se COPIA a la fila (denormalización: el feed no hará ningún
         // cruce) y el TTL lo aplica la tabla: sin USING TTL y sin job de purga.
-        await _vistas.Insert(new VistaPorUsuario
-        {
+        await _vistas.Insert(new VistaPorUsuario {
             UsuarioId = usuarioId,
             Fecha = DateTime.UtcNow,
             ProductoId = productoId,

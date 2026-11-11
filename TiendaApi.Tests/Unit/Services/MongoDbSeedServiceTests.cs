@@ -11,23 +11,20 @@ namespace TiendaApi.Tests.Unit.Services;
 /// <summary>
 /// Tests unitarios para MongoDbSeeder.
 /// </summary>
-public class MongoDbSeederTests
-{
+public class MongoDbSeederTests {
     private Mock<IMongoCollection<Pedido>> _mockPedidosCollection = null!;
     private Mock<ILogger<MongoDbSeeder>> _mockLogger = null!;
     private MongoDbSeeder _seedService = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _mockPedidosCollection = new Mock<IMongoCollection<Pedido>>();
         _mockLogger = new Mock<ILogger<MongoDbSeeder>>();
         _seedService = new MongoDbSeeder(_mockPedidosCollection.Object, _mockLogger.Object);
     }
 
     [Test]
-    public async Task SeedAsync_ColeccionVacia_InsertaPedidos()
-    {
+    public async Task SeedAsync_ColeccionVacia_InsertaPedidos() {
         var count = 0L;
         _mockPedidosCollection.Setup(x => x.CountDocumentsAsync(
                 It.IsAny<FilterDefinition<Pedido>>(),
@@ -54,8 +51,7 @@ public class MongoDbSeederTests
     }
 
     [Test]
-    public async Task SeedAsync_ColeccionConDatos_NoInsertaNada()
-    {
+    public async Task SeedAsync_ColeccionConDatos_NoInsertaNada() {
         var count = 5L;
         _mockPedidosCollection.Setup(x => x.CountDocumentsAsync(
                 It.IsAny<FilterDefinition<Pedido>>(),
@@ -85,8 +81,7 @@ public class MongoDbSeederTests
     }
 
     [Test]
-    public async Task SeedAsync_ErrorMongoDB_NoLanzaExcepcion()
-    {
+    public async Task SeedAsync_ErrorMongoDB_NoLanzaExcepcion() {
         var count = 0L;
         _mockPedidosCollection.Setup(x => x.CountDocumentsAsync(
                 It.IsAny<FilterDefinition<Pedido>>(),
@@ -115,8 +110,7 @@ public class MongoDbSeederTests
     }
 
     [Test]
-    public async Task SeedAsync_ColeccionVacia_LogueaSembrado()
-    {
+    public async Task SeedAsync_ColeccionVacia_LogueaSembrado() {
         var count = 0L;
         _mockPedidosCollection.Setup(x => x.CountDocumentsAsync(
                 It.IsAny<FilterDefinition<Pedido>>(),

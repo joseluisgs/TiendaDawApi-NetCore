@@ -36,8 +36,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Productos.Services;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class ProductoServiceIntegrationTests
-{
+public class ProductoServiceIntegrationTests {
     private const string DatabaseName = "it_producto_service";
     private string _connectionString = string.Empty;
     private string _mongoConnectionString = string.Empty;
@@ -47,28 +46,24 @@ public class ProductoServiceIntegrationTests
     private long _categoriaId;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
-    public async Task Setup()
-    {
+    public async Task Setup() {
         var connectionString = _connectionString;
         var mongoConnectionString = _mongoConnectionString;
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", DatabaseName },
@@ -82,8 +77,7 @@ public class ProductoServiceIntegrationTests
         services.AddOutputCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
-        services.AddLogging(builder =>
-        {
+        services.AddLogging(builder => {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Information);
         });
@@ -102,8 +96,7 @@ public class ProductoServiceIntegrationTests
         services.AddScoped<IProductoService, ProductoService>();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
         services.AddScoped<ICacheService, MemoryCacheService>();
-        services.AddScoped<IStorageService>(sp =>
-        {
+        services.AddScoped<IStorageService>(sp => {
             var mockStorage = new Mock<IStorageService>();
             mockStorage.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
                 .ReturnsAsync(Result.Success<string, DomainError>(System.IO.Path.Combine("images", "productos", "test.jpg")));
@@ -119,8 +112,7 @@ public class ProductoServiceIntegrationTests
         // MongoDB; la escritura del precio en los updates se delega en este mock y
         // la serie real de Cassandra la cubren los tests de integración con
         // Testcontainers.Cassandra.
-        services.AddScoped<IHistorialRepository>(sp =>
-        {
+        services.AddScoped<IHistorialRepository>(sp => {
             var mockHistorial = new Mock<IHistorialRepository>();
             mockHistorial.Setup(h => h.RegistrarPrecioAsync(It.IsAny<long>(), It.IsAny<double>()))
                 .Returns(Task.CompletedTask);
@@ -129,15 +121,13 @@ public class ProductoServiceIntegrationTests
         services.AddScoped<ProductosWebSocketHandler>();
 
         // Mock IHubContext<ProductosHub> for ProductoService
-        services.AddScoped<IHubContext<ProductosHub>>(sp =>
-        {
+        services.AddScoped<IHubContext<ProductosHub>>(sp => {
             var mockHubContext = new Mock<IHubContext<ProductosHub>>();
             return mockHubContext.Object;
         });
 
         // Mock IEventPublisher for GraphQL subscriptions
-        services.AddScoped<IEventPublisher>(sp =>
-        {
+        services.AddScoped<IEventPublisher>(sp => {
             var mockPublisher = new Mock<IEventPublisher>();
             mockPublisher.Setup(p => p.PublishAsync(It.IsAny<string>(), It.IsAny<object>()))
                 .Returns(Task.CompletedTask);
@@ -161,18 +151,15 @@ public class ProductoServiceIntegrationTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
+    public void TearDown() {
         _dbContext?.Dispose();
-        if (_serviceProvider is IDisposable sp)
-        {
+        if (_serviceProvider is IDisposable sp) {
             sp.Dispose();
         }
     }
 
     [Test]
-    public async Task FindAllAsync_SinProductos_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinProductos_RetornaListaVacia() {
         var result = await _productoService!.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
@@ -180,10 +167,8 @@ public class ProductoServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConDatosValidos_RetornaProductoCreado()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public async Task CreateAsync_ConDatosValidos_RetornaProductoCreado() {
+        var dto = new ProductoRequestDto {
             Nombre = "Laptop Test",
             Descripcion = "Laptop de prueba",
             Precio = 999.99m,
@@ -200,10 +185,8 @@ public class ProductoServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConProductoExistente_RetornaProducto()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public async Task FindByIdAsync_ConProductoExistente_RetornaProducto() {
+        var dto = new ProductoRequestDto {
             Nombre = "Buscar Test",
             Descripcion = "Producto de prueba",
             Precio = 99.99m,
@@ -220,18 +203,15 @@ public class ProductoServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConProductoNoExistente_RetornaNotFound()
-    {
+    public async Task FindByIdAsync_ConProductoNoExistente_RetornaNotFound() {
         var result = await _productoService!.FindByIdAsync(999999);
 
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    public async Task UpdateAsync_ConDatosValidos_RetornaProductoActualizado()
-    {
-        var createDto = new ProductoRequestDto
-        {
+    public async Task UpdateAsync_ConDatosValidos_RetornaProductoActualizado() {
+        var createDto = new ProductoRequestDto {
             Nombre = "Original",
             Descripcion = "Producto original",
             Precio = 99.99m,
@@ -241,8 +221,7 @@ public class ProductoServiceIntegrationTests
         var createResult = await _productoService!.CreateAsync(createDto);
         createResult.IsSuccess.Should().BeTrue();
 
-        var updateDto = new ProductoRequestDto
-        {
+        var updateDto = new ProductoRequestDto {
             Nombre = "Actualizado",
             Descripcion = "Producto actualizado",
             Precio = 149.99m,
@@ -256,10 +235,8 @@ public class ProductoServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteAsync_ConProductoExistente_RetornaExito()
-    {
-        var createDto = new ProductoRequestDto
-        {
+    public async Task DeleteAsync_ConProductoExistente_RetornaExito() {
+        var createDto = new ProductoRequestDto {
             Nombre = "Eliminar Test",
             Descripcion = "Producto a eliminar",
             Precio = 49.99m,
@@ -278,10 +255,8 @@ public class ProductoServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConPrecioCero_RetornaErrorValidacion()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public async Task CreateAsync_ConPrecioCero_RetornaErrorValidacion() {
+        var dto = new ProductoRequestDto {
             Nombre = "Producto Precio Cero",
             Descripcion = "No debería crearse",
             Precio = 0m,
@@ -295,10 +270,8 @@ public class ProductoServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConStockNegativo_RetornaErrorValidacion()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public async Task CreateAsync_ConStockNegativo_RetornaErrorValidacion() {
+        var dto = new ProductoRequestDto {
             Nombre = "Producto Stock Negativo",
             Descripcion = "No debería crearse",
             Precio = 99.99m,

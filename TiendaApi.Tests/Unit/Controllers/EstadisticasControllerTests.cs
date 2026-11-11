@@ -17,13 +17,11 @@ namespace TiendaApi.Tests.Unit.Controllers;
 /// delgado y que reparte correctamente éxito (200) y error de dominio.
 /// </summary>
 [TestFixture]
-public class EstadisticasControllerTests
-{
+public class EstadisticasControllerTests {
     private readonly Mock<IEstadisticasService> _mockService = new();
     private readonly EstadisticasController _controller;
 
-    public EstadisticasControllerTests()
-    {
+    public EstadisticasControllerTests() {
         _mockService.Setup(s => s.ResumenAsync(It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
             .ReturnsAsync(Result.Success<ResumenEstadisticasDto, DomainError>(
                 new ResumenEstadisticasDto(
@@ -40,15 +38,13 @@ public class EstadisticasControllerTests
                 ValidationError.Create("La agrupación 'trimestre' no es válida: usa dia, semana o mes")));
 
         _controller = new EstadisticasController(
-            _mockService.Object, Mock.Of<ILogger<EstadisticasController>>())
-        {
+            _mockService.Object, Mock.Of<ILogger<EstadisticasController>>()) {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
     }
 
     [Test]
-    public async Task Resumen_ConResultadoOk_Retorna200ConElResumen()
-    {
+    public async Task Resumen_ConResultadoOk_Retorna200ConElResumen() {
         var resultado = await _controller.Resumen(null, null);
 
         // El éxito viaja en Value (la conversión implícita crea ActionResult<T> con
@@ -59,8 +55,7 @@ public class EstadisticasControllerTests
     }
 
     [Test]
-    public async Task Resumen_ConErrorDeValidacion_Retorna400()
-    {
+    public async Task Resumen_ConErrorDeValidacion_Retorna400() {
         // Se distingue por los argumentos: si se redefiniera el Setup general,
         // el test de éxito recibiría este fallo (NUnit comparte la instancia).
         var desde = new DateTime(2026, 12, 31);
@@ -74,8 +69,7 @@ public class EstadisticasControllerTests
     }
 
     [Test]
-    public async Task Ventas_ConAgrupacionInvalida_Retorna400()
-    {
+    public async Task Ventas_ConAgrupacionInvalida_Retorna400() {
         var resultado = await _controller.Ventas(null, null, "trimestre");
 
         resultado.Result.Should().BeOfType<BadRequestObjectResult>();
@@ -83,8 +77,7 @@ public class EstadisticasControllerTests
     }
 
     [Test]
-    public async Task ProductosMasVendidos_PasaLosParametrosAlServicio()
-    {
+    public async Task ProductosMasVendidos_PasaLosParametrosAlServicio() {
         _mockService.Setup(s => s.ProductosMasVendidosAsync(
                 It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<int>()))
             .ReturnsAsync(Result.Success<ProductosMasVendidosDto, DomainError>(
@@ -97,8 +90,7 @@ public class EstadisticasControllerTests
     }
 
     [Test]
-    public async Task Precios_ConSerieNoEncontrada_Retorna404()
-    {
+    public async Task Precios_ConSerieNoEncontrada_Retorna404() {
         _mockService.Setup(s => s.PreciosAsync(It.IsAny<long>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
             .ReturnsAsync(Result.Failure<PreciosEstadisticasDto, DomainError>(
                 NotFoundError.FromId(999, "Producto")));
@@ -109,8 +101,7 @@ public class EstadisticasControllerTests
     }
 
     [Test]
-    public async Task Inventario_PasaElUmbralDeStockAlServicio()
-    {
+    public async Task Inventario_PasaElUmbralDeStockAlServicio() {
         _mockService.Setup(s => s.InventarioAsync(It.IsAny<int>()))
             .ReturnsAsync(Result.Success<InventarioDto, DomainError>(
                 new InventarioDto(8, new InventarioResumenDto(0, 0, 0, 0, 0, 0, 0), [], [], [])));

@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.Auth;
 /// <summary>
 /// Errores de autenticación y registro (HTTP 401, 409, 400).
 /// </summary>
-public static class AuthError
-{
+public static class AuthError {
     /// <summary>Crea error para credenciales inválidas.</summary>
     /// <returns>UnauthorizedError (HTTP 401).</returns>
     public static UnauthorizedError CredencialesInvalidas() =>

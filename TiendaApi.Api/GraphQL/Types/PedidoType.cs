@@ -12,14 +12,12 @@ namespace TiendaApi.Api.GraphQL.Types;
 /// modifican por REST; GraphQL los expone para lectura con control de acceso
 /// (pedidos = solo admin, misPedidos = solo el usuario autenticado).
 /// </summary>
-public class PedidoType : ObjectType<PedidoDto>
-{
+public class PedidoType : ObjectType<PedidoDto> {
     /// <summary>
     /// Configura los campos y descripciones del tipo GraphQL de PedidoDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
-    protected override void Configure(IObjectTypeDescriptor<PedidoDto> descriptor)
-    {
+    protected override void Configure(IObjectTypeDescriptor<PedidoDto> descriptor) {
         descriptor.Name("PedidoDto");
         descriptor.Description("Pedido tal como lo sirve la API (mismo contrato que REST).");
         descriptor.BindFieldsExplicitly();

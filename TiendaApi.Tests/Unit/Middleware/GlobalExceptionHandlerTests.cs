@@ -13,20 +13,16 @@ namespace TiendaApi.Tests.Unit.Middleware;
 /// <summary>
 /// Tests unitarios para GlobalExceptionHandler.
 /// </summary>
-public class GlobalExceptionHandlerTests
-{
+public class GlobalExceptionHandlerTests {
     private readonly Mock<RequestDelegate> _mockNext = new();
     private readonly Mock<ILogger<GlobalExceptionHandler>> _mockLogger = new();
     private readonly GlobalExceptionHandler _handler;
     private readonly DefaultHttpContext _httpContext;
 
-    public GlobalExceptionHandlerTests()
-    {
+    public GlobalExceptionHandlerTests() {
         _handler = new GlobalExceptionHandler(_mockNext.Object, _mockLogger.Object);
-        _httpContext = new DefaultHttpContext
-        {
-            Request =
-            {
+        _httpContext = new DefaultHttpContext {
+            Request = {
                 Path = "/api/v1/productos",
                 Method = HttpMethods.Post
             }
@@ -34,19 +30,16 @@ public class GlobalExceptionHandlerTests
     }
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _httpContext.Response.Body = new MemoryStream();
     }
 
     [TearDown]
-    public void TearDown()
-    {
+    public void TearDown() {
         _httpContext.Response.Body.Dispose();
     }
 
-    private async Task<(int StatusCode, string Body)> ExecuteHandlerAsync(Exception exception)
-    {
+    private async Task<(int StatusCode, string Body)> ExecuteHandlerAsync(Exception exception) {
         _mockNext.Setup(next => next(It.IsAny<HttpContext>()))
             .Throws(exception);
 
@@ -62,8 +55,7 @@ public class GlobalExceptionHandlerTests
     #region NotFoundException Tests
 
     [Test]
-    public async Task InvokeAsync_ConNotFoundException_DeberiaRetornar404()
-    {
+    public async Task InvokeAsync_ConNotFoundException_DeberiaRetornar404() {
         // Arrange
         var exception = new NotFoundException("Producto no encontrado");
 
@@ -77,8 +69,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_ConNotFoundException_DeberiaTenerErrorId()
-    {
+    public async Task InvokeAsync_ConNotFoundException_DeberiaTenerErrorId() {
         // Arrange
         var exception = new NotFoundException("Categoría no encontrada");
 
@@ -90,8 +81,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_ConNotFoundException_DeberiaTenerTimestamp()
-    {
+    public async Task InvokeAsync_ConNotFoundException_DeberiaTenerTimestamp() {
         // Arrange
         var exception = new NotFoundException("Usuario no encontrado");
 
@@ -107,11 +97,9 @@ public class GlobalExceptionHandlerTests
     #region ValidationException Tests
 
     [Test]
-    public async Task InvokeAsync_ConValidationException_DeberiaRetornar400()
-    {
+    public async Task InvokeAsync_ConValidationException_DeberiaRetornar400() {
         // Arrange
-        var errors = new Dictionary<string, string[]>
-        {
+        var errors = new Dictionary<string, string[]> {
             { "Nombre", new[] { "El nombre es obligatorio" } },
             { "Precio", new[] { "El precio debe ser mayor a 0" } }
         };
@@ -127,11 +115,9 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_ConValidationException_DeberiaIncluirErrors()
-    {
+    public async Task InvokeAsync_ConValidationException_DeberiaIncluirErrors() {
         // Arrange
-        var errors = new Dictionary<string, string[]>
-        {
+        var errors = new Dictionary<string, string[]> {
             { "Nombre", new[] { "El nombre es obligatorio" } }
         };
         var exception = new ValidationException("Errores de validación", errors);
@@ -149,8 +135,7 @@ public class GlobalExceptionHandlerTests
     #region BusinessException Tests
 
     [Test]
-    public async Task InvokeAsync_ConBusinessException_DeberiaRetornar400()
-    {
+    public async Task InvokeAsync_ConBusinessException_DeberiaRetornar400() {
         // Arrange
         var exception = new BusinessException("Stock insuficiente");
 
@@ -168,8 +153,7 @@ public class GlobalExceptionHandlerTests
     #region UnauthorizedAccessException Tests
 
     [Test]
-    public async Task InvokeAsync_ConUnauthorizedAccessException_DeberiaRetornar401()
-    {
+    public async Task InvokeAsync_ConUnauthorizedAccessException_DeberiaRetornar401() {
         // Arrange
         var exception = new UnauthorizedAccessException("Token inválido");
 
@@ -187,8 +171,7 @@ public class GlobalExceptionHandlerTests
     #region ArgumentException Tests
 
     [Test]
-    public async Task InvokeAsync_ConArgumentException_DeberiaRetornar400()
-    {
+    public async Task InvokeAsync_ConArgumentException_DeberiaRetornar400() {
         // Arrange
         var exception = new ArgumentException("El argumento es inválido");
 
@@ -205,8 +188,7 @@ public class GlobalExceptionHandlerTests
     #region TimeoutException Tests
 
     [Test]
-    public async Task InvokeAsync_ConTimeoutException_DeberiaRetornar408()
-    {
+    public async Task InvokeAsync_ConTimeoutException_DeberiaRetornar408() {
         // Arrange
         var exception = new TimeoutException("La operación tardó demasiado");
 
@@ -223,8 +205,7 @@ public class GlobalExceptionHandlerTests
     #region Exception Genérica Tests
 
     [Test]
-    public async Task InvokeAsync_ConExceptionGenerica_DeberiaRetornar500()
-    {
+    public async Task InvokeAsync_ConExceptionGenerica_DeberiaRetornar500() {
         // Arrange
         var exception = new Exception("Error inesperado");
 
@@ -237,8 +218,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_ConExceptionGenerica_NoDeberiaExponerDetalles()
-    {
+    public async Task InvokeAsync_ConExceptionGenerica_NoDeberiaExponerDetalles() {
         // Arrange
         var exception = new NullReferenceException("Object reference not set to an instance of an object.");
 
@@ -253,8 +233,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_ConExceptionGenerica_DeberiaTenerErrorId()
-    {
+    public async Task InvokeAsync_ConExceptionGenerica_DeberiaTenerErrorId() {
         // Arrange
         var exception = new InvalidOperationException("Operación inválida");
 
@@ -270,8 +249,7 @@ public class GlobalExceptionHandlerTests
     #region Response Format Tests
 
     [Test]
-    public async Task InvokeAsync_DeberiaRetornarContentTypeJson()
-    {
+    public async Task InvokeAsync_DeberiaRetornarContentTypeJson() {
         // Arrange
         var exception = new Exception("Error");
 
@@ -283,8 +261,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_DeberiaTenerPathEnRespuesta()
-    {
+    public async Task InvokeAsync_DeberiaTenerPathEnRespuesta() {
         // Arrange
         var exception = new Exception("Error");
 
@@ -296,8 +273,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_SinExcepcion_NoDeberiaLanzarExcepcion()
-    {
+    public async Task InvokeAsync_SinExcepcion_NoDeberiaLanzarExcepcion() {
         // Arrange
         var httpContext = new DefaultHttpContext();
         httpContext.Response.Body = new MemoryStream();
@@ -316,8 +292,7 @@ public class GlobalExceptionHandlerTests
     #region DbUpdateException Tests
 
     [Test]
-    public async Task InvokeAsync_ConDbUpdateException_DeberiaRetornar409()
-    {
+    public async Task InvokeAsync_ConDbUpdateException_DeberiaRetornar409() {
         // Arrange
         var exception = new DbUpdateException("Error de base de datos");
 
@@ -334,8 +309,7 @@ public class GlobalExceptionHandlerTests
     #region NpgsqlException Tests
 
     [Test]
-    public async Task InvokeAsync_ConNpgsqlException_DeberiaRetornar500()
-    {
+    public async Task InvokeAsync_ConNpgsqlException_DeberiaRetornar500() {
         // Arrange
         var exception = new NpgsqlException("Connection timeout");
 
@@ -348,8 +322,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_ConNpgsqlException_DeberiaTenerErrorId()
-    {
+    public async Task InvokeAsync_ConNpgsqlException_DeberiaTenerErrorId() {
         // Arrange
         var exception = new NpgsqlException("Error de PostgreSQL");
 
@@ -365,8 +338,7 @@ public class GlobalExceptionHandlerTests
     #region InvalidOperationException Tests
 
     [Test]
-    public async Task InvokeAsync_ConInvalidOperationException_DeberiaRetornar500()
-    {
+    public async Task InvokeAsync_ConInvalidOperationException_DeberiaRetornar500() {
         // Arrange
         var exception = new InvalidOperationException("Operación inválida");
 
@@ -383,8 +355,7 @@ public class GlobalExceptionHandlerTests
     #region ArgumentNullException Tests
 
     [Test]
-    public async Task InvokeAsync_ConArgumentNullException_DeberiaRetornar400()
-    {
+    public async Task InvokeAsync_ConArgumentNullException_DeberiaRetornar400() {
         // Arrange
         var exception = new ArgumentNullException("parameterName", "El argumento no puede ser null");
 
@@ -401,8 +372,7 @@ public class GlobalExceptionHandlerTests
     #region KeyNotFoundException Tests
 
     [Test]
-    public async Task InvokeAsync_ConKeyNotFoundException_DeberiaRetornar500()
-    {
+    public async Task InvokeAsync_ConKeyNotFoundException_DeberiaRetornar500() {
         // Arrange
         var exception = new System.Collections.Generic.KeyNotFoundException("La clave no existe");
 
@@ -419,8 +389,7 @@ public class GlobalExceptionHandlerTests
     #region OperationCanceledException Tests
 
     [Test]
-    public async Task InvokeAsync_ConOperationCanceledException_DeberiaRetornar500()
-    {
+    public async Task InvokeAsync_ConOperationCanceledException_DeberiaRetornar500() {
         // Arrange
         var exception = new OperationCanceledException("La operación fue cancelada");
 
@@ -437,8 +406,7 @@ public class GlobalExceptionHandlerTests
     #region JsonException Tests
 
     [Test]
-    public async Task InvokeAsync_ConJsonException_DeberiaRetornar500()
-    {
+    public async Task InvokeAsync_ConJsonException_DeberiaRetornar500() {
         // Arrange
         var exception = new System.Text.Json.JsonException("Error al parsear JSON");
 
@@ -455,8 +423,7 @@ public class GlobalExceptionHandlerTests
     #region Response Content Tests
 
     [Test]
-    public async Task InvokeAsync_Response_DeberiaSerJson()
-    {
+    public async Task InvokeAsync_Response_DeberiaSerJson() {
         // Arrange
         var exception = new Exception("Test");
 
@@ -468,8 +435,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_Response_DeberiaTenerStatusCodeCorrecto()
-    {
+    public async Task InvokeAsync_Response_DeberiaTenerStatusCodeCorrecto() {
         // Arrange
         var exception = new NotFoundException("Test");
 
@@ -481,8 +447,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_Response_DeberiaTenerPath()
-    {
+    public async Task InvokeAsync_Response_DeberiaTenerPath() {
         // Arrange
         var exception = new Exception("Test");
         _httpContext.Request.Path = "/api/v1/test/path";
@@ -495,8 +460,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_Response_DeberiaTenerMethod()
-    {
+    public async Task InvokeAsync_Response_DeberiaTenerMethod() {
         // Arrange
         var exception = new Exception("Test");
         _httpContext.Request.Method = HttpMethods.Post;
@@ -509,8 +473,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_Response_DeberiaTenerTimestamp()
-    {
+    public async Task InvokeAsync_Response_DeberiaTenerTimestamp() {
         // Arrange
         var exception = new Exception("Test");
 
@@ -522,8 +485,7 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_Response_Timestamp_DeberiaSerValido()
-    {
+    public async Task InvokeAsync_Response_Timestamp_DeberiaSerValido() {
         // Arrange
         var exception = new Exception("Test");
         var before = DateTime.UtcNow;
@@ -540,8 +502,7 @@ public class GlobalExceptionHandlerTests
     #region ErrorId Tests
 
     [Test]
-    public async Task InvokeAsync_ErrorId_DeberiaSerUnico()
-    {
+    public async Task InvokeAsync_ErrorId_DeberiaSerUnico() {
         // Arrange
         var exception1 = new Exception("Error 1");
         var exception2 = new Exception("Error 2");
@@ -560,8 +521,7 @@ public class GlobalExceptionHandlerTests
     #region Exception Message Tests
 
     [Test]
-    public async Task InvokeAsync_NotFoundException_Message_DeberiaIncluirMsgOriginal()
-    {
+    public async Task InvokeAsync_NotFoundException_Message_DeberiaIncluirMsgOriginal() {
         // Arrange
         var exception = new NotFoundException("Producto específico no encontrado");
 
@@ -574,11 +534,9 @@ public class GlobalExceptionHandlerTests
     }
 
     [Test]
-    public async Task InvokeAsync_ValidationException_Errors_DeberiaSerDiccionario()
-    {
+    public async Task InvokeAsync_ValidationException_Errors_DeberiaSerDiccionario() {
         // Arrange
-        var errors = new Dictionary<string, string[]>
-        {
+        var errors = new Dictionary<string, string[]> {
             { "Campo1", new[] { "Error1", "Error2" } },
             { "Campo2", new[] { "Error3" } }
         };

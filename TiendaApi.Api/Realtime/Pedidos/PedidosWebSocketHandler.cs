@@ -34,8 +34,7 @@ public record PedidoNotificacion(
 /// ws.onmessage = (event) => console.log('Notificación:', JSON.parse(event.data));
 /// // Respuesta: {"entity":"pedidos","type":"PEDIDO_ESTADO_ACTUALIZADO","pedidoId":"PED-ABC123","estado":"Enviado","timestamp":"2025-01-18T10:30:00Z"}
 /// </example>
-public class PedidosWebSocketHandler
-{
+public class PedidosWebSocketHandler {
     private const string ADMIN_CACHE_KEY_PREFIX = "ws:pedidos:admin:";
     private record struct ConnectionInfo(WebSocket WebSocket, long UserId, string Token);
 
@@ -60,16 +59,14 @@ public class PedidosWebSocketHandler
         IJwtTokenExtractor tokenExtractor,
         IJwtService jwtService,
         ICacheService cacheService,
-        IConfiguration configuration)
-    {
+        IConfiguration configuration) {
         _logger = logger;
         _tokenExtractor = tokenExtractor;
         _jwtService = jwtService;
         _cacheService = cacheService;
         var ttlMinutes = configuration.GetValue<int>("WebSocket:RoleCacheTTLMinutes", 5);
         _roleCacheTTL = TimeSpan.FromMinutes(ttlMinutes);
-        _jsonOptions = new JsonSerializerOptions
-        {
+        _jsonOptions = new JsonSerializerOptions {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             // Source-gen (AppJsonContext) + fallback a reflexión
             TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
@@ -80,8 +77,7 @@ public class PedidosWebSocketHandler
     /// <summary>Maneja una conexión WebSocket (requiere token JWT).</summary>
     /// <param name="context">Contexto HTTP.</param>
     /// <param name="webSocket">Instancia del WebSocket.</param>
-    public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket)
-    {
+    public async Task HandleConnectionAsync(HttpContext context, WebSocket webSocket) {
         // 🎓 Higiene de seguridad: preferir header Authorization sobre query string.
         var token = context.Request.Headers["Authorization"].FirstOrDefault();
         if (!string.IsNullOrEmpty(token) && token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
@@ -89,8 +85,7 @@ public class PedidosWebSocketHandler
         else
             token = context.Request.Query["token"].FirstOrDefault();
 
-        if (string.IsNullOrEmpty(token))
-        {
+        if (string.IsNullOrEmpty(token)) {
             await CloseWebSocketAsync(webSocket, WebSocketCloseStatus.PolicyViolation, "Token requerido");
             return;
         }
@@ -100,16 +95,14 @@ public class PedidosWebSocketHandler
         // comprobación valdría cualquier token fabricado. Aquí se comprueba
         // firma, issuer, audiencia y vida - la misma validación que aplica la
         // API HTTP con JwtBearer.
-        if (_jwtService.ValidateToken(token) is null)
-        {
+        if (_jwtService.ValidateToken(token) is null) {
             await CloseWebSocketAsync(webSocket, WebSocketCloseStatus.PolicyViolation, "Token inválido");
             return;
         }
 
         var (userId, isAdmin, _) = _tokenExtractor.ExtractUserInfo(token);
 
-        if (userId == null)
-        {
+        if (userId == null) {
             await CloseWebSocketAsync(webSocket, WebSocketCloseStatus.PolicyViolation, "Token inválido");
             return;
         }
@@ -128,28 +121,21 @@ public class PedidosWebSocketHandler
     /// <summary>Notifica a un usuario específico.</summary>
     /// <param name="userId">ID del usuario.</param>
     /// <param name="notificacion">Datos de la notificación.</param>
-    public async Task NotifyUserAsync(long userId, PedidoNotificacion notificacion)
-    {
+    public async Task NotifyUserAsync(long userId, PedidoNotificacion notificacion) {
         var wrapper = CreateWrapper(notificacion);
         var sentCount = 0;
         var disconnected = new List<string>();
 
-        foreach (var connection in _connections)
-        {
+        foreach (var connection in _connections) {
             if (connection.Value.UserId != userId) continue;
 
-            try
-            {
-                if (connection.Value.WebSocket.State == WebSocketState.Open)
-                {
+            try {
+                if (connection.Value.WebSocket.State == WebSocketState.Open) {
                     await SendToSocketAsync(connection.Value.WebSocket, wrapper);
                     sentCount++;
-                }
-                else
+                } else
                     disconnected.Add(connection.Key);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 _logger.LogWarning(ex, "Error enviando a: {ConnectionId}", connection.Key);
                 disconnected.Add(connection.Key);
             }
@@ -161,29 +147,22 @@ public class PedidosWebSocketHandler
 
     /// <summary>Notifica a todos los administradores.</summary>
     /// <param name="notificacion">Datos de la notificación.</param>
-    public async Task NotifyAdminsAsync(PedidoNotificacion notificacion)
-    {
+    public async Task NotifyAdminsAsync(PedidoNotificacion notificacion) {
         var wrapper = CreateWrapper(notificacion);
         var sentCount = 0;
         var disconnected = new List<string>();
 
-        foreach (var connection in _connections)
-        {
+        foreach (var connection in _connections) {
             var isAdmin = await GetUserAdminStatusAsync(connection.Value.UserId, connection.Value.Token);
             if (!isAdmin) continue;
 
-            try
-            {
-                if (connection.Value.WebSocket.State == WebSocketState.Open)
-                {
+            try {
+                if (connection.Value.WebSocket.State == WebSocketState.Open) {
                     await SendToSocketAsync(connection.Value.WebSocket, wrapper);
                     sentCount++;
-                }
-                else
+                } else
                     disconnected.Add(connection.Key);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 _logger.LogWarning(ex, "Error enviando a admin: {ConnectionId}", connection.Key);
                 disconnected.Add(connection.Key);
             }
@@ -194,8 +173,7 @@ public class PedidosWebSocketHandler
     }
 
     /// <summary>Notifica a usuario Y administradores.</summary>
-    public virtual async Task NotifyUserAndAdminsAsync(long userId, PedidoNotificacion notificacion)
-    {
+    public virtual async Task NotifyUserAndAdminsAsync(long userId, PedidoNotificacion notificacion) {
         await Task.WhenAll(NotifyUserAsync(userId, notificacion), NotifyAdminsAsync(notificacion));
     }
 
@@ -203,8 +181,7 @@ public class PedidosWebSocketHandler
     /// <returns>Número de conexiones.</returns>
     public int GetConnectionCount() => _connections.Count;
 
-    private async Task<bool> GetUserAdminStatusAsync(long userId, string token)
-    {
+    private async Task<bool> GetUserAdminStatusAsync(long userId, string token) {
         var cacheKey = $"{ADMIN_CACHE_KEY_PREFIX}{userId}";
         var cachedValue = await _cacheService.GetAsync<bool?>(cacheKey);
 
@@ -216,10 +193,8 @@ public class PedidosWebSocketHandler
         return isAdmin;
     }
 
-    private async Task HandleWebSocketLoopAsync(WebSocket webSocket, string connectionId)
-    {
-        try
-        {
+    private async Task HandleWebSocketLoopAsync(WebSocket webSocket, string connectionId) {
+        try {
             var buffer = new byte[1024 * 4];
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
@@ -227,15 +202,10 @@ public class PedidosWebSocketHandler
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             _logger.LogError(ex, "Error en WebSocket: {ConnectionId}", connectionId);
-        }
-        finally
-        {
-            if (_connections.TryRemove(connectionId, out var connection))
-            {
+        } finally {
+            if (_connections.TryRemove(connectionId, out var connection)) {
                 var cacheKey = $"{ADMIN_CACHE_KEY_PREFIX}{connection.UserId}";
                 await _cacheService.RemoveAsync(cacheKey);
             }
@@ -243,10 +213,8 @@ public class PedidosWebSocketHandler
         }
     }
 
-    private object CreateWrapper(PedidoNotificacion notificacion)
-    {
-        var wrapper = new Dictionary<string, object?>
-        {
+    private object CreateWrapper(PedidoNotificacion notificacion) {
+        var wrapper = new Dictionary<string, object?> {
             ["entity"] = "pedidos",
             ["type"] = notificacion.Tipo,
             ["pedidoId"] = notificacion.PedidoId,
@@ -261,32 +229,24 @@ public class PedidosWebSocketHandler
         return wrapper;
     }
 
-    private async Task SendToSocketAsync(WebSocket webSocket, object data)
-    {
+    private async Task SendToSocketAsync(WebSocket webSocket, object data) {
         var json = JsonSerializer.Serialize(data, _jsonOptions);
         var bytes = Encoding.UTF8.GetBytes(json);
         await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
-    private async Task CloseWebSocketAsync(WebSocket webSocket, WebSocketCloseStatus status, string description)
-    {
-        try
-        {
+    private async Task CloseWebSocketAsync(WebSocket webSocket, WebSocketCloseStatus status, string description) {
+        try {
             if (webSocket.State == WebSocketState.Open)
                 await webSocket.CloseAsync(status, description, CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             _logger.LogWarning(ex, "Error cerrando WebSocket");
         }
     }
 
-    private async Task CleanupDisconnectedConnectionsAsync(List<string> connectionIds)
-    {
-        foreach (var connectionId in connectionIds)
-        {
-            if (_connections.TryRemove(connectionId, out var connection))
-            {
+    private async Task CleanupDisconnectedConnectionsAsync(List<string> connectionIds) {
+        foreach (var connectionId in connectionIds) {
+            if (_connections.TryRemove(connectionId, out var connection)) {
                 var cacheKey = $"{ADMIN_CACHE_KEY_PREFIX}{connection.UserId}";
                 await _cacheService.RemoveAsync(cacheKey);
             }

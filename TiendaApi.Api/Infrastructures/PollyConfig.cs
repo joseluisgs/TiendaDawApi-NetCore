@@ -19,8 +19,7 @@ namespace TiendaApi.Api.Infrastructures;
 /// transacciones explícitas de PedidosService) ni sobre HttpClient (la API no
 /// tiene llamadas salientes reales).
 /// </summary>
-public static class PollyConfig
-{
+public static class PollyConfig {
     /// <summary>Timeout por intento: si SMTP no responde en 10s, se cancela y cuenta como fallo.</summary>
     public static readonly TimeSpan EmailTimeout = TimeSpan.FromSeconds(10);
 
@@ -28,8 +27,7 @@ public static class PollyConfig
     public static readonly TimeSpan EmailBreakDuration = TimeSpan.FromSeconds(30);
 
     /// <summary>Reintentos: 3 (es decir, 1 intento original + 3 reintentos), backoff 2^n → 1s, 2s, 4s.</summary>
-    public static RetryStrategyOptions EmailRetryOptions(ILogger? logger = null, TimeSpan? delay = null) => new()
-    {
+    public static RetryStrategyOptions EmailRetryOptions(ILogger? logger = null, TimeSpan? delay = null) => new() {
         MaxRetryAttempts = 3,
         BackoffType = DelayBackoffType.Exponential,
         Delay = delay ?? TimeSpan.FromSeconds(1),
@@ -37,8 +35,7 @@ public static class PollyConfig
         // repitiendo el intento) ni cancelaciones del hosting.
         ShouldHandle = new PredicateBuilder()
             .Handle<Exception>(ex => ex is not BrokenCircuitException and not OperationCanceledException),
-        OnRetry = args =>
-        {
+        OnRetry = args => {
             logger?.LogWarning(
                 "Polly[email] reintento {Attempt}/3 tras fallo de SMTP (próximo intento en {Delay})",
                 args.AttemptNumber,
@@ -48,28 +45,24 @@ public static class PollyConfig
     };
 
     /// <summary>Cortacircuitos: 3 fallos consecutivos (ratio 100%) en ventana de 30s → 30s sin llamar a SMTP.</summary>
-    public static CircuitBreakerStrategyOptions EmailCircuitBreakerOptions(ILogger? logger = null) => new()
-    {
+    public static CircuitBreakerStrategyOptions EmailCircuitBreakerOptions(ILogger? logger = null) => new() {
         FailureRatio = 1.0,
         MinimumThroughput = 3,
         SamplingDuration = TimeSpan.FromSeconds(30),
         BreakDuration = EmailBreakDuration,
         ShouldHandle = new PredicateBuilder()
             .Handle<Exception>(ex => ex is not OperationCanceledException),
-        OnOpened = args =>
-        {
+        OnOpened = args => {
             logger?.LogWarning(
                 "Polly[email] circuito ABIERTO tras 3 fallos: {BreakDuration}s sin intentar SMTP",
                 args.BreakDuration);
             return ValueTask.CompletedTask;
         },
-        OnClosed = _ =>
-        {
+        OnClosed = _ => {
             logger?.LogInformation("Polly[email] circuito CERRADO: reanudando envíos");
             return ValueTask.CompletedTask;
         },
-        OnHalfOpened = _ =>
-        {
+        OnHalfOpened = _ => {
             logger?.LogInformation("Polly[email] circuito HALF-OPEN: enviando prueba");
             return ValueTask.CompletedTask;
         }

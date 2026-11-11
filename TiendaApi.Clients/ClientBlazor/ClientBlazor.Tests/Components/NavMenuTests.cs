@@ -13,8 +13,7 @@ namespace ClientBlazor.Tests.Components;
 /// Objetivo: Validar la consistencia de las rutas y el dinamismo del menú según la sesión.
 /// </summary>
 [TestFixture]
-public class NavMenuTests
-{
+public class NavMenuTests {
     private BunitContext _ctx = null!;
     private Mock<IAuthStore> _authStoreMock = null!;
 
@@ -22,11 +21,10 @@ public class NavMenuTests
     /// Configura el mock del estado de sesión.
     /// </summary>
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _ctx = new BunitContext();
         _authStoreMock = new Mock<IAuthStore>();
-        
+
         // Estado inicial: no autenticado
         _authStoreMock.Setup(s => s.IsAuthenticatedObservable).Returns(System.Reactive.Linq.Observable.Return(false));
         _authStoreMock.Setup(s => s.IsAdminObservable).Returns(System.Reactive.Linq.Observable.Return(false));
@@ -44,8 +42,7 @@ public class NavMenuTests
     /// Verifica que los enlaces principales (REST y GraphQL) siempre estén disponibles en el menú.
     /// </summary>
     [Test]
-    public void NavMenu_Should_Always_Render_Basic_Links()
-    {
+    public void NavMenu_Should_Always_Render_Basic_Links() {
         // Act
         var cut = _ctx.Render<NavMenu>();
 
@@ -58,8 +55,7 @@ public class NavMenuTests
     /// Comprueba que el enlace a la página de inicio esté presente.
     /// </summary>
     [Test]
-    public void NavMenu_Should_Render_Home_Link()
-    {
+    public void NavMenu_Should_Render_Home_Link() {
         // Act
         var cut = _ctx.Render<NavMenu>();
 

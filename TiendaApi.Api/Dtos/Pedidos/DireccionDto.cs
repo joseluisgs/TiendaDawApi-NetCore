@@ -16,8 +16,7 @@ namespace TiendaApi.Api.Dtos.Pedidos;
 ///   "codigoPostal": "28013"
 /// }
 /// </example>
-public class DireccionDto
-{
+public class DireccionDto {
     /// <summary>
     /// Nombre de la calle, avenida, plaza o vía pública.
     /// </summary>

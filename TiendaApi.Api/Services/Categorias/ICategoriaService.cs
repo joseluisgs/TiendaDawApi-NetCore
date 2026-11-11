@@ -8,8 +8,7 @@ namespace TiendaApi.Api.Services.Categorias;
 /// <summary>
 /// Contrato del servicio de categorías.
 /// </summary>
-public interface ICategoriaService
-{
+public interface ICategoriaService {
     /// <summary>Obtiene todas las categorías.</summary>
     /// <returns>Resultado con colección de categorías.</returns>
     Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync();

@@ -9,13 +9,11 @@ namespace TiendaApi.Api.Data.Interceptors;
 /// <summary>
 /// Interceptor de EF Core que asigna CreatedAt y UpdatedAt automáticamente.
 /// </summary>
-public class TimestampInterceptor : SaveChangesInterceptor
-{
+public class TimestampInterceptor : SaveChangesInterceptor {
     /// <summary>
     /// Asigna timestamps antes de guardar cambios (sync).
     /// </summary>
-    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
-    {
+    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result) {
         if (eventData.Context == null)
             return base.SavingChanges(eventData, result);
 
@@ -29,8 +27,7 @@ public class TimestampInterceptor : SaveChangesInterceptor
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         if (eventData.Context == null)
             return base.SavingChangesAsync(eventData, result, cancellationToken);
 
@@ -38,14 +35,11 @@ public class TimestampInterceptor : SaveChangesInterceptor
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private static void UpdateTimestamps(DbContext context)
-    {
+    private static void UpdateTimestamps(DbContext context) {
         var now = DateTime.UtcNow;
 
-        foreach (var entry in context.ChangeTracker.Entries<ITimestamped>())
-        {
-            switch (entry.State)
-            {
+        foreach (var entry in context.ChangeTracker.Entries<ITimestamped>()) {
+            switch (entry.State) {
                 case EntityState.Added:
                     entry.Property(e => e.CreatedAt).CurrentValue = now;
                     entry.Property(e => e.UpdatedAt).CurrentValue = now;
@@ -61,13 +55,11 @@ public class TimestampInterceptor : SaveChangesInterceptor
 /// <summary>
 /// Extensiones para configurar timestamps en entidades.
 /// </summary>
-public static class TimestampExtensions
-{
+public static class TimestampExtensions {
     /// <summary>
     /// Configura CreatedAt y UpdatedAt como GeneratedOnAdd/Update.
     /// </summary>
-    public static void ConfigureTimestamps(this EntityTypeBuilder entity)
-    {
+    public static void ConfigureTimestamps(this EntityTypeBuilder entity) {
         entity.Property("CreatedAt")
             .IsRequired()
             .ValueGeneratedOnAdd()

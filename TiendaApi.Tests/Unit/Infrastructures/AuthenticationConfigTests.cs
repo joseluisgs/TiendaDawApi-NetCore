@@ -20,14 +20,11 @@ namespace TiendaApi.Tests.Unit.Infrastructures;
 [Category("Unit")]
 [Category("Infrastructure")]
 [Category("Auth")]
-public class AuthenticationConfigTests
-{
+public class AuthenticationConfigTests {
     private const string ValidJwtKey = "test-jwt-key-with-at-least-32-characters!!";
 
-    private static IConfiguration BuildConfiguration(string? authMode)
-    {
-        var data = new Dictionary<string, string?>
-        {
+    private static IConfiguration BuildConfiguration(string? authMode) {
+        var data = new Dictionary<string, string?> {
             ["Jwt:Key"] = ValidJwtKey,
             ["Jwt:Issuer"] = "TiendaApiTest",
             ["Jwt:Audience"] = "TiendaApiTest"
@@ -41,15 +38,13 @@ public class AuthenticationConfigTests
             .Build();
     }
 
-    private static Type? GetRegisteredAuthServiceImplementation(IServiceCollection services)
-    {
+    private static Type? GetRegisteredAuthServiceImplementation(IServiceCollection services) {
         var descriptor = services.LastOrDefault(d => d.ServiceType == typeof(IAuthService));
         return descriptor?.ImplementationType;
     }
 
     [Test]
-    public void AddAuthentication_ModoCustom_DebeRegistrarAuthService()
-    {
+    public void AddAuthentication_ModoCustom_DebeRegistrarAuthService() {
         var services = new ServiceCollection();
 
         services.AddAuthentication(BuildConfiguration("Custom"));
@@ -59,8 +54,7 @@ public class AuthenticationConfigTests
     }
 
     [Test]
-    public void AddAuthentication_ModoIdentity_DebeRegistrarIdentityAuthService()
-    {
+    public void AddAuthentication_ModoIdentity_DebeRegistrarIdentityAuthService() {
         var services = new ServiceCollection();
 
         services.AddAuthentication(BuildConfiguration("Identity"));
@@ -70,8 +64,7 @@ public class AuthenticationConfigTests
     }
 
     [Test]
-    public void AddAuthentication_ModoIdentity_DebeRegistrarUserManagerDeIdentity()
-    {
+    public void AddAuthentication_ModoIdentity_DebeRegistrarUserManagerDeIdentity() {
         var services = new ServiceCollection();
 
         services.AddAuthentication(BuildConfiguration("Identity"));
@@ -84,8 +77,7 @@ public class AuthenticationConfigTests
     }
 
     [Test]
-    public void AddAuthentication_SinAuthMode_DebeUsarCustomPorDefecto()
-    {
+    public void AddAuthentication_SinAuthMode_DebeUsarCustomPorDefecto() {
         var services = new ServiceCollection();
 
         // Sin "Auth:Mode" en configuración → default "Custom"
@@ -96,12 +88,10 @@ public class AuthenticationConfigTests
     }
 
     [Test]
-    public void AddAuthentication_AmbosModos_DebeRegistrarElMismoMiddlewareJwt()
-    {
+    public void AddAuthentication_AmbosModos_DebeRegistrarElMismoMiddlewareJwt() {
         // El middleware JWT es idéntico en ambos modos: la diferencia es SOLO
         // cómo se valida la contraseña, no cómo se valida el token.
-        foreach (var mode in new[] { "Custom", "Identity" })
-        {
+        foreach (var mode in new[] { "Custom", "Identity" }) {
             var services = new ServiceCollection();
 
             services.AddAuthentication(BuildConfiguration(mode));
@@ -112,8 +102,7 @@ public class AuthenticationConfigTests
     }
 
     [Test]
-    public void AddAuthentication_SinJwtKey_DebeLanzarInvalidOperationException()
-    {
+    public void AddAuthentication_SinJwtKey_DebeLanzarInvalidOperationException() {
         var services = new ServiceCollection();
         var configWithoutKey = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Auth:Mode"] = "Custom" })

@@ -26,17 +26,14 @@ public class IdentityAuthService(
     SignInManager<User> signInManager,
     IJwtService jwtService,
     ILogger<IdentityAuthService> logger
-) : IAuthService
-{
+) : IAuthService {
     /// <summary>
     /// Registra un nuevo usuario con Identity.
     /// </summary>
-    public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto)
-    {
+    public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto) {
         logger.LogInformation("SignUp (Identity) para: {Username}", dto.Username);
 
-        var user = new User
-        {
+        var user = new User {
             UserName = dto.Username,
             Email = dto.Email,
             Role = UserRoles.USER
@@ -44,8 +41,7 @@ public class IdentityAuthService(
 
         var result = await userManager.CreateAsync(user, dto.Password!);
 
-        if (!result.Succeeded)
-        {
+        if (!result.Succeeded) {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             logger.LogWarning("SignUp falló: {Errors}", errors);
 
@@ -63,23 +59,20 @@ public class IdentityAuthService(
     /// <summary>
     /// Inicia sesión con Identity (verifica contraseña con PBKDF2).
     /// </summary>
-    public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto)
-    {
+    public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto) {
         logger.LogInformation("SignIn (Identity) para: {Username}", dto.Username);
 
         var user = await userManager.FindByNameAsync(dto.Username!)
             ?? await userManager.FindByEmailAsync(dto.Username!);
 
-        if (user is null)
-        {
+        if (user is null) {
             logger.LogWarning("SignIn falló: usuario no encontrado");
             return Result.Failure<AuthResponseDto, DomainError>(AuthErrors.CredencialesInvalidas());
         }
 
         var result = await signInManager.CheckPasswordSignInAsync(user, dto.Password!, lockoutOnFailure: false);
 
-        if (!result.Succeeded)
-        {
+        if (!result.Succeeded) {
             logger.LogWarning("SignIn falló: contraseña inválida");
             return Result.Failure<AuthResponseDto, DomainError>(AuthErrors.CredencialesInvalidas());
         }
@@ -92,8 +85,7 @@ public class IdentityAuthService(
     /// Inicia sesión con proveedor externo (OAuth 2.0) usando Identity.
     /// </summary>
     public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(
-        Dtos.Auth.ExternalLoginDto info)
-    {
+        Dtos.Auth.ExternalLoginDto info) {
         logger.LogInformation("Login externo (Identity) con {Provider}", info.LoginProvider);
 
         if (string.IsNullOrWhiteSpace(info.Email))
@@ -102,10 +94,8 @@ public class IdentityAuthService(
 
         var user = await userManager.FindByEmailAsync(info.Email);
 
-        if (user is null)
-        {
-            user = new User
-            {
+        if (user is null) {
+            user = new User {
                 UserName = info.Email,
                 Email = info.Email,
                 Role = UserRoles.USER
@@ -117,8 +107,7 @@ public class IdentityAuthService(
         // Vincular login externo
         var loginInfo = new UserLoginInfo(info.LoginProvider, info.ProviderKey, info.LoginProvider);
         var existingLogins = await userManager.GetLoginsAsync(user);
-        if (!existingLogins.Any(l => l.LoginProvider == info.LoginProvider))
-        {
+        if (!existingLogins.Any(l => l.LoginProvider == info.LoginProvider)) {
             await userManager.AddLoginAsync(user, loginInfo);
         }
 
@@ -128,8 +117,7 @@ public class IdentityAuthService(
     /// <summary>
     /// Genera la respuesta con JWT (mismo flujo que modo Custom).
     /// </summary>
-    private AuthResponseDto GenerateAuthResponse(User user)
-    {
+    private AuthResponseDto GenerateAuthResponse(User user) {
         var token = jwtService.GenerateToken(user);
 
         var userDto = new UserDto(

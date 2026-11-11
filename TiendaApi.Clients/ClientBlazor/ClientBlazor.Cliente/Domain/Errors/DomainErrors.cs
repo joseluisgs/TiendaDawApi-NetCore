@@ -6,8 +6,7 @@ namespace ClientBlazor.Cliente.Domain.Errors;
 /// </summary>
 /// <param name="Code">Código identificador único del error (ej. AUTH_INVALID_CREDENTIALS).</param>
 /// <param name="Message">Mensaje descriptivo del error para el usuario.</param>
-public abstract class DomainError(string Code, string Message) : Exception(Message)
-{
+public abstract class DomainError(string Code, string Message) : Exception(Message) {
     /// <summary>Obtiene el código identificador del error.</summary>
     public string Code { get; } = Code;
     /// <summary>Obtiene el mensaje detallado del error.</summary>
@@ -17,8 +16,7 @@ public abstract class DomainError(string Code, string Message) : Exception(Messa
 /// <summary>
 /// Contenedor de errores predefinidos relacionados con la autenticación y autorización.
 /// </summary>
-public static class AuthErrors
-{
+public static class AuthErrors {
     /// <summary>Error disparado cuando las credenciales no coinciden con ningún usuario activo.</summary>
     public static DomainError InvalidCredentials =>
         new AuthError("AUTH_INVALID_CREDENTIALS", "Credenciales inválidas");
@@ -45,8 +43,7 @@ public static class AuthErrors
 /// <summary>
 /// Contenedor de errores relacionados con la validación de datos de entrada.
 /// </summary>
-public static class ValidationErrors
-{
+public static class ValidationErrors {
     /// <summary>Crea un error de campo obligatorio.</summary>
     /// <param name="fieldName">Nombre del campo que falta.</param>
     /// <returns>Una instancia de <see cref="DomainError"/>.</returns>
@@ -70,8 +67,7 @@ public static class ValidationErrors
 /// <summary>
 /// Contenedor de errores de infraestructura de red y conectividad.
 /// </summary>
-public static class NetworkErrors
-{
+public static class NetworkErrors {
     /// <summary>Error general de imposibilidad de establecer conexión con la API.</summary>
     public static DomainError ConnectionFailed =>
         new NetworkError("NETWORK_CONNECTION_FAILED", "Error de conexión");
@@ -90,8 +86,7 @@ public static class NetworkErrors
 /// <summary>
 /// Errores genéricos no categorizados.
 /// </summary>
-public static class GeneralErrors
-{
+public static class GeneralErrors {
     /// <summary>Error disparado ante excepciones no controladas o estados inesperados.</summary>
     public static DomainError Unexpected =>
         new GeneralError("GENERAL_UNEXPECTED", "Error inesperado");

@@ -35,8 +35,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Services;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class PedidosNativeServiceIntegrationTests
-{
+public class PedidosNativeServiceIntegrationTests {
     private static readonly ActivitySource ActivitySource = new("PedidosNativeServiceIntegrationTests");
     private const string DatabaseName = "it_pedidos_native_service";
     private string _connectionString = string.Empty;
@@ -48,29 +47,25 @@ public class PedidosNativeServiceIntegrationTests
     private long _userId;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
-    public async Task Setup()
-    {
+    public async Task Setup() {
         var connectionString = _connectionString;
         var mongoConnectionString = _mongoConnectionString;
         var mongoDatabaseName = DatabaseName;
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", mongoDatabaseName },
@@ -84,8 +79,7 @@ public class PedidosNativeServiceIntegrationTests
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
         services.AddSingleton(ActivitySource);
 
-        services.AddLogging(builder =>
-        {
+        services.AddLogging(builder => {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Information);
         });
@@ -97,13 +91,11 @@ public class PedidosNativeServiceIntegrationTests
         services.AddSignalR();
 
         // Registrar MongoDB Driver nativo (sin EF Core)
-        services.AddSingleton<IMongoClient>(sp =>
-        {
+        services.AddSingleton<IMongoClient>(sp => {
             return new MongoClient(mongoConnectionString);
         });
 
-        services.AddSingleton(sp =>
-        {
+        services.AddSingleton(sp => {
             var client = sp.GetRequiredService<IMongoClient>();
             return client.GetDatabase(mongoDatabaseName);
         });
@@ -121,8 +113,7 @@ public class PedidosNativeServiceIntegrationTests
         var categoria = new Categoria { Nombre = $"Test Categoria {Guid.NewGuid():N}".Substring(0, 20) };
         await categoriaRepo.SaveAsync(categoria);
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Nombre = $"Producto Test {Guid.NewGuid():N}".Substring(0, 20),
             Descripcion = "Producto para pedidos",
             Precio = 99.99m,
@@ -133,8 +124,7 @@ public class PedidosNativeServiceIntegrationTests
         await productoRepo.SaveAsync(producto);
         _productoId = producto.Id;
 
-        var user = new User
-        {
+        var user = new User {
             UserName = $"testuser_{Guid.NewGuid():N}".Substring(0, 15),
             Email = "test@example.com",
             PasswordHash = "$2a$11$test",
@@ -146,14 +136,12 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
+    public void TearDown() {
         _dbContext?.Dispose();
         (_serviceProvider as IDisposable)?.Dispose();
     }
 
-    private static void RegisterRepositories(IServiceCollection services)
-    {
+    private static void RegisterRepositories(IServiceCollection services) {
         services.AddScoped<ILogger<ProductoRepository>, Logger<ProductoRepository>>();
         services.AddScoped<ILogger<CategoriaRepository>, Logger<CategoriaRepository>>();
         services.AddScoped<ILogger<PedidosNativeRepository>, Logger<PedidosNativeRepository>>();
@@ -163,8 +151,7 @@ public class PedidosNativeServiceIntegrationTests
         services.AddScoped<IPedidosRepository, PedidosNativeRepository>();
     }
 
-    private static void RegisterServices(IServiceCollection services)
-    {
+    private static void RegisterServices(IServiceCollection services) {
         // Mock para IJwtTokenExtractor (requerido por PedidosWebSocketHandler)
         var mockJwtExtractor = new Mock<IJwtTokenExtractor>();
         mockJwtExtractor.Setup(x => x.ExtractUserId(It.IsAny<string>())).Returns(1L);
@@ -194,46 +181,38 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindAllAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinPedidos_RetornaListaVacia() {
         var result = await _pedidosService!.FindAllAsync();
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
     }
 
     [Test]
-    public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia() {
         var result = await _pedidosService!.FindByUserIdAsync(_userId);
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
     }
 
     [Test]
-    public async Task FindByIdAsync_SinPedidos_RetornaNotFound()
-    {
+    public async Task FindByIdAsync_SinPedidos_RetornaNotFound() {
         var result = await _pedidosService!.FindByIdAsync("507f1f77bcf86cd799439011");
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    public async Task CreateAsync_ConItemsValidos_RetornaPedidoCreado()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task CreateAsync_ConItemsValidos_RetornaPedidoCreado() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test Destinatario",
                 Email = "test@email.com",
-                Direccion = new DireccionDto
-                {
+                Direccion = new DireccionDto {
                     Calle = "Calle Test",
                     Ciudad = "Madrid",
                     Pais = "España"
                 }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 2 }
             }
         };
@@ -247,12 +226,9 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConItemsVacios_RetornaError()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task CreateAsync_ConItemsVacios_RetornaError() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -264,18 +240,14 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConProductoNoExistente_RetornaError()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public async Task CreateAsync_ConProductoNoExistente_RetornaError() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 999999, Cantidad = 1 }
             }
         };
@@ -284,20 +256,16 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConStockCero_RetornaErrorDeStock()
-    {
+    public async Task CreateAsync_ConStockCero_RetornaErrorDeStock() {
         await SetProductoStock(_productoId, 0);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 1 }
             }
         };
@@ -307,20 +275,16 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConStockInsuficiente_RetornaErrorDeStock()
-    {
+    public async Task CreateAsync_ConStockInsuficiente_RetornaErrorDeStock() {
         await SetProductoStock(_productoId, 5);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 10 }
             }
         };
@@ -330,21 +294,17 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConStockSuficiente_DecrementaStockCorrectamente()
-    {
+    public async Task CreateAsync_ConStockSuficiente_DecrementaStockCorrectamente() {
         var stockInicial = 50;
         await SetProductoStock(_productoId, stockInicial);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test Destinatario",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 5 }
             }
         };
@@ -357,21 +317,17 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_CantidadExactaStock_PermitePedido()
-    {
+    public async Task CreateAsync_CantidadExactaStock_PermitePedido() {
         var stockInicial = 10;
         await SetProductoStock(_productoId, stockInicial);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = stockInicial }
             }
         };
@@ -384,21 +340,17 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_CantidadMayorStock_RechazaPedido()
-    {
+    public async Task CreateAsync_CantidadMayorStock_RechazaPedido() {
         var stockInicial = 10;
         await SetProductoStock(_productoId, stockInicial);
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = stockInicial + 1 }
             }
         };
@@ -411,12 +363,9 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_UsuarioNoExistente_RetornaError()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+    public async Task CreateAsync_UsuarioNoExistente_RetornaError() {
+        var dto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = _productoId, Cantidad = 1 }
             }
         };
@@ -426,8 +375,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task DecrementStockAsync_StockInsuficiente_NoDecrementa()
-    {
+    public async Task DecrementStockAsync_StockInsuficiente_NoDecrementa() {
         var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
         await SetProductoStock(_productoId, 3);
 
@@ -442,8 +390,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task DecrementStockAsync_StockSuficiente_Decrementa()
-    {
+    public async Task DecrementStockAsync_StockSuficiente_Decrementa() {
         var productoRepo = _serviceProvider!.GetRequiredService<IProductoRepository>();
         await SetProductoStock(_productoId, 10);
 
@@ -459,8 +406,7 @@ public class PedidosNativeServiceIntegrationTests
 
     #region ========== UTILIDADES ==========
 
-    private async Task SetProductoStock(long productoId, int stock)
-    {
+    private async Task SetProductoStock(long productoId, int stock) {
         var producto = await _dbContext!.FindAsync<Producto>(productoId);
         producto!.Stock = stock;
         await _dbContext.SaveChangesAsync();
@@ -471,8 +417,7 @@ public class PedidosNativeServiceIntegrationTests
     #region ========== TESTS ADICIONALES - MÉTODOS DE ADMINISTRADOR ==========
 
     [Test]
-    public async Task FindAllPagedAsync_ConPaginacion_RetornaPedidosPaginados()
-    {
+    public async Task FindAllPagedAsync_ConPaginacion_RetornaPedidosPaginados() {
         // Arrange
         var page = 0;
         var size = 10;
@@ -489,8 +434,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta()
-    {
+    public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta() {
         // Arrange
         var page = 1;
         var size = 5;
@@ -505,13 +449,10 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateAdminAsync_ConDireccion_ActualizaPedido()
-    {
+    public async Task UpdateAdminAsync_ConDireccion_ActualizaPedido() {
         // Arrange - Primero crear un pedido
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle Original", Ciudad = "Madrid", Pais = "España" }
@@ -535,8 +476,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound() {
         // Arrange
         var updateDto = new UpdatePedidoDto { Estado = "ENVIADO" };
 
@@ -548,13 +488,10 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_EstadoValido_ActualizaEstado()
-    {
+    public async Task UpdateEstadoAsync_EstadoValido_ActualizaEstado() {
         // Arrange - Crear pedido
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -575,8 +512,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_EstadoInvalido_RetornaError()
-    {
+    public async Task UpdateEstadoAsync_EstadoInvalido_RetornaError() {
         // Arrange
         var pedidoId = "507f1f77bcf86cd799439011";
 
@@ -588,13 +524,10 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteAdminAsync_PedidoExistente_MarcaComoEliminado()
-    {
+    public async Task DeleteAdminAsync_PedidoExistente_MarcaComoEliminado() {
         // Arrange - Crear pedido
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -619,8 +552,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound() {
         // Act
         var result = await _pedidosService!.DeleteAdminAsync("507f1f77bcf86cd799439011");
 
@@ -633,13 +565,10 @@ public class PedidosNativeServiceIntegrationTests
     #region ========== TESTS ADICIONALES - MÉTODOS DE USUARIO ==========
 
     [Test]
-    public async Task FindMyPedidosAsync_ConPedidos_RetornaPedidosDelUsuario()
-    {
+    public async Task FindMyPedidosAsync_ConPedidos_RetornaPedidosDelUsuario() {
         // Arrange
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -659,8 +588,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindMyPedidosAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindMyPedidosAsync_SinPedidos_RetornaListaVacia() {
         // Arrange - Nuevo usuario sin pedidos
         var nuevoUserId = 999999L;
 
@@ -673,8 +601,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindMyPedidosPagedAsync_ConPaginacion_RetornaPedidosPaginados()
-    {
+    public async Task FindMyPedidosPagedAsync_ConPaginacion_RetornaPedidosPaginados() {
         // Arrange
         var page = 0;
         var size = 10;
@@ -690,13 +617,10 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindMyPedidoAsync_PedidoPropio_RetornaPedido()
-    {
+    public async Task FindMyPedidoAsync_PedidoPropio_RetornaPedido() {
         // Arrange - Crear pedido
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -718,8 +642,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindMyPedidoAsync_PedidoAjoyo_RetornaError()
-    {
+    public async Task FindMyPedidoAsync_PedidoAjoyo_RetornaError() {
         // Arrange
         var pedidoId = "507f1f77bcf86cd799439011";
         var otroUserId = 999999L;
@@ -732,13 +655,10 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateMyPedidoAsync_EstadoPendiente_ActualizaDireccion()
-    {
+    public async Task UpdateMyPedidoAsync_EstadoPendiente_ActualizaDireccion() {
         // Arrange - Crear pedido
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle Original", Ciudad = "Madrid", Pais = "España" }
@@ -761,13 +681,10 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateMyPedidoAsync_EstadoNoPendiente_RetornaError()
-    {
+    public async Task UpdateMyPedidoAsync_EstadoNoPendiente_RetornaError() {
         // Arrange - Crear pedido y cambiar estado
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -792,13 +709,10 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteMyPedidoAsync_EstadoPendiente_MarcaEliminado()
-    {
+    public async Task DeleteMyPedidoAsync_EstadoPendiente_MarcaEliminado() {
         // Arrange - Crear pedido
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -818,13 +732,10 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteMyPedidoAsync_EstadoNoPendiente_RetornaError()
-    {
+    public async Task DeleteMyPedidoAsync_EstadoNoPendiente_RetornaError() {
         // Arrange - Crear pedido y cambiar estado
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@email.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -847,8 +758,7 @@ public class PedidosNativeServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteMyPedidoAsync_PedidoAjoyo_RetornaError()
-    {
+    public async Task DeleteMyPedidoAsync_PedidoAjoyo_RetornaError() {
         // Arrange
         var pedidoId = "507f1f77bcf86cd799439011";
         var otroUserId = 999999L;

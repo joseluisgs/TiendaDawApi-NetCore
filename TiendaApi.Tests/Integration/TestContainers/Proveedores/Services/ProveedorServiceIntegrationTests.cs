@@ -29,8 +29,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Proveedores.Services;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class ProveedorServiceIntegrationTests
-{
+public class ProveedorServiceIntegrationTests {
     private const string DatabaseName = "it_proveedor_service";
 
     private string _connectionString = string.Empty;
@@ -40,28 +39,24 @@ public class ProveedorServiceIntegrationTests
     private IProveedorService? _proveedorService;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
-    public async Task Setup()
-    {
+    public async Task Setup() {
         var connectionString = _connectionString;
         var mongoConnectionString = _mongoConnectionString;
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", DatabaseName },
@@ -75,8 +70,7 @@ public class ProveedorServiceIntegrationTests
         services.AddOutputCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
-        services.AddLogging(builder =>
-        {
+        services.AddLogging(builder => {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Warning);
         });
@@ -103,18 +97,15 @@ public class ProveedorServiceIntegrationTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
+    public void TearDown() {
         _dbContext?.Dispose();
-        if (_serviceProvider is IDisposable sp)
-        {
+        if (_serviceProvider is IDisposable sp) {
             sp.Dispose();
         }
     }
 
     [Test]
-    public async Task FindAllAsync_SinProveedores_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinProveedores_RetornaListaVacia() {
         var result = await _proveedorService!.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
@@ -122,8 +113,7 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_SinCodigo_ElServidorGeneraIdentificadorDeOnceCaracteres()
-    {
+    public async Task CreateAsync_SinCodigo_ElServidorGeneraIdentificadorDeOnceCaracteres() {
         var dto = new ProveedorRequestDto { Nombre = "Generado Automaticamente" };
 
         var result = await _proveedorService!.CreateAsync(dto);
@@ -134,8 +124,7 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConCodigoExplicito_LoPreserva()
-    {
+    public async Task CreateAsync_ConCodigoExplicito_LoPreserva() {
         var dto = new ProveedorRequestDto { Codigo = "Explicito01", Nombre = "Con Código Explícito" };
 
         var result = await _proveedorService!.CreateAsync(dto);
@@ -145,8 +134,7 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConCodigoInvalido_RetornaErrorDeValidacion()
-    {
+    public async Task CreateAsync_ConCodigoInvalido_RetornaErrorDeValidacion() {
         var dto = new ProveedorRequestDto { Codigo = "corto", Nombre = "Código Inválido" };
 
         var result = await _proveedorService!.CreateAsync(dto);
@@ -155,8 +143,7 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConCodigoDuplicado_RetornaConflicto()
-    {
+    public async Task CreateAsync_ConCodigoDuplicado_RetornaConflicto() {
         var primero = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Codigo = "Duplicado01", Nombre = "Primero" });
         var segundo = await _proveedorService.CreateAsync(
@@ -167,8 +154,7 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConNombreDuplicado_RetornaConflicto()
-    {
+    public async Task CreateAsync_ConNombreDuplicado_RetornaConflicto() {
         var nombre = "Nombre Repetido";
         await _proveedorService!.CreateAsync(new ProveedorRequestDto { Nombre = nombre });
 
@@ -178,8 +164,7 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConCodigoExistente_RetornaProveedor()
-    {
+    public async Task FindByIdAsync_ConCodigoExistente_RetornaProveedor() {
         var creado = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Nombre = "Buscable" });
         creado.IsSuccess.Should().BeTrue();
@@ -191,16 +176,14 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConCodigoInexistente_RetornaNotFound()
-    {
+    public async Task FindByIdAsync_ConCodigoInexistente_RetornaNotFound() {
         var result = await _proveedorService!.FindByIdAsync("NoExiste000");
 
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    public async Task UpdateAsync_ConDatosValidos_ActualizaSinCambiarElCodigo()
-    {
+    public async Task UpdateAsync_ConDatosValidos_ActualizaSinCambiarElCodigo() {
         var creado = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Nombre = "Original" });
         creado.IsSuccess.Should().BeTrue();
@@ -216,8 +199,7 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteAsync_SinProductos_RetornaOkYDesaparece()
-    {
+    public async Task DeleteAsync_SinProductos_RetornaOkYDesaparece() {
         var creado = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Nombre = "Borrable" });
         creado.IsSuccess.Should().BeTrue();
@@ -230,8 +212,7 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteAsync_ConProductosAsociados_RetornaReglaDeNegocio()
-    {
+    public async Task DeleteAsync_ConProductosAsociados_RetornaReglaDeNegocio() {
         var creado = await _proveedorService!.CreateAsync(
             new ProveedorRequestDto { Nombre = "Con Productos" });
         creado.IsSuccess.Should().BeTrue();
@@ -244,13 +225,11 @@ public class ProveedorServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_FiltrandoPorNombre_RetornaSoloCoincidencias()
-    {
+    public async Task FindAllPagedAsync_FiltrandoPorNombre_RetornaSoloCoincidencias() {
         await _proveedorService!.CreateAsync(new ProveedorRequestDto { Nombre = "Distribuciones Norte" });
         await _proveedorService.CreateAsync(new ProveedorRequestDto { Nombre = "Editorial Sur" });
 
-        var result = await _proveedorService.FindAllPagedAsync(new ProveedorFilterDto
-        {
+        var result = await _proveedorService.FindAllPagedAsync(new ProveedorFilterDto {
             Nombre = "Distribuciones",
             Page = 0,
             Size = 10
@@ -265,10 +244,8 @@ public class ProveedorServiceIntegrationTests
     /// Crea directamente una categoría y un producto apuntando al proveedor,
     /// para ejercitar la regla de borrado con datos reales en la base.
     /// </summary>
-    private async Task CrearProductoAsociadoAsync(string proveedorCodigo)
-    {
-        var categoria = new Categoria
-        {
+    private async Task CrearProductoAsociadoAsync(string proveedorCodigo) {
+        var categoria = new Categoria {
             Nombre = $"Categoria {Guid.NewGuid():N}"[..30],
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -276,8 +253,7 @@ public class ProveedorServiceIntegrationTests
         _dbContext!.Categorias.Add(categoria);
         await _dbContext.SaveChangesAsync();
 
-        _dbContext.Productos.Add(new Producto
-        {
+        _dbContext.Productos.Add(new Producto {
             Nombre = "Producto con proveedor",
             Descripcion = "Para probar la regla de borrado",
             Precio = 10m,

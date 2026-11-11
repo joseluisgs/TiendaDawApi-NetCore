@@ -7,14 +7,12 @@ namespace TiendaApi.Api.GraphQL.Types;
 /// Tipo de GraphQL para <see cref="DestinatarioDto"/>: quién recibe el
 /// pedido (mismo contrato que REST).
 /// </summary>
-public class DestinatarioType : ObjectType<DestinatarioDto>
-{
+public class DestinatarioType : ObjectType<DestinatarioDto> {
     /// <summary>
     /// Configura los campos y descripciones del tipo GraphQL de DestinatarioDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
-    protected override void Configure(IObjectTypeDescriptor<DestinatarioDto> descriptor)
-    {
+    protected override void Configure(IObjectTypeDescriptor<DestinatarioDto> descriptor) {
         descriptor.Name("DestinatarioDto");
         descriptor.Description("Destinatario del pedido (mismo contrato que REST).");
         descriptor.BindFieldsExplicitly();

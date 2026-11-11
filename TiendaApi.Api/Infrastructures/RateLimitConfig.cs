@@ -18,8 +18,7 @@ namespace TiendaApi.Api.Infrastructures;
 /// Si dos reglas comparten periodo se aplica la más restrictiva
 /// (p.ej. un POST a autenticación queda en 10/min, no en 20/min).
 /// </remarks>
-public static class RateLimitConfig
-{
+public static class RateLimitConfig {
     /// <summary>Límite de peticiones para la ventana general.</summary>
     public const int GeneralLimit = 100;
 
@@ -43,8 +42,7 @@ public static class RateLimitConfig
     /// </summary>
     /// <param name="services">Colección de servicios de la aplicación.</param>
     /// <returns>La misma colección de servicios.</returns>
-    public static IServiceCollection AddRateLimitingPolicy(this IServiceCollection services)
-    {
+    public static IServiceCollection AddRateLimitingPolicy(this IServiceCollection services) {
         services.AddSingleton<RateLimitingState>();
         return services;
     }
@@ -54,8 +52,7 @@ public static class RateLimitConfig
     /// </summary>
     /// <param name="app">Constructor de la aplicación.</param>
     /// <returns>El mismo constructor de aplicación.</returns>
-    public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app)
-    {
+    public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder app) {
         app.UseMiddleware<RateLimitMiddleware>();
         return app;
     }

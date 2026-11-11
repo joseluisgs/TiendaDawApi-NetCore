@@ -7,13 +7,11 @@ namespace TiendaApi.Api.Validators.Categorias;
 /// Validador FluentValidation para CategoriaRequestDto.
 /// Reglas: Nombre(3-100 caracteres, obligatorio).
 /// </summary>
-public class CategoriaRequestValidator : AbstractValidator<CategoriaRequestDto>
-{
+public class CategoriaRequestValidator : AbstractValidator<CategoriaRequestDto> {
     /// <summary>
     /// Define reglas de validación para CategoriaRequestDto.
     /// </summary>
-    public CategoriaRequestValidator()
-    {
+    public CategoriaRequestValidator() {
         RuleFor(c => c.Nombre)
             .NotEmpty().WithMessage("El nombre es obligatorio")
             .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")

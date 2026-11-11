@@ -4,8 +4,7 @@ namespace ClientBlazor.Cliente.Services.Websocket;
 /// Define el contrato para el servicio de comunicación persistente mediante WebSockets nativos.
 /// Ideal para notificaciones de bajo nivel y flujos de datos continuos.
 /// </summary>
-public interface IWebSocketService
-{
+public interface IWebSocketService {
     /// <summary>
     /// Indica si la conexión con el servidor de sockets está actualmente abierta.
     /// </summary>

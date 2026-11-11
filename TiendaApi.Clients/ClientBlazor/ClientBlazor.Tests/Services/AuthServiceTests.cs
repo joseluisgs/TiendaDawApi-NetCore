@@ -18,8 +18,7 @@ namespace ClientBlazor.Tests.Services;
 /// Objetivo: Validar la lógica de negocio de inicio de sesión, mapeo de errores y persistencia.
 /// </summary>
 [TestFixture]
-public class AuthServiceTests
-{
+public class AuthServiceTests {
     private Mock<ITiendaRestClient> _clientMock = null!;
     private Mock<IAuthStore> _authStoreMock = null!;
     private Mock<INotificationStore> _notificationStoreMock = null!;
@@ -30,8 +29,7 @@ public class AuthServiceTests
     /// Prepara el servicio con dependencias simuladas.
     /// </summary>
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _clientMock = new Mock<ITiendaRestClient>();
         _authStoreMock = new Mock<IAuthStore>();
         _notificationStoreMock = new Mock<INotificationStore>();
@@ -43,8 +41,7 @@ public class AuthServiceTests
     /// Comprueba que la validación local bloquee el envío de datos vacíos a la red.
     /// </summary>
     [Test]
-    public async Task LoginAsync_Should_Return_Error_When_Email_Is_Empty()
-    {
+    public async Task LoginAsync_Should_Return_Error_When_Email_Is_Empty() {
         // Act
         var result = await _authService.LoginAsync("", "password");
 
@@ -59,8 +56,7 @@ public class AuthServiceTests
     /// persista los datos en disco y notifique al usuario.
     /// </summary>
     [Test]
-    public async Task LoginAsync_Should_Update_Store_On_Success()
-    {
+    public async Task LoginAsync_Should_Update_Store_On_Success() {
         // Arrange
         var userDto = new UserDto { Id = 1, Username = "testuser", Email = "test@test.com", Role = "USER" };
         var authResponse = new AuthResponseDto { Token = "token123", User = userDto };
@@ -72,7 +68,7 @@ public class AuthServiceTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Token.Should().Be("token123");
-        
+
         _authStoreMock.Verify(s => s.SetAuth("token123", "test@test.com", "testuser", "USER"), Times.Once);
         _storageMock.Verify(s => s.SetItemAsync(It.IsAny<string>(), It.IsAny<AuthStore.AuthState>()), Times.Once);
         _notificationStoreMock.Verify(n => n.Success(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
@@ -83,15 +79,14 @@ public class AuthServiceTests
     /// (como un 401 Unauthorized) en errores legibles del dominio cliente.
     /// </summary>
     [Test]
-    public async Task LoginAsync_Should_Return_DomainError_On_ApiException()
-    {
+    public async Task LoginAsync_Should_Return_DomainError_On_ApiException() {
         // Arrange
         var apiException = await ApiException.Create(
-            new HttpRequestMessage(), 
-            HttpMethod.Post, 
-            new HttpResponseMessage(HttpStatusCode.Unauthorized), 
+            new HttpRequestMessage(),
+            HttpMethod.Post,
+            new HttpResponseMessage(HttpStatusCode.Unauthorized),
             new RefitSettings());
-            
+
         _clientMock.Setup(c => c.LoginAsync(It.IsAny<LoginDto>())).ThrowsAsync(apiException);
 
         // Act

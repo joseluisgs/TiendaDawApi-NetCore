@@ -34,8 +34,7 @@ namespace TiendaApi.Tests.Unit.Services.Categorias;
 /// - Claridad en aserciones
 /// - Verificación de manejo de errores
 /// </summary>
-public class ErrorHandlingComparisonTests
-{
+public class ErrorHandlingComparisonTests {
     private Mock<ICategoriaRepository> _mockCategoriaRepo = null!;
     private Mock<IProductoRepository> _mockProductoRepo = null!;
     private Mock<ILogger<CategoriaService>> _mockCategoriaLogger = null!;
@@ -47,8 +46,7 @@ public class ErrorHandlingComparisonTests
     private ProductoService _productoService = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _mockCategoriaRepo = new Mock<ICategoriaRepository>();
         _mockProductoRepo = new Mock<IProductoRepository>();
         _mockCategoriaLogger = new Mock<ILogger<CategoriaService>>();
@@ -111,8 +109,7 @@ public class ErrorHandlingComparisonTests
     /// - Más fácil de entender y mantener
     /// </summary>
     [Test]
-    public async Task CategoriaService_FindById_CuandoNoEncontrado_RetornaFallo()
-    {
+    public async Task CategoriaService_FindById_CuandoNoEncontrado_RetornaFallo() {
         // Arrange
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Categoria?)null);
@@ -135,8 +132,7 @@ public class ErrorHandlingComparisonTests
     /// El éxito es explícito y type-safe
     /// </summary>
     [Test]
-    public async Task CategoriaService_FindById_CuandoEncontrado_RetornaExito()
-    {
+    public async Task CategoriaService_FindById_CuandoEncontrado_RetornaExito() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Test" };
 
@@ -166,8 +162,7 @@ public class ErrorHandlingComparisonTests
     /// - Fácil de testar sin try/catch
     /// </summary>
     [Test]
-    public async Task ProductoService_FindById_CuandoNoEncontrado_RetornaFallo()
-    {
+    public async Task ProductoService_FindById_CuandoNoEncontrado_RetornaFallo() {
         // Arrange
         _mockProductoRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Producto?)null);
@@ -187,11 +182,9 @@ public class ErrorHandlingComparisonTests
     /// Estado de éxito explícito
     /// </summary>
     [Test]
-    public async Task ProductoService_FindById_CuandoEncontrado_RetornaExito()
-    {
+    public async Task ProductoService_FindById_CuandoEncontrado_RetornaExito() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test",
             Categoria = new Categoria { Id = 1, Nombre = "Cat" }
@@ -215,11 +208,9 @@ public class ErrorHandlingComparisonTests
     /// Manejo limpio de validación sin excepciones
     /// </summary>
     [Test]
-    public async Task ProductoService_Create_ConPrecioInvalido_RetornaErrorValidacion()
-    {
+    public async Task ProductoService_Create_ConPrecioInvalido_RetornaErrorValidacion() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Test",
             Descripcion = "Test",
             Precio = -10, // Invalid!
@@ -234,8 +225,7 @@ public class ErrorHandlingComparisonTests
 
         // Configurar validator para que falle
         _mockProductoValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new[]
-            {
+            .ReturnsAsync(new ValidationResult(new[] {
                 new ValidationFailure("Precio", "El precio debe ser mayor a 0")
             }));
 
@@ -287,8 +277,7 @@ public class ErrorHandlingComparisonTests
     /// - Consistencia en toda la aplicación
     /// </summary>
     [Test]
-    public void Comparison_AmbosUsanResultPattern_EscenarioNoEncontrado()
-    {
+    public void Comparison_AmbosUsanResultPattern_EscenarioNoEncontrado() {
         // Setup for both
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Categoria?)null);

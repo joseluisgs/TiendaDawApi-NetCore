@@ -7,8 +7,7 @@ namespace TiendaApi.Api.Repositories.Proveedores;
 /// Contrato del repositorio de proveedores.
 /// La clave es un identificador de 11 caracteres generado por la aplicación.
 /// </summary>
-public interface IProveedorRepository
-{
+public interface IProveedorRepository {
     /// <summary>Obtiene todos los proveedores ordenados por nombre.</summary>
     /// <returns>Colección de proveedores.</returns>
     Task<IEnumerable<Proveedor>> FindAllAsync();

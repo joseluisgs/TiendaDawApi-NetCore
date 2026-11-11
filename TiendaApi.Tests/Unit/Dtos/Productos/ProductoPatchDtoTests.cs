@@ -7,19 +7,16 @@ namespace TiendaApi.Tests.Unit.Dtos.Productos;
 /// Tests unitarios para ProductoPatchDto.
 /// Verifica el funcionamiento de la actualización parcial de productos.
 /// </summary>
-public class ProductoPatchDtoTests
-{
+public class ProductoPatchDtoTests {
     #region Tests de Constructor
 
     /// <summary>
     /// Verifica que el constructor asigna todos los campos correctamente.
     /// </summary>
     [Test]
-    public void Constructor_ConValoresAsignados_AsignaCorrectamente()
-    {
+    public void Constructor_ConValoresAsignados_AsignaCorrectamente() {
         // Arrange & Act
-        var dto = new ProductoPatchDto
-        {
+        var dto = new ProductoPatchDto {
             Nombre = "Producto Actualizado",
             Descripcion = "Nueva descripción",
             Precio = 99.99m,
@@ -39,8 +36,7 @@ public class ProductoPatchDtoTests
     /// Verifica que por defecto los campos tienen valores nulos o predeterminados.
     /// </summary>
     [Test]
-    public void Constructor_PorDefecto_TieneValoresNulosOPredeterminados()
-    {
+    public void Constructor_PorDefecto_TieneValoresNulosOPredeterminados() {
         // Arrange & Act
         var dto = new ProductoPatchDto();
 
@@ -60,8 +56,7 @@ public class ProductoPatchDtoTests
     /// Verifica que Nombre puede ser asignado y puesto a null.
     /// </summary>
     [Test]
-    public void Nombre_PuedeSerAsignadoANulo()
-    {
+    public void Nombre_PuedeSerAsignadoANulo() {
         // Arrange & Act
         var dto = new ProductoPatchDto { Nombre = "Test" };
 
@@ -79,8 +74,7 @@ public class ProductoPatchDtoTests
     /// Verifica que Descripcion puede ser asignada y puesta a null.
     /// </summary>
     [Test]
-    public void Descripcion_PuedeSerAsignadaANula()
-    {
+    public void Descripcion_PuedeSerAsignadaANula() {
         // Arrange & Act
         var dto = new ProductoPatchDto { Descripcion = "Descripción de prueba" };
 
@@ -98,8 +92,7 @@ public class ProductoPatchDtoTests
     /// Verifica que Precio puede ser asignado y puesto a null.
     /// </summary>
     [Test]
-    public void Precio_PuedeSerAsignadoANulo()
-    {
+    public void Precio_PuedeSerAsignadoANulo() {
         // Arrange & Act
         var dto = new ProductoPatchDto { Precio = 19.99m };
 
@@ -117,8 +110,7 @@ public class ProductoPatchDtoTests
     /// Verifica que Stock puede ser asignado y puesto a null.
     /// </summary>
     [Test]
-    public void Stock_PuedeSerAsignadoANulo()
-    {
+    public void Stock_PuedeSerAsignadoANulo() {
         // Arrange & Act
         var dto = new ProductoPatchDto { Stock = 100 };
 
@@ -136,8 +128,7 @@ public class ProductoPatchDtoTests
     /// Verifica que Imagen puede ser asignada y puesta a null.
     /// </summary>
     [Test]
-    public void Imagen_PuedeSerAsignadaANula()
-    {
+    public void Imagen_PuedeSerAsignadaANula() {
         // Arrange & Act
         var dto = new ProductoPatchDto { Imagen = "https://example.com/imagen.png" };
 
@@ -159,11 +150,9 @@ public class ProductoPatchDtoTests
     /// Verifica que se puede crear una nueva instancia con cambios usando 'with'.
     /// </summary>
     [Test]
-    public void With_PuedeCrearNuevaInstanciaConCambios()
-    {
+    public void With_PuedeCrearNuevaInstanciaConCambios() {
         // Arrange
-        var original = new ProductoPatchDto
-        {
+        var original = new ProductoPatchDto {
             Nombre = "Original",
             Descripcion = "Descripción original"
         };
@@ -185,11 +174,9 @@ public class ProductoPatchDtoTests
     /// Verifica que actualizar solo el nombre no modifica otros campos.
     /// </summary>
     [Test]
-    public void Patch_ActualizaSoloNombre_NoModificaOtrosCampos()
-    {
+    public void Patch_ActualizaSoloNombre_NoModificaOtrosCampos() {
         // Arrange
-        var dto = new ProductoPatchDto
-        {
+        var dto = new ProductoPatchDto {
             Nombre = "Nombre actualizado",
             Precio = 10.00m,
             Stock = 5
@@ -208,8 +195,7 @@ public class ProductoPatchDtoTests
     /// Verifica que actualizar solo el stock no modifica el precio.
     /// </summary>
     [Test]
-    public void Patch_ActualizaSoloStock_NoModificaPrecio()
-    {
+    public void Patch_ActualizaSoloStock_NoModificaPrecio() {
         // Arrange
         var patch = new ProductoPatchDto { Stock = 25 };
 
@@ -223,8 +209,7 @@ public class ProductoPatchDtoTests
     /// Verifica que actualizar solo el precio no modifica el stock.
     /// </summary>
     [Test]
-    public void Patch_ActualizaSoloPrecio_NoModificaStock()
-    {
+    public void Patch_ActualizaSoloPrecio_NoModificaStock() {
         // Arrange
         var patch = new ProductoPatchDto { Precio = 49.99m };
 
@@ -241,8 +226,7 @@ public class ProductoPatchDtoTests
     /// Verifica que un DTO vacío es válido para patch.
     /// </summary>
     [Test]
-    public void DTO_Vacio_EsValidoParaPatch()
-    {
+    public void DTO_Vacio_EsValidoParaPatch() {
         // Arrange
         var dto = new ProductoPatchDto();
 
@@ -258,11 +242,9 @@ public class ProductoPatchDtoTests
     /// Verifica que un DTO con todos los campos null es válido.
     /// </summary>
     [Test]
-    public void DTO_ConTodosLosCamposNull_EsValido()
-    {
+    public void DTO_ConTodosLosCamposNull_EsValido() {
         // Arrange
-        var dto = new ProductoPatchDto
-        {
+        var dto = new ProductoPatchDto {
             Nombre = null,
             Descripcion = null,
             Precio = null,

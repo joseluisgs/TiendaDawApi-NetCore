@@ -19,8 +19,7 @@ namespace TiendaApi.Tests.Unit.Controllers;
 /// Tests unitarios para AuthController.
 /// Verifica el funcionamiento de los endpoints de autenticación.
 /// </summary>
-public class AuthControllerTests
-{
+public class AuthControllerTests {
     private readonly Mock<IAuthService> _mockAuthService;
     private readonly Mock<ICacheService> _mockCacheService;
     private readonly Mock<IAuthenticationSchemeProvider> _mockSchemeProvider;
@@ -28,8 +27,7 @@ public class AuthControllerTests
     private readonly Mock<ILogger<AuthController>> _mockLogger;
     private readonly AuthController _controller;
 
-    public AuthControllerTests()
-    {
+    public AuthControllerTests() {
         _mockAuthService = new Mock<IAuthService>();
         _mockCacheService = new Mock<ICacheService>();
         _mockSchemeProvider = new Mock<IAuthenticationSchemeProvider>();
@@ -48,11 +46,9 @@ public class AuthControllerTests
     /// Verifica que con datos válidos se retorna Created con la respuesta de autenticación.
     /// </summary>
     [Test]
-    public async Task SignUp_ConDtoValido_RetornaCreated()
-    {
+    public async Task SignUp_ConDtoValido_RetornaCreated() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "nuevousuario",
             Email = "nuevo@test.com",
             Password = "Password123"
@@ -79,11 +75,9 @@ public class AuthControllerTests
     /// Verifica que con datos inválidos retorna BadRequest.
     /// </summary>
     [Test]
-    public async Task SignUp_ConDtoInvalido_RetornaBadRequest()
-    {
+    public async Task SignUp_ConDtoInvalido_RetornaBadRequest() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "",
             Email = "invalid-email",
             Password = "123"
@@ -106,11 +100,9 @@ public class AuthControllerTests
     /// Verifica que con usuario duplicado retorna Conflict.
     /// </summary>
     [Test]
-    public async Task SignUp_ConUsuarioDuplicado_RetornaConflict()
-    {
+    public async Task SignUp_ConUsuarioDuplicado_RetornaConflict() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "existente",
             Email = "existente@test.com",
             Password = "Password123"
@@ -133,11 +125,9 @@ public class AuthControllerTests
     /// Verifica que con email duplicado retorna Conflict.
     /// </summary>
     [Test]
-    public async Task SignUp_ConEmailDuplicado_RetornaConflict()
-    {
+    public async Task SignUp_ConEmailDuplicado_RetornaConflict() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "nuevousuario",
             Email = "existente@test.com",
             Password = "Password123"
@@ -160,11 +150,9 @@ public class AuthControllerTests
     /// Verifica que con error interno retorna StatusCode 500.
     /// </summary>
     [Test]
-    public async Task SignUp_ConErrorInterno_Retorna500()
-    {
+    public async Task SignUp_ConErrorInterno_Retorna500() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "test",
             Email = "test@test.com",
             Password = "Password123"
@@ -191,11 +179,9 @@ public class AuthControllerTests
     /// Verifica que con credenciales válidas retorna Ok con token JWT.
     /// </summary>
     [Test]
-    public async Task SignIn_ConCredencialesValidas_RetornaOk()
-    {
+    public async Task SignIn_ConCredencialesValidas_RetornaOk() {
         // Arrange
-        var loginDto = new LoginDto
-        {
+        var loginDto = new LoginDto {
             Username = "usuariovalido",
             Password = "Password123"
         };
@@ -220,11 +206,9 @@ public class AuthControllerTests
     /// Verifica que con credenciales inválidas retorna Unauthorized.
     /// </summary>
     [Test]
-    public async Task SignIn_ConCredencialesInvalidas_RetornaUnauthorized()
-    {
+    public async Task SignIn_ConCredencialesInvalidas_RetornaUnauthorized() {
         // Arrange
-        var loginDto = new LoginDto
-        {
+        var loginDto = new LoginDto {
             Username = "usuario",
             Password = "password-incorrecto"
         };
@@ -246,11 +230,9 @@ public class AuthControllerTests
     /// Verifica que con usuario no encontrado retorna Unauthorized.
     /// </summary>
     [Test]
-    public async Task SignIn_ConUsuarioNoExistente_RetornaUnauthorized()
-    {
+    public async Task SignIn_ConUsuarioNoExistente_RetornaUnauthorized() {
         // Arrange
-        var loginDto = new LoginDto
-        {
+        var loginDto = new LoginDto {
             Username = "noexiste",
             Password = "Password123"
         };
@@ -272,11 +254,9 @@ public class AuthControllerTests
     /// Verifica que con validación fallida retorna BadRequest.
     /// </summary>
     [Test]
-    public async Task SignIn_ConValidacionFallida_RetornaBadRequest()
-    {
+    public async Task SignIn_ConValidacionFallida_RetornaBadRequest() {
         // Arrange
-        var loginDto = new LoginDto
-        {
+        var loginDto = new LoginDto {
             Username = "",
             Password = "Password123"
         };
@@ -298,11 +278,9 @@ public class AuthControllerTests
     /// Verifica que con error interno retorna StatusCode 500.
     /// </summary>
     [Test]
-    public async Task SignIn_ConErrorInterno_Retorna500()
-    {
+    public async Task SignIn_ConErrorInterno_Retorna500() {
         // Arrange
-        var loginDto = new LoginDto
-        {
+        var loginDto = new LoginDto {
             Username = "test",
             Password = "Password123"
         };
@@ -328,8 +306,7 @@ public class AuthControllerTests
     /// Verifica que el controlador se crea correctamente con las dependencias.
     /// </summary>
     [Test]
-    public void Constructor_ConDependenciasValidas_CreaControlador()
-    {
+    public void Constructor_ConDependenciasValidas_CreaControlador() {
         // Arrange & Act
         var controller = new AuthController(
             _mockAuthService.Object,
@@ -349,8 +326,7 @@ public class AuthControllerTests
     /// Verifica que un proveedor no configurado retorna 404 (puerta cerrada).
     /// </summary>
     [Test]
-    public async Task ExternalLogin_ProveedorNoConfigurado_RetornaNotFound()
-    {
+    public async Task ExternalLogin_ProveedorNoConfigurado_RetornaNotFound() {
         _mockSchemeProvider.Setup(x => x.GetSchemeAsync("Google"))
             .ReturnsAsync((AuthenticationScheme?)null);
 
@@ -365,8 +341,7 @@ public class AuthControllerTests
     /// Verifica que un proveedor configurado lanza Challenge (302) hacia el proveedor.
     /// </summary>
     [Test]
-    public async Task ExternalLogin_ProveedorConfigurado_RetornaChallenge()
-    {
+    public async Task ExternalLogin_ProveedorConfigurado_RetornaChallenge() {
         _mockSchemeProvider.Setup(x => x.GetSchemeAsync("Google"))
             .ReturnsAsync(new AuthenticationScheme("Google", null!, typeof(FakeOAuthHandler)));
 
@@ -374,8 +349,7 @@ public class AuthControllerTests
         mockUrlHelper.Setup(x => x.Action(It.IsAny<UrlActionContext>()))
             .Returns("/api/v1/auth/external-callback");
 
-        _controller.ControllerContext = new ControllerContext
-        {
+        _controller.ControllerContext = new ControllerContext {
             HttpContext = new DefaultHttpContext()
         };
         _controller.Url = mockUrlHelper.Object;
@@ -391,8 +365,7 @@ public class AuthControllerTests
     /// Verifica que sin principal autenticado el callback retorna 400.
     /// </summary>
     [Test]
-    public async Task ExternalLoginCallback_SinPrincipal_RetornaBadRequest()
-    {
+    public async Task ExternalLoginCallback_SinPrincipal_RetornaBadRequest() {
         // Sin esquemas registrados → AuthenticateAsync no tiene nada que autenticar
         _mockSchemeProvider.Setup(x => x.GetAllSchemesAsync())
             .ReturnsAsync(new List<AuthenticationScheme>());
@@ -408,8 +381,7 @@ public class AuthControllerTests
     /// Handler falso solo para poder construir AuthenticationScheme en tests
     /// (el handler real de Google vive en el paquete OAuth).
     /// </summary>
-    private sealed class FakeOAuthHandler : IAuthenticationHandler
-    {
+    private sealed class FakeOAuthHandler : IAuthenticationHandler {
         public Task InitializeAsync(AuthenticationScheme scheme, HttpContext context)
             => Task.CompletedTask;
 

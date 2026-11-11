@@ -15,8 +15,7 @@ namespace TiendaApi.Api.Middleware;
 public class GlobalExceptionHandler(
     RequestDelegate next,
     ILogger<GlobalExceptionHandler> logger
-)
-{
+) {
     private readonly RequestDelegate _next = next;
     private readonly ILogger<GlobalExceptionHandler> _logger = logger;
 
@@ -24,14 +23,10 @@ public class GlobalExceptionHandler(
     /// Ejecuta la petición y, si se produce una excepción, devuelve una respuesta HTTP de error JSON.
     /// </summary>
     /// <param name="context">Contexto HTTP de la petición en curso.</param>
-    public async Task InvokeAsync(HttpContext context)
-    {
-        try
-        {
+    public async Task InvokeAsync(HttpContext context) {
+        try {
             await _next(context);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             var errorId = Guid.NewGuid().ToString()[..8];
             _logger.LogError(ex, "Excepción no manejada. ErrorId: {ErrorId}, Message: {Message}",
                 errorId, ex.Message);
@@ -43,12 +38,10 @@ public class GlobalExceptionHandler(
     /// <param name="context">Contexto HTTP.</param>
     /// <param name="exception">Excepción capturada.</param>
     /// <param name="errorId">ID de seguimiento del error.</param>
-    private async Task HandleExceptionAsync(HttpContext context, Exception exception, string errorId)
-    {
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception, string errorId) {
         context.Response.ContentType = "application/json";
 
-        var (statusCode, message, errors, errorType) = exception switch
-        {
+        var (statusCode, message, errors, errorType) = exception switch {
             NotFoundException notFound => (
                 404,
                 notFound.Message,
@@ -108,8 +101,7 @@ public class GlobalExceptionHandler(
 
         context.Response.StatusCode = statusCode;
 
-        var response = new
-        {
+        var response = new {
             errorId,
             message,
             errorType,
@@ -119,8 +111,7 @@ public class GlobalExceptionHandler(
             errors
         };
 
-        var jsonOptions = new JsonSerializerOptions
-        {
+        var jsonOptions = new JsonSerializerOptions {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             // Source-gen (AppJsonContext) + fallback a reflexión para tipos anónimos
@@ -134,13 +125,11 @@ public class GlobalExceptionHandler(
 /// <summary>
 /// Extensiones para registro del middleware.
 /// </summary>
-public static class GlobalExceptionHandlerExtensions
-{
+public static class GlobalExceptionHandlerExtensions {
     /// <summary>Registra el middleware de excepciones.</summary>
     /// <param name="app">Constructor de la aplicación.</param>
     /// <returns>IApplicationBuilder.</returns>
-    public static IApplicationBuilder UseGlobalExceptionHandler(this IApplicationBuilder app)
-    {
+    public static IApplicationBuilder UseGlobalExceptionHandler(this IApplicationBuilder app) {
         return app.UseMiddleware<GlobalExceptionHandler>();
     }
 }

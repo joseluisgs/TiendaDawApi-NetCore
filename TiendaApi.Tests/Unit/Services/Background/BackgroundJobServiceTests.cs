@@ -8,16 +8,13 @@ using TiendaApi.Api.Services.Background.Host;
 
 namespace TiendaApi.Tests.Unit.Services.Background;
 
-public class BackgroundJobServiceTests
-{
+public class BackgroundJobServiceTests {
     private Mock<ILogger<BackgroundJobService>> _loggerMock = null!;
 
-    private BackgroundJobService CreateService(bool isDevelopment = true, int intervalMinutes = 1, int intervalHours = 168)
-    {
+    private BackgroundJobService CreateService(bool isDevelopment = true, int intervalMinutes = 1, int intervalHours = 168) {
         _loggerMock = new Mock<ILogger<BackgroundJobService>>();
 
-        var inMemorySettings = new Dictionary<string, string?>
-        {
+        var inMemorySettings = new Dictionary<string, string?> {
             { "IsDevelopment", isDevelopment.ToString().ToLower() },
             { "Scheduler:ExecutionIntervalMinutes", intervalMinutes.ToString() },
             { "Scheduler:ExecutionIntervalHours", intervalHours.ToString() }
@@ -36,18 +33,15 @@ public class BackgroundJobServiceTests
     #region Constructor Tests
 
     [Test]
-    public void Constructor_CreaInstanciaCorrectamente()
-    {
+    public void Constructor_CreaInstanciaCorrectamente() {
         var service = CreateService();
 
         service.Should().NotBeNull();
     }
 
     [Test]
-    public void Constructor_SinIsDevelopment_ValorPorDefectoFalse()
-    {
-        var inMemorySettings = new Dictionary<string, string?>
-        {
+    public void Constructor_SinIsDevelopment_ValorPorDefectoFalse() {
+        var inMemorySettings = new Dictionary<string, string?> {
             { "IsDevelopment", "false" },
             { "Scheduler:ExecutionIntervalMinutes", "1" }
         };
@@ -70,16 +64,14 @@ public class BackgroundJobServiceTests
     #region Configuration Tests
 
     [Test]
-    public void IsDevelopment_ConfiguracionDesarrollo_RetornaTrue()
-    {
+    public void IsDevelopment_ConfiguracionDesarrollo_RetornaTrue() {
         var service = CreateService(isDevelopment: true);
 
         service.Should().NotBeNull();
     }
 
     [Test]
-    public void IsDevelopment_ConfiguracionProduccion_RetornaFalse()
-    {
+    public void IsDevelopment_ConfiguracionProduccion_RetornaFalse() {
         var service = CreateService(isDevelopment: false);
 
         service.Should().NotBeNull();
@@ -90,8 +82,7 @@ public class BackgroundJobServiceTests
     #region ExecuteAsync Tests
 
     [Test]
-    public async Task ExecuteAsync_CancellationRequested_SaleDelLoop()
-    {
+    public async Task ExecuteAsync_CancellationRequested_SaleDelLoop() {
         var service = CreateService();
 
         using var cts = new CancellationTokenSource();
@@ -107,8 +98,7 @@ public class BackgroundJobServiceTests
     #region BackgroundService Properties Tests
 
     [Test]
-    public void BackgroundService_ImplementaIBackgroundService()
-    {
+    public void BackgroundService_ImplementaIBackgroundService() {
         var service = CreateService();
 
         service.Should().BeAssignableTo<BackgroundService>();
@@ -119,8 +109,7 @@ public class BackgroundJobServiceTests
     #region ExecuteAsync Method Tests
 
     [Test]
-    public void ExecuteAsync_MetodoProtegido_PuedeSerSobreescrito()
-    {
+    public void ExecuteAsync_MetodoProtegido_PuedeSerSobreescrito() {
         var service = CreateService();
         var methodInfo = service.GetType().GetMethod("ExecuteAsync",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -134,8 +123,7 @@ public class BackgroundJobServiceTests
     #region ExecuteJobsAsync Method Tests
 
     [Test]
-    public void ExecuteJobsAsync_MetodoPrivado_ExisteEnServicio()
-    {
+    public void ExecuteJobsAsync_MetodoPrivado_ExisteEnServicio() {
         var service = CreateService();
         var methodInfo = service.GetType().GetMethod("ExecuteJobsAsync",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -148,10 +136,8 @@ public class BackgroundJobServiceTests
     #region Interval Configuration Tests
 
     [Test]
-    public void IntervalMinutes_ConfiguracionPersonalizada_UsaValorConfigurado()
-    {
-        var inMemorySettings = new Dictionary<string, string?>
-        {
+    public void IntervalMinutes_ConfiguracionPersonalizada_UsaValorConfigurado() {
+        var inMemorySettings = new Dictionary<string, string?> {
             { "IsDevelopment", "true" },
             { "Scheduler:ExecutionIntervalMinutes", "5" }
         };
@@ -170,10 +156,8 @@ public class BackgroundJobServiceTests
     }
 
     [Test]
-    public void IntervalHours_ConfiguracionPersonalizada_UsaValorConfigurado()
-    {
-        var inMemorySettings = new Dictionary<string, string?>
-        {
+    public void IntervalHours_ConfiguracionPersonalizada_UsaValorConfigurado() {
+        var inMemorySettings = new Dictionary<string, string?> {
             { "IsDevelopment", "false" },
             { "Scheduler:ExecutionIntervalHours", "24" }
         };
@@ -196,16 +180,14 @@ public class BackgroundJobServiceTests
     #region Service Properties Tests
 
     [Test]
-    public void ServiceProvider_InyectadoCorrectamente()
-    {
+    public void ServiceProvider_InyectadoCorrectamente() {
         var service = CreateService();
 
         service.Should().NotBeNull();
     }
 
     [Test]
-    public void Configuration_InyectadoCorrectamente()
-    {
+    public void Configuration_InyectadoCorrectamente() {
         var service = CreateService();
 
         service.Should().NotBeNull();

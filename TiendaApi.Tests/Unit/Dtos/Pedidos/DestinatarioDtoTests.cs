@@ -6,15 +6,12 @@ using TiendaApi.Api.Validators.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Dtos.Pedidos;
 
-public class DestinatarioDtoTests
-{
+public class DestinatarioDtoTests {
     #region Tests de Propiedades
 
     [Test]
-    public void DestinatarioDto_ConTodosLosCampos_AsignaCorrectamente()
-    {
-        var direccion = new DireccionDto
-        {
+    public void DestinatarioDto_ConTodosLosCampos_AsignaCorrectamente() {
+        var direccion = new DireccionDto {
             Calle = "Gran Vía",
             Numero = "42",
             Ciudad = "Madrid",
@@ -23,8 +20,7 @@ public class DestinatarioDtoTests
             CodigoPostal = "28013"
         };
 
-        var dto = new DestinatarioDto
-        {
+        var dto = new DestinatarioDto {
             NombreCompleto = "María García López",
             Email = "maria.garcia@email.com",
             Telefono = "+34612345678",
@@ -38,8 +34,7 @@ public class DestinatarioDtoTests
     }
 
     [Test]
-    public void DestinatarioDto_PorDefecto_TienePropiedadesVacias()
-    {
+    public void DestinatarioDto_PorDefecto_TienePropiedadesVacias() {
         var dto = new DestinatarioDto();
 
         dto.NombreCompleto.Should().BeEmpty();
@@ -49,18 +44,15 @@ public class DestinatarioDtoTests
     }
 
     [Test]
-    public void DestinatarioDto_PermiteNombreVacio()
-    {
+    public void DestinatarioDto_PermiteNombreVacio() {
         var dto = new DestinatarioDto { NombreCompleto = string.Empty };
 
         dto.NombreCompleto.Should().BeEmpty();
     }
 
     [Test]
-    public void DestinatarioDto_PermiteValoresMaximos()
-    {
-        var dto = new DestinatarioDto
-        {
+    public void DestinatarioDto_PermiteValoresMaximos() {
+        var dto = new DestinatarioDto {
             NombreCompleto = new string('A', 200),
             Email = new string('a', 244) + "@test.com",  // 244 + 1 (@) + 8 (test.com) = 253
             Telefono = "+12345678901234567890",  // 21 chars - excede el máximo
@@ -77,15 +69,12 @@ public class DestinatarioDtoTests
     #region Tests de Serializacion JSON
 
     [Test]
-    public void DestinatarioDto_Serialize_ConTodosLosCampos()
-    {
-        var dto = new DestinatarioDto
-        {
+    public void DestinatarioDto_Serialize_ConTodosLosCampos() {
+        var dto = new DestinatarioDto {
             NombreCompleto = "Maria Garcia Lopez",
             Email = "maria.garcia@email.com",
             Telefono = "+34612345678",
-            Direccion = new DireccionDto
-            {
+            Direccion = new DireccionDto {
                 Calle = "Gran Via",
                 Numero = "42",
                 Ciudad = "Madrid",
@@ -104,8 +93,7 @@ public class DestinatarioDtoTests
     }
 
     [Test]
-    public void DestinatarioDto_Deserialize_ConTodosLosCampos()
-    {
+    public void DestinatarioDto_Deserialize_ConTodosLosCampos() {
         var json = """
             {
                 "nombreCompleto": "María García López",
@@ -134,8 +122,7 @@ public class DestinatarioDtoTests
     }
 
     [Test]
-    public void DestinatarioDto_Deserialize_SoloConNombre()
-    {
+    public void DestinatarioDto_Deserialize_SoloConNombre() {
         var json = """
             {
                 "nombreCompleto": "Juan Pérez",
@@ -158,8 +145,7 @@ public class DestinatarioDtoTests
     }
 
     [Test]
-    public void DestinatarioDto_Deserialize_SinDireccion()
-    {
+    public void DestinatarioDto_Deserialize_SinDireccion() {
         var json = """
             {
                 "nombreCompleto": "Juan Pérez",
@@ -180,10 +166,8 @@ public class DestinatarioDtoTests
     #region Tests de Direccion Anidada
 
     [Test]
-    public void DestinatarioDto_SinDireccion_AsignaNuevaDireccion()
-    {
-        var dto = new DestinatarioDto
-        {
+    public void DestinatarioDto_SinDireccion_AsignaNuevaDireccion() {
+        var dto = new DestinatarioDto {
             NombreCompleto = "Test User"
         };
 
@@ -191,10 +175,8 @@ public class DestinatarioDtoTests
     }
 
     [Test]
-    public void DestinatarioDto_DireccionVacia_EsValido()
-    {
-        var dto = new DestinatarioDto
-        {
+    public void DestinatarioDto_DireccionVacia_EsValido() {
+        var dto = new DestinatarioDto {
             NombreCompleto = "Test User",
             Direccion = new DireccionDto()
         };
@@ -208,12 +190,9 @@ public class DestinatarioDtoTests
     #region Tests de Casos Especiales
 
     [Test]
-    public void DestinatarioDto_SoloConDireccion_TieneCamposVacios()
-    {
-        var dto = new DestinatarioDto
-        {
-            Direccion = new DireccionDto
-            {
+    public void DestinatarioDto_SoloConDireccion_TieneCamposVacios() {
+        var dto = new DestinatarioDto {
+            Direccion = new DireccionDto {
                 Calle = "Calle Test",
                 Ciudad = "Barcelona",
                 Pais = "España"
@@ -226,8 +205,7 @@ public class DestinatarioDtoTests
     }
 
     [Test]
-    public void DestinatarioDto_CamposOpcionales_SonVerdaderamenteOpcionales()
-    {
+    public void DestinatarioDto_CamposOpcionales_SonVerdaderamenteOpcionales() {
         var dto = new DestinatarioDto();
 
         dto.NombreCompleto.Should().BeEmpty();

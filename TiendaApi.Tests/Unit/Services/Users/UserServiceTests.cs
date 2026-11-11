@@ -17,8 +17,7 @@ namespace TiendaApi.Tests.Unit.Services.Users;
 /// Tests unitarios para UserService usando Result Pattern
 /// Prueba operaciones CRUD, validación y manejo de errores
 /// </summary>
-public class UserServiceTests
-{
+public class UserServiceTests {
     private Mock<IUserRepository> _mockUserRepository = null!;
     private Mock<ILogger<UserService>> _mockLogger = null!;
     private Mock<IValidator<RegisterDto>> _mockRegisterValidator = null!;
@@ -28,8 +27,7 @@ public class UserServiceTests
     private IUserService _userService = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _mockUserRepository = new Mock<IUserRepository>();
         _mockLogger = new Mock<ILogger<UserService>>();
         _mockRegisterValidator = new Mock<IValidator<RegisterDto>>();
@@ -65,11 +63,9 @@ public class UserServiceTests
     #region FindAllAsync Tests
 
     [Test]
-    public async Task FindAllAsync_ConUsuarios_RetornaTodosLosUsuarios()
-    {
+    public async Task FindAllAsync_ConUsuarios_RetornaTodosLosUsuarios() {
         // Arrange
-        var users = new List<User>
-        {
+        var users = new List<User> {
             new User { Id = 1, UserName = "user1", Email = "user1@test.com", IsDeleted = false },
             new User { Id = 2, UserName = "user2", Email = "user2@test.com", IsDeleted = false },
         };
@@ -86,8 +82,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_SinUsuarios_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinUsuarios_RetornaListaVacia() {
         // Arrange
         _mockUserRepository.Setup(x => x.FindAllAsync())
             .ReturnsAsync(new List<User>());
@@ -101,11 +96,9 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_FiltraUsuariosEliminados()
-    {
+    public async Task FindAllAsync_FiltraUsuariosEliminados() {
         // Arrange
-        var users = new List<User>
-        {
+        var users = new List<User> {
             new User { Id = 1, UserName = "user1", Email = "user1@test.com", IsDeleted = false },
             new User { Id = 2, UserName = "user2", Email = "user2@test.com", IsDeleted = true }, // Deleted
         };
@@ -126,11 +119,9 @@ public class UserServiceTests
     #region FindAllPagedAsync Tests
 
     [Test]
-    public async Task FindAllPagedAsync_ConUsuarios_RetornaPaginaCorrecta()
-    {
+    public async Task FindAllPagedAsync_ConUsuarios_RetornaPaginaCorrecta() {
         // Arrange
-        var users = Enumerable.Range(1, 25).Select(i => new User
-        {
+        var users = Enumerable.Range(1, 25).Select(i => new User {
             Id = i,
             UserName = $"user{i}",
             Email = $"user{i}@test.com",
@@ -157,11 +148,9 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_SegundaPagina_RetornaElementosCorrectos()
-    {
+    public async Task FindAllPagedAsync_SegundaPagina_RetornaElementosCorrectos() {
         // Arrange
-        var users = Enumerable.Range(1, 25).Select(i => new User
-        {
+        var users = Enumerable.Range(1, 25).Select(i => new User {
             Id = i,
             UserName = $"user{i}",
             Email = $"user{i}@test.com",
@@ -186,11 +175,9 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_UltimaPagina_RetornaElementosRestantes()
-    {
+    public async Task FindAllPagedAsync_UltimaPagina_RetornaElementosRestantes() {
         // Arrange
-        var users = Enumerable.Range(1, 25).Select(i => new User
-        {
+        var users = Enumerable.Range(1, 25).Select(i => new User {
             Id = i,
             UserName = $"user{i}",
             Email = $"user{i}@test.com",
@@ -214,8 +201,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_SinUsuarios_RetornaListaVacia()
-    {
+    public async Task FindAllPagedAsync_SinUsuarios_RetornaListaVacia() {
         // Arrange
         var filter = new UserFilterDto(null, null, null, 0, 10, "id", "asc");
 
@@ -235,13 +221,11 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConFiltros_RetornaResultadosFiltrados()
-    {
+    public async Task FindAllPagedAsync_ConFiltros_RetornaResultadosFiltrados() {
         // Arrange
         var filter = new UserFilterDto("test", "@test.com", false, 0, 10, "id", "asc");
 
-        var users = new List<User>
-        {
+        var users = new List<User> {
             new User { Id = 1, UserName = "testuser1", Email = "user1@test.com", IsDeleted = false },
             new User { Id = 2, UserName = "testuser2", Email = "user2@test.com", IsDeleted = false },
         };
@@ -259,13 +243,11 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConPaginacion_RetornaPaginaCorrecta()
-    {
+    public async Task FindAllPagedAsync_ConPaginacion_RetornaPaginaCorrecta() {
         // Arrange
         var filter = new UserFilterDto(null, null, null, 2, 10, "id", "asc");
 
-        var users = Enumerable.Range(1, 25).Select(i => new User
-        {
+        var users = Enumerable.Range(1, 25).Select(i => new User {
             Id = i,
             UserName = $"user{i}",
             Email = $"user{i}@test.com",
@@ -285,13 +267,11 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConOrdenacionDescendente_RetornaOrdenado()
-    {
+    public async Task FindAllPagedAsync_ConOrdenacionDescendente_RetornaOrdenado() {
         // Arrange
         var filter = new UserFilterDto(null, null, null, 0, 10, "username", "desc");
 
-        var users = Enumerable.Range(1, 10).Select(i => new User
-        {
+        var users = Enumerable.Range(1, 10).Select(i => new User {
             Id = i,
             UserName = $"user{i}",
             Email = $"user{i}@test.com",
@@ -310,13 +290,11 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConPageSize100_Retorna100Elementos()
-    {
+    public async Task FindAllPagedAsync_ConPageSize100_Retorna100Elementos() {
         // Arrange
         var filter = new UserFilterDto(null, null, null, 0, 100, "id", "asc");
 
-        var users = Enumerable.Range(1, 100).Select(i => new User
-        {
+        var users = Enumerable.Range(1, 100).Select(i => new User {
             Id = i,
             UserName = $"user{i}",
             Email = $"user{i}@test.com",
@@ -336,13 +314,11 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConSortByCreatedAt_RetornaOrdenadoPorFecha()
-    {
+    public async Task FindAllPagedAsync_ConSortByCreatedAt_RetornaOrdenadoPorFecha() {
         // Arrange
         var filter = new UserFilterDto(null, null, null, 0, 10, "createdAt", "desc");
 
-        var users = Enumerable.Range(1, 10).Select(i => new User
-        {
+        var users = Enumerable.Range(1, 10).Select(i => new User {
             Id = i,
             UserName = $"user{i}",
             Email = $"user{i}@test.com",
@@ -366,11 +342,9 @@ public class UserServiceTests
     #region FindByIdAsync Tests
 
     [Test]
-    public async Task FindByIdAsync_ConIdExistente_RetornaExito()
-    {
+    public async Task FindByIdAsync_ConIdExistente_RetornaExito() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "testuser",
             Email = "test@test.com",
@@ -390,8 +364,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConIdNoExistente_RetornaFalloNoEncontrado()
-    {
+    public async Task FindByIdAsync_ConIdNoExistente_RetornaFalloNoEncontrado() {
         // Arrange
         _mockUserRepository.Setup(x => x.FindByIdAsync(999))
             .ReturnsAsync((User?)null);
@@ -406,11 +379,9 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConUsuarioEliminado_RetornaFalloNoEncontrado()
-    {
+    public async Task FindByIdAsync_ConUsuarioEliminado_RetornaFalloNoEncontrado() {
         // Arrange
-        var deletedUser = new User
-        {
+        var deletedUser = new User {
             Id = 1,
             UserName = "deleteduser",
             IsDeleted = true
@@ -432,11 +403,9 @@ public class UserServiceTests
     #region CreateAsync Tests
 
     [Test]
-    public async Task CreateAsync_ConDatosValidos_RetornaExito()
-    {
+    public async Task CreateAsync_ConDatosValidos_RetornaExito() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "newuser",
             Email = "newuser@test.com",
             Password = "Password123!"
@@ -448,8 +417,7 @@ public class UserServiceTests
         _mockUserRepository.Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
             .ReturnsAsync((User?)null);
 
-        var savedUser = new User
-        {
+        var savedUser = new User {
             Id = 1,
             UserName = registerDto.Username,
             Email = registerDto.Email,
@@ -472,18 +440,15 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConUsernameDuplicado_RetornaFalloConflicto()
-    {
+    public async Task CreateAsync_ConUsernameDuplicado_RetornaFalloConflicto() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "existinguser",
             Email = "new@test.com",
             Password = "Password123!"
         };
 
-        var existingUser = new User
-        {
+        var existingUser = new User {
             Id = 1,
             UserName = "existinguser",
             Email = "existing@test.com"
@@ -502,18 +467,15 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConEmailDuplicado_RetornaFalloConflicto()
-    {
+    public async Task CreateAsync_ConEmailDuplicado_RetornaFalloConflicto() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "newuser",
             Email = "existing@test.com",
             Password = "Password123!"
         };
 
-        var existingUser = new User
-        {
+        var existingUser = new User {
             Id = 1,
             UserName = "existinguser",
             Email = "existing@test.com"
@@ -535,19 +497,16 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConUsernameVacio_RetornaFalloValidacion()
-    {
+    public async Task CreateAsync_ConUsernameVacio_RetornaFalloValidacion() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "",
             Email = "test@test.com",
             Password = "Password123!"
         };
 
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[]
-            {
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] {
                 new FluentValidation.Results.ValidationFailure("Username", "El nombre de usuario es obligatorio")
             }));
 
@@ -563,19 +522,16 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConUsernameCorto_RetornaFalloValidacion()
-    {
+    public async Task CreateAsync_ConUsernameCorto_RetornaFalloValidacion() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "ab", // Too short
             Email = "test@test.com",
             Password = "Password123!"
         };
 
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[]
-            {
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] {
                 new FluentValidation.Results.ValidationFailure("Username", "El nombre de usuario debe tener al menos 3 caracteres")
             }));
 
@@ -591,19 +547,16 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConEmailInvalido_RetornaFalloValidacion()
-    {
+    public async Task CreateAsync_ConEmailInvalido_RetornaFalloValidacion() {
         // Arrange
-        var registerDto = new RegisterDto
-        {
+        var registerDto = new RegisterDto {
             Username = "testuser",
             Email = "invalidemail", // Invalid format
             Password = "Password123!"
         };
 
         _mockRegisterValidator.Setup(v => v.ValidateAsync(It.IsAny<RegisterDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[]
-            {
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] {
                 new FluentValidation.Results.ValidationFailure("Email", "Debe ser un correo electrónico válido")
             }));
 
@@ -623,11 +576,9 @@ public class UserServiceTests
     #region UpdateAsync Tests
 
     [Test]
-    public async Task UpdateAsync_ConDatosValidos_RetornaExito()
-    {
+    public async Task UpdateAsync_ConDatosValidos_RetornaExito() {
         // Arrange
-        var existingUser = new User
-        {
+        var existingUser = new User {
             Id = 1,
             UserName = "testuser",
             Email = "old@test.com",
@@ -635,8 +586,7 @@ public class UserServiceTests
             IsDeleted = false
         };
 
-        var updateDto = new UserUpdateDto
-        {
+        var updateDto = new UserUpdateDto {
             Email = "new@test.com",
             Password = "NewPassword123!"
         };
@@ -647,8 +597,7 @@ public class UserServiceTests
         _mockUserRepository.Setup(x => x.FindByEmailAsync("new@test.com"))
             .ReturnsAsync((User?)null);
 
-        var updatedUser = new User
-        {
+        var updatedUser = new User {
             Id = 1,
             UserName = "testuser",
             Email = "new@test.com",
@@ -667,11 +616,9 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_ConIdNoExistente_RetornaFalloNoEncontrado()
-    {
+    public async Task UpdateAsync_ConIdNoExistente_RetornaFalloNoEncontrado() {
         // Arrange
-        var updateDto = new UserUpdateDto
-        {
+        var updateDto = new UserUpdateDto {
             Email = "new@test.com"
         };
 
@@ -687,26 +634,22 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_ConEmailDuplicado_RetornaFalloConflicto()
-    {
+    public async Task UpdateAsync_ConEmailDuplicado_RetornaFalloConflicto() {
         // Arrange
-        var existingUser = new User
-        {
+        var existingUser = new User {
             Id = 1,
             UserName = "testuser",
             Email = "old@test.com",
             IsDeleted = false
         };
 
-        var otherUser = new User
-        {
+        var otherUser = new User {
             Id = 2,
             UserName = "otheruser",
             Email = "existing@test.com"
         };
 
-        var updateDto = new UserUpdateDto
-        {
+        var updateDto = new UserUpdateDto {
             Email = "existing@test.com"
         };
 
@@ -726,19 +669,16 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_ConEmailInvalido_RetornaFalloValidacion()
-    {
+    public async Task UpdateAsync_ConEmailInvalido_RetornaFalloValidacion() {
         // Arrange
-        var existingUser = new User
-        {
+        var existingUser = new User {
             Id = 1,
             UserName = "testuser",
             Email = "old@test.com",
             IsDeleted = false
         };
 
-        var updateDto = new UserUpdateDto
-        {
+        var updateDto = new UserUpdateDto {
             Email = "invalidemail"
         };
 
@@ -746,8 +686,7 @@ public class UserServiceTests
             .ReturnsAsync(existingUser);
 
         _mockUpdateValidator.Setup(v => v.ValidateAsync(It.IsAny<UserUpdateDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[]
-            {
+            .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] {
                 new FluentValidation.Results.ValidationFailure("Email", "Debe ser un correo electrónico válido")
             }));
 
@@ -767,11 +706,9 @@ public class UserServiceTests
     #region DeleteAsync Tests
 
     [Test]
-    public async Task DeleteAsync_ConIdExistente_RetornaExito()
-    {
+    public async Task DeleteAsync_ConIdExistente_RetornaExito() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "testuser",
             Email = "test@test.com",
@@ -793,8 +730,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task DeleteAsync_ConIdNoExistente_RetornaFalloNoEncontrado()
-    {
+    public async Task DeleteAsync_ConIdNoExistente_RetornaFalloNoEncontrado() {
         // Arrange
         _mockUserRepository.Setup(x => x.FindByIdAsync(999))
             .ReturnsAsync((User?)null);
@@ -808,11 +744,9 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task DeleteAsync_ConUsuarioYaEliminado_RetornaFalloNoEncontrado()
-    {
+    public async Task DeleteAsync_ConUsuarioYaEliminado_RetornaFalloNoEncontrado() {
         // Arrange
-        var deletedUser = new User
-        {
+        var deletedUser = new User {
             Id = 1,
             UserName = "testuser",
             IsDeleted = true

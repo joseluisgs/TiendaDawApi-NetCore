@@ -11,8 +11,7 @@ namespace TiendaApi.Api.Realtime.Pedidos;
 /// olvidar uno de ellos. Antes se usaba <c>Clients.All</c> y cualquier
 /// usuario autenticado recibía todos los pedidos ajenos.
 /// </summary>
-public static class PedidosHubExtensions
-{
+public static class PedidosHubExtensions {
     /// <summary>
     /// Envía <paramref name="payload"/> en el evento <paramref name="method"/>
     /// del hub de pedidos a los grupos del dueño y de administradores.
@@ -27,8 +26,7 @@ public static class PedidosHubExtensions
         long userId,
         string method,
         object payload,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         var clientes = hubContext.Clients;
         return Task.WhenAll(
             clientes.Group($"user-{userId}").SendAsync(method, payload, cancellationToken),

@@ -7,8 +7,7 @@ namespace ClientBlazor.Cliente.State.Auth;
 /// Define el contrato para el almacén de estado de autenticación.
 /// Gestiona la información del usuario, el token JWT y el estado reactivo de la sesión.
 /// </summary>
-public interface IAuthStore
-{
+public interface IAuthStore {
     /// <summary>
     /// Obtiene el observable del estado completo de autenticación.
     /// </summary>
@@ -53,7 +52,7 @@ public interface IAuthStore
     /// Obtiene un observable con el mensaje de error actual, si existe.
     /// </summary>
     IObservable<string?> ErrorObservable { get; }
-    
+
     /// <summary>
     /// Recupera una instantánea del estado actual de autenticación.
     /// </summary>

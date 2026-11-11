@@ -21,8 +21,7 @@ namespace TiendaApi.Api.Services.Estadisticas;
 ///   <item>Sin pedidos, el ticket medio es 0 (no NaN).</item>
 /// </list>
 /// </summary>
-public static class EstadisticasCalculator
-{
+public static class EstadisticasCalculator {
     /// <summary>Agrupaciones admitidas en la serie temporal.</summary>
     public static readonly string[] Agrupaciones = ["dia", "semana", "mes"];
 
@@ -49,8 +48,7 @@ public static class EstadisticasCalculator
     /// <summary>
     /// Totales de venta de una colección de pedidos (sin cancelados).
     /// </summary>
-    public static TotalesDto CalcularTotales(IEnumerable<Pedido> pedidos)
-    {
+    public static TotalesDto CalcularTotales(IEnumerable<Pedido> pedidos) {
         var validos = pedidos.Where(CuentaParaIngresos).ToList();
         var recaudacion = validos.Sum(p => p.Total);
         var unidades = SumarUnidades(validos);
@@ -67,13 +65,11 @@ public static class EstadisticasCalculator
     /// a cero para que las gráficas no tengan huecos.
     /// </summary>
     public static IReadOnlyList<PuntoSerieDto> Serie(
-        IEnumerable<Pedido> pedidos, string agrupar, DateTime desde, DateTime hasta)
-    {
+        IEnumerable<Pedido> pedidos, string agrupar, DateTime desde, DateTime hasta) {
         var validos = pedidos.Where(CuentaParaIngresos).ToList();
         var puntos = new Dictionary<string, (int Pedidos, int Unidades, decimal Recaudacion)>();
 
-        foreach (var pedido in validos)
-        {
+        foreach (var pedido in validos) {
             var clave = ClavePeriodo(pedido.CreatedAt, agrupar);
             var unidades = pedido.Items?.Sum(i => i.Cantidad) ?? 0;
             puntos[clave] = puntos.TryGetValue(clave, out var acumulado)
@@ -82,8 +78,7 @@ public static class EstadisticasCalculator
         }
 
         var salida = new List<PuntoSerieDto>();
-        for (var fecha = InicioPeriodo(desde, agrupar); fecha < hasta; fecha = SiguientePeriodo(fecha, agrupar))
-        {
+        for (var fecha = InicioPeriodo(desde, agrupar); fecha < hasta; fecha = SiguientePeriodo(fecha, agrupar)) {
             var clave = ClavePeriodo(fecha, agrupar);
             var acumulado = puntos.TryGetValue(clave, out var v)
                 ? v
@@ -102,8 +97,7 @@ public static class EstadisticasCalculator
     /// <summary>
     /// Clave de agrupación de una fecha: <c>2026-11-02</c>, <c>2026-W44</c> o <c>2026-11</c>.
     /// </summary>
-    public static string ClavePeriodo(DateTime fecha, string agrupar) => agrupar switch
-    {
+    public static string ClavePeriodo(DateTime fecha, string agrupar) => agrupar switch {
         "dia" => fecha.ToString("yyyy-MM-dd"),
         "semana" => $"{fecha:yyyy}-W{SemanaIso(fecha):00}",
         "mes" => fecha.ToString("yyyy-MM"),
@@ -119,8 +113,7 @@ public static class EstadisticasCalculator
         IReadOnlyDictionary<long, Producto> productos,
         IReadOnlyDictionary<long, Categoria> categorias,
         string orden,
-        int top)
-    {
+        int top) {
         // Cada línea se asocia a su pedido: así "Pedidos" cuenta pedidos distintos
         // y no líneas de pedido (un mismo producto puede aparecer varias veces).
         var lineas = pedidos
@@ -129,8 +122,7 @@ public static class EstadisticasCalculator
 
         var filas = lineas
             .GroupBy(x => x.Item.ProductoId)
-            .Select(g =>
-            {
+            .Select(g => {
                 var unidades = g.Sum(x => x.Item.Cantidad);
                 var recaudacion = g.Sum(x => x.Item.Subtotal);
                 var productoId = g.Key;
@@ -138,8 +130,7 @@ public static class EstadisticasCalculator
                 var categoriaNombre = producto is null || !categorias.TryGetValue(producto.CategoriaId, out var cat)
                     ? string.Empty
                     : cat.Nombre;
-                return new
-                {
+                return new {
                     ProductoId = productoId,
                     Nombre = producto?.Nombre ?? g.First().Item.NombreProducto,
                     Categoria = categoriaNombre,
@@ -178,14 +169,12 @@ public static class EstadisticasCalculator
     public static IReadOnlyList<FilaCategoriaDto> DesgloseCategorias(
         IEnumerable<Pedido> pedidos,
         IReadOnlyDictionary<long, Categoria> categorias,
-        IReadOnlyDictionary<long, Producto> productos)
-    {
+        IReadOnlyDictionary<long, Producto> productos) {
         var porCategoria = pedidos
             .Where(CuentaParaIngresos)
             .SelectMany(p => (p.Items ?? []).Select(item => new { Item = item, Pedido = p }))
             .GroupBy(x => CategoriaDeProducto(x.Item.ProductoId, productos))
-            .ToDictionary(g => g.Key, g => new
-            {
+            .ToDictionary(g => g.Key, g => new {
                 Unidades = g.Sum(x => x.Item.Cantidad),
                 Recaudacion = g.Sum(x => x.Item.Subtotal),
                 Pedidos = g.Select(x => x.Pedido.Id).Distinct().Count(),
@@ -208,8 +197,7 @@ public static class EstadisticasCalculator
 
         return categorias.Values
             .Where(c => !c.IsDeleted)
-            .Select(c =>
-            {
+            .Select(c => {
                 porCategoria.TryGetValue(c.Id, out var venta);
                 var recaudacion = venta?.Recaudacion ?? 0;
                 var productosDeLaCategoria = productosPorCategoria.GetValueOrDefault(c.Id);
@@ -237,18 +225,15 @@ public static class EstadisticasCalculator
     public static IReadOnlyList<FilaProveedorDto> DesgloseProveedores(
         IEnumerable<Pedido> pedidos,
         IReadOnlyDictionary<string, Proveedor> proveedores,
-        IReadOnlyDictionary<long, Producto> productos)
-    {
+        IReadOnlyDictionary<long, Producto> productos) {
         var filas = pedidos
             .Where(CuentaParaIngresos)
             .SelectMany(p => (p.Items ?? []).Select(item => new { Item = item, Pedido = p }))
             .GroupBy(x => ProveedorDeProducto(x.Item.ProductoId, productos))
-            .Select(g =>
-            {
+            .Select(g => {
                 var codigo = g.Key;
                 proveedores.TryGetValue(codigo, out var proveedor);
-                return new
-                {
+                return new {
                     Codigo = codigo,
                     Nombre = proveedor?.Nombre ?? string.Empty,
                     Unidades = g.Sum(x => x.Item.Cantidad),
@@ -283,13 +268,11 @@ public static class EstadisticasCalculator
     public static IReadOnlyList<FilaClienteDto> RankingClientes(
         IEnumerable<Pedido> pedidos,
         IReadOnlyDictionary<long, string> usuarios,
-        int top)
-    {
+        int top) {
         var filas = pedidos
             .Where(CuentaParaIngresos)
             .GroupBy(p => p.UserId)
-            .Select(g =>
-            {
+            .Select(g => {
                 var items = g.SelectMany(p => p.Items ?? []).ToList();
                 var favorito = items
                     .GroupBy(i => i.ProductoId)
@@ -328,8 +311,7 @@ public static class EstadisticasCalculator
     /// <summary>
     /// Embudo de estados con porcentajes sobre el total y cancelados aparte.
     /// </summary>
-    public static EstadosEstadisticasDto EmbudoEstados(IEnumerable<Pedido> pedidos, PeriodoDto periodo)
-    {
+    public static EstadosEstadisticasDto EmbudoEstados(IEnumerable<Pedido> pedidos, PeriodoDto periodo) {
         var todos = pedidos.Where(p => !p.IsDeleted).ToList();
         var total = todos.Count;
         var cancelados = todos.Where(p => string.Equals(p.Estado, PedidoEstado.CANCELADO, StringComparison.Ordinal)).ToList();
@@ -356,8 +338,7 @@ public static class EstadisticasCalculator
     /// Variación porcentual de cada métrica respecto del periodo anterior.
     /// Devuelve null cuando el periodo anterior no tiene datos que comparar.
     /// </summary>
-    public static ComparativaDto? CalcularComparativa(TotalesDto actuales, TotalesDto anteriores, int clientesActuales, int clientesAnteriores)
-    {
+    public static ComparativaDto? CalcularComparativa(TotalesDto actuales, TotalesDto anteriores, int clientesActuales, int clientesAnteriores) {
         if (anteriores.Pedidos == 0 && anteriores.Unidades == 0 && anteriores.Recaudacion == 0)
             return null;
 
@@ -372,15 +353,13 @@ public static class EstadisticasCalculator
     public static InventarioDto Inventario(
         IReadOnlyDictionary<long, Producto> productos,
         IReadOnlyDictionary<long, Categoria> categorias,
-        int stockMax)
-    {
+        int stockMax) {
         var activos = productos.Values.Where(p => !p.IsDeleted).ToList();
         var umbral = Math.Max(0, stockMax);
 
         var porCategoria = activos
             .GroupBy(p => p.CategoriaId)
-            .Select(g =>
-            {
+            .Select(g => {
                 categorias.TryGetValue(g.Key, out var categoria);
                 return new FilaInventarioCategoriaDto(
                     CategoriaId: g.Key,
@@ -419,8 +398,7 @@ public static class EstadisticasCalculator
     /// Estadísticas de una serie de precios ya cargada del histórico.
     /// </summary>
     public static PreciosEstadisticasDto Precios(
-        long productoId, IReadOnlyList<PuntoPrecioDto> serie, DateTime? desde, DateTime? hasta)
-    {
+        long productoId, IReadOnlyList<PuntoPrecioDto> serie, DateTime? desde, DateTime? hasta) {
         var puntos = serie.OrderBy(p => p.Fecha).ToList();
         if (puntos.Count == 0)
             return new PreciosEstadisticasDto(productoId, 0, desde, hasta, 0, 0, 0, 0, 0, 0, []);
@@ -449,8 +427,7 @@ public static class EstadisticasCalculator
     /// Semana ISO 8601 de una fecha: la semana que contiene el jueves, con el
     /// lunes como primer día (semana 1 = la que contiene el 4 de enero).
     /// </summary>
-    public static int SemanaIso(DateTime fecha)
-    {
+    public static int SemanaIso(DateTime fecha) {
         var dia = (int)fecha.DayOfWeek;
         if (dia == 0) dia = 7;                 // lunes = 1 … domingo = 7
         var jueves = fecha.AddDays(4 - dia);   // jueves de la semana de la fecha
@@ -458,22 +435,19 @@ public static class EstadisticasCalculator
         return (int)Math.Ceiling(((jueves - inicioAno).Days + 1) / 7.0);
     }
 
-    private static DateTime InicioPeriodo(DateTime fecha, string agrupar) => agrupar switch
-    {
+    private static DateTime InicioPeriodo(DateTime fecha, string agrupar) => agrupar switch {
         "semana" => InicioSemana(fecha),
         "mes" => new DateTime(fecha.Year, fecha.Month, 1),
         _ => fecha.Date,
     };
 
-    private static DateTime SiguientePeriodo(DateTime fecha, string agrupar) => agrupar switch
-    {
+    private static DateTime SiguientePeriodo(DateTime fecha, string agrupar) => agrupar switch {
         "semana" => InicioSemana(fecha).AddDays(7),
         "mes" => fecha.AddMonths(1),
         _ => fecha.AddDays(1),
     };
 
-    private static DateTime InicioSemana(DateTime fecha)
-    {
+    private static DateTime InicioSemana(DateTime fecha) {
         var diferencia = ((int)fecha.DayOfWeek + 6) % 7; // lunes = 0
         return fecha.Date.AddDays(-diferencia);
     }

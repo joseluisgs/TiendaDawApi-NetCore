@@ -9,8 +9,7 @@ namespace TiendaApi.Api.Models;
 /// Autenticación con email/password (BCrypt en modo Custom, PBKDF2 en modo Identity).
 /// Roles: USER, ADMIN.
 /// </summary>
-public class User : IdentityUser<long>, ITimestamped
-{
+public class User : IdentityUser<long>, ITimestamped {
     /// <summary>URL de avatar por defecto cuando no hay imagen.</summary>
     public const string AVATAR_DEFAULT = "https://via.placeholder.com/150";
 
@@ -64,8 +63,7 @@ public class User : IdentityUser<long>, ITimestamped
     /// Obtiene la URL completa del avatar normalizada.
     /// </summary>
     /// <returns>URL lista para usar en &lt;img src&gt;.</returns>
-    public string GetAvatarUrl()
-    {
+    public string GetAvatarUrl() {
         if (string.IsNullOrEmpty(Avatar))
             return AVATAR_DEFAULT;
 
@@ -86,8 +84,7 @@ public class User : IdentityUser<long>, ITimestamped
 /// <summary>
 /// Constantes para los roles de usuario.
 /// </summary>
-public static class UserRoles
-{
+public static class UserRoles {
     /// <summary>Rol de administrador con acceso total al sistema.</summary>
     public const string ADMIN = "ADMIN";
 

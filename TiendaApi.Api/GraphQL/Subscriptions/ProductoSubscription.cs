@@ -7,8 +7,7 @@ namespace TiendaApi.Api.GraphQL.Subscriptions;
 /// <summary>
 /// Suscripciones GraphQL para eventos de productos en tiempo real.
 /// </summary>
-public class ProductoSubscription
-{
+public class ProductoSubscription {
     /// <summary>Evento cuando se crea un producto.</summary>
     /// <param name="message">Datos del evento.</param>
     /// <returns>Evento publicado.</returns>

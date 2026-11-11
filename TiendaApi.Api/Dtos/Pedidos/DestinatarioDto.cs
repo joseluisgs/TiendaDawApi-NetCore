@@ -21,8 +21,7 @@ namespace TiendaApi.Api.Dtos.Pedidos;
 ///   }
 /// }
 /// </example>
-public class DestinatarioDto
-{
+public class DestinatarioDto {
     /// <summary>
     /// Nombre completo del destinatario.
     /// </summary>

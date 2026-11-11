@@ -9,18 +9,15 @@ using TiendaApi.Api.Realtime.Productos;
 
 namespace TiendaApi.Tests.Unit.Realtime;
 
-public class ProductosHubTests
-{
+public class ProductosHubTests {
     private Mock<ILogger<ProductosHub>> _loggerMock = null!;
     private HubCallerContext _context = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _loggerMock = new Mock<ILogger<ProductosHub>>();
 
-        var identity = new ClaimsIdentity(new[]
-        {
+        var identity = new ClaimsIdentity(new[] {
             new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimTypes.Name, "testuser")
         }, "TestAuthType");
@@ -33,8 +30,7 @@ public class ProductosHubTests
     #region Constructor Tests
 
     [Test]
-    public void Constructor_CreaInstanciaCorrectamente()
-    {
+    public void Constructor_CreaInstanciaCorrectamente() {
         var hub = new ProductosHub(_loggerMock.Object);
         hub.Should().NotBeNull();
     }
@@ -44,8 +40,7 @@ public class ProductosHubTests
     #region Attribute Tests
 
     [Test]
-    public void ProductosHub_TieneAllowAnonymousAttribute_Clase()
-    {
+    public void ProductosHub_TieneAllowAnonymousAttribute_Clase() {
         var attribute = typeof(ProductosHub)
             .GetCustomAttributes(typeof(AllowAnonymousAttribute), true)
             .FirstOrDefault();
@@ -54,8 +49,7 @@ public class ProductosHubTests
     }
 
     [Test]
-    public void ProductosHub_NoTieneAuthorizeAttribute_Clase()
-    {
+    public void ProductosHub_NoTieneAuthorizeAttribute_Clase() {
         var attribute = typeof(ProductosHub)
             .GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .FirstOrDefault();
@@ -68,8 +62,7 @@ public class ProductosHubTests
     #region OnConnectedAsync Tests
 
     [Test]
-    public async Task OnConnectedAsync_ClienteAnonimo_LogueaInformacion()
-    {
+    public async Task OnConnectedAsync_ClienteAnonimo_LogueaInformacion() {
         var hub = new ProductosHub(_loggerMock.Object);
         SetupHubContext(hub, _context);
 
@@ -86,8 +79,7 @@ public class ProductosHubTests
     }
 
     [Test]
-    public async Task OnConnectedAsync_MultiplesClientes_CreaMultiplesConexiones()
-    {
+    public async Task OnConnectedAsync_MultiplesClientes_CreaMultiplesConexiones() {
         var hub1 = new ProductosHub(_loggerMock.Object);
         var hub2 = new ProductosHub(_loggerMock.Object);
 
@@ -113,8 +105,7 @@ public class ProductosHubTests
     #region OnDisconnectedAsync Tests
 
     [Test]
-    public async Task OnDisconnectedAsync_SinError_LogueaInformacion()
-    {
+    public async Task OnDisconnectedAsync_SinError_LogueaInformacion() {
         var hub = new ProductosHub(_loggerMock.Object);
         SetupHubContext(hub, _context);
 
@@ -131,8 +122,7 @@ public class ProductosHubTests
     }
 
     [Test]
-    public async Task OnDisconnectedAsync_ConError_LogueaWarning()
-    {
+    public async Task OnDisconnectedAsync_ConError_LogueaWarning() {
         var hub = new ProductosHub(_loggerMock.Object);
         SetupHubContext(hub, _context);
         var exception = new Exception("Connection lost");
@@ -150,8 +140,7 @@ public class ProductosHubTests
     }
 
     [Test]
-    public async Task OnDisconnectedAsync_ConErrorNulo_NoLanzaExcepcion()
-    {
+    public async Task OnDisconnectedAsync_ConErrorNulo_NoLanzaExcepcion() {
         var hub = new ProductosHub(_loggerMock.Object);
         SetupHubContext(hub, _context);
 
@@ -160,8 +149,7 @@ public class ProductosHubTests
     }
 
     [Test]
-    public async Task OnDisconnectedAsync_ConExcepcionReal_NoLanzaExcepcion()
-    {
+    public async Task OnDisconnectedAsync_ConExcepcionReal_NoLanzaExcepcion() {
         var hub = new ProductosHub(_loggerMock.Object);
         SetupHubContext(hub, _context);
         var exception = new Exception("Test exception");
@@ -174,8 +162,7 @@ public class ProductosHubTests
 
     #region Helper Methods
 
-    private void SetupHubContext(ProductosHub hub, HubCallerContext context)
-    {
+    private void SetupHubContext(ProductosHub hub, HubCallerContext context) {
         var field = typeof(Hub).GetField("_context", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         field?.SetValue(hub, context);
     }

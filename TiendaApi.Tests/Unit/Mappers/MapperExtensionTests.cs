@@ -13,16 +13,13 @@ namespace TiendaApi.Tests.Unit.Mappers;
 /// Tests para métodos de extensión de mapeo
 /// Asegura que los métodos de extensión funcionen correctamente para conversiones entidad-DTO
 /// </summary>
-public class MapperExtensionTests
-{
+public class MapperExtensionTests {
     #region CategoriaMapper Tests
 
     [Test]
-    public void CategoriaMapper_ToDto_DebeMapearTodosLosCampos()
-    {
+    public void CategoriaMapper_ToDto_DebeMapearTodosLosCampos() {
         // Arrange
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = 1,
             Nombre = "Electronics",
             CreatedAt = DateTime.UtcNow
@@ -38,11 +35,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void CategoriaMapper_ToEntity_DebeMapearTodosLosCampos()
-    {
+    public void CategoriaMapper_ToEntity_DebeMapearTodosLosCampos() {
         // Arrange
-        var dto = new CategoriaRequestDto
-        {
+        var dto = new CategoriaRequestDto {
             Nombre = "Books"
         };
 
@@ -55,11 +50,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void CategoriaMapper_ToDtoList_DebeMapearMultiplesCategorias()
-    {
+    public void CategoriaMapper_ToDtoList_DebeMapearMultiplesCategorias() {
         // Arrange
-        var categorias = new List<Categoria>
-        {
+        var categorias = new List<Categoria> {
             new() { Id = 1, Nombre = "Cat1" },
             new() { Id = 2, Nombre = "Cat2" }
         };
@@ -76,8 +69,7 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void CategoriaMapper_UpdateEntity_DebeActualizarNombre()
-    {
+    public void CategoriaMapper_UpdateEntity_DebeActualizarNombre() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "OldName" };
         var dto = new CategoriaRequestDto { Nombre = "NewName" };
@@ -95,11 +87,9 @@ public class MapperExtensionTests
     #region ProductoMapper Tests
 
     [Test]
-    public void ProductoMapper_ToDto_DebeMapearTodosLosCampos()
-    {
+    public void ProductoMapper_ToDto_DebeMapearTodosLosCampos() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Laptop",
             Descripcion = "Gaming laptop",
@@ -126,11 +116,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void ProductoMapper_ToDto_DebeManejarCategoriaNula()
-    {
+    public void ProductoMapper_ToDto_DebeManejarCategoriaNula() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Product",
             Categoria = null!
@@ -144,11 +132,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void ProductoMapper_ToEntity_DebeMapearTodosLosCampos()
-    {
+    public void ProductoMapper_ToEntity_DebeMapearTodosLosCampos() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Phone",
             Descripcion = "Smartphone",
             Precio = 999.99m,
@@ -170,11 +156,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void ProductoMapper_ToDtoList_DebeMapearMultiplesProductos()
-    {
+    public void ProductoMapper_ToDtoList_DebeMapearMultiplesProductos() {
         // Arrange
-        var productos = new List<Producto>
-        {
+        var productos = new List<Producto> {
             new() { Id = 1, Nombre = "P1" },
             new() { Id = 2, Nombre = "P2" }
         };
@@ -193,11 +177,9 @@ public class MapperExtensionTests
     #region UserMapper Tests
 
     [Test]
-    public void UserMapper_ToDto_DebeMapearTodosLosCampos()
-    {
+    public void UserMapper_ToDto_DebeMapearTodosLosCampos() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "johndoe",
             Email = "john@example.com",
@@ -216,11 +198,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void UserMapper_ToEntity_DebeMapearTodosLosCampos()
-    {
+    public void UserMapper_ToEntity_DebeMapearTodosLosCampos() {
         // Arrange
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "janedoe",
             Email = "jane@example.com",
             Password = "password123"
@@ -239,11 +219,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void UserMapper_ToDtoList_DebeMapearMultiplesUsuarios()
-    {
+    public void UserMapper_ToDtoList_DebeMapearMultiplesUsuarios() {
         // Arrange
-        var users = new List<User>
-        {
+        var users = new List<User> {
             new() { Id = 1, UserName = "user1" },
             new() { Id = 2, UserName = "user2" }
         };
@@ -262,18 +240,15 @@ public class MapperExtensionTests
     #region PedidoMapper Tests
 
     [Test]
-    public void PedidoMapper_ToDto_DebeMapearTodosLosCampos()
-    {
+    public void PedidoMapper_ToDto_DebeMapearTodosLosCampos() {
         // Arrange
         var pedidoId = ObjectId.GenerateNewId();
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = pedidoId,
             UserId = 1,
             Total = 150.00m,
             Estado = PedidoEstado.PENDIENTE,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Product1", Cantidad = 2, Precio = 50, Subtotal = 100 },
                 new() { ProductoId = 2, NombreProducto = "Product2", Cantidad = 1, Precio = 50, Subtotal = 50 }
             },
@@ -294,12 +269,10 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void PedidoMapper_ToDto_DebeManejarItemsVacios()
-    {
+    public void PedidoMapper_ToDto_DebeManejarItemsVacios() {
         // Arrange
         var pedidoId = ObjectId.GenerateNewId();
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = pedidoId,
             Items = new List<PedidoItem>()
         };
@@ -314,13 +287,10 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void PedidoMapper_ToEntity_DebeMapearItems()
-    {
+    public void PedidoMapper_ToEntity_DebeMapearItems() {
         // Arrange
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var dto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 },
                 new() { ProductoId = 2, Cantidad = 1 }
             }
@@ -337,11 +307,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void PedidoMapper_ToEntity_DebeManejarItemsVacios()
-    {
+    public void PedidoMapper_ToEntity_DebeManejarItemsVacios() {
         // Arrange
-        var dto = new PedidoRequestDto
-        {
+        var dto = new PedidoRequestDto {
             Items = new List<PedidoItemRequestDto>()
         };
         var userId = 1L;
@@ -356,13 +324,11 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void PedidoMapper_ToDtoList_DebeMapearMultiplesPedidos()
-    {
+    public void PedidoMapper_ToDtoList_DebeMapearMultiplesPedidos() {
         // Arrange
         var pedidoId1 = ObjectId.GenerateNewId();
         var pedidoId2 = ObjectId.GenerateNewId();
-        var pedidos = new List<Pedido>
-        {
+        var pedidos = new List<Pedido> {
             new() { Id = pedidoId1, Total = 100 },
             new() { Id = pedidoId2, Total = 200 }
         };
@@ -381,11 +347,9 @@ public class MapperExtensionTests
     #region PedidoItemMapper Tests
 
     [Test]
-    public void PedidoItemMapper_ToDto_DebeCalcularSubtotal()
-    {
+    public void PedidoItemMapper_ToDto_DebeCalcularSubtotal() {
         // Arrange
-        var item = new PedidoItem
-        {
+        var item = new PedidoItem {
             ProductoId = 1,
             NombreProducto = "Product",
             Cantidad = 3,
@@ -405,11 +369,9 @@ public class MapperExtensionTests
     }
 
     [Test]
-    public void PedidoItemMapper_ToEntity_DebeCalcularSubtotal()
-    {
+    public void PedidoItemMapper_ToEntity_DebeCalcularSubtotal() {
         // Arrange
-        var dto = new PedidoItemRequestDto
-        {
+        var dto = new PedidoItemRequestDto {
             ProductoId = 1,
             Cantidad = 4
         };

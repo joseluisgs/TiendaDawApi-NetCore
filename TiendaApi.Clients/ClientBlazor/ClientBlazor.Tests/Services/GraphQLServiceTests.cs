@@ -19,8 +19,7 @@ namespace ClientBlazor.Tests.Services;
 /// Objetivo: Validar el procesamiento de respuestas con errores de grafo y el manejo de seguridad.
 /// </summary>
 [TestFixture]
-public class GraphQLServiceTests
-{
+public class GraphQLServiceTests {
     private Mock<IAuthStore> _authStoreMock = null!;
     private Mock<INotificationStore> _notificationStoreMock = null!;
     private GraphQLHttpClient _graphqlClient = null!;
@@ -31,17 +30,16 @@ public class GraphQLServiceTests
     /// Inicializa el cliente GraphQL con un handler de red simulado.
     /// </summary>
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _authStoreMock = new Mock<IAuthStore>();
         _notificationStoreMock = new Mock<INotificationStore>();
-        
+
         _httpHandler = new MockHttpMessageHandler();
         var httpClient = new HttpClient(_httpHandler);
-        
+
         var options = new GraphQLHttpClientOptions { EndPoint = new Uri("http://test.com/graphql") };
         _graphqlClient = new GraphQLHttpClient(options, new SystemTextJsonSerializer(), httpClient);
-        
+
         _service = new GraphQLService(_graphqlClient, _authStoreMock.Object, _notificationStoreMock.Object);
     }
 
@@ -49,8 +47,7 @@ public class GraphQLServiceTests
     /// Verifica que se devuelvan los datos correctamente cuando la respuesta de GraphQL es exitosa.
     /// </summary>
     [Test]
-    public async Task ExecuteQueryAsync_Should_Return_Data_When_Successful()
-    {
+    public async Task ExecuteQueryAsync_Should_Return_Data_When_Successful() {
         // Arrange
         var responseObj = new { data = new { productos = new[] { new { id = 1, nombre = "Test" } } } };
         _httpHandler.ResponseContent = JsonSerializer.Serialize(responseObj);
@@ -67,12 +64,11 @@ public class GraphQLServiceTests
     /// Comprueba que el servicio detecte los errores internos de GraphQL (lista 'errors') y notifique al usuario.
     /// </summary>
     [Test]
-    public async Task ExecuteQueryAsync_Should_Return_Failure_And_Notify_When_GraphQLErrors_Present()
-    {
+    public async Task ExecuteQueryAsync_Should_Return_Failure_And_Notify_When_GraphQLErrors_Present() {
         // Arrange
-        var responseObj = new { 
+        var responseObj = new {
             errors = new[] { new { message = "Campo no existe" } },
-            data = (object?)null 
+            data = (object?)null
         };
         _httpHandler.ResponseContent = JsonSerializer.Serialize(responseObj);
 
@@ -88,8 +84,7 @@ public class GraphQLServiceTests
     /// Valida que las mutaciones sean bloqueadas localmente si el usuario no ha iniciado sesión.
     /// </summary>
     [Test]
-    public async Task ExecuteMutationAsync_Should_Return_Error_If_Not_Authenticated()
-    {
+    public async Task ExecuteMutationAsync_Should_Return_Error_If_Not_Authenticated() {
         // Arrange
         _authStoreMock.Setup(s => s.GetState()).Returns(new AuthStore.AuthState { Token = null });
 
@@ -105,8 +100,7 @@ public class GraphQLServiceTests
     /// Verifica que un fallo de red real sea gestionado y notificado como error global.
     /// </summary>
     [Test]
-    public async Task ExecuteQueryAsync_Should_Return_ConnectionFailed_On_Network_Error()
-    {
+    public async Task ExecuteQueryAsync_Should_Return_ConnectionFailed_On_Network_Error() {
         // Arrange
         _httpHandler.ShouldThrow = true;
 
@@ -122,17 +116,14 @@ public class GraphQLServiceTests
     /// <summary>
     /// Clase interna para simular el comportamiento de red del servidor GraphQL.
     /// </summary>
-    private class MockHttpMessageHandler : HttpMessageHandler
-    {
+    private class MockHttpMessageHandler : HttpMessageHandler {
         public string ResponseContent { get; set; } = "{}";
         public bool ShouldThrow { get; set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
             if (ShouldThrow) throw new HttpRequestException("Network Error");
 
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) {
                 Content = new StringContent(ResponseContent, Encoding.UTF8, "application/json")
             });
         }

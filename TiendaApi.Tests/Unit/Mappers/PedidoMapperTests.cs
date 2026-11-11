@@ -11,22 +11,18 @@ namespace TiendaApi.Tests.Unit.Mappers;
 /// Tests unitarios para el mapeador de pedidos.
 /// Prueba todas las conversiones entidad-DTO para el dominio de Pedido.
 /// </summary>
-public class PedidoMapperTests
-{
+public class PedidoMapperTests {
     #region Pedido ToDto Tests
 
     [Test]
-    public void ToDto_ConTodosLosCampos_MapeaCorrectamente()
-    {
+    public void ToDto_ConTodosLosCampos_MapeaCorrectamente() {
         // Arrange
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
             UserId = 100,
             Total = 299.99m,
             Estado = PedidoEstado.PENDIENTE,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Product 1", Cantidad = 2, Precio = 50, Subtotal = 100 },
                 new() { ProductoId = 2, NombreProducto = "Product 2", Cantidad = 1, Precio = 199.99m, Subtotal = 199.99m }
             },
@@ -46,11 +42,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConIdVacio_RetornaStringVacio()
-    {
+    public void ToDto_ConIdVacio_RetornaStringVacio() {
         // Arrange
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.Empty,
             UserId = 1,
             Total = 100
@@ -64,8 +58,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConEstadoPredeterminado_DebeSerPendiente()
-    {
+    public void ToDto_ConEstadoPredeterminado_DebeSerPendiente() {
         // Arrange
         var pedido = new Pedido { Id = ObjectId.GenerateNewId() };
 
@@ -77,11 +70,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConItemsVacios_RetornaListaVacia()
-    {
+    public void ToDto_ConItemsVacios_RetornaListaVacia() {
         // Arrange
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
             Items = new List<PedidoItem>()
         };
@@ -95,11 +86,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConItemsNulos_RetornaListaVacia()
-    {
+    public void ToDto_ConItemsNulos_RetornaListaVacia() {
         // Arrange
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
             Items = null!
         };
@@ -113,14 +102,11 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_DebeCalcularSubtotalesDeItems()
-    {
+    public void ToDto_DebeCalcularSubtotalesDeItems() {
         // Arrange
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Product 1", Cantidad = 3, Precio = 10, Subtotal = 30 },
                 new() { ProductoId = 2, NombreProducto = "Product 2", Cantidad = 2, Precio = 25, Subtotal = 50 }
             }
@@ -135,11 +121,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConTotalCero_MapeaCorrectamente()
-    {
+    public void ToDto_ConTotalCero_MapeaCorrectamente() {
         // Arrange
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
             Total = 0,
             Items = new List<PedidoItem>()
@@ -153,11 +137,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConTotalMuyGrande_MapeaCorrectamente()
-    {
+    public void ToDto_ConTotalMuyGrande_MapeaCorrectamente() {
         // Arrange
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
             Total = 999999999.99m,
             Items = new List<PedidoItem>()
@@ -171,11 +153,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConTodosLosEstados_MapeaCorrectamente()
-    {
+    public void ToDto_ConTodosLosEstados_MapeaCorrectamente() {
         // Arrange
-        var estados = new[]
-        {
+        var estados = new[] {
             PedidoEstado.PENDIENTE,
             PedidoEstado.PROCESANDO,
             PedidoEstado.ENVIADO,
@@ -183,10 +163,8 @@ public class PedidoMapperTests
             PedidoEstado.CANCELADO
         };
 
-        foreach (var estado in estados)
-        {
-            var pedido = new Pedido
-            {
+        foreach (var estado in estados) {
+            var pedido = new Pedido {
                 Id = ObjectId.GenerateNewId(),
                 Estado = estado
             };
@@ -200,12 +178,10 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_ConMuchosItems_MapeaTodos()
-    {
+    public void ToDto_ConMuchosItems_MapeaTodos() {
         // Arrange
         var items = Enumerable.Range(1, 100)
-            .Select(i => new PedidoItem
-            {
+            .Select(i => new PedidoItem {
                 ProductoId = i,
                 NombreProducto = $"Product {i}",
                 Cantidad = i,
@@ -214,8 +190,7 @@ public class PedidoMapperTests
             })
             .ToList();
 
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
             Items = items
         };
@@ -225,8 +200,7 @@ public class PedidoMapperTests
 
         // Assert
         dto.Items.Should().HaveCount(100);
-        for (int i = 0; i < 100; i++)
-        {
+        for (int i = 0; i < 100; i++) {
             dto.Items[i].ProductoId.Should().Be(i + 1);
         }
     }
@@ -236,11 +210,9 @@ public class PedidoMapperTests
     #region List<Pedido> ToDtoList Tests
 
     [Test]
-    public void ToDtoList_ConMultiplesPedidos_MapeaTodos()
-    {
+    public void ToDtoList_ConMultiplesPedidos_MapeaTodos() {
         // Arrange
-        var pedidos = new List<Pedido>
-        {
+        var pedidos = new List<Pedido> {
             new() { Id = ObjectId.GenerateNewId(), UserId = 1, Total = 100 },
             new() { Id = ObjectId.GenerateNewId(), UserId = 2, Total = 200 },
             new() { Id = ObjectId.GenerateNewId(), UserId = 3, Total = 300 }
@@ -257,11 +229,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDtoList_DebePreservarOrden()
-    {
+    public void ToDtoList_DebePreservarOrden() {
         // Arrange
-        var pedidos = new List<Pedido>
-        {
+        var pedidos = new List<Pedido> {
             new() { Id = ObjectId.Parse("507f1f77bcf86cd799439011"), UserId = 1, Total = 100 },
             new() { Id = ObjectId.Parse("507f1f77bcf86cd799439012"), UserId = 2, Total = 200 },
             new() { Id = ObjectId.Parse("507f1f77bcf86cd799439013"), UserId = 3, Total = 300 }
@@ -277,8 +247,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDtoList_ConListaVacia_RetornaListaVacia()
-    {
+    public void ToDtoList_ConListaVacia_RetornaListaVacia() {
         // Arrange
         var pedidos = new List<Pedido>();
 
@@ -291,8 +260,7 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDtoList_ConListaNula_RetornaListaVacia()
-    {
+    public void ToDtoList_ConListaNula_RetornaListaVacia() {
         // Arrange
         List<Pedido>? pedidos = null;
 
@@ -309,13 +277,10 @@ public class PedidoMapperTests
     #region ToEntity Tests
 
     [Test]
-    public void ToEntity_PedidoRequestDto_MapeaCorrectamente()
-    {
+    public void ToEntity_PedidoRequestDto_MapeaCorrectamente() {
         // Arrange
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var dto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 },
                 new() { ProductoId = 2, Cantidad = 3 }
             }
@@ -333,11 +298,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_PedidoRequestDtoConItemsVacios_CreaListaVacia()
-    {
+    public void ToEntity_PedidoRequestDtoConItemsVacios_CreaListaVacia() {
         // Arrange
-        var dto = new PedidoRequestDto
-        {
+        var dto = new PedidoRequestDto {
             Items = new List<PedidoItemRequestDto>()
         };
         var userId = 1L;
@@ -351,11 +314,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_PedidoItemRequestDto_SinInfoExtra_MapeaConValoresPorDefecto()
-    {
+    public void ToEntity_PedidoItemRequestDto_SinInfoExtra_MapeaConValoresPorDefecto() {
         // Arrange
-        var dto = new PedidoItemRequestDto
-        {
+        var dto = new PedidoItemRequestDto {
             ProductoId = 5,
             Cantidad = 10
         };
@@ -372,11 +333,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_PedidoItemRequestDto_ConInfoExtra_MapeaConValores()
-    {
+    public void ToEntity_PedidoItemRequestDto_ConInfoExtra_MapeaConValores() {
         // Arrange
-        var dto = new PedidoItemRequestDto
-        {
+        var dto = new PedidoItemRequestDto {
             ProductoId = 5,
             Cantidad = 10
         };
@@ -395,11 +354,9 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_PedidoItemRequestDto_CalculaSubtotalCorrectamente()
-    {
+    public void ToEntity_PedidoItemRequestDto_CalculaSubtotalCorrectamente() {
         // Arrange
-        var dto = new PedidoItemRequestDto
-        {
+        var dto = new PedidoItemRequestDto {
             ProductoId = 1,
             Cantidad = 5
         };
@@ -417,15 +374,12 @@ public class PedidoMapperTests
     #region Destinatario ToDto Tests
 
     [Test]
-    public void DestinatarioToDto_ConTodosLosCampos_MapeaCorrectamente()
-    {
-        var destinatario = new Destinatario
-        {
+    public void DestinatarioToDto_ConTodosLosCampos_MapeaCorrectamente() {
+        var destinatario = new Destinatario {
             NombreCompleto = "María García López",
             Email = "maria.garcia@email.com",
             Telefono = "+34612345678",
-            Direccion = new Direccion
-            {
+            Direccion = new Direccion {
                 Calle = "Gran Vía",
                 Numero = "42",
                 Ciudad = "Madrid",
@@ -446,10 +400,8 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void DestinatarioToDto_SoloConNombre_MapeaCorrectamente()
-    {
-        var destinatario = new Destinatario
-        {
+    public void DestinatarioToDto_SoloConNombre_MapeaCorrectamente() {
+        var destinatario = new Destinatario {
             NombreCompleto = "Juan Pérez"
         };
 
@@ -462,10 +414,8 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void DestinatarioToDto_DireccionNula_MapeaConDireccionVacia()
-    {
-        var destinatario = new Destinatario
-        {
+    public void DestinatarioToDto_DireccionNula_MapeaConDireccionVacia() {
+        var destinatario = new Destinatario {
             NombreCompleto = "Test User",
             Email = "test@email.com",
             Direccion = null
@@ -483,10 +433,8 @@ public class PedidoMapperTests
     #region Direccion ToDto Tests
 
     [Test]
-    public void DireccionToDto_ConTodosLosCampos_MapeaCorrectamente()
-    {
-        var direccion = new Direccion
-        {
+    public void DireccionToDto_ConTodosLosCampos_MapeaCorrectamente() {
+        var direccion = new Direccion {
             Calle = "Gran Vía",
             Numero = "42",
             Ciudad = "Madrid",
@@ -506,10 +454,8 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void DireccionToDto_SoloConCalle_MapeaCorrectamente()
-    {
-        var direccion = new Direccion
-        {
+    public void DireccionToDto_SoloConCalle_MapeaCorrectamente() {
+        var direccion = new Direccion {
             Calle = "Calle Test"
         };
 
@@ -525,10 +471,8 @@ public class PedidoMapperTests
     #region ToEntity with Destinatario Tests
 
     [Test]
-    public void DestinatarioToEntity_SoloConNombre_MapeaCorrectamente()
-    {
-        var dto = new DestinatarioDto
-        {
+    public void DestinatarioToEntity_SoloConNombre_MapeaCorrectamente() {
+        var dto = new DestinatarioDto {
             NombreCompleto = "Juan Pérez"
         };
 
@@ -546,10 +490,8 @@ public class PedidoMapperTests
     #region Direccion ToEntity Tests
 
     [Test]
-    public void DireccionToEntity_ConTodosLosCampos_MapeaCorrectamente()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionToEntity_ConTodosLosCampos_MapeaCorrectamente() {
+        var dto = new DireccionDto {
             Calle = "Gran Vía",
             Numero = "42",
             Ciudad = "Madrid",
@@ -570,18 +512,15 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void DireccionToEntity_Nula_RetornaNull()
-    {
+    public void DireccionToEntity_Nula_RetornaNull() {
         var direccion = ((DireccionDto?)null!).ToEntity();
 
         direccion.Should().BeNull();
     }
 
     [Test]
-    public void DireccionToEntity_SoloConCalle_MapeaCorrectamente()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionToEntity_SoloConCalle_MapeaCorrectamente() {
+        var dto = new DireccionDto {
             Calle = "Calle Test"
         };
 
@@ -597,29 +536,24 @@ public class PedidoMapperTests
     #region Pedido ToDto with Destinatario Tests
 
     [Test]
-    public void ToDto_ConDestinatario_MapeaCorrectamente()
-    {
-        var pedido = new Pedido
-        {
+    public void ToDto_ConDestinatario_MapeaCorrectamente() {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
             UserId = 100,
             Total = 299.99m,
             Estado = PedidoEstado.PENDIENTE,
-            Destinatario = new Destinatario
-            {
+            Destinatario = new Destinatario {
                 NombreCompleto = "María García",
                 Email = "maria@email.com",
                 Telefono = "+34612345678",
-                Direccion = new Direccion
-                {
+                Direccion = new Direccion {
                     Calle = "Gran Vía",
                     Numero = "42",
                     Ciudad = "Madrid",
                     CodigoPostal = "28013"
                 }
             },
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Product 1", Cantidad = 2, Precio = 50, Subtotal = 100 }
             },
             CreatedAt = new DateTime(2024, 1, 15, 10, 30, 0)
@@ -637,16 +571,13 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToDto_SinDestinatario_MapeaCorrectamente()
-    {
-        var pedido = new Pedido
-        {
+    public void ToDto_SinDestinatario_MapeaCorrectamente() {
+        var pedido = new Pedido {
             Id = ObjectId.GenerateNewId(),
             UserId = 100,
             Total = 299.99m,
             Destinatario = null,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, Cantidad = 2, Precio = 50, Subtotal = 100 }
             }
         };
@@ -662,25 +593,20 @@ public class PedidoMapperTests
     #region ToEntity with Destinatario Tests
 
     [Test]
-    public void ToEntity_PedidoRequestDtoConDestinatario_MapeaCorrectamente()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public void ToEntity_PedidoRequestDtoConDestinatario_MapeaCorrectamente() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "María García",
                 Email = "maria@email.com",
                 Telefono = "+34612345678",
-                Direccion = new DireccionDto
-                {
+                Direccion = new DireccionDto {
                     Calle = "Gran Vía",
                     Numero = "42",
                     Ciudad = "Madrid",
                     CodigoPostal = "28013"
                 }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
@@ -697,18 +623,14 @@ public class PedidoMapperTests
     }
 
     [Test]
-    public void ToEntity_PedidoRequestDtoSinDestinatario_MapeaCorrectamente()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+    public void ToEntity_PedidoRequestDtoSinDestinatario_MapeaCorrectamente() {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test",
                 Email = "test@test.com",
                 Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };

@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Validators;
 /// <summary>
 /// Extensiones de FluentValidation para reglas reutilizables entre validadores.
 /// </summary>
-public static class ReglasIdentificadorExtensions
-{
+public static class ReglasIdentificadorExtensions {
     /// <summary>
     /// Exige que el valor sea un identificador estilo YouTube (11 caracteres Base64url).
     /// Delega en <see cref="IdYouTube"/>, la misma regla que usa el atributo de validación

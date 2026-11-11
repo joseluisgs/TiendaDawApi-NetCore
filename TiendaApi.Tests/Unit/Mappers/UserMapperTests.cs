@@ -9,16 +9,13 @@ namespace TiendaApi.Tests.Unit.Mappers;
 /// Tests unitarios para el mapeador de usuarios.
 /// Prueba todas las conversiones entidad-DTO para el dominio de Usuario.
 /// </summary>
-public class UserMapperTests
-{
+public class UserMapperTests {
     #region ToDto Tests
 
     [Test]
-    public void ToDto_ConTodosLosCampos_MapeaCorrectamente()
-    {
+    public void ToDto_ConTodosLosCampos_MapeaCorrectamente() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 100,
             UserName = "johndoe",
             Email = "john@example.com",
@@ -41,11 +38,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_NoDebeExponerPasswordHash()
-    {
+    public void ToDto_NoDebeExponerPasswordHash() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Email = "test@test.com",
@@ -62,11 +57,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_ConRolAdmin_MapeaCorrectamente()
-    {
+    public void ToDto_ConRolAdmin_MapeaCorrectamente() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "admin",
             Email = "admin@example.com",
@@ -81,11 +74,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_ConUsuarioEliminado_AunMapea()
-    {
+    public void ToDto_ConUsuarioEliminado_AunMapea() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "deleted_user",
             Email = "deleted@test.com",
@@ -101,12 +92,10 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_DebePreservarCreatedAt()
-    {
+    public void ToDto_DebePreservarCreatedAt() {
         // Arrange
         var createdAt = new DateTime(2023, 6, 15, 10, 0, 0);
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             CreatedAt = createdAt,
@@ -125,11 +114,9 @@ public class UserMapperTests
     #region ToEntity (RegisterDto) Tests
 
     [Test]
-    public void ToEntity_ConRegisterDto_MapeaCorrectamente()
-    {
+    public void ToEntity_ConRegisterDto_MapeaCorrectamente() {
         // Arrange
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "newuser",
             Email = "newuser@example.com",
             Password = "SecurePassword123!"
@@ -148,11 +135,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_DebeEstablecerRolPredeterminadoAUsuario()
-    {
+    public void ToEntity_DebeEstablecerRolPredeterminadoAUsuario() {
         // Arrange
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "test",
             Email = "test@test.com",
             Password = "password"
@@ -166,8 +151,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_DebeEstablecerIsDeletedAFalse()
-    {
+    public void ToEntity_DebeEstablecerIsDeletedAFalse() {
         // Arrange
         var dto = new RegisterDto { Username = "test", Password = "pass" };
 
@@ -179,8 +163,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_DebeEstablecerMarcasDeTiempo()
-    {
+    public void ToEntity_DebeEstablecerMarcasDeTiempo() {
         // Arrange
         var dto = new RegisterDto { Username = "test", Password = "pass" };
         var before = DateTime.UtcNow;
@@ -197,11 +180,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_DebeUsarPasswordHashProporcionado()
-    {
+    public void ToEntity_DebeUsarPasswordHashProporcionado() {
         // Arrange
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "test",
             Email = "test@test.com",
             Password = "plain_password"
@@ -221,11 +202,9 @@ public class UserMapperTests
     #region UpdateEntity Tests
 
     [Test]
-    public void UpdateEntity_ConEmail_ActualizaEmail()
-    {
+    public void UpdateEntity_ConEmail_ActualizaEmail() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Email = "old@test.com",
@@ -242,11 +221,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ConPassword_ActualizaPasswordHash()
-    {
+    public void UpdateEntity_ConPassword_ActualizaPasswordHash() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             PasswordHash = "old_hash",
@@ -263,11 +240,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ConEmailVacio_NoActualizaEmail()
-    {
+    public void UpdateEntity_ConEmailVacio_NoActualizaEmail() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Email = "original@test.com"
@@ -282,12 +257,10 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ConPasswordVacio_NoActualizaPassword()
-    {
+    public void UpdateEntity_ConPasswordVacio_NoActualizaPassword() {
         // Arrange
         var originalHash = "original_bcrypt_hash";
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             PasswordHash = originalHash
@@ -302,8 +275,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_NoDebeModificarId()
-    {
+    public void UpdateEntity_NoDebeModificarId() {
         // Arrange
         var user = new User { Id = 999, UserName = "test" };
         var dto = new UserUpdateDto { Email = "new@test.com" };
@@ -316,12 +288,10 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_NoDebeModificarCreatedAt()
-    {
+    public void UpdateEntity_NoDebeModificarCreatedAt() {
         // Arrange
         var originalCreatedAt = new DateTime(2022, 1, 1);
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             CreatedAt = originalCreatedAt
@@ -336,8 +306,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_NoDebeModificarUsername()
-    {
+    public void UpdateEntity_NoDebeModificarUsername() {
         // Arrange
         var user = new User { Id = 1, UserName = "original_username" };
         var dto = new UserUpdateDto { Email = "new@test.com" };
@@ -354,11 +323,9 @@ public class UserMapperTests
     #region UpdateEntity (UserPatchDto) Tests
 
     [Test]
-    public void UpdateEntity_UserPatchDto_ConEmail_ActualizaEmail()
-    {
+    public void UpdateEntity_UserPatchDto_ConEmail_ActualizaEmail() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Email = "old@test.com",
@@ -374,11 +341,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_UserPatchDto_ConPassword_ActualizaPasswordHash()
-    {
+    public void UpdateEntity_UserPatchDto_ConPassword_ActualizaPasswordHash() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             PasswordHash = "old_hash"
@@ -394,11 +359,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_UserPatchDto_ConAvatar_ActualizaAvatar()
-    {
+    public void UpdateEntity_UserPatchDto_ConAvatar_ActualizaAvatar() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Avatar = "old_avatar.jpg"
@@ -413,19 +376,16 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_UserPatchDto_ConTodosLosCampos_ActualizaTodos()
-    {
+    public void UpdateEntity_UserPatchDto_ConTodosLosCampos_ActualizaTodos() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Email = "old@test.com",
             PasswordHash = "old_hash",
             Avatar = "old_avatar.jpg"
         };
-        var dto = new UserPatchDto
-        {
+        var dto = new UserPatchDto {
             Email = "new@test.com",
             Password = "NewPassword123!",
             Avatar = "https://example.com/new_avatar.png"
@@ -441,13 +401,11 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_UserPatchDto_SoloAvatar_ActualizaSoloAvatar()
-    {
+    public void UpdateEntity_UserPatchDto_SoloAvatar_ActualizaSoloAvatar() {
         // Arrange
         var originalEmail = "original@test.com";
         var originalHash = "original_bcrypt_hash";
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Email = originalEmail,
@@ -466,12 +424,10 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_UserPatchDto_NullAvatar_NoActualizaAvatar()
-    {
+    public void UpdateEntity_UserPatchDto_NullAvatar_NoActualizaAvatar() {
         // Arrange
         var originalAvatar = "https://example.com/original.png";
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Avatar = originalAvatar
@@ -486,11 +442,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_UserPatchDto_ConEmailVacio_NoActualizaEmail()
-    {
+    public void UpdateEntity_UserPatchDto_ConEmailVacio_NoActualizaEmail() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Email = "original@test.com"
@@ -505,8 +459,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_UserPatchDto_NoDebeModificarId()
-    {
+    public void UpdateEntity_UserPatchDto_NoDebeModificarId() {
         // Arrange
         var user = new User { Id = 999, UserName = "test" };
         var dto = new UserPatchDto { Email = "new@test.com", Avatar = "https://example.com/avatar.png" };
@@ -519,8 +472,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void UpdateEntity_UserPatchDto_NoDebeModificarUsername()
-    {
+    public void UpdateEntity_UserPatchDto_NoDebeModificarUsername() {
         // Arrange
         var user = new User { Id = 1, UserName = "original_username" };
         var dto = new UserPatchDto { Email = "new@test.com" };
@@ -537,11 +489,9 @@ public class UserMapperTests
     #region ToDtoList Tests
 
     [Test]
-    public void ToDtoList_ConMultiplesUsuarios_MapeaTodos()
-    {
+    public void ToDtoList_ConMultiplesUsuarios_MapeaTodos() {
         // Arrange
-        var users = new List<User>
-        {
+        var users = new List<User> {
             new() { Id = 1, UserName = "user1" },
             new() { Id = 2, UserName = "user2" },
             new() { Id = 3, UserName = "user3" }
@@ -558,8 +508,7 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDtoList_ConListaVacia_RetornaVacia()
-    {
+    public void ToDtoList_ConListaVacia_RetornaVacia() {
         // Arrange
         var users = new List<User>();
 
@@ -571,11 +520,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDtoList_DebePreservarOrden()
-    {
+    public void ToDtoList_DebePreservarOrden() {
         // Arrange
-        var users = new List<User>
-        {
+        var users = new List<User> {
             new() { Id = 3, UserName = "Third" },
             new() { Id = 1, UserName = "First" },
             new() { Id = 2, UserName = "Second" }
@@ -595,11 +542,9 @@ public class UserMapperTests
     #region Roundtrip Tests
 
     [Test]
-    public void ToDto_LuegoToEntity_DebePreservarDatosBasicos()
-    {
+    public void ToDto_LuegoToEntity_DebePreservarDatosBasicos() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "roundtrip_test",
             Email = "roundtrip@test.com",
@@ -624,11 +569,9 @@ public class UserMapperTests
     #region Edge Cases Tests
 
     [Test]
-    public void ToDto_ConMaxId_MapeaCorrectamente()
-    {
+    public void ToDto_ConMaxId_MapeaCorrectamente() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = long.MaxValue,
             UserName = "Max ID User"
         };
@@ -641,12 +584,10 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_ConUsernameMuyLargo_MapeaCorrectamente()
-    {
+    public void ToDto_ConUsernameMuyLargo_MapeaCorrectamente() {
         // Arrange
         var longUsername = new string('U', 100);
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = longUsername
         };
@@ -660,11 +601,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToDto_ConEmailUnicode_MapeaCorrectamente()
-    {
+    public void ToDto_ConEmailUnicode_MapeaCorrectamente() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "test",
             Email = "user@exämple.com"
@@ -678,11 +617,9 @@ public class UserMapperTests
     }
 
     [Test]
-    public void ToEntity_ConUsernameUnicode_MapeaCorrectamente()
-    {
+    public void ToEntity_ConUsernameUnicode_MapeaCorrectamente() {
         // Arrange
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "üser_nombre",
             Email = "test@test.com",
             Password = "password"
@@ -700,11 +637,9 @@ public class UserMapperTests
     #region Security Tests
 
     [Test]
-    public void ToDto_NuncaDebeExponerPasswordHash()
-    {
+    public void ToDto_NuncaDebeExponerPasswordHash() {
         // Arrange
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "secure_user",
             Email = "secure@test.com",

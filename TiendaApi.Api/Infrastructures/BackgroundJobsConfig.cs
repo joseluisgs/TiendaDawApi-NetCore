@@ -8,13 +8,11 @@ namespace TiendaApi.Api.Infrastructures;
 /// <summary>
 /// Extensiones de configuración de servicios de background jobs.
 /// </summary>
-public static class BackgroundJobsConfig
-{
+public static class BackgroundJobsConfig {
     /// <summary>
     /// Configura los servicios de background jobs.
     /// </summary>
-    public static IServiceCollection AddBackgroundJobs(this IServiceCollection services)
-    {
+    public static IServiceCollection AddBackgroundJobs(this IServiceCollection services) {
         Log.Information("🛠️ Configurando servicios de background jobs...");
 
         services.AddScoped<IProductoReportTask, ProductoReportTask>();

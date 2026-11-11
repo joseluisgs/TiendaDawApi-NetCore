@@ -9,8 +9,7 @@ namespace TiendaApi.Api.Services.Cache;
 /// pueden hacer de forma razonable. No prometemos RemoveByPattern porque
 /// MemoryCache no lo soporta y Redis lo haría con SCAN (costoso).
 /// </summary>
-public interface ICacheService
-{
+public interface ICacheService {
     /// <summary>Obtiene un valor de la caché.</summary>
     /// <typeparam name="T">Tipo del valor.</typeparam>
     /// <param name="key">Clave del valor.</param>

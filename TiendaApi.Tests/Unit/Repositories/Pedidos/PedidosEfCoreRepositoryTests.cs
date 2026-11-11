@@ -13,13 +13,11 @@ namespace TiendaApi.Tests.Unit.Repositories.Pedidos;
 [TestFixture]
 [Category("Unit")]
 [Category("Repository")]
-public class PedidosEfCoreRepositoryTests
-{
+public class PedidosEfCoreRepositoryTests {
     #region Constructor Tests
 
     [Test]
-    public void Constructor_CreaInstanciaCorrectamente()
-    {
+    public void Constructor_CreaInstanciaCorrectamente() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
@@ -37,8 +35,7 @@ public class PedidosEfCoreRepositoryTests
     #region FindAllAsync Tests
 
     [Test]
-    public async Task FindAllAsync_MetodoExiste_EnElRepositorio()
-    {
+    public async Task FindAllAsync_MetodoExiste_EnElRepositorio() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
@@ -57,8 +54,7 @@ public class PedidosEfCoreRepositoryTests
     #region FindByUserIdAsync Tests
 
     [Test]
-    public async Task FindByUserIdAsync_MetodoExiste_EnElRepositorio()
-    {
+    public async Task FindByUserIdAsync_MetodoExiste_EnElRepositorio() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
@@ -77,8 +73,7 @@ public class PedidosEfCoreRepositoryTests
     #region FindByIdAsync Tests
 
     [Test]
-    public async Task FindByIdAsync_MetodoExiste_EnElRepositorio()
-    {
+    public async Task FindByIdAsync_MetodoExiste_EnElRepositorio() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
@@ -93,8 +88,7 @@ public class PedidosEfCoreRepositoryTests
     }
 
     [Test]
-    public void FindByIdAsync_IdNoObjectId_LanzaExcepcion()
-    {
+    public void FindByIdAsync_IdNoObjectId_LanzaExcepcion() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
@@ -114,8 +108,7 @@ public class PedidosEfCoreRepositoryTests
     #region FindByUserIdPagedAsync Tests
 
     [Test]
-    public async Task FindByUserIdPagedAsync_MetodoExiste_EnElRepositorio()
-    {
+    public async Task FindByUserIdPagedAsync_MetodoExiste_EnElRepositorio() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
@@ -134,8 +127,7 @@ public class PedidosEfCoreRepositoryTests
     #region SaveAsync Tests
 
     [Test]
-    public async Task SaveAsync_MetodoExiste_EnElRepositorio()
-    {
+    public async Task SaveAsync_MetodoExiste_EnElRepositorio() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
@@ -154,8 +146,7 @@ public class PedidosEfCoreRepositoryTests
     #region UpdateAsync Tests
 
     [Test]
-    public async Task UpdateAsync_MetodoExiste_EnElRepositorio()
-    {
+    public async Task UpdateAsync_MetodoExiste_EnElRepositorio() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
@@ -174,8 +165,7 @@ public class PedidosEfCoreRepositoryTests
     #region Interface Implementation Tests
 
     [Test]
-    public void ImplementsIPedidosRepository()
-    {
+    public void ImplementsIPedidosRepository() {
         var options = new DbContextOptionsBuilder<TiendaMongoContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;

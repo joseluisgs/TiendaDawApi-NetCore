@@ -18,42 +18,34 @@ namespace TiendaApi.Tests.Unit.Controllers;
 /// Tests unitarios para PedidosController.
 /// Verifica los endpoints separados para administradores y usuarios.
 /// </summary>
-public class PedidosControllerTests
-{
+public class PedidosControllerTests {
     private readonly Mock<IPedidosService> _mockService;
     private PedidosController _controller = null!;
 
-    public PedidosControllerTests()
-    {
+    public PedidosControllerTests() {
         _mockService = new Mock<IPedidosService>();
         _controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
     }
 
-    private static DestinatarioDto CreateValidDestinatario() => new()
-    {
+    private static DestinatarioDto CreateValidDestinatario() => new() {
         NombreCompleto = "Test Destinatario",
         Email = "test@email.com",
-        Direccion = new DireccionDto
-        {
+        Direccion = new DireccionDto {
             Calle = "Calle Test",
             Ciudad = "Madrid",
             Pais = "España"
         }
     };
 
-    private void SetupUserClaims(long userId, string role = "USER")
-    {
-        var claims = new List<Claim>
-        {
+    private void SetupUserClaims(long userId, string role = "USER") {
+        var claims = new List<Claim> {
             new(ClaimTypes.NameIdentifier, userId.ToString()),
             new(ClaimTypes.Role, role)
         };
         var identity = new ClaimsIdentity(claims, "Test");
         var claimsPrincipal = new ClaimsPrincipal(identity);
-        _controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>())
-        {
-            ControllerContext = new ControllerContext
-            {
+        _controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>()) {
+            ControllerContext = new ControllerContext {
                 HttpContext = new DefaultHttpContext { User = claimsPrincipal }
             }
         };
@@ -64,11 +56,9 @@ public class PedidosControllerTests
     #region GetAllPedidos (Admin)
 
     [Test]
-    public async Task GetAllPedidos_AdminAutenticado_RetornaOk()
-    {
+    public async Task GetAllPedidos_AdminAutenticado_RetornaOk() {
         SetupUserClaims(1, "ADMIN");
-        var pedidos = new List<PedidoDto>
-        {
+        var pedidos = new List<PedidoDto> {
             new("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow),
             new("456", 2, CreateValidDestinatario(), new List<PedidoItemDto>(), 200m, "ENTREGADO", null, DateTime.UtcNow)
         };
@@ -84,8 +74,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetAllPedidos_SinPedidos_RetornaOkConListaVacia()
-    {
+    public async Task GetAllPedidos_SinPedidos_RetornaOkConListaVacia() {
         SetupUserClaims(1, "ADMIN");
 
         _mockService.Setup(s => s.FindAllAsync())
@@ -99,8 +88,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetAllPedidos_ErrorInterno_Retorna500()
-    {
+    public async Task GetAllPedidos_ErrorInterno_Retorna500() {
         SetupUserClaims(1, "ADMIN");
 
         _mockService.Setup(s => s.FindAllAsync())
@@ -119,13 +107,10 @@ public class PedidosControllerTests
     #region GetAllPedidosPaged (Admin)
 
     [Test]
-    public async Task GetAllPedidosPaged_AdminAutenticado_RetornaOk()
-    {
+    public async Task GetAllPedidosPaged_AdminAutenticado_RetornaOk() {
         SetupUserClaims(1, "ADMIN");
-        var pagedResult = new PagedResult<PedidoDto>
-        {
-            Items = new List<PedidoDto>
-            {
+        var pagedResult = new PagedResult<PedidoDto> {
+            Items = new List<PedidoDto> {
                 new("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow)
             },
             TotalCount = 1,
@@ -144,11 +129,9 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetAllPedidosPaged_ConParametros_RetornaOk()
-    {
+    public async Task GetAllPedidosPaged_ConParametros_RetornaOk() {
         SetupUserClaims(1, "ADMIN");
-        var pagedResult = new PagedResult<PedidoDto>
-        {
+        var pagedResult = new PagedResult<PedidoDto> {
             Items = new List<PedidoDto>(),
             TotalCount = 0,
             Page = 5,
@@ -168,8 +151,7 @@ public class PedidosControllerTests
     #region GetPedidoById (Admin)
 
     [Test]
-    public async Task GetPedidoById_AdminPuedeVerCualquierPedido_RetornaOk()
-    {
+    public async Task GetPedidoById_AdminPuedeVerCualquierPedido_RetornaOk() {
         SetupUserClaims(2, "ADMIN");
         var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
 
@@ -184,8 +166,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetPedidoById_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task GetPedidoById_PedidoNoExistente_RetornaNotFound() {
         SetupUserClaims(1, "ADMIN");
         var error = new NotFoundError("Pedido no encontrado");
 
@@ -202,8 +183,7 @@ public class PedidosControllerTests
     #region UpdatePedidoAdmin (Admin)
 
     [Test]
-    public async Task UpdatePedidoAdmin_ConDtoValido_RetornaOk()
-    {
+    public async Task UpdatePedidoAdmin_ConDtoValido_RetornaOk() {
         SetupUserClaims(1, "ADMIN");
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección", Estado = "PROCESANDO" };
         var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PROCESANDO", "Nueva dirección", DateTime.UtcNow);
@@ -219,8 +199,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task UpdatePedidoAdmin_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task UpdatePedidoAdmin_PedidoNoExistente_RetornaNotFound() {
         SetupUserClaims(1, "ADMIN");
         var updateDto = new UpdatePedidoDto();
 
@@ -237,8 +216,7 @@ public class PedidosControllerTests
     #region DeletePedidoAdmin (Admin)
 
     [Test]
-    public async Task DeletePedidoAdmin_PedidoExistente_RetornaNoContent()
-    {
+    public async Task DeletePedidoAdmin_PedidoExistente_RetornaNoContent() {
         SetupUserClaims(1, "ADMIN");
 
         _mockService.Setup(s => s.DeleteAdminAsync("123"))
@@ -250,8 +228,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task DeletePedidoAdmin_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task DeletePedidoAdmin_PedidoNoExistente_RetornaNotFound() {
         SetupUserClaims(1, "ADMIN");
 
         _mockService.Setup(s => s.DeleteAdminAsync("999"))
@@ -267,8 +244,7 @@ public class PedidosControllerTests
     #region UpdatePedidoEstado (Admin)
 
     [Test]
-    public async Task UpdatePedidoEstado_ConEstadoValido_RetornaOk()
-    {
+    public async Task UpdatePedidoEstado_ConEstadoValido_RetornaOk() {
         SetupUserClaims(1, "ADMIN");
         var pedidoDto = new PedidoDto("123", 0, CreateValidDestinatario(), new List<PedidoItemDto>(), 0m, "ENVIADO", null, DateTime.UtcNow);
 
@@ -283,8 +259,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task UpdatePedidoEstado_ConEstadoInvalido_RetornaBadRequest()
-    {
+    public async Task UpdatePedidoEstado_ConEstadoInvalido_RetornaBadRequest() {
         SetupUserClaims(1, "ADMIN");
         var error = ValidationError.Create("Estado inválido");
 
@@ -305,11 +280,9 @@ public class PedidosControllerTests
     #region GetMyPedidos (User - Sin paginación)
 
     [Test]
-    public async Task GetMyPedidos_ConPedidos_RetornaOk()
-    {
+    public async Task GetMyPedidos_ConPedidos_RetornaOk() {
         SetupUserClaims(1);
-        var pedidos = new List<PedidoDto>
-        {
+        var pedidos = new List<PedidoDto> {
             new("1", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow),
             new("2", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 200m, "PENDIENTE", null, DateTime.UtcNow)
         };
@@ -326,8 +299,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetMyPedidos_SinPedidos_RetornaOkConListaVacia()
-    {
+    public async Task GetMyPedidos_SinPedidos_RetornaOkConListaVacia() {
         SetupUserClaims(1);
 
         _mockService.Setup(s => s.FindByUserIdAsync(1))
@@ -342,8 +314,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetMyPedidos_SinAutenticacion_RetornaUnauthorized()
-    {
+    public async Task GetMyPedidos_SinAutenticacion_RetornaUnauthorized() {
         var controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
 
         var result = await controller.GetMyPedidos();
@@ -358,13 +329,10 @@ public class PedidosControllerTests
     #region GetMyPedidosPaged (User - Con paginación)
 
     [Test]
-    public async Task GetMyPedidosPaged_ConParametros_RetornaOk()
-    {
+    public async Task GetMyPedidosPaged_ConParametros_RetornaOk() {
         SetupUserClaims(1);
-        var pagedResult = new PagedResult<PedidoDto>
-        {
-            Items = new List<PedidoDto>
-            {
+        var pagedResult = new PagedResult<PedidoDto> {
+            Items = new List<PedidoDto> {
                 new("1", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow)
             },
             TotalCount = 1,
@@ -383,11 +351,9 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetMyPedidosPaged_ValoresDefecto_RetornaOk()
-    {
+    public async Task GetMyPedidosPaged_ValoresDefecto_RetornaOk() {
         SetupUserClaims(1);
-        var pagedResult = new PagedResult<PedidoDto>
-        {
+        var pagedResult = new PagedResult<PedidoDto> {
             Items = new List<PedidoDto>(),
             TotalCount = 0,
             Page = 1,
@@ -407,13 +373,10 @@ public class PedidosControllerTests
     #region CreateMyPedido (User)
 
     [Test]
-    public async Task CreateMyPedido_ConDtoValido_RetornaCreated()
-    {
+    public async Task CreateMyPedido_ConDtoValido_RetornaCreated() {
         SetupUserClaims(1);
-        var requestDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var requestDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
@@ -429,18 +392,14 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task CreateMyPedido_ConDestinatario_RetornaCreated()
-    {
+    public async Task CreateMyPedido_ConDestinatario_RetornaCreated() {
         SetupUserClaims(1);
-        var requestDto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var requestDto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "María García",
                 Email = "maria@email.com",
                 Telefono = "+34612345678",
-                Direccion = new DireccionDto
-                {
+                Direccion = new DireccionDto {
                     Calle = "Gran Vía",
                     Numero = "42",
                     Ciudad = "Madrid",
@@ -449,18 +408,15 @@ public class PedidosControllerTests
                     CodigoPostal = "28013"
                 }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
-        var destinatarioDto = new DestinatarioDto
-        {
+        var destinatarioDto = new DestinatarioDto {
             NombreCompleto = "María García",
             Email = "maria@email.com",
             Telefono = "+34612345678",
-            Direccion = new DireccionDto
-            {
+            Direccion = new DireccionDto {
                 Calle = "Gran Vía",
                 Numero = "42",
                 Ciudad = "Madrid",
@@ -480,8 +436,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task CreateMyPedido_SinItems_RetornaBadRequest()
-    {
+    public async Task CreateMyPedido_SinItems_RetornaBadRequest() {
         SetupUserClaims(1);
         var requestDto = new PedidoRequestDto { Items = new List<PedidoItemRequestDto>() };
         var error = ValidationError.Create("El pedido debe contener al menos un artículo");
@@ -495,13 +450,10 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task CreateMyPedido_StockInsuficiente_RetornaUnprocessableEntity()
-    {
+    public async Task CreateMyPedido_StockInsuficiente_RetornaUnprocessableEntity() {
         SetupUserClaims(1);
-        var requestDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var requestDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 100 }
             }
         };
@@ -518,13 +470,10 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task CreateMyPedido_SinAutenticacion_RetornaUnauthorized()
-    {
+    public async Task CreateMyPedido_SinAutenticacion_RetornaUnauthorized() {
         var controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
-        var requestDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var requestDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
@@ -541,8 +490,7 @@ public class PedidosControllerTests
     #region GetMyPedidoById (User)
 
     [Test]
-    public async Task GetMyPedidoById_Propietario_RetornaOk()
-    {
+    public async Task GetMyPedidoById_Propietario_RetornaOk() {
         SetupUserClaims(1);
         var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
 
@@ -557,8 +505,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetMyPedidoById_NoPropietario_RetornaForbidden()
-    {
+    public async Task GetMyPedidoById_NoPropietario_RetornaForbidden() {
         SetupUserClaims(2);
         var pedido = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", null, DateTime.UtcNow);
 
@@ -573,8 +520,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetMyPedidoById_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task GetMyPedidoById_PedidoNoExistente_RetornaNotFound() {
         SetupUserClaims(1);
         var error = new NotFoundError("Pedido no encontrado");
 
@@ -591,8 +537,7 @@ public class PedidosControllerTests
     #region UpdateMyPedido (User)
 
     [Test]
-    public async Task UpdateMyPedido_PropietarioYPendiente_RetornaOk()
-    {
+    public async Task UpdateMyPedido_PropietarioYPendiente_RetornaOk() {
         SetupUserClaims(1);
         var updateDto = new UpdatePedidoDto { DireccionEnvio = "Nueva dirección" };
         var pedidoDto = new PedidoDto("123", 1, CreateValidDestinatario(), new List<PedidoItemDto>(), 100m, "PENDIENTE", "Nueva dirección", DateTime.UtcNow);
@@ -606,8 +551,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task UpdateMyPedido_NoPropietario_RetornaForbidden()
-    {
+    public async Task UpdateMyPedido_NoPropietario_RetornaForbidden() {
         SetupUserClaims(2);
         var updateDto = new UpdatePedidoDto();
 
@@ -622,8 +566,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task UpdateMyPedido_PedidoNoPendiente_RetornaBadRequest()
-    {
+    public async Task UpdateMyPedido_PedidoNoPendiente_RetornaBadRequest() {
         SetupUserClaims(1);
         var updateDto = new UpdatePedidoDto();
 
@@ -637,8 +580,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task UpdateMyPedido_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateMyPedido_PedidoNoExistente_RetornaNotFound() {
         SetupUserClaims(1);
         var updateDto = new UpdatePedidoDto();
 
@@ -655,8 +597,7 @@ public class PedidosControllerTests
     #region DeleteMyPedido (User)
 
     [Test]
-    public async Task DeleteMyPedido_PropietarioYPendiente_RetornaNoContent()
-    {
+    public async Task DeleteMyPedido_PropietarioYPendiente_RetornaNoContent() {
         SetupUserClaims(1);
 
         _mockService.Setup(s => s.DeleteMyPedidoAsync("123", 1))
@@ -668,8 +609,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task DeleteMyPedido_NoPropietario_RetornaForbidden()
-    {
+    public async Task DeleteMyPedido_NoPropietario_RetornaForbidden() {
         SetupUserClaims(2);
 
         _mockService.Setup(s => s.DeleteMyPedidoAsync("123", 2))
@@ -683,8 +623,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task DeleteMyPedido_PedidoNoPendiente_RetornaBadRequest()
-    {
+    public async Task DeleteMyPedido_PedidoNoPendiente_RetornaBadRequest() {
         SetupUserClaims(1);
 
         _mockService.Setup(s => s.DeleteMyPedidoAsync("123", 1))
@@ -701,8 +640,7 @@ public class PedidosControllerTests
     #endregion
 
     [Test]
-    public async Task DeleteMyPedido_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task DeleteMyPedido_PedidoNoExistente_RetornaNotFound() {
         SetupUserClaims(1);
 
         _mockService.Setup(s => s.DeleteMyPedidoAsync("999", 1))
@@ -718,13 +656,10 @@ public class PedidosControllerTests
     #region ========== TESTS ADICIONALES ==========
 
     [Test]
-    public async Task CreateMyPedido_ErrorInterno_Retorna500()
-    {
+    public async Task CreateMyPedido_ErrorInterno_Retorna500() {
         SetupUserClaims(1);
-        var requestDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var requestDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
@@ -741,13 +676,10 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task CreateMyPedido_MultiplesItems_RetornaCreated()
-    {
+    public async Task CreateMyPedido_MultiplesItems_RetornaCreated() {
         SetupUserClaims(1);
-        var requestDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var requestDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 },
                 new() { ProductoId = 2, Cantidad = 3 }
             }
@@ -763,8 +695,7 @@ public class PedidosControllerTests
     }
 
     [Test]
-    public async Task GetMyPedidosPaged_SinAutenticacion_RetornaUnauthorized()
-    {
+    public async Task GetMyPedidosPaged_SinAutenticacion_RetornaUnauthorized() {
         var controller = new PedidosController(_mockService.Object, Mock.Of<ILogger<PedidosController>>());
 
         var result = await controller.GetMyPedidosPaged();

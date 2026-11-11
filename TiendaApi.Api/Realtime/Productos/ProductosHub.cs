@@ -18,18 +18,15 @@ namespace TiendaApi.Api.Realtime.Productos;
 /// // Respuesta: {"productoId":123,"nombre":"Nuevo","precio":99.99,"tipo":"PRODUCTO_CREADO","timestamp":"2025-01-18T10:30:00Z"}
 /// </example>
 [AllowAnonymous]
-public class ProductosHub(ILogger<ProductosHub> logger) : Hub
-{
+public class ProductosHub(ILogger<ProductosHub> logger) : Hub {
     /// <summary>Cliente conectado.</summary>
-    public override async Task OnConnectedAsync()
-    {
+    public override async Task OnConnectedAsync() {
         logger.LogInformation("Cliente conectado: {ConnectionId}", Context.ConnectionId);
         await base.OnConnectedAsync();
     }
 
     /// <summary>Cliente desconectado.</summary>
-    public override async Task OnDisconnectedAsync(Exception? exception)
-    {
+    public override async Task OnDisconnectedAsync(Exception? exception) {
         if (exception != null)
             logger.LogWarning(exception, "Cliente desconectado: {ConnectionId}", Context.ConnectionId);
         else
@@ -38,8 +35,7 @@ public class ProductosHub(ILogger<ProductosHub> logger) : Hub
     }
 
     /// <summary>Crea el payload de notificación.</summary>
-    private object CreateNotificationPayload(string tipo, long productoId, ProductoDto? producto) => new
-    {
+    private object CreateNotificationPayload(string tipo, long productoId, ProductoDto? producto) => new {
         productoId,
         nombre = producto?.Nombre,
         descripcion = producto?.Descripcion,

@@ -8,15 +8,13 @@ namespace TiendaApi.Api.Infrastructures;
 /// <summary>
 /// Configuración de WebSockets.
 /// </summary>
-public static class WebSocketsConfig
-{
+public static class WebSocketsConfig {
     /// <summary>
     /// Registra handlers de WebSocket para notificaciones en tiempo real.
     /// </summary>
     /// <param name="services">Colección de servicios.</param>
     /// <returns>IServiceCollection.</returns>
-    public static IServiceCollection AddWebSockets(this IServiceCollection services)
-    {
+    public static IServiceCollection AddWebSockets(this IServiceCollection services) {
         Log.Information("Registrando handlers de WebSocket...");
         return services
             .AddSingleton<ProductosWebSocketHandler>()

@@ -355,8 +355,8 @@ public class SignalRService(AuthStore authStore, NotificationStore notificationS
 
 ## 📝 Credenciales Demo
 
-| Rol | Email | Password |
-|-----|-------|----------|
+| Rol | Username (lo que se teclea) | Email | Password |
+|-----|--------------------|-------|----------|
 | 👑 **Admin** | `admin@tienda.com` | `admin` |
 | 👤 **User** | `userdaw@tienda.com` | `userdaw` |
 
@@ -1231,10 +1231,10 @@ http://localhost:5000
 
 ## 📝 Credenciales Demo
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| Admin | admin@tienda.com | admin |
-| User | userdaw@tienda.com | userdaw |
+| Rol | Username (lo que se teclea) | Email | Password |
+|-----|--------------------|-------|----------|
+| Admin | `admin` | admin@tienda.com | `Admin123!` |
+| User | `userdaw` | userdaw@tienda.com | `Userdaw123!` |
 
 ---
 

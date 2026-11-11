@@ -52,8 +52,7 @@ public class BackupService(
     ICacheService cacheService,
     IOutputCacheStore outputCacheStore,
     ILogger<BackupService> logger
-) : IBackupService
-{
+) : IBackupService {
     /// <summary>Formatos admitidos en export e import.</summary>
     public static readonly string[] Formatos = ["zip", "json", "csv"];
 
@@ -74,20 +73,17 @@ public class BackupService(
     /// Se comparten con los tests para que el round-trip lea lo mismo que escribe:
     /// el contexto source-gen por defecto es PascalCase y el fichero no casaría.
     /// </summary>
-    public static readonly JsonSerializerOptions OpcionesJson = new(AppJsonContext.Default.Options)
-    {
+    public static readonly JsonSerializerOptions OpcionesJson = new(AppJsonContext.Default.Options) {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
     };
 
     /// <inheritdoc/>
-    public (string ContentType, string NombreFichero) DatosSalida(string formato, IReadOnlyList<string> entidades)
-    {
+    public (string ContentType, string NombreFichero) DatosSalida(string formato, IReadOnlyList<string> entidades) {
         var fecha = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
         var sufijo = entidades.Count == 1 ? entidades[0] : "backup";
 
-        return formato switch
-        {
+        return formato switch {
             "json" => ("application/json; charset=utf-8", $"tienda-{sufijo}-{fecha}.json"),
             // El csv necesita una entidad por fichero: con más de una se empaqueta.
             "csv" => entidades.Count == 1
@@ -99,8 +95,7 @@ public class BackupService(
 
     /// <inheritdoc/>
     public async Task<UnitResult<DomainError>> ExportarAsync(
-        Stream salida, string formato, IReadOnlyList<string> entidades, bool incluirBorrados)
-    {
+        Stream salida, string formato, IReadOnlyList<string> entidades, bool incluirBorrados) {
         var validacion = ValidarPeticion(formato, entidades);
         if (validacion.IsFailure)
             return UnitResult.Failure<DomainError>(validacion.Error);
@@ -108,8 +103,7 @@ public class BackupService(
         // Se carga TODO antes de escribir: si algo falla, la respuesta aún no se ha tocado.
         var datos = await CargarAsync(entidades, incluirBorrados);
 
-        switch (formato)
-        {
+        switch (formato) {
             case "json":
                 await EscribirJsonAsync(salida, datos, entidades, incluirBorrados);
                 break;
@@ -133,8 +127,7 @@ public class BackupService(
 
     /// <inheritdoc/>
     public async Task<Result<ImportReportDto, DomainError>> ImportarAsync(
-        Stream fichero, string formato, IReadOnlyList<string> entidades, bool dryRun)
-    {
+        Stream fichero, string formato, IReadOnlyList<string> entidades, bool dryRun) {
         var formatos = string.IsNullOrWhiteSpace(formato) ? Formatos : [formato.Trim().ToLowerInvariant()];
         if (formatos.Length != 1 || !Formatos.Contains(formatos[0]))
             return Result.Failure<ImportReportDto, DomainError>(BackupError.FormatoDesconocido(formato));
@@ -146,21 +139,14 @@ public class BackupService(
         var reloj = System.Diagnostics.Stopwatch.StartNew();
 
         BackupDto? backup;
-        try
-        {
+        try {
             backup = await LeerAsync(fichero, formatos[0], entidades);
-        }
-        catch (BackupException ex)
-        {
+        } catch (BackupException ex) {
             return Result.Failure<ImportReportDto, DomainError>(ex.Error);
-        }
-        catch (JsonException ex)
-        {
+        } catch (JsonException ex) {
             return Result.Failure<ImportReportDto, DomainError>(
                 BackupError.FormatoInvalido($"JSON inválido ({ex.Message})"));
-        }
-        catch (InvalidDataException ex)
-        {
+        } catch (InvalidDataException ex) {
             return Result.Failure<ImportReportDto, DomainError>(
                 BackupError.FormatoInvalido(ex.Message));
         }
@@ -179,8 +165,7 @@ public class BackupService(
         if (entidades.Contains("productos") && backup.Productos is not null)
             informes.Add(await ImportarProductosAsync(backup.Productos, dryRun));
 
-        if (!dryRun)
-        {
+        if (!dryRun) {
             // Altas con ID explícito: la secuencia debe quedar por detrás del mayor
             // ID existente, o la siguiente creación chocaría por clave duplicada.
             if (informes.Any(i => i.Entidad == "categorias" && i.Creados > 0))
@@ -204,17 +189,14 @@ public class BackupService(
     }
 
     /// <inheritdoc/>
-    public Task<Result<CatalogoFormatosDto, DomainError>> ObtenerFormatosAsync()
-    {
+    public Task<Result<CatalogoFormatosDto, DomainError>> ObtenerFormatosAsync() {
         var catalogo = new CatalogoFormatosDto(
-            Formatos: new List<FormatoDto>
-            {
+            Formatos: new List<FormatoDto> {
                 new("zip", "application/zip", ".zip", "Manifest más un fichero por entidad (json o csv)"),
                 new("json", "application/json; charset=utf-8", ".json", "Un único documento con manifest y entidades"),
                 new("csv", "text/csv; charset=utf-8", ".csv", "Una entidad por fichero (con más de una se empaqueta en zip)"),
             },
-            Entidades: new List<EntidadCatalogoDto>
-            {
+            Entidades: new List<EntidadCatalogoDto> {
                 new("categorias", "id", ["id", "nombre", "descripcion", "isDeleted", "createdAt", "updatedAt"]),
                 new("proveedores", "codigo", ["codigo", "nombre", "descripcion", "contacto", "isDeleted", "createdAt", "updatedAt"]),
                 new("productos", "id", ["id", "nombre", "descripcion", "precio", "stock", "imagen", "categoriaId", "proveedorId", "isDeleted", "createdAt", "updatedAt"]),
@@ -233,8 +215,7 @@ public class BackupService(
     // ────────────────────────────────────────────────────────────
 
     /// <summary>Carga las entidades pedidas (activas y, si se pide, también las borradas).</summary>
-    private async Task<DatosBackup> CargarAsync(IReadOnlyList<string> entidades, bool incluirBorrados)
-    {
+    private async Task<DatosBackup> CargarAsync(IReadOnlyList<string> entidades, bool incluirBorrados) {
         var datos = new DatosBackup();
 
         if (entidades.Contains("categorias"))
@@ -249,13 +230,11 @@ public class BackupService(
         return datos;
     }
 
-    private async Task<List<BackupCategoriaDto>> CargarCategoriasAsync(bool incluirBorrados)
-    {
+    private async Task<List<BackupCategoriaDto>> CargarCategoriasAsync(bool incluirBorrados) {
         var activas = (await categoriaRepository.FindAllAsync()).ToList();
         if (!incluirBorrados) return activas.Select(Mapear).ToList();
 
-        var borradas = await PaginarAsync((page) => categoriaRepository.FindAllPagedAsync(new CategoriaFilterDto
-        {
+        var borradas = await PaginarAsync((page) => categoriaRepository.FindAllPagedAsync(new CategoriaFilterDto {
             IsDeleted = true,
             Page = page,
             Size = 100,
@@ -266,13 +245,11 @@ public class BackupService(
         return activas.Concat(borradas).Select(Mapear).ToList();
     }
 
-    private async Task<List<BackupProveedorDto>> CargarProveedoresAsync(bool incluirBorrados)
-    {
+    private async Task<List<BackupProveedorDto>> CargarProveedoresAsync(bool incluirBorrados) {
         var activos = (await proveedorRepository.FindAllAsync()).ToList();
         if (!incluirBorrados) return activos.Select(Mapear).ToList();
 
-        var borrados = await PaginarAsync((page) => proveedorRepository.FindAllPagedAsync(new ProveedorFilterDto
-        {
+        var borrados = await PaginarAsync((page) => proveedorRepository.FindAllPagedAsync(new ProveedorFilterDto {
             IsDeleted = true,
             Page = page,
             Size = 100,
@@ -283,8 +260,7 @@ public class BackupService(
         return activos.Concat(borrados).Select(Mapear).ToList();
     }
 
-    private async Task<List<BackupProductoDto>> CargarProductosAsync(bool incluirBorrados)
-    {
+    private async Task<List<BackupProductoDto>> CargarProductosAsync(bool incluirBorrados) {
         var activos = (await productoRepository.FindAllAsync()).ToList();
         if (!incluirBorrados) return activos.Select(Mapear).ToList();
 
@@ -303,13 +279,11 @@ public class BackupService(
     }
 
     /// <summary>Recorre un listado paginado hasta agotarlo (para incluir borrados).</summary>
-    private static async Task<List<T>> PaginarAsync<T>(Func<int, Task<(IEnumerable<T> Items, int TotalCount)>> consulta)
-    {
+    private static async Task<List<T>> PaginarAsync<T>(Func<int, Task<(IEnumerable<T> Items, int TotalCount)>> consulta) {
         var salida = new List<T>();
         var pagina = 0;
 
-        while (true)
-        {
+        while (true) {
             var (items, total) = await consulta(pagina);
             salida.AddRange(items);
             pagina++;
@@ -319,8 +293,7 @@ public class BackupService(
         return salida;
     }
 
-    private static async Task EscribirJsonAsync(Stream salida, DatosBackup datos, IReadOnlyList<string> entidades, bool incluirBorrados)
-    {
+    private static async Task EscribirJsonAsync(Stream salida, DatosBackup datos, IReadOnlyList<string> entidades, bool incluirBorrados) {
         // Las entidades no pedidas salen en null (documentado en el DTO): así el
         // cliente distingue "no lo pedí" de "no hay nada".
         var backup = new BackupDto(CrearManifest("json", datos, incluirBorrados),
@@ -332,11 +305,9 @@ public class BackupService(
         await salida.FlushAsync();
     }
 
-    private static async Task EscribirCsvAsync(Stream salida, string entidad, DatosBackup datos)
-    {
+    private static async Task EscribirCsvAsync(Stream salida, string entidad, DatosBackup datos) {
         using var escritor = CsvCodec.CrearEscritor(salida);
-        switch (entidad)
-        {
+        switch (entidad) {
             case "categorias":
                 CsvCodec.EscribirCabecera(escritor, ["id", "nombre", "descripcion", "isDeleted", "createdAt", "updatedAt"]);
                 foreach (var c in datos.Categorias)
@@ -366,8 +337,7 @@ public class BackupService(
         await escritor.FlushAsync();
     }
 
-    private static async Task EscribirZipAsync(Stream salida, DatosBackup datos, bool incluirBorrados, bool csv)
-    {
+    private static async Task EscribirZipAsync(Stream salida, DatosBackup datos, bool incluirBorrados, bool csv) {
         using var archivo = ZipCodec.Crear(salida);
 
         // Manifest siempre como primer fichero.
@@ -375,17 +345,14 @@ public class BackupService(
         await EscribirEntradaAsync(archivo, "manifest.json",
             JsonSerializer.Serialize(manifest, OpcionesJson));
 
-        if (csv)
-        {
+        if (csv) {
             if (datos.Categorias.Count > 0)
                 await EscribirEntradaAsync(archivo, "categorias.csv", SerializarCsv("categorias", datos));
             if (datos.Proveedores.Count > 0)
                 await EscribirEntradaAsync(archivo, "proveedores.csv", SerializarCsv("proveedores", datos));
             if (datos.Productos.Count > 0)
                 await EscribirEntradaAsync(archivo, "productos.csv", SerializarCsv("productos", datos));
-        }
-        else
-        {
+        } else {
             if (datos.Categorias.Count > 0)
                 await EscribirEntradaAsync(archivo, "categorias.json",
                     JsonSerializer.Serialize(datos.Categorias, OpcionesJson));
@@ -401,8 +368,7 @@ public class BackupService(
         await salida.FlushAsync();
     }
 
-    private static async Task EscribirEntradaAsync(ZipArchive archivo, string nombre, string contenido)
-    {
+    private static async Task EscribirEntradaAsync(ZipArchive archivo, string nombre, string contenido) {
         var entrada = archivo.CreateEntry(nombre, CompressionLevel.Optimal);
         await using var flujo = entrada.Open();
         await using var escritor = new StreamWriter(flujo, new UTF8Encoding(false));
@@ -410,11 +376,9 @@ public class BackupService(
     }
 
     /// <summary>Serializa una entidad a CSV (para incluirlo dentro de un ZIP).</summary>
-    private static string SerializarCsv(string entidad, DatosBackup datos)
-    {
+    private static string SerializarCsv(string entidad, DatosBackup datos) {
         using var texto = new StringWriter();
-        switch (entidad)
-        {
+        switch (entidad) {
             case "categorias":
                 CsvCodec.EscribirCabecera(texto, ["id", "nombre", "descripcion", "isDeleted", "createdAt", "updatedAt"]);
                 foreach (var c in datos.Categorias)
@@ -448,8 +412,7 @@ public class BackupService(
         new(
             Version: "1.0",
             GeneradoEn: DateTime.UtcNow,
-            Entidades: new Dictionary<string, int>
-            {
+            Entidades: new Dictionary<string, int> {
                 ["categorias"] = datos.Categorias.Count,
                 ["proveedores"] = datos.Proveedores.Count,
                 ["productos"] = datos.Productos.Count,
@@ -462,16 +425,14 @@ public class BackupService(
     // ────────────────────────────────────────────────────────────
 
     /// <summary>Valida formato y entidades antes de tocar el fichero.</summary>
-    private static UnitResult<DomainError> ValidarPeticion(string formato, IReadOnlyList<string> entidades)
-    {
+    private static UnitResult<DomainError> ValidarPeticion(string formato, IReadOnlyList<string> entidades) {
         if (!Formatos.Contains(formato))
             return UnitResult.Failure<DomainError>(BackupError.FormatoDesconocido(formato));
 
         if (entidades.Count == 0)
             return UnitResult.Failure<DomainError>(BackupError.EntidadDesconocida("(ninguna)"));
 
-        foreach (var entidad in entidades)
-        {
+        foreach (var entidad in entidades) {
             if (!Entidades.Contains(entidad))
                 return UnitResult.Failure<DomainError>(BackupError.EntidadDesconocida(entidad));
         }
@@ -483,10 +444,8 @@ public class BackupService(
     /// Lee el fichero según el formato y devuelve solo las entidades pedidas.
     /// El ZIP pasa por stream (binario); el json y el csv se leen como texto.
     /// </summary>
-    private static async Task<BackupDto?> LeerAsync(Stream fichero, string formato, IReadOnlyList<string> entidades)
-    {
-        return formato switch
-        {
+    private static async Task<BackupDto?> LeerAsync(Stream fichero, string formato, IReadOnlyList<string> entidades) {
+        return formato switch {
             "zip" => LeerZip(fichero, entidades),
             "json" => JsonSerializer.Deserialize<BackupDto>(
                 await LeerTextoAsync(fichero), OpcionesJson),
@@ -494,8 +453,7 @@ public class BackupService(
         };
     }
 
-    private static async Task<string> LeerTextoAsync(Stream fichero)
-    {
+    private static async Task<string> LeerTextoAsync(Stream fichero) {
         using var lector = new StreamReader(fichero, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
         var texto = await lector.ReadToEndAsync();
         if (texto.Length > MaxBytesFichero)
@@ -507,13 +465,11 @@ public class BackupService(
     /// Construye el backup desde las entradas de un ZIP (límites aplicados por el codec).
     /// Se aceptan ficheros .json y .csv: el nombre del fichero dice qué entidad contiene.
     /// </summary>
-    private static BackupDto? LeerZip(Stream fichero, IReadOnlyList<string> entidades)
-    {
+    private static BackupDto? LeerZip(Stream fichero, IReadOnlyList<string> entidades) {
         var entradas = ZipCodec.Leer(fichero);
         var datos = new DatosBackup();
 
-        foreach (var entrada in entradas)
-        {
+        foreach (var entrada in entradas) {
             var nombre = System.IO.Path.GetFileName(entrada.Nombre).ToLowerInvariant();
 
             if (nombre == "categorias.json")
@@ -541,27 +497,23 @@ public class BackupService(
     }
 
     /// <summary>Convierte el contenido de un CSV en la lista de su entidad.</summary>
-    private static List<BackupCategoriaDto> MapearCategoriasCsv(string contenido)
-    {
+    private static List<BackupCategoriaDto> MapearCategoriasCsv(string contenido) {
         var filas = LeerFilas(contenido);
         return filas.cuerpo.Select(f => MapaCategoriaCsv(filas.cabecera, f)).ToList();
     }
 
-    private static List<BackupProveedorDto> MapearProveedoresCsv(string contenido)
-    {
+    private static List<BackupProveedorDto> MapearProveedoresCsv(string contenido) {
         var filas = LeerFilas(contenido);
         return filas.cuerpo.Select(f => MapaProveedorCsv(filas.cabecera, f)).ToList();
     }
 
-    private static List<BackupProductoDto> MapearProductosCsv(string contenido)
-    {
+    private static List<BackupProductoDto> MapearProductosCsv(string contenido) {
         var filas = LeerFilas(contenido);
         return filas.cuerpo.Select(f => MapaProductoCsv(filas.cabecera, f)).ToList();
     }
 
     /// <summary>Lee un CSV devolviendo la cabecera y las filas de datos.</summary>
-    private static (string[] cabecera, string[][] cuerpo) LeerFilas(string contenido)
-    {
+    private static (string[] cabecera, string[][] cuerpo) LeerFilas(string contenido) {
         using var lector = new StringReader(contenido);
         var todas = CsvCodec.Leer(lector);
         if (todas.Count < 2) return ([], []);
@@ -571,8 +523,7 @@ public class BackupService(
     /// <summary>
     /// Construye el backup desde un CSV de una sola entidad (la indica `entidades`).
     /// </summary>
-    private static BackupDto? LeerCsv(string contenido, IReadOnlyList<string> entidades)
-    {
+    private static BackupDto? LeerCsv(string contenido, IReadOnlyList<string> entidades) {
         using var lector = new StringReader(contenido);
         var filas = CsvCodec.Leer(lector);
         if (filas.Count < 2) return null;
@@ -582,8 +533,7 @@ public class BackupService(
         var datos = new DatosBackup();
         var cuerpo = filas.Skip(1).ToArray();
 
-        switch (entidad)
-        {
+        switch (entidad) {
             case "categorias":
                 datos.Categorias = cuerpo.Select(f => MapaCategoriaCsv(cabecera, f)).ToList();
                 break;
@@ -637,8 +587,7 @@ public class BackupService(
     private static string? NuloSiVacio(string valor) =>
         string.IsNullOrWhiteSpace(valor) ? null : valor;
 
-    private static string Campo(string[] cabecera, string[] fila, string nombre)
-    {
+    private static string Campo(string[] cabecera, string[] fila, string nombre) {
         var indice = Array.FindIndex(cabecera, c => c.Trim().Equals(nombre, StringComparison.OrdinalIgnoreCase));
         return indice >= 0 && indice < fila.Length ? fila[indice] : string.Empty;
     }
@@ -648,33 +597,28 @@ public class BackupService(
 
     /// <summary>Importa categorías con upsert por id.</summary>
     private async Task<EntidadImportReportDto> ImportarCategoriasAsync(
-        IReadOnlyList<BackupCategoriaDto> filas, bool dryRun)
-    {
+        IReadOnlyList<BackupCategoriaDto> filas, bool dryRun) {
         var errores = new List<ErrorFilaDto>();
         var creados = 0;
         var actualizados = 0;
         var sinCambios = 0;
 
-        for (var i = 0; i < filas.Count; i++)
-        {
+        for (var i = 0; i < filas.Count; i++) {
             var fila = filas[i];
             var numeroFila = i + 1;
 
-            var validacion = await categoriaValidator.ValidateAsync(new CategoriaRequestDto
-            {
+            var validacion = await categoriaValidator.ValidateAsync(new CategoriaRequestDto {
                 Nombre = fila.Nombre,
                 Descripcion = fila.Descripcion,
             });
 
-            if (!validacion.IsValid)
-            {
+            if (!validacion.IsValid) {
                 errores.Add(new ErrorFilaDto(numeroFila, "nombre", Mensaje(validacion)));
                 continue;
             }
 
             var existente = await categoriaRepository.FindByIdAsync(fila.Id);
-            if (existente is null)
-            {
+            if (existente is null) {
                 creados++;
                 if (!dryRun)
                     await CrearConIdExplicitoAsync(fila);
@@ -682,8 +626,7 @@ public class BackupService(
             }
 
             if (existente.Nombre == fila.Nombre && existente.Descripcion == fila.Descripcion
-                && existente.IsDeleted == fila.IsDeleted)
-            {
+                && existente.IsDeleted == fila.IsDeleted) {
                 sinCambios++;
                 continue;
             }
@@ -701,39 +644,33 @@ public class BackupService(
 
     /// <summary>Importa proveedores con upsert por código (clave de negocio, sin identidad).</summary>
     private async Task<EntidadImportReportDto> ImportarProveedoresAsync(
-        IReadOnlyList<BackupProveedorDto> filas, bool dryRun)
-    {
+        IReadOnlyList<BackupProveedorDto> filas, bool dryRun) {
         var errores = new List<ErrorFilaDto>();
         var creados = 0;
         var actualizados = 0;
         var sinCambios = 0;
 
-        for (var i = 0; i < filas.Count; i++)
-        {
+        for (var i = 0; i < filas.Count; i++) {
             var fila = filas[i];
             var numeroFila = i + 1;
 
-            var validacion = await proveedorValidator.ValidateAsync(new ProveedorRequestDto
-            {
+            var validacion = await proveedorValidator.ValidateAsync(new ProveedorRequestDto {
                 Codigo = fila.Codigo,
                 Nombre = fila.Nombre,
                 Descripcion = fila.Descripcion,
                 Contacto = fila.Contacto,
             });
 
-            if (!validacion.IsValid)
-            {
+            if (!validacion.IsValid) {
                 errores.Add(new ErrorFilaDto(numeroFila, "codigo", Mensaje(validacion)));
                 continue;
             }
 
             var existente = await proveedorRepository.FindByIdAsync(fila.Codigo);
-            if (existente is null)
-            {
+            if (existente is null) {
                 creados++;
                 if (!dryRun)
-                    await proveedorRepository.CreateAsync(new Proveedor
-                    {
+                    await proveedorRepository.CreateAsync(new Proveedor {
                         Codigo = fila.Codigo,
                         Nombre = fila.Nombre,
                         Descripcion = fila.Descripcion,
@@ -746,8 +683,7 @@ public class BackupService(
             }
 
             if (existente.Nombre == fila.Nombre && existente.Descripcion == fila.Descripcion
-                && existente.Contacto == fila.Contacto && existente.IsDeleted == fila.IsDeleted)
-            {
+                && existente.Contacto == fila.Contacto && existente.IsDeleted == fila.IsDeleted) {
                 sinCambios++;
                 continue;
             }
@@ -769,20 +705,17 @@ public class BackupService(
     /// existencia de la categoría y del proveedor (los errores no abortan).
     /// </summary>
     private async Task<EntidadImportReportDto> ImportarProductosAsync(
-        IReadOnlyList<BackupProductoDto> filas, bool dryRun)
-    {
+        IReadOnlyList<BackupProductoDto> filas, bool dryRun) {
         var errores = new List<ErrorFilaDto>();
         var creados = 0;
         var actualizados = 0;
         var sinCambios = 0;
 
-        for (var i = 0; i < filas.Count; i++)
-        {
+        for (var i = 0; i < filas.Count; i++) {
             var fila = filas[i];
             var numeroFila = i + 1;
 
-            var validacion = await productoValidator.ValidateAsync(new ProductoRequestDto
-            {
+            var validacion = await productoValidator.ValidateAsync(new ProductoRequestDto {
                 Nombre = fila.Nombre,
                 Descripcion = fila.Descripcion,
                 Precio = fila.Precio,
@@ -792,29 +725,25 @@ public class BackupService(
                 ProveedorCodigo = fila.ProveedorId,
             });
 
-            if (!validacion.IsValid)
-            {
+            if (!validacion.IsValid) {
                 errores.Add(new ErrorFilaDto(numeroFila, "producto", Mensaje(validacion)));
                 continue;
             }
 
-            if (!await categoriaRepository.ExistsByIdAsync(fila.CategoriaId))
-            {
+            if (!await categoriaRepository.ExistsByIdAsync(fila.CategoriaId)) {
                 errores.Add(new ErrorFilaDto(numeroFila, "categoriaId",
                     $"La categoría con ID {fila.CategoriaId} no existe"));
                 continue;
             }
 
-            if (fila.ProveedorId is not null && !await proveedorRepository.ExistsByIdAsync(fila.ProveedorId))
-            {
+            if (fila.ProveedorId is not null && !await proveedorRepository.ExistsByIdAsync(fila.ProveedorId)) {
                 errores.Add(new ErrorFilaDto(numeroFila, "proveedorId",
                     $"El proveedor con código {fila.ProveedorId} no existe"));
                 continue;
             }
 
             var existente = await productoRepository.FindByIdAsync(fila.Id);
-            if (existente is null)
-            {
+            if (existente is null) {
                 creados++;
                 if (!dryRun)
                     await CrearProductoConIdExplicitoAsync(fila);
@@ -824,8 +753,7 @@ public class BackupService(
             if (existente.Nombre == fila.Nombre && existente.Descripcion == fila.Descripcion
                 && existente.Precio == fila.Precio && existente.Stock == fila.Stock
                 && existente.CategoriaId == fila.CategoriaId && existente.ProveedorId == fila.ProveedorId
-                && existente.IsDeleted == fila.IsDeleted)
-            {
+                && existente.IsDeleted == fila.IsDeleted) {
                 sinCambios++;
                 continue;
             }
@@ -855,10 +783,8 @@ public class BackupService(
     /// <c>GENERATED ALWAYS</c> y rechazan valores explícitos, así que se inserta
     /// con <c>OVERRIDING SYSTEM VALUE</c> y después se re-sincroniza la secuencia.
     /// </summary>
-    private async Task CrearConIdExplicitoAsync(BackupCategoriaDto fila)
-    {
-        await categoriaRepository.CrearConIdExplicitoAsync(new Categoria
-        {
+    private async Task CrearConIdExplicitoAsync(BackupCategoriaDto fila) {
+        await categoriaRepository.CrearConIdExplicitoAsync(new Categoria {
             Id = fila.Id,
             Nombre = fila.Nombre,
             Descripcion = fila.Descripcion,
@@ -868,10 +794,8 @@ public class BackupService(
         });
     }
 
-    private async Task CrearProductoConIdExplicitoAsync(BackupProductoDto fila)
-    {
-        await productoRepository.CrearConIdExplicitoAsync(new Producto
-        {
+    private async Task CrearProductoConIdExplicitoAsync(BackupProductoDto fila) {
+        await productoRepository.CrearConIdExplicitoAsync(new Producto {
             Id = fila.Id,
             Nombre = fila.Nombre,
             Descripcion = fila.Descripcion,
@@ -896,18 +820,14 @@ public class BackupService(
     /// Las claves por id (productos:{id}) no se enumeran: caducan solas con su
     /// TTL; aquí se limpian las de listado y la caché HTTP por tag.
     /// </summary>
-    private async Task InvalidarCacheAsync()
-    {
-        try
-        {
+    private async Task InvalidarCacheAsync() {
+        try {
             await cacheService.RemoveAsync("categorias:all");
             await cacheService.RemoveAsync("proveedores:all");
             await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
             await outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
             await outputCacheStore.EvictByTagAsync("proveedores", CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.LogWarning(ex, "No se pudieron invalidar las cachés tras el import");
         }
     }
@@ -930,8 +850,7 @@ public class BackupService(
             p.CategoriaId, p.ProveedorId, p.IsDeleted, p.CreatedAt, p.UpdatedAt);
 
     /// <summary>Datos ya cargados de las tres entidades para el export.</summary>
-    private sealed class DatosBackup
-    {
+    private sealed class DatosBackup {
         public List<BackupCategoriaDto> Categorias { get; set; } = [];
         public List<BackupProveedorDto> Proveedores { get; set; } = [];
         public List<BackupProductoDto> Productos { get; set; } = [];
