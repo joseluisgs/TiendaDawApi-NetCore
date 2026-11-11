@@ -68,3 +68,6 @@ nul
 # Informes E2E generados por los compose (Bruno/Newman)
 TiendaApi.Tests.E2E/**/reports/
 **/results.json
+
+# Informes internos (no se versionan)
+INFORME-DOTNET11-C15.md
