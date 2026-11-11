@@ -8,11 +8,9 @@ namespace TiendaApi.Tests.Unit.Dtos;
 /// construcción) con igualdad estructural — el mapper de Cassandra los rellena
 /// campo a campo y el controller los serializa tal cual.
 /// </summary>
-public class HistorialDtosTests
-{
+public class HistorialDtosTests {
     [Test]
-    public void HistorialPrecioDto_EsIgualEstructural_SiMismosValores()
-    {
+    public void HistorialPrecioDto_EsIgualEstructural_SiMismosValores() {
         var fecha = new DateTime(2026, 10, 29, 12, 0, 0, DateTimeKind.Utc);
 
         var a = new HistorialPrecioDto(fecha, 1299.99);
@@ -23,8 +21,7 @@ public class HistorialDtosTests
     }
 
     [Test]
-    public void HistorialPrecioDto_WithNoMutaElOriginal()
-    {
+    public void HistorialPrecioDto_WithNoMutaElOriginal() {
         var original = new HistorialPrecioDto(DateTime.UtcNow, 1299.99);
 
         var copia = original with { Precio = 1349.99 };
@@ -34,8 +31,7 @@ public class HistorialDtosTests
     }
 
     [Test]
-    public void VistaFeedDto_CarryaLaDenormalizacionDelNombre()
-    {
+    public void VistaFeedDto_CarryaLaDenormalizacionDelNombre() {
         var entrada = new VistaFeedDto(DateTime.UtcNow, 1, "Laptop Dell XPS 15");
 
         entrada.ProductoId.Should().Be(1);
@@ -44,8 +40,7 @@ public class HistorialDtosTests
     }
 
     [Test]
-    public void CambioPrecioDto_FechaEsDateOnly_DeLaParticion()
-    {
+    public void CambioPrecioDto_FechaEsDateOnly_DeLaParticion() {
         var cambio = new CambioPrecioDto(new DateOnly(2026, 10, 29), 1, 1299.99);
 
         cambio.Fecha.DayNumber.Should().Be(new DateOnly(2026, 10, 29).DayNumber);
@@ -53,8 +48,7 @@ public class HistorialDtosTests
     }
 
     [Test]
-    public void LosTresDtos_SonDistintosTipos_SinRelacionDeHerencia()
-    {
+    public void LosTresDtos_SonDistintosTipos_SinRelacionDeHerencia() {
         // Regresion de disenno: son records independientes (no hay jerarquia).
         typeof(HistorialPrecioDto).IsAbstract.Should().BeFalse();
         typeof(VistaFeedDto).BaseType.Should().Be(typeof(object));

@@ -21,8 +21,7 @@ namespace TiendaApi.Tests.Integration.TestContainers;
 /// todos los tests de <c>TiendaApi.Tests.Integration.TestContainers.*</c>.
 /// </summary>
 [SetUpFixture]
-public sealed class AssemblyContainerFixture
-{
+public sealed class AssemblyContainerFixture {
     private static PostgreSqlContainer? _postgres;
     private static MongoDbContainer? _mongo;
 
@@ -53,15 +52,12 @@ public sealed class AssemblyContainerFixture
     /// devuelve la cadena de conexión apuntando a ella. Usada por cada clase
     /// de tests para aislar sus datos dentro del contenedor compartido.
     /// </summary>
-    internal static async Task<string> CreatePostgresDatabaseAsync(string databaseName)
-    {
-        var admin = new NpgsqlConnectionStringBuilder(Postgres.GetConnectionString())
-        {
+    internal static async Task<string> CreatePostgresDatabaseAsync(string databaseName) {
+        var admin = new NpgsqlConnectionStringBuilder(Postgres.GetConnectionString()) {
             Database = "postgres",
         };
 
-        await using (var connection = new NpgsqlConnection(admin.ConnectionString))
-        {
+        await using (var connection = new NpgsqlConnection(admin.ConnectionString)) {
             await connection.OpenAsync();
             await using var drop = new NpgsqlCommand(
                 $"DROP DATABASE IF EXISTS \"{databaseName}\" WITH (FORCE)", connection);
@@ -72,18 +68,15 @@ public sealed class AssemblyContainerFixture
             await create.ExecuteNonQueryAsync();
         }
 
-        var target = new NpgsqlConnectionStringBuilder(Postgres.GetConnectionString())
-        {
+        var target = new NpgsqlConnectionStringBuilder(Postgres.GetConnectionString()) {
             Database = databaseName,
         };
         return target.ConnectionString;
     }
 
     /// <summary>Elimina una base de datos PostgreSQL creada por una clase de tests.</summary>
-    internal static async Task DropPostgresDatabaseAsync(string databaseName)
-    {
-        var admin = new NpgsqlConnectionStringBuilder(Postgres.GetConnectionString())
-        {
+    internal static async Task DropPostgresDatabaseAsync(string databaseName) {
+        var admin = new NpgsqlConnectionStringBuilder(Postgres.GetConnectionString()) {
             Database = "postgres",
         };
 
@@ -95,8 +88,7 @@ public sealed class AssemblyContainerFixture
     }
 
     /// <summary>Elimina una base de datos MongoDB creada por una clase de tests.</summary>
-    internal static void DropMongoDatabase(string databaseName)
-    {
+    internal static void DropMongoDatabase(string databaseName) {
         new MongoClient(MongoConnectionString).DropDatabase(databaseName);
     }
 
@@ -107,14 +99,12 @@ public sealed class AssemblyContainerFixture
     /// </summary>
     /// <param name="keyspace">Keyspace a crear/usar (por defecto el de la tienda).</param>
     /// <returns>Sesión conectada al contenedor de tests.</returns>
-    internal static async Task<ISession> GetCassandraSessionAsync(string keyspace = "tienda")
-    {
+    internal static async Task<ISession> GetCassandraSessionAsync(string keyspace = "tienda") {
         if (_cassandraSession is not null)
             return _cassandraSession;
 
         await _cassandraLock.WaitAsync();
-        try
-        {
+        try {
             if (_cassandraSession is not null)
                 return _cassandraSession;
 
@@ -135,17 +125,14 @@ public sealed class AssemblyContainerFixture
 
             _cassandraSession = session;
             return _cassandraSession;
-        }
-        finally
-        {
+        } finally {
             _cassandraLock.Release();
         }
     }
 
     /// <summary>Arranca los dos contenedores compartidos (una sola vez por assembly).</summary>
     [OneTimeSetUp]
-    public async Task InitializeAsync()
-    {
+    public async Task InitializeAsync() {
         _mongo = new MongoDbBuilder(TestContainerImages.Mongo)
             .WithPortBinding(27017, true)
             .Build();
@@ -162,28 +149,23 @@ public sealed class AssemblyContainerFixture
 
     /// <summary>Detiene los contenedores compartidos al finalizar los tests.</summary>
     [OneTimeTearDown]
-    public async Task DisposeAsync()
-    {
-        if (_mongo is not null)
-        {
+    public async Task DisposeAsync() {
+        if (_mongo is not null) {
             await _mongo.DisposeAsync();
             _mongo = null;
         }
 
-        if (_postgres is not null)
-        {
+        if (_postgres is not null) {
             await _postgres.DisposeAsync();
             _postgres = null;
         }
 
-        if (_cassandraSession is not null)
-        {
+        if (_cassandraSession is not null) {
             _cassandraSession.Dispose();
             _cassandraSession = null;
         }
 
-        if (_cassandra is not null)
-        {
+        if (_cassandra is not null) {
             await _cassandra.DisposeAsync();
             _cassandra = null;
         }

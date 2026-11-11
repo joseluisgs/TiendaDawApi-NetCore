@@ -14,8 +14,7 @@ namespace TiendaApi.Api.IdGenerators;
 /// La generación no garantiza unicidad, solo la hace muy probable: quien inserta debe
 /// dejar que la base de datos rechace la clave duplicada o reintentar con otro valor.
 /// </summary>
-public static class IdYouTube
-{
+public static class IdYouTube {
     /// <summary>Alfabeto Base64url: 26 mayúsculas, 26 minúsculas, 10 dígitos, `-` y `_`.</summary>
     private const string Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 

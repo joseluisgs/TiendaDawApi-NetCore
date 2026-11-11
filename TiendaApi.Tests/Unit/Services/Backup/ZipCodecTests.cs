@@ -12,15 +12,11 @@ namespace TiendaApi.Tests.Unit.Services.Backup;
 /// demasiado grande).
 /// </summary>
 [TestFixture]
-public class ZipCodecTests
-{
-    private static MemoryStream CrearZip(params (string Nombre, string Contenido)[] entradas)
-    {
+public class ZipCodecTests {
+    private static MemoryStream CrearZip(params (string Nombre, string Contenido)[] entradas) {
         var memoria = new MemoryStream();
-        using (var archivo = ZipCodec.Crear(memoria))
-        {
-            foreach (var (nombre, contenido) in entradas)
-            {
+        using (var archivo = ZipCodec.Crear(memoria)) {
+            foreach (var (nombre, contenido) in entradas) {
                 var entrada = archivo.CreateEntry(nombre);
                 using var flujo = entrada.Open();
                 using var escritor = new StreamWriter(flujo, new UTF8Encoding(false));
@@ -33,8 +29,7 @@ public class ZipCodecTests
     }
 
     [Test]
-    public void RoundTrip_LasEntradasSeLeenIgualesQueSeEscribieron()
-    {
+    public void RoundTrip_LasEntradasSeLeenIgualesQueSeEscribieron() {
         using var zip = CrearZip(
             ("manifest.json", """{"version":"1.0"}"""),
             ("productos.json", """[{"id":1,"nombre":"Laptop"}]"""));
@@ -48,16 +43,14 @@ public class ZipCodecTests
     }
 
     [Test]
-    public void Lectura_UnZipVacio_NoDevuelveNada()
-    {
+    public void Lectura_UnZipVacio_NoDevuelveNada() {
         using var zip = CrearZip();
 
         ZipCodec.Leer(zip).Should().BeEmpty();
     }
 
     [Test]
-    public void Lectura_ConDemasiadasEntradas_SeRechaza()
-    {
+    public void Lectura_ConDemasiadasEntradas_SeRechaza() {
         var entradas = Enumerable.Range(0, ZipCodec.MaxEntradas + 1)
             .Select(i => ($"fichero-{i}.json", "[]"))
             .ToArray();
@@ -71,8 +64,7 @@ public class ZipCodecTests
     }
 
     [Test]
-    public void Lectura_ConMasDeCincuentaMb_SeRechaza()
-    {
+    public void Lectura_ConMasDeCincuentaMb_SeRechaza() {
         // Un zip bomb: pocos bytes comprimidos que ocupan mucho al descomprimir.
         var grande = new string('a', ZipCodec.MaxBytesDescomprimidos + 1024);
         using var zip = CrearZip(("grande.json", grande));
@@ -84,8 +76,7 @@ public class ZipCodecTests
     }
 
     [Test]
-    public void Entradas_DevuelveLosNombresCompletos()
-    {
+    public void Entradas_DevuelveLosNombresCompletos() {
         using var zip = CrearZip(("subcarpeta/datos.json", "[]"));
 
         var entradas = ZipCodec.Leer(zip);

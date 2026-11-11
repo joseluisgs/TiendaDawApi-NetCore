@@ -10,8 +10,7 @@ namespace ClientBlazor.Cliente.Clients;
 /// Cliente REST tipado generado por Refit.
 /// Define las operaciones contra la API backend.
 /// </summary>
-public interface ITiendaRestClient
-{
+public interface ITiendaRestClient {
     // ========================================================================
     // AUTH
     // ========================================================================

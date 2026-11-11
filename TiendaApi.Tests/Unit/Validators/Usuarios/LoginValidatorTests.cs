@@ -7,15 +7,13 @@ namespace TiendaApi.Tests.Unit.Validators.Usuarios;
 /// <summary>
 /// Tests unitarios para LoginValidator.
 /// </summary>
-public class LoginValidatorTests
-{
+public class LoginValidatorTests {
     private readonly LoginValidator _validator = new();
 
     #region Username Tests
 
     [Test]
-    public void SignInAsync_ConUsernameVacio_DeberiaTenerError()
-    {
+    public void SignInAsync_ConUsernameVacio_DeberiaTenerError() {
         var dto = new LoginDto { Username = "", Password = "Password123" };
 
         var result = _validator.TestValidate(dto);
@@ -25,8 +23,7 @@ public class LoginValidatorTests
     }
 
     [Test]
-    public void SignInAsync_ConUsernameValido_DeberiaPasar()
-    {
+    public void SignInAsync_ConUsernameValido_DeberiaPasar() {
         var dto = new LoginDto { Username = "johndoe", Password = "Password123" };
 
         var result = _validator.TestValidate(dto);
@@ -39,8 +36,7 @@ public class LoginValidatorTests
     #region Password Tests
 
     [Test]
-    public void SignInAsync_ConPasswordVacio_DeberiaTenerError()
-    {
+    public void SignInAsync_ConPasswordVacio_DeberiaTenerError() {
         var dto = new LoginDto { Username = "johndoe", Password = "" };
 
         var result = _validator.TestValidate(dto);
@@ -50,8 +46,7 @@ public class LoginValidatorTests
     }
 
     [Test]
-    public void SignInAsync_ConPasswordValido_DeberiaPasar()
-    {
+    public void SignInAsync_ConPasswordValido_DeberiaPasar() {
         var dto = new LoginDto { Username = "johndoe", Password = "Password123" };
 
         var result = _validator.TestValidate(dto);
@@ -64,8 +59,7 @@ public class LoginValidatorTests
     #region DTO Completo Tests
 
     [Test]
-    public void SignInAsync_ConDtoInvalido_DeberiaTenerErrores()
-    {
+    public void SignInAsync_ConDtoInvalido_DeberiaTenerErrores() {
         var dto = new LoginDto { Username = "", Password = "" };
 
         var result = _validator.TestValidate(dto);
@@ -75,8 +69,7 @@ public class LoginValidatorTests
     }
 
     [Test]
-    public void SignInAsync_ConDtoValido_NoDeberiaTenerErrores()
-    {
+    public void SignInAsync_ConDtoValido_NoDeberiaTenerErrores() {
         var dto = new LoginDto { Username = "johndoe", Password = "SecurePass123" };
 
         var result = _validator.TestValidate(dto);

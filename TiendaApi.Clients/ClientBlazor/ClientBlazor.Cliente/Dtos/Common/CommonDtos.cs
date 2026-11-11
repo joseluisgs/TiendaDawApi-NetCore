@@ -4,8 +4,7 @@ namespace ClientBlazor.Cliente.DTOs.Common;
 /// Representa el envoltorio genérico para cualquier respuesta de la API que incluya paginación.
 /// </summary>
 /// <typeparam name="T">Tipo de los elementos contenidos en la página.</typeparam>
-public record PagedResult<T>
-{
+public record PagedResult<T> {
     /// <summary>Colección de elementos de la página actual.</summary>
     public IEnumerable<T> Items { get; init; } = Enumerable.Empty<T>();
 

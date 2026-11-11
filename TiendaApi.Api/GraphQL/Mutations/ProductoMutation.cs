@@ -19,8 +19,7 @@ namespace TiendaApi.Api.GraphQL.Mutations;
 /// modelo de ESCRITURA (PostgreSQL), nunca de la caché. Así evitamos
 /// escribir encima de un dato reciente que aún no se reflejó en caché.
 /// </summary>
-public class ProductoMutation
-{
+public class ProductoMutation {
     /// <summary>
     /// 🎓 Las dependencias scoped (repositorio/servicio) se inyectan por PARÁMETRO
     /// [Service], nunca por constructor: HotChocolate resuelve el tipo de mutación
@@ -36,10 +35,8 @@ public class ProductoMutation
     [Authorize(policy: "AdminOnly")]
     public async Task<ProductoDto> CreateProducto(
         CreateProductoInput input,
-        [Service] IProductoService service)
-    {
-        var dto = new ProductoRequestDto
-        {
+        [Service] IProductoService service) {
+        var dto = new ProductoRequestDto {
             Nombre = input.Nombre,
             Descripcion = input.Descripcion ?? string.Empty,
             Precio = input.Precio,
@@ -72,10 +69,8 @@ public class ProductoMutation
     public async Task<ProductoDto> UpdateProducto(
         long id,
         UpdateProductoInput input,
-        [Service] IProductoService service)
-    {
-        var patch = new ProductoPatchDto
-        {
+        [Service] IProductoService service) {
+        var patch = new ProductoPatchDto {
             Nombre = input.Nombre,
             Descripcion = input.Descripcion,
             Precio = input.Precio,
@@ -99,8 +94,7 @@ public class ProductoMutation
     [Authorize(policy: "AdminOnly")]
     public async Task<bool> DeleteProducto(
         long id,
-        [Service] IProductoService service)
-    {
+        [Service] IProductoService service) {
         var result = await service.DeleteAsync(id);
         if (result.IsFailure)
             throw new Exception(result.Error.Message);

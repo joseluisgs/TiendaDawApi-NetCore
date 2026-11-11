@@ -16,16 +16,14 @@ namespace TiendaApi.Tests.Unit.Repositories.Pedidos;
 [TestFixture]
 [Category("Unit")]
 [Category("Repository")]
-public class PedidosNativeRepositoryTests
-{
+public class PedidosNativeRepositoryTests {
     private Mock<IMongoDatabase> _mockDatabase = null!;
     private Mock<IMongoCollection<Pedido>> _mockCollection = null!;
     private Mock<ILogger<PedidosNativeRepository>> _mockLogger = null!;
     private PedidosNativeRepository _repository = null!;
 
     [SetUp]
-    public void SetUp()
-    {
+    public void SetUp() {
         _mockDatabase = new Mock<IMongoDatabase>();
         _mockCollection = new Mock<IMongoCollection<Pedido>>();
         _mockLogger = new Mock<ILogger<PedidosNativeRepository>>();
@@ -37,11 +35,9 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task FindAllAsync_ConPedidos_RetornaListaOrdenada()
-    {
+    public async Task FindAllAsync_ConPedidos_RetornaListaOrdenada() {
         // Arrange
-        var pedidos = new List<Pedido>
-        {
+        var pedidos = new List<Pedido> {
             new() { Id = ObjectId.GenerateNewId(), UserId = 1, CreatedAt = DateTime.UtcNow.AddHours(-2) },
             new() { Id = ObjectId.GenerateNewId(), UserId = 1, CreatedAt = DateTime.UtcNow.AddHours(-1) }
         };
@@ -67,8 +63,7 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task FindAllAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinPedidos_RetornaListaVacia() {
         // Arrange
         var mockCursor = new Mock<IAsyncCursor<Pedido>>();
         mockCursor.Setup(c => c.Current).Returns(new List<Pedido>());
@@ -91,8 +86,7 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConIdExistente_RetornaPedido()
-    {
+    public async Task FindByIdAsync_ConIdExistente_RetornaPedido() {
         // Arrange
         var id = ObjectId.GenerateNewId();
         var pedido = new Pedido { Id = id, UserId = 1 };
@@ -118,8 +112,7 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConIdNoExistente_RetornaNull()
-    {
+    public async Task FindByIdAsync_ConIdNoExistente_RetornaNull() {
         // Arrange
         var id = ObjectId.GenerateNewId();
 
@@ -143,8 +136,7 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConIdInvalido_RetornaNull()
-    {
+    public async Task FindByIdAsync_ConIdInvalido_RetornaNull() {
         // Act
         var result = await _repository.FindByIdAsync("id-invalido");
 
@@ -153,12 +145,10 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task FindByUserIdAsync_ConUserId_RetornaPedidosDelUsuario()
-    {
+    public async Task FindByUserIdAsync_ConUserId_RetornaPedidosDelUsuario() {
         // Arrange
         long userId = 1;
-        var pedidos = new List<Pedido>
-        {
+        var pedidos = new List<Pedido> {
             new() { Id = ObjectId.GenerateNewId(), UserId = userId },
             new() { Id = ObjectId.GenerateNewId(), UserId = userId }
         };
@@ -185,8 +175,7 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task SaveAsync_InsertarPedido_RetornaPedidoConId()
-    {
+    public async Task SaveAsync_InsertarPedido_RetornaPedidoConId() {
         // Arrange
         var pedido = new Pedido { UserId = 1 };
 
@@ -205,8 +194,7 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task UpdateAsync_ActualizarPedido_RetornaPedido()
-    {
+    public async Task UpdateAsync_ActualizarPedido_RetornaPedido() {
         // Arrange
         var id = ObjectId.GenerateNewId();
         var pedido = new Pedido { Id = id, UserId = 1 };
@@ -227,12 +215,10 @@ public class PedidosNativeRepositoryTests
     }
 
     [Test]
-    public async Task FindByUserIdPagedAsync_ConPaginacion_RetornaPedidosYPagina()
-    {
+    public async Task FindByUserIdPagedAsync_ConPaginacion_RetornaPedidosYPagina() {
         // Arrange
         long userId = 1;
-        var pedidos = new List<Pedido>
-        {
+        var pedidos = new List<Pedido> {
             new() { Id = ObjectId.GenerateNewId(), UserId = userId }
         };
 

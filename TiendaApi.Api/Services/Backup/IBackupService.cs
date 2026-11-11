@@ -12,8 +12,7 @@ namespace TiendaApi.Api.Services.Backup;
 /// codec. El servicio decide el formato, valida antes de escribir y acumula
 /// los errores de fila sin abortar la operación.
 /// </summary>
-public interface IBackupService
-{
+public interface IBackupService {
     /// <summary>
     /// Metadatos de la salida (tipo de contenido y nombre del fichero) para que
     /// el controlador fije las cabeceras ANTES de escribir en la respuesta.

@@ -7,15 +7,13 @@ namespace TiendaApi.Api.Mappers;
 /// <summary>
 /// Mapper para convertir entre entidades de Pedido y DTOs.
 /// </summary>
-public static class PedidoMapper
-{
+public static class PedidoMapper {
     /// <summary>
     /// Convierte una entidad Pedido a DTO.
     /// </summary>
     /// <param name="pedido">Entidad a convertir.</param>
     /// <returns>DTO del pedido.</returns>
-    public static PedidoDto ToDto(this Pedido pedido)
-    {
+    public static PedidoDto ToDto(this Pedido pedido) {
         return new PedidoDto(
             pedido.Id.ToString(),
             pedido.UserId,
@@ -33,10 +31,8 @@ public static class PedidoMapper
     /// </summary>
     /// <param name="destinatario">Entidad a convertir.</param>
     /// <returns>DTO del destinatario.</returns>
-    public static DestinatarioDto ToDto(this Destinatario? destinatario)
-    {
-        return new DestinatarioDto
-        {
+    public static DestinatarioDto ToDto(this Destinatario? destinatario) {
+        return new DestinatarioDto {
             NombreCompleto = destinatario?.NombreCompleto ?? string.Empty,
             Email = destinatario?.Email ?? string.Empty,
             Telefono = destinatario?.Telefono,
@@ -49,10 +45,8 @@ public static class PedidoMapper
     /// </summary>
     /// <param name="direccion">Entidad a convertir.</param>
     /// <returns>DTO de la dirección.</returns>
-    public static DireccionDto ToDto(this Direccion? direccion)
-    {
-        return new DireccionDto
-        {
+    public static DireccionDto ToDto(this Direccion? direccion) {
+        return new DireccionDto {
             Calle = direccion?.Calle ?? string.Empty,
             Numero = direccion?.Numero,
             Ciudad = direccion?.Ciudad ?? string.Empty,
@@ -67,10 +61,8 @@ public static class PedidoMapper
     /// </summary>
     /// <param name="dto">DTO a convertir.</param>
     /// <returns>Entidad del destinatario.</returns>
-    public static Destinatario ToEntity(this DestinatarioDto dto)
-    {
-        return new Destinatario
-        {
+    public static Destinatario ToEntity(this DestinatarioDto dto) {
+        return new Destinatario {
             NombreCompleto = dto.NombreCompleto,
             Email = dto.Email,
             Telefono = dto.Telefono,
@@ -83,13 +75,11 @@ public static class PedidoMapper
     /// </summary>
     /// <param name="dto">DTO a convertir.</param>
     /// <returns>Entidad de la dirección.</returns>
-    public static Direccion? ToEntity(this DireccionDto? dto)
-    {
+    public static Direccion? ToEntity(this DireccionDto? dto) {
         if (dto == null)
             return null;
 
-        return new Direccion
-        {
+        return new Direccion {
             Calle = dto.Calle,
             Numero = dto.Numero,
             Ciudad = dto.Ciudad,
@@ -104,8 +94,7 @@ public static class PedidoMapper
     /// </summary>
     /// <param name="pedidos">Lista de entidades.</param>
     /// <returns>Lista de DTOs.</returns>
-    public static IEnumerable<PedidoDto> ToDtoList(this IEnumerable<Pedido> pedidos)
-    {
+    public static IEnumerable<PedidoDto> ToDtoList(this IEnumerable<Pedido> pedidos) {
         return pedidos.Select(p => p.ToDto());
     }
 
@@ -114,8 +103,7 @@ public static class PedidoMapper
     /// </summary>
     /// <param name="item">Entidad a convertir.</param>
     /// <returns>DTO del ítem.</returns>
-    public static PedidoItemDto ToDto(this PedidoItem item)
-    {
+    public static PedidoItemDto ToDto(this PedidoItem item) {
         return new PedidoItemDto(
             item.ProductoId,
             item.NombreProducto ?? string.Empty,
@@ -131,10 +119,8 @@ public static class PedidoMapper
     /// <param name="dto">DTO del pedido.</param>
     /// <param name="userId">ID del usuario.</param>
     /// <returns>Entidad del pedido.</returns>
-    public static Pedido ToEntity(this PedidoRequestDto dto, long userId)
-    {
-        return new Pedido
-        {
+    public static Pedido ToEntity(this PedidoRequestDto dto, long userId) {
+        return new Pedido {
             UserId = userId,
             Destinatario = dto.Destinatario?.ToEntity(),
             Items = dto.Items.Select(i => i.ToEntity()).ToList(),
@@ -151,10 +137,8 @@ public static class PedidoMapper
     /// <param name="nombreProducto">Nombre del producto.</param>
     /// <param name="precio">Precio del producto.</param>
     /// <returns>Entidad del ítem.</returns>
-    public static PedidoItem ToEntity(this PedidoItemRequestDto dto, string? nombreProducto = null, decimal? precio = null)
-    {
-        return new PedidoItem
-        {
+    public static PedidoItem ToEntity(this PedidoItemRequestDto dto, string? nombreProducto = null, decimal? precio = null) {
+        return new PedidoItem {
             ProductoId = dto.ProductoId,
             NombreProducto = nombreProducto ?? string.Empty,
             Cantidad = dto.Cantidad,

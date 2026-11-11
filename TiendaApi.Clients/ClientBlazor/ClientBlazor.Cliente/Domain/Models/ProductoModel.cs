@@ -4,8 +4,7 @@ namespace ClientBlazor.Cliente.Domain.Models;
 /// Modelo de dominio para representar un producto en la interfaz de usuario.
 /// Incluye propiedades calculadas y formateo específico para la vista.
 /// </summary>
-public record ProductoModel
-{
+public record ProductoModel {
     public long Id { get; init; }
     public string Nombre { get; init; } = string.Empty;
     public string Descripcion { get; init; } = string.Empty;
@@ -20,8 +19,8 @@ public record ProductoModel
     /// <summary>
     /// Obtiene la URL absoluta de la imagen o una ruta a un marcador de posición si no existe.
     /// </summary>
-    public string ImagenUrl => string.IsNullOrEmpty(Imagen) 
-        ? "/images/placeholder.png" 
+    public string ImagenUrl => string.IsNullOrEmpty(Imagen)
+        ? "/images/placeholder.png"
         : (Imagen.StartsWith("http") ? Imagen : $"http://localhost:5031/storage/{Imagen}");
 
     /// <summary>

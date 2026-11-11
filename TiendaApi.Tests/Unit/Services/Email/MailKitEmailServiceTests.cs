@@ -9,21 +9,18 @@ using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Unit.Services.Email;
 
-public class MailKitEmailServiceTests
-{
+public class MailKitEmailServiceTests {
     private Mock<IConfiguration> _mockConfiguration = null!;
     private Mock<ILogger<MailKitEmailService>> _mockLogger = null!;
     private Channel<EmailMessage> _emailChannel = null!;
     private MailKitEmailService _emailService = null!;
 
-    private void SetupConfiguration(bool valid = true)
-    {
+    private void SetupConfiguration(bool valid = true) {
         _mockConfiguration = new Mock<IConfiguration>();
         _emailChannel = Channel.CreateUnbounded<EmailMessage>();
         _mockLogger = new Mock<ILogger<MailKitEmailService>>();
 
-        if (valid)
-        {
+        if (valid) {
             _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
             _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns("587");
             _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns("test@test.com");
@@ -41,16 +38,14 @@ public class MailKitEmailServiceTests
     #region Constructor Tests
 
     [Test]
-    public void Constructor_ConParametrosValidos_CreaInstancia()
-    {
+    public void Constructor_ConParametrosValidos_CreaInstancia() {
         SetupConfiguration(valid: true);
 
         _emailService.Should().NotBeNull();
     }
 
     [Test]
-    public void Constructor_SinConfiguracion_CreaInstancia()
-    {
+    public void Constructor_SinConfiguracion_CreaInstancia() {
         _mockConfiguration = new Mock<IConfiguration>();
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns((string?)null);
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns("587");
@@ -72,11 +67,9 @@ public class MailKitEmailServiceTests
     #region EnqueueEmailAsync Tests
 
     [Test]
-    public async Task EnqueueEmailAsync_MensajeValido_EncolaCorrectamente()
-    {
+    public async Task EnqueueEmailAsync_MensajeValido_EncolaCorrectamente() {
         SetupConfiguration();
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "destinatario@test.com",
             Subject = "Test Subject",
             Body = "Test Body",
@@ -93,11 +86,9 @@ public class MailKitEmailServiceTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_MensajeHtml_EncolaCorrectamente()
-    {
+    public async Task EnqueueEmailAsync_MensajeHtml_EncolaCorrectamente() {
         SetupConfiguration();
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "destinatario@test.com",
             Subject = "HTML Subject",
             Body = "<html><body>Hello</body></html>",
@@ -112,18 +103,15 @@ public class MailKitEmailServiceTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_MultiplesMensajes_EncolaTodos()
-    {
+    public async Task EnqueueEmailAsync_MultiplesMensajes_EncolaTodos() {
         SetupConfiguration();
-        var messages = new[]
-        {
+        var messages = new[] {
             new EmailMessage { To = "test1@test.com", Subject = "Test 1", Body = "Body 1" },
             new EmailMessage { To = "test2@test.com", Subject = "Test 2", Body = "Body 2" },
             new EmailMessage { To = "test3@test.com", Subject = "Test 3", Body = "Body 3" }
         };
 
-        foreach (var msg in messages)
-        {
+        foreach (var msg in messages) {
             await _emailService.EnqueueEmailAsync(msg);
         }
 
@@ -133,11 +121,9 @@ public class MailKitEmailServiceTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ConExcepcionEnCanal_NoLanzaExcepcion()
-    {
+    public async Task EnqueueEmailAsync_ConExcepcionEnCanal_NoLanzaExcepcion() {
         SetupConfiguration();
-        var boundedChannel = Channel.CreateBounded<EmailMessage>(new BoundedChannelOptions(1)
-        {
+        var boundedChannel = Channel.CreateBounded<EmailMessage>(new BoundedChannelOptions(1) {
             SingleWriter = true
         });
 
@@ -146,8 +132,7 @@ public class MailKitEmailServiceTests
             _mockLogger.Object,
             boundedChannel);
 
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@test.com",
             Subject = "Test",
             Body = "Test"
@@ -160,11 +145,9 @@ public class MailKitEmailServiceTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_LogueaInformacion()
-    {
+    public async Task EnqueueEmailAsync_LogueaInformacion() {
         SetupConfiguration();
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@test.com",
             Subject = "Test",
             Body = "Test"
@@ -187,8 +170,7 @@ public class MailKitEmailServiceTests
     #region SendEmailAsync Configuration Tests
 
     [Test]
-    public async Task SendEmailAsync_SinHostConfigurado_OmiteEnvio()
-    {
+    public async Task SendEmailAsync_SinHostConfigurado_OmiteEnvio() {
         _mockConfiguration = new Mock<IConfiguration>();
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns((string?)null);
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns("587");
@@ -198,8 +180,7 @@ public class MailKitEmailServiceTests
         _mockLogger = new Mock<ILogger<MailKitEmailService>>();
         _emailService = new MailKitEmailService(_mockConfiguration.Object, _mockLogger.Object, _emailChannel);
 
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@test.com",
             Subject = "Test",
             Body = "Test"
@@ -218,14 +199,12 @@ public class MailKitEmailServiceTests
     }
 
     [Test]
-    public async Task SendEmailAsync_SinUsername_OmiteEnvio()
-    {
+    public async Task SendEmailAsync_SinUsername_OmiteEnvio() {
         SetupConfiguration();
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
         _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns((string?)null);
 
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@test.com",
             Subject = "Test",
             Body = "Test"
@@ -248,11 +227,9 @@ public class MailKitEmailServiceTests
     #region SendEmailAsync Exception Handling Tests
 
     [Test]
-    public async Task SendEmailAsync_ConExcepcion_LogueaError()
-    {
+    public async Task SendEmailAsync_ConExcepcion_LogueaError() {
         SetupConfiguration();
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "invalid-email",
             Subject = "Test",
             Body = "Test"
@@ -264,11 +241,9 @@ public class MailKitEmailServiceTests
     }
 
     [Test]
-    public async Task SendEmailAsync_EmailInvalido_LanzaExcepcion()
-    {
+    public async Task SendEmailAsync_EmailInvalido_LanzaExcepcion() {
         SetupConfiguration();
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "not-an-email",
             Subject = "Test",
             Body = "Test"
@@ -284,8 +259,7 @@ public class MailKitEmailServiceTests
     #region Interface Implementation Tests
 
     [Test]
-    public void ImplementsIEmailService()
-    {
+    public void ImplementsIEmailService() {
         SetupConfiguration();
 
         _emailService.Should().BeAssignableTo<IEmailService>();
@@ -296,11 +270,9 @@ public class MailKitEmailServiceTests
     #region EmailMessage Validation Tests
 
     [Test]
-    public async Task EnqueueEmailAsync_ConEmailVacio_EncolaCorrectamente()
-    {
+    public async Task EnqueueEmailAsync_ConEmailVacio_EncolaCorrectamente() {
         SetupConfiguration();
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "",
             Subject = "Test",
             Body = "Test"
@@ -312,11 +284,9 @@ public class MailKitEmailServiceTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ConSubjectLargo_EncolaCorrectamente()
-    {
+    public async Task EnqueueEmailAsync_ConSubjectLargo_EncolaCorrectamente() {
         SetupConfiguration();
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@test.com",
             Subject = new string('A', 500),
             Body = "Test"
@@ -333,8 +303,7 @@ public class MailKitEmailServiceTests
     #region Configuration Fallback Tests
 
     [Test]
-    public void Constructor_SinFromEmail_UsaUsernameComoFrom()
-    {
+    public void Constructor_SinFromEmail_UsaUsernameComoFrom() {
         _mockConfiguration = new Mock<IConfiguration>();
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns("587");
@@ -354,8 +323,7 @@ public class MailKitEmailServiceTests
     }
 
     [Test]
-    public void Constructor_SinFromName_UsaTiendaApi()
-    {
+    public void Constructor_SinFromName_UsaTiendaApi() {
         _mockConfiguration = new Mock<IConfiguration>();
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns("587");
@@ -379,8 +347,7 @@ public class MailKitEmailServiceTests
     #region Port Configuration Tests
 
     [Test]
-    public void Constructor_ConPuertoDefault_Usa587()
-    {
+    public void Constructor_ConPuertoDefault_Usa587() {
         _mockConfiguration = new Mock<IConfiguration>();
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns((string?)null);

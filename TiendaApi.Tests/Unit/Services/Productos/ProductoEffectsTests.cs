@@ -17,8 +17,7 @@ namespace TiendaApi.Tests.Unit.Services.Productos;
 /// WebSocket y se perdía el evento SignalR (incluido el mutation GraphQL que
 /// delega en UpdatePartialAsync).
 /// </summary>
-public class ProductoEffectsTests
-{
+public class ProductoEffectsTests {
     private Mock<ProductosWebSocketHandler> _webSocket = null!;
     private Mock<IHubContext<ProductosHub>> _hubContext = null!;
     private Mock<IHubClients> _clients = null!;
@@ -26,8 +25,7 @@ public class ProductoEffectsTests
     private ProductoEffects _effects = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _webSocket = new Mock<ProductosWebSocketHandler>(
             Mock.Of<ILogger<ProductosWebSocketHandler>>());
 
@@ -63,18 +61,13 @@ public class ProductoEffectsTests
     /// Los envíos son fire-and-forget (Task.Run): se reintenta la verificación
     /// hasta 2s para no depender de tiempos de ejecución.
     /// </summary>
-    private static async Task Eventually(Action verify)
-    {
+    private static async Task Eventually(Action verify) {
         Exception? ultimoError = null;
-        for (var intento = 0; intento < 200; intento++)
-        {
-            try
-            {
+        for (var intento = 0; intento < 200; intento++) {
+            try {
                 verify();
                 return;
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 ultimoError = ex;
                 await Task.Delay(10);
             }
@@ -83,12 +76,10 @@ public class ProductoEffectsTests
     }
 
     [Test]
-    public async Task NotificarProductoCreado_EmitePorWebSocketYSignalR()
-    {
+    public async Task NotificarProductoCreado_EmitePorWebSocketYSignalR() {
         _effects.NotificarProductoCreado(UnProducto());
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _webSocket.Verify(h => h.NotifyAsync(
                 It.Is<ProductoNotificacion>(n => n.ProductoId == 42)), Times.Once);
             _allProxy.Verify(p => p.SendCoreAsync("ProductoCreado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -96,12 +87,10 @@ public class ProductoEffectsTests
     }
 
     [Test]
-    public async Task NotificarProductoActualizado_EmitePorWebSocketYSignalR()
-    {
+    public async Task NotificarProductoActualizado_EmitePorWebSocketYSignalR() {
         _effects.NotificarProductoActualizado(UnProducto());
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _webSocket.Verify(h => h.NotifyAsync(
                 It.Is<ProductoNotificacion>(n => n.ProductoId == 42)), Times.Once);
             _allProxy.Verify(p => p.SendCoreAsync("ProductoActualizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -109,12 +98,10 @@ public class ProductoEffectsTests
     }
 
     [Test]
-    public async Task NotificarProductoEliminado_EmitePorWebSocketYSignalR()
-    {
+    public async Task NotificarProductoEliminado_EmitePorWebSocketYSignalR() {
         _effects.NotificarProductoEliminado(42);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _webSocket.Verify(h => h.NotifyAsync(
                 It.Is<ProductoNotificacion>(n => n.ProductoId == 42)), Times.Once);
             _allProxy.Verify(p => p.SendCoreAsync("ProductoEliminado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Once);

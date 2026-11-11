@@ -23,8 +23,7 @@ namespace TiendaApi.Api.Services.Pedidos;
 /// que debe gestionar y no proviene de él: creación y cancelación por
 /// usuario. Las acciones que el admin realiza él mismo no le generan email.
 /// </remarks>
-public interface IPedidoEffects
-{
+public interface IPedidoEffects {
     /// <summary>
     /// Notifica la creación de un pedido por WebSocket Y SignalR
     /// (la recibe el usuario dueño y todos los administradores).

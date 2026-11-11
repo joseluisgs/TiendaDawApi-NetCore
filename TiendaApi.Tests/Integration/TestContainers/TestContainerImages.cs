@@ -12,8 +12,7 @@ namespace TiendaApi.Tests.Integration.TestContainers;
 /// postgres:15.1 en Testcontainers 4.15.0), que no coinciden con las de
 /// desarrollo ni con las de producción.
 /// </summary>
-public static class TestContainerImages
-{
+public static class TestContainerImages {
     /// <summary>Tag unificada con docker-compose.*.yml.</summary>
     public const string Postgres = "postgres:17-alpine";
 

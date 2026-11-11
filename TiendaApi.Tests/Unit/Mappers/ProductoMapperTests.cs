@@ -9,17 +9,14 @@ namespace TiendaApi.Tests.Unit.Mappers;
 /// Tests unitarios para el mapeador de productos.
 /// Prueba todas las conversiones entidad-DTO para el dominio de Producto.
 /// </summary>
-public class ProductoMapperTests
-{
+public class ProductoMapperTests {
     #region ToDto Tests
 
     [Test]
-    public void ToDto_ConTodosLosCampos_MapeaCorrectamente()
-    {
+    public void ToDto_ConTodosLosCampos_MapeaCorrectamente() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 100,
             Nombre = "Gaming Laptop",
             Descripcion = "High-performance gaming laptop",
@@ -47,11 +44,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ConCategoriaNula_RetornaCategoriaNombreVacio()
-    {
+    public void ToDto_ConCategoriaNula_RetornaCategoriaNombreVacio() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Orphan Product",
             Categoria = null!
@@ -65,11 +60,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ConCategoriaNombreNulo_RetornaVacio()
-    {
+    public void ToDto_ConCategoriaNombreNulo_RetornaVacio() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test",
             Categoria = new Categoria { Id = 1, Nombre = null! }
@@ -83,11 +76,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ConPreciosDecimales_MapeaCorrectamente()
-    {
+    public void ToDto_ConPreciosDecimales_MapeaCorrectamente() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Precise Product",
             Precio = 123.456789m
@@ -101,11 +92,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ConStockCero_MapeaCorrectamente()
-    {
+    public void ToDto_ConStockCero_MapeaCorrectamente() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Out of Stock",
             Stock = 0
@@ -119,11 +108,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ConImagenNula_MapeaNulo()
-    {
+    public void ToDto_ConImagenNula_MapeaNulo() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "No Image Product",
             Imagen = null
@@ -137,13 +124,11 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_DebePreservarMarcasDeTiempo()
-    {
+    public void ToDto_DebePreservarMarcasDeTiempo() {
         // Arrange
         var createdAt = new DateTime(2024, 1, 1, 10, 0, 0);
         var updatedAt = new DateTime(2024, 6, 15, 14, 30, 0);
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test",
             CreatedAt = createdAt,
@@ -163,11 +148,9 @@ public class ProductoMapperTests
     #region ToEntity Tests
 
     [Test]
-    public void ToEntity_ConTodosLosCampos_MapeaCorrectamente()
-    {
+    public void ToEntity_ConTodosLosCampos_MapeaCorrectamente() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "New Product",
             Descripcion = "Product description",
             Precio = 299.99m,
@@ -189,8 +172,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToEntity_DebeEstablecerMarcasDeTiempo()
-    {
+    public void ToEntity_DebeEstablecerMarcasDeTiempo() {
         // Arrange
         var dto = new ProductoRequestDto { Nombre = "Test" };
         var before = DateTime.UtcNow;
@@ -207,11 +189,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToEntity_ConDescripcionVacia_MapeaVacia()
-    {
+    public void ToEntity_ConDescripcionVacia_MapeaVacia() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Test",
             Descripcion = string.Empty
         };
@@ -224,11 +204,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToEntity_ConPrecioCero_MapeaCero()
-    {
+    public void ToEntity_ConPrecioCero_MapeaCero() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Free Product",
             Precio = 0m
         };
@@ -241,11 +219,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToEntity_ConStockNegativo_MapeaNegativo()
-    {
+    public void ToEntity_ConStockNegativo_MapeaNegativo() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Backorder Product",
             Stock = -10
         };
@@ -262,11 +238,9 @@ public class ProductoMapperTests
     #region UpdateEntity Tests
 
     [Test]
-    public void UpdateEntity_DebeActualizarTodosLosCampos()
-    {
+    public void UpdateEntity_DebeActualizarTodosLosCampos() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Original",
             Descripcion = "Original desc",
@@ -275,8 +249,7 @@ public class ProductoMapperTests
             CategoriaId = 1,
             UpdatedAt = DateTime.UtcNow.AddHours(-1)
         };
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Updated",
             Descripcion = "Updated desc",
             Precio = 200,
@@ -296,8 +269,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_NoDebeModificarId()
-    {
+    public void UpdateEntity_NoDebeModificarId() {
         // Arrange
         var producto = new Producto { Id = 999, Nombre = "Original" };
         var dto = new ProductoRequestDto { Nombre = "Updated" };
@@ -310,12 +282,10 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_NoDebeModificarCreatedAt()
-    {
+    public void UpdateEntity_NoDebeModificarCreatedAt() {
         // Arrange
         var originalCreatedAt = new DateTime(2023, 6, 15);
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test",
             CreatedAt = originalCreatedAt
@@ -330,17 +300,14 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ConImagenNula_NoActualizaImagen()
-    {
+    public void UpdateEntity_ConImagenNula_NoActualizaImagen() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test",
             Imagen = "existing.jpg"
         };
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Updated",
             Imagen = null
         };
@@ -353,17 +320,14 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ConImagenNoVacia_ActualizaImagen()
-    {
+    public void UpdateEntity_ConImagenNoVacia_ActualizaImagen() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test",
             Imagen = "old.jpg"
         };
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Updated",
             Imagen = "new.jpg"
         };
@@ -380,11 +344,9 @@ public class ProductoMapperTests
     #region ToDtoList Tests
 
     [Test]
-    public void ToDtoList_ConMultiplesProductos_MapeaTodos()
-    {
+    public void ToDtoList_ConMultiplesProductos_MapeaTodos() {
         // Arrange
-        var productos = new List<Producto>
-        {
+        var productos = new List<Producto> {
             new() { Id = 1, Nombre = "P1" },
             new() { Id = 2, Nombre = "P2" },
             new() { Id = 3, Nombre = "P3" }
@@ -401,8 +363,7 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDtoList_ConListaVacia_RetornaVacia()
-    {
+    public void ToDtoList_ConListaVacia_RetornaVacia() {
         // Arrange
         var productos = new List<Producto>();
 
@@ -414,11 +375,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDtoList_DebePreservarOrden()
-    {
+    public void ToDtoList_DebePreservarOrden() {
         // Arrange
-        var productos = new List<Producto>
-        {
+        var productos = new List<Producto> {
             new() { Id = 3, Nombre = "Third" },
             new() { Id = 1, Nombre = "First" },
             new() { Id = 2, Nombre = "Second" }
@@ -438,11 +397,9 @@ public class ProductoMapperTests
     #region Roundtrip Tests
 
     [Test]
-    public void ToEntity_LuegoToDto_DebePreservarDatosBasicos()
-    {
+    public void ToEntity_LuegoToDto_DebePreservarDatosBasicos() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Roundtrip Test",
             Descripcion = "Testing roundtrip",
             Precio = 150.00m,
@@ -466,11 +423,9 @@ public class ProductoMapperTests
     #region Edge Cases Tests
 
     [Test]
-    public void ToDto_ConPreciosMaximos_MapeaCorrectamente()
-    {
+    public void ToDto_ConPreciosMaximos_MapeaCorrectamente() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Expensive",
             Precio = decimal.MaxValue
@@ -484,11 +439,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ConStockMaximo_MapeaCorrectamente()
-    {
+    public void ToDto_ConStockMaximo_MapeaCorrectamente() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Bulk",
             Stock = int.MaxValue
@@ -502,12 +455,10 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ConDescripcionMuyLarga_MapeaCorrectamente()
-    {
+    public void ToDto_ConDescripcionMuyLarga_MapeaCorrectamente() {
         // Arrange
         var longDesc = new string('X', 5000);
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Long Description",
             Descripcion = longDesc
@@ -522,11 +473,9 @@ public class ProductoMapperTests
     }
 
     [Test]
-    public void ToDto_ConEmoji_MapeaCorrectamente()
-    {
+    public void ToDto_ConEmoji_MapeaCorrectamente() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "🎁 Gift Box 🎁",
             Descripcion = "Contains 🎮 + 📦 + 🎀"

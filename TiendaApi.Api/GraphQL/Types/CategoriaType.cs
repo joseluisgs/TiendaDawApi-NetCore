@@ -12,14 +12,12 @@ namespace TiendaApi.Api.GraphQL.Types;
 /// productos de una categoría se pide por la query <c>productos</c>
 /// (REST: GET /api/v1/productos/categoria/{id}), no por navegación anidada.
 /// </summary>
-public class CategoriaType : ObjectType<CategoriaDto>
-{
+public class CategoriaType : ObjectType<CategoriaDto> {
     /// <summary>
     /// Configura los campos y descripciones del tipo GraphQL de CategoriaDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
-    protected override void Configure(IObjectTypeDescriptor<CategoriaDto> descriptor)
-    {
+    protected override void Configure(IObjectTypeDescriptor<CategoriaDto> descriptor) {
         descriptor.Name("CategoriaDto");
         descriptor.Description("Categoría tal como la sirve la API (mismo contrato que REST).");
         descriptor.BindFieldsExplicitly();

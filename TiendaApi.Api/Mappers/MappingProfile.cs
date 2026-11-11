@@ -11,13 +11,11 @@ namespace TiendaApi.Api.Mappers;
 /// Perfiles de AutoMapper para mapeos entidad-DTO.
 /// Convierte automáticamente entre entidades y DTOs.
 /// </summary>
-public class MappingProfile : Profile
-{
+public class MappingProfile : Profile {
     /// <summary>
     /// Registra los mapeos entre entidades y DTOs de la API.
     /// </summary>
-    public MappingProfile()
-    {
+    public MappingProfile() {
         // Mapeos de categoría
         CreateMap<Categoria, CategoriaDto>();
         CreateMap<CategoriaRequestDto, Categoria>();

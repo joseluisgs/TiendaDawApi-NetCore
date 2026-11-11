@@ -18,8 +18,7 @@ namespace ClientBlazor.Tests.Components;
 /// Objetivo: Validar la interacción del usuario con el formulario y la orquestación con el servicio de autenticación.
 /// </summary>
 [TestFixture]
-public class LoginTests
-{
+public class LoginTests {
     private BunitContext _ctx = null!;
     private Mock<IAuthService> _authServiceMock = null!;
     private Mock<IAuthStore> _authStoreMock = null!;
@@ -29,8 +28,7 @@ public class LoginTests
     /// Configura el contexto de renderizado de BUnit y registra los servicios mockeados.
     /// </summary>
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _ctx = new BunitContext();
         _authServiceMock = new Mock<IAuthService>();
         _authStoreMock = new Mock<IAuthStore>();
@@ -51,8 +49,7 @@ public class LoginTests
     /// Verifica que el formulario de login se renderice con todos sus controles básicos.
     /// </summary>
     [Test]
-    public void Login_Component_Should_Render_Correctly()
-    {
+    public void Login_Component_Should_Render_Correctly() {
         // Act
         var cut = _ctx.Render<Login>();
 
@@ -67,13 +64,12 @@ public class LoginTests
     /// Valida que al introducir credenciales y pulsar el botón, se llame al método Login del servicio con los datos correctos.
     /// </summary>
     [Test]
-    public void Clicking_Login_Should_Call_AuthService_With_Input_Values()
-    {
+    public void Clicking_Login_Should_Call_AuthService_With_Input_Values() {
         // Arrange
         var cut = _ctx.Render<Login>();
         var email = "profe@daw.com";
         var pass = "password123";
-        
+
         _authServiceMock.Setup(s => s.LoginAsync(email, pass))
             .ReturnsAsync(Result.Success<AuthResponseDto, DomainError>(new AuthResponseDto { Token = "token", User = null! }));
 
@@ -90,8 +86,7 @@ public class LoginTests
     /// Comprueba que los botones de 'Demo' rellenen automáticamente los campos del formulario.
     /// </summary>
     [Test]
-    public void FillDemo_Buttons_Should_Populate_Fields()
-    {
+    public void FillDemo_Buttons_Should_Populate_Fields() {
         // Act
         var cut = _ctx.Render<Login>();
         cut.FindAll("button.demo-user").First().Click(); // Boton Admin

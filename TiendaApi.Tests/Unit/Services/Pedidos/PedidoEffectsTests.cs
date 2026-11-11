@@ -19,8 +19,7 @@ namespace TiendaApi.Tests.Unit.Services.Pedidos;
 /// nunca a Clients.All. Regresión de los puntos que antes emitían un solo
 /// canal y del bug de broadcast.
 /// </summary>
-public class PedidoEffectsTests
-{
+public class PedidoEffectsTests {
     private const long UserId = 1;
 
     private Mock<PedidosWebSocketHandler> _webSocket = null!;
@@ -32,8 +31,7 @@ public class PedidoEffectsTests
     private PedidoEffects _effects = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         var configuration = new Mock<IConfiguration>();
         var wsSection = new Mock<IConfigurationSection>();
         wsSection.Setup(s => s.Value).Returns("5");
@@ -79,18 +77,13 @@ public class PedidoEffectsTests
     /// Los envíos son fire-and-forget (Task.Run): se reintenta la verificación
     /// hasta 2s para no depender de tiempos de ejecución.
     /// </summary>
-    private static async Task Eventually(Action verify)
-    {
+    private static async Task Eventually(Action verify) {
         Exception? ultimoError = null;
-        for (var intento = 0; intento < 200; intento++)
-        {
-            try
-            {
+        for (var intento = 0; intento < 200; intento++) {
+            try {
                 verify();
                 return;
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 ultimoError = ex;
                 await Task.Delay(10);
             }
@@ -99,12 +92,10 @@ public class PedidoEffectsTests
     }
 
     [Test]
-    public async Task NotificarPedidoCreado_EmitePorWebSocketYSignalR()
-    {
+    public async Task NotificarPedidoCreado_EmitePorWebSocketYSignalR() {
         _effects.NotificarPedidoCreado("PED-2024-0001", UserId, "Pendiente", UnPedido());
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _webSocket.Verify(h => h.NotifyUserAndAdminsAsync(UserId,
                 It.Is<PedidoNotificacion>(n =>
                     n.Tipo == PedidoNotificationType.CREADO &&
@@ -116,12 +107,10 @@ public class PedidoEffectsTests
     }
 
     [Test]
-    public async Task NotificarPedidoActualizado_EmitePorWebSocketYSignalR()
-    {
+    public async Task NotificarPedidoActualizado_EmitePorWebSocketYSignalR() {
         _effects.NotificarPedidoActualizado("PED-2024-0001", UserId, "Enviado", UnPedido());
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _webSocket.Verify(h => h.NotifyUserAndAdminsAsync(UserId,
                 It.Is<PedidoNotificacion>(n =>
                     n.Tipo == PedidoNotificationType.ESTADO_ACTUALIZADO &&
@@ -133,12 +122,10 @@ public class PedidoEffectsTests
     }
 
     [Test]
-    public async Task NotificarPedidoEliminado_EmitePorWebSocketYSignalR()
-    {
+    public async Task NotificarPedidoEliminado_EmitePorWebSocketYSignalR() {
         _effects.NotificarPedidoEliminado("PED-2024-0001", UserId, "CANCELADO", 99.5m);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _webSocket.Verify(h => h.NotifyUserAndAdminsAsync(UserId,
                 It.Is<PedidoNotificacion>(n =>
                     n.Tipo == PedidoNotificationType.ELIMINADO &&
@@ -150,12 +137,10 @@ public class PedidoEffectsTests
     }
 
     [Test]
-    public async Task NotificarPedidoEliminado_DiferenciaAlDueñoYAlGrupoDeAdmins()
-    {
+    public async Task NotificarPedidoEliminado_DiferenciaAlDueñoYAlGrupoDeAdmins() {
         _effects.NotificarPedidoEliminado("PED-2024-0001", UserId, "CANCELADO", 99.5m);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             // Solo los dos grupos selectivos: jamás broadcast a Clients.All.
             _clients.Verify(c => c.Group($"user-{UserId}"), Times.AtLeastOnce);
             _clients.Verify(c => c.Group("admins"), Times.AtLeastOnce);
@@ -166,11 +151,9 @@ public class PedidoEffectsTests
     #region Emails de creación: cliente + admin
 
     [Test]
-    public async Task EnviarEmailPedidoCreado_EnviaConfirmacionAlClienteYAlAdmin()
-    {
+    public async Task EnviarEmailPedidoCreado_EnviaConfirmacionAlClienteYAlAdmin() {
         // 🎓 Antes solo se avisaba al admin y el cliente no recibía nada.
-        var destinatario = new DestinatarioDto
-        {
+        var destinatario = new DestinatarioDto {
             NombreCompleto = "María García",
             Email = "maria@test.com",
             Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
@@ -178,8 +161,7 @@ public class PedidoEffectsTests
 
         _effects.EnviarEmailPedidoCreado("PED-2024-0001", 99.5m, 2, UserId, destinatario);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
                 m.To == "maria@test.com" &&
                 m.Subject.Contains("PED-2024-0001") &&
@@ -191,8 +173,7 @@ public class PedidoEffectsTests
     }
 
     [Test]
-    public async Task EnviarEmailPedidoCreado_SinConfigDeAdmin_AunEnviaLaConfirmacionAlCliente()
-    {
+    public async Task EnviarEmailPedidoCreado_SinConfigDeAdmin_AunEnviaLaConfirmacionAlCliente() {
         // El email al cliente no depende de Smtp:AdminEmail.
         var configurationSinAdmin = new Mock<IConfiguration>();
         configurationSinAdmin.Setup(c => c["Smtp:AdminEmail"]).Returns((string?)null);
@@ -203,8 +184,7 @@ public class PedidoEffectsTests
             configurationSinAdmin.Object,
             Mock.Of<ILogger<PedidoEffects>>());
 
-        var destinatario = new DestinatarioDto
-        {
+        var destinatario = new DestinatarioDto {
             NombreCompleto = "María García",
             Email = "maria@test.com",
             Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
@@ -212,8 +192,7 @@ public class PedidoEffectsTests
 
         effects.EnviarEmailPedidoCreado("PED-2024-0001", 99.5m, 2, UserId, destinatario);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
                 m.To == "maria@test.com")), Times.Once);
             _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
@@ -226,12 +205,10 @@ public class PedidoEffectsTests
     #region Matriz de emails: el usuario recibe todo, el admin solo creación y cancelación de usuario
 
     [Test]
-    public async Task EnviarEmailPedidoEstadoActualizado_EnviaAlCliente_YNoAlAdmin()
-    {
+    public async Task EnviarEmailPedidoEstadoActualizado_EnviaAlCliente_YNoAlAdmin() {
         // 📧 El cambio de estado lo provoca el admin desde el panel: quien
         // debe enterarse es el USUARIO. El admin no recibe este email.
-        var destinatario = new DestinatarioDto
-        {
+        var destinatario = new DestinatarioDto {
             NombreCompleto = "María García",
             Email = "maria@test.com",
             Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
@@ -239,8 +216,7 @@ public class PedidoEffectsTests
 
         _effects.EnviarEmailPedidoEstadoActualizado("PED-2024-0001", "Pendiente", "Enviado", 99.5m, destinatario);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
                 m.To == "maria@test.com" &&
                 m.Subject.Contains("Enviado"))), Times.Once);
@@ -250,10 +226,8 @@ public class PedidoEffectsTests
     }
 
     [Test]
-    public async Task EnviarEmailPedidoModificadoCliente_EnviaAlCliente()
-    {
-        var destinatario = new DestinatarioDto
-        {
+    public async Task EnviarEmailPedidoModificadoCliente_EnviaAlCliente() {
+        var destinatario = new DestinatarioDto {
             NombreCompleto = "María García",
             Email = "maria@test.com",
             Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
@@ -261,8 +235,7 @@ public class PedidoEffectsTests
 
         _effects.EnviarEmailPedidoModificadoCliente("PED-2024-0001", destinatario);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
                 m.To == "maria@test.com" &&
                 m.Subject.Contains("modificado"))), Times.Once);
@@ -272,10 +245,8 @@ public class PedidoEffectsTests
     }
 
     [Test]
-    public async Task EnviarEmailPedidoCanceladoCliente_EnviaAlCliente()
-    {
-        var destinatario = new DestinatarioDto
-        {
+    public async Task EnviarEmailPedidoCanceladoCliente_EnviaAlCliente() {
+        var destinatario = new DestinatarioDto {
             NombreCompleto = "María García",
             Email = "maria@test.com",
             Direccion = new DireccionDto { Calle = "Gran Vía", Ciudad = "Madrid", Pais = "España" }
@@ -283,8 +254,7 @@ public class PedidoEffectsTests
 
         _effects.EnviarEmailPedidoCanceladoCliente("PED-2024-0001", 99.5m, destinatario);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
                 m.To == "maria@test.com" &&
                 m.Subject.Contains("cancelado"))), Times.Once);
@@ -292,14 +262,12 @@ public class PedidoEffectsTests
     }
 
     [Test]
-    public async Task EnviarEmailPedidoCanceladoAdmin_EnviaAlAdmin()
-    {
+    public async Task EnviarEmailPedidoCanceladoAdmin_EnviaAlAdmin() {
         // 📧 Único aviso de gestión del admin junto con la creación: la
         // cancelación de un pedido por parte del usuario.
         _effects.EnviarEmailPedidoCanceladoAdmin("PED-2024-0001", 99.5m, UserId);
 
-        await Eventually(() =>
-        {
+        await Eventually(() => {
             _email.Verify(e => e.EnqueueEmailAsync(It.Is<EmailMessage>(m =>
                 m.To == "admin@tienda.com" &&
                 m.Subject.Contains("Cancelado por Usuario"))), Times.Once);

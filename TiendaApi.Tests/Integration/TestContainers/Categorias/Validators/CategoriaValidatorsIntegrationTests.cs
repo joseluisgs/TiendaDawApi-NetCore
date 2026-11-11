@@ -13,11 +13,9 @@ namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Validators;
 /// </summary>
 [TestFixture]
 [Category("Integration")]
-public class CategoriaValidatorsIntegrationTests
-{
+public class CategoriaValidatorsIntegrationTests {
     [Test]
-    public async Task CategoriaValidator_ConNombreValido_PasaValidacion()
-    {
+    public async Task CategoriaValidator_ConNombreValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
 
@@ -33,8 +31,7 @@ public class CategoriaValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task CategoriaValidator_ConNombreVacio_FallaValidacion()
-    {
+    public async Task CategoriaValidator_ConNombreVacio_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
 
@@ -51,8 +48,7 @@ public class CategoriaValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task CategoriaValidator_ConNombreCorto_FallaValidacion()
-    {
+    public async Task CategoriaValidator_ConNombreCorto_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
 
@@ -68,8 +64,7 @@ public class CategoriaValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task CategoriaValidator_ConNombreLargo_PasaValidacion()
-    {
+    public async Task CategoriaValidator_ConNombreLargo_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<CategoriaRequestDto>, CategoriaRequestValidator>();
 
@@ -85,8 +80,7 @@ public class CategoriaValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task CategoriaFilterDto_DefaultValues_AreCorrect()
-    {
+    public async Task CategoriaFilterDto_DefaultValues_AreCorrect() {
         var filter = new CategoriaFilterDto();
 
         filter.Page.Should().Be(0);

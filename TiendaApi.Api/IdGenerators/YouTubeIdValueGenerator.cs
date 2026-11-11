@@ -12,8 +12,7 @@ namespace TiendaApi.Api.IdGenerators;
 /// inicializada (incluso con <c>string.Empty</c>), EF la da por asignada y no genera nada.
 /// Por eso la clave se declara sin inicializar en la entidad.
 /// </summary>
-public sealed class YouTubeIdValueGenerator : ValueGenerator<string>
-{
+public sealed class YouTubeIdValueGenerator : ValueGenerator<string> {
     /// <summary>
     /// Devuelve el siguiente identificador generado.
     /// </summary>

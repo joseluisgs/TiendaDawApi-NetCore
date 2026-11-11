@@ -18,20 +18,17 @@ namespace TiendaApi.Tests.Integration.Services.Storage;
 [TestFixture]
 [Category("Integration")]
 [Category("Storage")]
-public class FileSystemStorageServiceIntegrationTests
-{
+public class FileSystemStorageServiceIntegrationTests {
     private string _testDirectory = null!;
     private FileSystemStorageService _service = null!;
 
     [SetUp]
-    public void SetUp()
-    {
+    public void SetUp() {
         _testDirectory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"storage_integration_test_{Guid.NewGuid():N}");
         Directory.CreateDirectory(_testDirectory);
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "Storage:UploadPath", "uploads" },
                 { "Storage:MaxFileSize", "5242880" },
                 { "Storage:AllowedExtensions", ".jpg,.jpeg,.png,.gif" },
@@ -53,22 +50,18 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
-        if (Directory.Exists(_testDirectory))
-        {
+    public void TearDown() {
+        if (Directory.Exists(_testDirectory)) {
             Directory.Delete(_testDirectory, true);
         }
     }
 
-    private static IFormFile CreateMockFile(string filename, string contentType, long size)
-    {
+    private static IFormFile CreateMockFile(string filename, string contentType, long size) {
         var mock = new Mock<IFormFile>();
         mock.Setup(f => f.FileName).Returns(filename);
         mock.Setup(f => f.Length).Returns(size);
         mock.Setup(f => f.ContentType).Returns(contentType);
-        mock.Setup(f => f.OpenReadStream()).Returns(() =>
-        {
+        mock.Setup(f => f.OpenReadStream()).Returns(() => {
             var stream = new MemoryStream(Encoding.UTF8.GetBytes("test file content"));
             stream.Position = 0;
             return stream;
@@ -79,8 +72,7 @@ public class FileSystemStorageServiceIntegrationTests
     #region ========== SAVE FILE INTEGRATION TESTS ==========
 
     [Test]
-    public async Task SaveFileAsync_ArchivoValido_GuardaEnSistemaArchivos()
-    {
+    public async Task SaveFileAsync_ArchivoValido_GuardaEnSistemaArchivos() {
         // Arrange
         var file = CreateMockFile("integration-test.jpg", "image/jpeg", 1024);
         var folder = "test-folder";
@@ -96,8 +88,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public async Task SaveFileAsync_MultiplesArchivos_GuardaArchivosSeparados()
-    {
+    public async Task SaveFileAsync_MultiplesArchivos_GuardaArchivosSeparados() {
         // Arrange
         var file1 = CreateMockFile("file1.png", "image/png", 512);
         var file2 = CreateMockFile("file2.gif", "image/gif", 256);
@@ -113,8 +104,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public async Task SaveFileAsync_CreaDirectorioSiNoExiste()
-    {
+    public async Task SaveFileAsync_CreaDirectorioSiNoExiste() {
         // Arrange
         var file = CreateMockFile("test.jpg", "image/jpeg", 1024);
         var newFolder = $"new-folder-{Guid.NewGuid():N}";
@@ -128,8 +118,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public async Task SaveFileAsync_OverrideNombre_GeneraNombreUnico()
-    {
+    public async Task SaveFileAsync_OverrideNombre_GeneraNombreUnico() {
         // Arrange
         var file1 = CreateMockFile("same-name.jpg", "image/jpeg", 1024);
         var file2 = CreateMockFile("same-name.jpg", "image/jpeg", 1024);
@@ -149,8 +138,7 @@ public class FileSystemStorageServiceIntegrationTests
     #region ========== DELETE FILE INTEGRATION TESTS ==========
 
     [Test]
-    public async Task DeleteFileAsync_ArchivoExistente_EliminaDelDisco()
-    {
+    public async Task DeleteFileAsync_ArchivoExistente_EliminaDelDisco() {
         // Arrange
         var file = CreateMockFile("to-delete.jpg", "image/jpeg", 1024);
         var saveResult = await _service.SaveFileAsync(file, "delete-test");
@@ -164,8 +152,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteFileAsync_ArchivoNoExistente_NoLanzaExcepcion()
-    {
+    public async Task DeleteFileAsync_ArchivoNoExistente_NoLanzaExcepcion() {
         // Act
         var result = await _service.DeleteFileAsync("/uploads/nonexistent/file.jpg");
 
@@ -178,8 +165,7 @@ public class FileSystemStorageServiceIntegrationTests
     #region ========== FILE EXISTS INTEGRATION TESTS ==========
 
     [Test]
-    public void FileExists_ConPathValido_RetornaBool()
-    {
+    public void FileExists_ConPathValido_RetornaBool() {
         // Arrange - just verify the method works without throwing
         var result = _service.FileExists("/uploads/test.jpg");
 
@@ -188,8 +174,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public void FileExists_ConPathVacio_RetornaFalse()
-    {
+    public void FileExists_ConPathVacio_RetornaFalse() {
         // Act
         var result = _service.FileExists("");
 
@@ -198,8 +183,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public void FileExists_ConPathNull_RetornaFalse()
-    {
+    public void FileExists_ConPathNull_RetornaFalse() {
         // Act
         var result = _service.FileExists(null!);
 
@@ -212,8 +196,7 @@ public class FileSystemStorageServiceIntegrationTests
     #region ========== PATH RESOLUTION INTEGRATION TESTS ==========
 
     [Test]
-    public void GetFullPath_DiferentesPrefijos_ResuelveCorrectamente()
-    {
+    public void GetFullPath_DiferentesPrefijos_ResuelveCorrectamente() {
         // Test /storage/ prefix
         var result1 = _service.GetFullPath("/storage/test.jpg");
         result1.Should().Contain("test.jpg");
@@ -228,8 +211,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public void GetRelativePath_DiferentesFolders_RetornaRutasCorrectas()
-    {
+    public void GetRelativePath_DiferentesFolders_RetornaRutasCorrectas() {
         // Test default folder
         var result1 = _service.GetRelativePath("test.jpg");
         result1.Should().Be("/uploads/productos/test.jpg");
@@ -248,8 +230,7 @@ public class FileSystemStorageServiceIntegrationTests
     #region ========== VALIDATION INTEGRATION TESTS ==========
 
     [Test]
-    public async Task SaveFileAsync_ExtensionJPEGMayuscula_Acepta()
-    {
+    public async Task SaveFileAsync_ExtensionJPEGMayuscula_Acepta() {
         // Arrange
         var file = CreateMockFile("test.JPEG", "image/jpeg", 1024);
 
@@ -261,8 +242,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public async Task SaveFileAsync_TamanoMaximoPermitido_Acepta()
-    {
+    public async Task SaveFileAsync_TamanoMaximoPermitido_Acepta() {
         // Arrange - 5MB exactly
         var file = CreateMockFile("max-size.jpg", "image/jpeg", 5 * 1024 * 1024);
 
@@ -274,8 +254,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public async Task SaveFileAsync_TamanoExcedido_Rechaza()
-    {
+    public async Task SaveFileAsync_TamanoExcedido_Rechaza() {
         // Arrange - 6MB (exceeds 5MB limit)
         var file = CreateMockFile("too-big.jpg", "image/jpeg", 6 * 1024 * 1024);
 
@@ -287,8 +266,7 @@ public class FileSystemStorageServiceIntegrationTests
     }
 
     [Test]
-    public async Task SaveFileAsync_TipoContenidoWebP_Rechaza()
-    {
+    public async Task SaveFileAsync_TipoContenidoWebP_Rechaza() {
         // Arrange
         var file = CreateMockFile("test.jpg", "image/webp", 1024);
 

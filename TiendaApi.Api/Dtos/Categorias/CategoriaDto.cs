@@ -81,8 +81,7 @@ public record CategoriaDto(
 /// - Nombre: Obligatorio, entre 3 y 100 caracteres
 /// </remarks>
 /// </summary>
-public record CategoriaRequestDto
-{
+public record CategoriaRequestDto {
     /// <summary>
     /// Nombre de la categoría.
     /// Representa el nombre público que verán los usuarios.

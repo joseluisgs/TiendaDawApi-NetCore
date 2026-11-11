@@ -9,10 +9,8 @@ using TiendaApi.Api.Repositories.Usuarios;
 
 namespace TiendaApi.Tests.Unit.Repositories.Usuarios;
 
-public class UserRepositoryInMemoryTests
-{
-    private TiendaDbContext CreateContext(string dbName)
-    {
+public class UserRepositoryInMemoryTests {
+    private TiendaDbContext CreateContext(string dbName) {
         var options = new DbContextOptionsBuilder<TiendaDbContext>()
             .UseInMemoryDatabase(databaseName: dbName)
             .Options;
@@ -21,8 +19,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindByIdAsync_Existe_RetornaUsuario()
-    {
+    public async Task FindByIdAsync_Existe_RetornaUsuario() {
         using var context = CreateContext(nameof(FindByIdAsync_Existe_RetornaUsuario));
 
         context.Users.Add(new User { Id = 1, UserName = "admin", Email = "admin@test.com" });
@@ -37,8 +34,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindByIdAsync_NoExiste_RetornaNull()
-    {
+    public async Task FindByIdAsync_NoExiste_RetornaNull() {
         using var context = CreateContext(nameof(FindByIdAsync_NoExiste_RetornaNull));
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
@@ -49,8 +45,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindByUsernameAsync_Existe_RetornaUsuario()
-    {
+    public async Task FindByUsernameAsync_Existe_RetornaUsuario() {
         using var context = CreateContext(nameof(FindByUsernameAsync_Existe_RetornaUsuario));
 
         context.Users.Add(new User { Id = 1, UserName = "admin", Email = "admin@test.com" });
@@ -65,8 +60,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindByUsernameAsync_NoExiste_RetornaNull()
-    {
+    public async Task FindByUsernameAsync_NoExiste_RetornaNull() {
         using var context = CreateContext(nameof(FindByUsernameAsync_NoExiste_RetornaNull));
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
@@ -77,8 +71,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindByEmailAsync_Existe_RetornaUsuario()
-    {
+    public async Task FindByEmailAsync_Existe_RetornaUsuario() {
         using var context = CreateContext(nameof(FindByEmailAsync_Existe_RetornaUsuario));
 
         context.Users.Add(new User { Id = 1, UserName = "admin", Email = "admin@test.com" });
@@ -93,8 +86,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task SaveAsync_NuevoUsuario_RetornaConId()
-    {
+    public async Task SaveAsync_NuevoUsuario_RetornaConId() {
         using var context = CreateContext(nameof(SaveAsync_NuevoUsuario_RetornaConId));
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
@@ -107,8 +99,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task UpdateAsync_Existente_ActualizaDatos()
-    {
+    public async Task UpdateAsync_Existente_ActualizaDatos() {
         using var context = CreateContext(nameof(UpdateAsync_Existente_ActualizaDatos));
 
         context.Users.Add(new User { Id = 1, UserName = "original", Email = "original@test.com" });
@@ -124,8 +115,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllAsync_ConUsuarios_RetornaLista()
-    {
+    public async Task FindAllAsync_ConUsuarios_RetornaLista() {
         using var context = CreateContext(nameof(FindAllAsync_ConUsuarios_RetornaLista));
 
         context.Users.AddRange(
@@ -142,8 +132,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllAsync_NoMuestraEliminados_SoftDelete()
-    {
+    public async Task FindAllAsync_NoMuestraEliminados_SoftDelete() {
         using var context = CreateContext(nameof(FindAllAsync_NoMuestraEliminados_SoftDelete));
 
         context.Users.AddRange(
@@ -163,13 +152,11 @@ public class UserRepositoryInMemoryTests
     #region FindAllPagedAsync Tests
 
     [Test]
-    public async Task FindAllPagedAsync_Con20Usuarios_Pagina1_Size10_Retorna10()
-    {
+    public async Task FindAllPagedAsync_Con20Usuarios_Pagina1_Size10_Retorna10() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
-        for (int i = 1; i <= 20; i++)
-        {
+        for (int i = 1; i <= 20; i++) {
             context.Users.Add(new User { Id = i, UserName = $"user{i}", Email = $"user{i}@test.com" });
         }
         await context.SaveChangesAsync();
@@ -184,13 +171,11 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_Pagina2_Size5_RetornaSiguientes5()
-    {
+    public async Task FindAllPagedAsync_Pagina2_Size5_RetornaSiguientes5() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
-        for (int i = 1; i <= 20; i++)
-        {
+        for (int i = 1; i <= 20; i++) {
             context.Users.Add(new User { Id = i, UserName = $"user{i}", Email = $"user{i}@test.com" });
         }
         await context.SaveChangesAsync();
@@ -206,8 +191,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroUsername_RetornaSoloCoincidentes()
-    {
+    public async Task FindAllPagedAsync_ConFiltroUsername_RetornaSoloCoincidentes() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -229,8 +213,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroEmail_RetornaSoloCoincidentes()
-    {
+    public async Task FindAllPagedAsync_ConFiltroEmail_RetornaSoloCoincidentes() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -251,8 +234,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados()
-    {
+    public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -273,8 +255,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso()
-    {
+    public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -295,8 +276,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_OrdenacionPorUsername_RetornaOrdenadoPorUsername()
-    {
+    public async Task FindAllPagedAsync_OrdenacionPorUsername_RetornaOrdenadoPorUsername() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -318,8 +298,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos()
-    {
+    public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -339,8 +318,7 @@ public class UserRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto()
-    {
+    public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -370,8 +348,7 @@ public class UserRepositoryInMemoryTests
     /// Verifica que retorna solo usuarios activos.
     /// </summary>
     [Test]
-    public async Task GetActiveUsersAsync_ConUsuariosActivos_RetornaSoloActivos()
-    {
+    public async Task GetActiveUsersAsync_ConUsuariosActivos_RetornaSoloActivos() {
         using var context = CreateContext(nameof(GetActiveUsersAsync_ConUsuariosActivos_RetornaSoloActivos));
 
         context.Users.AddRange(
@@ -391,8 +368,7 @@ public class UserRepositoryInMemoryTests
     /// Verifica que excluye usuarios eliminados lógicamente.
     /// </summary>
     [Test]
-    public async Task GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados()
-    {
+    public async Task GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados() {
         using var context = CreateContext(nameof(GetActiveUsersAsync_ConUsuariosEliminados_ExcluyeEliminados));
 
         context.Users.AddRange(
@@ -414,8 +390,7 @@ public class UserRepositoryInMemoryTests
     /// Verifica que retorna lista vacía cuando no hay usuarios activos.
     /// </summary>
     [Test]
-    public async Task GetActiveUsersAsync_SoloEliminados_RetornaListaVacia()
-    {
+    public async Task GetActiveUsersAsync_SoloEliminados_RetornaListaVacia() {
         using var context = CreateContext(nameof(GetActiveUsersAsync_SoloEliminados_RetornaListaVacia));
 
         context.Users.AddRange(
@@ -435,8 +410,7 @@ public class UserRepositoryInMemoryTests
     /// Verifica que retorna lista vacía cuando no hay usuarios.
     /// </summary>
     [Test]
-    public async Task GetActiveUsersAsync_SinUsuarios_RetornaListaVacia()
-    {
+    public async Task GetActiveUsersAsync_SinUsuarios_RetornaListaVacia() {
         using var context = CreateContext(nameof(GetActiveUsersAsync_SinUsuarios_RetornaListaVacia));
 
         var repository = new UserRepository(context, Mock.Of<ILogger<UserRepository>>());
@@ -450,8 +424,7 @@ public class UserRepositoryInMemoryTests
     /// Verifica que usuarios están ordenados por Email.
     /// </summary>
     [Test]
-    public async Task GetActiveUsersAsync_MultiplesUsuarios_OrdenadosPorEmail()
-    {
+    public async Task GetActiveUsersAsync_MultiplesUsuarios_OrdenadosPorEmail() {
         using var context = CreateContext(nameof(GetActiveUsersAsync_MultiplesUsuarios_OrdenadosPorEmail));
 
         context.Users.AddRange(
@@ -475,8 +448,7 @@ public class UserRepositoryInMemoryTests
     /// Verifica que con usuarios mixtos solo retorna activos.
     /// </summary>
     [Test]
-    public async Task GetActiveUsersAsync_UsuariosMixtos_RetornaSoloActivos()
-    {
+    public async Task GetActiveUsersAsync_UsuariosMixtos_RetornaSoloActivos() {
         using var context = CreateContext(nameof(GetActiveUsersAsync_UsuariosMixtos_RetornaSoloActivos));
 
         context.Users.AddRange(
@@ -500,8 +472,7 @@ public class UserRepositoryInMemoryTests
     /// Verifica que retorna un solo usuario activo.
     /// </summary>
     [Test]
-    public async Task GetActiveUsersAsync_UnUsuarioActivo_RetornaEseUsuario()
-    {
+    public async Task GetActiveUsersAsync_UnUsuarioActivo_RetornaEseUsuario() {
         using var context = CreateContext(nameof(GetActiveUsersAsync_UnUsuarioActivo_RetornaEseUsuario));
 
         context.Users.AddRange(

@@ -19,17 +19,14 @@ namespace TiendaApi.Tests.Unit.Services.Background;
 [TestFixture]
 [Category("Unit")]
 [Category("BackgroundJob")]
-public class ProductoReportTaskTests
-{
+public class ProductoReportTaskTests {
     private Mock<IProductoRepository> _mockProductoRepository = null!;
     private Mock<IUserRepository> _mockUserRepository = null!;
     private Mock<IEmailService> _mockEmailService = null!;
     private Mock<ILogger<ProductoReportTask>> _mockLogger = null!;
 
-    private ProductoReportTask CreateTask(bool isDevelopment = true, int days = 7)
-    {
-        var inMemorySettings = new Dictionary<string, string?>
-        {
+    private ProductoReportTask CreateTask(bool isDevelopment = true, int days = 7) {
+        var inMemorySettings = new Dictionary<string, string?> {
             { "Scheduler:ProductoReportDays", days.ToString() },
             { "IsDevelopment", isDevelopment.ToString().ToLower() }
         };
@@ -48,8 +45,7 @@ public class ProductoReportTaskTests
     }
 
     [SetUp]
-    public void SetUp()
-    {
+    public void SetUp() {
         _mockProductoRepository = new Mock<IProductoRepository>();
         _mockUserRepository = new Mock<IUserRepository>();
         _mockEmailService = new Mock<IEmailService>();
@@ -59,8 +55,7 @@ public class ProductoReportTaskTests
     #region ========== ExecuteAsync Tests ==========
 
     [Test]
-    public async Task ExecuteAsync_ModoDesarrollo_RetornaSuccess()
-    {
+    public async Task ExecuteAsync_ModoDesarrollo_RetornaSuccess() {
         // Arrange
         var task = CreateTask(isDevelopment: true);
 
@@ -72,8 +67,7 @@ public class ProductoReportTaskTests
     }
 
     [Test]
-    public async Task ExecuteAsync_ModoProduccion_SinProductos_RetornaSuccess()
-    {
+    public async Task ExecuteAsync_ModoProduccion_SinProductos_RetornaSuccess() {
         // Arrange
         var task = CreateTask(isDevelopment: false);
 
@@ -88,19 +82,16 @@ public class ProductoReportTaskTests
     }
 
     [Test]
-    public async Task ExecuteAsync_ModoProduccion_ConProductos_EnviaEmails()
-    {
+    public async Task ExecuteAsync_ModoProduccion_ConProductos_EnviaEmails() {
         // Arrange
         var task = CreateTask(isDevelopment: false);
 
-        var productos = new List<Producto>
-        {
+        var productos = new List<Producto> {
             new() { Id = 1, Nombre = "Producto 1", Descripcion = "Desc 1", Precio = 10.99m, Stock = 5 },
             new() { Id = 2, Nombre = "Producto 2", Descripcion = "Desc 2", Precio = 20.99m, Stock = 10 }
         };
 
-        var usuarios = new List<User>
-        {
+        var usuarios = new List<User> {
             new() { Id = 1, UserName = "user1", Email = "user1@example.com" },
             new() { Id = 2, UserName = "user2", Email = "user2@example.com" }
         };
@@ -123,13 +114,11 @@ public class ProductoReportTaskTests
     }
 
     [Test]
-    public async Task ExecuteAsync_ModoProduccion_SinUsuarios_RetornaSuccess()
-    {
+    public async Task ExecuteAsync_ModoProduccion_SinUsuarios_RetornaSuccess() {
         // Arrange
         var task = CreateTask(isDevelopment: false);
 
-        var productos = new List<Producto>
-        {
+        var productos = new List<Producto> {
             new() { Id = 1, Nombre = "Producto 1", Descripcion = "Desc 1", Precio = 10.99m, Stock = 5 }
         };
 
@@ -148,8 +137,7 @@ public class ProductoReportTaskTests
     }
 
     [Test]
-    public async Task ExecuteAsync_ModoProduccion_DiasPersonalizados_UsaDiasConfigurados()
-    {
+    public async Task ExecuteAsync_ModoProduccion_DiasPersonalizados_UsaDiasConfigurados() {
         // Arrange
         var task = CreateTask(isDevelopment: false, days: 14);
 
@@ -167,18 +155,15 @@ public class ProductoReportTaskTests
     }
 
     [Test]
-    public async Task ExecuteAsync_ModoProduccion_UnProducto_EnviaUnEmail()
-    {
+    public async Task ExecuteAsync_ModoProduccion_UnProducto_EnviaUnEmail() {
         // Arrange
         var task = CreateTask(isDevelopment: false);
 
-        var productos = new List<Producto>
-        {
+        var productos = new List<Producto> {
             new() { Id = 1, Nombre = "Producto 1", Descripcion = "Desc 1", Precio = 10.99m, Stock = 5 }
         };
 
-        var usuarios = new List<User>
-        {
+        var usuarios = new List<User> {
             new() { Id = 1, UserName = "user1", Email = "user1@example.com" }
         };
 
@@ -204,8 +189,7 @@ public class ProductoReportTaskTests
     #region ========== Configuration Tests ==========
 
     [Test]
-    public void Constructor_ValoresPorDefecto_ConfiguraCorrectamente()
-    {
+    public void Constructor_ValoresPorDefecto_ConfiguraCorrectamente() {
         // Arrange & Act
         var task = CreateTask(isDevelopment: true, days: 7);
 

@@ -13,11 +13,9 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Validators;
 /// </summary>
 [TestFixture]
 [Category("Integration")]
-public class PedidoValidatorsIntegrationTests
-{
+public class PedidoValidatorsIntegrationTests {
     [Test]
-    public async Task PedidoRequestValidator_ConItemsValidos_PasaValidacion()
-    {
+    public async Task PedidoRequestValidator_ConItemsValidos_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<PedidoRequestDto>, PedidoRequestValidator>();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
@@ -25,21 +23,17 @@ public class PedidoValidatorsIntegrationTests
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<PedidoRequestDto>>();
 
-        var dto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var dto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test User",
                 Email = "test@email.com",
-                Direccion = new DireccionDto
-                {
+                Direccion = new DireccionDto {
                     Calle = "Calle Test",
                     Ciudad = "Madrid",
                     Pais = "España"
                 }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
@@ -51,8 +45,7 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task PedidoRequestValidator_SinItems_FallaValidacion()
-    {
+    public async Task PedidoRequestValidator_SinItems_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<PedidoRequestDto>, PedidoRequestValidator>();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
@@ -60,8 +53,7 @@ public class PedidoValidatorsIntegrationTests
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<PedidoRequestDto>>();
 
-        var dto = new PedidoRequestDto
-        {
+        var dto = new PedidoRequestDto {
             Items = new List<PedidoItemRequestDto>()
         };
         var result = await validator.ValidateAsync(dto);
@@ -72,16 +64,14 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task PedidoItemRequestValidator_ConProductoIdInvalido_FallaValidacion()
-    {
+    public async Task PedidoItemRequestValidator_ConProductoIdInvalido_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
 
-        var dto = new PedidoItemRequestDto
-        {
+        var dto = new PedidoItemRequestDto {
             ProductoId = 0,
             Cantidad = 1
         };
@@ -93,16 +83,14 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task PedidoItemRequestValidator_ConCantidadInvalida_FallaValidacion()
-    {
+    public async Task PedidoItemRequestValidator_ConCantidadInvalida_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
 
-        var dto = new PedidoItemRequestDto
-        {
+        var dto = new PedidoItemRequestDto {
             ProductoId = 1,
             Cantidad = 0
         };
@@ -114,16 +102,14 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task PedidoItemRequestValidator_ConCantidadNegativa_FallaValidacion()
-    {
+    public async Task PedidoItemRequestValidator_ConCantidadNegativa_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<PedidoItemRequestDto>, PedidoItemRequestValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<PedidoItemRequestDto>>();
 
-        var dto = new PedidoItemRequestDto
-        {
+        var dto = new PedidoItemRequestDto {
             ProductoId = 1,
             Cantidad = -5
         };
@@ -135,8 +121,7 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task UpdateEstadoDto_ConEstadoValido_PasaValidacion()
-    {
+    public async Task UpdateEstadoDto_ConEstadoValido_PasaValidacion() {
         var dto = new UpdateEstadoDto { Estado = "PROCESANDO" };
         dto.Should().NotBeNull();
         dto.Estado.Should().Be("PROCESANDO");
@@ -145,17 +130,14 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task PedidoDto_AllStates_ShouldBeValid()
-    {
+    public async Task PedidoDto_AllStates_ShouldBeValid() {
         var estadosValidos = new[] { "PENDIENTE", "PROCESANDO", "ENVIADO", "ENTREGADO", "CANCELADO" };
 
-        foreach (var estado in estadosValidos)
-        {
+        foreach (var estado in estadosValidos) {
             var dto = new PedidoDto(
                 Id: "PED-2024-0001",
                 UserId: 1,
-                Destinatario: new DestinatarioDto
-                {
+                Destinatario: new DestinatarioDto {
                     NombreCompleto = "Test",
                     Email = "test@test.com",
                     Direccion = new DireccionDto { Calle = "Calle", Ciudad = "Madrid", Pais = "España" }
@@ -174,12 +156,9 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task PedidoRequestDto_ConItemsValidos_DeberiaSerValido()
-    {
-        var dto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+    public async Task PedidoRequestDto_ConItemsValidos_DeberiaSerValido() {
+        var dto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 },
                 new() { ProductoId = 2, Cantidad = 1 }
             }
@@ -191,8 +170,7 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task PedidoRequestDto_SinItems_DeberiaTenerItemsVacios()
-    {
+    public async Task PedidoRequestDto_SinItems_DeberiaTenerItemsVacios() {
         var dto = new PedidoRequestDto();
 
         dto.Items.Should().NotBeNull();
@@ -202,10 +180,8 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task UpdatePedidoDto_ConCamposOpcionales_DeberiaSerValido()
-    {
-        var dto = new UpdatePedidoDto
-        {
+    public async Task UpdatePedidoDto_ConCamposOpcionales_DeberiaSerValido() {
+        var dto = new UpdatePedidoDto {
             Estado = "PROCESANDO",
             DireccionEnvio = "Nueva Calle 456"
         };
@@ -217,8 +193,7 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task UpdatePedidoDto_SinCampos_DeberiaSerValido()
-    {
+    public async Task UpdatePedidoDto_SinCampos_DeberiaSerValido() {
         var dto = new UpdatePedidoDto();
 
         dto.Estado.Should().BeNull();
@@ -230,16 +205,14 @@ public class PedidoValidatorsIntegrationTests
     #region DireccionValidator Tests
 
     [Test]
-    public async Task DireccionValidator_ConDtoValido_PasaValidacion()
-    {
+    public async Task DireccionValidator_ConDtoValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
 
-        var dto = new DireccionDto
-        {
+        var dto = new DireccionDto {
             Calle = "Gran Vía",
             Numero = "42",
             Ciudad = "Madrid",
@@ -255,8 +228,7 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task DireccionValidator_ConCalleVacia_FallaValidacion()
-    {
+    public async Task DireccionValidator_ConCalleVacia_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
@@ -272,8 +244,7 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task DireccionValidator_ConCiudadVacia_FallaValidacion()
-    {
+    public async Task DireccionValidator_ConCiudadVacia_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
@@ -289,8 +260,7 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task DireccionValidator_ConPaisVacio_FallaValidacion()
-    {
+    public async Task DireccionValidator_ConPaisVacio_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
@@ -306,16 +276,14 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task DireccionValidator_ConCodigoPostalInvalido_FallaValidacion()
-    {
+    public async Task DireccionValidator_ConCodigoPostalInvalido_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DireccionDto>, DireccionValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<DireccionDto>>();
 
-        var dto = new DireccionDto
-        {
+        var dto = new DireccionDto {
             Calle = "Calle Test",
             Ciudad = "Madrid",
             Pais = "España",
@@ -333,21 +301,18 @@ public class PedidoValidatorsIntegrationTests
     #region DestinatarioValidator Tests
 
     [Test]
-    public async Task DestinatarioValidator_ConDtoValido_PasaValidacion()
-    {
+    public async Task DestinatarioValidator_ConDtoValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
 
-        var dto = new DestinatarioDto
-        {
+        var dto = new DestinatarioDto {
             NombreCompleto = "Juan Pérez",
             Email = "juan@email.com",
             Telefono = "+34612345678",
-            Direccion = new DireccionDto
-            {
+            Direccion = new DireccionDto {
                 Calle = "Gran Vía",
                 Ciudad = "Madrid",
                 Pais = "España"
@@ -361,8 +326,7 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task DestinatarioValidator_ConNombreCompletoVacio_FallaValidacion()
-    {
+    public async Task DestinatarioValidator_ConNombreCompletoVacio_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
 
@@ -378,16 +342,14 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task DestinatarioValidator_ConEmailInvalido_FallaValidacion()
-    {
+    public async Task DestinatarioValidator_ConEmailInvalido_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
 
-        var dto = new DestinatarioDto
-        {
+        var dto = new DestinatarioDto {
             NombreCompleto = "Juan Pérez",
             Email = "email-invalido"
         };
@@ -399,16 +361,14 @@ public class PedidoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task DestinatarioValidator_SinDireccion_FallaValidacion()
-    {
+    public async Task DestinatarioValidator_SinDireccion_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<DestinatarioDto>, DestinatarioValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<DestinatarioDto>>();
 
-        var dto = new DestinatarioDto
-        {
+        var dto = new DestinatarioDto {
             NombreCompleto = "Juan Pérez",
             Email = "juan@email.com",
             Direccion = null!

@@ -9,8 +9,7 @@ namespace TiendaApi.Api.Models;
 /// trabajos de limpieza programados, y acota el crecimiento de la partición.
 /// </summary>
 [Table("vistas_por_usuario")]
-public class VistaPorUsuario
-{
+public class VistaPorUsuario {
     /// <summary>Partition key: toda la actividad de un usuario vive en su partición.</summary>
     [Column("usuario_id")]
     [PartitionKey]

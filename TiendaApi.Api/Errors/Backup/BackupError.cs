@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.Backup;
 /// <summary>
 /// Errores del dominio de backup (HTTP 400, 404 y 409).
 /// </summary>
-public static class BackupError
-{
+public static class BackupError {
     /// <summary>Crea error cuando el fichero no se puede interpretar.</summary>
     /// <param name="mensaje">Motivo concreto (zip corrupto, CSV malformado, JSON inválido…).</param>
     /// <returns>ValidationError (HTTP 400).</returns>

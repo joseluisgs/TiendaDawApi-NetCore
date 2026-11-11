@@ -9,16 +9,13 @@ namespace TiendaApi.Tests.Unit.Mappers;
 /// Tests unitarios para el mapeador de categorías.
 /// Prueba todas las conversiones entidad-DTO para el dominio de Categoría.
 /// </summary>
-public class CategoriaMapperTests
-{
+public class CategoriaMapperTests {
     #region ToDto Tests
 
     [Test]
-    public void ToDto_ConTodosLosCampos_MapeaCorrectamente()
-    {
+    public void ToDto_ConTodosLosCampos_MapeaCorrectamente() {
         // Arrange
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = 1,
             Nombre = "Electronics",
             CreatedAt = new DateTime(2024, 1, 15, 10, 30, 0),
@@ -35,11 +32,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_ConCamposMinimos_MapeaCorrectamente()
-    {
+    public void ToDto_ConCamposMinimos_MapeaCorrectamente() {
         // Arrange
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = 5,
             Nombre = "Books"
         };
@@ -53,12 +48,10 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_ConNombreLargo_MapeaCorrectamente()
-    {
+    public void ToDto_ConNombreLargo_MapeaCorrectamente() {
         // Arrange
         var longNombre = new string('A', 200);
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = 1,
             Nombre = longNombre
         };
@@ -72,11 +65,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_ConCaracteresEspeciales_MapeaCorrectamente()
-    {
+    public void ToDto_ConCaracteresEspeciales_MapeaCorrectamente() {
         // Arrange
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = 1,
             Nombre = "Electrónica & Electrodomésticos > 100€"
         };
@@ -89,11 +80,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_DebeSerIdempotente()
-    {
+    public void ToDto_DebeSerIdempotente() {
         // Arrange
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = 1,
             Nombre = "Test"
         };
@@ -111,11 +100,9 @@ public class CategoriaMapperTests
     #region ToEntity Tests
 
     [Test]
-    public void ToEntity_ConTodosLosCampos_MapeaCorrectamente()
-    {
+    public void ToEntity_ConTodosLosCampos_MapeaCorrectamente() {
         // Arrange
-        var dto = new CategoriaRequestDto
-        {
+        var dto = new CategoriaRequestDto {
             Nombre = "Computers & Accessories"
         };
 
@@ -129,11 +116,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_ConNombreVacio_MapeaStringVacio()
-    {
+    public void ToEntity_ConNombreVacio_MapeaStringVacio() {
         // Arrange
-        var dto = new CategoriaRequestDto
-        {
+        var dto = new CategoriaRequestDto {
             Nombre = string.Empty
         };
 
@@ -145,11 +130,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_ConNombreBlanco_MapeaBlanco()
-    {
+    public void ToEntity_ConNombreBlanco_MapeaBlanco() {
         // Arrange
-        var dto = new CategoriaRequestDto
-        {
+        var dto = new CategoriaRequestDto {
             Nombre = "   "
         };
 
@@ -161,8 +144,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_DebeEstablecerMarcasDeTiempoPredeterminadas()
-    {
+    public void ToEntity_DebeEstablecerMarcasDeTiempoPredeterminadas() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Test" };
         var beforeCreation = DateTime.UtcNow;
@@ -183,8 +165,7 @@ public class CategoriaMapperTests
     #region UpdateEntity Tests
 
     [Test]
-    public void UpdateEntity_DebeActualizarNombre()
-    {
+    public void UpdateEntity_DebeActualizarNombre() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Old Name" };
         var dto = new CategoriaRequestDto { Nombre = "New Name" };
@@ -199,8 +180,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void UpdateEntity_ConNombreVacio_ActualizaAVacio()
-    {
+    public void UpdateEntity_ConNombreVacio_ActualizaAVacio() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Original Name" };
         var dto = new CategoriaRequestDto { Nombre = string.Empty };
@@ -213,8 +193,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void UpdateEntity_NoDebeModificarId()
-    {
+    public void UpdateEntity_NoDebeModificarId() {
         // Arrange
         var categoria = new Categoria { Id = 42, Nombre = "Original" };
         var dto = new CategoriaRequestDto { Nombre = "Updated" };
@@ -227,12 +206,10 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void UpdateEntity_NoDebeModificarCreatedAt()
-    {
+    public void UpdateEntity_NoDebeModificarCreatedAt() {
         // Arrange
         var originalCreatedAt = new DateTime(2023, 1, 1);
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = 1,
             Nombre = "Original",
             CreatedAt = originalCreatedAt
@@ -251,11 +228,9 @@ public class CategoriaMapperTests
     #region ToDtoList Tests
 
     [Test]
-    public void ToDtoList_ConMultiplesCategorias_MapeaTodas()
-    {
+    public void ToDtoList_ConMultiplesCategorias_MapeaTodas() {
         // Arrange
-        var categorias = new List<Categoria>
-        {
+        var categorias = new List<Categoria> {
             new() { Id = 1, Nombre = "Cat1" },
             new() { Id = 2, Nombre = "Cat2" },
             new() { Id = 3, Nombre = "Cat3" }
@@ -275,8 +250,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDtoList_ConListaVacia_RetornaVacia()
-    {
+    public void ToDtoList_ConListaVacia_RetornaVacia() {
         // Arrange
         var categorias = new List<Categoria>();
 
@@ -288,11 +262,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDtoList_DebeMantenerOrden()
-    {
+    public void ToDtoList_DebeMantenerOrden() {
         // Arrange
-        var categorias = new List<Categoria>
-        {
+        var categorias = new List<Categoria> {
             new() { Id = 3, Nombre = "Third" },
             new() { Id = 1, Nombre = "First" },
             new() { Id = 2, Nombre = "Second" }
@@ -308,11 +280,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDtoList_DebeSerPerezoso()
-    {
+    public void ToDtoList_DebeSerPerezoso() {
         // Arrange
-        var categorias = new List<Categoria>
-        {
+        var categorias = new List<Categoria> {
             new() { Id = 1, Nombre = "Cat1" },
             new() { Id = 2, Nombre = "Cat2" }
         };
@@ -325,11 +295,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDtoList_PuedeIterarseMultiplesVeces()
-    {
+    public void ToDtoList_PuedeIterarseMultiplesVeces() {
         // Arrange
-        var categorias = new List<Categoria>
-        {
+        var categorias = new List<Categoria> {
             new() { Id = 1, Nombre = "Cat1" }
         };
 
@@ -348,11 +316,9 @@ public class CategoriaMapperTests
     #region Roundtrip Tests
 
     [Test]
-    public void ToDto_LuegoToEntity_DebePreservarDatos()
-    {
+    public void ToDto_LuegoToEntity_DebePreservarDatos() {
         // Arrange
-        var original = new Categoria
-        {
+        var original = new Categoria {
             Id = 10,
             Nombre = "Roundtrip Test"
         };
@@ -367,8 +333,7 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_LuegoToDto_DebePreservarNombre()
-    {
+    public void ToEntity_LuegoToDto_DebePreservarNombre() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Persistence Test" };
 
@@ -385,11 +350,9 @@ public class CategoriaMapperTests
     #region Edge Cases Tests
 
     [Test]
-    public void ToDto_ConMaxId_MapeaCorrectamente()
-    {
+    public void ToDto_ConMaxId_MapeaCorrectamente() {
         // Arrange
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = long.MaxValue,
             Nombre = "Max ID Category"
         };
@@ -402,11 +365,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToDto_ConCaracteresUnicode_MapeaCorrectamente()
-    {
+    public void ToDto_ConCaracteresUnicode_MapeaCorrectamente() {
         // Arrange
-        var categoria = new Categoria
-        {
+        var categoria = new Categoria {
             Id = 1,
             Nombre = "José María Álvarez Ñúñez"
         };
@@ -419,11 +380,9 @@ public class CategoriaMapperTests
     }
 
     [Test]
-    public void ToEntity_ConNombreUnicode_MapeaCorrectamente()
-    {
+    public void ToEntity_ConNombreUnicode_MapeaCorrectamente() {
         // Arrange
-        var dto = new CategoriaRequestDto
-        {
+        var dto = new CategoriaRequestDto {
             Nombre = "🎉 Unicode Celebration 🎊"
         };
 

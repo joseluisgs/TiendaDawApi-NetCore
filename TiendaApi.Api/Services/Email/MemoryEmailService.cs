@@ -7,35 +7,30 @@ namespace TiendaApi.Api.Services.Email;
 /// <summary>
 /// Implementación de IEmailService para desarrollo que solo loguea los emails.
 /// </summary>
-public class MemoryEmailService : IEmailService
-{
+public class MemoryEmailService : IEmailService {
     private readonly ILogger<MemoryEmailService> _logger;
 
     /// <summary>
     /// Crea una instancia del servicio de emails en memoria.
     /// </summary>
     /// <param name="logger">Logger de la instancia.</param>
-    public MemoryEmailService(ILogger<MemoryEmailService> logger)
-    {
+    public MemoryEmailService(ILogger<MemoryEmailService> logger) {
         _logger = logger;
     }
 
     /// <inheritdoc />
-    public Task EnqueueEmailAsync(EmailMessage message)
-    {
+    public Task EnqueueEmailAsync(EmailMessage message) {
         LogEmail(message, "ENQUEUED");
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public Task SendEmailAsync(EmailMessage message)
-    {
+    public Task SendEmailAsync(EmailMessage message) {
         LogEmail(message, "SENT");
         return Task.CompletedTask;
     }
 
-    private void LogEmail(EmailMessage message, string status)
-    {
+    private void LogEmail(EmailMessage message, string status) {
         _logger.LogInformation("=== EMAIL {Status} ===", status);
         _logger.LogInformation("Para: {To}", message.To);
         _logger.LogInformation("Asunto: {Subject}", message.Subject);

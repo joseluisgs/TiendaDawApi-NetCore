@@ -5,8 +5,7 @@ namespace TiendaApi.Api.Data.Abstractions;
 /// Implementada por: Categoria, Producto, User, Pedido.
 /// Propiedades: CreatedAt (readonly), UpdatedAt.
 /// </summary>
-public interface ITimestamped
-{
+public interface ITimestamped {
     /// <summary>Fecha de creación (se asigna en INSERT).</summary>
     DateTime CreatedAt { get; }
 

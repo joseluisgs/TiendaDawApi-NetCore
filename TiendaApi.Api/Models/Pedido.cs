@@ -11,8 +11,7 @@ using TiendaApi.Api.Data.Abstractions;
 /// Documento embebido con items, total y estado.
 /// Estados: PENDIENTE → PROCESANDO → ENVIADO → ENTREGADO | CANCELADO.
 /// </summary>
-public class Pedido : ITimestamped
-{
+public class Pedido : ITimestamped {
     /// <summary>Identificador ObjectId generado automáticamente por MongoDB.</summary>
     [BsonId]
     [Key]
@@ -52,8 +51,7 @@ public class Pedido : ITimestamped
 /// Elemento individual dentro de un pedido.
 /// Registra producto, cantidad, precio y subtotal al momento de la compra.
 /// </summary>
-public class PedidoItem
-{
+public class PedidoItem {
     /// <summary>ID del producto en el catálogo.</summary>
     public long ProductoId { get; set; }
 
@@ -76,8 +74,7 @@ public class PedidoItem
 /// Flujo típico: PENDIENTE → PROCESANDO → ENVIADO → ENTREGADO
 /// Flujo alternativo: PENDIENTE → CANCELADO
 /// </summary>
-public static class PedidoEstado
-{
+public static class PedidoEstado {
     /// <summary>Pedido creado pero sin confirmar (estado inicial).</summary>
     public const string PENDIENTE = "PENDIENTE";
 

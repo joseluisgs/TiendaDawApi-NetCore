@@ -13,13 +13,11 @@ namespace TiendaApi.Api.Validators.Proveedores;
 /// Reglas: Nombre(3-100, obligatorio), Descripcion(max 500), Contacto(max 200),
 /// Codigo(opcional, formato de 11 caracteres).
 /// </summary>
-public class ProveedorRequestValidator : AbstractValidator<ProveedorRequestDto>
-{
+public class ProveedorRequestValidator : AbstractValidator<ProveedorRequestDto> {
     /// <summary>
     /// Define reglas de validación para ProveedorRequestDto.
     /// </summary>
-    public ProveedorRequestValidator()
-    {
+    public ProveedorRequestValidator() {
         // El código solo se valida por FORMATO, y con tres estados bien distintos:
         //   null → se omite y el servidor genera uno
         //   ""   → sin sentido en el DTO: se rechaza (no es "omitir")

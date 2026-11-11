@@ -17,8 +17,7 @@ public class JwtService(
     IConfiguration configuration,
     ILogger<JwtService> logger,
     TimeProvider? timeProvider = null
-) : IJwtService
-{
+) : IJwtService {
     private readonly IConfiguration _configuration = configuration;
     private readonly ILogger<JwtService> _logger = logger;
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
@@ -29,8 +28,7 @@ public class JwtService(
     /// <param name="user">Usuario para el token.</param>
     /// <returns>Token JWT firmado.</returns>
     /// <exception cref="InvalidOperationException">Si la clave JWT no está configurada.</exception>
-    public string GenerateToken(User user)
-    {
+    public string GenerateToken(User user) {
         var key = _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT Key no configurada");
         var issuer = _configuration["Jwt:Issuer"] ?? "TiendaApi";
@@ -40,8 +38,7 @@ public class JwtService(
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
-        {
+        var claims = new[] {
             new Claim("username", user.UserName ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new Claim(ClaimTypes.Role, user.Role),
@@ -69,10 +66,8 @@ public class JwtService(
     /// </summary>
     /// <param name="token">Token JWT a validar.</param>
     /// <returns>Username del token o null si es inválido.</returns>
-    public string? ValidateToken(string token)
-    {
-        try
-        {
+    public string? ValidateToken(string token) {
+        try {
             var key = _configuration["Jwt:Key"]
                 ?? throw new InvalidOperationException("JWT Key no configurada");
             var issuer = _configuration["Jwt:Issuer"] ?? "TiendaApi";
@@ -81,8 +76,7 @@ public class JwtService(
             var tokenHandler = new JwtSecurityTokenHandler();
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
 
-            tokenHandler.ValidateToken(token, new TokenValidationParameters
-            {
+            tokenHandler.ValidateToken(token, new TokenValidationParameters {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = securityKey,
                 ValidateIssuer = true,
@@ -97,9 +91,7 @@ public class JwtService(
             var username = jwtToken.Claims.First(x => x.Type == "username").Value;
 
             return username;
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             _logger.LogWarning(ex, "Validación de token JWT fallida");
             return null;
         }

@@ -25,8 +25,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Usuarios.Services;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class UserServiceIntegrationTests
-{
+public class UserServiceIntegrationTests {
     private const string DatabaseName = "it_usuario_service";
     private string _connectionString = string.Empty;
     private string _mongoConnectionString = string.Empty;
@@ -35,28 +34,24 @@ public class UserServiceIntegrationTests
     private IUserService? _userService;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
-    public async Task Setup()
-    {
+    public async Task Setup() {
         var connectionString = _connectionString;
         var mongoConnectionString = _mongoConnectionString;
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", DatabaseName },
@@ -69,8 +64,7 @@ public class UserServiceIntegrationTests
         services.AddMemoryCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
-        services.AddLogging(builder =>
-        {
+        services.AddLogging(builder => {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Information);
         });
@@ -96,18 +90,15 @@ public class UserServiceIntegrationTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
+    public void TearDown() {
         _dbContext?.Dispose();
-        if (_serviceProvider is IDisposable sp)
-        {
+        if (_serviceProvider is IDisposable sp) {
             sp.Dispose();
         }
     }
 
     [Test]
-    public async Task FindAllAsync_SinUsuarios_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinUsuarios_RetornaListaVacia() {
         var result = await _userService!.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
@@ -115,11 +106,9 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConDatosValidos_RetornaUsuarioCreado()
-    {
+    public async Task CreateAsync_ConDatosValidos_RetornaUsuarioCreado() {
         var uniqueId = Guid.NewGuid().ToString("N")[..8];
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = $"testuser_{uniqueId}",
             Email = $"test_{uniqueId}@example.com",
             Password = "Test1234"
@@ -134,10 +123,8 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConUsuarioExistente_RetornaUsuario()
-    {
-        var dto = new RegisterDto
-        {
+    public async Task FindByIdAsync_ConUsuarioExistente_RetornaUsuario() {
+        var dto = new RegisterDto {
             Username = "buscaruser",
             Email = "buscar@example.com",
             Password = "Test1234"
@@ -152,26 +139,22 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConUsuarioNoExistente_RetornaNotFound()
-    {
+    public async Task FindByIdAsync_ConUsuarioNoExistente_RetornaNotFound() {
         var result = await _userService!.FindByIdAsync(999999);
 
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    public async Task CreateAsync_ConEmailDuplicado_RetornaConflicto()
-    {
-        var dto = new RegisterDto
-        {
+    public async Task CreateAsync_ConEmailDuplicado_RetornaConflicto() {
+        var dto = new RegisterDto {
             Username = "user1",
             Email = "duplicate@example.com",
             Password = "Test1234"
         };
         await _userService!.CreateAsync(dto);
 
-        var result = await _userService.CreateAsync(new RegisterDto
-        {
+        var result = await _userService.CreateAsync(new RegisterDto {
             Username = "user2",
             Email = "duplicate@example.com",
             Password = "Test1234"
@@ -181,18 +164,15 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConUsernameDuplicado_RetornaConflicto()
-    {
-        var dto = new RegisterDto
-        {
+    public async Task CreateAsync_ConUsernameDuplicado_RetornaConflicto() {
+        var dto = new RegisterDto {
             Username = "duplicateuser",
             Email = "user1@example.com",
             Password = "Test1234"
         };
         await _userService!.CreateAsync(dto);
 
-        var result = await _userService.CreateAsync(new RegisterDto
-        {
+        var result = await _userService.CreateAsync(new RegisterDto {
             Username = "duplicateuser",
             Email = "user2@example.com",
             Password = "Test1234"
@@ -202,10 +182,8 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConEmailInvalido_RetornaErrorValidacion()
-    {
-        var dto = new RegisterDto
-        {
+    public async Task CreateAsync_ConEmailInvalido_RetornaErrorValidacion() {
+        var dto = new RegisterDto {
             Username = "testuser",
             Email = "email-invalido",
             Password = "Test1234"
@@ -217,10 +195,8 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConPasswordCorto_RetornaErrorValidacion()
-    {
-        var dto = new RegisterDto
-        {
+    public async Task CreateAsync_ConPasswordCorto_RetornaErrorValidacion() {
+        var dto = new RegisterDto {
             Username = "testuser",
             Email = "test@example.com",
             Password = "123"
@@ -232,10 +208,8 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConUsernameCorto_RetornaErrorValidacion()
-    {
-        var dto = new RegisterDto
-        {
+    public async Task CreateAsync_ConUsernameCorto_RetornaErrorValidacion() {
+        var dto = new RegisterDto {
             Username = "ab",
             Email = "test@example.com",
             Password = "Test1234"
@@ -249,11 +223,9 @@ public class UserServiceIntegrationTests
     #region ========== UPDATE ASYNC TESTS ==========
 
     [Test]
-    public async Task UpdateAsync_ConUsuarioExistente_ActualizaDatos()
-    {
+    public async Task UpdateAsync_ConUsuarioExistente_ActualizaDatos() {
         // Arrange
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "updatetest",
             Email = "update@example.com",
             Password = "Test1234"
@@ -273,8 +245,7 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateAsync_ConUsuarioNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateAsync_ConUsuarioNoExistente_RetornaNotFound() {
         // Arrange
         var updateDto = new UserUpdateDto { Email = "updated@example.com" };
 
@@ -286,17 +257,14 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateAsync_ConEmailDuplicado_RetornaConflicto()
-    {
+    public async Task UpdateAsync_ConEmailDuplicado_RetornaConflicto() {
         // Arrange
-        var dto1 = new RegisterDto
-        {
+        var dto1 = new RegisterDto {
             Username = "user1update",
             Email = "user1update@example.com",
             Password = "Test1234"
         };
-        var dto2 = new RegisterDto
-        {
+        var dto2 = new RegisterDto {
             Username = "user2update",
             Email = "user2update@example.com",
             Password = "Test1234"
@@ -319,11 +287,9 @@ public class UserServiceIntegrationTests
     #region ========== DELETE ASYNC TESTS ==========
 
     [Test]
-    public async Task DeleteAsync_ConUsuarioExistente_EliminaUsuario()
-    {
+    public async Task DeleteAsync_ConUsuarioExistente_EliminaUsuario() {
         // Arrange
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "deletetest",
             Email = "delete@example.com",
             Password = "Test1234"
@@ -343,8 +309,7 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteAsync_ConUsuarioNoExistente_RetornaNotFound()
-    {
+    public async Task DeleteAsync_ConUsuarioNoExistente_RetornaNotFound() {
         // Act
         var result = await _userService!.DeleteAsync(999999);
 
@@ -357,11 +322,9 @@ public class UserServiceIntegrationTests
     #region ========== UPDATE AVATAR ASYNC TESTS ==========
 
     [Test]
-    public async Task UpdateAvatarAsync_ConUsuarioExistente_ActualizaAvatar()
-    {
+    public async Task UpdateAvatarAsync_ConUsuarioExistente_ActualizaAvatar() {
         // Arrange
-        var dto = new RegisterDto
-        {
+        var dto = new RegisterDto {
             Username = "avatartest",
             Email = "avatar@example.com",
             Password = "Test1234"
@@ -379,8 +342,7 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task UpdateAvatarAsync_ConUsuarioNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateAvatarAsync_ConUsuarioNoExistente_RetornaNotFound() {
         // Act
         var result = await _userService!.UpdateAvatarAsync(999999, "/uploads/avatars/test.jpg");
 
@@ -393,8 +355,7 @@ public class UserServiceIntegrationTests
     #region ========== FIND ALL PAGED ASYNC TESTS ==========
 
     [Test]
-    public async Task FindAllPagedAsync_SinUsuarios_RetornaPaginaVacia()
-    {
+    public async Task FindAllPagedAsync_SinUsuarios_RetornaPaginaVacia() {
         // Act
         var result = await _userService!.FindAllPagedAsync(new UserFilterDto(null, null, null, 0, 10));
 
@@ -405,13 +366,10 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConUsuarios_RetornaUsuariosPaginados()
-    {
+    public async Task FindAllPagedAsync_ConUsuarios_RetornaUsuariosPaginados() {
         // Arrange - Create multiple users
-        for (int i = 0; i < 5; i++)
-        {
-            var dto = new RegisterDto
-            {
+        for (int i = 0; i < 5; i++) {
+            var dto = new RegisterDto {
                 Username = $"pageduser{i}",
                 Email = $"paged{i}@example.com",
                 Password = "Test1234"
@@ -432,13 +390,10 @@ public class UserServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta()
-    {
+    public async Task FindAllPagedAsync_SegundaPagina_RetornaPaginaCorrecta() {
         // Arrange - Create users
-        for (int i = 0; i < 5; i++)
-        {
-            var dto = new RegisterDto
-            {
+        for (int i = 0; i < 5; i++) {
+            var dto = new RegisterDto {
                 Username = $"paged2user{i}",
                 Email = $"paged2{i}@example.com",
                 Password = "Test1234"

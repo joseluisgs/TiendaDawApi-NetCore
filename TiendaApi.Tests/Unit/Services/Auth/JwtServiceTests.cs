@@ -14,14 +14,12 @@ namespace TiendaApi.Tests.Unit.Services.Auth;
 /// Tests para JwtService.
 /// Verifica la generación y validación de tokens JWT.
 /// </summary>
-public class JwtServiceTests
-{
+public class JwtServiceTests {
     private IJwtService _jwtService = null!;
     private IConfiguration _configuration = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         var inMemorySettings = new Dictionary<string, string> {
             {"Jwt:Key", "TestKeyWithAtLeast32CharactersForSecurity!"},
             {"Jwt:Issuer", "TiendaApiTest"},
@@ -43,10 +41,8 @@ public class JwtServiceTests
     /// Verifica que la generación de token retorna un token JWT válido.
     /// </summary>
     [Test]
-    public void GenerateToken_DebeRetornarTokenValido()
-    {
-        var user = new User
-        {
+    public void GenerateToken_DebeRetornarTokenValido() {
+        var user = new User {
             Id = 1,
             UserName = "testuser",
             Email = "test@example.com",
@@ -63,10 +59,8 @@ public class JwtServiceTests
     /// Verifica que el token generado contiene los claims correctos.
     /// </summary>
     [Test]
-    public void GenerateToken_DebeContenerClaimsCorrectos()
-    {
-        var user = new User
-        {
+    public void GenerateToken_DebeContenerClaimsCorrectos() {
+        var user = new User {
             Id = 42,
             UserName = "testuser",
             Email = "test@example.com",
@@ -98,10 +92,8 @@ public class JwtServiceTests
     /// Verifica que el token para admin contiene el rol ADMIN.
     /// </summary>
     [Test]
-    public void GenerateToken_ParaAdmin_DebeContenerRolAdmin()
-    {
-        var adminUser = new User
-        {
+    public void GenerateToken_ParaAdmin_DebeContenerRolAdmin() {
+        var adminUser = new User {
             Id = 1,
             UserName = "admin",
             Email = "admin@example.com",
@@ -121,8 +113,7 @@ public class JwtServiceTests
     /// Verifica que tokens generados para usuarios diferentes son distintos.
     /// </summary>
     [Test]
-    public void GenerateToken_ParaUsuariosDistintos_DebeRetornarTokensDistintos()
-    {
+    public void GenerateToken_ParaUsuariosDistintos_DebeRetornarTokensDistintos() {
         var user1 = new User { Id = 1, UserName = "user1", Email = "user1@test.com", Role = UserRoles.USER };
         var user2 = new User { Id = 2, UserName = "user2", Email = "user2@test.com", Role = UserRoles.USER };
 
@@ -136,10 +127,8 @@ public class JwtServiceTests
     /// Verifica que el token contiene la fecha de expiración.
     /// </summary>
     [Test]
-    public void GenerateToken_DebeContenerExpiracion()
-    {
-        var user = new User
-        {
+    public void GenerateToken_DebeContenerExpiracion() {
+        var user = new User {
             Id = 1,
             UserName = "testuser",
             Email = "test@example.com",
@@ -159,8 +148,7 @@ public class JwtServiceTests
     /// Verifica que el token contiene el issuer correcto.
     /// </summary>
     [Test]
-    public void GenerateToken_DebeContenerIssuerCorrecto()
-    {
+    public void GenerateToken_DebeContenerIssuerCorrecto() {
         var user = new User { Id = 1, UserName = "testuser", Email = "test@test.com", Role = UserRoles.USER };
 
         var token = _jwtService.GenerateToken(user);
@@ -178,10 +166,8 @@ public class JwtServiceTests
     /// Verifica que la validación de token válido retorna el username.
     /// </summary>
     [Test]
-    public void ValidateToken_ConTokenValido_DebeRetornarUsername()
-    {
-        var user = new User
-        {
+    public void ValidateToken_ConTokenValido_DebeRetornarUsername() {
+        var user = new User {
             Id = 1,
             UserName = "testuser",
             Email = "test@example.com",
@@ -198,8 +184,7 @@ public class JwtServiceTests
     /// Verifica que la validación de token inválido retorna null.
     /// </summary>
     [Test]
-    public void ValidateToken_ConTokenInvalido_DebeRetornarNull()
-    {
+    public void ValidateToken_ConTokenInvalido_DebeRetornarNull() {
         var invalidToken = "invalid.token.value";
 
         var username = _jwtService.ValidateToken(invalidToken);
@@ -211,8 +196,7 @@ public class JwtServiceTests
     /// Verifica que la validación de token vacío retorna null.
     /// </summary>
     [Test]
-    public void ValidateToken_ConTokenVacio_DebeRetornarNull()
-    {
+    public void ValidateToken_ConTokenVacio_DebeRetornarNull() {
         var username = _jwtService.ValidateToken(string.Empty);
 
         username.Should().BeNull();
@@ -222,8 +206,7 @@ public class JwtServiceTests
     /// Verifica que la validación de token nulo retorna null.
     /// </summary>
     [Test]
-    public void ValidateToken_ConTokenNulo_DebeRetornarNull()
-    {
+    public void ValidateToken_ConTokenNulo_DebeRetornarNull() {
         var username = _jwtService.ValidateToken(null!);
 
         username.Should().BeNull();
@@ -233,8 +216,7 @@ public class JwtServiceTests
     /// Verifica que la validación de token con formato incorrecto retorna null.
     /// </summary>
     [Test]
-    public void ValidateToken_ConFormatoIncorrecto_DebeRetornarNull()
-    {
+    public void ValidateToken_ConFormatoIncorrecto_DebeRetornarNull() {
         var malformedToken = "not-a-jwt-token";
 
         var username = _jwtService.ValidateToken(malformedToken);
@@ -246,10 +228,8 @@ public class JwtServiceTests
     /// Verifica que la validación de token con ClaimsIdentity personalizado funciona.
     /// </summary>
     [Test]
-    public void ValidateToken_ConTokenValido_DebePoderObtenerClaims()
-    {
-        var user = new User
-        {
+    public void ValidateToken_ConTokenValido_DebePoderObtenerClaims() {
+        var user = new User {
             Id = 99,
             UserName = "claimtest",
             Email = "claims@test.com",
@@ -273,8 +253,7 @@ public class JwtServiceTests
     /// Verifica que la generación de token funciona con diferentes configuraciones de expiración.
     /// </summary>
     [Test]
-    public void GenerateToken_ConConfiguracionExpiracionDistinta_DebeGenerarToken()
-    {
+    public void GenerateToken_ConConfiguracionExpiracionDistinta_DebeGenerarToken() {
         var shortConfig = new Dictionary<string, string> {
             {"Jwt:Key", "TestKeyWithAtLeast32CharactersForSecurity!"},
             {"Jwt:Issuer", "TiendaApiTest"},
@@ -295,8 +274,7 @@ public class JwtServiceTests
     /// Verifica que la validación falla con clave diferente.
     /// </summary>
     [Test]
-    public void ValidateToken_ConClaveDistinta_NoDebeValidar()
-    {
+    public void ValidateToken_ConClaveDistinta_NoDebeValidar() {
         var user = new User { Id = 1, UserName = "test", Email = "test@test.com", Role = UserRoles.USER };
         var token = _jwtService.GenerateToken(user);
 
@@ -323,10 +301,8 @@ public class JwtServiceTests
     /// Verifica que el token para usuario USER contiene el rol correcto.
     /// </summary>
     [Test]
-    public void GenerateToken_ParaRolesDistintos_DebeIncluirRol()
-    {
-        var adminUser = new User
-        {
+    public void GenerateToken_ParaRolesDistintos_DebeIncluirRol() {
+        var adminUser = new User {
             Id = 1,
             UserName = "admin",
             Email = "admin@example.com",
@@ -342,10 +318,8 @@ public class JwtServiceTests
     /// Verifica que se puede validar un token de usuario con rol USER.
     /// </summary>
     [Test]
-    public void GenerateToken_ParaUserRole_DebeValidarCorrectamente()
-    {
-        var regularUser = new User
-        {
+    public void GenerateToken_ParaUserRole_DebeValidarCorrectamente() {
+        var regularUser = new User {
             Id = 5,
             UserName = "regularuser",
             Email = "regular@test.com",
@@ -366,14 +340,12 @@ public class JwtServiceTests
     /// Verifica que el token generado con FakeTimeProvider usa la fecha controlada.
     /// </summary>
     [Test]
-    public void GenerateToken_ConFakeTimeProvider_DebeUsarFechaControlada()
-    {
+    public void GenerateToken_ConFakeTimeProvider_DebeUsarFechaControlada() {
         var fakeTime = new FakeTimeProvider(new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero));
         var mockLogger = new Mock<ILogger<JwtService>>();
         var jwtService = new JwtService(_configuration, mockLogger.Object, fakeTime);
 
-        var user = new User
-        {
+        var user = new User {
             Id = 1,
             UserName = "testuser",
             Email = "test@example.com",

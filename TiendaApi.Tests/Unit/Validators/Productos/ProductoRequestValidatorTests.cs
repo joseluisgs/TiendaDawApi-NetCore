@@ -8,17 +8,14 @@ namespace TiendaApi.Tests.Unit.Validators.Productos;
 /// <summary>
 /// Tests unitarios para ProductoRequestValidator.
 /// </summary>
-public class ProductoRequestValidatorTests
-{
+public class ProductoRequestValidatorTests {
     private readonly ProductoRequestValidator _validator = new();
 
     #region Nombre Tests
 
     [Test]
-    public void CreateAsync_ConNombreVacio_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreVacio_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "",
             Precio = 10,
             Stock = 5,
@@ -32,10 +29,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConNombreMuyCorto_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreMuyCorto_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "AB",
             Precio = 10,
             Stock = 5,
@@ -49,10 +44,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConNombreMuyLargo_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreMuyLargo_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = new string('A', 201),
             Precio = 10,
             Stock = 5,
@@ -66,10 +59,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConNombreValido_NoDeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreValido_NoDeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "iPhone 15 Pro Max",
             Precio = 999.99m,
             Stock = 10,
@@ -86,10 +77,8 @@ public class ProductoRequestValidatorTests
     #region Precio Tests
 
     [Test]
-    public void CreateAsync_ConPrecioCero_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConPrecioCero_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 0,
             Stock = 5,
@@ -103,10 +92,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConPrecioNegativo_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConPrecioNegativo_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = -10,
             Stock = 5,
@@ -120,10 +107,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConPrecioValido_NoDeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConPrecioValido_NoDeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 99.99m,
             Stock = 5,
@@ -140,10 +125,8 @@ public class ProductoRequestValidatorTests
     #region Stock Tests
 
     [Test]
-    public void CreateAsync_ConStockNegativo_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConStockNegativo_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = -5,
@@ -157,10 +140,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConStockCero_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConStockCero_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 0,
@@ -173,10 +154,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConStockPositivo_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConStockPositivo_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 100,
@@ -193,10 +172,8 @@ public class ProductoRequestValidatorTests
     #region CategoriaId Tests
 
     [Test]
-    public void CreateAsync_ConCategoriaIdCero_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConCategoriaIdCero_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -210,10 +187,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConCategoriaIdNegativo_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConCategoriaIdNegativo_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -227,10 +202,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConCategoriaIdValido_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConCategoriaIdValido_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -247,10 +220,8 @@ public class ProductoRequestValidatorTests
     #region Descripcion Tests
 
     [Test]
-    public void CreateAsync_ConDescripcionMuyLarga_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcionMuyLarga_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = new string('A', 1001),
             Precio = 10,
@@ -265,10 +236,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConDescripcionVacia_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcionVacia_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = "",
             Precio = 10,
@@ -286,10 +255,8 @@ public class ProductoRequestValidatorTests
     #region Imagen Tests
 
     [Test]
-    public void CreateAsync_ConUrlInvalida_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlInvalida_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -303,10 +270,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConUrlHttpValida_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlHttpValida_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -320,10 +285,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConUrlHttpsValida_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlHttpsValida_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -337,10 +300,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConImagenVacia_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConImagenVacia_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -358,10 +319,8 @@ public class ProductoRequestValidatorTests
     #region DTO Completo Tests
 
     [Test]
-    public void CreateAsync_ConDtoCompletoInvalido_DeberiaTenerMultiplesErrores()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDtoCompletoInvalido_DeberiaTenerMultiplesErrores() {
+        var dto = new ProductoRequestDto {
             Nombre = "",
             Descripcion = new string('A', 1001),
             Precio = -10,
@@ -381,10 +340,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConDtoCompletoValido_NoDeberiaTenerErrores()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDtoCompletoValido_NoDeberiaTenerErrores() {
+        var dto = new ProductoRequestDto {
             Nombre = "iPhone 15 Pro",
             Descripcion = "El último iPhone de Apple",
             Precio = 999.99m,
@@ -403,10 +360,8 @@ public class ProductoRequestValidatorTests
     #region Casos Borde Adicionales
 
     [Test]
-    public void CreateAsync_ConNombreConCaracteresEspeciales_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreConCaracteresEspeciales_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Producto #1 - Deluxe Edition®",
             Precio = 10,
             Stock = 5,
@@ -419,10 +374,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConNombreConEspacios_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreConEspacios_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = " producto con espacios ",
             Precio = 10,
             Stock = 5,
@@ -435,10 +388,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConPrecioDecimal_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConPrecioDecimal_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 0.01m,
             Stock = 5,
@@ -451,10 +402,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConPrecioMuyAlto_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConPrecioMuyAlto_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 9999999.99m,
             Stock = 5,
@@ -467,10 +416,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConStockMuyAlto_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConStockMuyAlto_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = int.MaxValue,
@@ -483,10 +430,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConCategoriaIdMuyAlto_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConCategoriaIdMuyAlto_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -499,10 +444,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConUrlSinProtocolo_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlSinProtocolo_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -516,10 +459,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConUrlConQueryString_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlConQueryString_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -533,10 +474,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConDescripcionConSaltoDeLinea_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcionConSaltoDeLinea_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = "Primera línea\nSegunda línea\r\nTercera línea",
             Precio = 10,
@@ -550,10 +489,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConDescripcionConCaracteresEspeciales_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcionConCaracteresEspeciales_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = "Producto con acentos: áéíóúñÑ y símbolos: @#$%",
             Precio = 10,
@@ -567,10 +504,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConDescripcionEnIngles_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcionEnIngles_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = "This is a product description in English with special chars: ñ, ü, ö",
             Precio = 10,
@@ -584,10 +519,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConSoloErroresDeStock_DeberiaTenerErrorSoloEnStock()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConSoloErroresDeStock_DeberiaTenerErrorSoloEnStock() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = "A valid description",
             Precio = 10,
@@ -607,10 +540,8 @@ public class ProductoRequestValidatorTests
     }
 
     [Test]
-    public void CreateAsync_ConSoloErroresDeCategoria_DeberiaTenerErrorSoloEnCategoria()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConSoloErroresDeCategoria_DeberiaTenerErrorSoloEnCategoria() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = "A valid description",
             Precio = 10,

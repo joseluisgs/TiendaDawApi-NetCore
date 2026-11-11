@@ -8,8 +8,7 @@ namespace TiendaApi.Api.Services.Auth;
 /// <summary>
 /// Contrato del servicio de autenticación.
 /// </summary>
-public interface IAuthService
-{
+public interface IAuthService {
     /// <summary>Registra un nuevo usuario.</summary>
     /// <param name="dto">Datos de registro.</param>
     /// <returns>Resultado con respuesta de autenticación.</returns>

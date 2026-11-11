@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Repositories.Categorias;
 /// <summary>
 /// Contrato del repositorio de categorías.
 /// </summary>
-public interface ICategoriaRepository
-{
+public interface ICategoriaRepository {
     /// <summary>Obtiene todas las categorías ordenadas por nombre.</summary>
     /// <returns>Colección de categorías.</returns>
     Task<IEnumerable<Categoria>> FindAllAsync();

@@ -20,8 +20,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class PedidosRangoIntegrationTests
-{
+public class PedidosRangoIntegrationTests {
     private const string DatabaseName = "it_pedidos_rango";
 
     private string _mongoConnectionString = string.Empty;
@@ -30,13 +29,11 @@ public class PedidosRangoIntegrationTests
     private IMongoCollection<Pedido>? _coleccion;
 
     [OneTimeSetUp]
-    public void OneTimeSetup()
-    {
+    public void OneTimeSetup() {
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "MongoDbSettings:ConnectionString", _mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", DatabaseName }
             }!)
@@ -57,22 +54,19 @@ public class PedidosRangoIntegrationTests
     }
 
     [OneTimeTearDown]
-    public void OneTimeTearDown()
-    {
+    public void OneTimeTearDown() {
         if (_provider is IDisposable desechable) desechable.Dispose();
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
-    public async Task SetUp()
-    {
+    public async Task SetUp() {
         // Cada test parte de una colección limpia para no depender del orden.
         await _coleccion!.DeleteManyAsync(FilterDefinition<Pedido>.Empty);
     }
 
     private static Pedido Pedido(long id, DateTime creado, decimal total = 100m) =>
-        new()
-        {
+        new() {
             Id = MongoDB.Bson.ObjectId.GenerateNewId(),
             UserId = id,
             Total = total,
@@ -83,8 +77,7 @@ public class PedidosRangoIntegrationTests
         };
 
     [Test]
-    public async Task FindByRangoFechas_RetornaSoloLosPedidosDeLaVentana()
-    {
+    public async Task FindByRangoFechas_RetornaSoloLosPedidosDeLaVentana() {
         var dentro1 = Pedido(1, new DateTime(2026, 10, 10, 9, 0, 0, DateTimeKind.Utc));
         var dentro2 = Pedido(2, new DateTime(2026, 10, 20, 9, 0, 0, DateTimeKind.Utc));
         var fueraAntes = Pedido(3, new DateTime(2026, 9, 1, 9, 0, 0, DateTimeKind.Utc));
@@ -100,8 +93,7 @@ public class PedidosRangoIntegrationTests
     }
 
     [Test]
-    public async Task FindByRangoFechas_DevuelveOrdenadoPorFechaAscendente()
-    {
+    public async Task FindByRangoFechas_DevuelveOrdenadoPorFechaAscendente() {
         await _coleccion!.InsertManyAsync(
         [
             Pedido(1, new DateTime(2026, 10, 25, 9, 0, 0, DateTimeKind.Utc)),
@@ -119,8 +111,7 @@ public class PedidosRangoIntegrationTests
     }
 
     [Test]
-    public async Task FindByRangoFechas_LaVentanaEsExclusivaAlFinal()
-    {
+    public async Task FindByRangoFechas_LaVentanaEsExclusivaAlFinal() {
         // El límite superior es exclusivo: un pedido creado exactamente en `hasta`
         // pertenece a la ventana siguiente.
         var enElLimite = Pedido(1, new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc));

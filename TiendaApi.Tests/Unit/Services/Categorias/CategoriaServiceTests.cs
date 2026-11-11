@@ -19,8 +19,7 @@ namespace TiendaApi.Tests.Unit.Services.Categorias;
 /// Suite de tests para CategoriaService
 /// Prueba el enfoque Result Pattern para operaciones de categorías
 /// </summary>
-public class CategoriaServiceTests
-{
+public class CategoriaServiceTests {
     private Mock<ICategoriaRepository> _mockRepository = null!;
     private Mock<ILogger<CategoriaService>> _mockLogger = null!;
     private Mock<IValidator<CategoriaRequestDto>> _mockValidator = null!;
@@ -28,8 +27,7 @@ public class CategoriaServiceTests
     private Mock<IConfiguration> _mockConfiguration = null!;
     private CategoriaService _service = null!;
 
-    private void CreateService()
-    {
+    private void CreateService() {
         _service = new CategoriaService(
             _mockRepository.Object,
             _mockLogger.Object,
@@ -40,8 +38,7 @@ public class CategoriaServiceTests
     }
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _mockRepository = new Mock<ICategoriaRepository>();
         _mockLogger = new Mock<ILogger<CategoriaService>>();
         _mockValidator = new Mock<IValidator<CategoriaRequestDto>>();
@@ -66,11 +63,9 @@ public class CategoriaServiceTests
     #region FindAllAsync Tests
 
     [Test]
-    public async Task FindAllAsync_ConCategorias_RetornaTodasLasCategorias()
-    {
+    public async Task FindAllAsync_ConCategorias_RetornaTodasLasCategorias() {
         // Arrange
-        var categorias = new List<Categoria>
-        {
+        var categorias = new List<Categoria> {
             new() { Id = 1, Nombre = "Electronics" },
             new() { Id = 2, Nombre = "Books" }
         };
@@ -87,8 +82,7 @@ public class CategoriaServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_SinCategorias_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinCategorias_RetornaListaVacia() {
         // Arrange
         _mockRepository.Setup(r => r.FindAllAsync())
             .ReturnsAsync(new List<Categoria>());
@@ -106,8 +100,7 @@ public class CategoriaServiceTests
     #region FindByIdAsync Tests
 
     [Test]
-    public async Task FindByIdAsync_ConCategoriaExistente_RetornaCategoria()
-    {
+    public async Task FindByIdAsync_ConCategoriaExistente_RetornaCategoria() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
         _mockRepository.Setup(r => r.FindByIdAsync(1))
@@ -123,8 +116,7 @@ public class CategoriaServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConCategoriaNoExistente_RetornaNotFound()
-    {
+    public async Task FindByIdAsync_ConCategoriaNoExistente_RetornaNotFound() {
         // Arrange
         _mockRepository.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Categoria?)null);
@@ -142,8 +134,7 @@ public class CategoriaServiceTests
     #region CreateAsync Tests
 
     [Test]
-    public async Task CreateAsync_ConDatosValidos_RetornaCategoriaCreada()
-    {
+    public async Task CreateAsync_ConDatosValidos_RetornaCategoriaCreada() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Electronics" };
         var categoriaGuardada = new Categoria { Id = 1, Nombre = dto.Nombre };
@@ -163,14 +154,12 @@ public class CategoriaServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConNombreVacio_RetornaErrorValidacion()
-    {
+    public async Task CreateAsync_ConNombreVacio_RetornaErrorValidacion() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "" };
 
         _mockValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new[]
-            {
+            .ReturnsAsync(new ValidationResult(new[] {
                 new ValidationFailure("Nombre", "El nombre es obligatorio")
             }));
 
@@ -193,8 +182,7 @@ public class CategoriaServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConNombreDuplicado_RetornaConflicto()
-    {
+    public async Task CreateAsync_ConNombreDuplicado_RetornaConflicto() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Electronics" };
 
@@ -214,8 +202,7 @@ public class CategoriaServiceTests
     #region UpdateAsync Tests
 
     [Test]
-    public async Task UpdateAsync_ConDatosValidos_RetornaCategoriaActualizada()
-    {
+    public async Task UpdateAsync_ConDatosValidos_RetornaCategoriaActualizada() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Updated Category", Descripcion = "Updated Description" };
         var categoriaExistente = new Categoria { Id = 1, Nombre = "Old Category", Descripcion = "Old Description" };
@@ -239,8 +226,7 @@ public class CategoriaServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_ConCategoriaNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateAsync_ConCategoriaNoExistente_RetornaNotFound() {
         // Arrange
         var dto = new CategoriaRequestDto { Nombre = "Updated Category" };
 
@@ -260,8 +246,7 @@ public class CategoriaServiceTests
     #region DeleteAsync Tests
 
     [Test]
-    public async Task DeleteAsync_ConCategoriaExistente_RetornaExito()
-    {
+    public async Task DeleteAsync_ConCategoriaExistente_RetornaExito() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
         _mockRepository.Setup(r => r.FindByIdAsync(1))
@@ -277,8 +262,7 @@ public class CategoriaServiceTests
     }
 
     [Test]
-    public async Task DeleteAsync_ConCategoriaNoExistente_RetornaNotFound()
-    {
+    public async Task DeleteAsync_ConCategoriaNoExistente_RetornaNotFound() {
         // Arrange
         _mockRepository.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Categoria?)null);

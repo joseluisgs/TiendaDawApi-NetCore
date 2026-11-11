@@ -11,14 +11,12 @@ namespace TiendaApi.Api.GraphQL.Types;
 /// Antes este type apuntaba a la entidad Proveedor completa (7 campos) y
 /// quedaba inalcanzable en el esquema: nadie podía consultarlo nunca.
 /// </summary>
-public class ProveedorType : ObjectType<ProveedorResumenDto>
-{
+public class ProveedorType : ObjectType<ProveedorResumenDto> {
     /// <summary>
     /// Configura los campos y descripciones del tipo GraphQL de ProveedorResumenDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
-    protected override void Configure(IObjectTypeDescriptor<ProveedorResumenDto> descriptor)
-    {
+    protected override void Configure(IObjectTypeDescriptor<ProveedorResumenDto> descriptor) {
         descriptor.Name("ProveedorResumenDto");
         descriptor.Description("Resumen de proveedor dentro de un producto (mismo contrato que REST).");
         descriptor.BindFieldsExplicitly();

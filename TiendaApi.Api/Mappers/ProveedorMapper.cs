@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Mappers;
 /// <summary>
 /// Mapper para convertir entre Proveedor y sus DTOs.
 /// </summary>
-public static class ProveedorMapper
-{
+public static class ProveedorMapper {
     /// <summary>Convierte Proveedor a ProveedorDto.</summary>
     public static ProveedorDto ToDto(this Proveedor proveedor) =>
         new(proveedor.Codigo, proveedor.Nombre, proveedor.Descripcion, proveedor.Contacto,
@@ -22,10 +21,8 @@ public static class ProveedorMapper
     /// El código solo se copia si viene en la petición; si queda a null, Entity Framework
     /// genera el identificador con el generador de IDs estilo YouTube al registrar la entidad.
     /// </summary>
-    public static Proveedor ToEntity(this ProveedorRequestDto dto)
-    {
-        var proveedor = new Proveedor
-        {
+    public static Proveedor ToEntity(this ProveedorRequestDto dto) {
+        var proveedor = new Proveedor {
             Nombre = dto.Nombre,
             Descripcion = dto.Descripcion,
             Contacto = dto.Contacto,
@@ -40,8 +37,7 @@ public static class ProveedorMapper
     }
 
     /// <summary>Actualiza los campos editables de un Proveedor desde su DTO.</summary>
-    public static void UpdateEntity(this ProveedorRequestDto dto, Proveedor proveedor)
-    {
+    public static void UpdateEntity(this ProveedorRequestDto dto, Proveedor proveedor) {
         proveedor.Nombre = dto.Nombre;
         proveedor.Descripcion = dto.Descripcion;
         proveedor.Contacto = dto.Contacto;

@@ -7,15 +7,13 @@ namespace TiendaApi.Api.Validators.Pedidos;
 /// Validador FluentValidation para PedidoRequestDto.
 /// Reglas: Items no vacíos, destinatario válido.
 /// </summary>
-public class PedidoRequestValidator : AbstractValidator<PedidoRequestDto>
-{
+public class PedidoRequestValidator : AbstractValidator<PedidoRequestDto> {
     private static readonly DestinatarioValidator DestinatarioValidator = new();
 
     /// <summary>
     /// Define reglas de validación para PedidoRequestDto.
     /// </summary>
-    public PedidoRequestValidator()
-    {
+    public PedidoRequestValidator() {
         RuleFor(p => p.Items)
             .NotEmpty().WithMessage("El pedido debe contener al menos un artículo");
 

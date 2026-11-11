@@ -14,8 +14,7 @@ namespace ClientBlazor.Tests.Infrastructures;
 /// Objetivo: Validar la seguridad transversal y la gestión automática de sesiones.
 /// </summary>
 [TestFixture]
-public class AuthHeaderHandlerTests
-{
+public class AuthHeaderHandlerTests {
     private Mock<IAuthStore> _authStoreMock = null!;
     private Mock<INotificationStore> _notificationStoreMock = null!;
     private Mock<ILocalStorageService> _storageMock = null!;
@@ -25,8 +24,7 @@ public class AuthHeaderHandlerTests
     /// Configura el entorno de aislamiento para probar el handler sin red real.
     /// </summary>
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _authStoreMock = new Mock<IAuthStore>();
         _notificationStoreMock = new Mock<INotificationStore>();
         _storageMock = new Mock<ILocalStorageService>();
@@ -38,8 +36,7 @@ public class AuthHeaderHandlerTests
     /// del Store en la cabecera 'Authorization' de la petición saliente.
     /// </summary>
     [Test]
-    public async Task SendAsync_Should_Add_Authorization_Header_When_Token_Exists()
-    {
+    public async Task SendAsync_Should_Add_Authorization_Header_When_Token_Exists() {
         // Arrange
         _authStoreMock.Setup(s => s.GetState()).Returns(new AuthStore.AuthState { Token = "token123" });
         var innerHandler = new MockHttpMessageHandler(HttpStatusCode.OK);
@@ -58,8 +55,7 @@ public class AuthHeaderHandlerTests
     /// el handler debe limpiar automáticamente el estado local y notificar al usuario.
     /// </summary>
     [Test]
-    public async Task SendAsync_Should_Handle_401_By_Logging_Out()
-    {
+    public async Task SendAsync_Should_Handle_401_By_Logging_Out() {
         // Arrange - El usuario cree estar logueado pero el servidor dice 401
         _authStoreMock.Setup(s => s.GetState()).Returns(new AuthStore.AuthState { Token = "expirado", Role = "USER" });
         var innerHandler = new MockHttpMessageHandler(HttpStatusCode.Unauthorized);
@@ -78,12 +74,10 @@ public class AuthHeaderHandlerTests
     /// <summary>
     /// Handler auxiliar para interceptar y capturar las peticiones en el entorno de test.
     /// </summary>
-    private class MockHttpMessageHandler(HttpStatusCode statusCode) : HttpMessageHandler
-    {
+    private class MockHttpMessageHandler(HttpStatusCode statusCode) : HttpMessageHandler {
         public HttpRequestMessage? LastRequest { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
             LastRequest = request;
             return Task.FromResult(new HttpResponseMessage(statusCode));
         }

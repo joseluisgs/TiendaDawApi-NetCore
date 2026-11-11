@@ -10,8 +10,7 @@ namespace TiendaApi.Api.Controllers;
 public class StorageController(
     IWebHostEnvironment environment,
     ILogger<StorageController> logger
-) : ControllerBase
-{
+) : ControllerBase {
     private readonly IWebHostEnvironment _environment = environment;
     private readonly ILogger<StorageController> _logger = logger;
 
@@ -24,15 +23,12 @@ public class StorageController(
     [ProducesResponseType(typeof(FileStreamResult), 200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
-    public IActionResult GetFile(string path)
-    {
-        if (string.IsNullOrEmpty(path))
-        {
+    public IActionResult GetFile(string path) {
+        if (string.IsNullOrEmpty(path)) {
             return NotFound();
         }
 
-        try
-        {
+        try {
             var basePath = System.IO.Path.Combine(_environment.ContentRootPath, "wwwroot");
 
             // 🎓 Anti path traversal: la ruta del cliente NUNCA manda.
@@ -48,15 +44,13 @@ public class StorageController(
             if (!fullPath.StartsWith(basePathFull + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal))
                 return NotFound();
 
-            if (!System.IO.File.Exists(fullPath))
-            {
+            if (!System.IO.File.Exists(fullPath)) {
                 _logger.LogWarning("Archivo no encontrado: {Path}", fullPath);
                 return NotFound(new { error = "Archivo no encontrado", path });
             }
 
             var fileInfo = new FileInfo(fullPath);
-            if (fileInfo.Length > 10 * 1024 * 1024)
-            {
+            if (fileInfo.Length > 10 * 1024 * 1024) {
                 _logger.LogWarning("Archivo demasiado grande: {Path} ({Size} bytes)", path, fileInfo.Length);
                 return BadRequest(new { error = "Archivo demasiado grande" });
             }
@@ -66,14 +60,10 @@ public class StorageController(
 
             _logger.LogInformation("Sirviendo archivo: {Path}", path);
             return File(fileStream, contentType);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
+        } catch (UnauthorizedAccessException ex) {
             _logger.LogError(ex, "Acceso denegado al archivo: {Path}", path);
             return Forbid();
-        }
-        catch (IOException ex)
-        {
+        } catch (IOException ex) {
             _logger.LogError(ex, "Error leyendo archivo: {Path}", path);
             return StatusCode(500, new { error = "Error leyendo archivo", details = ex.Message });
         }
@@ -84,10 +74,8 @@ public class StorageController(
     /// </summary>
     /// <param name="extension">Extensión del archivo (ej: ".jpg", ".png").</param>
     /// <returns>Tipo MIME correspondiente (ej: "image/jpeg").</returns>
-    private static string GetContentType(string extension)
-    {
-        return extension.ToLowerInvariant() switch
-        {
+    private static string GetContentType(string extension) {
+        return extension.ToLowerInvariant() switch {
             ".jpg" or ".jpeg" => "image/jpeg",
             ".png" => "image/png",
             ".gif" => "image/gif",

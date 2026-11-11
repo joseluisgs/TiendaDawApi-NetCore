@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Mappers;
 /// <summary>
 /// Mapper para convertir entre Producto y sus DTOs.
 /// </summary>
-public static class ProductoMapper
-{
+public static class ProductoMapper {
     /// <summary>Convierte Producto a ProductoDto.</summary>
     public static ProductoDto ToDto(this Producto producto) =>
         new(
@@ -36,8 +35,7 @@ public static class ProductoMapper
         productos.Select(p => p.ToDto());
 
     /// <summary>Convierte ProductoRequestDto a Producto.</summary>
-    public static Producto ToEntity(this ProductoRequestDto dto) => new()
-    {
+    public static Producto ToEntity(this ProductoRequestDto dto) => new() {
         Nombre = dto.Nombre,
         Descripcion = dto.Descripcion,
         Precio = dto.Precio,
@@ -51,8 +49,7 @@ public static class ProductoMapper
     };
 
     /// <summary>Actualiza Producto desde ProductoRequestDto (PUT: reemplaza todos los campos editables).</summary>
-    public static void UpdateEntity(this ProductoRequestDto dto, Producto producto)
-    {
+    public static void UpdateEntity(this ProductoRequestDto dto, Producto producto) {
         producto.Nombre = dto.Nombre;
         producto.Descripcion = dto.Descripcion;
         producto.Precio = dto.Precio;

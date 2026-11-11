@@ -8,8 +8,7 @@ namespace TiendaApi.Api.Models;
 /// La unicidad es (LoginProvider, ProviderKey): un proveedor externo solo puede
 /// estar vinculado a un único usuario local.
 /// </summary>
-public class UserLogin : ITimestamped
-{
+public class UserLogin : ITimestamped {
     /// <summary>ID único del registro (PK en PostgreSQL).</summary>
     public long Id { get; set; }
 

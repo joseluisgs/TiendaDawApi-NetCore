@@ -8,15 +8,13 @@ using TiendaApi.Api.Controllers;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 
-public class StorageControllerTests
-{
+public class StorageControllerTests {
     private readonly Mock<IWebHostEnvironment> _mockEnvironment;
     private readonly Mock<ILogger<StorageController>> _mockLogger;
     private readonly StorageController _controller;
     private readonly string _testDirectory;
 
-    public StorageControllerTests()
-    {
+    public StorageControllerTests() {
         _mockEnvironment = new Mock<IWebHostEnvironment>();
         _mockLogger = new Mock<ILogger<StorageController>>();
         _testDirectory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"TiendaApi_StorageTests_{Guid.NewGuid():N}");
@@ -26,24 +24,18 @@ public class StorageControllerTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
-        try
-        {
-            if (System.IO.Directory.Exists(_testDirectory))
-            {
+    public void TearDown() {
+        try {
+            if (System.IO.Directory.Exists(_testDirectory)) {
                 System.IO.Directory.Delete(_testDirectory, true);
             }
-        }
-        catch
-        {
+        } catch {
             // Ignore cleanup errors
         }
     }
 
     [Test]
-    public void GetFile_ConRutaVacia_Retorna404()
-    {
+    public void GetFile_ConRutaVacia_Retorna404() {
         // Act
         var result = _controller.GetFile("");
 
@@ -52,8 +44,7 @@ public class StorageControllerTests
     }
 
     [Test]
-    public void GetFile_ConArchivoNoExistente_Retorna404()
-    {
+    public void GetFile_ConArchivoNoExistente_Retorna404() {
         // Act
         var result = _controller.GetFile("no_existe.jpg");
 
@@ -62,8 +53,7 @@ public class StorageControllerTests
     }
 
     [Test]
-    public void GetFile_ConArchivoExistente_RetornaFileStream()
-    {
+    public void GetFile_ConArchivoExistente_RetornaFileStream() {
         // Arrange
         var testFilePath = System.IO.Path.Combine(_testDirectory, "wwwroot", "productos", "test.jpg");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(testFilePath)!);
@@ -78,8 +68,7 @@ public class StorageControllerTests
     }
 
     [Test]
-    public void GetFile_ConPNG_RetornaContentTypeImagenPng()
-    {
+    public void GetFile_ConPNG_RetornaContentTypeImagenPng() {
         // Arrange
         var testFilePath = System.IO.Path.Combine(_testDirectory, "wwwroot", "productos", "test.png");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(testFilePath)!);
@@ -94,8 +83,7 @@ public class StorageControllerTests
     }
 
     [Test]
-    public void GetFile_ConGif_RetornaContentTypeImagenGif()
-    {
+    public void GetFile_ConGif_RetornaContentTypeImagenGif() {
         // Arrange
         var testFilePath = System.IO.Path.Combine(_testDirectory, "wwwroot", "productos", "test.gif");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(testFilePath)!);
@@ -110,8 +98,7 @@ public class StorageControllerTests
     }
 
     [Test]
-    public void GetFile_ConSubdirectorio_RetornaArchivo()
-    {
+    public void GetFile_ConSubdirectorio_RetornaArchivo() {
         // Arrange
         var testFilePath = System.IO.Path.Combine(_testDirectory, "wwwroot", "categorias", "electronics", "test.jpg");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(testFilePath)!);

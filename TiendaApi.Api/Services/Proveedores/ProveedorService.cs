@@ -28,21 +28,18 @@ public class ProveedorService(
     ICacheService cacheService,
     IConfiguration configuration,
     IOutputCacheStore outputCacheStore
-) : IProveedorService
-{
+) : IProveedorService {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
         int.Parse(configuration["Cache:ProveedorCacheTTLMinutes"] ?? "10"));
 
     /// <inheritdoc/>
-    public async Task<Result<IEnumerable<ProveedorDto>, DomainError>> FindAllAsync()
-    {
+    public async Task<Result<IEnumerable<ProveedorDto>, DomainError>> FindAllAsync() {
         logger.LogInformation("Buscando todos los proveedores");
 
         const string cacheKey = "proveedores:all";
         var cached = await cacheService.GetAsync<IEnumerable<ProveedorDto>>(cacheKey);
 
-        if (cached is not null)
-        {
+        if (cached is not null) {
             logger.LogInformation("Devolviendo proveedores desde caché");
             return Result.Success<IEnumerable<ProveedorDto>, DomainError>(cached);
         }
@@ -55,15 +52,13 @@ public class ProveedorService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<PagedResult<ProveedorDto>, DomainError>> FindAllPagedAsync(ProveedorFilterDto filter)
-    {
+    public async Task<Result<PagedResult<ProveedorDto>, DomainError>> FindAllPagedAsync(ProveedorFilterDto filter) {
         logger.LogInformation("Obteniendo proveedores paginados - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
 
         var (proveedores, totalCount) = await repository.FindAllPagedAsync(filter);
         var dtos = proveedores.ToDtoList();
 
-        var pagedResult = new PagedResult<ProveedorDto>
-        {
+        var pagedResult = new PagedResult<ProveedorDto> {
             Items = dtos,
             TotalCount = totalCount,
             Page = filter.Page + 1,
@@ -74,8 +69,7 @@ public class ProveedorService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<ProveedorDto, DomainError>> FindByIdAsync(string codigo)
-    {
+    public async Task<Result<ProveedorDto, DomainError>> FindByIdAsync(string codigo) {
         logger.LogInformation("Buscando proveedor: {Codigo}", codigo);
 
         var cacheKey = $"proveedores:{codigo}";
@@ -95,8 +89,7 @@ public class ProveedorService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<ProveedorDto, DomainError>> CreateAsync(ProveedorRequestDto dto)
-    {
+    public async Task<Result<ProveedorDto, DomainError>> CreateAsync(ProveedorRequestDto dto) {
         logger.LogInformation("Creando proveedor: {Nombre}", dto.Nombre);
 
         var validationResult = await ValidateAsync(dto);
@@ -107,17 +100,14 @@ public class ProveedorService(
         if (duplicateCheck.IsFailure)
             return Result.Failure<ProveedorDto, DomainError>(duplicateCheck.Error);
 
-        try
-        {
+        try {
             var saved = await repository.CreateAsync(dto.ToEntity());
             var result = saved.ToDto();
 
             await InvalidarCacheAsync($"proveedores:{result.Codigo}");
 
             return Result.Success<ProveedorDto, DomainError>(result);
-        }
-        catch (DbUpdateException ex)
-        {
+        } catch (DbUpdateException ex) {
             // Colisión del índice único (nombre o código aleatorio ya existente).
             logger.LogWarning(ex, "Conflicto de unicidad al crear proveedor: {Nombre}", dto.Nombre);
             return Result.Failure<ProveedorDto, DomainError>(ProveedorError.CodigoDuplicado(dto.Codigo ?? dto.Nombre));
@@ -125,8 +115,7 @@ public class ProveedorService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<ProveedorDto, DomainError>> UpdateAsync(string codigo, ProveedorRequestDto dto)
-    {
+    public async Task<Result<ProveedorDto, DomainError>> UpdateAsync(string codigo, ProveedorRequestDto dto) {
         logger.LogInformation("Actualizando proveedor: {Codigo}", codigo);
 
         var validationResult = await ValidateAsync(dto);
@@ -151,8 +140,7 @@ public class ProveedorService(
     }
 
     /// <inheritdoc/>
-    public async Task<UnitResult<DomainError>> DeleteAsync(string codigo)
-    {
+    public async Task<UnitResult<DomainError>> DeleteAsync(string codigo) {
         logger.LogInformation("Eliminando proveedor: {Codigo}", codigo);
 
         var proveedor = await repository.FindByIdAsync(codigo);
@@ -171,41 +159,30 @@ public class ProveedorService(
         return UnitResult.Success<DomainError>();
     }
 
-    private void AñadirCache<T>(string key, T value)
-    {
-        _ = Task.Run(async () =>
-        {
-            try { await cacheService.SetAsync(key, value, _cacheTTL); }
-            catch (Exception ex) { logger.LogWarning(ex, "Error adding to cache: Key={Key}", key); }
+    private void AñadirCache<T>(string key, T value) {
+        _ = Task.Run(async () => {
+            try { await cacheService.SetAsync(key, value, _cacheTTL); } catch (Exception ex) { logger.LogWarning(ex, "Error adding to cache: Key={Key}", key); }
         });
     }
 
-    private async Task InvalidarCacheAsync(params string[] keys)
-    {
-        foreach (var key in keys)
-        {
-            try { await cacheService.RemoveAsync(key); }
-            catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
+    private async Task InvalidarCacheAsync(params string[] keys) {
+        foreach (var key in keys) {
+            try { await cacheService.RemoveAsync(key); } catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
         }
 
-        try
-        {
+        try {
             // Los DTO de producto llevan proveedorNombre: invalidar también el tag de productos.
             await outputCacheStore.EvictByTagAsync("proveedores", CancellationToken.None);
             await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.LogWarning(ex, "Output cache invalidation error: Tag=proveedores");
         }
     }
 
-    private async Task<UnitResult<DomainError>> ValidateAsync(ProveedorRequestDto dto)
-    {
+    private async Task<UnitResult<DomainError>> ValidateAsync(ProveedorRequestDto dto) {
         var validationResult = await proveedorValidator.ValidateAsync(dto);
 
-        if (!validationResult.IsValid)
-        {
+        if (!validationResult.IsValid) {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
@@ -216,10 +193,8 @@ public class ProveedorService(
         return UnitResult.Success<DomainError>();
     }
 
-    private async Task<Result<bool, DomainError>> CheckDuplicados(ProveedorRequestDto dto, string? excludeCodigo)
-    {
-        if (!string.IsNullOrWhiteSpace(dto.Codigo) && dto.Codigo != excludeCodigo)
-        {
+    private async Task<Result<bool, DomainError>> CheckDuplicados(ProveedorRequestDto dto, string? excludeCodigo) {
+        if (!string.IsNullOrWhiteSpace(dto.Codigo) && dto.Codigo != excludeCodigo) {
             var codigoExiste = await repository.ExistsByIdAsync(dto.Codigo);
             if (codigoExiste)
                 return Result.Failure<bool, DomainError>(ProveedorError.CodigoDuplicado(dto.Codigo));

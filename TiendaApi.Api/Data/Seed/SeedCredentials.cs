@@ -14,8 +14,7 @@ namespace TiendaApi.Api.Data.Seed;
 /// Requisito de las contraseñas: cumplir la política de Identity
 /// (≥8 caracteres, mayúscula y dígito) para que sean válidas en AMBOS modos.
 /// </summary>
-public static class SeedCredentials
-{
+public static class SeedCredentials {
     /// <summary>Usuario administrador (rol ADMIN).</summary>
     public const string AdminUsername = "admin";
 

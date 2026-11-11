@@ -7,13 +7,11 @@ namespace TiendaApi.Api.Validators.Productos;
 /// Validador FluentValidation para ProductoRequestDto.
 /// Reglas: Nombre(3-200), Descripcion(max 1000), Precio(>0), Stock(>=0), CategoriaId(>0).
 /// </summary>
-public class ProductoRequestValidator : AbstractValidator<ProductoRequestDto>
-{
+public class ProductoRequestValidator : AbstractValidator<ProductoRequestDto> {
     /// <summary>
     /// Define reglas de validación para ProductoRequestDto.
     /// </summary>
-    public ProductoRequestValidator()
-    {
+    public ProductoRequestValidator() {
         RuleFor(p => p.Nombre)
             .NotEmpty().WithMessage("El nombre es obligatorio")
             .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")

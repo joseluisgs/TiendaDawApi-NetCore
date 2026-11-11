@@ -7,8 +7,7 @@ namespace TiendaApi.Api.Dtos.Proveedores;
 /// <remarks>
 /// Uso típico: GET /api/v1/proveedores?nombre=DAW&amp;page=0&amp;size=10&amp;sortBy=nombre&amp;direction=asc
 /// </remarks>
-public record ProveedorFilterDto
-{
+public record ProveedorFilterDto {
     /// <summary>Filtrar por nombre (búsqueda parcial, sensible a mayúsculas/minúsculas).</summary>
     /// <example>Distribuciones</example>
     public string? Nombre { get; init; }

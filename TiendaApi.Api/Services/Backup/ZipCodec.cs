@@ -13,8 +13,7 @@ namespace TiendaApi.Api.Services.Backup;
 ///   DURANTE la lectura (por si el declarado miente),
 /// - solo se devuelven las entradas; el servicio elige las que le interesan.
 /// </summary>
-public static class ZipCodec
-{
+public static class ZipCodec {
     /// <summary>Número máximo de ficheros dentro del ZIP.</summary>
     public const int MaxEntradas = 50;
 
@@ -34,8 +33,7 @@ public static class ZipCodec
     /// Lee todas las entradas de texto del ZIP aplicando los límites de seguridad.
     /// Lanza <see cref="BackupException"/> si el fichero no es admisible.
     /// </summary>
-    public static IReadOnlyList<EntradaZip> Leer(Stream entrada)
-    {
+    public static IReadOnlyList<EntradaZip> Leer(Stream entrada) {
         using var archivo = new ZipArchive(entrada, ZipArchiveMode.Read, leaveOpen: true);
 
         if (archivo.Entries.Count > MaxEntradas)
@@ -51,8 +49,7 @@ public static class ZipCodec
         var resultados = new List<EntradaZip>();
         var totalLeido = 0;
 
-        foreach (var entradaZip in archivo.Entries)
-        {
+        foreach (var entradaZip in archivo.Entries) {
             // Los directorios terminan en barra y no aportan contenido.
             if (entradaZip.FullName.EndsWith('/') || entradaZip.Length == 0)
                 continue;
@@ -63,8 +60,7 @@ public static class ZipCodec
             int leidos;
 
             // 2º límite: lo que se lee de verdad, por si el declarado miente.
-            while ((leidos = flujo.Read(buffer, 0, buffer.Length)) > 0)
-            {
+            while ((leidos = flujo.Read(buffer, 0, buffer.Length)) > 0) {
                 totalLeido += leidos;
                 if (totalLeido > MaxBytesDescomprimidos)
                     throw new BackupException(BackupError.DemasiadoGrande(

@@ -8,21 +8,17 @@ namespace TiendaApi.Tests.Unit.Repositories;
 /// DbContext para tests con InMemory.
 /// Solo incluye entidades de PostgreSQL (sin MongoDB).
 /// </summary>
-public class TiendaDbContextInMemory : DbContext
-{
+public class TiendaDbContextInMemory : DbContext {
     public TiendaDbContextInMemory(DbContextOptions<TiendaDbContextInMemory> options)
-        : base(options)
-    {
+        : base(options) {
     }
 
     public DbSet<Categoria> Categorias { get; set; } = null!;
     public DbSet<Producto> Productos { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Categoria>(entity =>
-        {
+    protected override void OnModelCreating(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<Categoria>(entity => {
             entity.ToTable("categorias");
             entity.HasKey(c => c.Id);
             entity.Property(c => c.Nombre).IsRequired().HasMaxLength(100);
@@ -31,8 +27,7 @@ public class TiendaDbContextInMemory : DbContext
             entity.HasQueryFilter(c => !c.IsDeleted);
         });
 
-        modelBuilder.Entity<Producto>(entity =>
-        {
+        modelBuilder.Entity<Producto>(entity => {
             entity.ToTable("productos");
             entity.HasKey(p => p.Id);
             entity.Property(p => p.Nombre).IsRequired().HasMaxLength(200);
@@ -49,8 +44,7 @@ public class TiendaDbContextInMemory : DbContext
             entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
-        modelBuilder.Entity<User>(entity =>
-        {
+        modelBuilder.Entity<User>(entity => {
             entity.ToTable("users");
             entity.HasKey(u => u.Id);
             entity.Property(u => u.UserName).IsRequired().HasMaxLength(50);

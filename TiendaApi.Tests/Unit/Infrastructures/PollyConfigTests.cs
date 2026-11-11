@@ -14,30 +14,25 @@ namespace TiendaApi.Tests.Unit.Infrastructures;
 /// reintentos al abrir el circuito y agotamiento total de intentos.
 /// Los delays se anulan (delay: TimeSpan.Zero) para que los tests sean instantáneos.
 /// </summary>
-public class PollyConfigTests
-{
+public class PollyConfigTests {
     [Test]
-    public void BuildEmailPipeline_DevuelvePipelineNoNulo()
-    {
+    public void BuildEmailPipeline_DevuelvePipelineNoNulo() {
         var pipeline = PollyConfig.BuildEmailPipeline();
 
         pipeline.Should().NotBeNull();
     }
 
     [Test]
-    public async Task Retry_FallaDosVeces_AlTercerIntento_Envia_YSonTresIntentos()
-    {
+    public async Task Retry_FallaDosVeces_AlTercerIntento_Envia_YSonTresIntentos() {
         var pipeline = new ResiliencePipelineBuilder()
             .AddRetry(PollyConfig.EmailRetryOptions(delay: TimeSpan.Zero))
             .AddTimeout(TimeSpan.FromSeconds(5))
             .Build();
 
         var attempts = 0;
-        await pipeline.ExecuteAsync(_ =>
-        {
+        await pipeline.ExecuteAsync(_ => {
             attempts++;
-            if (attempts < 3)
-            {
+            if (attempts < 3) {
                 throw new IOException("SMTP caído");
             }
 
@@ -48,16 +43,14 @@ public class PollyConfigTests
     }
 
     [Test]
-    public async Task Retry_SiempreFalla_AgotaLos3Reintentos_YPropagaElUltimoError()
-    {
+    public async Task Retry_SiempreFalla_AgotaLos3Reintentos_YPropagaElUltimoError() {
         var pipeline = new ResiliencePipelineBuilder()
             .AddRetry(PollyConfig.EmailRetryOptions(delay: TimeSpan.Zero))
             .AddTimeout(TimeSpan.FromSeconds(5))
             .Build();
 
         var attempts = 0;
-        var act = async () => await pipeline.ExecuteAsync(_ =>
-        {
+        var act = async () => await pipeline.ExecuteAsync(_ => {
             attempts++;
             throw new IOException("SMTP caído");
         }, CancellationToken.None);
@@ -68,21 +61,18 @@ public class PollyConfigTests
     }
 
     [Test]
-    public async Task CircuitBreaker_TresFallosSeguidos_Abre_YLaCuartaLlamadaNoEjecutaElCallback()
-    {
+    public async Task CircuitBreaker_TresFallosSeguidos_Abre_YLaCuartaLlamadaNoEjecutaElCallback() {
         var pipeline = new ResiliencePipelineBuilder()
             .AddCircuitBreaker(PollyConfig.EmailCircuitBreakerOptions())
             .Build();
 
         var attempts = 0;
-        var act = async () => await pipeline.ExecuteAsync(_ =>
-        {
+        var act = async () => await pipeline.ExecuteAsync(_ => {
             attempts++;
             throw new IOException("SMTP caído");
         }, CancellationToken.None);
 
-        for (var i = 0; i < 3; i++)
-        {
+        for (var i = 0; i < 3; i++) {
             await act.Should().ThrowAsync<IOException>();
         }
 
@@ -94,8 +84,7 @@ public class PollyConfigTests
     }
 
     [Test]
-    public async Task PipelineCompleto_CuandoElCircuitoAbre_ElRetryNoInsiste()
-    {
+    public async Task PipelineCompleto_CuandoElCircuitoAbre_ElRetryNoInsiste() {
         // Mismo orden que BuildEmailPipeline: Retry → CircuitBreaker → Timeout.
         var pipeline = new ResiliencePipelineBuilder()
             .AddRetry(PollyConfig.EmailRetryOptions(delay: TimeSpan.Zero))
@@ -104,8 +93,7 @@ public class PollyConfigTests
             .Build();
 
         var attempts = 0;
-        var act = async () => await pipeline.ExecuteAsync(_ =>
-        {
+        var act = async () => await pipeline.ExecuteAsync(_ => {
             attempts++;
             throw new IOException("SMTP caído");
         }, CancellationToken.None);

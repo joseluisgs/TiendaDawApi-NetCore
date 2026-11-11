@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Repositories.Productos;
 /// <summary>
 /// Contrato del repositorio de productos.
 /// </summary>
-public interface IProductoRepository
-{
+public interface IProductoRepository {
     /// <summary>Obtiene todos los productos ordenados por nombre.</summary>
     /// <returns>Colección de productos.</returns>
     Task<IEnumerable<Producto>> FindAllAsync();

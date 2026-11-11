@@ -154,8 +154,7 @@ public record ProductoDto(
 /// - Formularios de administración de inventario
 /// </remarks>
 /// </summary>
-public record ProductoRequestDto
-{
+public record ProductoRequestDto {
     /// <summary>
     /// Nombre del producto.
     /// Identificador público que aparece en catálogos y resultados de búsqueda.
@@ -292,8 +291,7 @@ public record ProductoRequestDto
 /// </code>
 /// Este ejemplo solo actualiza precio y stock, dejando otros campos sin cambios.
 /// </example>
-public record ProductoPatchDto
-{
+public record ProductoPatchDto {
     /// <summary>
     /// Nombre del producto (opcional).
     /// Si se proporciona, actualiza el nombre actual.

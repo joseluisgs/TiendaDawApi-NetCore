@@ -9,19 +9,16 @@ namespace TiendaApi.Tests.Unit.Services.Email;
 /// <summary>
 /// Tests unitarios para EmailBackgroundService.
 /// </summary>
-public class EmailBackgroundServiceTests
-{
+public class EmailBackgroundServiceTests {
     private Channel<EmailMessage> _emailChannel = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _emailChannel = Channel.CreateUnbounded<EmailMessage>();
     }
 
     [Test]
-    public void Constructor_ParametrosValidos_NoLanzaExcepcion()
-    {
+    public void Constructor_ParametrosValidos_NoLanzaExcepcion() {
         var mockServiceProvider = new Mock<IServiceProvider>();
         var mockLogger = new Mock<ILogger<EmailBackgroundService>>();
 

@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.Proveedores;
 /// <summary>
 /// Errores del dominio de proveedores (HTTP 404, 409, 400, 422).
 /// </summary>
-public static class ProveedorError
-{
+public static class ProveedorError {
     /// <summary>Crea error para proveedor no encontrado.</summary>
     /// <param name="codigo">Código de 11 caracteres del proveedor.</param>
     /// <returns>NotFoundError (HTTP 404).</returns>

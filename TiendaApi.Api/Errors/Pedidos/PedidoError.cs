@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.Pedidos;
 /// <summary>
 /// Errores del dominio de pedidos (HTTP 404, 409, 400, 403, 422).
 /// </summary>
-public static class PedidoError
-{
+public static class PedidoError {
     /// <summary>Crea error para pedido no encontrado.</summary>
     /// <param name="id">ID del pedido.</param>
     /// <returns>NotFoundError (HTTP 404).</returns>

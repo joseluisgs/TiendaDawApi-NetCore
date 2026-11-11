@@ -29,8 +29,7 @@ namespace TiendaApi.Api.Controllers;
 public class BackupController(
     IBackupService service,
     ILogger<BackupController> logger
-) : ControllerBase
-{
+) : ControllerBase {
     /// <summary>
     /// Exporta productos, categorías y proveedores en zip, json o csv.
     /// </summary>
@@ -47,8 +46,7 @@ public class BackupController(
     public async Task<IActionResult> Export(
         [FromQuery] string formato = "zip",
         [FromQuery] string entidades = "productos,categorias,proveedores",
-        [FromQuery] bool incluirBorrados = false)
-    {
+        [FromQuery] bool incluirBorrados = false) {
         var lista = ParsearEntidades(entidades);
         logger.LogInformation("Exportando backup ({Formato}: {Entidades})", formato, string.Join(",", lista));
 
@@ -64,12 +62,10 @@ public class BackupController(
         var cuerpo = HttpContext.Features.Get<IHttpBodyControlFeature>();
         if (cuerpo is not null) cuerpo.AllowSynchronousIO = true;
 
-        try
-        {
+        try {
             var resultado = await service.ExportarAsync(Response.Body, formato, lista, incluirBorrados);
 
-            if (resultado.IsFailure)
-            {
+            if (resultado.IsFailure) {
                 // El formato y las entidades se validan antes de escribir: el error
                 // todavia se puede devolver como 400 con el shape de dominio.
                 Response.ContentType = null;
@@ -78,9 +74,7 @@ public class BackupController(
 
             await Response.Body.FlushAsync();
             return new EmptyResult();
-        }
-        finally
-        {
+        } finally {
             if (cuerpo is not null) cuerpo.AllowSynchronousIO = false;
         }
     }
@@ -103,8 +97,7 @@ public class BackupController(
         IFormFile file,
         [FromQuery] string? formato = null,
         [FromQuery] string entidades = "productos,categorias,proveedores",
-        [FromQuery] bool dryRun = false)
-    {
+        [FromQuery] bool dryRun = false) {
         if (file is null || file.Length == 0)
             return BadRequest(new { message = "Debe subir un fichero en el campo 'file'" });
 
@@ -138,8 +131,7 @@ public class BackupController(
     [ProducesResponseType(typeof(CatalogoFormatosDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<CatalogoFormatosDto>> Formatos()
-    {
+    public async Task<ActionResult<CatalogoFormatosDto>> Formatos() {
         var resultado = await service.ObtenerFormatosAsync();
 
         return resultado.Match(
@@ -157,11 +149,9 @@ public class BackupController(
             .ToList();
 
     /// <summary>Deduce el formato de la extensión del fichero subido.</summary>
-    private static string FormatoDesdeNombre(string? nombre)
-    {
+    private static string FormatoDesdeNombre(string? nombre) {
         var extension = System.IO.Path.GetExtension(nombre ?? string.Empty).ToLowerInvariant();
-        return extension switch
-        {
+        return extension switch {
             ".json" => "json",
             ".csv" => "csv",
             _ => "zip",

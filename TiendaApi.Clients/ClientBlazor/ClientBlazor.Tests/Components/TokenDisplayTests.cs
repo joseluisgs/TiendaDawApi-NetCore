@@ -12,8 +12,7 @@ namespace ClientBlazor.Tests.Components;
 /// Objetivo: Validar la reactividad de la UI ante cambios en el token de sesión.
 /// </summary>
 [TestFixture]
-public class TokenDisplayTests
-{
+public class TokenDisplayTests {
     private BunitContext _ctx = null!;
     private IAuthStore _authStore = null!;
 
@@ -21,8 +20,7 @@ public class TokenDisplayTests
     /// Preparación.
     /// </summary>
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _ctx = new BunitContext();
         _authStore = new AuthStore();
         _ctx.Services.AddSingleton<IAuthStore>(_authStore);
@@ -38,8 +36,7 @@ public class TokenDisplayTests
     /// Verifica que el componente muestre el título y el marcador de posición correctamente al iniciar sin token.
     /// </summary>
     [Test]
-    public void Should_Render_Initial_State_Correctly()
-    {
+    public void Should_Render_Initial_State_Correctly() {
         // Act
         var cut = _ctx.Render<TokenDisplay>();
 
@@ -52,15 +49,14 @@ public class TokenDisplayTests
     /// Valida que la UI se actualice automáticamente para mostrar el token cuando este se genera en el Store.
     /// </summary>
     [Test]
-    public async Task Should_Display_Token_When_Set()
-    {
+    public async Task Should_Display_Token_When_Set() {
         // Arrange
         var cut = _ctx.Render<TokenDisplay>();
         var testToken = "abc-123-def";
 
         // Act
         await _ctx.Renderer.Dispatcher.InvokeAsync(() => _authStore.SetToken(testToken));
-        
+
         // Assert
         cut.WaitForAssertion(() => cut.Find("#token").GetAttribute("value").Should().Be(testToken));
     }
@@ -69,8 +65,7 @@ public class TokenDisplayTests
     /// Comprueba que el campo del token se limpie visualmente tras un Logout.
     /// </summary>
     [Test]
-    public async Task Should_Clear_Display_On_Logout()
-    {
+    public async Task Should_Clear_Display_On_Logout() {
         // Arrange
         await _ctx.Renderer.Dispatcher.InvokeAsync(() => _authStore.SetToken("initial-token"));
         var cut = _ctx.Render<TokenDisplay>();

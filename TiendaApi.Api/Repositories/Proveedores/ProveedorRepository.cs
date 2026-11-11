@@ -12,11 +12,9 @@ namespace TiendaApi.Api.Repositories.Proveedores;
 public class ProveedorRepository(
     TiendaDbContext context,
     ILogger<ProveedorRepository> logger
-) : IProveedorRepository
-{
+) : IProveedorRepository {
     /// <inheritdoc/>
-    public async Task<IEnumerable<Proveedor>> FindAllAsync()
-    {
+    public async Task<IEnumerable<Proveedor>> FindAllAsync() {
         logger.LogDebug("Buscando todos los proveedores");
         return await context.Proveedores
             .OrderBy(p => p.Nombre)
@@ -25,8 +23,7 @@ public class ProveedorRepository(
     }
 
     /// <inheritdoc/>
-    public IQueryable<Proveedor> FindAllAsNoTracking()
-    {
+    public IQueryable<Proveedor> FindAllAsNoTracking() {
         logger.LogDebug("Obteniendo proveedores como IQueryable");
         return context.Proveedores
             .OrderBy(p => p.Nombre)
@@ -34,8 +31,7 @@ public class ProveedorRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<(IEnumerable<Proveedor> Items, int TotalCount)> FindAllPagedAsync(ProveedorFilterDto filter)
-    {
+    public async Task<(IEnumerable<Proveedor> Items, int TotalCount)> FindAllPagedAsync(ProveedorFilterDto filter) {
         logger.LogDebug("Buscando proveedores paginados con filtros");
 
         var query = context.Proveedores.AsQueryable();
@@ -43,8 +39,7 @@ public class ProveedorRepository(
         if (!string.IsNullOrWhiteSpace(filter.Nombre))
             query = query.Where(p => p.Nombre.Contains(filter.Nombre));
 
-        if (filter.IsDeleted.HasValue)
-        {
+        if (filter.IsDeleted.HasValue) {
             query = query.IgnoreQueryFilters();
             query = query.Where(p => p.IsDeleted == filter.IsDeleted.Value);
         }
@@ -68,21 +63,18 @@ public class ProveedorRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<Proveedor?> FindByIdAsync(string codigo)
-    {
+    public async Task<Proveedor?> FindByIdAsync(string codigo) {
         logger.LogDebug("Buscando proveedor por código: {Codigo}", codigo);
         return await context.Proveedores.FirstOrDefaultAsync(p => p.Codigo == codigo);
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ExistsByIdAsync(string codigo)
-    {
+    public async Task<bool> ExistsByIdAsync(string codigo) {
         return await context.Proveedores.AnyAsync(p => p.Codigo == codigo);
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ExistsByNombreAsync(string nombre, string? excludeCodigo = null)
-    {
+    public async Task<bool> ExistsByNombreAsync(string nombre, string? excludeCodigo = null) {
         var query = context.Proveedores.Where(p => p.Nombre == nombre);
         if (!string.IsNullOrEmpty(excludeCodigo))
             query = query.Where(p => p.Codigo != excludeCodigo);
@@ -90,15 +82,13 @@ public class ProveedorRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<int> CountProductosAsync(string codigo)
-    {
+    public async Task<int> CountProductosAsync(string codigo) {
         // Los productos tienen filtro global de borrado lógico: solo se cuentan los activos.
         return await context.Productos.CountAsync(p => p.ProveedorId == codigo);
     }
 
     /// <inheritdoc/>
-    public async Task<Proveedor> CreateAsync(Proveedor proveedor)
-    {
+    public async Task<Proveedor> CreateAsync(Proveedor proveedor) {
         logger.LogDebug("Creando proveedor: {Nombre}", proveedor.Nombre);
         context.Proveedores.Add(proveedor);
         await context.SaveChangesAsync();
@@ -106,8 +96,7 @@ public class ProveedorRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<Proveedor> UpdateAsync(Proveedor proveedor)
-    {
+    public async Task<Proveedor> UpdateAsync(Proveedor proveedor) {
         logger.LogDebug("Actualizando proveedor código: {Codigo}", proveedor.Codigo);
         context.Proveedores.Update(proveedor);
         await context.SaveChangesAsync();
@@ -115,8 +104,7 @@ public class ProveedorRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeleteAsync(string codigo)
-    {
+    public async Task<bool> DeleteAsync(string codigo) {
         logger.LogDebug("Eliminando proveedor código: {Codigo}", codigo);
         var proveedor = await FindByIdAsync(codigo);
         if (proveedor == null) return false;
@@ -126,10 +114,8 @@ public class ProveedorRepository(
         return true;
     }
 
-    private static Expression<Func<Proveedor, object>> GetSortExpression(string sortBy)
-    {
-        return sortBy.ToLowerInvariant() switch
-        {
+    private static Expression<Func<Proveedor, object>> GetSortExpression(string sortBy) {
+        return sortBy.ToLowerInvariant() switch {
             "nombre" => p => p.Nombre,
             "createdat" => p => p.CreatedAt,
             _ => p => p.Codigo

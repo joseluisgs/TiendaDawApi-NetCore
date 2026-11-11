@@ -19,8 +19,7 @@ namespace TiendaApi.Api.Services.Productos;
 /// reparto equivalente en el proyecto CQRS son sus notifications + handlers,
 /// donde un único <c>mediator.Publish</c> dispara todos los canales.
 /// </remarks>
-public interface IProductoEffects
-{
+public interface IProductoEffects {
     /// <summary>
     /// Notifica la creación de un producto por WebSocket Y SignalR
     /// (broadcast: catálogo público).

@@ -5,8 +5,7 @@ namespace TiendaApi.Api.Services.Email;
 /// <summary>
 /// Mensaje de correo electrónico.
 /// </summary>
-public class EmailMessage
-{
+public class EmailMessage {
     /// <summary>Destinatario.</summary>
     public string To { get; set; } = string.Empty;
 
@@ -23,8 +22,7 @@ public class EmailMessage
 /// <summary>
 /// Contrato del servicio de email.
 /// </summary>
-public interface IEmailService
-{
+public interface IEmailService {
     /// <summary>Envía un email de forma inmediata.</summary>
     /// <param name="message">Mensaje a enviar.</param>
     Task SendEmailAsync(EmailMessage message);

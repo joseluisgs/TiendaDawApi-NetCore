@@ -11,11 +11,9 @@ namespace TiendaApi.Api.Repositories.Pedidos;
 public class PedidosEfCoreRepository(
     TiendaMongoContext context,
     ILogger<PedidosEfCoreRepository> logger
-) : IPedidosRepository
-{
+) : IPedidosRepository {
     /// <inheritdoc/>
-    public async Task<IEnumerable<Pedido>> FindAllAsync()
-    {
+    public async Task<IEnumerable<Pedido>> FindAllAsync() {
         logger.LogDebug("Buscando todos los pedidos");
         // AsNoTracking: estos listados solo se proyectan a DTO y jamas se
         // persisten; sin el, el change tracker retendria todas las filas del
@@ -27,8 +25,7 @@ public class PedidosEfCoreRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<Pedido>> FindByRangoFechasAsync(DateTime desde, DateTime hasta)
-    {
+    public async Task<IEnumerable<Pedido>> FindByRangoFechasAsync(DateTime desde, DateTime hasta) {
         logger.LogDebug("Buscando pedidos entre {Desde} y {Hasta}", desde, hasta);
         // AsNoTracking: las estadísticas solo agregan, jamás persisten. El rango ya
         // acota el volumen, así que no hace falta proyectar a mano las columnas.
@@ -40,8 +37,7 @@ public class PedidosEfCoreRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size)
-    {
+    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindAllPagedAsync(int page, int size) {
         logger.LogDebug("Buscando pedidos paginados. Página: {Page}, Tamaño: {Size}", page, size);
         // AsNoTracking: listado de solo lectura (ver FindAllAsync).
         var query = context.Pedidos.AsNoTracking().OrderByDescending(p => p.CreatedAt);
@@ -52,8 +48,7 @@ public class PedidosEfCoreRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<Pedido>> FindByUserIdAsync(long userId)
-    {
+    public async Task<IEnumerable<Pedido>> FindByUserIdAsync(long userId) {
         logger.LogDebug("Buscando pedidos para usuario: {UserId}", userId);
         return await context.Pedidos
             .AsNoTracking()
@@ -63,8 +58,7 @@ public class PedidosEfCoreRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindByUserIdPagedAsync(long userId, int page, int size)
-    {
+    public async Task<(IEnumerable<Pedido> Items, int TotalCount)> FindByUserIdPagedAsync(long userId, int page, int size) {
         logger.LogDebug("Buscando pedidos paginados para usuario: {UserId}", userId);
         // AsNoTracking: listado de solo lectura (ver FindAllAsync).
         var query = context.Pedidos
@@ -78,16 +72,14 @@ public class PedidosEfCoreRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<Pedido?> FindByIdAsync(string id)
-    {
+    public async Task<Pedido?> FindByIdAsync(string id) {
         logger.LogDebug("Buscando pedido: {Id}", id);
         return await context.Pedidos
             .FirstOrDefaultAsync(p => p.Id == ObjectId.Parse(id));
     }
 
     /// <inheritdoc/>
-    public async Task<Pedido> SaveAsync(Pedido pedido)
-    {
+    public async Task<Pedido> SaveAsync(Pedido pedido) {
         logger.LogDebug("Guardando nuevo pedido");
         context.Pedidos.Add(pedido);
         await context.SaveChangesAsync();
@@ -96,8 +88,7 @@ public class PedidosEfCoreRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<Pedido> UpdateAsync(Pedido pedido)
-    {
+    public async Task<Pedido> UpdateAsync(Pedido pedido) {
         logger.LogDebug("Actualizando pedido: {Id}", pedido.Id);
         context.Pedidos.Update(pedido);
         await context.SaveChangesAsync();

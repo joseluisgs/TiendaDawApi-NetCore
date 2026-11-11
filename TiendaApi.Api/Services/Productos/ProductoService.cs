@@ -38,8 +38,7 @@ IValidator<ProductoRequestDto> productoValidator,
 IStorageService storageService,
 IOutputCacheStore outputCacheStore,
 IProductoEffects effects
-) : IProductoService
-{
+) : IProductoService {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
         int.Parse(configuration["Cache:ProductoCacheTTLMinutes"] ?? "10"));
 
@@ -56,15 +55,13 @@ IProductoEffects effects
     /// 2. Cachea "productos:all" que NUNCA se invalida (solo TTL).
     /// 3. Si alguien lo llamara, vería datos stale hasta 10 minutos tras cada escritura.
     /// </remarks>
-    public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync()
-    {
+    public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync() {
         logger.LogInformation("Obteniendo todos los productos");
 
         const string cacheKey = "productos:all";
         var cachedProductos = await cacheService.GetAsync<IEnumerable<ProductoDto>>(cacheKey);
 
-        if (cachedProductos is not null)
-        {
+        if (cachedProductos is not null) {
             logger.LogInformation("Devolviendo productos desde caché");
             return Result.Success<IEnumerable<ProductoDto>, DomainError>(cachedProductos);
         }
@@ -90,15 +87,13 @@ IProductoEffects effects
     /// La OutputCache en el controller (tag "productos") sí cachea la respuesta HTTP
     /// con TTL corto (60s) y se invalida por tag al escribir. Es suficiente para este caso.
     /// </remarks>
-    public async Task<Result<PagedResult<ProductoDto>, DomainError>> FindAllPagedAsync(ProductoFilterDto filter)
-    {
+    public async Task<Result<PagedResult<ProductoDto>, DomainError>> FindAllPagedAsync(ProductoFilterDto filter) {
         logger.LogInformation("Obteniendo productos paginados - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
 
         var (productos, totalCount) = await productoRepository.FindAllPagedAsync(filter);
         var dtos = productos.ToDtoList();
 
-        var pagedResult = new PagedResult<ProductoDto>
-        {
+        var pagedResult = new PagedResult<ProductoDto> {
             Items = dtos,
             TotalCount = totalCount,
             Page = filter.Page + 1,
@@ -112,23 +107,20 @@ IProductoEffects effects
     /// Obtener un producto por ID con patrón cache-aside.
     /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound)
     /// </summary>
-    public async Task<Result<ProductoDto, DomainError>> FindByIdAsync(long id)
-    {
+    public async Task<Result<ProductoDto, DomainError>> FindByIdAsync(long id) {
         logger.LogInformation("Obteniendo producto con ID: {Id}", id);
 
         var cacheKey = $"productos:{id}";
         var cachedProducto = await cacheService.GetAsync<ProductoDto>(cacheKey);
 
-        if (cachedProducto is not null)
-        {
+        if (cachedProducto is not null) {
             logger.LogInformation("Devolviendo producto desde caché: {Id}", id);
             return Result.Success<ProductoDto, DomainError>(cachedProducto);
         }
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto is null)
-        {
+        if (producto is null) {
             logger.LogWarning("Producto con ID {Id} no encontrado", id);
             return Result.Failure<ProductoDto, DomainError>(
                 ProductoError.NotFound(id)
@@ -145,13 +137,11 @@ IProductoEffects effects
     /// Obtener productos por categoría.
     /// Devuelve: Result.Success(List) | Result.Failure(NotFound)
     /// </summary>
-    public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindByCategoriaIdAsync(long categoriaId)
-    {
+    public async Task<Result<IEnumerable<ProductoDto>, DomainError>> FindByCategoriaIdAsync(long categoriaId) {
         logger.LogInformation("Obteniendo productos para categoría: {CategoriaId}", categoriaId);
 
         var categoria = await categoriaRepository.FindByIdAsync(categoriaId);
-        if (categoria is null)
-        {
+        if (categoria is null) {
             return Result.Failure<IEnumerable<ProductoDto>, DomainError>(
                 ProductoError.CategoriaNoEncontrada(categoriaId)
             );
@@ -175,13 +165,11 @@ IProductoEffects effects
     /// asumir que el DTO ya fue validado. Se deja aquí con fines didácticos para
     /// mostrar cómo validar manualmente en la capa de servicio cuando se requiera.
     /// </remarks>
-    public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto)
-    {
+    public async Task<Result<ProductoDto, DomainError>> CreateAsync(ProductoRequestDto dto) {
         logger.LogInformation("Creando producto: {Nombre}", dto.Nombre);
 
         var validationResult = await ValidateProductoAsync(dto);
-        if (validationResult.IsFailure)
-        {
+        if (validationResult.IsFailure) {
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
 
@@ -199,10 +187,9 @@ IProductoEffects effects
         await InvalidarCacheProductoAsync();
 
         return Result.Success<ProductoDto, DomainError>(resultDto)
-            .Tap(dto =>
-            {
+            .Tap(dto => {
                 logger.LogInformation("Producto creado con ID: {Id}", dto.Id);
-                
+
                 effects.NotificarProductoCreado(dto);
                 effects.EnviarEmailProductoCreado(saved);
                 effects.EventoSuscripcionProductoCreado(dto);
@@ -217,14 +204,12 @@ IProductoEffects effects
     /// NOTA PARA EL ALUMNO: Esta validación manual es OPTATIVA.
     /// Ver comentario en CreateAsync para más detalles.
     /// </remarks>
-    public async Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto)
-    {
+    public async Task<Result<ProductoDto, DomainError>> UpdateAsync(long id, ProductoRequestDto dto) {
         logger.LogInformation("Actualizando producto con ID: {Id}", id);
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto is null)
-        {
+        if (producto is null) {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar", id);
             return Result.Failure<ProductoDto, DomainError>(
                 ProductoError.NotFound(id)
@@ -232,8 +217,7 @@ IProductoEffects effects
         }
 
         var validationResult = await ValidateProductoAsync(dto);
-        if (validationResult.IsFailure)
-        {
+        if (validationResult.IsFailure) {
             return Result.Failure<ProductoDto, DomainError>(validationResult.Error);
         }
 
@@ -259,8 +243,7 @@ IProductoEffects effects
         await InvalidarCacheProductoAsync($"productos:{id}");
 
         return Result.Success<ProductoDto, DomainError>(resultDto)
-            .Tap(_ =>
-            {
+            .Tap(_ => {
                 logger.LogInformation("Producto actualizado con ID: {Id}", id);
                 effects.NotificarProductoActualizado(resultDto);
                 effects.EventoSuscripcionProductoActualizado(resultDto);
@@ -272,25 +255,21 @@ IProductoEffects effects
     /// Eliminar un producto.
     /// Devuelve: UnitResult.Success | UnitResult.Failure(NotFound)
     /// </summary>
-    public async Task<UnitResult<DomainError>> DeleteAsync(long id)
-    {
+    public async Task<UnitResult<DomainError>> DeleteAsync(long id) {
         logger.LogInformation("Eliminando producto con ID: {Id}", id);
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto is null)
-        {
+        if (producto is null) {
             logger.LogWarning("Producto con ID {Id} no encontrado para eliminar", id);
             return UnitResult.Failure<DomainError>(
                 ProductoError.NotFound(id)
             );
         }
 
-        if (producto.IsLocalImage())
-        {
+        if (producto.IsLocalImage()) {
             var deleteResult = await storageService.DeleteFileAsync(producto.Imagen!);
-            if (deleteResult.IsFailure)
-            {
+            if (deleteResult.IsFailure) {
                 logger.LogWarning("Error eliminando imagen local del producto {Id}: {Error}", id, deleteResult.Error.Message);
             }
         }
@@ -309,14 +288,12 @@ IProductoEffects effects
     /// Actualizar la imagen de un producto.
     /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
-    public async Task<Result<ProductoDto, DomainError>> UpdateImageAsync(long id, IFormFile image)
-    {
+    public async Task<Result<ProductoDto, DomainError>> UpdateImageAsync(long id, IFormFile image) {
         logger.LogInformation("Actualizando imagen de producto con ID: {Id}", id);
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto is null)
-        {
+        if (producto is null) {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar imagen", id);
             return Result.Failure<ProductoDto, DomainError>(
                 ProductoError.NotFound(id)
@@ -324,14 +301,12 @@ IProductoEffects effects
         }
 
         var saveResult = await storageService.SaveFileAsync(image, "productos");
-        if (saveResult.IsFailure)
-        {
+        if (saveResult.IsFailure) {
             logger.LogWarning("Error guardando imagen para producto {Id}: {Error}", id, saveResult.Error.Message);
             return Result.Failure<ProductoDto, DomainError>(saveResult.Error);
         }
 
-        if (producto.IsLocalImage())
-        {
+        if (producto.IsLocalImage()) {
             await storageService.DeleteFileAsync(producto.Imagen!);
         }
 
@@ -343,8 +318,7 @@ IProductoEffects effects
         await InvalidarCacheProductoAsync($"productos:{id}");
 
         return Result.Success<ProductoDto, DomainError>(resultDto)
-            .Tap(_ =>
-            {
+            .Tap(_ => {
                 logger.LogInformation("Imagen actualizada para producto con ID: {Id}", id);
                 effects.NotificarProductoActualizado(resultDto);
                 effects.EventoSuscripcionProductoActualizado(resultDto);
@@ -355,14 +329,12 @@ IProductoEffects effects
     /// Actualizar parcialmente un producto (solo campos proporcionados).
     /// Devuelve: Result.Success(ProductoDto) | Result.Failure(NotFound/Validation)
     /// </summary>
-    public async Task<Result<ProductoDto, DomainError>> UpdatePartialAsync(long id, ProductoPatchDto dto)
-    {
+    public async Task<Result<ProductoDto, DomainError>> UpdatePartialAsync(long id, ProductoPatchDto dto) {
         logger.LogInformation("Actualizando parcialmente producto con ID: {Id}", id);
 
         var producto = await productoRepository.FindByIdAsync(id);
 
-        if (producto is null)
-        {
+        if (producto is null) {
             logger.LogWarning("Producto con ID {Id} no encontrado para actualizar parcialmente", id);
             return Result.Failure<ProductoDto, DomainError>(
                 ProductoError.NotFound(id)
@@ -372,11 +344,9 @@ IProductoEffects effects
         var precioAnterior = producto.Precio;   // capturado ANTES de aplicar el patch
 
         if (!string.IsNullOrWhiteSpace(dto.ProveedorCodigo)
-            && !await proveedorRepository.ExistsByIdAsync(dto.ProveedorCodigo))
-        {
+            && !await proveedorRepository.ExistsByIdAsync(dto.ProveedorCodigo)) {
             return Result.Failure<ProductoDto, DomainError>(
-                ProductoError.ValidacionConCampos(new Dictionary<string, string[]>
-                {
+                ProductoError.ValidacionConCampos(new Dictionary<string, string[]> {
                     { "ProveedorCodigo", new[] { $"El proveedor con código {dto.ProveedorCodigo} no fue encontrado" } }
                 })
             );
@@ -395,8 +365,7 @@ IProductoEffects effects
         await InvalidarCacheProductoAsync($"productos:{id}");
 
         return Result.Success<ProductoDto, DomainError>(resultDto)
-            .Tap(_ =>
-            {
+            .Tap(_ => {
                 logger.LogInformation("Producto actualizado parcialmente con ID: {Id}", id);
                 effects.NotificarProductoActualizado(resultDto);
                 effects.EventoSuscripcionProductoActualizado(resultDto);
@@ -410,8 +379,7 @@ IProductoEffects effects
     /// (la semantica de PATCH). Metodo puro sin estado: extraido de
     /// UpdatePartialAsync para dejar el flujo de ese metodo lineal.
     /// </summary>
-    private static void AplicarPatch(Producto producto, ProductoPatchDto dto)
-    {
+    private static void AplicarPatch(Producto producto, ProductoPatchDto dto) {
         if (!string.IsNullOrWhiteSpace(dto.Nombre))
             producto.Nombre = dto.Nombre;
 
@@ -441,14 +409,10 @@ IProductoEffects effects
     /// si consulta la serie seguido. Equivalente al PrecioHistoricoHandler del
     /// proyecto CQRS: misma escritura, otro cableado.
     /// </summary>
-    private async Task RegistrarPrecioEnCassandra(Producto producto)
-    {
-        try
-        {
+    private async Task RegistrarPrecioEnCassandra(Producto producto) {
+        try {
             await historialRepository.RegistrarPrecioAsync(producto.Id, (double)producto.Precio);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.LogWarning(ex,
                 "Cassandra: no se pudo registrar el precio del producto {Id} (modo degradado)", producto.Id);
         }
@@ -459,16 +423,11 @@ IProductoEffects effects
     /// <summary>
     /// Añade un elemento a la caché de forma asíncrona (fire &amp; forget).
     /// </summary>
-    private void AñadirCacheProducto<T>(string key, T value)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    private void AñadirCacheProducto<T>(string key, T value) {
+        _ = Task.Run(async () => {
+            try {
                 await cacheService.SetAsync(key, value, _cacheTTL);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error adding to cache: Key={Key}", key);
             }
         });
@@ -479,16 +438,12 @@ IProductoEffects effects
     /// También invalida la tag de OutputCache "productos" (en memoria: síncrono,
     /// para que el siguiente GET no sirva datos obsoletos).
     /// </summary>
-    private async Task InvalidarCacheProductoAsync(params string[] keys)
-    {
-        foreach (var key in keys)
-        {
-            try { await cacheService.RemoveAsync(key); }
-            catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
+    private async Task InvalidarCacheProductoAsync(params string[] keys) {
+        foreach (var key in keys) {
+            try { await cacheService.RemoveAsync(key); } catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
         }
 
-        try { await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None); }
-        catch (Exception ex) { logger.LogWarning(ex, "Output cache invalidation error: Tag=productos"); }
+        try { await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None); } catch (Exception ex) { logger.LogWarning(ex, "Output cache invalidation error: Tag=productos"); }
     }
 
     #endregion
@@ -502,12 +457,10 @@ IProductoEffects effects
     /// Valida los datos de un producto usando FluentValidation.
     /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation/NotFound)
     /// </summary>
-    private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto)
-    {
+    private async Task<UnitResult<DomainError>> ValidateProductoAsync(ProductoRequestDto dto) {
         var validationResult = await productoValidator.ValidateAsync(dto);
 
-        if (!validationResult.IsValid)
-        {
+        if (!validationResult.IsValid) {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(
@@ -521,24 +474,19 @@ IProductoEffects effects
         }
 
         var categoriaExists = await categoriaRepository.FindByIdAsync(dto.CategoriaId);
-        if (categoriaExists is null)
-        {
+        if (categoriaExists is null) {
             return UnitResult.Failure<DomainError>(
-                ProductoError.ValidacionConCampos(new Dictionary<string, string[]>
-                {
+                ProductoError.ValidacionConCampos(new Dictionary<string, string[]> {
                     { "CategoriaId", new[] { $"La categoría con ID {dto.CategoriaId} no fue encontrada" } }
                 })
             );
         }
 
-        if (!string.IsNullOrWhiteSpace(dto.ProveedorCodigo))
-        {
+        if (!string.IsNullOrWhiteSpace(dto.ProveedorCodigo)) {
             var proveedorExists = await proveedorRepository.ExistsByIdAsync(dto.ProveedorCodigo);
-            if (!proveedorExists)
-            {
+            if (!proveedorExists) {
                 return UnitResult.Failure<DomainError>(
-                    ProductoError.ValidacionConCampos(new Dictionary<string, string[]>
-                    {
+                    ProductoError.ValidacionConCampos(new Dictionary<string, string[]> {
                         { "ProveedorCodigo", new[] { $"El proveedor con código {dto.ProveedorCodigo} no fue encontrado" } }
                     })
                 );

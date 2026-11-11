@@ -14,8 +14,7 @@ namespace TiendaApi.Api.Services.Historial;
 ///   que se consulta DESPUÉS de validar contra PostgreSQL, y cuya API trabaja
 ///   con listas — sin puntos = lista vacía, una respuesta válida como otra.
 /// </summary>
-public interface IHistorialService
-{
+public interface IHistorialService {
     /// <summary>
     /// Serie histórica de precios de un producto (consulta Q-A).
     /// </summary>

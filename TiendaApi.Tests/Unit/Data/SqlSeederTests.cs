@@ -23,10 +23,8 @@ namespace TiendaApi.Tests.Unit.Data;
 [Category("Unit")]
 [Category("Data")]
 [Category("Auth")]
-public class SqlSeederTests
-{
-    private static IConfiguration BuildConfiguration(string? authMode)
-    {
+public class SqlSeederTests {
+    private static IConfiguration BuildConfiguration(string? authMode) {
         var data = new Dictionary<string, string?>();
         if (authMode is not null)
             data["Auth:Mode"] = authMode;
@@ -36,8 +34,7 @@ public class SqlSeederTests
             .Build();
     }
 
-    private static TiendaDbContext CreateContext(string dbName)
-    {
+    private static TiendaDbContext CreateContext(string dbName) {
         var options = new DbContextOptionsBuilder<TiendaDbContext>()
             .UseInMemoryDatabase(databaseName: dbName)
             .Options;
@@ -48,8 +45,7 @@ public class SqlSeederTests
     #region Modo Custom (default)
 
     [Test]
-    public async Task SeedAsync_ModoCustom_DebeCrearUsuariosConHashBcrypt()
-    {
+    public async Task SeedAsync_ModoCustom_DebeCrearUsuariosConHashBcrypt() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -69,8 +65,7 @@ public class SqlSeederTests
     }
 
     [Test]
-    public async Task SeedAsync_ModoCustom_LasPasswordsDebenSerVerificables()
-    {
+    public async Task SeedAsync_ModoCustom_LasPasswordsDebenSerVerificables() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -94,8 +89,7 @@ public class SqlSeederTests
     }
 
     [Test]
-    public async Task SeedAsync_SinAuthMode_DebeComportarseComoCustom()
-    {
+    public async Task SeedAsync_SinAuthMode_DebeComportarseComoCustom() {
         // Sin "Auth:Mode" en configuración → default "Custom"
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
@@ -120,8 +114,7 @@ public class SqlSeederTests
     #region Modo Identity
 
     [Test]
-    public async Task SeedAsync_ModoIdentity_DebeCrearUsuariosConHashPbkdf2()
-    {
+    public async Task SeedAsync_ModoIdentity_DebeCrearUsuariosConHashPbkdf2() {
         var dbName = Guid.NewGuid().ToString();
         var services = BuildIdentityContainer(dbName, "Identity");
 
@@ -142,8 +135,7 @@ public class SqlSeederTests
     }
 
     [Test]
-    public async Task SeedAsync_ModoIdentity_LasPasswordsDebenSerVerificables()
-    {
+    public async Task SeedAsync_ModoIdentity_LasPasswordsDebenSerVerificables() {
         var dbName = Guid.NewGuid().ToString();
         var services = BuildIdentityContainer(dbName, "Identity");
 
@@ -173,8 +165,7 @@ public class SqlSeederTests
     }
 
     [Test]
-    public async Task SeedAsync_ModoIdentity_DebeCrearRolesAntesDeAsignarlos()
-    {
+    public async Task SeedAsync_ModoIdentity_DebeCrearRolesAntesDeAsignarlos() {
         // AddToRoleAsync lanza excepción si el rol no existe → el seed debe crearlos
         var dbName = Guid.NewGuid().ToString();
         var services = BuildIdentityContainer(dbName, "Identity");
@@ -197,8 +188,7 @@ public class SqlSeederTests
     }
 
     [Test]
-    public async Task SeedAsync_ModoIdentity_NoDebeSembrarUsuariosConHashBcrypt()
-    {
+    public async Task SeedAsync_ModoIdentity_NoDebeSembrarUsuariosConHashBcrypt() {
         // Regresión: si alguien "arreglara" el seed Identity reutilizando los hashes
         // hardcoded de Custom, nadie podría hacer login. Este test lo caza.
         var dbName = Guid.NewGuid().ToString();
@@ -222,17 +212,14 @@ public class SqlSeederTests
     #region Seed común (categorías y productos)
 
     [Test]
-    public async Task SeedAsync_CualquierModo_DebeSembrarCategoriasYProductos()
-    {
+    public async Task SeedAsync_CualquierModo_DebeSembrarCategoriasYProductos() {
         // El catch de SeedAsync traga excepciones: si la rama de usuarios falla
         // (p.ej. roles inexistentes en Identity), categorías y productos NO se
         // sembrarían. Este test detecta esa regresión.
-        foreach (var mode in new[] { "Custom", "Identity" })
-        {
+        foreach (var mode in new[] { "Custom", "Identity" }) {
             var dbName = Guid.NewGuid().ToString();
 
-            if (mode == "Custom")
-            {
+            if (mode == "Custom") {
                 using var context = CreateContext(dbName);
                 var seeder = new SqlSeeder(
                     context,
@@ -244,9 +231,7 @@ public class SqlSeederTests
 
                 context.Categorias.Should().HaveCount(3, $"modo {mode} debe sembrar categorías");
                 context.Productos.Should().HaveCount(3, $"modo {mode} debe sembrar productos");
-            }
-            else
-            {
+            } else {
                 var services = BuildIdentityContainer(dbName, mode);
                 await using var provider = services.BuildServiceProvider();
                 using var scope = provider.CreateScope();
@@ -269,8 +254,7 @@ public class SqlSeederTests
     /// Contenedor DI mínimo con Identity + EF InMemory para ejecutar la rama
     /// Identity del seeder (necesita UserManager y RoleManager reales).
     /// </summary>
-    private static ServiceCollection BuildIdentityContainer(string dbName, string authMode)
-    {
+    private static ServiceCollection BuildIdentityContainer(string dbName, string authMode) {
         var services = new ServiceCollection();
 
         services.AddLogging();

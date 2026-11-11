@@ -1,7 +1,6 @@
 namespace ClientBlazor.Cliente.DTOs.Productos;
 
-public record ProductoDto
-{
+public record ProductoDto {
     public long Id { get; init; }
     public string Nombre { get; init; } = string.Empty;
     public string Descripcion { get; init; } = string.Empty;
@@ -15,8 +14,7 @@ public record ProductoDto
 }
 
 /// <summary>Categoría de un producto, anidada en la respuesta de la API.</summary>
-public record CategoriaResumenDto
-{
+public record CategoriaResumenDto {
     public long Id { get; init; }
     public string Nombre { get; init; } = string.Empty;
 
@@ -25,8 +23,7 @@ public record CategoriaResumenDto
 }
 
 /// <summary>Proveedor de un producto, anidado en la respuesta de la API. Null si no tiene.</summary>
-public record ProveedorResumenDto
-{
+public record ProveedorResumenDto {
     public string Codigo { get; init; } = string.Empty;
     public string Nombre { get; init; } = string.Empty;
 
@@ -34,8 +31,7 @@ public record ProveedorResumenDto
     public string? Descripcion { get; init; }
 }
 
-public record ProductoRequestDto
-{
+public record ProductoRequestDto {
     public string Nombre { get; init; } = string.Empty;
     public string Descripcion { get; init; } = string.Empty;
     public decimal Precio { get; init; }
@@ -44,8 +40,7 @@ public record ProductoRequestDto
     public long CategoriaId { get; init; }
 }
 
-public record ProductoFilterDto
-{
+public record ProductoFilterDto {
     public string? Nombre { get; init; }
     public string? Categoria { get; init; }
     public bool? IsDeleted { get; init; }

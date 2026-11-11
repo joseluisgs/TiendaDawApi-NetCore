@@ -13,19 +13,16 @@ namespace TiendaApi.Tests.Integration.TestContainers.Productos.Validators;
 /// </summary>
 [TestFixture]
 [Category("Integration")]
-public class ProductoValidatorsIntegrationTests
-{
+public class ProductoValidatorsIntegrationTests {
     [Test]
-    public async Task ProductoValidator_ConDtoValido_PasaValidacion()
-    {
+    public async Task ProductoValidator_ConDtoValido_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Laptop",
             Precio = 999.99m,
             Stock = 10,
@@ -40,16 +37,14 @@ public class ProductoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task ProductoValidator_ConPrecioNegativo_FallaValidacion()
-    {
+    public async Task ProductoValidator_ConPrecioNegativo_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Laptop",
             Precio = -100m,
             Stock = 10,
@@ -63,16 +58,14 @@ public class ProductoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task ProductoValidator_ConStockNegativo_FallaValidacion()
-    {
+    public async Task ProductoValidator_ConStockNegativo_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Laptop",
             Precio = 100m,
             Stock = -5,
@@ -86,16 +79,14 @@ public class ProductoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task ProductoValidator_ConCategoriaIdInvalido_FallaValidacion()
-    {
+    public async Task ProductoValidator_ConCategoriaIdInvalido_FallaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Laptop",
             Precio = 100m,
             Stock = 10,
@@ -109,16 +100,14 @@ public class ProductoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task ProductoValidator_ConDescripcionVacia_PasaValidacion()
-    {
+    public async Task ProductoValidator_ConDescripcionVacia_PasaValidacion() {
         var services = new ServiceCollection();
         services.AddScoped<IValidator<ProductoRequestDto>, ProductoRequestValidator>();
 
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IValidator<ProductoRequestDto>>();
 
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Mouse",
             Precio = 29.99m,
             Stock = 50,
@@ -132,8 +121,7 @@ public class ProductoValidatorsIntegrationTests
     }
 
     [Test]
-    public async Task ProductoFilterDto_DefaultValues_AreCorrect()
-    {
+    public async Task ProductoFilterDto_DefaultValues_AreCorrect() {
         var filter = new ProductoFilterDto(null, null, null, null, null);
 
         filter.Page.Should().Be(0);

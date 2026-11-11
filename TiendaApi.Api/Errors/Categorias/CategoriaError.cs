@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.Categorias;
 /// <summary>
 /// Errores del dominio de categorías (HTTP 404, 409, 400, 422).
 /// </summary>
-public static class CategoriaError
-{
+public static class CategoriaError {
     /// <summary>Crea error para categoría no encontrada.</summary>
     /// <param name="id">ID de la categoría.</param>
     /// <returns>NotFoundError (HTTP 404).</returns>

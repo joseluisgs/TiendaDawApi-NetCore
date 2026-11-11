@@ -8,15 +8,13 @@ namespace TiendaApi.Api.Infrastructures;
 /// Extensiones de configuración para Serilog.
 /// Configura el logger con salida a consola y filtros de nivel.
 /// </summary>
-public static class SerilogConfig
-{
+public static class SerilogConfig {
     /// <summary>
     /// Configura Serilog con salida a consola y filtros de nivel.
     /// Filtra los logs verbose de base de datos para mayor claridad.
     /// </summary>
     /// <returns>Configuración de logger lista para usar.</returns>
-    public static LoggerConfiguration Configure()
-    {
+    public static LoggerConfiguration Configure() {
         return new LoggerConfiguration()
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)

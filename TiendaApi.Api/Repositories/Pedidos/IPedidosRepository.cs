@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Repositories.Pedidos;
 /// <summary>
 /// Contrato del repositorio de pedidos.
 /// </summary>
-public interface IPedidosRepository
-{
+public interface IPedidosRepository {
     /// <summary>Obtiene todos los pedidos ordenados por fecha.</summary>
     /// <returns>Colección de pedidos.</returns>
     Task<IEnumerable<Pedido>> FindAllAsync();

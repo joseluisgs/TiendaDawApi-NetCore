@@ -23,21 +23,18 @@ public class CategoriaService(
     ICacheService cacheService,
     IConfiguration configuration,
     IOutputCacheStore outputCacheStore
-) : ICategoriaService
-{
+) : ICategoriaService {
     private readonly TimeSpan _cacheTTL = TimeSpan.FromMinutes(
         int.Parse(configuration["Cache:CategoriaCacheTTLMinutes"] ?? "10"));
 
     /// <inheritdoc/>
-    public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync()
-    {
+    public async Task<Result<IEnumerable<CategoriaDto>, DomainError>> FindAllAsync() {
         logger.LogInformation("Buscando todas las categorías");
 
         const string cacheKey = "categorias:all";
         var cachedCategorias = await cacheService.GetAsync<IEnumerable<CategoriaDto>>(cacheKey);
 
-        if (cachedCategorias is not null)
-        {
+        if (cachedCategorias is not null) {
             logger.LogInformation("Devolviendo categorías desde caché");
             return Result.Success<IEnumerable<CategoriaDto>, DomainError>(cachedCategorias);
         }
@@ -50,15 +47,13 @@ public class CategoriaService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<PagedResult<CategoriaDto>, DomainError>> FindAllPagedAsync(CategoriaFilterDto filter)
-    {
+    public async Task<Result<PagedResult<CategoriaDto>, DomainError>> FindAllPagedAsync(CategoriaFilterDto filter) {
         logger.LogInformation("Obteniendo categorías paginadas - Página: {Page}, Tamaño: {Size}", filter.Page, filter.Size);
 
         var (categorias, totalCount) = await repository.FindAllPagedAsync(filter);
         var dtos = categorias.ToDtoList();
 
-        var pagedResult = new PagedResult<CategoriaDto>
-        {
+        var pagedResult = new PagedResult<CategoriaDto> {
             Items = dtos,
             TotalCount = totalCount,
             Page = filter.Page + 1,
@@ -69,8 +64,7 @@ public class CategoriaService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<CategoriaDto, DomainError>> FindByIdAsync(long id)
-    {
+    public async Task<Result<CategoriaDto, DomainError>> FindByIdAsync(long id) {
         logger.LogInformation("Buscando categoría: {Id}", id);
 
         var cacheKey = $"categorias:{id}";
@@ -90,8 +84,7 @@ public class CategoriaService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto)
-    {
+    public async Task<Result<CategoriaDto, DomainError>> CreateAsync(CategoriaRequestDto dto) {
         logger.LogInformation("Creando categoría: {Nombre}", dto.Nombre);
 
         var validationResult = await ValidateCategoriaAsync(dto);
@@ -111,8 +104,7 @@ public class CategoriaService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto)
-    {
+    public async Task<Result<CategoriaDto, DomainError>> UpdateAsync(long id, CategoriaRequestDto dto) {
         logger.LogInformation("Actualizando categoría: {Id}", id);
 
         var validationResult = await ValidateCategoriaAsync(dto);
@@ -138,8 +130,7 @@ public class CategoriaService(
     }
 
     /// <inheritdoc/>
-    public async Task<UnitResult<DomainError>> DeleteAsync(long id)
-    {
+    public async Task<UnitResult<DomainError>> DeleteAsync(long id) {
         logger.LogInformation("Eliminando categoría: {Id}", id);
 
         var categoria = await repository.FindByIdAsync(id);
@@ -154,41 +145,30 @@ public class CategoriaService(
         return UnitResult.Success<DomainError>();
     }
 
-    private void AñadirCacheCategoria<T>(string key, T value)
-    {
-        _ = Task.Run(async () =>
-        {
-            try { await cacheService.SetAsync(key, value, _cacheTTL); }
-            catch (Exception ex) { logger.LogWarning(ex, "Error adding to cache: Key={Key}", key); }
+    private void AñadirCacheCategoria<T>(string key, T value) {
+        _ = Task.Run(async () => {
+            try { await cacheService.SetAsync(key, value, _cacheTTL); } catch (Exception ex) { logger.LogWarning(ex, "Error adding to cache: Key={Key}", key); }
         });
     }
 
-    private async Task InvalidarCacheCategoriaAsync(params string[] keys)
-    {
-        foreach (var key in keys)
-        {
-            try { await cacheService.RemoveAsync(key); }
-            catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
+    private async Task InvalidarCacheCategoriaAsync(params string[] keys) {
+        foreach (var key in keys) {
+            try { await cacheService.RemoveAsync(key); } catch (Exception ex) { logger.LogWarning(ex, "Cache invalidation error: Key={Key}", key); }
         }
 
-        try
-        {
+        try {
             // Invalidar caché de categorías Y productos (los DTO de producto llevan categoriaNombre)
-        await outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
-        await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
+            await outputCacheStore.EvictByTagAsync("categorias", CancellationToken.None);
+            await outputCacheStore.EvictByTagAsync("productos", CancellationToken.None);
+        } catch (Exception ex) {
             logger.LogWarning(ex, "Output cache invalidation error: Tag=categorias");
         }
     }
 
-    private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto)
-    {
+    private async Task<UnitResult<DomainError>> ValidateCategoriaAsync(CategoriaRequestDto dto) {
         var validationResult = await categoriaValidator.ValidateAsync(dto);
 
-        if (!validationResult.IsValid)
-        {
+        if (!validationResult.IsValid) {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
@@ -199,8 +179,7 @@ public class CategoriaService(
         return UnitResult.Success<DomainError>();
     }
 
-    private async Task<Result<bool, DomainError>> CheckNombreDuplicado(string nombre, long? excludeId = null)
-    {
+    private async Task<Result<bool, DomainError>> CheckNombreDuplicado(string nombre, long? excludeId = null) {
         var exists = await repository.ExistsByNombreAsync(nombre, excludeId);
 
         if (exists)

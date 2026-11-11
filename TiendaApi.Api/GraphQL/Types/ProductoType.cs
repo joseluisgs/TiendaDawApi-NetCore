@@ -14,14 +14,12 @@ namespace TiendaApi.Api.GraphQL.Types;
 /// dominio como isLocalImage) NO se exponen: si algún día hacen falta, se
 /// añaden al DTO (aditivo, REST no se rompe) y los ganan los dos canales.
 /// </summary>
-public class ProductoType : ObjectType<ProductoDto>
-{
+public class ProductoType : ObjectType<ProductoDto> {
     /// <summary>
     /// Configura los campos y descripciones del tipo GraphQL de ProductoDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
-    protected override void Configure(IObjectTypeDescriptor<ProductoDto> descriptor)
-    {
+    protected override void Configure(IObjectTypeDescriptor<ProductoDto> descriptor) {
         descriptor.Name("ProductoDto");
         descriptor.Description("Producto tal como lo sirve la API (mismo contrato que REST).");
         descriptor.BindFieldsExplicitly();

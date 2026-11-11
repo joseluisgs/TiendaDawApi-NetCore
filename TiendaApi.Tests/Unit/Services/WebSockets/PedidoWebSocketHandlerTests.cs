@@ -15,16 +15,14 @@ namespace TiendaApi.Tests.Unit.Services.WebSockets;
 /// Tests unitarios para PedidosWebSocketHandler.
 /// Verifica el comportamiento de las notificaciones selectivas por usuario y el sistema de caché.
 /// </summary>
-public class PedidosWebSocketHandlerTests
-{
+public class PedidosWebSocketHandlerTests {
     private readonly Mock<ILogger<PedidosWebSocketHandler>> _mockLogger;
     private readonly Mock<IJwtTokenExtractor> _mockTokenExtractor;
     private readonly Mock<ICacheService> _mockCacheService;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly PedidosWebSocketHandler _handler;
 
-    public PedidosWebSocketHandlerTests()
-    {
+    public PedidosWebSocketHandlerTests() {
         _mockLogger = new Mock<ILogger<PedidosWebSocketHandler>>();
         _mockTokenExtractor = new Mock<IJwtTokenExtractor>();
         _mockCacheService = new Mock<ICacheService>();
@@ -47,8 +45,7 @@ public class PedidosWebSocketHandlerTests
     #region Constructor Tests
 
     [Test]
-    public void Constructor_InitializesCorrectly()
-    {
+    public void Constructor_InitializesCorrectly() {
         // Arrange & Act
         var handler = CreateHandler();
 
@@ -57,8 +54,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void Constructor_SetsUpDependenciesCorrectly()
-    {
+    public void Constructor_SetsUpDependenciesCorrectly() {
         // Arrange & Act
         var logger = new Mock<ILogger<PedidosWebSocketHandler>>();
         var tokenExtractor = new Mock<IJwtTokenExtractor>();
@@ -87,8 +83,7 @@ public class PedidosWebSocketHandlerTests
     #region JwtTokenExtractor Integration Tests
 
     [Test]
-    public void JwtTokenExtractor_ExtractUserInfo_WithValidToken_ReturnsUserIdAndRole()
-    {
+    public void JwtTokenExtractor_ExtractUserInfo_WithValidToken_ReturnsUserIdAndRole() {
         // Arrange - Create real JWT token
         var token = CreateValidJwtToken(123L, "cliente");
 
@@ -102,8 +97,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractUserInfo_WithAdminRole_ReturnsIsAdminTrue()
-    {
+    public void JwtTokenExtractor_ExtractUserInfo_WithAdminRole_ReturnsIsAdminTrue() {
         // Arrange
         var token = CreateValidJwtToken(1L, "admin");
 
@@ -117,8 +111,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractUserInfo_WithAdminRoleUppercase_ReturnsIsAdminTrue()
-    {
+    public void JwtTokenExtractor_ExtractUserInfo_WithAdminRoleUppercase_ReturnsIsAdminTrue() {
         // Arrange
         var token = CreateValidJwtToken(1L, "ADMIN");
 
@@ -132,8 +125,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractUserInfo_WithInvalidToken_ReturnsNullUserId()
-    {
+    public void JwtTokenExtractor_ExtractUserInfo_WithInvalidToken_ReturnsNullUserId() {
         // Arrange
         var token = "invalid.token.here";
 
@@ -147,8 +139,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractUserInfo_WithEmptyToken_ReturnsNull()
-    {
+    public void JwtTokenExtractor_ExtractUserInfo_WithEmptyToken_ReturnsNull() {
         // Arrange
         var token = "";
 
@@ -162,8 +153,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractUserInfo_WithMalformedToken_ReturnsNull()
-    {
+    public void JwtTokenExtractor_ExtractUserInfo_WithMalformedToken_ReturnsNull() {
         // Arrange
         var token = "not-a-jwt";
 
@@ -177,8 +167,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractUserInfo_WithMissingRoleClaim_ReturnsIsAdminFalse()
-    {
+    public void JwtTokenExtractor_ExtractUserInfo_WithMissingRoleClaim_ReturnsIsAdminFalse() {
         // Arrange - Token sin rol
         var token = CreateTokenWithoutRole(123L);
 
@@ -192,8 +181,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractEmail_WithValidToken_ReturnsEmail()
-    {
+    public void JwtTokenExtractor_ExtractEmail_WithValidToken_ReturnsEmail() {
         // Arrange
         var token = CreateTokenWithEmail(123L, "test@example.com");
 
@@ -205,8 +193,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_IsValidTokenFormat_WithValidToken_ReturnsTrue()
-    {
+    public void JwtTokenExtractor_IsValidTokenFormat_WithValidToken_ReturnsTrue() {
         // Arrange
         var token = CreateValidJwtToken(123L, "cliente");
 
@@ -218,8 +205,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_IsValidTokenFormat_WithInvalidToken_ReturnsFalse()
-    {
+    public void JwtTokenExtractor_IsValidTokenFormat_WithInvalidToken_ReturnsFalse() {
         // Arrange
         var token = "invalid.token";
 
@@ -231,8 +217,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_IsValidTokenFormat_WithEmptyToken_ReturnsFalse()
-    {
+    public void JwtTokenExtractor_IsValidTokenFormat_WithEmptyToken_ReturnsFalse() {
         // Arrange
         var token = "";
 
@@ -244,8 +229,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractUserId_WithValidToken_ReturnsUserId()
-    {
+    public void JwtTokenExtractor_ExtractUserId_WithValidToken_ReturnsUserId() {
         // Arrange
         var token = CreateValidJwtToken(456L, "cliente");
 
@@ -257,8 +241,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void JwtTokenExtractor_ExtractRole_WithValidToken_ReturnsRole()
-    {
+    public void JwtTokenExtractor_ExtractRole_WithValidToken_ReturnsRole() {
         // Arrange
         var token = CreateValidJwtToken(123L, "admin");
 
@@ -277,8 +260,7 @@ public class PedidosWebSocketHandlerTests
     private const string NotificationTypeEstadoUpdated = "PEDIDO_ESTADO_UPDATED";
 
     [Test]
-    public void PedidoNotificacion_CanBeCreatedWithAllFields()
-    {
+    public void PedidoNotificacion_CanBeCreatedWithAllFields() {
         // Arrange & Act
         var notificacion = new PedidoNotificacion(
             NotificationTypeCreated,
@@ -297,8 +279,7 @@ public class PedidosWebSocketHandlerTests
     }
 
     [Test]
-    public void PedidoNotificacion_CanBeCreatedWithNullData()
-    {
+    public void PedidoNotificacion_CanBeCreatedWithNullData() {
         // Arrange & Act
         var notificacion = new PedidoNotificacion(
             NotificationTypeCreated,
@@ -316,8 +297,7 @@ public class PedidosWebSocketHandlerTests
 
     #region Helpers
 
-    private PedidosWebSocketHandler CreateHandler()
-    {
+    private PedidosWebSocketHandler CreateHandler() {
         return new PedidosWebSocketHandler(
             _mockLogger.Object,
             _mockTokenExtractor.Object,
@@ -326,13 +306,10 @@ public class PedidosWebSocketHandlerTests
             _mockConfiguration.Object);
     }
 
-    private static string CreateValidJwtToken(long userId, string role)
-    {
+    private static string CreateValidJwtToken(long userId, string role) {
         var handler = new JwtSecurityTokenHandler();
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
+        var tokenDescriptor = new SecurityTokenDescriptor {
+            Subject = new ClaimsIdentity(new[] {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Role, role)
             }),
@@ -343,13 +320,10 @@ public class PedidosWebSocketHandlerTests
         return handler.WriteToken(token);
     }
 
-    private static string CreateTokenWithoutRole(long userId)
-    {
+    private static string CreateTokenWithoutRole(long userId) {
         var handler = new JwtSecurityTokenHandler();
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
+        var tokenDescriptor = new SecurityTokenDescriptor {
+            Subject = new ClaimsIdentity(new[] {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString())
             }),
             Expires = DateTime.UtcNow.AddHours(1)
@@ -359,13 +333,10 @@ public class PedidosWebSocketHandlerTests
         return handler.WriteToken(token);
     }
 
-    private static string CreateTokenWithEmail(long userId, string email)
-    {
+    private static string CreateTokenWithEmail(long userId, string email) {
         var handler = new JwtSecurityTokenHandler();
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
+        var tokenDescriptor = new SecurityTokenDescriptor {
+            Subject = new ClaimsIdentity(new[] {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Email, email)
             }),
@@ -376,38 +347,32 @@ public class PedidosWebSocketHandlerTests
         return handler.WriteToken(token);
     }
 
-    private static (long? UserId, bool IsAdmin, string? Role) ExtractUserInfoFromToken(string token)
-    {
+    private static (long? UserId, bool IsAdmin, string? Role) ExtractUserInfoFromToken(string token) {
         var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
         return extractor.ExtractUserInfo(token);
     }
 
-    private static string? ExtractEmailFromToken(string token)
-    {
+    private static string? ExtractEmailFromToken(string token) {
         var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
         return extractor.ExtractEmail(token);
     }
 
-    private static bool IsValidTokenFormat(string token)
-    {
+    private static bool IsValidTokenFormat(string token) {
         var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
         return extractor.IsValidTokenFormat(token);
     }
 
-    private static long? ExtractUserIdFromToken(string token)
-    {
+    private static long? ExtractUserIdFromToken(string token) {
         var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
         return extractor.ExtractUserId(token);
     }
 
-    private static string? ExtractRoleFromToken(string token)
-    {
+    private static string? ExtractRoleFromToken(string token) {
         var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
         return extractor.ExtractRole(token);
     }
 
-    private static bool IsAdminFromToken(string token)
-    {
+    private static bool IsAdminFromToken(string token) {
         var extractor = new JwtTokenExtractor(Mock.Of<ILogger<JwtTokenExtractor>>());
         return extractor.IsAdmin(token);
     }

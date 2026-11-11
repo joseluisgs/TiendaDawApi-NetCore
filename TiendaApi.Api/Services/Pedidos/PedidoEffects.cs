@@ -27,8 +27,7 @@ public class PedidoEffects(
     IEmailService emailService,
     IConfiguration configuration,
     ILogger<PedidoEffects> logger
-) : IPedidoEffects
-{
+) : IPedidoEffects {
     #region ========== MÉTODOS PÚBLICOS - TIEMPO REAL (WS + SIGNALR) ==========
 
     /// <summary>
@@ -39,8 +38,7 @@ public class PedidoEffects(
     /// <param name="userId">ID del usuario que creó el pedido.</param>
     /// <param name="estado">Estado inicial del pedido.</param>
     /// <param name="pedido">Datos del pedido creado.</param>
-    public void NotificarPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
+    public void NotificarPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido) {
         NotificarWebSocketPedidoCreado(pedidoId, userId, estado, pedido);
         NotificarSignalRPedidoCreado(pedidoId, userId, estado, pedido);
     }
@@ -53,8 +51,7 @@ public class PedidoEffects(
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
     /// <param name="estado">Nuevo estado del pedido.</param>
     /// <param name="pedido">Datos actualizados del pedido.</param>
-    public void NotificarPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
+    public void NotificarPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido) {
         NotificarWebSocketPedidoActualizado(pedidoId, userId, estado, pedido);
         NotificarSignalRPedidoActualizado(pedidoId, userId, estado, pedido);
     }
@@ -67,8 +64,7 @@ public class PedidoEffects(
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
     /// <param name="estado">Estado del pedido al eliminarse.</param>
     /// <param name="total">Total del pedido eliminado.</param>
-    public void NotificarPedidoEliminado(string pedidoId, long userId, string estado, decimal total)
-    {
+    public void NotificarPedidoEliminado(string pedidoId, long userId, string estado, decimal total) {
         NotificarWebSocketPedidoEliminado(pedidoId, userId, estado);
         NotificarSignalRPedidoEliminado(pedidoId, userId, estado, total);
     }
@@ -85,12 +81,9 @@ public class PedidoEffects(
     /// <param name="userId">ID del usuario que creó el pedido.</param>
     /// <param name="estado">Estado inicial del pedido.</param>
     /// <param name="pedido">Datos del pedido creado.</param>
-    private void NotificarWebSocketPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    private void NotificarWebSocketPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido) {
+        _ = Task.Run(async () => {
+            try {
                 await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
                     PedidoNotificationType.CREADO,
                     pedidoId,
@@ -99,9 +92,7 @@ public class PedidoEffects(
                     pedido
                 ));
                 logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", pedidoId);
             }
         });
@@ -115,12 +106,9 @@ public class PedidoEffects(
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
     /// <param name="estado">Nuevo estado del pedido.</param>
     /// <param name="pedido">Datos actualizados del pedido.</param>
-    private void NotificarWebSocketPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    private void NotificarWebSocketPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido) {
+        _ = Task.Run(async () => {
+            try {
                 await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
                     PedidoNotificationType.ESTADO_ACTUALIZADO,
                     pedidoId,
@@ -129,9 +117,7 @@ public class PedidoEffects(
                     pedido
                 ));
                 logger.LogDebug("Notificación WebSocket enviada para pedido: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error en notificación WebSocket para pedido: {PedidoId}", pedidoId);
             }
         });
@@ -144,12 +130,9 @@ public class PedidoEffects(
     /// <param name="pedidoId">Identificador del pedido.</param>
     /// <param name="userId">ID del usuario que realizó el pedido.</param>
     /// <param name="estado">Estado del pedido al eliminarse.</param>
-    private void NotificarWebSocketPedidoEliminado(string pedidoId, long userId, string estado)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    private void NotificarWebSocketPedidoEliminado(string pedidoId, long userId, string estado) {
+        _ = Task.Run(async () => {
+            try {
                 await webSocketHandler.NotifyUserAndAdminsAsync(userId, new PedidoNotificacion(
                     PedidoNotificationType.ELIMINADO,
                     pedidoId,
@@ -158,9 +141,7 @@ public class PedidoEffects(
                     null
                 ));
                 logger.LogDebug("Notificación WebSocket enviada para pedido eliminado: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error en notificación WebSocket para pedido eliminado: {PedidoId}", pedidoId);
             }
         });
@@ -174,14 +155,10 @@ public class PedidoEffects(
     /// Notifica via SignalR la creacion de un pedido.
     /// Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
-    private void NotificarSignalRPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
+    private void NotificarSignalRPedidoCreado(string pedidoId, long userId, string estado, PedidoDto pedido) {
+        _ = Task.Run(async () => {
+            try {
+                var payload = new {
                     pedidoId,
                     userId,
                     estado,
@@ -192,9 +169,7 @@ public class PedidoEffects(
                 };
                 await pedidosHubContext.SendPedidoToUserAndAdminsAsync(userId, "PedidoCreado", payload);
                 logger.LogDebug("Notificación SignalR enviada para pedido creado: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
             }
         });
@@ -204,14 +179,10 @@ public class PedidoEffects(
     /// Notifica via SignalR la actualizacion de un pedido.
     /// Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
-    private void NotificarSignalRPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
+    private void NotificarSignalRPedidoActualizado(string pedidoId, long userId, string estado, PedidoDto pedido) {
+        _ = Task.Run(async () => {
+            try {
+                var payload = new {
                     pedidoId,
                     userId,
                     estado,
@@ -221,9 +192,7 @@ public class PedidoEffects(
                 };
                 await pedidosHubContext.SendPedidoToUserAndAdminsAsync(userId, "PedidoActualizado", payload);
                 logger.LogDebug("Notificación SignalR enviada para pedido actualizado: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error en notificación SignalR para pedido: {PedidoId}", pedidoId);
             }
         });
@@ -233,14 +202,10 @@ public class PedidoEffects(
     /// Notifica via SignalR la eliminacion de un pedido.
     /// Envía al grupo del usuario dueño y al grupo de administradores.
     /// </summary>
-    private void NotificarSignalRPedidoEliminado(string pedidoId, long userId, string estado, decimal total)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var payload = new
-                {
+    private void NotificarSignalRPedidoEliminado(string pedidoId, long userId, string estado, decimal total) {
+        _ = Task.Run(async () => {
+            try {
+                var payload = new {
                     pedidoId,
                     userId,
                     estado,
@@ -250,9 +215,7 @@ public class PedidoEffects(
                 };
                 await pedidosHubContext.SendPedidoToUserAndAdminsAsync(userId, "PedidoEliminado", payload);
                 logger.LogDebug("Notificación SignalR enviada para pedido eliminado: {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error en notificación SignalR para pedido eliminado: {PedidoId}", pedidoId);
             }
         });
@@ -272,21 +235,16 @@ public class PedidoEffects(
     /// salen DOS emails: confirmación al destinatario del pedido y aviso al
     /// admin. El email al cliente no depende de la config del admin.
     /// </remarks>
-    public void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId, DestinatarioDto? destinatario)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    public void EnviarEmailPedidoCreado(string pedidoId, decimal total, int itemCount, long userId, DestinatarioDto? destinatario) {
+        _ = Task.Run(async () => {
+            try {
                 // 1) Confirmación AL CLIENTE (dirección del pedido)
-                if (!string.IsNullOrWhiteSpace(destinatario?.Email))
-                {
+                if (!string.IsNullOrWhiteSpace(destinatario?.Email)) {
                     var contentCliente = EmailTemplates.PedidoConfirmacionCliente(
                         pedidoId, total, itemCount, destinatario.NombreCompleto);
                     var bodyCliente = EmailTemplates.CreateBase($"Pedido #{pedidoId} confirmado", contentCliente);
 
-                    await emailService.EnqueueEmailAsync(new EmailMessage
-                    {
+                    await emailService.EnqueueEmailAsync(new EmailMessage {
                         To = destinatario.Email,
                         Subject = $"✅ Pedido #{pedidoId} confirmado",
                         Body = bodyCliente,
@@ -302,8 +260,7 @@ public class PedidoEffects(
                 var content = EmailTemplates.PedidoCreado(pedidoId, total, itemCount, userId);
                 var body = EmailTemplates.CreateBase("Nuevo Pedido Recibido", content);
 
-                var emailMessage = new EmailMessage
-                {
+                var emailMessage = new EmailMessage {
                     To = adminEmail,
                     Subject = $"🛒 Nuevo Pedido #{pedidoId}",
                     Body = body,
@@ -311,9 +268,7 @@ public class PedidoEffects(
                 };
                 await emailService.EnqueueEmailAsync(emailMessage);
                 logger.LogDebug("Email de notificación encolado tras crear pedido");
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error al encolar email de notificación tras crear pedido");
             }
         });
@@ -327,19 +282,15 @@ public class PedidoEffects(
     /// de estado. El admin NO recibe este email porque los cambios de estado
     /// los provoca él desde el panel (ver doc/21-email-services.md).
     /// </remarks>
-    public void EnviarEmailPedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, DestinatarioDto? destinatario)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    public void EnviarEmailPedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total, DestinatarioDto? destinatario) {
+        _ = Task.Run(async () => {
+            try {
                 if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
 
                 var content = EmailTemplates.PedidoEstadoActualizado(pedidoId, estadoAnterior, nuevoEstado, total);
                 var body = EmailTemplates.CreateBase("Cambio de Estado de Pedido", content);
 
-                var emailMessage = new EmailMessage
-                {
+                var emailMessage = new EmailMessage {
                     To = destinatario.Email,
                     Subject = $"📦 Pedido #{pedidoId} - {nuevoEstado}",
                     Body = body,
@@ -347,9 +298,7 @@ public class PedidoEffects(
                 };
                 await emailService.EnqueueEmailAsync(emailMessage);
                 logger.LogDebug("Email de cambio de estado encolado para el cliente del pedido {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error al encolar email de cambio de estado tras cambio de estado");
             }
         });
@@ -359,28 +308,22 @@ public class PedidoEffects(
     /// Encola el email de aviso AL CLIENTE cuando un administrador modifica
     /// datos de su pedido sin cambiar el estado.
     /// </summary>
-    public void EnviarEmailPedidoModificadoCliente(string pedidoId, DestinatarioDto? destinatario)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    public void EnviarEmailPedidoModificadoCliente(string pedidoId, DestinatarioDto? destinatario) {
+        _ = Task.Run(async () => {
+            try {
                 if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
 
                 var content = EmailTemplates.PedidoModificadoCliente(pedidoId, destinatario.NombreCompleto);
                 var body = EmailTemplates.CreateBase($"Pedido #{pedidoId} modificado", content);
 
-                await emailService.EnqueueEmailAsync(new EmailMessage
-                {
+                await emailService.EnqueueEmailAsync(new EmailMessage {
                     To = destinatario.Email,
                     Subject = $"✏️ Tu pedido #{pedidoId} ha sido modificado",
                     Body = body,
                     IsHtml = true
                 });
                 logger.LogDebug("Email de aviso de modificación encolado para el cliente del pedido {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error al encolar email de aviso de modificación para pedido {PedidoId}", pedidoId);
             }
         });
@@ -390,28 +333,22 @@ public class PedidoEffects(
     /// Encola el email de cancelación AL CLIENTE (cancelación propia o
     /// eliminación por administrador).
     /// </summary>
-    public void EnviarEmailPedidoCanceladoCliente(string pedidoId, decimal total, DestinatarioDto? destinatario)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    public void EnviarEmailPedidoCanceladoCliente(string pedidoId, decimal total, DestinatarioDto? destinatario) {
+        _ = Task.Run(async () => {
+            try {
                 if (string.IsNullOrWhiteSpace(destinatario?.Email)) return;
 
                 var content = EmailTemplates.PedidoCanceladoCliente(pedidoId, total, destinatario.NombreCompleto);
                 var body = EmailTemplates.CreateBase($"Pedido #{pedidoId} cancelado", content);
 
-                await emailService.EnqueueEmailAsync(new EmailMessage
-                {
+                await emailService.EnqueueEmailAsync(new EmailMessage {
                     To = destinatario.Email,
                     Subject = $"🚫 Tu pedido #{pedidoId} ha sido cancelado",
                     Body = body,
                     IsHtml = true
                 });
                 logger.LogDebug("Email de cancelación encolado para el cliente del pedido {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error al encolar email de cancelación para pedido {PedidoId}", pedidoId);
             }
         });
@@ -422,20 +359,16 @@ public class PedidoEffects(
     /// pedido (matriz de emails: es lo único que el admin debe gestionar y
     /// no proviene de él, junto con la creación).
     /// </summary>
-    public void EnviarEmailPedidoCanceladoAdmin(string pedidoId, decimal total, long userId)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+    public void EnviarEmailPedidoCanceladoAdmin(string pedidoId, decimal total, long userId) {
+        _ = Task.Run(async () => {
+            try {
                 var adminEmail = configuration["Smtp:AdminEmail"];
                 if (string.IsNullOrEmpty(adminEmail)) return;
 
                 var content = EmailTemplates.PedidoEliminadoAdmin(pedidoId, total, userId);
                 var body = EmailTemplates.CreateBase("Pedido Cancelado por Usuario", content);
 
-                var emailMessage = new EmailMessage
-                {
+                var emailMessage = new EmailMessage {
                     To = adminEmail,
                     Subject = $"🚫 Pedido #{pedidoId} Cancelado por Usuario",
                     Body = body,
@@ -443,9 +376,7 @@ public class PedidoEffects(
                 };
                 await emailService.EnqueueEmailAsync(emailMessage);
                 logger.LogDebug("Aviso de cancelación encolado para el administrador del pedido {PedidoId}", pedidoId);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.LogWarning(ex, "Error al encolar aviso de cancelación para el administrador: {PedidoId}", pedidoId);
             }
         });
