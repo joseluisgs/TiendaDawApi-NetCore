@@ -1,12 +1,12 @@
 # 🐳 Docker en TiendaDawApi
 
+## 1. El Dockerfile (multi-stage)
+
 > Contenedores para **desarrollo local** (`docker-compose.local.yml`) y para
 > **producción** (`docker-compose.prod.yml`). Todo lo de esta página está tomado
 > de los ficheros reales del repositorio.
 
 ---
-
-## 1. El Dockerfile (multi-stage)
 
 Fichero: `TiendaApi.Api/Dockerfile` (idéntico en los dos proyectos de la tienda).
 
