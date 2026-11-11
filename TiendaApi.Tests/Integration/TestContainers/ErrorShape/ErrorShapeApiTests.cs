@@ -33,6 +33,15 @@ public class ErrorShapeApiTests {
         Environment.SetEnvironmentVariable(
             "MongoDbSettings__DatabaseName", DatabaseName);
 
+        // Cassandra: la app lo lee de appsettings (localhost:9042 = compose).
+        // Se apunta al contenedor compartido para que la suite funcione SIN el
+        // compose levantado (mismo criterio que Postgres y Mongo de arriba).
+        var cassandra = await AssemblyContainerFixture.EnsureCassandraContainerAsync();
+        Environment.SetEnvironmentVariable(
+            "Cassandra__Hosts__0", cassandra.Hostname);
+        Environment.SetEnvironmentVariable(
+            "Cassandra__Port", cassandra.GetMappedPublicPort(9042).ToString());
+
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder => {
             builder.UseEnvironment("Development");
             builder.ConfigureAppConfiguration((_, config) => {
@@ -69,6 +78,10 @@ public class ErrorShapeApiTests {
 
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
+
+        // No dejar la config del contenedor de Cassandra colgada para el resto del run.
+        Environment.SetEnvironmentVariable("Cassandra__Hosts__0", null);
+        Environment.SetEnvironmentVariable("Cassandra__Port", null);
     }
 
     private const string DatabaseName = "it_error_shape";

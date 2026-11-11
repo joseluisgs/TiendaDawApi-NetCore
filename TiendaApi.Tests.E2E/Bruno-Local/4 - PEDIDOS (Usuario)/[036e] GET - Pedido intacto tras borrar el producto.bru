@@ -1,0 +1,42 @@
+meta {
+  name: [036e] GET - Pedido intacto tras borrar el producto
+  type: http
+  seq: 93
+}
+
+get {
+  url: {{baseUrl}}/api/v1/pedidos/me/{{pedidoSnapId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+script:post-response {
+  test("SnapshotPedidoIntacto - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("SnapshotPedidoIntacto - El item conserva nombre y precio de la compra", function () {
+      const d = res.getBody();
+      expect(d.items).to.be.an('array');
+      expect(d.items.length).to.be.greaterThan(0);
+      const item = d.items[0];
+      expect(item.nombreProducto).to.equal('Prod Snapshot E2E');
+      expect(item.precio).to.equal(123.45);
+      expect(item.subtotal).to.equal(123.45);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Paso 4: el producto ya no existe, pero el pedido conserva su snapshot
+  (NombreProducto/Precio fijados al comprar). Regresion del contrato de
+  borrado logico de productos.
+}

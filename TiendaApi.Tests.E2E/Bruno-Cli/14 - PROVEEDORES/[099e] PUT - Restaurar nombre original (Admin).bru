@@ -1,0 +1,47 @@
+meta {
+  name: [099e] PUT - Restaurar nombre original (Admin)
+  type: http
+  seq: 14
+}
+
+put {
+  url: {{baseUrl}}/api/v1/proveedores/Distribuc01
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "nombre": "{{provNombreOriginal}}",
+      "descripcion": "{{provDescOriginal}}"
+  }
+}
+
+script:post-response {
+  test("RenameRestore - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("RenameRestore - Volvio al nombre original", function () {
+      const d = res.getBody();
+      expect(d.nombre).to.equal(bru.getVar("provNombreOriginal"));
+      expect(d.codigo).to.equal('Distribuc01');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Paso 4: restaura el nombre original del proveedor para no dejar la semilla
+  alterada (el resto de la suite no debe notar el renombrado).
+}

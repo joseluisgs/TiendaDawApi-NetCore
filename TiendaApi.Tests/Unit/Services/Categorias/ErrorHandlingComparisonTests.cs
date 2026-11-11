@@ -66,6 +66,7 @@ public class ErrorHandlingComparisonTests {
 
         _categoriaService = new CategoriaService(
             _mockCategoriaRepo.Object,
+            Mock.Of<IProductoRepository>(),
             _mockCategoriaLogger.Object,
             _mockCategoriaValidator.Object,
             mockCategoriaCacheService.Object,

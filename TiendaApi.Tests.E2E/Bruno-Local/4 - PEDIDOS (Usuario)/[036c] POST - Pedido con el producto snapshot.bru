@@ -1,0 +1,72 @@
+meta {
+  name: [036c] POST - Pedido con el producto snapshot
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/v1/pedidos/me
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {
+      "destinatario": {
+          "nombreCompleto": "Juan Perez",
+          "email": "juanperez@test.com",
+          "telefono": "+34123456789",
+          "direccion": {
+              "calle": "Calle Mayor",
+              "numero": "10",
+              "ciudad": "Madrid",
+              "provincia": "Madrid",
+              "pais": "España",
+              "codigoPostal": "28001"
+          }
+      },
+      "items": [
+          {
+              "productoId": {{productoSnapId}},
+              "cantidad": 1,
+              "precioUnitario": 123.45
+          }
+      ]
+  }
+}
+
+script:post-response {
+  test("SnapshotPedido - Status 201 Created", function () {
+      expect(res.getStatus()).to.equal(201);
+  });
+
+  test("SnapshotPedido - Item con el precio del producto", function () {
+      const d = res.getBody();
+      expect(d.estado).to.equal('PENDIENTE');
+      expect(d.items).to.be.an('array');
+      expect(d.items.length).to.be.greaterThan(0);
+  });
+
+  if (res.getStatus() === 201) {
+      const d = res.getBody();
+      bru.setVar("pedidoSnapId", d.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Paso 2: crea el pedido del usuario con el producto del paso 1. El servidor
+  fija NombreProducto y Precio en la linea del pedido (snapshot de compra).
+}

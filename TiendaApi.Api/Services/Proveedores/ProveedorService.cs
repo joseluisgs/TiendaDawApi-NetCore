@@ -10,6 +10,7 @@ using TiendaApi.Api.Errors.Proveedores;
 using TiendaApi.Api.Mappers;
 using TiendaApi.Api.Models;
 using TiendaApi.Api.Repositories.Proveedores;
+using TiendaApi.Api.Repositories.Productos;
 using TiendaApi.Api.Services.Cache;
 
 namespace TiendaApi.Api.Services.Proveedores;
@@ -23,6 +24,7 @@ namespace TiendaApi.Api.Services.Proveedores;
 /// </summary>
 public class ProveedorService(
     IProveedorRepository repository,
+    IProductoRepository productos,
     ILogger<ProveedorService> logger,
     IValidator<ProveedorRequestDto> proveedorValidator,
     ICacheService cacheService,
@@ -143,6 +145,17 @@ public class ProveedorService(
         ProveedorDto result = updated.ToDto();
 
         await InvalidarCacheAsync($"proveedores:{codigo}");
+
+        // Los DTO de producto embeben el proveedor (nombre/descripción): al
+        // renombrar hay que invalidar SUS claves de caché (ICacheService no
+        // admite patrones) o el producto sirve el nombre viejo hasta el TTL.
+        foreach (long productoId in await productos.FindIdsByProveedorAsync(codigo)) {
+            try {
+                await cacheService.RemoveAsync($"productos:{productoId}");
+            } catch (Exception ex) {
+                logger.LogWarning(ex, "Cache invalidation error: Key=productos:{Id}", productoId);
+            }
+        }
 
         return Result.Success<ProveedorDto, DomainError>(result);
     }

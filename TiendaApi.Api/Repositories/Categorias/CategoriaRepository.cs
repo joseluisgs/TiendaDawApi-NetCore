@@ -146,6 +146,15 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc />
+    public async Task<int> CountProductosAsync(long categoriaId) {
+        // Cuenta TODOS los productos, incluidos los borrados lógicos: el filtro
+        // global los excluye, pero una categoría referenciada por cualquiera no
+        // debe poder eliminarse (así los productos no quedan apuntando a una
+        // categoría borrada).
+        return await context.Productos.IgnoreQueryFilters().CountAsync(p => p.CategoriaId == categoriaId);
+    }
+
+    /// <inheritdoc />
     public async Task<Categoria> SaveAsync(Categoria categoria) {
         logger.LogDebug("Guardando categoría: {Nombre}", categoria.Nombre);
         Categoria? existing = await FindByIdAsync(categoria.Id);

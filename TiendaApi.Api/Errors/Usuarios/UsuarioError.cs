@@ -44,13 +44,6 @@ public static class UsuarioError {
         return UnauthorizedError.TokenExpired();
     }
 
-    /// <summary>Crea error si el usuario tiene pedidos asociados.</summary>
-    /// <param name="id">ID del usuario.</param>
-    /// <returns>BusinessRuleError (HTTP 422).</returns>
-    public static BusinessRuleError NoSePuedeEliminarConPedidos(long id) {
-        return new BusinessRuleError($"No se puede eliminar el usuario con ID {id} porque tiene pedidos asociados");
-    }
-
     /// <summary>Crea error si el usuario tiene productos a la venta.</summary>
     /// <param name="id">ID del usuario.</param>
     /// <returns>BusinessRuleError (HTTP 422).</returns>

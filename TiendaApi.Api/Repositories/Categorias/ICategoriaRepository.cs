@@ -65,6 +65,11 @@ public interface ICategoriaRepository {
     /// <returns>True si se eliminó.</returns>
     Task<bool> DeleteAsync(long id);
 
+    /// <summary>Cuenta los productos que referencian la categoría (incluidos los borrados lógicos).</summary>
+    /// <param name="categoriaId">ID de la categoría.</param>
+    /// <returns>Número de productos asociados.</returns>
+    Task<int> CountProductosAsync(long categoriaId);
+
     /// <summary>Guarda cambios en la categoría.</summary>
     /// <param name="categoria">Categoría a guardar.</param>
     /// <returns>Categoría guardada.</returns>

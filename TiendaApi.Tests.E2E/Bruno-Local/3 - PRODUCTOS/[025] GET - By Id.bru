@@ -24,6 +24,16 @@ script:post-response {
       expect(jsonData.stock).to.be.a('number');
       expect(jsonData.categoria.id).to.be.a('number');
   });
+
+  test("Productos GetById - Trae categoria.nombre y proveedor anidados", function () {
+      const jsonData = res.getBody();
+      expect(jsonData.categoria.nombre).to.be.a('string');
+      expect(jsonData.categoria.nombre.length).to.be.greaterThan(0);
+      expect(jsonData.proveedor).to.be.an('object');
+      expect(jsonData.proveedor.codigo).to.equal('Distribuc01');
+      expect(jsonData.proveedor.nombre).to.be.a('string');
+      expect(jsonData.proveedor.nombre.length).to.be.greaterThan(0);
+  });
 }
 
 settings {

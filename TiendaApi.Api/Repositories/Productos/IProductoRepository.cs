@@ -44,6 +44,11 @@ public interface IProductoRepository {
     /// <returns>Colección de productos.</returns>
     Task<IEnumerable<Producto>> FindByCategoriaIdAsync(long categoriaId);
 
+    /// <summary>Obtiene los IDs de los productos asociados a un proveedor (para invalidar sus cachés al renombrarlo).</summary>
+    /// <param name="codigo">Código del proveedor.</param>
+    /// <returns>IDs de los productos que referencian al proveedor.</returns>
+    Task<List<long>> FindIdsByProveedorAsync(string codigo);
+
     /// <summary>Guarda o actualiza un producto.</summary>
     /// <param name="producto">Producto a guardar.</param>
     /// <returns>Producto guardado.</returns>

@@ -1,0 +1,32 @@
+meta {
+  name: [036d] DELETE - Borrar el producto del pedido (Admin)
+  type: http
+  seq: 92
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/productos/{{productoSnapId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("SnapshotBorrarProducto - Status 204 No Content", function () {
+      expect(res.getStatus()).to.equal(204);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Paso 3: borra (logicamente) el producto que el pedido del paso 2 ya compro.
+  El borrado esta permitido: el pedido lleva su propia copia del nombre y el
+  precio. El siguiente test verifica que el pedido sigue intacto.
+}

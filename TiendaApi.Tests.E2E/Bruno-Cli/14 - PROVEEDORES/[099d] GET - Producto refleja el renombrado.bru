@@ -1,0 +1,34 @@
+meta {
+  name: [099d] GET - Producto refleja el renombrado
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/api/v1/productos/1
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  test("RenameReflejado - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("RenameReflejado - El producto muestra el NUEVO nombre del proveedor", function () {
+      const d = res.getBody();
+      expect(d.proveedor).to.be.an('object');
+      expect(d.proveedor.codigo).to.equal('Distribuc01');
+      expect(d.proveedor.nombre).to.equal('Distri E2E Renombrada');
+  });
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Paso 3 (REGRESION): al renombrar un proveedor, el producto que lo lleva
+  embebido debe devolver el nombre nuevo. En CQRS/micro esto depende del sync
+  del read model: sin el fix de proveedor, este test FALLA.
+}
