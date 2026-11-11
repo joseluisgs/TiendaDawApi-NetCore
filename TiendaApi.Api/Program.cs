@@ -114,13 +114,10 @@ app.UseSecurityHeaders();
 app.UseRateLimiting();
 
 // HTTPS + HSTS - Solo en producción (para desarrollo/testing local, permitir HTTP)
-if (!isDevelopment)
-{
+if (!isDevelopment) {
     app.UseHsts();
     app.UseHttpsRedirection();
-}
-else
-{
+} else {
     Log.Information("🔓 Modo desarrollo: HTTP permitido (sin redirección HTTPS)");
 }
 app.UseCorsPolicy();
@@ -156,8 +153,7 @@ await app.InitializeCassandraAsync(isDevelopment);
 // Seed de Cassandra (solo desarrollo): serie histórica de precios y feed de
 // ejemplo. Va DESPUÉS del esquema y con scope propio: son datos de ejemplo,
 // no un prerequisito del arranque (mismo criterio que el resto de seeders).
-if (isDevelopment)
-{
+if (isDevelopment) {
     using var cassandraScope = app.Services.CreateScope();
     var cassandraSeeder = cassandraScope.ServiceProvider.GetService<CassandraSeeder>();
     if (cassandraSeeder != null)
@@ -170,17 +166,12 @@ PrintStartupInfo(isDevelopment, configuration);
 // ▶️ ARRANQUE DE LA APLICACIÓN
 // ============================================================================
 
-try
-{
+try {
     app.Run();
-}
-catch (Exception ex)
-{
+} catch (Exception ex) {
     Log.Fatal(ex, "💥 La aplicación falló al iniciar");
     throw;
-}
-finally
-{
+} finally {
     Log.CloseAndFlush();
 }
 
@@ -190,8 +181,7 @@ finally
 // </summary>
 // <param name="isDevelopment">Indica si el entorno es de desarrollo.</param>
 // <param name="configuration">La configuración de la aplicación.</param>
-static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
-{
+static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration) {
     var urls = configuration["ASPNETCORE_URLS"]?.Split(';') ?? new[] { "http://localhost:5000" };
     var firstUrl = urls.FirstOrDefault() ?? "http://localhost:5000";
     var protocol = firstUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? "https" : "http";
@@ -231,18 +221,14 @@ static void PrintStartupInfo(bool isDevelopment, IConfiguration configuration)
     var authMode = configuration["Auth:Mode"] ?? "Custom";
     Log.Information("=================================================================");
     Log.Information("AUTENTICACIÓN:");
-    if (authMode == "Identity")
-    {
+    if (authMode == "Identity") {
         Log.Information("  Contraseña:  JWT con Identity (UserManager / PBKDF2) [Auth:Mode=Identity]");
         Log.Information("  Callback OAuth: IdentityAuthService (vincula en AspNetUserLogins)");
-    }
-    else
-    {
+    } else {
         Log.Information("  Contraseña:  JWT Manual (BCrypt) [Auth:Mode=Custom]");
         Log.Information("  Callback OAuth: AuthService (vincula en user_logins, dummy hash OAUTH-*)");
     }
-    foreach (var provider in new[] { "Google", "GitHub", "Microsoft" })
-    {
+    foreach (var provider in new[] { "Google", "GitHub", "Microsoft" }) {
         var enabled = string.Equals(configuration[$"Auth:{provider}:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
         var hasCreds = !string.IsNullOrEmpty(configuration[$"{provider}:ClientId"])
                        && !string.IsNullOrEmpty(configuration[$"{provider}:ClientSecret"]);

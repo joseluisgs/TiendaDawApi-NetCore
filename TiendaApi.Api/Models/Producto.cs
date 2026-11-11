@@ -7,8 +7,7 @@ using TiendaApi.Api.Data.Abstractions;
 /// <summary>
 /// Entidad de dominio que representa un producto en el catálogo.
 /// </summary>
-public class Producto : ITimestamped
-{
+public class Producto : ITimestamped {
     /// <summary>URL de imagen por defecto cuando no hay imagen personalizada.</summary>
     public const string IMAGE_DEFAULT = "https://via.placeholder.com/150";
 
@@ -62,8 +61,7 @@ public class Producto : ITimestamped
     /// Determina si la imagen es local (almacenada en el servidor).
     /// </summary>
     /// <returns>true si la imagen comienza con IMAGE_LOCAL_PREFIX.</returns>
-    public bool IsLocalImage()
-    {
+    public bool IsLocalImage() {
         if (string.IsNullOrEmpty(Imagen))
             return false;
 
@@ -74,8 +72,7 @@ public class Producto : ITimestamped
     /// Determina si el producto usa la imagen por defecto.
     /// </summary>
     /// <returns>true si Imagen es null, vacío o igual a IMAGE_DEFAULT.</returns>
-    public bool HasDefaultImage()
-    {
+    public bool HasDefaultImage() {
         return string.IsNullOrEmpty(Imagen) || Imagen == IMAGE_DEFAULT;
     }
 
@@ -83,8 +80,7 @@ public class Producto : ITimestamped
     /// Obtiene la URL completa de la imagen normalizada para mostrar.
     /// </summary>
     /// <returns>URL absoluta o relativa lista para usar en &lt;img src&gt;.</returns>
-    public string GetImagenUrl()
-    {
+    public string GetImagenUrl() {
         if (string.IsNullOrEmpty(Imagen))
             return IMAGE_DEFAULT;
 

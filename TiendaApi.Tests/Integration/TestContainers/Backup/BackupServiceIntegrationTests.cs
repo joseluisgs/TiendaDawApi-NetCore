@@ -37,8 +37,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Backup;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class BackupServiceIntegrationTests
-{
+public class BackupServiceIntegrationTests {
     private const string DatabaseName = "it_backup_service";
 
     private string _connectionString = string.Empty;
@@ -47,28 +46,24 @@ public class BackupServiceIntegrationTests
     private IBackupService? _servicio;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
     }
 
     [SetUp]
-    public async Task Setup()
-    {
+    public async Task Setup() {
         // Cada test parte de cero: los nombres de categoría son únicos y la
         // semilla se repite en cada test, así que sin limpiar fallaría el índice.
         // Include Error Detail: muestra la sentencia SQL que falle (diagnóstico).
         var connectionString = _connectionString + ";Include Error Detail=True";
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString + ";Include Error Detail=True" },
                 { "Cache:ProductoCacheTTLMinutes", "10" }
             }!)
@@ -108,8 +103,7 @@ public class BackupServiceIntegrationTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
+    public void TearDown() {
         _dbContext?.Dispose();
         if (_provider is IDisposable desechable) desechable.Dispose();
     }
@@ -119,8 +113,7 @@ public class BackupServiceIntegrationTests
     // ────────────────────────────────────────────────────────────
 
     [Test]
-    public async Task Exportar_Json_ContieneLasEntidadesSembradas()
-    {
+    public async Task Exportar_Json_ContieneLasEntidadesSembradas() {
         await SembrarAsync();
 
         using var salida = new MemoryStream();
@@ -143,8 +136,7 @@ public class BackupServiceIntegrationTests
     }
 
     [Test]
-    public async Task Exportar_ConFormatoDesconocido_RetornaErrorSinEscribirNada()
-    {
+    public async Task Exportar_ConFormatoDesconocido_RetornaErrorSinEscribirNada() {
         using var salida = new MemoryStream();
 
         var export = await _servicio!.ExportarAsync(salida, "xml", ["productos"], incluirBorrados: false);
@@ -154,8 +146,7 @@ public class BackupServiceIntegrationTests
     }
 
     [Test]
-    public async Task Exportar_SoloUnaEntidad_LaDemejadaQuedaFuera()
-    {
+    public async Task Exportar_SoloUnaEntidad_LaDemejadaQuedaFuera() {
         await SembrarAsync();
 
         using var salida = new MemoryStream();
@@ -175,8 +166,7 @@ public class BackupServiceIntegrationTests
     // ────────────────────────────────────────────────────────────
 
     [Test]
-    public async Task Importar_DryRun_NoEscribeNada()
-    {
+    public async Task Importar_DryRun_NoEscribeNada() {
         await SembrarAsync();
         var antes = await ContarProductosAsync();
 
@@ -194,8 +184,7 @@ public class BackupServiceIntegrationTests
     }
 
     [Test]
-    public async Task Importar_ConIdNuevo_DejaLaSecuenciaOperativa()
-    {
+    public async Task Importar_ConIdNuevo_DejaLaSecuenciaOperativa() {
         // Es el caso delicado: se inserta un ID explícito (9999) y después se
         // crea otro por el camino normal. Si la secuencia no se re-sincronizó,
         // ese segundo INSERT chocaría por clave duplicada.
@@ -203,8 +192,7 @@ public class BackupServiceIntegrationTests
 
         var json = await ExportarTextoAsync("json", ["productos", "categorias", "proveedores"]);
         var backup = JsonSerializer.Deserialize<BackupDto>(json, BackupService.OpcionesJson)!;
-        backup = ConProductoExtra(backup, backup.Productos![0] with
-        {
+        backup = ConProductoExtra(backup, backup.Productos![0] with {
             Id = 9999,
             Nombre = "Producto restaurado con ID propio",
         });
@@ -227,8 +215,7 @@ public class BackupServiceIntegrationTests
         // La categoría se reutiliza la del producto restaurado (los IDs no vuelven
         // a empezar en 1 entre tests, así que 1 podría no existir).
         var productoRepository = _provider!.GetRequiredService<IProductoRepository>();
-        var nuevo = await productoRepository.SaveAsync(new Producto
-        {
+        var nuevo = await productoRepository.SaveAsync(new Producto {
             Nombre = "Creado tras el restore",
             Descripcion = "Comprueba la secuencia",
             Precio = 5m,
@@ -244,13 +231,11 @@ public class BackupServiceIntegrationTests
     }
 
     [Test]
-    public async Task Importar_ConErroresDeFila_AcumulaSinAbortar()
-    {
+    public async Task Importar_ConErroresDeFila_AcumulaSinAbortar() {
         await SembrarAsync();
         var json = await ExportarTextoAsync("json", ["productos"]);
         var backup = JsonSerializer.Deserialize<BackupDto>(json, BackupService.OpcionesJson)!;
-        backup = ConProductoExtra(backup, backup.Productos![0] with
-        {
+        backup = ConProductoExtra(backup, backup.Productos![0] with {
             Id = 8888,
             Nombre = "Producto con categoría inexistente",
             CategoriaId = 999999,
@@ -275,8 +260,7 @@ public class BackupServiceIntegrationTests
     }
 
     [Test]
-    public async Task Importar_Csv_HaceElRoundTrip()
-    {
+    public async Task Importar_Csv_HaceElRoundTrip() {
         await SembrarAsync();
         var csv = await ExportarTextoAsync("csv", ["categorias"]);
 
@@ -293,10 +277,8 @@ public class BackupServiceIntegrationTests
     // Helpers
     // ────────────────────────────────────────────────────────────
 
-    private async Task SembrarAsync()
-    {
-        var categorias = new List<Categoria>
-        {
+    private async Task SembrarAsync() {
+        var categorias = new List<Categoria> {
             new() { Nombre = "Cat Uno", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
             new() { Nombre = "Cat Dos", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
             new() { Nombre = "Cat Tres", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
@@ -304,8 +286,7 @@ public class BackupServiceIntegrationTests
         _dbContext!.Categorias.AddRange(categorias);
         await _dbContext.SaveChangesAsync();
 
-        _dbContext.Proveedores.Add(new Proveedor
-        {
+        _dbContext.Proveedores.Add(new Proveedor {
             Codigo = "Backup00001",
             Nombre = "Proveedor backup",
             CreatedAt = DateTime.UtcNow,
@@ -315,10 +296,8 @@ public class BackupServiceIntegrationTests
 
         // Los IDs de categoría se leen tras insertar: la secuencia no vuelve a
         // empezar en 1 entre tests, y un ID fijo rompería la clave foránea.
-        for (var i = 0; i < categorias.Count; i++)
-        {
-            _dbContext.Productos.Add(new Producto
-            {
+        for (var i = 0; i < categorias.Count; i++) {
+            _dbContext.Productos.Add(new Producto {
                 Nombre = $"Producto {i + 1}",
                 Descripcion = "Para el test de backup",
                 Precio = (i + 1) * 10m,
@@ -333,8 +312,7 @@ public class BackupServiceIntegrationTests
         await _dbContext.SaveChangesAsync();
     }
 
-    private async Task<string> ExportarTextoAsync(string formato, string[] entidades)
-    {
+    private async Task<string> ExportarTextoAsync(string formato, string[] entidades) {
         using var salida = new MemoryStream();
         var resultado = await _servicio!.ExportarAsync(salida, formato, entidades, incluirBorrados: false);
         resultado.IsSuccess.Should().BeTrue(resultado.IsFailure ? resultado.Error.Message : "");
@@ -343,8 +321,7 @@ public class BackupServiceIntegrationTests
     }
 
     /// <summary>Devuelve el backup con un producto más (IReadOnlyList no admite Add).</summary>
-    private static BackupDto ConProductoExtra(BackupDto backup, BackupProductoDto producto)
-    {
+    private static BackupDto ConProductoExtra(BackupDto backup, BackupProductoDto producto) {
         var lista = backup.Productos!.ToList();
         lista.Add(producto);
         return backup with { Productos = lista };

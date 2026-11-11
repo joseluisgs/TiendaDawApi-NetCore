@@ -78,8 +78,7 @@ public record UserDto(
 /// - Mínimo 8 caracteres
 /// - Se recomienda incluir mayúsculas, minúsculas, números y símbolos
 /// </remarks>
-public record RegisterDto
-{
+public record RegisterDto {
     /// <summary>
     /// Nombre de usuario único.
     /// Identificador público del usuario en el sistema.
@@ -122,8 +121,7 @@ public record RegisterDto
 /// DTO para el inicio de sesión de usuarios.
 /// Credenciales necesarias para obtener token JWT.
 /// </summary>
-public record LoginDto
-{
+public record LoginDto {
     /// <summary>
     /// Nombre de usuario o correo electrónico.
     /// Identifica al usuario en el sistema.
@@ -167,8 +165,7 @@ public record AuthResponseDto(
 /// DTO para actualizar datos de usuario.
 /// Campos opcionales: solo los presentes se actualizan.
 /// </summary>
-public record UserUpdateDto
-{
+public record UserUpdateDto {
     /// <summary>
     /// Nuevo correo electrónico del usuario (opcional).
     /// Debe ser un email válido y único.

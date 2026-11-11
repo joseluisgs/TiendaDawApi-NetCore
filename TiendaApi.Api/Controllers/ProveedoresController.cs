@@ -28,8 +28,7 @@ namespace TiendaApi.Api.Controllers;
 public class ProveedoresController(
     IProveedorService service,
     ILogger<ProveedoresController> logger
-) : ControllerBase
-{
+) : ControllerBase {
     /// <summary>
     /// Obtiene todos los proveedores paginados con filtros opcionales.
     /// </summary>
@@ -50,12 +49,10 @@ public class ProveedoresController(
         [FromQuery] int page = 0,
         [FromQuery] int size = 10,
         [FromQuery] string sortBy = "codigo",
-        [FromQuery] string direction = "asc")
-    {
+        [FromQuery] string direction = "asc") {
         logger.LogInformation("Obteniendo proveedores paginados - Página: {Page}, Tamaño: {Size}", page, size);
 
-        var filter = new ProveedorFilterDto
-        {
+        var filter = new ProveedorFilterDto {
             Nombre = nombre,
             IsDeleted = isDeleted,
             Page = page,
@@ -67,8 +64,7 @@ public class ProveedoresController(
         var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: proveedores =>
-            {
+            onSuccess: proveedores => {
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(proveedores, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
@@ -88,8 +84,7 @@ public class ProveedoresController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ProveedorDto>> GetById(string codigo)
-    {
+    public async Task<ActionResult<ProveedorDto>> GetById(string codigo) {
         logger.LogInformation("Obteniendo proveedor con código: {Codigo}", codigo);
 
         var resultado = await service.FindByIdAsync(codigo);
@@ -112,8 +107,7 @@ public class ProveedoresController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ProveedorDto>> Create([FromBody] ProveedorRequestDto dto)
-    {
+    public async Task<ActionResult<ProveedorDto>> Create([FromBody] ProveedorRequestDto dto) {
         logger.LogInformation("Creando nuevo proveedor: {Nombre}", dto.Nombre);
 
         var resultado = await service.CreateAsync(dto);
@@ -138,8 +132,7 @@ public class ProveedoresController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ProveedorDto>> Update(string codigo, [FromBody] ProveedorRequestDto dto)
-    {
+    public async Task<ActionResult<ProveedorDto>> Update(string codigo, [FromBody] ProveedorRequestDto dto) {
         logger.LogInformation("Actualizando proveedor con código: {Codigo}", codigo);
 
         var resultado = await service.UpdateAsync(codigo, dto);
@@ -162,8 +155,7 @@ public class ProveedoresController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public async Task<ActionResult> Delete(string codigo)
-    {
+    public async Task<ActionResult> Delete(string codigo) {
         logger.LogInformation("Eliminando proveedor con código: {Codigo}", codigo);
 
         var resultado = await service.DeleteAsync(codigo);
@@ -172,8 +164,7 @@ public class ProveedoresController(
             return NoContent();
 
         var error = resultado.Error;
-        return error switch
-        {
+        return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
             BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),

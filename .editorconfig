@@ -20,12 +20,18 @@ trim_trailing_whitespace = false
 
 [*.cs]
 # Espacios en blanco (los aplica el whitespace formatter de dotnet format)
-csharp_new_line_before_open_brace = all
-csharp_new_line_before_else = true
-csharp_new_line_before_catch = true
-csharp_new_line_before_finally = true
-csharp_new_line_before_members_in_object_initializers = true
-csharp_new_line_before_members_in_anonymous_types = true
+# Estilo K&R / 1TBS (llave AL FINAL de la línea) - no Allman:
+#   void Foo() {
+#       if (x) {
+#           Do();
+#       }
+#   }
+csharp_new_line_before_open_brace = none
+csharp_new_line_before_else = false
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
+csharp_new_line_before_members_in_object_initializers = false
+csharp_new_line_before_members_in_anonymous_types = false
 csharp_new_line_between_query_expression_clauses = true
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = true

@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Mappers;
 /// <summary>
 /// Mapper para convertir entre User y sus DTOs.
 /// </summary>
-public static class UserMapper
-{
+public static class UserMapper {
     /// <summary>Convierte User a UserDto.</summary>
     public static UserDto ToDto(this User user) =>
         new(user.Id, user.UserName ?? string.Empty, user.Email ?? string.Empty, user.GetAvatarUrl(), user.Role, user.CreatedAt);
@@ -17,8 +16,7 @@ public static class UserMapper
         users.Select(u => u.ToDto());
 
     /// <summary>Convierte RegisterDto a User.</summary>
-    public static User ToEntity(this RegisterDto dto, string passwordHash) => new()
-    {
+    public static User ToEntity(this RegisterDto dto, string passwordHash) => new() {
         UserName = dto.Username,
         Email = dto.Email,
         PasswordHash = passwordHash,
@@ -29,8 +27,7 @@ public static class UserMapper
     };
 
     /// <summary>Actualiza User desde UserUpdateDto.</summary>
-    public static void UpdateEntity(this UserUpdateDto dto, User user)
-    {
+    public static void UpdateEntity(this UserUpdateDto dto, User user) {
         if (!string.IsNullOrEmpty(dto.Email))
             user.Email = dto.Email;
         if (!string.IsNullOrEmpty(dto.Password))
@@ -38,8 +35,7 @@ public static class UserMapper
     }
 
     /// <summary>Actualiza User desde UserPatchDto (actualización parcial).</summary>
-    public static void UpdateEntity(this UserPatchDto dto, User user)
-    {
+    public static void UpdateEntity(this UserPatchDto dto, User user) {
         if (!string.IsNullOrEmpty(dto.Email))
             user.Email = dto.Email;
         if (!string.IsNullOrEmpty(dto.Password))

@@ -16,17 +16,14 @@ namespace TiendaApi.Api.Data.Seed.Cassandra;
 /// arranque, pero el keyspace NO (CREATE IF NOT EXISTS + datos persistentes);
 /// por eso la comprobación de "¿ya sembrado?" es obligatoria, no opcional.
 /// </summary>
-public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
-{
+public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger) {
     /// <summary>
     /// Siembra historial y feed si sus particiones están vacías: comprueba el
     /// estado antes de escribir para poder repetirse en cada arranque sin
     /// duplicar puntos.
     /// </summary>
-    public async Task SeedAsync()
-    {
-        try
-        {
+    public async Task SeedAsync() {
+        try {
             // Table<T> con los MISMOS modelos LINQ que usa el repositorio en
             // producción: mismo mapeo, mismas particiones, mismo TTL de tabla.
             var historial = new Table<HistorialPrecioPorProducto>(session);
@@ -34,9 +31,7 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
 
             await SeedHistorialAsync(historial);
             await SeedVistasAsync(vistas);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.LogWarning(ex,
                 "Error al sembrar datos en Cassandra (puede que el nodo no este disponible)");
         }
@@ -46,15 +41,13 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
     /// Serie de precios de los 3 productos seed. Cada serie termina en el precio
     /// vigente del catálogo (el punto más reciente enlaza con el precio actual).
     /// </summary>
-    private async Task SeedHistorialAsync(Table<HistorialPrecioPorProducto> historial)
-    {
+    private async Task SeedHistorialAsync(Table<HistorialPrecioPorProducto> historial) {
         var yaSembrado = (await historial
             .Where(h => h.ProductoId == 1)
             .Take(1)
             .ExecuteAsync()).Any();
 
-        if (yaSembrado)
-        {
+        if (yaSembrado) {
             logger.LogInformation("Cassandra ya contiene historial, omitiendo sembrado");
             return;
         }
@@ -63,8 +56,7 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
 
         // (producto, [(días hacia atrás, precio), ...]) — el último de cada uno es
         // el precio actual de SqlSeeder: 1299.99 / 29.99 / 42.99.
-        var series = new (long ProductoId, (int Dias, double Precio)[] Puntos)[]
-        {
+        var series = new (long ProductoId, (int Dias, double Precio)[] Puntos)[] {
             (1, [(90, 1199.99), (75, 1249.99), (60, 1279.99), (40, 1349.99), (25, 1319.99), (10, 1299.99)]),
             (2, [(80, 34.99), (55, 32.99), (30, 31.99), (12, 29.99)]),
             (3, [(95, 46.99), (60, 44.99), (20, 42.99)])
@@ -72,18 +64,15 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
 
         var totalPuntos = 0;
 
-        foreach (var (productoId, puntos) in series)
-        {
-            foreach (var (dias, precio) in puntos)
-            {
+        foreach (var (productoId, puntos) in series) {
+            foreach (var (dias, precio) in puntos) {
                 var fecha = DateTime.UtcNow.AddDays(-dias);
 
                 // Dual-write EXACTO de RegistrarPrecioAsync (Q-A + Q-C) pero con la
                 // fecha backdateada: la firma del repo pone UtcNow a propósito (son
                 // los cambios "hoy" de los updates reales), así que el seeder repite
                 // los dos inserts a mano con su propia fecha.
-                await historial.Insert(new HistorialPrecioPorProducto
-                {
+                await historial.Insert(new HistorialPrecioPorProducto {
                     ProductoId = productoId,
                     Fecha = fecha,
                     Precio = precio
@@ -108,15 +97,13 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
     /// Vistas de ejemplo del usuario seed userdaw (id 2, el mismo que usa
     /// MongoDbSeeder) para que el feed arranque con contenido ordenado.
     /// </summary>
-    private async Task SeedVistasAsync(Table<VistaPorUsuario> vistas)
-    {
+    private async Task SeedVistasAsync(Table<VistaPorUsuario> vistas) {
         var yaSembrado = (await vistas
             .Where(v => v.UsuarioId == 2)
             .Take(1)
             .ExecuteAsync()).Any();
 
-        if (yaSembrado)
-        {
+        if (yaSembrado) {
             logger.LogInformation("Cassandra ya contiene vistas, omitiendo sembrado");
             return;
         }
@@ -126,8 +113,7 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
         // Nombres COPIADOS en la fila (denormalización: quien consulta el feed
         // no necesita ir a buscar el producto) con los productos seed de
         // SqlSeeder. Horas decrecientes = orden del feed.
-        var vistasSeed = new (int HorasAtras, long ProductoId, string Nombre)[]
-        {
+        var vistasSeed = new (int HorasAtras, long ProductoId, string Nombre)[] {
             (1, 1, "Laptop Dell XPS 15"),
             (4, 3, "Clean Code"),
             (7, 2, "Camiseta Nike"),
@@ -135,10 +121,8 @@ public class CassandraSeeder(ISession session, ILogger<CassandraSeeder> logger)
             (50, 3, "Clean Code")
         };
 
-        foreach (var (horas, productoId, nombre) in vistasSeed)
-        {
-            await vistas.Insert(new VistaPorUsuario
-            {
+        foreach (var (horas, productoId, nombre) in vistasSeed) {
+            await vistas.Insert(new VistaPorUsuario {
                 UsuarioId = 2,
                 Fecha = DateTime.UtcNow.AddHours(-horas),
                 ProductoId = productoId,

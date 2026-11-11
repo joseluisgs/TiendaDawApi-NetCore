@@ -26,8 +26,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.Categorias.Services;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class CategoriaServiceIntegrationTests
-{
+public class CategoriaServiceIntegrationTests {
     private const string DatabaseName = "it_categoria_service";
 
     private string _connectionString = string.Empty;
@@ -37,28 +36,24 @@ public class CategoriaServiceIntegrationTests
     private ICategoriaService? _categoriaService;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [SetUp]
-    public async Task Setup()
-    {
+    public async Task Setup() {
         var connectionString = _connectionString;
         var mongoConnectionString = _mongoConnectionString;
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", connectionString },
                 { "MongoDbSettings:ConnectionString", mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", DatabaseName },
@@ -72,8 +67,7 @@ public class CategoriaServiceIntegrationTests
         services.AddOutputCache();
         services.AddSingleton(Channel.CreateUnbounded<EmailMessage>());
 
-        services.AddLogging(builder =>
-        {
+        services.AddLogging(builder => {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Information);
         });
@@ -98,18 +92,15 @@ public class CategoriaServiceIntegrationTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
+    public void TearDown() {
         _dbContext?.Dispose();
-        if (_serviceProvider is IDisposable sp)
-        {
+        if (_serviceProvider is IDisposable sp) {
             sp.Dispose();
         }
     }
 
     [Test]
-    public async Task FindAllAsync_SinCategorias_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinCategorias_RetornaListaVacia() {
         var result = await _categoriaService!.FindAllAsync();
 
         result.IsSuccess.Should().BeTrue();
@@ -117,8 +108,7 @@ public class CategoriaServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConDatosValidos_RetornaCategoriaCreada()
-    {
+    public async Task CreateAsync_ConDatosValidos_RetornaCategoriaCreada() {
         var dto = new CategoriaRequestDto { Nombre = "Electronica Test" };
 
         var result = await _categoriaService!.CreateAsync(dto);
@@ -130,8 +120,7 @@ public class CategoriaServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConCategoriaExistente_RetornaCategoria()
-    {
+    public async Task FindByIdAsync_ConCategoriaExistente_RetornaCategoria() {
         var dto = new CategoriaRequestDto { Nombre = "Buscar Test" };
         var createResult = await _categoriaService!.CreateAsync(dto);
         createResult.IsSuccess.Should().BeTrue();
@@ -143,16 +132,14 @@ public class CategoriaServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConCategoriaNoExistente_RetornaNotFound()
-    {
+    public async Task FindByIdAsync_ConCategoriaNoExistente_RetornaNotFound() {
         var result = await _categoriaService!.FindByIdAsync(999999);
 
         result.IsFailure.Should().BeTrue();
     }
 
     [Test]
-    public async Task UpdateAsync_ConDatosValidos_RetornaCategoriaActualizada()
-    {
+    public async Task UpdateAsync_ConDatosValidos_RetornaCategoriaActualizada() {
         var createDto = new CategoriaRequestDto { Nombre = "Original" };
         var createResult = await _categoriaService!.CreateAsync(createDto);
         createResult.IsSuccess.Should().BeTrue();
@@ -165,8 +152,7 @@ public class CategoriaServiceIntegrationTests
     }
 
     [Test]
-    public async Task DeleteAsync_ConCategoriaExistente_RetornaExito()
-    {
+    public async Task DeleteAsync_ConCategoriaExistente_RetornaExito() {
         var createDto = new CategoriaRequestDto { Nombre = "Eliminar Test" };
         var createResult = await _categoriaService!.CreateAsync(createDto);
         createResult.IsSuccess.Should().BeTrue();
@@ -180,8 +166,7 @@ public class CategoriaServiceIntegrationTests
     }
 
     [Test]
-    public async Task CreateAsync_ConNombreDuplicado_RetornaConflicto()
-    {
+    public async Task CreateAsync_ConNombreDuplicado_RetornaConflicto() {
         var dto = new CategoriaRequestDto { Nombre = "Duplicado Test" };
         await _categoriaService!.CreateAsync(dto);
 
@@ -191,10 +176,8 @@ public class CategoriaServiceIntegrationTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConFiltro_RetornaResultadosPaginados()
-    {
-        for (int i = 0; i < 5; i++)
-        {
+    public async Task FindAllPagedAsync_ConFiltro_RetornaResultadosPaginados() {
+        for (int i = 0; i < 5; i++) {
             var dto = new CategoriaRequestDto { Nombre = $"Paged Test {i}" };
             await _categoriaService!.CreateAsync(dto);
         }

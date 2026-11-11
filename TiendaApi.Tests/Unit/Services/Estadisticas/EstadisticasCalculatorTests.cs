@@ -11,13 +11,11 @@ namespace TiendaApi.Tests.Unit.Services.Estadisticas;
 /// vistas estadísticas, sin tocar ninguna base de datos.
 /// </summary>
 [TestFixture]
-public class EstadisticasCalculatorTests
-{
+public class EstadisticasCalculatorTests {
     private static readonly DateTime Referencia = new(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
 
     private static PedidoItem Item(long productoId, int cantidad, decimal precio, string nombre = "Producto") =>
-        new()
-        {
+        new() {
             ProductoId = productoId,
             NombreProducto = nombre,
             Cantidad = cantidad,
@@ -31,8 +29,7 @@ public class EstadisticasCalculatorTests
         string estado = PedidoEstado.ENTREGADO,
         DateTime? creado = null,
         params PedidoItem[] items) =>
-        new()
-        {
+        new() {
             Id = MongoDB.Bson.ObjectId.GenerateNewId(),
             UserId = id,
             Total = total,
@@ -43,8 +40,7 @@ public class EstadisticasCalculatorTests
         };
 
     private static Producto Producto(long id, long categoriaId, decimal precio = 10m, int stock = 5, string? proveedorId = null) =>
-        new()
-        {
+        new() {
             Id = id,
             Nombre = $"Producto {id}",
             Precio = precio,
@@ -59,10 +55,8 @@ public class EstadisticasCalculatorTests
     // ────────────────────────────────────────────────────────────
 
     [Test]
-    public void CalcularTotales_ExcluyeCanceladosYSumaUnidades()
-    {
-        var pedidos = new[]
-        {
+    public void CalcularTotales_ExcluyeCanceladosYSumaUnidades() {
+        var pedidos = new[] {
             Pedido(1, 100m, PedidoEstado.ENTREGADO, items: [Item(1, 2, 50m)]),
             Pedido(2, 200m, PedidoEstado.PENDIENTE, items: [Item(1, 4, 50m)]),
             Pedido(3, 999m, PedidoEstado.CANCELADO, items: [Item(1, 99, 10m)]),
@@ -77,8 +71,7 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void CalcularTotales_SinPedidos_DevuelveCerosYNuncaNaN()
-    {
+    public void CalcularTotales_SinPedidos_DevuelveCerosYNuncaNaN() {
         var totales = EstadisticasCalculator.CalcularTotales([]);
 
         totales.Pedidos.Should().Be(0);
@@ -87,8 +80,7 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void EnVentana_FiltraPorFechasYExcluyeBorrados()
-    {
+    public void EnVentana_FiltraPorFechasYExcluyeBorrados() {
         var dentro = Pedido(1, 10m, creado: new DateTime(2026, 10, 5, 0, 0, 0, DateTimeKind.Utc));
         var fuera = Pedido(2, 10m, creado: new DateTime(2026, 11, 5, 0, 0, 0, DateTimeKind.Utc));
         var borrado = Pedido(3, 10m, creado: new DateTime(2026, 10, 6, 0, 0, 0, DateTimeKind.Utc));
@@ -107,8 +99,7 @@ public class EstadisticasCalculatorTests
     // ────────────────────────────────────────────────────────────
 
     [Test]
-    public void Serie_RellenaLosPeriodosVaciosACero()
-    {
+    public void Serie_RellenaLosPeriodosVaciosACero() {
         var desde = new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc);
         var hasta = new DateTime(2026, 10, 4, 0, 0, 0, DateTimeKind.Utc);
         var pedidos = new[] { Pedido(1, 50m, creado: new DateTime(2026, 10, 1, 9, 0, 0, DateTimeKind.Utc), items: [Item(1, 1, 50m)]) };
@@ -125,12 +116,10 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void Serie_AgrupadaPorMes_AcumulaLosDiasDelMes()
-    {
+    public void Serie_AgrupadaPorMes_AcumulaLosDiasDelMes() {
         var desde = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
         var hasta = new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc);
-        var pedidos = new[]
-        {
+        var pedidos = new[] {
             Pedido(1, 10m, creado: new DateTime(2026, 9, 10, 0, 0, 0, DateTimeKind.Utc), items: [Item(1, 1, 10m)]),
             Pedido(2, 20m, creado: new DateTime(2026, 9, 20, 0, 0, 0, DateTimeKind.Utc), items: [Item(1, 2, 10m)]),
             Pedido(3, 30m, creado: new DateTime(2026, 10, 5, 0, 0, 0, DateTimeKind.Utc), items: [Item(1, 3, 10m)]),
@@ -148,8 +137,7 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void ClavePeriodo_SemanaUsaLaSemanaIso()
-    {
+    public void ClavePeriodo_SemanaUsaLaSemanaIso() {
         // 1 de enero de 2026 cae en jueves: pertenece a la semana 1.
         EstadisticasCalculator.ClavePeriodo(new DateTime(2026, 1, 1), "semana").Should().Be("2026-W01");
         // 4 de noviembre de 2026 es miércoles de la semana 45.
@@ -161,20 +149,16 @@ public class EstadisticasCalculatorTests
     // ────────────────────────────────────────────────────────────
 
     [Test]
-    public void RankingProductos_OrdenaPorUnidadesYPorcentuaSobreElTotal()
-    {
-        var pedidos = new[]
-        {
+    public void RankingProductos_OrdenaPorUnidadesYPorcentuaSobreElTotal() {
+        var pedidos = new[] {
             Pedido(1, 100m, items: [Item(1, 10, 10m, "Caro")]),
             Pedido(2, 30m, items: [Item(2, 30, 1m, "Barato")]),
         };
-        var productos = new Dictionary<long, Producto>
-        {
+        var productos = new Dictionary<long, Producto> {
             [1] = Producto(1, categoriaId: 1, precio: 10m),
             [2] = Producto(2, categoriaId: 1, precio: 1m),
         };
-        var categorias = new Dictionary<long, Categoria>
-        {
+        var categorias = new Dictionary<long, Categoria> {
             [1] = new() { Id = 1, Nombre = "General" },
         };
 
@@ -191,12 +175,10 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void DesgloseCategorias_LasCategoriasSinVentasSalenConCeros()
-    {
+    public void DesgloseCategorias_LasCategoriasSinVentasSalenConCeros() {
         var pedidos = new[] { Pedido(1, 50m, items: [Item(1, 5, 10m)]) };
         var productos = new Dictionary<long, Producto> { [1] = Producto(1, categoriaId: 1) };
-        var categorias = new Dictionary<long, Categoria>
-        {
+        var categorias = new Dictionary<long, Categoria> {
             [1] = new() { Id = 1, Nombre = "Con ventas" },
             [2] = new() { Id = 2, Nombre = "Sin ventas" },
         };
@@ -211,19 +193,15 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void DesgloseProveedores_AgrupaLoSinProveedorConCodigoVacio()
-    {
-        var pedidos = new[]
-        {
+    public void DesgloseProveedores_AgrupaLoSinProveedorConCodigoVacio() {
+        var pedidos = new[] {
             Pedido(1, 40m, items: [Item(1, 4, 10m), Item(2, 2, 5m)]),
         };
-        var productos = new Dictionary<long, Producto>
-        {
+        var productos = new Dictionary<long, Producto> {
             [1] = Producto(1, categoriaId: 1, proveedorId: "Dist0000001"),
             [2] = Producto(2, categoriaId: 1, proveedorId: null),
         };
-        var proveedores = new Dictionary<string, Proveedor>
-        {
+        var proveedores = new Dictionary<string, Proveedor> {
             ["Dist0000001"] = new() { Codigo = "Dist0000001", Nombre = "Distribuidor" },
         };
 
@@ -237,10 +215,8 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void RankingClientes_OrdenaPorGastoYCalculaElProductoFavorito()
-    {
-        var pedidos = new[]
-        {
+    public void RankingClientes_OrdenaPorGastoYCalculaElProductoFavorito() {
+        var pedidos = new[] {
             Pedido(7, 10m, creado: Referencia, items: [Item(1, 1, 10m, "Funko")]),
             Pedido(7, 20m, creado: Referencia.AddDays(1), items: [Item(2, 2, 10m, "Funko"), Item(3, 1, 8m, "Camiseta")]),
             Pedido(9, 5m, creado: Referencia, items: [Item(3, 1, 5m, "Camiseta")]),
@@ -261,11 +237,9 @@ public class EstadisticasCalculatorTests
     // ────────────────────────────────────────────────────────────
 
     [Test]
-    public void EmbudoEstados_MuestraLosCanceladosPeroNoLosSuma()
-    {
+    public void EmbudoEstados_MuestraLosCanceladosPeroNoLosSuma() {
         var periodo = EstadisticasCalculator.CrearPeriodo(Referencia, Referencia.AddDays(1));
-        var pedidos = new[]
-        {
+        var pedidos = new[] {
             Pedido(1, 100m, PedidoEstado.ENTREGADO),
             Pedido(2, 200m, PedidoEstado.ENTREGADO),
             Pedido(3, 500m, PedidoEstado.CANCELADO),
@@ -281,8 +255,7 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void CalcularComparativa_DevuelveNullSinPeriodoAnterior()
-    {
+    public void CalcularComparativa_DevuelveNullSinPeriodoAnterior() {
         var actual = new TotalesDto(2, 4, 40m, 20m);
         var vacio = new TotalesDto(0, 0, 0m, 0m);
 
@@ -290,8 +263,7 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void CalcularComparativa_CalculaLosPorcentajesRespectoDelPeriodoAnterior()
-    {
+    public void CalcularComparativa_CalculaLosPorcentajesRespectoDelPeriodoAnterior() {
         var actual = new TotalesDto(4, 8, 200m, 50m);
         var anterior = new TotalesDto(2, 4, 100m, 50m);
 
@@ -305,16 +277,13 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void Inventario_CalculaValorAgotadosYStockBajo()
-    {
-        var productos = new Dictionary<long, Producto>
-        {
+    public void Inventario_CalculaValorAgotadosYStockBajo() {
+        var productos = new Dictionary<long, Producto> {
             [1] = Producto(1, categoriaId: 1, precio: 10m, stock: 3),   // stock bajo
             [2] = Producto(2, categoriaId: 1, precio: 20m, stock: 0),   // agotado
             [3] = Producto(3, categoriaId: 2, precio: 5m, stock: 100),  // normal
         };
-        var categorias = new Dictionary<long, Categoria>
-        {
+        var categorias = new Dictionary<long, Categoria> {
             [1] = new() { Id = 1, Nombre = "A" },
             [2] = new() { Id = 2, Nombre = "B" },
         };
@@ -332,10 +301,8 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void Precios_CalculaMinimoMaximoMediaYVariacion()
-    {
-        var puntos = new List<PuntoPrecioDto>
-        {
+    public void Precios_CalculaMinimoMaximoMediaYVariacion() {
+        var puntos = new List<PuntoPrecioDto> {
             new(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), 10m),
             new(new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc), 20m),
             new(new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc), 30m),
@@ -354,8 +321,7 @@ public class EstadisticasCalculatorTests
     }
 
     [Test]
-    public void Precios_SinSerie_DevuelveCeros()
-    {
+    public void Precios_SinSerie_DevuelveCeros() {
         var resultado = EstadisticasCalculator.Precios(5, [], null, null);
 
         resultado.Puntos.Should().Be(0);

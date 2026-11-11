@@ -10,8 +10,7 @@ namespace TiendaApi.Api.Extensions;
 /// Devuelve siempre el shape <c>{message, ...}</c> (con <c>errors</c> por campo
 /// en validaciones) que consumen los tests E2E.
 /// </summary>
-public static class DomainErrorExtensions
-{
+public static class DomainErrorExtensions {
     /// <summary>
     /// Convierte un error de dominio en su respuesta HTTP equivalente.
     /// Devuelve <see cref="ActionResult{T}"/> para que los controladores usen el tipo tipado.
@@ -22,8 +21,7 @@ public static class DomainErrorExtensions
     /// 409 <c>ConflictError</c> · 422 <c>BusinessRuleError</c> · 401 <c>UnauthorizedError</c> ·
     /// 403 <c>ForbiddenError</c> · 500 <c>InternalError</c>/desconocidos.
     /// </returns>
-    public static ActionResult<T> ToHttpResult<T>(this DomainError error) => error switch
-    {
+    public static ActionResult<T> ToHttpResult<T>(this DomainError error) => error switch {
         NotFoundError e => new NotFoundObjectResult(new { message = e.Message }),
         ValidationError e => new BadRequestObjectResult(new { message = e.Message, errors = e.ValidationErrors }),
         ConflictError e => new ConflictObjectResult(new { message = e.Message }),

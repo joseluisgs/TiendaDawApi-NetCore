@@ -22,34 +22,29 @@ public class AuthService(
     ILogger<AuthService> logger,
     IValidator<RegisterDto> registerValidator,
     IValidator<LoginDto> loginValidator
-) : IAuthService
-{
+) : IAuthService {
 
     /// <summary>
     /// Registra un nuevo usuario.
     /// Devuelve: Result.Success(AuthResponseDto) | Result.Failure(Validation/Conflict)
     /// </summary>
-    public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto)
-    {
+    public async Task<Result<AuthResponseDto, DomainError>> SignUpAsync(RegisterDto dto) {
         var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
         logger.LogInformation("SignUp request for username: {Username}", sanitizedUsername);
 
         var validationResult = await ValidateRegistrationAsync(dto);
-        if (validationResult.IsFailure)
-        {
+        if (validationResult.IsFailure) {
             return Result.Failure<AuthResponseDto, DomainError>(validationResult.Error);
         }
 
         var duplicateCheck = await CheckDuplicatesAsync(dto);
-        if (duplicateCheck.IsFailure)
-        {
+        if (duplicateCheck.IsFailure) {
             return Result.Failure<AuthResponseDto, DomainError>(duplicateCheck.Error);
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11);
 
-        var user = new User
-        {
+        var user = new User {
             UserName = dto.Username!,
             Email = dto.Email!,
             PasswordHash = passwordHash,
@@ -69,20 +64,17 @@ public class AuthService(
     /// Autentica un usuario existente.
     /// Devuelve: Result.Success(AuthResponseDto) | Result.Failure(Validation/Unauthorized/NotFound)
     /// </summary>
-    public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto)
-    {
+    public async Task<Result<AuthResponseDto, DomainError>> SignInAsync(LoginDto dto) {
         var sanitizedUsername = dto.Username?.Replace("\n", "").Replace("\r", "");
         logger.LogInformation("SignIn request for username: {Username}", sanitizedUsername);
 
         var validationResult = await ValidateLoginAsync(dto);
-        if (validationResult.IsFailure)
-        {
+        if (validationResult.IsFailure) {
             return Result.Failure<AuthResponseDto, DomainError>(validationResult.Error);
         }
 
         var user = await userRepository.FindByUsernameAsync(dto.Username!);
-        if (user is null)
-        {
+        if (user is null) {
             logger.LogWarning("SignIn fallido: Usuario no encontrado - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
                 AuthErrors.CredencialesInvalidas()
@@ -90,8 +82,7 @@ public class AuthService(
         }
 
         var passwordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
-        if (!passwordValid)
-        {
+        if (!passwordValid) {
             logger.LogWarning("SignIn fallido: Password inválido - {Username}", sanitizedUsername);
             return Result.Failure<AuthResponseDto, DomainError>(
                 AuthErrors.CredencialesInvalidas()
@@ -113,12 +104,10 @@ public class AuthService(
     /// 3. Primera vez → crear cuenta local con dummy hash (no tiene contraseña)
     /// 4. Vincular en user_logins y devolver el MISMO JWT que el login normal
     /// </summary>
-    public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(ExternalLoginDto info)
-    {
+    public async Task<Result<AuthResponseDto, DomainError>> LoginExternalAsync(ExternalLoginDto info) {
         logger.LogInformation("Login externo ({Provider}) para: {Email}", info.LoginProvider, info.Email);
 
-        if (string.IsNullOrWhiteSpace(info.Email))
-        {
+        if (string.IsNullOrWhiteSpace(info.Email)) {
             logger.LogWarning("Login externo falló: el proveedor no devolvió email");
             return Result.Failure<AuthResponseDto, DomainError>(
                 new BusinessRuleError("El proveedor no devolvió email"));
@@ -132,10 +121,8 @@ public class AuthService(
         user ??= await userRepository.FindByEmailAsync(info.Email);
 
         // 3. Primera vez → crear cuenta local sin contraseña real
-        if (user is null)
-        {
-            user = new User
-            {
+        if (user is null) {
+            user = new User {
                 UserName = info.Email,
                 Email = info.Email,
                 PasswordHash = $"OAUTH-{info.LoginProvider}", // dummy hash: el login normal fallará
@@ -147,12 +134,9 @@ public class AuthService(
         }
 
         // 4. Vincular login externo si aún no existía
-        if (linkedLogin is null)
-        {
-            if (!await userLoginRepository.ExistsAsync(info.LoginProvider, info.ProviderKey))
-            {
-                await userLoginRepository.SaveAsync(new UserLogin
-                {
+        if (linkedLogin is null) {
+            if (!await userLoginRepository.ExistsAsync(info.LoginProvider, info.ProviderKey)) {
+                await userLoginRepository.SaveAsync(new UserLogin {
                     UserId = user.Id,
                     LoginProvider = info.LoginProvider,
                     ProviderKey = info.ProviderKey,
@@ -171,12 +155,10 @@ public class AuthService(
     /// Valida el registro usando FluentValidation.
     /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
-    private async Task<UnitResult<DomainError>> ValidateRegistrationAsync(RegisterDto dto)
-    {
+    private async Task<UnitResult<DomainError>> ValidateRegistrationAsync(RegisterDto dto) {
         var validationResult = await registerValidator.ValidateAsync(dto);
 
-        if (!validationResult.IsValid)
-        {
+        if (!validationResult.IsValid) {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(
@@ -196,12 +178,10 @@ public class AuthService(
     /// Valida el login usando FluentValidation.
     /// Devuelve: UnitResult.Success | UnitResult.Failure(Validation)
     /// </summary>
-    private async Task<UnitResult<DomainError>> ValidateLoginAsync(LoginDto dto)
-    {
+    private async Task<UnitResult<DomainError>> ValidateLoginAsync(LoginDto dto) {
         var validationResult = await loginValidator.ValidateAsync(dto);
 
-        if (!validationResult.IsValid)
-        {
+        if (!validationResult.IsValid) {
             var errors = validationResult.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(
@@ -221,17 +201,14 @@ public class AuthService(
     /// Verifica duplicados de username y email.
     /// Devuelve: UnitResult.Success | UnitResult.Failure(Conflict)
     /// </summary>
-    private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(RegisterDto dto)
-    {
+    private async Task<UnitResult<DomainError>> CheckDuplicatesAsync(RegisterDto dto) {
         var existingUser = await userRepository.FindByUsernameAsync(dto.Username!);
-        if (existingUser is not null)
-        {
+        if (existingUser is not null) {
             return UnitResult.Failure<DomainError>(AuthErrors.UsernameExistente(dto.Username!));
         }
 
         var existingEmail = await userRepository.FindByEmailAsync(dto.Email!);
-        if (existingEmail is not null)
-        {
+        if (existingEmail is not null) {
             return UnitResult.Failure<DomainError>(AuthErrors.EmailExistente(dto.Email!));
         }
 
@@ -242,8 +219,7 @@ public class AuthService(
     /// Genera la respuesta de autenticación con token JWT.
     /// Devuelve: AuthResponseDto
     /// </summary>
-    private AuthResponseDto GenerateAuthResponse(User user)
-    {
+    private AuthResponseDto GenerateAuthResponse(User user) {
         var token = jwtService.GenerateToken(user);
 
         var userDto = new UserDto(

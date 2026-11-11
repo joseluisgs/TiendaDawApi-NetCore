@@ -13,8 +13,7 @@ namespace TiendaApi.Api.Dtos.Pedidos;
 /// - Búsqueda específica: por ID de pedido
 /// </remarks>
 /// </summary>
-public class PedidoFilterDto
-{
+public class PedidoFilterDto {
     /// <summary>
     /// Número de página a consultar (1-indexed).
     /// Valor por defecto: 1
@@ -72,8 +71,7 @@ public class PedidoFilterDto
 /// DTO para filtrar pedidos propios del usuario.
 /// Simplificación de PedidoFilterDto para endpoints de usuario.
 /// </summary>
-public class MyPedidoFilterDto
-{
+public class MyPedidoFilterDto {
     /// <summary>
     /// Número de página a consultar (1-indexed).
     /// Valor por defecto: 1

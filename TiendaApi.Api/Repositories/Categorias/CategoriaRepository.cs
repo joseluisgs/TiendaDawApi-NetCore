@@ -12,11 +12,9 @@ namespace TiendaApi.Api.Repositories.Categorias;
 public class CategoriaRepository(
     TiendaDbContext context,
     ILogger<CategoriaRepository> logger
-) : ICategoriaRepository
-{
+) : ICategoriaRepository {
     /// <inheritdoc/>
-    public async Task<IEnumerable<Categoria>> FindAllAsync()
-    {
+    public async Task<IEnumerable<Categoria>> FindAllAsync() {
         logger.LogDebug("Buscando todas las categorías");
         return await context.Categorias
             .OrderBy(c => c.Nombre)
@@ -25,8 +23,7 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
-    public IQueryable<Categoria> FindAllAsNoTracking()
-    {
+    public IQueryable<Categoria> FindAllAsNoTracking() {
         logger.LogDebug("Obteniendo categorías como IQueryable");
         return context.Categorias
             .OrderBy(c => c.Nombre)
@@ -34,8 +31,7 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<(IEnumerable<Categoria> Items, int TotalCount)> FindAllPagedAsync(CategoriaFilterDto filter)
-    {
+    public async Task<(IEnumerable<Categoria> Items, int TotalCount)> FindAllPagedAsync(CategoriaFilterDto filter) {
         logger.LogDebug("Buscando categorías paginadas con filtros");
 
         var query = context.Categorias.AsQueryable();
@@ -43,8 +39,7 @@ public class CategoriaRepository(
         if (!string.IsNullOrWhiteSpace(filter.Nombre))
             query = query.Where(c => c.Nombre.Contains(filter.Nombre));
 
-        if (filter.IsDeleted.HasValue)
-        {
+        if (filter.IsDeleted.HasValue) {
             query = query.IgnoreQueryFilters();
             query = query.Where(c => c.IsDeleted == filter.IsDeleted.Value);
         }
@@ -70,21 +65,18 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<Categoria?> FindByIdAsync(long id)
-    {
+    public async Task<Categoria?> FindByIdAsync(long id) {
         logger.LogDebug("Buscando categoría por ID: {Id}", id);
         return await context.Categorias.FirstOrDefaultAsync(c => c.Id == id);
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ExistsByIdAsync(long id)
-    {
+    public async Task<bool> ExistsByIdAsync(long id) {
         return await context.Categorias.AnyAsync(c => c.Id == id);
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ExistsByNombreAsync(string nombre, long? excludeId = null)
-    {
+    public async Task<bool> ExistsByNombreAsync(string nombre, long? excludeId = null) {
         var query = context.Categorias.Where(c => c.Nombre == nombre);
         if (excludeId.HasValue)
             query = query.Where(c => c.Id != excludeId.Value);
@@ -92,8 +84,7 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<Categoria> CreateAsync(Categoria categoria)
-    {
+    public async Task<Categoria> CreateAsync(Categoria categoria) {
         logger.LogDebug("Creando categoría: {Nombre}", categoria.Nombre);
         context.Categorias.Add(categoria);
         await context.SaveChangesAsync();
@@ -101,8 +92,7 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
-    public async Task CrearConIdExplicitoAsync(Categoria categoria)
-    {
+    public async Task CrearConIdExplicitoAsync(Categoria categoria) {
         logger.LogDebug("Creando categoría con ID explícito: {Id}", categoria.Id);
         // GENERATED ALWAYS rechaza valores explícitos: se inserta con OVERRIDING
         // y después se llama a ResincronizarSecuenciaAsync para no dejar la
@@ -122,8 +112,7 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
-    public async Task ResincronizarSecuenciaAsync()
-    {
+    public async Task ResincronizarSecuenciaAsync() {
         logger.LogDebug("Re-sincronizando secuencia de categorías");
         await context.Database.ExecuteSqlRawAsync(
             """
@@ -137,8 +126,7 @@ public class CategoriaRepository(
         valor.Kind == DateTimeKind.Utc ? valor : DateTime.SpecifyKind(valor, DateTimeKind.Utc);
 
     /// <inheritdoc/>
-    public async Task<Categoria> UpdateAsync(Categoria categoria)
-    {
+    public async Task<Categoria> UpdateAsync(Categoria categoria) {
         logger.LogDebug("Actualizando categoría ID: {Id}", categoria.Id);
         context.Categorias.Update(categoria);
         await context.SaveChangesAsync();
@@ -146,8 +134,7 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeleteAsync(long id)
-    {
+    public async Task<bool> DeleteAsync(long id) {
         logger.LogDebug("Eliminando categoría ID: {Id}", id);
         var categoria = await FindByIdAsync(id);
         if (categoria == null) return false;
@@ -158,26 +145,20 @@ public class CategoriaRepository(
     }
 
     /// <inheritdoc/>
-    public async Task<Categoria> SaveAsync(Categoria categoria)
-    {
+    public async Task<Categoria> SaveAsync(Categoria categoria) {
         logger.LogDebug("Guardando categoría: {Nombre}", categoria.Nombre);
         var existing = await FindByIdAsync(categoria.Id);
-        if (existing != null)
-        {
+        if (existing != null) {
             context.Entry(existing).CurrentValues.SetValues(categoria);
-        }
-        else
-        {
+        } else {
             context.Categorias.Add(categoria);
         }
         await context.SaveChangesAsync();
         return categoria;
     }
 
-    private static Expression<Func<Categoria, object>> GetSortExpression(string sortBy)
-    {
-        return sortBy.ToLowerInvariant() switch
-        {
+    private static Expression<Func<Categoria, object>> GetSortExpression(string sortBy) {
+        return sortBy.ToLowerInvariant() switch {
             "nombre" => c => c.Nombre,
             "createdat" => c => c.CreatedAt,
             _ => c => c.Id

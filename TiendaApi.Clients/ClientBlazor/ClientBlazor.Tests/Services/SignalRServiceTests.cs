@@ -12,8 +12,7 @@ namespace ClientBlazor.Tests.Services;
 /// Objetivo: Validar la lógica de orquestación de conexiones y seguridad de Hubs.
 /// </summary>
 [TestFixture]
-public class SignalRServiceTests
-{
+public class SignalRServiceTests {
     private Mock<IAuthStore> _authStoreMock = null!;
     private Mock<INotificationStore> _notificationStoreMock = null!;
     private SignalRService _service = null!;
@@ -22,8 +21,7 @@ public class SignalRServiceTests
     /// Prepara el entorno para cada test.
     /// </summary>
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _authStoreMock = new Mock<IAuthStore>();
         _notificationStoreMock = new Mock<INotificationStore>();
         _service = new SignalRService(_authStoreMock.Object, _notificationStoreMock.Object);
@@ -33,8 +31,7 @@ public class SignalRServiceTests
     /// Verifica que el sistema impida la conexión a Hubs protegidos si no hay token JWT.
     /// </summary>
     [Test]
-    public async Task ConnectPedidosAsync_Should_Warn_And_Not_Connect_If_No_Token()
-    {
+    public async Task ConnectPedidosAsync_Should_Warn_And_Not_Connect_If_No_Token() {
         // Arrange
         _authStoreMock.Setup(s => s.GetState()).Returns(new AuthStore.AuthState { Token = null });
 
@@ -50,8 +47,7 @@ public class SignalRServiceTests
     /// Comprueba que el estado inicial de la conexión sea desconectado.
     /// </summary>
     [Test]
-    public void Initial_State_Should_Be_Disconnected()
-    {
+    public void Initial_State_Should_Be_Disconnected() {
         _service.IsConnected.Should().BeFalse();
     }
 
@@ -59,8 +55,7 @@ public class SignalRServiceTests
     /// Valida que el método de desconexión no lance errores incluso si no hay una conexión activa.
     /// </summary>
     [Test]
-    public async Task DisconnectAsync_Should_Work_Even_If_Not_Connected()
-    {
+    public async Task DisconnectAsync_Should_Work_Even_If_Not_Connected() {
         // Act & Assert
         Assert.DoesNotThrowAsync(async () => await _service.DisconnectAsync());
     }
@@ -69,11 +64,10 @@ public class SignalRServiceTests
     /// Verifica que se intentó la conexión al Hub sin lanzar excepciones.
     /// </summary>
     [Test]
-    public async Task ConnectProductosAsync_Should_Attempt_Connection_To_Correct_Url()
-    {
+    public async Task ConnectProductosAsync_Should_Attempt_Connection_To_Correct_Url() {
         // Act & Assert
         Assert.DoesNotThrowAsync(async () => await _service.ConnectProductosAsync());
-        
+
         // Verifica que se notificó al usuario (éxito o error según disponibilidad del servidor)
         _notificationStoreMock.Verify(n => n.Success(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.AtMostOnce);
     }

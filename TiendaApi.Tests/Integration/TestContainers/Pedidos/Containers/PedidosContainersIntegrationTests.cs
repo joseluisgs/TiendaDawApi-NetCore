@@ -13,29 +13,25 @@ namespace TiendaApi.Tests.Integration.TestContainers.Pedidos.Containers;
 /// </summary>
 [TestFixture]
 [Category("Integration")]
-public class PedidosContainersIntegrationTests
-{
+public class PedidosContainersIntegrationTests {
     private const string DatabaseName = "it_pedidos_containers";
     private string _connectionString = string.Empty;
     private string _mongoConnectionString = string.Empty;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         _connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         _mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         await AssemblyContainerFixture.DropPostgresDatabaseAsync(DatabaseName);
         AssemblyContainerFixture.DropMongoDatabase(DatabaseName);
     }
 
     [Test]
-    public async Task MongoDBContainer_ShouldBeRunning()
-    {
+    public async Task MongoDBContainer_ShouldBeRunning() {
         var connectionString = _mongoConnectionString;
         connectionString.Should().NotBeNullOrEmpty();
         connectionString.Should().Contain("mongodb://");
@@ -44,8 +40,7 @@ public class PedidosContainersIntegrationTests
     }
 
     [Test]
-    public async Task PostgreSQLContainer_ShouldBeRunning()
-    {
+    public async Task PostgreSQLContainer_ShouldBeRunning() {
         var connectionString = _connectionString;
         connectionString.Should().NotBeNullOrEmpty();
         connectionString.Should().Contain("Host=");
@@ -54,11 +49,9 @@ public class PedidosContainersIntegrationTests
     }
 
     [Test]
-    public async Task Configuration_CanBuildServiceProvider()
-    {
+    public async Task Configuration_CanBuildServiceProvider() {
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 { "ConnectionStrings:DefaultConnection", _connectionString },
                 { "MongoDbSettings:ConnectionString", _mongoConnectionString },
                 { "MongoDbSettings:DatabaseName", DatabaseName },
@@ -79,8 +72,7 @@ public class PedidosContainersIntegrationTests
     }
 
     [Test]
-    public async Task BothContainers_CanRunTogether()
-    {
+    public async Task BothContainers_CanRunTogether() {
         var postgresConnection = _connectionString;
         var mongoConnection = _mongoConnectionString;
 

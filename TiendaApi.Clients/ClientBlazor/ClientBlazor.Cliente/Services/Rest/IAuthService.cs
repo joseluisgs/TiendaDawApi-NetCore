@@ -8,8 +8,7 @@ namespace ClientBlazor.Cliente.Services.Rest;
 /// Define el contrato para el servicio de orquestación de autenticación.
 /// Maneja la lógica de negocio relacionada con la sesión del usuario y su persistencia.
 /// </summary>
-public interface IAuthService
-{
+public interface IAuthService {
     /// <summary>
     /// Realiza el proceso de inicio de sesión contra la API.
     /// Valida credenciales, actualiza el estado global y persiste la sesión localmente.

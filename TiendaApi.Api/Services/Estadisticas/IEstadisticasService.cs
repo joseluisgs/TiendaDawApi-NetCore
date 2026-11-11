@@ -11,8 +11,7 @@ namespace TiendaApi.Api.Services.Estadisticas;
 /// tablas de agregados, trabajos de fondo ni materialización. Cada llamada carga
 /// la ventana pedida y delega el cálculo en <see cref="EstadisticasCalculator"/>.
 /// </summary>
-public interface IEstadisticasService
-{
+public interface IEstadisticasService {
     /// <summary>Resumen general con comparativa frente al periodo anterior.</summary>
     Task<Result<ResumenEstadisticasDto, DomainError>> ResumenAsync(DateTime? desde, DateTime? hasta);
 

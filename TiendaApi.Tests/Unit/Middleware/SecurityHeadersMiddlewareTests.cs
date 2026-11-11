@@ -13,10 +13,8 @@ namespace TiendaApi.Tests.Unit.Middleware;
 /// la API, recibe una política propia para no romper su script interno.
 /// </summary>
 [TestFixture]
-public class SecurityHeadersMiddlewareTests
-{
-    private static async Task<DefaultHttpContext> InvocarAsync(string path)
-    {
+public class SecurityHeadersMiddlewareTests {
+    private static async Task<DefaultHttpContext> InvocarAsync(string path) {
         var context = new DefaultHttpContext { Request = { Path = path, Method = HttpMethods.Get } };
         context.Response.Body = new MemoryStream();
 
@@ -27,8 +25,7 @@ public class SecurityHeadersMiddlewareTests
     }
 
     [Test]
-    public async Task Invoke_RespuestaApi_LlevaContentSecurityPolicy()
-    {
+    public async Task Invoke_RespuestaApi_LlevaContentSecurityPolicy() {
         var context = await InvocarAsync("/api/v1/productos");
 
         context.Response.Headers["Content-Security-Policy"].ToString()
@@ -38,8 +35,7 @@ public class SecurityHeadersMiddlewareTests
     }
 
     [Test]
-    public async Task Invoke_RespuestaApi_NoEnviaXssProtection()
-    {
+    public async Task Invoke_RespuestaApi_NoEnviaXssProtection() {
         var context = await InvocarAsync("/api/v1/productos");
 
         context.Response.Headers.ContainsKey("X-XSS-Protection").Should().BeFalse(
@@ -47,8 +43,7 @@ public class SecurityHeadersMiddlewareTests
     }
 
     [Test]
-    public async Task Invoke_SwaggerUsaPoliticaPropiaParaNoRomperselo()
-    {
+    public async Task Invoke_SwaggerUsaPoliticaPropiaParaNoRomperselo() {
         var context = await InvocarAsync("/swagger/index.html");
 
         var csp = context.Response.Headers["Content-Security-Policy"].ToString();
@@ -58,8 +53,7 @@ public class SecurityHeadersMiddlewareTests
     }
 
     [Test]
-    public async Task Invoke_GraphQLUi_RecibePoliticaQueLeDejaCargarSusAssets()
-    {
+    public async Task Invoke_GraphQLUi_RecibePoliticaQueLeDejaCargarSusAssets() {
         // 🎓 Regresión: la UI de GraphQL (Banana Cake Pop en /graphql) se
         // servía con el default-src 'none' de la API y el navegador bloqueaba
         // sus scripts, estilos, manifest y conexiones → página en blanco.
@@ -77,8 +71,7 @@ public class SecurityHeadersMiddlewareTests
     }
 
     [Test]
-    public async Task Invoke_OtrasCabecerasDeSeguridad_SiguenPresentes()
-    {
+    public async Task Invoke_OtrasCabecerasDeSeguridad_SiguenPresentes() {
         var context = await InvocarAsync("/api/v1/productos");
 
         context.Response.Headers["X-Content-Type-Options"].ToString().Should().Be("nosniff");

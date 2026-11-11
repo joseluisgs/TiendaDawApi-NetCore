@@ -25,8 +25,7 @@ namespace TiendaApi.Api.Controllers;
 public class EstadisticasController(
     IEstadisticasService service,
     ILogger<EstadisticasController> logger
-) : ControllerBase
-{
+) : ControllerBase {
     /// <summary>
     /// Resumen general: ventas, pedidos por estado, inventario, usuarios y
     /// comparativa con el periodo anterior de igual duración.
@@ -39,8 +38,7 @@ public class EstadisticasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ResumenEstadisticasDto>> Resumen(
-        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
-    {
+        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta) {
         logger.LogInformation("Calculando resumen estadístico");
 
         var resultado = await service.ResumenAsync(desde, hasta);
@@ -65,8 +63,7 @@ public class EstadisticasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<VentasSerieDto>> Ventas(
-        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] string agrupar = "mes")
-    {
+        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] string agrupar = "mes") {
         logger.LogInformation("Calculando serie de ventas ({Agrupar})", agrupar);
 
         var resultado = await service.VentasAsync(desde, hasta, agrupar);
@@ -94,8 +91,7 @@ public class EstadisticasController(
         [FromQuery] DateTime? desde,
         [FromQuery] DateTime? hasta,
         [FromQuery] string orden = "unidades",
-        [FromQuery] int top = 10)
-    {
+        [FromQuery] int top = 10) {
         logger.LogInformation("Calculando ranking de productos ({Orden}, top {Top})", orden, top);
 
         var resultado = await service.ProductosMasVendidosAsync(desde, hasta, orden, top);
@@ -118,8 +114,7 @@ public class EstadisticasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<CategoriasEstadisticasDto>> Categorias(
-        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
-    {
+        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta) {
         logger.LogInformation("Calculando estadísticas por categoría");
 
         var resultado = await service.CategoriasAsync(desde, hasta);
@@ -142,8 +137,7 @@ public class EstadisticasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ProveedoresEstadisticasDto>> Proveedores(
-        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
-    {
+        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta) {
         logger.LogInformation("Calculando estadísticas por proveedor");
 
         var resultado = await service.ProveedoresAsync(desde, hasta);
@@ -166,8 +160,7 @@ public class EstadisticasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<EstadosEstadisticasDto>> Estados(
-        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
-    {
+        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta) {
         logger.LogInformation("Calculando embudo de estados");
 
         var resultado = await service.EstadosAsync(desde, hasta);
@@ -190,8 +183,7 @@ public class EstadisticasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ClientesEstadisticasDto>> Clientes(
-        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] int top = 10)
-    {
+        [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] int top = 10) {
         logger.LogInformation("Calculando ranking de clientes (top {Top})", top);
 
         var resultado = await service.ClientesAsync(desde, hasta, top);
@@ -212,8 +204,7 @@ public class EstadisticasController(
     [ProducesResponseType(typeof(InventarioDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<InventarioDto>> Inventario([FromQuery] int stockMax = 5)
-    {
+    public async Task<ActionResult<InventarioDto>> Inventario([FromQuery] int stockMax = 5) {
         logger.LogInformation("Calculando inventario (umbral {StockMax})", stockMax);
 
         var resultado = await service.InventarioAsync(stockMax);
@@ -239,8 +230,7 @@ public class EstadisticasController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PreciosEstadisticasDto>> Precios(
-        [FromQuery] long productoId, [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
-    {
+        [FromQuery] long productoId, [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta) {
         logger.LogInformation("Calculando histórico de precios del producto {ProductoId}", productoId);
 
         var resultado = await service.PreciosAsync(productoId, desde, hasta);

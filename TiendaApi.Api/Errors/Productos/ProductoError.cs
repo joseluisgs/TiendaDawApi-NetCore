@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.Productos;
 /// <summary>
 /// Errores del dominio de productos (HTTP 404, 409, 400, 422).
 /// </summary>
-public static class ProductoError
-{
+public static class ProductoError {
     /// <summary>Crea error para producto no encontrado.</summary>
     /// <param name="id">ID del producto.</param>
     /// <returns>NotFoundError (HTTP 404).</returns>

@@ -49,8 +49,7 @@ namespace TiendaApi.Api.Dtos.Common;
 /// }
 /// </code>
 /// </example>
-public record PagedResult<T>
-{
+public record PagedResult<T> {
     /// <summary>
     /// Elementos de la página actual.
     /// Colección de objetos del tipo especificado que pertenecen

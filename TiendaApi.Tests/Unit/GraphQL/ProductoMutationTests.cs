@@ -16,15 +16,13 @@ namespace TiendaApi.Tests.Unit.GraphQL;
 [TestFixture]
 [Category("Unit")]
 [Category("GraphQL")]
-public class ProductoMutationTests
-{
+public class ProductoMutationTests {
     private Mock<IProductoService> _productoServiceMock = null!;
     private Mock<IProductoRepository> _productoRepoMock = null!;
     private ProductoMutation _mutation = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _productoServiceMock = new Mock<IProductoService>();
         _productoRepoMock = new Mock<IProductoRepository>();
         _mutation = new ProductoMutation();
@@ -33,10 +31,8 @@ public class ProductoMutationTests
     #region CreateProducto Tests
 
     [Test]
-    public async Task CreateProducto_ConDtoValido_RetornaProductoCreado()
-    {
-        var input = new CreateProductoInput
-        {
+    public async Task CreateProducto_ConDtoValido_RetornaProductoCreado() {
+        var input = new CreateProductoInput {
             Nombre = "Nuevo Producto",
             Precio = 99.99m,
             Stock = 10,
@@ -55,10 +51,8 @@ public class ProductoMutationTests
     }
 
     [Test]
-    public async Task CreateProducto_ConErrorValidacion_LanzaExcepcion()
-    {
-        var input = new CreateProductoInput
-        {
+    public async Task CreateProducto_ConErrorValidacion_LanzaExcepcion() {
+        var input = new CreateProductoInput {
             Nombre = "",
             Precio = -100m,
             Stock = 0,
@@ -80,8 +74,7 @@ public class ProductoMutationTests
     #region UpdateProducto Tests
 
     [Test]
-    public async Task UpdateProducto_ConProductoExistente_RetornaProductoActualizado()
-    {
+    public async Task UpdateProducto_ConProductoExistente_RetornaProductoActualizado() {
         long productoId = 1;
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
 
@@ -99,8 +92,7 @@ public class ProductoMutationTests
     }
 
     [Test]
-    public async Task UpdateProducto_ConProductoNoExistente_LanzaExcepcion()
-    {
+    public async Task UpdateProducto_ConProductoNoExistente_LanzaExcepcion() {
         long productoId = 999;
         var input = new UpdateProductoInput { Nombre = "Nuevo Nombre" };
 
@@ -118,8 +110,7 @@ public class ProductoMutationTests
     #region DeleteProducto Tests
 
     [Test]
-    public async Task DeleteProducto_ConProductoExistente_RetornaTrue()
-    {
+    public async Task DeleteProducto_ConProductoExistente_RetornaTrue() {
         long productoId = 1;
 
         _productoServiceMock.Setup(s => s.DeleteAsync(productoId))
@@ -131,8 +122,7 @@ public class ProductoMutationTests
     }
 
     [Test]
-    public async Task DeleteProducto_ConProductoNoExistente_LanzaExcepcion()
-    {
+    public async Task DeleteProducto_ConProductoNoExistente_LanzaExcepcion() {
         long productoId = 999;
 
         _productoServiceMock.Setup(s => s.DeleteAsync(productoId))

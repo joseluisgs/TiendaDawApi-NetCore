@@ -9,8 +9,7 @@ namespace TiendaApi.Api.Infrastructures;
 /// <summary>
 /// Configuración de bases de datos (PostgreSQL + MongoDB).
 /// </summary>
-public static class DatabaseConfig
-{
+public static class DatabaseConfig {
     /// <summary>
     /// Configura PostgreSQL y MongoDB según configuración.
     /// </summary>
@@ -18,8 +17,7 @@ public static class DatabaseConfig
     /// <param name="configuration">Configuración de la app.</param>
     /// <param name="environment">Entorno (producción exige configuración explícita).</param>
     /// <returns>IServiceCollection para encadenar.</returns>
-    public static IServiceCollection AddDatabases(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
-    {
+    public static IServiceCollection AddDatabases(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment) {
         Log.Information("Configurando PostgreSQL...");
 
         // 🎓 Fail-fast: en producción, si falta la configuración, la app NO debe arrancar.
@@ -33,8 +31,7 @@ public static class DatabaseConfig
 
         var mongoImpl = configuration["Pedidos:RepositoryType"] ?? "MongoDbNative";
 
-        if (mongoImpl == "MongoDbNative")
-        {
+        if (mongoImpl == "MongoDbNative") {
             Log.Information("Configurando MongoDB (Native)...");
             var mongoConnectionString = ResolverCadenaObligatoria(
                 configuration["MongoDbSettings:ConnectionString"],
@@ -44,20 +41,16 @@ public static class DatabaseConfig
             var mongoDatabaseName = configuration["MongoDbSettings:DatabaseName"] ?? "tienda";
 
             services.AddSingleton<IMongoClient>(sp => new MongoClient(mongoConnectionString));
-            services.AddSingleton(sp =>
-            {
+            services.AddSingleton(sp => {
                 var client = sp.GetRequiredService<IMongoClient>();
                 return client.GetDatabase(mongoDatabaseName);
             });
 
-            services.AddSingleton(sp =>
-            {
+            services.AddSingleton(sp => {
                 var database = sp.GetRequiredService<IMongoDatabase>();
                 return database.GetCollection<Models.Pedido>("pedidos");
             });
-        }
-        else
-        {
+        } else {
             Log.Information("Configurando MongoDB (EfCore) [bug EF-272]");
             var mongoConnectionString = ResolverCadenaObligatoria(
                 configuration["MongoDbSettings:ConnectionString"],
@@ -74,12 +67,9 @@ public static class DatabaseConfig
         }
 
         Log.Information("Registrando seeders...");
-        if (mongoImpl == "MongoDbNative")
-        {
+        if (mongoImpl == "MongoDbNative") {
             services.AddScoped<Data.Seed.Mongo.MongoDbSeeder>();
-        }
-        else
-        {
+        } else {
             services.AddScoped<Data.Seed.Mongo.MongoDbEfCoreSeeder>();
         }
         services.AddScoped<Data.Seed.Sql.SqlSeeder>();
@@ -99,13 +89,11 @@ public static class DatabaseConfig
     /// <param name="claveConfig">Nombre de la clave, para los mensajes (mismos textos que antes).</param>
     /// <param name="environment">Entorno actual.</param>
     private static string ResolverCadenaObligatoria(
-        string? valor, string fallbackDesarrollo, string claveConfig, IWebHostEnvironment environment)
-    {
+        string? valor, string fallbackDesarrollo, string claveConfig, IWebHostEnvironment environment) {
         if (!string.IsNullOrEmpty(valor))
             return valor;
 
-        if (environment.IsDevelopment())
-        {
+        if (environment.IsDevelopment()) {
             Log.Warning("⚠️ Usando credenciales por defecto de desarrollo ({Clave} no definida)", claveConfig);
             return fallbackDesarrollo;
         }

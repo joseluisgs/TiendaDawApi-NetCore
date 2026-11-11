@@ -16,8 +16,7 @@ namespace TiendaApi.Api.Services.Backup;
 /// y cultura invariante en números y fechas para que el archivo sea legible
 /// en cualquier configuración regional.
 /// </summary>
-public static class CsvCodec
-{
+public static class CsvCodec {
     /// <summary>Separador de campos.</summary>
     private const char Separador = ',';
 
@@ -46,21 +45,18 @@ public static class CsvCodec
     /// <summary>
     /// Lee todas las filas de un CSV. La primera fila suele ser la cabecera.
     /// </summary>
-    public static List<string[]> Leer(TextReader lector)
-    {
+    public static List<string[]> Leer(TextReader lector) {
         var filas = new List<string[]>();
         var campo = new StringBuilder();
         var fila = new List<string>();
         var entreComillas = false;
 
-        void CerrarCampo()
-        {
+        void CerrarCampo() {
             fila.Add(campo.ToString());
             campo.Clear();
         }
 
-        void CerrarFila()
-        {
+        void CerrarFila() {
             CerrarCampo();
             // Una línea vacía al final no produce una fila fantasma.
             if (fila.Count > 1 || fila[0].Length > 0)
@@ -69,33 +65,24 @@ public static class CsvCodec
         }
 
         int caract;
-        while ((caract = lector.Read()) != -1)
-        {
+        while ((caract = lector.Read()) != -1) {
             var c = (char)caract;
 
-            if (entreComillas)
-            {
-                if (c == '"')
-                {
-                    if (lector.Peek() == '"')
-                    {
+            if (entreComillas) {
+                if (c == '"') {
+                    if (lector.Peek() == '"') {
                         lector.Read();
                         campo.Append('"');
-                    }
-                    else
-                    {
+                    } else {
                         entreComillas = false;
                     }
-                }
-                else
-                {
+                } else {
                     campo.Append(c);
                 }
                 continue;
             }
 
-            switch (c)
-            {
+            switch (c) {
                 case '"':
                     entreComillas = true;
                     break;
@@ -147,8 +134,7 @@ public static class CsvCodec
             : DateTime.Parse(texto, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
 
     /// <summary>Entrecomilla un valor si lo necesita (RFC 4180).</summary>
-    private static string Escapar(string valor)
-    {
+    private static string Escapar(string valor) {
         if (valor.IndexOfAny([Separador, '"', '\r', '\n']) < 0)
             return valor;
 

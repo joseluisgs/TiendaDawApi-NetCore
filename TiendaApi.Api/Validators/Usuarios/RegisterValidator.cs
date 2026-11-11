@@ -7,13 +7,11 @@ namespace TiendaApi.Api.Validators.Usuarios;
 /// Validador FluentValidation para RegisterDto.
 /// Reglas: Username(3-50), Email válido, Password(8-100 con mayúscula, minúscula y dígito).
 /// </summary>
-public class RegisterValidator : AbstractValidator<RegisterDto>
-{
+public class RegisterValidator : AbstractValidator<RegisterDto> {
     /// <summary>
     /// Define reglas de validación para RegisterDto.
     /// </summary>
-    public RegisterValidator()
-    {
+    public RegisterValidator() {
         RuleFor(r => r.Username)
             .NotEmpty().WithMessage("El nombre de usuario es obligatorio")
             .MinimumLength(3).WithMessage("El nombre de usuario debe tener al menos 3 caracteres")

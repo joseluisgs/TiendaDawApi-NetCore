@@ -19,11 +19,9 @@ namespace TiendaApi.Api.Realtime.Pedidos;
 /// // Respuesta: {"pedidoId":"PED-001","userId":123,"estado":"Pendiente","tipo":"PEDIDO_CREADO","timestamp":"2025-01-18T10:30:00Z"}
 /// </example>
 [Authorize]
-public class PedidosHub(ILogger<PedidosHub> logger) : Hub
-{
+public class PedidosHub(ILogger<PedidosHub> logger) : Hub {
     /// <summary>Cliente conectado - se suscribe a grupos.</summary>
-    public override async Task OnConnectedAsync()
-    {
+    public override async Task OnConnectedAsync() {
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var isAdmin = EsAdmin(Context.User);
 
@@ -52,8 +50,7 @@ public class PedidosHub(ILogger<PedidosHub> logger) : Hub
             string.Equals(c.Value, "admin", StringComparison.OrdinalIgnoreCase)) == true;
 
     /// <summary>Cliente desconectado.</summary>
-    public override async Task OnDisconnectedAsync(Exception? exception)
-    {
+    public override async Task OnDisconnectedAsync(Exception? exception) {
         if (exception != null)
             logger.LogWarning(exception, "Cliente desconectado: {ConnectionId}", Context.ConnectionId);
         else
@@ -64,8 +61,7 @@ public class PedidosHub(ILogger<PedidosHub> logger) : Hub
     /// <summary>Obtiene información de la conexión.</summary>
     /// <returns>Datos de conexión.</returns>
     [Authorize]
-    public object GetConnectionInfo() => new
-    {
+    public object GetConnectionInfo() => new {
         connectionId = Context.ConnectionId,
         userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value,
         userName = Context.User?.Identity?.Name,

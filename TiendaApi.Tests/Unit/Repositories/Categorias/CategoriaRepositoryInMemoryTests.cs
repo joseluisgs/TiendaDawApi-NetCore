@@ -9,10 +9,8 @@ using TiendaApi.Api.Repositories.Categorias;
 
 namespace TiendaApi.Tests.Unit.Repositories.Categorias;
 
-public class CategoriaRepositoryInMemoryTests
-{
-    private TiendaDbContext CreateContext(string dbName)
-    {
+public class CategoriaRepositoryInMemoryTests {
+    private TiendaDbContext CreateContext(string dbName) {
         var options = new DbContextOptionsBuilder<TiendaDbContext>()
             .UseInMemoryDatabase(databaseName: dbName)
             .Options;
@@ -21,8 +19,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllAsync_SinCategorias_RetornaListaVacia()
-    {
+    public async Task FindAllAsync_SinCategorias_RetornaListaVacia() {
         using var context = CreateContext(nameof(FindAllAsync_SinCategorias_RetornaListaVacia));
 
         var repository = new CategoriaRepository(context, Mock.Of<ILogger<CategoriaRepository>>());
@@ -33,8 +30,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllAsync_ConCategorias_RetornaListaOrdenada()
-    {
+    public async Task FindAllAsync_ConCategorias_RetornaListaOrdenada() {
         using var context = CreateContext(nameof(FindAllAsync_ConCategorias_RetornaListaOrdenada));
 
         context.Categorias.AddRange(
@@ -51,8 +47,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindByIdAsync_Existe_RetornaCategoria()
-    {
+    public async Task FindByIdAsync_Existe_RetornaCategoria() {
         using var context = CreateContext(nameof(FindByIdAsync_Existe_RetornaCategoria));
 
         context.Categorias.Add(new Categoria { Id = 1, Nombre = "Electrónica" });
@@ -67,8 +62,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindByIdAsync_NoExiste_RetornaNull()
-    {
+    public async Task FindByIdAsync_NoExiste_RetornaNull() {
         using var context = CreateContext(nameof(FindByIdAsync_NoExiste_RetornaNull));
 
         var repository = new CategoriaRepository(context, Mock.Of<ILogger<CategoriaRepository>>());
@@ -79,8 +73,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task SaveAsync_NuevaCategoria_RetornaConId()
-    {
+    public async Task SaveAsync_NuevaCategoria_RetornaConId() {
         using var context = CreateContext(nameof(SaveAsync_NuevaCategoria_RetornaConId));
 
         var repository = new CategoriaRepository(context, Mock.Of<ILogger<CategoriaRepository>>());
@@ -93,8 +86,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task UpdateAsync_Existente_ActualizaNombre()
-    {
+    public async Task UpdateAsync_Existente_ActualizaNombre() {
         using var context = CreateContext(nameof(UpdateAsync_Existente_ActualizaNombre));
 
         context.Categorias.Add(new Categoria { Id = 1, Nombre = "Original" });
@@ -110,8 +102,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task DeleteAsync_Existente_MarcaIsDeleted()
-    {
+    public async Task DeleteAsync_Existente_MarcaIsDeleted() {
         using var context = CreateContext(nameof(DeleteAsync_Existente_MarcaIsDeleted));
 
         context.Categorias.Add(new Categoria { Id = 1, Nombre = "Para Borrar" });
@@ -127,8 +118,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllAsync_NoMuestraEliminados_SoftDelete()
-    {
+    public async Task FindAllAsync_NoMuestraEliminados_SoftDelete() {
         using var context = CreateContext(nameof(FindAllAsync_NoMuestraEliminados_SoftDelete));
 
         context.Categorias.AddRange(
@@ -148,13 +138,11 @@ public class CategoriaRepositoryInMemoryTests
     #region FindAllPagedAsync Tests
 
     [Test]
-    public async Task FindAllPagedAsync_Con15Categorias_Pagina1_Size5_Retorna5()
-    {
+    public async Task FindAllPagedAsync_Con15Categorias_Pagina1_Size5_Retorna5() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
-        for (int i = 1; i <= 15; i++)
-        {
+        for (int i = 1; i <= 15; i++) {
             context.Categorias.Add(new Categoria { Id = i, Nombre = $"Categoría {i}" });
         }
         await context.SaveChangesAsync();
@@ -169,13 +157,11 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_Pagina2_Size5_RetornaSiguientes5()
-    {
+    public async Task FindAllPagedAsync_Pagina2_Size5_RetornaSiguientes5() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
-        for (int i = 1; i <= 15; i++)
-        {
+        for (int i = 1; i <= 15; i++) {
             context.Categorias.Add(new Categoria { Id = i, Nombre = $"Categoría {i}" });
         }
         await context.SaveChangesAsync();
@@ -191,8 +177,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroNombre_RetornaSoloCoincidentes()
-    {
+    public async Task FindAllPagedAsync_ConFiltroNombre_RetornaSoloCoincidentes() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -214,8 +199,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados()
-    {
+    public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -236,8 +220,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso()
-    {
+    public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -258,8 +241,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_OrdenacionPorNombre_RetornaOrdenadoPorNombre()
-    {
+    public async Task FindAllPagedAsync_OrdenacionPorNombre_RetornaOrdenadoPorNombre() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -281,8 +263,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos()
-    {
+    public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -302,8 +283,7 @@ public class CategoriaRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto()
-    {
+    public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -316,8 +296,7 @@ public class CategoriaRepositoryInMemoryTests
         await context.SaveChangesAsync();
 
         var repository = new CategoriaRepository(context, Mock.Of<ILogger<CategoriaRepository>>());
-        var filter = new CategoriaFilterDto
-        {
+        var filter = new CategoriaFilterDto {
             Nombre = "Electrónica",
             IsDeleted = false,
             Page = 0,

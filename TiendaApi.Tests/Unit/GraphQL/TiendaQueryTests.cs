@@ -18,15 +18,13 @@ namespace TiendaApi.Tests.Unit.GraphQL;
 [TestFixture]
 [Category("Unit")]
 [Category("GraphQL")]
-public class TiendaQueryTests
-{
+public class TiendaQueryTests {
     private Mock<IProductoRepository> _productoRepoMock = null!;
     private Mock<ICategoriaRepository> _categoriaRepoMock = null!;
     private TiendaQuery _query = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _productoRepoMock = new Mock<IProductoRepository>();
         _categoriaRepoMock = new Mock<ICategoriaRepository>();
         _query = new TiendaQuery();
@@ -35,8 +33,7 @@ public class TiendaQueryTests
     #region GetProductos Tests
 
     [Test]
-    public async Task GetProductos_RepositoryExists_ReturnsList()
-    {
+    public async Task GetProductos_RepositoryExists_ReturnsList() {
         _productoRepoMock.Setup(r => r.FindAllAsync())
             .ReturnsAsync(new List<Producto>());
 
@@ -50,8 +47,7 @@ public class TiendaQueryTests
     #region GetProducto Tests
 
     [Test]
-    public async Task GetProducto_WithId_ReturnsProducto()
-    {
+    public async Task GetProducto_WithId_ReturnsProducto() {
         var productoId = 1L;
         var producto = new Producto { Id = productoId, Nombre = "Test" };
 
@@ -65,8 +61,7 @@ public class TiendaQueryTests
     }
 
     [Test]
-    public async Task GetProducto_WithInvalidId_ReturnsNull()
-    {
+    public async Task GetProducto_WithInvalidId_ReturnsNull() {
         _productoRepoMock.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Producto?)null);
 
@@ -80,8 +75,7 @@ public class TiendaQueryTests
     #region GetCategorias Tests
 
     [Test]
-    public async Task GetCategorias_RepositoryExists_ReturnsList()
-    {
+    public async Task GetCategorias_RepositoryExists_ReturnsList() {
         _categoriaRepoMock.Setup(r => r.FindAllAsync())
             .ReturnsAsync(new List<Categoria>());
 
@@ -95,8 +89,7 @@ public class TiendaQueryTests
     #region GetCategoria Tests
 
     [Test]
-    public async Task GetCategoria_WithId_ReturnsCategoria()
-    {
+    public async Task GetCategoria_WithId_ReturnsCategoria() {
         var categoriaId = 1L;
         var categoria = new Categoria { Id = categoriaId, Nombre = "Test" };
 
@@ -110,8 +103,7 @@ public class TiendaQueryTests
     }
 
     [Test]
-    public async Task GetCategoria_WithInvalidId_ReturnsNull()
-    {
+    public async Task GetCategoria_WithInvalidId_ReturnsNull() {
         _categoriaRepoMock.Setup(r => r.FindByIdAsync(It.IsAny<long>()))
             .ReturnsAsync((Categoria?)null);
 
@@ -125,8 +117,7 @@ public class TiendaQueryTests
     #region GetProductosPaged Tests
 
     [Test]
-    public async Task GetProductosPaged_WithPage1_ConvertsToZeroBasedFilter()
-    {
+    public async Task GetProductosPaged_WithPage1_ConvertsToZeroBasedFilter() {
         // Arrange: capturar el filtro que llega al repositorio
         ProductoFilterDto? capturedFilter = null;
         _productoRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
@@ -145,8 +136,7 @@ public class TiendaQueryTests
     }
 
     [Test]
-    public async Task GetProductosPaged_WithPage5_ConvertsToFourZeroBased()
-    {
+    public async Task GetProductosPaged_WithPage5_ConvertsToFourZeroBased() {
         ProductoFilterDto? capturedFilter = null;
         _productoRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
             .Callback<ProductoFilterDto>(f => capturedFilter = f)
@@ -163,8 +153,7 @@ public class TiendaQueryTests
     #region GetCategoriasPaged Tests
 
     [Test]
-    public async Task GetCategoriasPaged_WithPage1_ConvertsToZeroBasedFilter()
-    {
+    public async Task GetCategoriasPaged_WithPage1_ConvertsToZeroBasedFilter() {
         // Arrange: capturar el filtro que llega al repositorio
         CategoriaFilterDto? capturedFilter = null;
         _categoriaRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))
@@ -183,8 +172,7 @@ public class TiendaQueryTests
     }
 
     [Test]
-    public async Task GetCategoriasPaged_WithPage3_ConvertsToTwoZeroBased()
-    {
+    public async Task GetCategoriasPaged_WithPage3_ConvertsToTwoZeroBased() {
         CategoriaFilterDto? capturedFilter = null;
         _categoriaRepoMock.Setup(r => r.FindAllPagedAsync(It.IsAny<CategoriaFilterDto>()))
             .Callback<CategoriaFilterDto>(f => capturedFilter = f)
@@ -200,8 +188,7 @@ public class TiendaQueryTests
 
     #region GetPedidos / GetMisPedidos Tests
 
-    private static Pedido UnPedido(long userId) => new()
-    {
+    private static Pedido UnPedido(long userId) => new() {
         Id = MongoDB.Bson.ObjectId.GenerateNewId(),
         UserId = userId,
         Estado = "Pendiente",
@@ -211,8 +198,7 @@ public class TiendaQueryTests
     };
 
     [Test]
-    public async Task GetPedidos_ReturnsAllAsDtos()
-    {
+    public async Task GetPedidos_ReturnsAllAsDtos() {
         var repo = new Mock<IPedidosRepository>();
         repo.Setup(r => r.FindAllAsync())
             .ReturnsAsync(new List<Pedido> { UnPedido(1), UnPedido(2) });
@@ -225,8 +211,7 @@ public class TiendaQueryTests
     }
 
     [Test]
-    public async Task GetMisPedidos_ConClaim_FiltraPorElUsuarioAutenticado()
-    {
+    public async Task GetMisPedidos_ConClaim_FiltraPorElUsuarioAutenticado() {
         // El userId SIEMPRE sale del claim del JWT: el repositorio filtra
         // por él y un usuario jamás ve pedidos ajenos por GraphQL.
         var repo = new Mock<IPedidosRepository>();
@@ -245,8 +230,7 @@ public class TiendaQueryTests
     }
 
     [Test]
-    public async Task GetMisPedidos_SinClaim_LanzaError()
-    {
+    public async Task GetMisPedidos_SinClaim_LanzaError() {
         var repo = new Mock<IPedidosRepository>();
         var sinClaims = new ClaimsPrincipal(new ClaimsIdentity()); // anónimo
 

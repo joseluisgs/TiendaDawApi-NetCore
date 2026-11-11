@@ -29,8 +29,7 @@ namespace TiendaApi.Tests.Unit.Services.Productos;
 /// Suite de tests para ProductoService
 /// Prueba el enfoque Result Pattern para operaciones de productos
 /// </summary>
-public class ProductoServiceTests
-{
+public class ProductoServiceTests {
     private Mock<IProductoRepository> _mockProductoRepo = null!;
     private Mock<ICategoriaRepository> _mockCategoriaRepo = null!;
     private Mock<ILogger<ProductoService>> _mockLogger = null!;
@@ -46,8 +45,7 @@ public class ProductoServiceTests
     private ProductoService _service = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _mockProductoRepo = new Mock<IProductoRepository>();
         _mockCategoriaRepo = new Mock<ICategoriaRepository>();
         _mockLogger = new Mock<ILogger<ProductoService>>();
@@ -86,11 +84,9 @@ public class ProductoServiceTests
     #region FindAllAsync Tests
 
     [Test]
-    public async Task FindAllAsync_ConProductos_RetornaTodosLosProductos()
-    {
+    public async Task FindAllAsync_ConProductos_RetornaTodosLosProductos() {
         // Arrange
-        var productos = new List<Producto>
-        {
+        var productos = new List<Producto> {
             new() { Id = 1, Nombre = "Product1" },
             new() { Id = 2, Nombre = "Product2" }
         };
@@ -109,11 +105,9 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_ConCache_RetornaDesdeCache()
-    {
+    public async Task FindAllAsync_ConCache_RetornaDesdeCache() {
         // Arrange
-        var cachedDtos = new List<ProductoDto>
-        {
+        var cachedDtos = new List<ProductoDto> {
             new ProductoDto(1, "Cached Product", "", 0, 0, null, new CategoriaResumenDto(0, ""), null, DateTime.UtcNow, DateTime.UtcNow)
         };
 
@@ -135,11 +129,9 @@ public class ProductoServiceTests
     #region FindByIdAsync Tests
 
     [Test]
-    public async Task FindByIdAsync_ConIdExistente_RetornaExito()
-    {
+    public async Task FindByIdAsync_ConIdExistente_RetornaExito() {
         // Arrange
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Categoria = new Categoria { Id = 1, Nombre = "Electronics" }
@@ -160,8 +152,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task FindByIdAsync_ConIdNoExistente_RetornaNoEncontrado()
-    {
+    public async Task FindByIdAsync_ConIdNoExistente_RetornaNoEncontrado() {
         // Arrange
         _mockCacheService.Setup(c => c.GetAsync<ProductoDto>("productos:999"))
             .ReturnsAsync((ProductoDto?)null);
@@ -181,12 +172,10 @@ public class ProductoServiceTests
     #region FindByCategoriaIdAsync Tests
 
     [Test]
-    public async Task FindByCategoriaIdAsync_ConCategoriaExistente_RetornaProductos()
-    {
+    public async Task FindByCategoriaIdAsync_ConCategoriaExistente_RetornaProductos() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Electronics" };
-        var productos = new List<Producto>
-        {
+        var productos = new List<Producto> {
             new() { Id = 1, Nombre = "Laptop", CategoriaId = 1 }
         };
 
@@ -204,8 +193,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task FindByCategoriaIdAsync_ConCategoriaNoExistente_RetornaNoEncontrado()
-    {
+    public async Task FindByCategoriaIdAsync_ConCategoriaNoExistente_RetornaNoEncontrado() {
         // Arrange
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Categoria?)null);
@@ -223,11 +211,9 @@ public class ProductoServiceTests
     #region CreateAsync Tests
 
     [Test]
-    public async Task CreateAsync_ConDatosValidos_RetornaExito()
-    {
+    public async Task CreateAsync_ConDatosValidos_RetornaExito() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "New Product",
             Descripcion = "Description",
             Precio = 99.99m,
@@ -235,8 +221,7 @@ public class ProductoServiceTests
             CategoriaId = 1
         };
 
-        var savedProducto = new Producto
-        {
+        var savedProducto = new Producto {
             Id = 1,
             Nombre = "New Product",
             Descripcion = "Description",
@@ -259,11 +244,9 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConPrecioInvalido_RetornaErrorValidacion()
-    {
+    public async Task CreateAsync_ConPrecioInvalido_RetornaErrorValidacion() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Test",
             Precio = -10,
             Stock = 5,
@@ -277,8 +260,7 @@ public class ProductoServiceTests
 
         // Configurar validator para que falle
         _mockValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new[]
-            {
+            .ReturnsAsync(new ValidationResult(new[] {
                 new ValidationFailure("Precio", "El precio debe ser mayor a 0")
             }));
 
@@ -303,14 +285,12 @@ public class ProductoServiceTests
     #region CreateAsync_CategoriaNoExiste_RetornaFailure
 
     [Test]
-    public async Task CreateAsync_CategoriaNoExiste_RetornaFailure()
-    {
+    public async Task CreateAsync_CategoriaNoExiste_RetornaFailure() {
         // Arrange
         _mockCategoriaRepo.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Categoria?)null);
 
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Test",
             Precio = 99,
             Stock = 10,
@@ -335,11 +315,9 @@ public class ProductoServiceTests
     #region CreateAsync_ConStockInvalido_RetornaErrorValidacion
 
     [Test]
-    public async Task CreateAsync_ConStockInvalido_RetornaErrorValidacion()
-    {
+    public async Task CreateAsync_ConStockInvalido_RetornaErrorValidacion() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Test",
             Precio = 50,
             Stock = -5,
@@ -353,8 +331,7 @@ public class ProductoServiceTests
 
         // Configurar validator para que falle
         _mockValidator.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new[]
-            {
+            .ReturnsAsync(new ValidationResult(new[] {
                 new ValidationFailure("Stock", "El stock no puede ser negativo")
             }));
 
@@ -372,11 +349,9 @@ public class ProductoServiceTests
     #region CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado
 
     [Test]
-    public async Task CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado()
-    {
+    public async Task CreateAsync_ConCategoriaNoExistente_RetornaNoEncontrado() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Test",
             Precio = 50,
             Stock = 5,
@@ -399,11 +374,9 @@ public class ProductoServiceTests
     #region UpdateAsync Tests
 
     [Test]
-    public async Task UpdateAsync_ConDatosValidos_RetornaExito()
-    {
+    public async Task UpdateAsync_ConDatosValidos_RetornaExito() {
         // Arrange
-        var dto = new ProductoRequestDto
-        {
+        var dto = new ProductoRequestDto {
             Nombre = "Updated Product",
             Descripcion = "Updated Description",
             Precio = 199.99m,
@@ -429,8 +402,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_ConIdNoExistente_RetornaNoEncontrado()
-    {
+    public async Task UpdateAsync_ConIdNoExistente_RetornaNoEncontrado() {
         // Arrange
         var dto = new ProductoRequestDto { Nombre = "Updated" };
         _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
@@ -449,8 +421,7 @@ public class ProductoServiceTests
     #region DeleteAsync Tests
 
     [Test]
-    public async Task DeleteAsync_ConIdExistente_RetornaExito()
-    {
+    public async Task DeleteAsync_ConIdExistente_RetornaExito() {
         // Arrange
         var producto = new Producto { Id = 1, Nombre = "To Delete" };
         _mockProductoRepo.Setup(r => r.FindByIdAsync(1))
@@ -464,8 +435,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task DeleteAsync_ConIdNoExistente_RetornaNoEncontrado()
-    {
+    public async Task DeleteAsync_ConIdNoExistente_RetornaNoEncontrado() {
         // Arrange
         _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Producto?)null);
@@ -483,8 +453,7 @@ public class ProductoServiceTests
     #region UpdateImageAsync Tests
 
     [Test]
-    public async Task UpdateImageAsync_ConIdNoExistente_RetornaNoEncontrado()
-    {
+    public async Task UpdateImageAsync_ConIdNoExistente_RetornaNoEncontrado() {
         // Arrange
         _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Producto?)null);
@@ -501,12 +470,10 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdateImageAsync_ConArchivoValido_RetornaExito()
-    {
+    public async Task UpdateImageAsync_ConArchivoValido_RetornaExito() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Test Category" };
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             CategoriaId = 1,
@@ -537,12 +504,10 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdateImageAsync_ConImagenLocalAnterior_EliminaImagenAnterior()
-    {
+    public async Task UpdateImageAsync_ConImagenLocalAnterior_EliminaImagenAnterior() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Test Category" };
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             CategoriaId = 1,
@@ -577,12 +542,10 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdateImageAsync_ConErrorEnStorage_RetornaError()
-    {
+    public async Task UpdateImageAsync_ConErrorEnStorage_RetornaError() {
         // Arrange
         var categoria = new Categoria { Id = 1, Nombre = "Test Category" };
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             CategoriaId = 1,
@@ -617,11 +580,9 @@ public class ProductoServiceTests
     // los tests de controller usan mock del servicio y no llegan hasta aqui.
 
     [Test]
-    public async Task UpdatePartialAsync_PatchCompleto_AplicaTodosLosCampos_Y_EscribeSerie()
-    {
+    public async Task UpdatePartialAsync_PatchCompleto_AplicaTodosLosCampos_Y_EscribeSerie() {
         // Arrange: producto existente y DTO con los6 campos rellenos
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Teclado",
             Descripcion = "Mecanico",
@@ -634,8 +595,7 @@ public class ProductoServiceTests
         _mockProductoRepo.Setup(r => r.UpdateAsync(It.IsAny<Producto>()))
             .ReturnsAsync((Producto p) => p);
 
-        var dto = new ProductoPatchDto
-        {
+        var dto = new ProductoPatchDto {
             Nombre = "Teclado RGB",
             Descripcion = "Mecanico retroiluminado",
             Precio = 79.99m,
@@ -663,11 +623,9 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdatePartialAsync_SoloPrecio_DejaElRestoIntacto()
-    {
+    public async Task UpdatePartialAsync_SoloPrecio_DejaElRestoIntacto() {
         // Arrange: solo el precio viene en el DTO; el resto NO debe tocarse
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Teclado",
             Descripcion = "Mecanico",
@@ -695,12 +653,10 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdatePartialAsync_ValoresInvalidos_NoModificaNada_NiEscribeSerie()
-    {
+    public async Task UpdatePartialAsync_ValoresInvalidos_NoModificaNada_NiEscribeSerie() {
         // Arrange: Nombre en blanco, Precio<=0 y CategoriaId=0 significan
         // "no tocar ese campo" en la semantica del patch
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Teclado",
             Descripcion = "Mecanico",
@@ -729,8 +685,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdatePartialAsync_SoloStock_NoEscribeSerie()
-    {
+    public async Task UpdatePartialAsync_SoloStock_NoEscribeSerie() {
         // Arrange: un patch de solo stock no es un cambio de precio, por eso
         // no genera punto nuevo en el historial
         var producto = new Producto { Id = 1, Nombre = "Teclado", Precio = 50m, Stock = 5 };
@@ -751,8 +706,7 @@ public class ProductoServiceTests
     }
 
     [Test]
-    public async Task UpdatePartialAsync_ProductoInexistente_RetornaNoEncontrado_SinPersistir()
-    {
+    public async Task UpdatePartialAsync_ProductoInexistente_RetornaNoEncontrado_SinPersistir() {
         // Arrange: el 404 lo decide PostgreSQL (fuente de verdad)
         _mockProductoRepo.Setup(r => r.FindByIdAsync(999))
             .ReturnsAsync((Producto?)null);

@@ -13,8 +13,7 @@ namespace TiendaApi.Api.Middleware;
 /// cada una con sus propios limitadores nativos de ventana fija.
 /// El estado es singleton para que los contadores sobrevivan a las peticiones.
 /// </summary>
-public sealed class RateLimitingState : IDisposable
-{
+public sealed class RateLimitingState : IDisposable {
     private const int MaxPartitionsBeforeSweep = 1000;
     private static readonly TimeSpan SweepInterval = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan IdleEvictionTime = TimeSpan.FromMinutes(10);
@@ -25,8 +24,7 @@ public sealed class RateLimitingState : IDisposable
     /// <summary>
     /// Obtiene (o crea) la partición para el cliente, verbo y ruta indicados.
     /// </summary>
-    internal RateLimitPartition GetOrCreate(string clientIp, string method, string path)
-    {
+    internal RateLimitPartition GetOrCreate(string clientIp, string method, string path) {
         var key = string.Create(CultureInfo.InvariantCulture, $"{clientIp}_{method}_{path}");
         var partition = _partitions.GetOrAdd(key, _ => RateLimitPartition.Create(method, path));
         partition.Touch();
@@ -34,19 +32,15 @@ public sealed class RateLimitingState : IDisposable
         return partition;
     }
 
-    private void SweepIfNeeded(DateTime now)
-    {
-        if (_partitions.Count < MaxPartitionsBeforeSweep || now - _lastSweepUtc < SweepInterval)
-        {
+    private void SweepIfNeeded(DateTime now) {
+        if (_partitions.Count < MaxPartitionsBeforeSweep || now - _lastSweepUtc < SweepInterval) {
             return;
         }
 
         _lastSweepUtc = now;
         var cutoff = now - IdleEvictionTime;
-        foreach (var kvp in _partitions)
-        {
-            if (kvp.Value.LastAccessUtc < cutoff && _partitions.TryRemove(kvp.Key, out var removed))
-            {
+        foreach (var kvp in _partitions) {
+            if (kvp.Value.LastAccessUtc < cutoff && _partitions.TryRemove(kvp.Key, out var removed)) {
                 removed.Dispose();
             }
         }
@@ -55,12 +49,9 @@ public sealed class RateLimitingState : IDisposable
     /// <summary>
     /// Libera los limitadores (y sus temporizadores) al detener la aplicación.
     /// </summary>
-    public void Dispose()
-    {
-        foreach (var kvp in _partitions)
-        {
-            if (_partitions.TryRemove(kvp.Key, out var removed))
-            {
+    public void Dispose() {
+        foreach (var kvp in _partitions) {
+            if (_partitions.TryRemove(kvp.Key, out var removed)) {
                 removed.Dispose();
             }
         }
@@ -72,13 +63,11 @@ public sealed class RateLimitingState : IDisposable
 /// La ventana general (100/15s) siempre existe; la ventana de un minuto
 /// solo se crea si la ruta es de autenticación o la petición es POST.
 /// </summary>
-internal sealed class RateLimitPartition : IDisposable
-{
+internal sealed class RateLimitPartition : IDisposable {
     private readonly FixedWindowRateLimiter _general;
     private readonly FixedWindowRateLimiter? _minute;
 
-    private RateLimitPartition(FixedWindowRateLimiter general, FixedWindowRateLimiter? minute, int minuteLimit)
-    {
+    private RateLimitPartition(FixedWindowRateLimiter general, FixedWindowRateLimiter? minute, int minuteLimit) {
         _general = general;
         _minute = minute;
         MinuteLimit = minuteLimit;
@@ -105,10 +94,8 @@ internal sealed class RateLimitPartition : IDisposable
     internal DateTime LastAccessUtc { get; private set; }
 
     /// <summary>Crea la partición con las reglas que correspondan a la ruta y el verbo.</summary>
-    internal static RateLimitPartition Create(string method, string path)
-    {
-        var general = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
-        {
+    internal static RateLimitPartition Create(string method, string path) {
+        var general = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions {
             PermitLimit = RateLimitConfig.GeneralLimit,
             Window = RateLimitConfig.GeneralWindow,
             QueueLimit = 0,
@@ -118,20 +105,15 @@ internal sealed class RateLimitPartition : IDisposable
 
         // Regla más restrictiva por periodo: autenticación (10/min) gana sobre POST (20/min).
         var minuteLimit = 0;
-        if (path.StartsWith(RateLimitConfig.AuthPathPrefix, StringComparison.Ordinal))
-        {
+        if (path.StartsWith(RateLimitConfig.AuthPathPrefix, StringComparison.Ordinal)) {
             minuteLimit = RateLimitConfig.AuthLimit;
-        }
-        else if (HttpMethods.IsPost(method))
-        {
+        } else if (HttpMethods.IsPost(method)) {
             minuteLimit = RateLimitConfig.WriteLimit;
         }
 
         FixedWindowRateLimiter? minute = null;
-        if (minuteLimit > 0)
-        {
-            minute = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
-            {
+        if (minuteLimit > 0) {
+            minute = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions {
                 PermitLimit = minuteLimit,
                 Window = RateLimitConfig.MinuteWindow,
                 QueueLimit = 0,
@@ -146,8 +128,7 @@ internal sealed class RateLimitPartition : IDisposable
     internal void Touch() => LastAccessUtc = DateTime.UtcNow;
 
     /// <summary>Libera los limitadores de la partición.</summary>
-    public void Dispose()
-    {
+    public void Dispose() {
         _general.Dispose();
         _minute?.Dispose();
     }
@@ -159,10 +140,8 @@ internal sealed class RateLimitPartition : IDisposable
 /// estándar <c>RateLimit-Limit</c>/<c>RateLimit-Remaining</c>/<c>RateLimit-Reset</c>
 /// en las respuestas permitidas y devuelve un 429 con cuerpo JSON y <c>Retry-After</c>.
 /// </summary>
-public class RateLimitMiddleware
-{
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-    {
+public class RateLimitMiddleware {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         // Source-gen (AppJsonContext) + fallback a reflexión para tipos anónimos
         TypeInfoResolver = JsonTypeInfoResolver.Combine(AppJsonContext.Default, new DefaultJsonTypeInfoResolver())
@@ -176,8 +155,7 @@ public class RateLimitMiddleware
     /// </summary>
     /// <param name="next">Siguiente componente de la pipeline.</param>
     /// <param name="state">Estado compartido de particiones y limitadores.</param>
-    public RateLimitMiddleware(RequestDelegate next, RateLimitingState state)
-    {
+    public RateLimitMiddleware(RequestDelegate next, RateLimitingState state) {
         _next = next;
         _state = state;
     }
@@ -186,8 +164,7 @@ public class RateLimitMiddleware
     /// Ejecuta la comprobación de límites para la petición en curso.
     /// </summary>
     /// <param name="context">Contexto HTTP de la petición.</param>
-    public async Task InvokeAsync(HttpContext context)
-    {
+    public async Task InvokeAsync(HttpContext context) {
         var request = context.Request;
         var method = request.Method.ToUpperInvariant();
         var path = NormalizePath(request.Path);
@@ -195,20 +172,16 @@ public class RateLimitMiddleware
         var partition = _state.GetOrCreate(ResolveClientIp(context), method, path);
 
         // Orden de las reglas: primero la ventana corta (15s), después la de un minuto.
-        using (var generalLease = await partition.General.AcquireAsync(1, context.RequestAborted))
-        {
-            if (!generalLease.IsAcquired)
-            {
+        using (var generalLease = await partition.General.AcquireAsync(1, context.RequestAborted)) {
+            if (!generalLease.IsAcquired) {
                 await RejectAsync(context, generalLease, RateLimitConfig.GeneralLimit, RateLimitConfig.GeneralWindow);
                 return;
             }
         }
 
-        if (partition.HasMinuteWindow)
-        {
+        if (partition.HasMinuteWindow) {
             using var minuteLease = await partition.Minute!.AcquireAsync(1, context.RequestAborted);
-            if (!minuteLease.IsAcquired)
-            {
+            if (!minuteLease.IsAcquired) {
                 await RejectAsync(context, minuteLease, partition.MinuteLimit, RateLimitConfig.MinuteWindow);
                 return;
             }
@@ -223,8 +196,7 @@ public class RateLimitMiddleware
     /// usando la ventana de periodo más largo (la misma prioridad que las cabeceras
     /// <c>X-Rate-Limit-*</c> clásicas).
     /// </summary>
-    private static void SetRateLimitHeaders(HttpContext context, RateLimitPartition partition)
-    {
+    private static void SetRateLimitHeaders(HttpContext context, RateLimitPartition partition) {
         var (limiter, limit, window) = partition.HasMinuteWindow
             ? (partition.Minute!, partition.MinuteLimit, RateLimitConfig.MinuteWindow)
             : (partition.General, RateLimitConfig.GeneralLimit, RateLimitConfig.GeneralWindow);
@@ -242,11 +214,9 @@ public class RateLimitMiddleware
     /// Calcula los segundos que faltan para el siguiente replenishment de la ventana
     /// (el temporizador de la ventana fija se ancla en la creación del limitador).
     /// </summary>
-    private static int ComputeResetSeconds(DateTime createdUtc, TimeSpan window)
-    {
+    private static int ComputeResetSeconds(DateTime createdUtc, TimeSpan window) {
         var elapsed = DateTime.UtcNow - createdUtc;
-        if (elapsed < TimeSpan.Zero)
-        {
+        if (elapsed < TimeSpan.Zero) {
             elapsed = TimeSpan.Zero;
         }
 
@@ -260,11 +230,9 @@ public class RateLimitMiddleware
     /// Devuelve el 429 con cuerpo JSON y la cabecera <c>Retry-After</c>
     /// (segundos hasta que se replenishen los permisos).
     /// </summary>
-    private static async Task RejectAsync(HttpContext context, RateLimitLease lease, int limit, TimeSpan window)
-    {
+    private static async Task RejectAsync(HttpContext context, RateLimitLease lease, int limit, TimeSpan window) {
         var retryAfter = 1;
-        if (lease.TryGetMetadata(MetadataName.RetryAfter, out var value) && value is TimeSpan remaining)
-        {
+        if (lease.TryGetMetadata(MetadataName.RetryAfter, out var value) && value is TimeSpan remaining) {
             retryAfter = Math.Max(1, (int)Math.Ceiling(remaining.TotalSeconds));
         }
 
@@ -273,8 +241,7 @@ public class RateLimitMiddleware
         response.Headers.RetryAfter = retryAfter.ToString(CultureInfo.InvariantCulture);
         response.ContentType = "application/json";
 
-        var payload = new
-        {
+        var payload = new {
             message = "Demasiadas solicitudes. Por favor, intente más tarde.",
             errorType = "RateLimitError",
             timestamp = DateTime.UtcNow.ToString("o"),
@@ -298,22 +265,17 @@ public class RateLimitMiddleware
     /// (<c>X-Forwarded-For</c> primer salto, luego <c>X-Real-IP</c>) con
     /// fallback a la IP de conexión directa.
     /// </summary>
-    private static string ResolveClientIp(HttpContext context)
-    {
-        if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwarded) && forwarded.Count > 0)
-        {
+    private static string ResolveClientIp(HttpContext context) {
+        if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwarded) && forwarded.Count > 0) {
             var first = forwarded.ToString().Split(',')[0].Trim();
-            if (first.Length > 0)
-            {
+            if (first.Length > 0) {
                 return first;
             }
         }
 
-        if (context.Request.Headers.TryGetValue("X-Real-IP", out var realIp) && realIp.Count > 0)
-        {
+        if (context.Request.Headers.TryGetValue("X-Real-IP", out var realIp) && realIp.Count > 0) {
             var value = realIp.ToString().Trim();
-            if (value.Length > 0)
-            {
+            if (value.Length > 0) {
                 return value;
             }
         }
@@ -322,8 +284,7 @@ public class RateLimitMiddleware
     }
 
     /// <summary>Normaliza la ruta igual que el rate limiting clásico: minúsculas y sin barra final.</summary>
-    private static string NormalizePath(PathString path)
-    {
+    private static string NormalizePath(PathString path) {
         var value = path.Value?.ToLowerInvariant() ?? "/";
         return value.Length > 1 ? value.TrimEnd('/') : value;
     }

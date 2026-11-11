@@ -3,8 +3,7 @@ namespace TiendaApi.Api.Errors.StorageErrors;
 /// <summary>
 /// Errores de almacenamiento de archivos (HTTP 400).
 /// </summary>
-public static class StorageError
-{
+public static class StorageError {
     /// <summary>Crea error cuando el archivo está vacío.</summary>
     /// <returns>ValidationError (HTTP 400).</returns>
     public static ValidationError ArchivoVacio() =>

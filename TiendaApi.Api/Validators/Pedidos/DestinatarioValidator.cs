@@ -7,15 +7,13 @@ namespace TiendaApi.Api.Validators.Pedidos;
 /// Validador FluentValidation para DestinatarioDto.
 /// Reglas: NombreCompleto(oblig, max200), Email(valido, max254), Telefono(opc, 9-15 dig), Direccion(oblig).
 /// </summary>
-public class DestinatarioValidator : AbstractValidator<DestinatarioDto>
-{
+public class DestinatarioValidator : AbstractValidator<DestinatarioDto> {
     private static readonly DireccionValidator DireccionValidator = new();
 
     /// <summary>
     /// Define reglas de validación para DestinatarioDto.
     /// </summary>
-    public DestinatarioValidator()
-    {
+    public DestinatarioValidator() {
         RuleFor(d => d.NombreCompleto)
             .NotEmpty().WithMessage("El nombre completo es obligatorio")
             .MaximumLength(200).WithMessage("El nombre completo no puede superar los 200 caracteres");
@@ -36,8 +34,7 @@ public class DestinatarioValidator : AbstractValidator<DestinatarioDto>
             .WithMessage("La dirección del destinatario no es válida");
     }
 
-    private static bool ValidateDireccion(DireccionDto direccion)
-    {
+    private static bool ValidateDireccion(DireccionDto direccion) {
         var validator = new DireccionValidator();
         var result = validator.Validate(direccion);
         return result.IsValid;

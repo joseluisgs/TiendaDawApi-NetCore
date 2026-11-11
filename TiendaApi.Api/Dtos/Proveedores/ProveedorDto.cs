@@ -57,8 +57,7 @@ public record ProveedorDto(
 /// 11 caracteres Base64url (su uso principal es el import de backups: sin código el
 /// servidor genera uno nuevo).
 /// </summary>
-public record ProveedorRequestDto
-{
+public record ProveedorRequestDto {
     /// <summary>
     /// Identificador de 11 caracteres. Opcional: si se omite, el servidor lo genera.
     /// Solo se envía explícito al importar un backup existente.

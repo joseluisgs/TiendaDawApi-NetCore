@@ -11,16 +11,14 @@ using FluentAssertions;
 namespace ClientBlazor.Tests.Components;
 
 [TestFixture]
-public class SignalRPageTests
-{
+public class SignalRPageTests {
     private BunitContext _ctx = null!;
     private Mock<ISignalRService> _signalRServiceMock = null!;
     private Mock<INotificationStore> _notificationStoreMock = null!;
     private Mock<IAuthStore> _authStoreMock = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _ctx = new BunitContext();
         _signalRServiceMock = new Mock<ISignalRService>();
         _notificationStoreMock = new Mock<INotificationStore>();
@@ -29,7 +27,7 @@ public class SignalRPageTests
         _ctx.Services.AddSingleton(_signalRServiceMock.Object);
         _ctx.Services.AddSingleton(_notificationStoreMock.Object);
         _ctx.Services.AddSingleton(_authStoreMock.Object);
-        
+
         _authStoreMock.Setup(s => s.IsAuthenticatedObservable).Returns(System.Reactive.Linq.Observable.Return(false));
     }
 
@@ -37,8 +35,7 @@ public class SignalRPageTests
     public void TearDown() => _ctx.Dispose();
 
     [Test]
-    public void Connect_Button_Should_Reflect_Service_State()
-    {
+    public void Connect_Button_Should_Reflect_Service_State() {
         // Arrange - Desconectado
         _signalRServiceMock.Setup(s => s.IsConnected).Returns(false);
         var cut = _ctx.Render<SignalR>();

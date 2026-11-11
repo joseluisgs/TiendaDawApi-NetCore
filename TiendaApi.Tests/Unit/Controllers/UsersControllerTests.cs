@@ -15,14 +15,12 @@ using TiendaApi.Api.Services.Users;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 
-public class UsersControllerTests
-{
+public class UsersControllerTests {
     private readonly Mock<IUserService> _mockUserService;
     private readonly Mock<ILogger<UsersController>> _mockLogger;
     private readonly UsersController _controller;
 
-    public UsersControllerTests()
-    {
+    public UsersControllerTests() {
         _mockUserService = new Mock<IUserService>();
         _mockLogger = new Mock<ILogger<UsersController>>();
         // IHistorialService mockeado: estos tests no tocan el historial/feed (lo
@@ -33,15 +31,12 @@ public class UsersControllerTests
     #region GetAll Tests
 
     [Test]
-    public async Task GetAll_ConUsuariosExistentes_RetornaOkConListaPaginada()
-    {
-        var usuarios = new List<UserDto>
-        {
+    public async Task GetAll_ConUsuariosExistentes_RetornaOkConListaPaginada() {
+        var usuarios = new List<UserDto> {
             new UserDto(1, "user1", "user1@test.com", "", "USER", DateTime.UtcNow),
             new UserDto(2, "user2", "user2@test.com", "", "USER", DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<UserDto>
-        {
+        var pagedResult = new PagedResult<UserDto> {
             Items = usuarios,
             TotalCount = 2,
             Page = 1,
@@ -59,10 +54,8 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task GetAll_SinUsuarios_RetornaOkConListaVacia()
-    {
-        var pagedResult = new PagedResult<UserDto>
-        {
+    public async Task GetAll_SinUsuarios_RetornaOkConListaVacia() {
+        var pagedResult = new PagedResult<UserDto> {
             Items = new List<UserDto>(),
             TotalCount = 0,
             Page = 1,
@@ -80,14 +73,11 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task GetAll_ConFiltroUsername_RetornaListaFiltrada()
-    {
-        var usuarios = new List<UserDto>
-        {
+    public async Task GetAll_ConFiltroUsername_RetornaListaFiltrada() {
+        var usuarios = new List<UserDto> {
             new UserDto(1, "admin", "admin@test.com", "", "ADMIN", DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<UserDto>
-        {
+        var pagedResult = new PagedResult<UserDto> {
             Items = usuarios,
             TotalCount = 1,
             Page = 1,
@@ -108,8 +98,7 @@ public class UsersControllerTests
     #region GetById Tests
 
     [Test]
-    public async Task GetById_ConIdExistente_RetornaOkConUsuario()
-    {
+    public async Task GetById_ConIdExistente_RetornaOkConUsuario() {
         var usuario = new UserDto(1, "testuser", "test@test.com", "", "USER", DateTime.UtcNow);
 
         _mockUserService.Setup(s => s.FindByIdAsync(1))
@@ -124,8 +113,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task GetById_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task GetById_ConIdNoExistente_RetornaNotFound() {
         var error = new NotFoundError("Usuario no encontrado");
 
         _mockUserService.Setup(s => s.FindByIdAsync(999))
@@ -141,8 +129,7 @@ public class UsersControllerTests
     #region Create Tests
 
     [Test]
-    public async Task Create_ConDtoValido_RetornaCreatedConUsuario()
-    {
+    public async Task Create_ConDtoValido_RetornaCreatedConUsuario() {
         var registerDto = new RegisterDto { Username = "nuevouser", Email = "nuevo@test.com", Password = "Password123" };
         var usuarioDto = new UserDto(1, "nuevouser", "nuevo@test.com", "", "USER", DateTime.UtcNow);
 
@@ -158,8 +145,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task Create_ConUsernameDuplicado_RetornaConflict()
-    {
+    public async Task Create_ConUsernameDuplicado_RetornaConflict() {
         var registerDto = new RegisterDto { Username = "existente", Email = "nuevo@test.com", Password = "Password123" };
         var error = new ConflictError("El nombre de usuario ya existe");
 
@@ -172,11 +158,9 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task Create_ConValidacionFallida_RetornaBadRequest()
-    {
+    public async Task Create_ConValidacionFallida_RetornaBadRequest() {
         var registerDto = new RegisterDto { Username = "ab", Email = "invalido", Password = "123" };
-        var error = new ValidationError("Errores de validación", new Dictionary<string, string[]>
-        {
+        var error = new ValidationError("Errores de validación", new Dictionary<string, string[]> {
             { "Username", new[] { "El nombre de usuario debe tener al menos 3 caracteres" } }
         });
 
@@ -194,8 +178,7 @@ public class UsersControllerTests
     #region Update Tests
 
     [Test]
-    public async Task Update_ConIdValido_RetornaOkConUsuarioActualizado()
-    {
+    public async Task Update_ConIdValido_RetornaOkConUsuarioActualizado() {
         var id = 1L;
         var updateDto = new UserUpdateDto { Email = "nuevo@test.com" };
         var usuarioDto = new UserDto(1, "testuser", "nuevo@test.com", "", "USER", DateTime.UtcNow);
@@ -211,8 +194,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task Update_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task Update_ConIdNoExistente_RetornaNotFound() {
         var id = 999L;
         var updateDto = new UserUpdateDto { Email = "nuevo@test.com" };
         var error = new NotFoundError("Usuario no encontrado");
@@ -226,8 +208,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task Update_ConEmailDuplicado_RetornaConflict()
-    {
+    public async Task Update_ConEmailDuplicado_RetornaConflict() {
         var id = 1L;
         var updateDto = new UserUpdateDto { Email = "existente@test.com" };
         var error = new ConflictError("El email ya existe");
@@ -245,8 +226,7 @@ public class UsersControllerTests
     #region UpdateAvatar Tests
 
     [Test]
-    public async Task UpdateAvatar_ConUrlValida_RetornaOk()
-    {
+    public async Task UpdateAvatar_ConUrlValida_RetornaOk() {
         var id = 1L;
         var avatarDto = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar.jpg" };
         var usuarioDto = new UserDto(1, "testuser", "https://example.com/avatar.jpg", "https://example.com/avatar.jpg", "USER", DateTime.UtcNow);
@@ -263,8 +243,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task UpdateAvatar_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateAvatar_ConIdNoExistente_RetornaNotFound() {
         var id = 999L;
         var avatarDto = new AvatarUpdateDto { AvatarUrl = "https://example.com/avatar.jpg" };
 
@@ -285,8 +264,7 @@ public class UsersControllerTests
     #region Delete Tests
 
     [Test]
-    public async Task Delete_ConIdExistente_RetornaNoContent()
-    {
+    public async Task Delete_ConIdExistente_RetornaNoContent() {
         _mockUserService.Setup(s => s.DeleteAsync(1))
             .ReturnsAsync(UnitResult.Success<DomainError>());
 
@@ -296,8 +274,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task Delete_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task Delete_ConIdNoExistente_RetornaNotFound() {
         var error = new NotFoundError("Usuario no encontrado");
 
         _mockUserService.Setup(s => s.DeleteAsync(999))
@@ -313,8 +290,7 @@ public class UsersControllerTests
     #region GetMyProfile Tests
 
     [Test]
-    public async Task GetMyProfile_UsuarioAutenticado_RetornaOkConPerfil()
-    {
+    public async Task GetMyProfile_UsuarioAutenticado_RetornaOkConPerfil() {
         var userId = 1L;
         var usuarioDto = new UserDto(1, "testuser", "test@test.com", "", "USER", DateTime.UtcNow);
 
@@ -331,8 +307,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task GetMyProfile_SinClaim_RetornaUnauthorized()
-    {
+    public async Task GetMyProfile_SinClaim_RetornaUnauthorized() {
         SetupEmptyClaims();
 
         var result = await _controller.GetMyProfile();
@@ -345,8 +320,7 @@ public class UsersControllerTests
     #region UpdateMyProfile Tests
 
     [Test]
-    public async Task UpdateMyProfile_ConDtoValido_RetornaOk()
-    {
+    public async Task UpdateMyProfile_ConDtoValido_RetornaOk() {
         var userId = 1L;
         var updateDto = new UserUpdateDto { Email = "nuevo@test.com" };
         var usuarioDto = new UserDto(1, "testuser", "nuevo@test.com", "", "USER", DateTime.UtcNow);
@@ -363,8 +337,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task UpdateMyProfile_ConValidacionFallida_RetornaBadRequest()
-    {
+    public async Task UpdateMyProfile_ConValidacionFallida_RetornaBadRequest() {
         var userId = 1L;
         var updateDto = new UserUpdateDto { Email = "email-invalido" };
         var error = ValidationError.Create("El email no es válido");
@@ -384,8 +357,7 @@ public class UsersControllerTests
     #region DeleteMyProfile Tests
 
     [Test]
-    public async Task DeleteMyProfile_UsuarioAutenticado_RetornaNoContent()
-    {
+    public async Task DeleteMyProfile_UsuarioAutenticado_RetornaNoContent() {
         var userId = 1L;
 
         SetupUserClaims(userId);
@@ -399,8 +371,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task DeleteMyProfile_UsuarioNoExistente_RetornaNotFound()
-    {
+    public async Task DeleteMyProfile_UsuarioNoExistente_RetornaNotFound() {
         var userId = 999L;
         var error = new NotFoundError("Usuario no encontrado");
 
@@ -419,8 +390,7 @@ public class UsersControllerTests
     #region Error Handling Tests
 
     [Test]
-    public async Task GetAll_ConErrorInterno_Retorna500()
-    {
+    public async Task GetAll_ConErrorInterno_Retorna500() {
         var error = new InternalError("Error de base de datos");
 
         _mockUserService.Setup(s => s.FindAllPagedAsync(It.IsAny<UserFilterDto>()))
@@ -433,8 +403,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public async Task GetById_ConErrorInterno_Retorna500()
-    {
+    public async Task GetById_ConErrorInterno_Retorna500() {
         var error = new InternalError("Error inesperado");
 
         _mockUserService.Setup(s => s.FindByIdAsync(1))
@@ -451,8 +420,7 @@ public class UsersControllerTests
     #region Authorization Attribute Tests
 
     [Test]
-    public void GetAll_TieneAtributoAuthorizeAdmin()
-    {
+    public void GetAll_TieneAtributoAuthorizeAdmin() {
         var methodInfo = typeof(UsersController).GetMethod(nameof(UsersController.GetAll));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .Cast<AuthorizeAttribute>().FirstOrDefault();
@@ -461,8 +429,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public void GetById_TieneAtributoAuthorizeAdmin()
-    {
+    public void GetById_TieneAtributoAuthorizeAdmin() {
         var methodInfo = typeof(UsersController).GetMethod(nameof(UsersController.GetById));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .Cast<AuthorizeAttribute>().FirstOrDefault();
@@ -471,8 +438,7 @@ public class UsersControllerTests
     }
 
     [Test]
-    public void GetMyProfile_TieneAtributoAuthorize()
-    {
+    public void GetMyProfile_TieneAtributoAuthorize() {
         var methodInfo = typeof(UsersController).GetMethod(nameof(UsersController.GetMyProfile));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true);
         attribute.Should().NotBeEmpty();
@@ -482,29 +448,24 @@ public class UsersControllerTests
 
     #region Helper Methods
 
-    private void SetupUserClaims(long userId)
-    {
-        var claims = new List<Claim>
-        {
+    private void SetupUserClaims(long userId) {
+        var claims = new List<Claim> {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Role, "USER")
         };
         var identity = new ClaimsIdentity(claims, "Test");
         var claimsPrincipal = new ClaimsPrincipal(identity);
 
-        _controller.ControllerContext = new ControllerContext
-        {
+        _controller.ControllerContext = new ControllerContext {
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
     }
 
-    private void SetupEmptyClaims()
-    {
+    private void SetupEmptyClaims() {
         var identity = new ClaimsIdentity();
         var claimsPrincipal = new ClaimsPrincipal(identity);
 
-        _controller.ControllerContext = new ControllerContext
-        {
+        _controller.ControllerContext = new ControllerContext {
             HttpContext = new DefaultHttpContext { User = claimsPrincipal }
         };
     }

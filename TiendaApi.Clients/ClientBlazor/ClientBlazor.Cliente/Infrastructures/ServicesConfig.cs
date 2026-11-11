@@ -6,17 +6,15 @@ using ClientBlazor.Cliente.Services.Storage;
 
 namespace ClientBlazor.Cliente.Infrastructures;
 
-public static class ServicesConfig
-{
-    public static IServiceCollection AddDomainServices(this IServiceCollection services)
-    {
+public static class ServicesConfig {
+    public static IServiceCollection AddDomainServices(this IServiceCollection services) {
         services.AddScoped<ILocalStorageService, LocalStorageService>();
         services.AddTransient<IAuthService, AuthService>();
         services.AddTransient<IRestService, ClientBlazor.Cliente.Services.Rest.RestService>();
         services.AddTransient<IGraphQLService, GraphQLService>();
         services.AddSingleton<IWebSocketService, WebSocketService>();
         services.AddSingleton<ISignalRService, SignalRService>();
-        
+
         return services;
     }
 }

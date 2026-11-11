@@ -24,8 +24,7 @@ namespace TiendaApi.Api.Controllers;
 public class CategoriasController(
     ICategoriaService service,
     ILogger<CategoriasController> logger
-) : ControllerBase
-{
+) : ControllerBase {
     /// <summary>
     /// Obtiene todas las categorías paginadas con filtros opcionales.
     /// </summary>
@@ -46,12 +45,10 @@ public class CategoriasController(
         [FromQuery] int page = 0,
         [FromQuery] int size = 10,
         [FromQuery] string sortBy = "id",
-        [FromQuery] string direction = "asc")
-    {
+        [FromQuery] string direction = "asc") {
         logger.LogInformation("Obteniendo categorías paginadas - Página: {Page}, Tamaño: {Size}", page, size);
 
-        var filter = new CategoriaFilterDto
-        {
+        var filter = new CategoriaFilterDto {
             Nombre = nombre,
             IsDeleted = isDeleted,
             Page = page,
@@ -63,10 +60,9 @@ public class CategoriasController(
         var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: categorias =>
-            {
+            onSuccess: categorias => {
                 // Caché la cachea OutputCache ([OutputCache] attribute): la 2ª petición
-    // sirve desde caché (header Age). ETag/304 no está implementado.
+                // sirve desde caché (header Age). ETag/304 no está implementado.
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(categorias, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
@@ -86,8 +82,7 @@ public class CategoriasController(
     [ProducesResponseType(typeof(CategoriaDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
-    public async Task<ActionResult<CategoriaDto>> GetById(long id)
-    {
+    public async Task<ActionResult<CategoriaDto>> GetById(long id) {
         logger.LogInformation("Obteniendo categoría con ID: {Id}", id);
 
         var resultado = await service.FindByIdAsync(id);
@@ -110,8 +105,7 @@ public class CategoriasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CategoriaDto>> Create([FromBody] CategoriaRequestDto dto)
-    {
+    public async Task<ActionResult<CategoriaDto>> Create([FromBody] CategoriaRequestDto dto) {
         logger.LogInformation("Creando nueva categoría: {Nombre}", dto.Nombre);
 
         var resultado = await service.CreateAsync(dto);
@@ -136,8 +130,7 @@ public class CategoriasController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CategoriaDto>> Update(long id, [FromBody] CategoriaRequestDto dto)
-    {
+    public async Task<ActionResult<CategoriaDto>> Update(long id, [FromBody] CategoriaRequestDto dto) {
         logger.LogInformation("Actualizando categoría con ID: {Id}", id);
 
         var resultado = await service.UpdateAsync(id, dto);
@@ -159,8 +152,7 @@ public class CategoriasController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> Delete(long id)
-    {
+    public async Task<ActionResult> Delete(long id) {
         logger.LogInformation("Eliminando categoría con ID: {Id}", id);
 
         var resultado = await service.DeleteAsync(id);
@@ -169,8 +161,7 @@ public class CategoriasController(
             return NoContent();
 
         var error = resultado.Error;
-        return error switch
-        {
+        return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
             BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),

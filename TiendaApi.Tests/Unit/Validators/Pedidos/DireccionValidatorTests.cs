@@ -4,15 +4,13 @@ using TiendaApi.Api.Validators.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Validators.Pedidos;
 
-public class DireccionValidatorTests
-{
+public class DireccionValidatorTests {
     private readonly DireccionValidator _validator = new();
 
     #region Calle Tests
 
     [Test]
-    public void Calle_ConLongitudExcedida_DeberiaTenerError()
-    {
+    public void Calle_ConLongitudExcedida_DeberiaTenerError() {
         var dto = new DireccionDto { Calle = new string('A', 201) };
 
         var result = _validator.TestValidate(dto);
@@ -22,8 +20,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Calle_ConLongitudMaxima_DeberiaPasar()
-    {
+    public void Calle_ConLongitudMaxima_DeberiaPasar() {
         var dto = new DireccionDto { Calle = new string('A', 200) };
 
         var result = _validator.TestValidate(dto);
@@ -32,8 +29,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Calle_Vacia_DeberiaTenerError()
-    {
+    public void Calle_Vacia_DeberiaTenerError() {
         var dto = new DireccionDto { Calle = string.Empty };
 
         var result = _validator.TestValidate(dto);
@@ -46,8 +42,7 @@ public class DireccionValidatorTests
     #region Numero Tests
 
     [Test]
-    public void Numero_ConLongitudExcedida_DeberiaTenerError()
-    {
+    public void Numero_ConLongitudExcedida_DeberiaTenerError() {
         var dto = new DireccionDto { Numero = new string('1', 21) };
 
         var result = _validator.TestValidate(dto);
@@ -57,8 +52,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Numero_ConLongitudMaxima_DeberiaPasar()
-    {
+    public void Numero_ConLongitudMaxima_DeberiaPasar() {
         var dto = new DireccionDto { Numero = new string('1', 20) };
 
         var result = _validator.TestValidate(dto);
@@ -67,8 +61,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Numero_Null_DeberiaPasar()
-    {
+    public void Numero_Null_DeberiaPasar() {
         var dto = new DireccionDto { Numero = null };
 
         var result = _validator.TestValidate(dto);
@@ -81,8 +74,7 @@ public class DireccionValidatorTests
     #region Ciudad Tests
 
     [Test]
-    public void Ciudad_ConLongitudExcedida_DeberiaTenerError()
-    {
+    public void Ciudad_ConLongitudExcedida_DeberiaTenerError() {
         var dto = new DireccionDto { Ciudad = new string('C', 101) };
 
         var result = _validator.TestValidate(dto);
@@ -92,8 +84,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Ciudad_ConLongitudMaxima_DeberiaPasar()
-    {
+    public void Ciudad_ConLongitudMaxima_DeberiaPasar() {
         var dto = new DireccionDto { Ciudad = new string('C', 100) };
 
         var result = _validator.TestValidate(dto);
@@ -102,8 +93,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Ciudad_Vacia_DeberiaTenerError()
-    {
+    public void Ciudad_Vacia_DeberiaTenerError() {
         var dto = new DireccionDto { Ciudad = string.Empty };
 
         var result = _validator.TestValidate(dto);
@@ -116,8 +106,7 @@ public class DireccionValidatorTests
     #region Provincia Tests
 
     [Test]
-    public void Provincia_ConLongitudExcedida_DeberiaTenerError()
-    {
+    public void Provincia_ConLongitudExcedida_DeberiaTenerError() {
         var dto = new DireccionDto { Provincia = new string('P', 101) };
 
         var result = _validator.TestValidate(dto);
@@ -127,8 +116,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Provincia_ConLongitudMaxima_DeberiaPasar()
-    {
+    public void Provincia_ConLongitudMaxima_DeberiaPasar() {
         var dto = new DireccionDto { Provincia = new string('P', 100) };
 
         var result = _validator.TestValidate(dto);
@@ -137,8 +125,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Provincia_Null_DeberiaPasar()
-    {
+    public void Provincia_Null_DeberiaPasar() {
         var dto = new DireccionDto { Provincia = null };
 
         var result = _validator.TestValidate(dto);
@@ -151,8 +138,7 @@ public class DireccionValidatorTests
     #region Pais Tests
 
     [Test]
-    public void Pais_ConLongitudExcedida_DeberiaTenerError()
-    {
+    public void Pais_ConLongitudExcedida_DeberiaTenerError() {
         var dto = new DireccionDto { Pais = new string('P', 101) };
 
         var result = _validator.TestValidate(dto);
@@ -162,8 +148,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Pais_ConLongitudMaxima_DeberiaPasar()
-    {
+    public void Pais_ConLongitudMaxima_DeberiaPasar() {
         var dto = new DireccionDto { Pais = new string('P', 100) };
 
         var result = _validator.TestValidate(dto);
@@ -172,8 +157,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void Pais_Vacio_DeberiaTenerError()
-    {
+    public void Pais_Vacio_DeberiaTenerError() {
         var dto = new DireccionDto { Pais = string.Empty };
 
         var result = _validator.TestValidate(dto);
@@ -186,8 +170,7 @@ public class DireccionValidatorTests
     #region CodigoPostal Tests
 
     [Test]
-    public void CodigoPostal_ConLongitudExcedida_DeberiaTenerError()
-    {
+    public void CodigoPostal_ConLongitudExcedida_DeberiaTenerError() {
         var dto = new DireccionDto { CodigoPostal = new string('1', 21) };
 
         var result = _validator.TestValidate(dto);
@@ -197,8 +180,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void CodigoPostal_ConFormatoInvalido_DeberiaTenerError()
-    {
+    public void CodigoPostal_ConFormatoInvalido_DeberiaTenerError() {
         var dto = new DireccionDto { CodigoPostal = "1234" };
 
         var result = _validator.TestValidate(dto);
@@ -208,8 +190,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void CodigoPostal_ConLetras_DeberiaTenerError()
-    {
+    public void CodigoPostal_ConLetras_DeberiaTenerError() {
         var dto = new DireccionDto { CodigoPostal = "12AB3" };
 
         var result = _validator.TestValidate(dto);
@@ -219,8 +200,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void CodigoPostal_ConFormatoValido_DeberiaPasar()
-    {
+    public void CodigoPostal_ConFormatoValido_DeberiaPasar() {
         var dto = new DireccionDto { CodigoPostal = "28013" };
 
         var result = _validator.TestValidate(dto);
@@ -229,8 +209,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void CodigoPostal_Null_DeberiaPasar()
-    {
+    public void CodigoPostal_Null_DeberiaPasar() {
         var dto = new DireccionDto { CodigoPostal = null };
 
         var result = _validator.TestValidate(dto);
@@ -239,8 +218,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void CodigoPostal_Vacio_DeberiaPasar()
-    {
+    public void CodigoPostal_Vacio_DeberiaPasar() {
         var dto = new DireccionDto { CodigoPostal = string.Empty };
 
         var result = _validator.TestValidate(dto);
@@ -253,10 +231,8 @@ public class DireccionValidatorTests
     #region Direccion Completa Tests
 
     [Test]
-    public void DireccionCompleta_ConDatosValidos_NoDeberiaTenerErrores()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionCompleta_ConDatosValidos_NoDeberiaTenerErrores() {
+        var dto = new DireccionDto {
             Calle = "Gran Vía",
             Numero = "42",
             Ciudad = "Madrid",
@@ -271,8 +247,7 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void DireccionCompleta_Vacia_NoDeberiaTenerErrores()
-    {
+    public void DireccionCompleta_Vacia_NoDeberiaTenerErrores() {
         var dto = new DireccionDto();
 
         var result = _validator.TestValidate(dto);
@@ -283,10 +258,8 @@ public class DireccionValidatorTests
     }
 
     [Test]
-    public void DireccionCompleta_ConDireccionParcial_NoDeberiaTenerErrores()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionCompleta_ConDireccionParcial_NoDeberiaTenerErrores() {
+        var dto = new DireccionDto {
             Calle = "Gran Vía",
             Ciudad = "Madrid",
             Pais = "España"

@@ -7,13 +7,11 @@ namespace TiendaApi.Api.Validators.Usuarios;
 /// Validador FluentValidation para LoginDto.
 /// Reglas: Username y Password obligatorios.
 /// </summary>
-public class LoginValidator : AbstractValidator<LoginDto>
-{
+public class LoginValidator : AbstractValidator<LoginDto> {
     /// <summary>
     /// Define reglas de validación para LoginDto.
     /// </summary>
-    public LoginValidator()
-    {
+    public LoginValidator() {
         RuleFor(l => l.Username)
             .NotEmpty().WithMessage("El nombre de usuario es obligatorio");
 

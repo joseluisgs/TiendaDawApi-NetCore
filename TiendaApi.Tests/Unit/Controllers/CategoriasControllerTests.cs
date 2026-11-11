@@ -12,17 +12,14 @@ using TiendaApi.Api.Services.Categorias;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 
-public class CategoriasControllerTests
-{
+public class CategoriasControllerTests {
     private readonly Mock<ICategoriaService> _mockService;
     private readonly CategoriasController _controller;
 
-    public CategoriasControllerTests()
-    {
+    public CategoriasControllerTests() {
         _mockService = new Mock<ICategoriaService>();
         var mockLogger = new Mock<ILogger<CategoriasController>>();
-        _controller = new CategoriasController(_mockService.Object, mockLogger.Object)
-        {
+        _controller = new CategoriasController(_mockService.Object, mockLogger.Object) {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
     }
@@ -34,15 +31,12 @@ public class CategoriasControllerTests
     /// Returns: 200 OK con lista de categorías paginada
     /// </summary>
     [Test]
-    public async Task GetAll_ConCategoriasExistentes_RetornaOkConLista()
-    {
-        var categorias = new List<CategoriaDto>
-        {
+    public async Task GetAll_ConCategoriasExistentes_RetornaOkConLista() {
+        var categorias = new List<CategoriaDto> {
             new CategoriaDto(1, "Electrónica", null, DateTime.UtcNow, DateTime.UtcNow),
             new CategoriaDto(2, "Ropa", null, DateTime.UtcNow, DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<CategoriaDto>
-        {
+        var pagedResult = new PagedResult<CategoriaDto> {
             Items = categorias,
             TotalCount = 2,
             Page = 1,
@@ -64,10 +58,8 @@ public class CategoriasControllerTests
     /// Returns: 200 OK con lista vacía
     /// </summary>
     [Test]
-    public async Task GetAll_SinCategorias_RetornaOkConListaVacia()
-    {
-        var pagedResult = new PagedResult<CategoriaDto>
-        {
+    public async Task GetAll_SinCategorias_RetornaOkConListaVacia() {
+        var pagedResult = new PagedResult<CategoriaDto> {
             Items = new List<CategoriaDto>(),
             TotalCount = 0,
             Page = 1,
@@ -89,14 +81,11 @@ public class CategoriasControllerTests
     /// Returns: 200 OK con lista filtrada
     /// </summary>
     [Test]
-    public async Task GetAll_ConFiltroNombre_RetornaListaFiltrada()
-    {
-        var categorias = new List<CategoriaDto>
-        {
+    public async Task GetAll_ConFiltroNombre_RetornaListaFiltrada() {
+        var categorias = new List<CategoriaDto> {
             new CategoriaDto(1, "Electrónica", null, DateTime.UtcNow, DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<CategoriaDto>
-        {
+        var pagedResult = new PagedResult<CategoriaDto> {
             Items = categorias,
             TotalCount = 1,
             Page = 1,
@@ -122,8 +111,7 @@ public class CategoriasControllerTests
     /// Returns: 200 OK con categoría encontrada
     /// </summary>
     [Test]
-    public async Task GetById_ConIdExistente_RetornaOkConCategoria()
-    {
+    public async Task GetById_ConIdExistente_RetornaOkConCategoria() {
         var categoria = new CategoriaDto(1, "Electrónica", null, DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindByIdAsync(1))
@@ -142,8 +130,7 @@ public class CategoriasControllerTests
     /// Returns: 404 Not Found
     /// </summary>
     [Test]
-    public async Task GetById_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task GetById_ConIdNoExistente_RetornaNotFound() {
         var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.FindByIdAsync(999))
@@ -164,8 +151,7 @@ public class CategoriasControllerTests
     /// Returns: 201 Created con categoría creada
     /// </summary>
     [Test]
-    public async Task Create_ConDtoValido_RetornaCreatedConCategoria()
-    {
+    public async Task Create_ConDtoValido_RetornaCreatedConCategoria() {
         var requestDto = new CategoriaRequestDto { Nombre = "Nueva Categoría" };
         var categoriaDto = new CategoriaDto(1, "Nueva Categoría", null, DateTime.UtcNow, DateTime.UtcNow);
 
@@ -186,8 +172,7 @@ public class CategoriasControllerTests
     /// Returns: 400 Bad Request
     /// </summary>
     [Test]
-    public async Task Create_ConNombreVacio_RetornaBadRequest()
-    {
+    public async Task Create_ConNombreVacio_RetornaBadRequest() {
         var requestDto = new CategoriaRequestDto { Nombre = "" };
         var error = ValidationError.Create("Nombre no puede estar vacío");
 
@@ -205,8 +190,7 @@ public class CategoriasControllerTests
     /// Returns: 409 Conflict
     /// </summary>
     [Test]
-    public async Task Create_ConNombreDuplicado_RetornaConflict()
-    {
+    public async Task Create_ConNombreDuplicado_RetornaConflict() {
         var requestDto = new CategoriaRequestDto { Nombre = "Existente" };
         var error = new ConflictError("Ya existe una categoría con ese nombre");
 
@@ -228,8 +212,7 @@ public class CategoriasControllerTests
     /// Returns: 200 OK con categoría actualizada
     /// </summary>
     [Test]
-    public async Task Update_ConIdValido_RetornaOkConCategoriaActualizada()
-    {
+    public async Task Update_ConIdValido_RetornaOkConCategoriaActualizada() {
         var id = 1L;
         var requestDto = new CategoriaRequestDto { Nombre = "Actualizada" };
         var categoriaDto = new CategoriaDto(1, "Actualizada", null, DateTime.UtcNow, DateTime.UtcNow);
@@ -249,8 +232,7 @@ public class CategoriasControllerTests
     /// Returns: 404 Not Found
     /// </summary>
     [Test]
-    public async Task Update_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task Update_ConIdNoExistente_RetornaNotFound() {
         var id = 999L;
         var requestDto = new CategoriaRequestDto { Nombre = "Actualizada" };
         var error = new NotFoundError("Categoría no encontrada");
@@ -273,8 +255,7 @@ public class CategoriasControllerTests
     /// Returns: 204 No Content
     /// </summary>
     [Test]
-    public async Task Delete_ConIdExistente_RetornaNoContent()
-    {
+    public async Task Delete_ConIdExistente_RetornaNoContent() {
         _mockService.Setup(s => s.DeleteAsync(1))
             .ReturnsAsync(UnitResult.Success<DomainError>());
 
@@ -288,8 +269,7 @@ public class CategoriasControllerTests
     /// Returns: 404 Not Found
     /// </summary>
     [Test]
-    public async Task Delete_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task Delete_ConIdNoExistente_RetornaNotFound() {
         var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.DeleteAsync(999))
@@ -306,8 +286,7 @@ public class CategoriasControllerTests
     #region Tests Adicionales - Casos Borde
 
     [Test]
-    public async Task GetById_ConIdCero_RetornaNotFound()
-    {
+    public async Task GetById_ConIdCero_RetornaNotFound() {
         var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.FindByIdAsync(0))
@@ -319,8 +298,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task GetById_ConIdNegativo_RetornaNotFound()
-    {
+    public async Task GetById_ConIdNegativo_RetornaNotFound() {
         var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.FindByIdAsync(-1))
@@ -332,8 +310,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task Create_ConNombreLargo_RetornaCreated()
-    {
+    public async Task Create_ConNombreLargo_RetornaCreated() {
         var nombreLargo = new string('A', 100);
         var requestDto = new CategoriaRequestDto { Nombre = nombreLargo };
         var categoriaDto = new CategoriaDto(1, nombreLargo, null, DateTime.UtcNow, DateTime.UtcNow);
@@ -348,8 +325,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task Create_ConNombreConCaracteresEspeciales_RetornaCreated()
-    {
+    public async Task Create_ConNombreConCaracteresEspeciales_RetornaCreated() {
         var requestDto = new CategoriaRequestDto { Nombre = "Categoría #1 - Test®" };
         var categoriaDto = new CategoriaDto(1, requestDto.Nombre, null, DateTime.UtcNow, DateTime.UtcNow);
 
@@ -362,8 +338,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task Update_ConflictoPorNombreDuplicado_RetornaConflict()
-    {
+    public async Task Update_ConflictoPorNombreDuplicado_RetornaConflict() {
         var id = 1L;
         var requestDto = new CategoriaRequestDto { Nombre = "Existente" };
         var error = new ConflictError("Ya existe una categoría con ese nombre");
@@ -377,8 +352,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task Update_ErrorInterno_Retorna500()
-    {
+    public async Task Update_ErrorInterno_Retorna500() {
         var id = 1L;
         var requestDto = new CategoriaRequestDto { Nombre = "Actualizada" };
         var error = new InternalError("Error en base de datos");
@@ -393,8 +367,7 @@ public class CategoriasControllerTests
     }
 
     [Test]
-    public async Task Delete_CategoriaConProductos_RetornaUnprocessableEntity()
-    {
+    public async Task Delete_CategoriaConProductos_RetornaUnprocessableEntity() {
         var error = new BusinessRuleError("No se puede eliminar una categoría con productos asociados");
 
         _mockService.Setup(s => s.DeleteAsync(1))

@@ -6,13 +6,11 @@ namespace TiendaApi.Api.Infrastructures;
 /// <summary>
 /// Extension methods para CORS.
 /// </summary>
-public static class CorsExtensions
-{
+public static class CorsExtensions {
     /// <summary>
     /// Aplica la política CORS configurada según el entorno.
     /// </summary>
-    public static IApplicationBuilder UseCorsPolicy(this IApplicationBuilder app)
-    {
+    public static IApplicationBuilder UseCorsPolicy(this IApplicationBuilder app) {
         var env = ((WebApplication)app).Environment;
 
         var policyName = env.IsDevelopment() ? "AllowAll" : "ProductionPolicy";

@@ -4,17 +4,14 @@ using TiendaApi.Api.Validators.Productos;
 
 namespace TiendaApi.Tests.Unit.Validators.Productos;
 
-public class ProductoRequestValidatorEdgeTests
-{
+public class ProductoRequestValidatorEdgeTests {
     private readonly ProductoRequestValidator _validator = new();
 
     #region Nombre Edge Cases
 
     [Test]
-    public void CreateAsync_ConNombreExactamente3Caracteres_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreExactamente3Caracteres_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "ABC",
             Precio = 10,
             Stock = 5,
@@ -27,10 +24,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConNombreExactamente200Caracteres_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreExactamente200Caracteres_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = new string('A', 200),
             Precio = 10,
             Stock = 5,
@@ -43,10 +38,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConNombre201Caracteres_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombre201Caracteres_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = new string('A', 201),
             Precio = 10,
             Stock = 5,
@@ -59,10 +52,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConNombreConEmojis_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreConEmojis_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Producto 🎁 #1",
             Precio = 10,
             Stock = 5,
@@ -75,10 +66,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConNombreConTildes_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConNombreConTildes_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "José María García Pérez",
             Precio = 10,
             Stock = 5,
@@ -95,10 +84,8 @@ public class ProductoRequestValidatorEdgeTests
     #region Precio Edge Cases
 
     [Test]
-    public void CreateAsync_ConPrecio0_01_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConPrecio0_01_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 0.01m,
             Stock = 5,
@@ -111,10 +98,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConPrecio99999999999999_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConPrecio99999999999999_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 99999999999999m,
             Stock = 5,
@@ -127,10 +112,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConPrecioNegativoPequeño_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConPrecioNegativoPequeño_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = -0.01m,
             Stock = 5,
@@ -147,10 +130,8 @@ public class ProductoRequestValidatorEdgeTests
     #region Stock Edge Cases
 
     [Test]
-    public void CreateAsync_ConStockIntMaxValue_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConStockIntMaxValue_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = int.MaxValue,
@@ -163,10 +144,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConStockNegativo1_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConStockNegativo1_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = -1,
@@ -183,10 +162,8 @@ public class ProductoRequestValidatorEdgeTests
     #region CategoriaId Edge Cases
 
     [Test]
-    public void CreateAsync_ConCategoriaId1_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConCategoriaId1_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -199,10 +176,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConCategoriaId999999999_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConCategoriaId999999999_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -215,10 +190,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConCategoriaIdNegativo1_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConCategoriaIdNegativo1_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -235,10 +208,8 @@ public class ProductoRequestValidatorEdgeTests
     #region Descripcion Edge Cases
 
     [Test]
-    public void CreateAsync_ConDescripcionExactamente1000Caracteres_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcionExactamente1000Caracteres_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = new string('A', 1000),
             Precio = 10,
@@ -252,10 +223,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConDescripcion1001Caracteres_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcion1001Caracteres_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = new string('A', 1001),
             Precio = 10,
@@ -269,10 +238,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConDescripcionNull_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcionNull_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = null!,
             Precio = 10,
@@ -286,10 +253,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConDescripcionSoloEspacios_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConDescripcionSoloEspacios_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Descripcion = "   ",
             Precio = 10,
@@ -307,10 +272,8 @@ public class ProductoRequestValidatorEdgeTests
     #region Imagen URL Edge Cases
 
     [Test]
-    public void CreateAsync_ConUrlVacia_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlVacia_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -324,10 +287,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConUrlNull_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlNull_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -341,10 +302,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConUrlHttpsValida_DeberiaPasar()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlHttpsValida_DeberiaPasar() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -358,10 +317,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConUrlFtp_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlFtp_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,
@@ -375,10 +332,8 @@ public class ProductoRequestValidatorEdgeTests
     }
 
     [Test]
-    public void CreateAsync_ConUrlFile_DeberiaTenerError()
-    {
-        var dto = new ProductoRequestDto
-        {
+    public void CreateAsync_ConUrlFile_DeberiaTenerError() {
+        var dto = new ProductoRequestDto {
             Nombre = "Test Product",
             Precio = 10,
             Stock = 5,

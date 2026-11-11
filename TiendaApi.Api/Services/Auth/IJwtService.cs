@@ -5,8 +5,7 @@ namespace TiendaApi.Api.Services.Auth;
 /// <summary>
 /// Servicio para generación y validación de tokens JWT.
 /// </summary>
-public interface IJwtService
-{
+public interface IJwtService {
     /// <summary>Genera un token JWT para un usuario.</summary>
     /// <param name="user">Usuario para el token.</param>
     /// <returns>Token JWT generado.</returns>

@@ -10,15 +10,13 @@ namespace TiendaApi.Api.Data;
 /// <c>EnsureDeleted + EnsureCreated</c> al generar cada migración.
 /// Lee la connection string de appsettings.json (copiado al bin de salida).
 /// </summary>
-public class TiendaDbContextFactory : IDesignTimeDbContextFactory<TiendaDbContext>
-{
+public class TiendaDbContextFactory : IDesignTimeDbContextFactory<TiendaDbContext> {
     /// <summary>
     /// Crea el DbContext para tiempo de diseño.
     /// </summary>
     /// <param name="args">Argumentos de la herramienta (no usados; usar <c>--environment</c> si se necesita otro entorno).</param>
     /// <returns>DbContext configurado con la conexión por defecto.</returns>
-    public TiendaDbContext CreateDbContext(string[] args)
-    {
+    public TiendaDbContext CreateDbContext(string[] args) {
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)

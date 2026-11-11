@@ -7,13 +7,11 @@ namespace TiendaApi.Api.Validators.Usuarios;
 /// Validador FluentValidation para UserUpdateDto.
 /// Reglas opcionales: Email válido, Password(8-100 con mayúscula, minúscula y dígito).
 /// </summary>
-public class UserUpdateValidator : AbstractValidator<UserUpdateDto>
-{
+public class UserUpdateValidator : AbstractValidator<UserUpdateDto> {
     /// <summary>
     /// Define reglas de validación para UserUpdateDto.
     /// </summary>
-    public UserUpdateValidator()
-    {
+    public UserUpdateValidator() {
         RuleFor(u => u.Email)
             .EmailAddress().WithMessage("Debe ser un correo electrónico válido")
             .MaximumLength(100).WithMessage("El correo no puede exceder 100 caracteres")

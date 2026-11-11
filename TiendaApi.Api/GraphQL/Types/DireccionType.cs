@@ -7,14 +7,12 @@ namespace TiendaApi.Api.GraphQL.Types;
 /// Tipo de GraphQL para <see cref="DireccionDto"/>: dirección de entrega
 /// (mismo contrato que REST).
 /// </summary>
-public class DireccionType : ObjectType<DireccionDto>
-{
+public class DireccionType : ObjectType<DireccionDto> {
     /// <summary>
     /// Configura los campos y descripciones del tipo GraphQL de DireccionDto.
     /// </summary>
     /// <param name="descriptor">Descriptor del tipo de objeto.</param>
-    protected override void Configure(IObjectTypeDescriptor<DireccionDto> descriptor)
-    {
+    protected override void Configure(IObjectTypeDescriptor<DireccionDto> descriptor) {
         descriptor.Name("DireccionDto");
         descriptor.Description("Dirección postal de envío (mismo contrato que REST).");
         descriptor.BindFieldsExplicitly();

@@ -11,17 +11,14 @@ namespace ClientBlazor.Tests.Domain;
 /// Objetivo: Asegurar que la conversión entre DTOs de API y Modelos de UI sea íntegra y funcional.
 /// </summary>
 [TestFixture]
-public class MapperTests
-{
+public class MapperTests {
     /// <summary>
     /// Verifica que todas las propiedades de un ProductoDto se transfieran correctamente al ProductoModel.
     /// </summary>
     [Test]
-    public void ProductoDto_ToModel_Should_Map_All_Fields()
-    {
+    public void ProductoDto_ToModel_Should_Map_All_Fields() {
         // Arrange
-        var dto = new ProductoDto
-        {
+        var dto = new ProductoDto {
             Id = 1,
             Nombre = "Test",
             Descripcion = "Desc",
@@ -49,8 +46,7 @@ public class MapperTests
     /// cuando el producto no tiene una imagen asignada.
     /// </summary>
     [Test]
-    public void ProductoModel_ImagenUrl_Should_Return_Placeholder_When_Empty()
-    {
+    public void ProductoModel_ImagenUrl_Should_Return_Placeholder_When_Empty() {
         // Arrange
         var model = new ProductoModel { Id = 1, Nombre = "T", Descripcion = "D", Precio = 10, Stock = 0, Imagen = null };
 
@@ -63,8 +59,7 @@ public class MapperTests
     /// concatenando la base del servidor cuando se proporciona un nombre de archivo.
     /// </summary>
     [Test]
-    public void ProductoModel_ImagenUrl_Should_Return_FullUrl_When_FileName_Provided()
-    {
+    public void ProductoModel_ImagenUrl_Should_Return_FullUrl_When_FileName_Provided() {
         // Arrange
         var model = new ProductoModel { Id = 1, Nombre = "T", Descripcion = "D", Precio = 10, Stock = 0, Imagen = "foto.png" };
 
@@ -77,8 +72,7 @@ public class MapperTests
     /// mostrar alertas de stock bajo o agotado correctamente.
     /// </summary>
     [Test]
-    public void ProductoModel_Stock_Properties_Should_Reflect_Correct_State()
-    {
+    public void ProductoModel_Stock_Properties_Should_Reflect_Correct_State() {
         var sinStock = new ProductoModel { Stock = 0 };
         var stockBajo = new ProductoModel { Stock = 3 };
         var stockOk = new ProductoModel { Stock = 20 };

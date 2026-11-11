@@ -9,8 +9,7 @@ namespace TiendaApi.Api.Services.Proveedores;
 /// Contrato del servicio de proveedores.
 /// Todas las operaciones son exclusivas del rol ADMIN.
 /// </summary>
-public interface IProveedorService
-{
+public interface IProveedorService {
     /// <summary>Obtiene todos los proveedores.</summary>
     /// <returns>Lista de proveedores.</returns>
     Task<Result<IEnumerable<ProveedorDto>, DomainError>> FindAllAsync();

@@ -8,8 +8,7 @@ namespace TiendaApi.Api.Services.Storage;
 /// <summary>
 /// Interfaz para operaciones de almacenamiento de archivos.
 /// </summary>
-public interface IStorageService
-{
+public interface IStorageService {
     /// <summary>
     /// Guarda un archivo en el sistema de almacenamiento.
     /// </summary>

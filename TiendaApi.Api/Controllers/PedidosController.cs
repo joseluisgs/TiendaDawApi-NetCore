@@ -22,8 +22,7 @@ namespace TiendaApi.Api.Controllers;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiVersion("1.0")]
 [Produces("application/json")]
-public class PedidosController(IPedidosService service, ILogger<PedidosController> logger) : ControllerBase
-{
+public class PedidosController(IPedidosService service, ILogger<PedidosController> logger) : ControllerBase {
     #region ========== ENDPOINTS DE ADMINISTRADORES ==========
 
     /// <summary>
@@ -35,8 +34,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<PedidoDto>>> GetAllPedidos()
-    {
+    public async Task<ActionResult<IEnumerable<PedidoDto>>> GetAllPedidos() {
         var resultado = await service.FindAllAsync();
 
         return resultado.Match(
@@ -63,13 +61,11 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         [FromQuery] int page = 1,
         [FromQuery] int size = 10,
         [FromQuery] string? sortBy = null,
-        [FromQuery] string? direction = null)
-    {
+        [FromQuery] string? direction = null) {
         var resultado = await service.FindAllPagedAsync(page - 1, size);
 
         return resultado.Match(
-            onSuccess: pedidos =>
-            {
+            onSuccess: pedidos => {
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(pedidos, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
@@ -90,8 +86,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PedidoDto>> GetPedidoById(string id)
-    {
+    public async Task<ActionResult<PedidoDto>> GetPedidoById(string id) {
         var resultado = await service.FindByIdAsync(id);
 
         return resultado.Match(
@@ -114,8 +109,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PedidoDto>> UpdatePedidoAdmin(string id, [FromBody] UpdatePedidoDto dto)
-    {
+    public async Task<ActionResult<PedidoDto>> UpdatePedidoAdmin(string id, [FromBody] UpdatePedidoDto dto) {
         var resultado = await service.UpdateAdminAsync(id, dto);
 
         return resultado.Match(
@@ -135,16 +129,14 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> DeletePedidoAdmin(string id)
-    {
+    public async Task<ActionResult> DeletePedidoAdmin(string id) {
         var resultado = await service.DeleteAdminAsync(id);
 
         if (resultado.IsSuccess)
             return NoContent();
 
         var error = resultado.Error;
-        return error switch
-        {
+        return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
             BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),
@@ -166,8 +158,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PedidoDto>> UpdatePedidoEstado(string id, [FromBody] UpdateEstadoDto dto)
-    {
+    public async Task<ActionResult<PedidoDto>> UpdatePedidoEstado(string id, [FromBody] UpdateEstadoDto dto) {
         var resultado = await service.UpdateEstadoAsync(id, dto.Estado);
 
         return resultado.Match(
@@ -188,8 +179,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [Authorize]
     [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<IEnumerable<PedidoDto>>> GetMyPedidos()
-    {
+    public async Task<ActionResult<IEnumerable<PedidoDto>>> GetMyPedidos() {
         logger.LogInformation("GetMyPedidos - User: {User}", User?.Identity?.Name);
         logger.LogInformation("GetMyPedidos - IsAuthenticated: {IsAuth}", User?.Identity?.IsAuthenticated);
 
@@ -222,16 +212,14 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         [FromQuery] int page = 1,
         [FromQuery] int size = 10,
         [FromQuery] string? sortBy = null,
-        [FromQuery] string? direction = null)
-    {
+        [FromQuery] string? direction = null) {
         if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var resultado = await service.FindMyPedidosAsync(userId, page - 1, size);
 
         return resultado.Match(
-            onSuccess: pedidos =>
-            {
+            onSuccess: pedidos => {
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(pedidos, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
@@ -252,15 +240,13 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PedidoDto>> CreateMyPedido([FromBody] PedidoRequestDto dto)
-    {
+    public async Task<ActionResult<PedidoDto>> CreateMyPedido([FromBody] PedidoRequestDto dto) {
         if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
         var resultado = await service.CreateAsync(userId, dto);
 
-        if (resultado.IsSuccess)
-        {
+        if (resultado.IsSuccess) {
             var pedido = resultado.Value;
             return CreatedAtAction(nameof(GetMyPedidoById), new { id = pedido.Id }, pedido);
         }
@@ -279,8 +265,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PedidoDto>> GetMyPedidoById(string id)
-    {
+    public async Task<ActionResult<PedidoDto>> GetMyPedidoById(string id) {
         if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
@@ -306,8 +291,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PedidoDto>> UpdateMyPedido(string id, [FromBody] UpdatePedidoDto dto)
-    {
+    public async Task<ActionResult<PedidoDto>> UpdateMyPedido(string id, [FromBody] UpdatePedidoDto dto) {
         if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
@@ -332,8 +316,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> DeleteMyPedido(string id)
-    {
+    public async Task<ActionResult> DeleteMyPedido(string id) {
         if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Usuario no autenticado correctamente" });
 
@@ -343,8 +326,7 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
             return NoContent();
 
         var error = resultado.Error;
-        return error switch
-        {
+        return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
             BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),
@@ -353,14 +335,13 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         };
     }
 
-        /// <summary>
+    /// <summary>
     /// Lee el id de la sesión actual (claim NameIdentifier). Devuelve false
     /// cuando no hay sesión o el claim no es numérico: agrupa el patrón que
     /// repiten las seis acciones "me/" de este controller y cada acción
     /// responde 401 con una sola línea.
     /// </summary>
-    private bool TryGetUserId(out long userId)
-    {
+    private bool TryGetUserId(out long userId) {
         userId = 0;
         if (User?.Identity == null || !User.Identity.IsAuthenticated)
             return false;
@@ -368,5 +349,5 @@ public class PedidosController(IPedidosService service, ILogger<PedidosControlle
         var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return !string.IsNullOrEmpty(claim) && long.TryParse(claim, out userId);
     }
-#endregion
+    #endregion
 }

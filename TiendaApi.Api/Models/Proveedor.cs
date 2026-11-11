@@ -1,4 +1,5 @@
 namespace TiendaApi.Api.Models;
+
 using TiendaApi.Api.Data.Abstractions;
 
 /// <summary>
@@ -9,8 +10,7 @@ using TiendaApi.Api.Data.Abstractions;
 /// distribuibles y legibles en URL. Un proveedor tiene muchos productos; cada producto
 /// apunta a uno solo o a ninguno.
 /// </summary>
-public class Proveedor : ITimestamped
-{
+public class Proveedor : ITimestamped {
     /// <summary>
     /// Clave primaria: identificador estilo YouTube (11 caracteres Base64url).
     /// Se declara sin inicializar a propósito: si llegara con un valor (incluso vacío),

@@ -27,8 +27,7 @@ public class ProductosController(
     IProductoService service,
     IHistorialService historialService,
     ILogger<ProductosController> logger
-) : ControllerBase
-{
+) : ControllerBase {
     /// <summary>
     /// Obtiene todos los productos paginados con filtros opcionales.
     /// </summary>
@@ -55,8 +54,7 @@ public class ProductosController(
         [FromQuery] int page = 0,
         [FromQuery] int size = 10,
         [FromQuery] string sortBy = "id",
-        [FromQuery] string direction = "asc")
-    {
+        [FromQuery] string direction = "asc") {
         logger.LogInformation("Obteniendo productos paginados - Página: {Page}, Tamaño: {Size}", page, size);
 
         var filter = new ProductoFilterDto(nombre, categoria, isDeleted, precioMax, stockMin, page, size, sortBy, direction);
@@ -64,8 +62,7 @@ public class ProductosController(
         var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: productos =>
-            {
+            onSuccess: productos => {
                 // ETag lo gestiona OutputCache ([OutputCache] attribute)
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(productos, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
@@ -86,8 +83,7 @@ public class ProductosController(
     [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
-    public async Task<ActionResult<ProductoDto>> GetById(long id)
-    {
+    public async Task<ActionResult<ProductoDto>> GetById(long id) {
         logger.LogInformation("Obteniendo producto con ID: {Id}", id);
 
         var resultado = await service.FindByIdAsync(id);
@@ -108,8 +104,7 @@ public class ProductosController(
     [ProducesResponseType(typeof(IEnumerable<ProductoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<ProductoDto>>> GetByCategoria(long categoriaId)
-    {
+    public async Task<ActionResult<IEnumerable<ProductoDto>>> GetByCategoria(long categoriaId) {
         logger.LogInformation("Obteniendo productos de categoría: {CategoriaId}", categoriaId);
 
         var resultado = await service.FindByCategoriaIdAsync(categoriaId);
@@ -132,8 +127,7 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<ActionResult<ProductoDto>> Create([FromBody] ProductoRequestDto dto)
-    {
+    public async Task<ActionResult<ProductoDto>> Create([FromBody] ProductoRequestDto dto) {
         logger.LogInformation("Creando nuevo producto: {Nombre}", dto.Nombre);
 
         var resultado = await service.CreateAsync(dto);
@@ -157,8 +151,7 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<ActionResult<ProductoDto>> Update(long id, [FromBody] ProductoRequestDto dto)
-    {
+    public async Task<ActionResult<ProductoDto>> Update(long id, [FromBody] ProductoRequestDto dto) {
         logger.LogInformation("Actualizando producto con ID: {Id}", id);
 
         var resultado = await service.UpdateAsync(id, dto);
@@ -180,8 +173,7 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<ActionResult> Delete(long id)
-    {
+    public async Task<ActionResult> Delete(long id) {
         logger.LogInformation("Eliminando producto con ID: {Id}", id);
 
         var resultado = await service.DeleteAsync(id);
@@ -190,8 +182,7 @@ public class ProductosController(
             return NoContent();
 
         var error = resultado.Error;
-        return error switch
-        {
+        return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
             BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),
@@ -214,18 +205,15 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [RequestSizeLimit(10 * 1024 * 1024)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<ActionResult<ProductoDto>> UpdateImage(long id, IFormFile image)
-    {
+    public async Task<ActionResult<ProductoDto>> UpdateImage(long id, IFormFile image) {
         logger.LogInformation("Actualizando imagen de producto con ID: {Id}", id);
 
-        if (image is null or { Length: 0 })
-        {
+        if (image is null or { Length: 0 }) {
             return BadRequest(new { message = "Debe proporcionar un archivo de imagen" });
         }
 
         var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
-        if (!allowedTypes.Contains(image.ContentType.ToLowerInvariant()))
-        {
+        if (!allowedTypes.Contains(image.ContentType.ToLowerInvariant())) {
             return BadRequest(new { message = "Tipo de archivo no permitido. Solo se permiten: JPG, PNG, GIF, WEBP" });
         }
 
@@ -250,8 +238,7 @@ public class ProductosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Authorize(Policy = "RequireAdminRole")]
-    public async Task<ActionResult<ProductoDto>> UpdatePartial(long id, [FromBody] ProductoPatchDto dto)
-    {
+    public async Task<ActionResult<ProductoDto>> UpdatePartial(long id, [FromBody] ProductoPatchDto dto) {
         logger.LogInformation("Actualizando parcialmente producto con ID: {Id}", id);
 
         var resultado = await service.UpdatePartialAsync(id, dto);
@@ -284,8 +271,7 @@ public class ProductosController(
         long id,
         [FromQuery] DateTime? desde = null,
         [FromQuery] DateTime? hasta = null,
-        [FromQuery] int limit = 50)
-    {
+        [FromQuery] int limit = 50) {
         var resultado = await historialService.GetHistorialPreciosAsync(id, desde, hasta, limit);
 
         // Constructor explícito: el operador implícito T -> ActionResult<T> no se
@@ -312,8 +298,7 @@ public class ProductosController(
     // ActionResult<object> y no ActionResult: en ASP.NET Core 10 ActionResult<T>
     // ya no hereda de ActionResult, así que ToHttpResult<T> no es convertible al
     // tipo no genérico. Con T = object el 204/401 y el mapeo de errores siguen iguales.
-    public async Task<ActionResult<object>> RegistrarVista(long id)
-    {
+    public async Task<ActionResult<object>> RegistrarVista(long id) {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))

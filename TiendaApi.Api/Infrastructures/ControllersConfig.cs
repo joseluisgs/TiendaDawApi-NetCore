@@ -9,16 +9,13 @@ namespace TiendaApi.Api.Infrastructures;
 /// <summary>
 /// Extensiones de configuración de controladores MVC y validación FluentValidation.
 /// </summary>
-public static class ControllersConfig
-{
+public static class ControllersConfig {
     /// <summary>
     /// Configura los controladores MVC con negociación de contenido.
     /// </summary>
-    public static IMvcBuilder AddMvcControllers(this IServiceCollection services)
-    {
+    public static IMvcBuilder AddMvcControllers(this IServiceCollection services) {
         Log.Information("📦 Configurando controladores MVC...");
-        return services.AddControllers(options =>
-        {
+        return services.AddControllers(options => {
             options.RespectBrowserAcceptHeader = true;
             options.ReturnHttpNotAcceptable = true;
         })
@@ -36,8 +33,7 @@ public static class ControllersConfig
     /// Data Annotations valida formato básico (requerido, rango, email). FluentValidation complementa
     /// con reglas de negocio complejas (condicionales, múltiples campos). Ambos se ejecutan antes del controller.
     /// </remarks>
-    public static IServiceCollection AddFluentValidationServices(this IServiceCollection services)
-    {
+    public static IServiceCollection AddFluentValidationServices(this IServiceCollection services) {
         Log.Information("✓ Configurando FluentValidation...");
         return services
             .AddValidatorsFromAssemblyContaining<Program>()  // Busca validadores en el ensamblado

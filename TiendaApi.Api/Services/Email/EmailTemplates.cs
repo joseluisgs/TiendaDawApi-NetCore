@@ -3,13 +3,11 @@ namespace TiendaApi.Api.Services.Email;
 /// <summary>
 /// Plantillas base para emails de la tienda.
 /// </summary>
-public static class EmailTemplates
-{
+public static class EmailTemplates {
     /// <summary>
     /// Crea el HTML base para un email de la tienda.
     /// </summary>
-    public static string CreateBase(string title, string content)
-    {
+    public static string CreateBase(string title, string content) {
         return $@"<!DOCTYPE html>
 <html lang='es'>
 <head>
@@ -48,8 +46,7 @@ public static class EmailTemplates
     /// <summary>
     /// Genera el contenido para email de nuevo producto.
     /// </summary>
-    public static string ProductoCreado(string nombre, decimal precio, int stock, long id)
-    {
+    public static string ProductoCreado(string nombre, decimal precio, int stock, long id) {
         return $@"
             <table style='width: 100%; border-collapse: collapse; margin: 20px 0;'>
                 <tr>
@@ -77,8 +74,7 @@ public static class EmailTemplates
     /// <summary>
     /// Genera el contenido para email de nuevo pedido (incluye datos del cliente).
     /// </summary>
-    public static string PedidoCreado(string pedidoId, decimal total, int itemCount, long userId)
-    {
+    public static string PedidoCreado(string pedidoId, decimal total, int itemCount, long userId) {
         return $@"
             <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
                 <h3 style='margin-top: 0; color: #1a1a2e;'>📋 Datos del Cliente</h3>
@@ -110,8 +106,7 @@ public static class EmailTemplates
     /// Genera el contenido para el email de CONFIRMACIÓN dirigido al cliente
     /// que realizó el pedido (distinto del email de aviso al administrador).
     /// </summary>
-    public static string PedidoConfirmacionCliente(string pedidoId, decimal total, int itemCount, string nombreDestinatario)
-    {
+    public static string PedidoConfirmacionCliente(string pedidoId, decimal total, int itemCount, string nombreDestinatario) {
         return $@"
             <p style='color: #1a1a2e;'>Hola <strong>{nombreDestinatario}</strong>,</p>
             <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
@@ -140,10 +135,8 @@ public static class EmailTemplates
     /// Genera el contenido para email de cambio de estado de pedido
     /// (redactado en voz del cliente: es el email que recibe él).
     /// </summary>
-    public static string PedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total)
-    {
-        var estadoColor = nuevoEstado.ToUpper() switch
-        {
+    public static string PedidoEstadoActualizado(string pedidoId, string estadoAnterior, string nuevoEstado, decimal total) {
+        var estadoColor = nuevoEstado.ToUpper() switch {
             "ENTREGADO" => "#28a745",
             "ENVIADO" => "#17a2b8",
             "PROCESANDO" => "#ffc107",
@@ -182,8 +175,7 @@ public static class EmailTemplates
     /// Genera el contenido para el email de aviso al CLIENTE cuando un
     /// administrador modifica datos de su pedido (dirección, etc.).
     /// </summary>
-    public static string PedidoModificadoCliente(string pedidoId, string nombreDestinatario)
-    {
+    public static string PedidoModificadoCliente(string pedidoId, string nombreDestinatario) {
         return $@"
             <p style='color: #1a1a2e;'>Hola <strong>{nombreDestinatario}</strong>,</p>
             <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
@@ -199,8 +191,7 @@ public static class EmailTemplates
     /// Genera el contenido para el email de CANCELACIÓN dirigido al CLIENTE
     /// (cancelación propia o eliminación por administrador).
     /// </summary>
-    public static string PedidoCanceladoCliente(string pedidoId, decimal total, string nombreDestinatario)
-    {
+    public static string PedidoCanceladoCliente(string pedidoId, decimal total, string nombreDestinatario) {
         return $@"
             <p style='color: #1a1a2e;'>Hola <strong>{nombreDestinatario}</strong>,</p>
             <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
@@ -224,8 +215,7 @@ public static class EmailTemplates
     /// <summary>
     /// Genera el contenido para email de pedido eliminado por administrador (incluye datos del cliente).
     /// </summary>
-    public static string PedidoEliminadoAdmin(string pedidoId, decimal total, long userId)
-    {
+    public static string PedidoEliminadoAdmin(string pedidoId, decimal total, long userId) {
         return $@"
             <div style='background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #f5c6cb;'>
                 <h3 style='margin-top: 0; color: #721c24;'>🗑️ Pedido Eliminado</h3>

@@ -18,12 +18,10 @@ namespace TiendaApi.Api.Services.Historial;
 public class HistorialService(
     IProductoRepository productoRepository,
     IHistorialRepository historialRepository,
-    ILogger<HistorialService> logger) : IHistorialService
-{
+    ILogger<HistorialService> logger) : IHistorialService {
     /// <inheritdoc />
     public async Task<Result<IReadOnlyList<HistorialPrecioDto>, DomainError>> GetHistorialPreciosAsync(
-        long productoId, DateTime? desde, DateTime? hasta, int limit)
-    {
+        long productoId, DateTime? desde, DateTime? hasta, int limit) {
         var producto = await productoRepository.FindByIdAsync(productoId);
         if (producto is null)
             return Result.Failure<IReadOnlyList<HistorialPrecioDto>, DomainError>(
@@ -37,14 +35,11 @@ public class HistorialService(
 
         var limitEfectivo = Math.Clamp(limit, 1, 200);
 
-        try
-        {
+        try {
             var serie = await historialRepository.GetHistorialPreciosAsync(
                 productoId, desde, hasta, limitEfectivo);
             return Result.Success<IReadOnlyList<HistorialPrecioDto>, DomainError>(serie);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.LogWarning(ex,
                 "Cassandra no disponible: el historial del producto {Id} responde vacio (modo degradado)", productoId);
             return Result.Success<IReadOnlyList<HistorialPrecioDto>, DomainError>(Array.Empty<HistorialPrecioDto>());
@@ -52,19 +47,15 @@ public class HistorialService(
     }
 
     /// <inheritdoc />
-    public async Task<UnitResult<DomainError>> RegistrarVistaAsync(long usuarioId, long productoId)
-    {
+    public async Task<UnitResult<DomainError>> RegistrarVistaAsync(long usuarioId, long productoId) {
         var producto = await productoRepository.FindByIdAsync(productoId);
         if (producto is null)
             return UnitResult.Failure<DomainError>(ProductoError.NotFound(productoId));
 
-        try
-        {
+        try {
             // El nombre se copia a la fila (denormalización): el feed no hará cruces.
             await historialRepository.RegistrarVistaAsync(usuarioId, producto.Id, producto.Nombre);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.LogWarning(ex,
                 "Cassandra: no se pudo registrar la vista del producto {Id} por el usuario {UsuarioId} (modo degradado)",
                 productoId, usuarioId);
@@ -74,16 +65,12 @@ public class HistorialService(
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<VistaFeedDto>> GetFeedVistasAsync(long usuarioId, int limit)
-    {
+    public async Task<IReadOnlyList<VistaFeedDto>> GetFeedVistasAsync(long usuarioId, int limit) {
         var limitEfectivo = Math.Clamp(limit, 1, 100);
 
-        try
-        {
+        try {
             return await historialRepository.GetFeedVistasAsync(usuarioId, limitEfectivo);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.LogWarning(ex,
                 "Cassandra no disponible: el feed del usuario {UsuarioId} responde vacio (modo degradado)", usuarioId);
             return Array.Empty<VistaFeedDto>();

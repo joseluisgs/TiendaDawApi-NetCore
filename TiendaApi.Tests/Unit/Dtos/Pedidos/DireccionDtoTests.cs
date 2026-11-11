@@ -3,15 +3,12 @@ using TiendaApi.Api.Dtos.Pedidos;
 
 namespace TiendaApi.Tests.Unit.Dtos.Pedidos;
 
-public class DireccionDtoTests
-{
+public class DireccionDtoTests {
     #region Tests de Propiedades
 
     [Test]
-    public void DireccionDto_ConTodosLosCampos_AsignaCorrectamente()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionDto_ConTodosLosCampos_AsignaCorrectamente() {
+        var dto = new DireccionDto {
             Calle = "Gran Vía",
             Numero = "42",
             Ciudad = "Madrid",
@@ -29,8 +26,7 @@ public class DireccionDtoTests
     }
 
     [Test]
-    public void DireccionDto_PorDefecto_TienePropiedadesVacias()
-    {
+    public void DireccionDto_PorDefecto_TienePropiedadesVacias() {
         var dto = new DireccionDto();
 
         dto.Calle.Should().BeEmpty();
@@ -42,18 +38,15 @@ public class DireccionDtoTests
     }
 
     [Test]
-    public void DireccionDto_PermiteCalleVacia()
-    {
+    public void DireccionDto_PermiteCalleVacia() {
         var dto = new DireccionDto { Calle = string.Empty };
 
         dto.Calle.Should().BeEmpty();
     }
 
     [Test]
-    public void DireccionDto_PermiteValoresMaximos()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionDto_PermiteValoresMaximos() {
+        var dto = new DireccionDto {
             Calle = new string('A', 200),
             Numero = new string('1', 20),
             Ciudad = new string('C', 100),
@@ -75,10 +68,8 @@ public class DireccionDtoTests
     #region Tests de Serializacion JSON
 
     [Test]
-    public void DireccionDto_Serialize_ConTodosLosCampos()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionDto_Serialize_ConTodosLosCampos() {
+        var dto = new DireccionDto {
             Calle = "Gran Via",
             Numero = "42",
             Ciudad = "Madrid",
@@ -102,8 +93,7 @@ public class DireccionDtoTests
     }
 
     [Test]
-    public void DireccionDto_Deserialize_ConTodosLosCampos()
-    {
+    public void DireccionDto_Deserialize_ConTodosLosCampos() {
         var json = """
             {
                 "calle": "Gran Vía",
@@ -127,8 +117,7 @@ public class DireccionDtoTests
     }
 
     [Test]
-    public void DireccionDto_Deserialize_SinCamposOpcionales()
-    {
+    public void DireccionDto_Deserialize_SinCamposOpcionales() {
         var json = """
             {
                 "calle": "Calle Principal",
@@ -151,10 +140,8 @@ public class DireccionDtoTests
     #region Tests de Direccion Parcial
 
     [Test]
-    public void DireccionDto_SoloCalleYCiudad_EsParcial()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionDto_SoloCalleYCiudad_EsParcial() {
+        var dto = new DireccionDto {
             Calle = "Calle Test",
             Ciudad = "Barcelona",
             Pais = "España"
@@ -167,10 +154,8 @@ public class DireccionDtoTests
     }
 
     [Test]
-    public void DireccionDto_SinCodigoPostal_EsValida()
-    {
-        var dto = new DireccionDto
-        {
+    public void DireccionDto_SinCodigoPostal_EsValida() {
+        var dto = new DireccionDto {
             Calle = "Gran Vía",
             Numero = "42",
             Ciudad = "Madrid",

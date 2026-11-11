@@ -14,8 +14,7 @@ namespace ClientBlazor.Tests.Components;
 /// Objetivo: Validar la reactividad de la UI ante eventos del stream de notificaciones globales.
 /// </summary>
 [TestFixture]
-public class ToastPanelTests
-{
+public class ToastPanelTests {
     private BunitContext _ctx = null!;
     private Mock<INotificationStore> _notificationStoreMock = null!;
     private BehaviorSubject<List<Notification>> _notificationsSubject = null!;
@@ -24,11 +23,10 @@ public class ToastPanelTests
     /// Configura el mock del stream de notificaciones.
     /// </summary>
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _ctx = new BunitContext();
         _notificationStoreMock = new Mock<INotificationStore>();
-        
+
         // Creamos un Subject para controlar las emisiones de notificaciones
         _notificationsSubject = new BehaviorSubject<List<Notification>>(new List<Notification>());
         _notificationStoreMock.Setup(s => s.Notifications).Returns(_notificationsSubject);
@@ -46,8 +44,7 @@ public class ToastPanelTests
     /// Verifica que no se renderice ningún Toast si la lista de notificaciones está vacía.
     /// </summary>
     [Test]
-    public void Should_Not_Render_Toasts_When_List_Is_Empty()
-    {
+    public void Should_Not_Render_Toasts_When_List_Is_Empty() {
         var cut = _ctx.Render<ToastPanel>();
         cut.FindAll(".toast-item").Should().BeEmpty();
     }
@@ -56,11 +53,9 @@ public class ToastPanelTests
     /// Valida que al emitir una notificación desde el Store, esta aparezca con sus datos y estilos correctos en el DOM.
     /// </summary>
     [Test]
-    public void Should_Render_Toast_When_Notification_Is_Added()
-    {
+    public void Should_Render_Toast_When_Notification_Is_Added() {
         var cut = _ctx.Render<ToastPanel>();
-        var notification = new Notification
-        {
+        var notification = new Notification {
             Id = "1",
             Type = NotificationType.Success,
             Message = "Test Message",
@@ -82,8 +77,7 @@ public class ToastPanelTests
     /// Comprueba que al hacer clic sobre una notificación se llame al método Dismiss del Store.
     /// </summary>
     [Test]
-    public void Clicking_Toast_Should_Call_Dismiss()
-    {
+    public void Clicking_Toast_Should_Call_Dismiss() {
         // Arrange
         var notification = new Notification { Id = "99", Message = "Click me", CreatedAt = DateTime.Now };
         _notificationsSubject.OnNext(new List<Notification> { notification });

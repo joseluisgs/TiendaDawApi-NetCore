@@ -7,35 +7,30 @@ namespace ClientBlazor.E2E.Tests;
 
 [Parallelizable(ParallelScope.Self)]
 [TestFixture]
-public class UserFlowTests : PageTest
-{
+public class UserFlowTests : PageTest {
     // Configuración global para grabación de video y URL base
-    public override BrowserNewContextOptions ContextOptions()
-    {
-        return new BrowserNewContextOptions
-        {
+    public override BrowserNewContextOptions ContextOptions() {
+        return new BrowserNewContextOptions {
             // URL base donde corre la app
             BaseURL = "http://localhost:5234",
-            
+
             // Grabación de video
             RecordVideoDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, "videos"),
             RecordVideoSize = new RecordVideoSize { Width = 1280, Height = 720 },
-            
+
             // Viewport estándar
             ViewportSize = new ViewportSize { Width = 1280, Height = 720 }
         };
     }
 
     [SetUp]
-    public void SetupTimeout()
-    {
+    public void SetupTimeout() {
         // Aumentar el timeout por defecto de la página (90 segundos)
         Page.SetDefaultTimeout(90000);
     }
 
     [Test]
-    public async Task Login_User_Flow_Should_Authenticate_Successfully()
-    {
+    public async Task Login_User_Flow_Should_Authenticate_Successfully() {
         // 1. Ir a la home
         await Page.GotoAsync("/", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await Page.ScreenshotAsync(new() { Path = "screenshots/login-1-home.png" });
@@ -43,8 +38,8 @@ public class UserFlowTests : PageTest
         // 2. Rellenar formulario de login (usando la extensión TestId)
         // La API espera el Username, que es "userdaw", no el email completo en este caso
         await Page.TestId("email-input").FillAsync("userdaw");
-        await Page.TestId("password-input").FillAsync("userdaw");
-        
+        await Page.TestId("password-input").FillAsync("Userdaw123!");
+
         await Page.ScreenshotAsync(new() { Path = "screenshots/login-2-filled.png" });
 
         // 3. Click en login
@@ -53,7 +48,7 @@ public class UserFlowTests : PageTest
         // 4. Verificar resultado (debe aparecer el AuthPanel)
         var authPanel = Page.TestId("auth-panel");
         await Expect(authPanel).ToBeVisibleAsync();
-        
+
         // Verificar que contiene el nombre del usuario
         await Expect(authPanel).ToContainTextAsync("userdaw");
 
@@ -61,8 +56,7 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Navigation_To_Rest_Page_Should_Load_Content()
-    {
+    public async Task Navigation_To_Rest_Page_Should_Load_Content() {
         // 1. Ir a la home primero
         await Page.GotoAsync("/");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -82,8 +76,7 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Rest_Page_Interaction_Should_Fetch_Product_By_Id()
-    {
+    public async Task Rest_Page_Interaction_Should_Fetch_Product_By_Id() {
         // 1. Ir directamente a REST
         await Page.GotoAsync("/rest");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -111,7 +104,7 @@ public class UserFlowTests : PageTest
         // Esperamos que aparezca el área de respuesta con el JSON
         var responseArea = Page.Locator(".response-display");
         await Expect(responseArea).ToBeVisibleAsync();
-        
+
         // Verificar contenido JSON (buscamos alguna propiedad típica de un producto)
         await Expect(responseArea).ToContainTextAsync("\"Id\": 2");
         await Expect(responseArea).ToContainTextAsync("Nombre");
@@ -120,16 +113,15 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task WebSocket_Connection_Should_Receive_Events()
-    {
+    public async Task WebSocket_Connection_Should_Receive_Events() {
         // Para que este test pase de forma determinista, necesitamos disparar un evento.
         // Los eventos automáticos del backend (Background Services) no están garantizados en tiempo.
         // Por tanto: 1. Login como Admin -> 2. Conectar WS -> 3. Crear Producto -> 4. Verificar Evento
-        
+
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -142,13 +134,13 @@ public class UserFlowTests : PageTest
         // 3. Abrir una nueva pestaña para disparar el evento (Crear producto)
         var secondPage = await Page.Context.NewPageAsync();
         await secondPage.GotoAsync("/rest");
-        
+
         // Seleccionar Operación "POST - Crear"
         await secondPage.Locator(".form-group")
             .Filter(new() { HasText = "Operación" })
             .Locator("select")
             .SelectOptionAsync(new[] { "post" });
-        
+
         // Pulsar Ejecutar
         await secondPage.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
         // Esperar a que termine la ejecución en la segunda pestaña
@@ -161,18 +153,17 @@ public class UserFlowTests : PageTest
         await Expect(logsArea).ToContainTextAsync("PRODUCTO_CREADO");
 
         await Page.ScreenshotAsync(new() { Path = "screenshots/ws-2-event-received.png" });
-        
+
         // Limpieza
         await secondPage.CloseAsync();
     }
 
     [Test]
-    public async Task Logout_User_Flow_Should_Clear_Session()
-    {
+    public async Task Logout_User_Flow_Should_Clear_Session() {
         // 1. Login previo
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("userdaw");
-        await Page.TestId("password-input").FillAsync("userdaw");
+        await Page.TestId("password-input").FillAsync("Userdaw123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -182,17 +173,16 @@ public class UserFlowTests : PageTest
         // 3. Verificar que el panel desaparece y vuelve el login
         await Expect(Page.TestId("auth-panel")).Not.ToBeVisibleAsync();
         await Expect(Page.TestId("login-btn")).ToBeVisibleAsync();
-        
+
         await Page.ScreenshotAsync(new() { Path = "screenshots/logout-success.png" });
     }
 
     [Test]
-    public async Task Admin_Should_Perform_Full_Rest_Crud_Cycle()
-    {
+    public async Task Admin_Should_Perform_Full_Rest_Crud_Cycle() {
         // 1. Login como Admin (necesario para POST/PUT/DELETE)
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -203,10 +193,10 @@ public class UserFlowTests : PageTest
         // 3. CREATE
         await Page.Locator(".form-group select").Nth(1).SelectOptionAsync("post");
         await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
-        
+
         var responseArea = Page.Locator(".response-display");
         await Expect(responseArea).ToContainTextAsync("\"Id\":", new() { Timeout = 10000 });
-        
+
         var responseText = await responseArea.Locator("pre").InnerTextAsync();
         var idMatch = System.Text.RegularExpressions.Regex.Match(responseText, @"""Id"":\s*(\d+)");
         Assert.That(idMatch.Success, Is.True, "No se encontró el ID en la respuesta");
@@ -215,13 +205,13 @@ public class UserFlowTests : PageTest
         // 4. UPDATE (Enviando JSON completo para evitar error 500 de validación)
         await Page.Locator(".form-group select").Nth(1).SelectOptionAsync("put");
         await Page.Locator("input[type='number']").FillAsync(productId);
-        
+
         // Modificamos el JSON del body para que sea completo y válido
         var validJson = "{\n  \"Nombre\": \"Producto E2E Actualizado\",\n  \"Descripcion\": \"Actualizado desde Playwright\",\n  \"Precio\": 150.0,\n  \"Stock\": 25,\n  \"CategoriaId\": 1\n}";
         await Page.Locator("textarea").FillAsync(validJson);
-        
+
         await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
-        
+
         await Expect(responseArea).ToContainTextAsync("\"Nombre\": \"Producto E2E Actualizado\"", new() { Timeout = 10000 });
 
         // 5. DELETE
@@ -233,17 +223,16 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Admin_Should_Perform_GraphQL_Mutation_Successfully()
-    {
+    public async Task Admin_Should_Perform_GraphQL_Mutation_Successfully() {
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
-        
+
         // Verificar que el login fue exitoso antes de navegar
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
-        
+
         // Pequeña pausa para asegurar que el estado se persiste
         await Page.WaitForTimeoutAsync(500);
 
@@ -253,16 +242,16 @@ public class UserFlowTests : PageTest
 
         // 3. Cambiar a Mutation
         await Page.Locator(".form-group").Filter(new() { HasText = "Tipo" }).Locator("select").SelectOptionAsync("mutation");
-        
+
         // 4. Seleccionar "createProducto"
         await Page.Locator(".form-group").Filter(new() { HasText = "Operacion" }).Locator("select").SelectOptionAsync("createProducto");
-        
+
         // 5. Ejecutar
         await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
 
         // 6. Verificar respuesta (JSON con el nuevo producto o error de autenticación)
         var responseArea = Page.Locator(".response-section").Nth(0).Locator(".response-display");
-        
+
         // Verificar que hay respuesta (ya sea éxito con id o error de autenticación)
         var hasResponse = await Task.WhenAny(
             Expect(responseArea).ToContainTextAsync("\"id\":", new() { Timeout = 10000 }),
@@ -273,42 +262,40 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Admin_Should_Connect_To_Pedidos_SignalR_Hub()
-    {
+    public async Task Admin_Should_Connect_To_Pedidos_SignalR_Hub() {
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
         // 2. Ir a SignalR
         await Page.GotoAsync("/signalr");
-        
+
         // 3. Seleccionar Hub de Pedidos (que requiere JWT)
         await Page.Locator("select").Nth(0).SelectOptionAsync("pedidos");
-        
+
         // 4. Conectar - esperar más tiempo ya que requiere negociación JWT
         await Page.GetByRole(AriaRole.Button, new() { Name = "▶️ Conectar Hub" }).ClickAsync();
-        
+
         // 5. Verificar que aparece el mensaje de error de autenticación o la conexión exitosa
         var statusLocator = Page.Locator(".response-display").Filter(new() { HasText = "Estado:" });
-        
+
         // Puede conectar con JWT o fallar si hay problema de autenticación - verificamos cualquiera de los dos estados
         var connectedOrError = await Task.WhenAny(
             Expect(statusLocator).ToContainTextAsync("🟢 Hub Conectado", new() { Timeout = 15000 }),
             Expect(statusLocator).ToContainTextAsync("autenticacion", new() { Timeout = 5000 })
         );
-        
+
         await Page.ScreenshotAsync(new() { Path = "screenshots/signalr-pedidos-admin.png" });
     }
 
     [Test]
-    public async Task Rest_Page_Invalid_Id_Should_Show_NotFound_Error()
-    {
+    public async Task Rest_Page_Invalid_Id_Should_Show_NotFound_Error() {
         // 1. Ir a REST
         await Page.GotoAsync("/rest");
-        
+
         // 2. Operación GET por ID (ya seleccionada por defecto normalmente, pero aseguramos)
         await Page.Locator(".form-group").Filter(new() { HasText = "Operación" }).Locator("select").SelectOptionAsync("get-by-id");
 
@@ -321,7 +308,7 @@ public class UserFlowTests : PageTest
         // 5. Verificar error
         var responseArea = Page.Locator(".response-display");
         await Expect(responseArea).ToContainTextAsync("ERROR: Recurso no encontrado", new() { Timeout = 10000 });
-        
+
         // Verificar que salió notificación de advertencia/error
         await Expect(Page.Locator(".toast-container")).ToBeVisibleAsync();
 
@@ -329,12 +316,11 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task SignalR_And_GraphQL_Subscriptions_Should_Receive_RealTime_Events()
-    {
+    public async Task SignalR_And_GraphQL_Subscriptions_Should_Receive_RealTime_Events() {
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
@@ -368,7 +354,7 @@ public class UserFlowTests : PageTest
             .ToContainTextAsync("onProductoCreado", new() { Timeout = 15000 });
 
         await Page.ScreenshotAsync(new() { Path = "screenshots/realtime-all-success.png" });
-        
+
         // Limpieza
         await signalrPage.CloseAsync();
         await graphqlPage.CloseAsync();
@@ -376,15 +362,14 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Login_With_Invalid_Credentials_Should_Show_Error_Notification()
-    {
+    public async Task Login_With_Invalid_Credentials_Should_Show_Error_Notification() {
         // 1. Ir a la home
         await Page.GotoAsync("/");
 
         // 2. Rellenar con credenciales erróneas
         await Page.TestId("email-input").FillAsync("usuario_inexistente");
         await Page.TestId("password-input").FillAsync("password_falso");
-        
+
         // 3. Click en login
         await Page.TestId("login-btn").ClickAsync();
 
@@ -401,8 +386,7 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task GraphQL_Public_Query_For_Categorias_Should_Succeed()
-    {
+    public async Task GraphQL_Public_Query_For_Categorias_Should_Succeed() {
         // 1. Ir a GraphQL (sin login, es público)
         await Page.GotoAsync("/graphql");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -425,8 +409,7 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Rest_Page_Resource_Switch_Should_Update_Available_Operations_Info()
-    {
+    public async Task Rest_Page_Resource_Switch_Should_Update_Available_Operations_Info() {
         // 1. Ir a REST
         await Page.GotoAsync("/rest");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -443,7 +426,7 @@ public class UserFlowTests : PageTest
 
         // 4. Verificar que la información de ayuda se actualiza
         await Expect(infoBox).ToContainTextAsync("/api/v1/categorias");
-        
+
         // 5. Verificar que el select de operaciones se resetea a "GET - Listar todos" (comportamiento Blazor)
         var operacionSelect = Page.Locator(".form-group")
             .Filter(new() { HasText = "Operación" })
@@ -454,60 +437,57 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Session_Should_Persist_After_Page_Refresh()
-    {
+    public async Task Session_Should_Persist_After_Page_Refresh() {
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
-        
+
         // 2. Ir a REST
         await Page.GotoAsync("/rest");
-        
+
         // 3. Recargar la página (F5)
         await Page.ReloadAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        
+
         // 4. Verificar que la sesión persiste (AuthPanel visible)
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
-        
+
         await Page.ScreenshotAsync(new() { Path = "screenshots/session-persist.png" });
     }
 
     [Test]
-    public async Task Logout_From_GraphQL_Page_Should_Clear_Session()
-    {
+    public async Task Logout_From_GraphQL_Page_Should_Clear_Session() {
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
-        
+
         // 2. Ir a GraphQL
         await Page.GotoAsync("/graphql");
-        
+
         // 3. Hacer logout desde GraphQL
         await Page.GetByRole(AriaRole.Button, new() { Name = "Cerrar Sesión" }).ClickAsync();
-        
+
         // 4. Verificar que el panel desaparece
         await Expect(Page.TestId("auth-panel")).Not.ToBeVisibleAsync();
-        
+
         // 5. Intentar ejecutar una mutation y verificar que requiere login
         await Page.Locator(".form-group").Filter(new() { HasText = "Tipo" }).Locator("select").SelectOptionAsync("mutation");
         await Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" }).ClickAsync();
-        
+
         var responseArea = Page.Locator(".response-section").Nth(0).Locator(".response-display");
         await Expect(responseArea).ToContainTextAsync("Debes iniciar sesión", new() { Timeout = 10000 });
-        
+
         await Page.ScreenshotAsync(new() { Path = "screenshots/logout-graphql.png" });
     }
 
     [Test]
-    public async Task GraphQL_Public_Query_For_Productos_Should_Succeed()
-    {
+    public async Task GraphQL_Public_Query_For_Productos_Should_Succeed() {
         // 1. Ir a GraphQL (sin login, es público)
         await Page.GotoAsync("/graphql");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -530,8 +510,7 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task GraphQL_Type_Change_Should_Update_Available_Operations()
-    {
+    public async Task GraphQL_Type_Change_Should_Update_Available_Operations() {
         // 1. Ir a GraphQL
         await Page.GotoAsync("/graphql");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -561,18 +540,17 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task WebSocket_Pedidos_Requires_Authentication()
-    {
+    public async Task WebSocket_Pedidos_Requires_Authentication() {
         // 1. Login como Admin
         await Page.GotoAsync("/");
         await Page.TestId("email-input").FillAsync("admin");
-        await Page.TestId("password-input").FillAsync("admin");
+        await Page.TestId("password-input").FillAsync("Admin123!");
         await Page.TestId("login-btn").ClickAsync();
         await Expect(Page.TestId("auth-panel")).ToBeVisibleAsync();
 
         // 2. Ir a WebSocket
         await Page.GotoAsync("/websocket");
-        
+
         // 3. Seleccionar Hub de Pedidos
         await Page.Locator("select").Nth(0).SelectOptionAsync("pedidos");
 
@@ -581,7 +559,7 @@ public class UserFlowTests : PageTest
 
         // 5. Verificar conexión exitosa (con JWT)
         var statusLocator = Page.Locator(".response-display").Filter(new() { HasText = "Estado:" });
-        
+
         // Acepta conexión exitosa o error de autenticación
         var result = await Task.WhenAny(
             Expect(statusLocator).ToContainTextAsync("🟢 Conectado", new() { Timeout = 15000 }),
@@ -592,8 +570,7 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Rest_Categorias_Get_By_Id_Should_Succeed()
-    {
+    public async Task Rest_Categorias_Get_By_Id_Should_Succeed() {
         // 1. Ir a REST
         await Page.GotoAsync("/rest");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -626,18 +603,17 @@ public class UserFlowTests : PageTest
     }
 
     [Test]
-    public async Task Rest_Page_Should_Show_Executing_State()
-    {
+    public async Task Rest_Page_Should_Show_Executing_State() {
         // 1. Ir a REST (sin login para que tarde más)
         await Page.GotoAsync("/rest");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         // 2. Ejecutar una operación (GET listar todos)
         var executeButton = Page.GetByRole(AriaRole.Button, new() { Name = "Ejecutar" });
-        
+
         // 3. Click y verificar que el texto cambia (si es rápido, verificamos al menos que responde)
         await executeButton.ClickAsync();
-        
+
         // Verificar que después de ejecutar hay respuesta
         var responseArea = Page.Locator(".response-display");
         await Expect(responseArea).ToContainTextAsync("\"", new() { Timeout = 10000 });

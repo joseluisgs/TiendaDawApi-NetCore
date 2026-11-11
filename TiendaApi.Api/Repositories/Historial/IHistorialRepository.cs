@@ -7,8 +7,7 @@ namespace TiendaApi.Api.Repositories.Historial;
 /// actividad). Cada método responde a UNA consulta planificada (query-first):
 /// las tablas existen porque la pizarra de consultas existía antes.
 /// </summary>
-public interface IHistorialRepository
-{
+public interface IHistorialRepository {
     /// <summary>
     /// Q-A: histórico de precios de un producto. Lee la partición ENTERA del
     /// producto; el orden (más reciente primero) lo da la clustering key, sin ORDER BY.

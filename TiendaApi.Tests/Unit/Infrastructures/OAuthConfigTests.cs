@@ -14,8 +14,7 @@ namespace TiendaApi.Tests.Unit.Infrastructures;
 /// el esquema del proveedor aparece en IAuthenticationSchemeProvider: con la
 /// puerta cerrada la app ni siquiera conoce al proveedor.
 /// </summary>
-public class OAuthConfigTests
-{
+public class OAuthConfigTests {
     private static IConfiguration Config(Dictionary<string, string?> valores)
         => new ConfigurationBuilder().AddInMemoryCollection(valores).Build();
 
@@ -23,8 +22,7 @@ public class OAuthConfigTests
     /// Registra el OAuth de la configuración dada y pregunta si el esquema del
     /// proveedor quedó montado (mismo camino que usará el Challenge en runtime).
     /// </summary>
-    private static async Task<bool> TieneEsquema(string proveedor, Dictionary<string, string?> valores)
-    {
+    private static async Task<bool> TieneEsquema(string proveedor, Dictionary<string, string?> valores) {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddOAuthDoors(Config(valores));
@@ -39,8 +37,7 @@ public class OAuthConfigTests
     [TestCase("Google")]
     [TestCase("GitHub")]
     [TestCase("Microsoft")]
-    public async Task PuertaCerrada_NoRegistraElEsquema(string proveedor)
-    {
+    public async Task PuertaCerrada_NoRegistraElEsquema(string proveedor) {
         // Sin Auth:{Proveedor}:Enabled el proveedor no se registra: no hay
         // endpoint de login externo que exponer
         var resultado = await TieneEsquema(proveedor, new());
@@ -51,8 +48,7 @@ public class OAuthConfigTests
     [TestCase("Google")]
     [TestCase("GitHub")]
     [TestCase("Microsoft")]
-    public async Task PuertaAbiertaSinCredenciales_NoRegistraElEsquema(string proveedor)
-    {
+    public async Task PuertaAbiertaSinCredenciales_NoRegistraElEsquema(string proveedor) {
         // Enabled=true pero sin ClientId/ClientSecret: falta el material del
         // OAuth y no se puede montar una puerta a medias
         var valores = new Dictionary<string, string?> { [$"Auth:{proveedor}:Enabled"] = "true" };
@@ -65,12 +61,10 @@ public class OAuthConfigTests
     [TestCase("Google")]
     [TestCase("GitHub")]
     [TestCase("Microsoft")]
-    public async Task PuertaAbiertaConCredenciales_RegistraElEsquema(string proveedor)
-    {
+    public async Task PuertaAbiertaConCredenciales_RegistraElEsquema(string proveedor) {
         // Con Enabled y credenciales completas, el esquema queda disponible
         // para el Challenge del endpoint /auth/external/{provider}
-        var valores = new Dictionary<string, string?>
-        {
+        var valores = new Dictionary<string, string?> {
             [$"Auth:{proveedor}:Enabled"] = "true",
             [$"{proveedor}:ClientId"] = "id-de-prueba",
             [$"{proveedor}:ClientSecret"] = "secreto-de-prueba"

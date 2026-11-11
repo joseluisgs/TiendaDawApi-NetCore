@@ -14,34 +14,29 @@ namespace TiendaApi.Api.Infrastructures;
 /// <summary>
 /// Configuración de repositorios.
 /// </summary>
-public static class RepositoriesConfig
-{
+public static class RepositoriesConfig {
     /// <summary>
     /// Registra todos los repositorios.
     /// </summary>
     /// <param name="services">Colección de servicios.</param>
     /// <param name="configuration">Configuración.</param>
     /// <returns>IServiceCollection.</returns>
-    public static IServiceCollection AddRepositories(this IServiceCollection services, IConfiguration configuration)
-    {
+    public static IServiceCollection AddRepositories(this IServiceCollection services, IConfiguration configuration) {
         Log.Information("Registrando repositorios...");
 
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IProveedorRepository, ProveedorRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
-    services.AddScoped<IUserLoginRepository, UserLoginRepository>();
+        services.AddScoped<IUserLoginRepository, UserLoginRepository>();
         services.AddScoped<IHistorialRepository, CassandraHistorialRepository>();
 
         var pedidosRepoType = configuration["Pedidos:RepositoryType"] ?? "MongoDbNative";
 
-        if (pedidosRepoType == "MongoDbNative")
-        {
+        if (pedidosRepoType == "MongoDbNative") {
             services.AddScoped<IPedidosRepository, PedidosNativeRepository>();
             Log.Debug("Usando PedidosNativeRepository (MongoDB Driver nativo)");
-        }
-        else
-        {
+        } else {
             services.AddScoped<IPedidosRepository, PedidosEfCoreRepository>();
             Log.Debug("Usando PedidosEfCoreRepository (MongoDB EF Core)");
         }

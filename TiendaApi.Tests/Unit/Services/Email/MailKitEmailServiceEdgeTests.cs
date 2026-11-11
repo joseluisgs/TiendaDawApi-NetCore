@@ -7,16 +7,14 @@ using TiendaApi.Api.Services.Email;
 
 namespace TiendaApi.Tests.Unit.Services.Email;
 
-public class MailKitEmailServiceEdgeTests
-{
+public class MailKitEmailServiceEdgeTests {
     private Mock<IConfiguration> _mockConfiguration = null!;
     private Mock<ILogger<MailKitEmailService>> _mockLogger = null!;
     private Channel<EmailMessage> _emailChannel = null!;
     private MailKitEmailService _emailService = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _mockConfiguration = new Mock<IConfiguration>();
         _emailChannel = Channel.CreateUnbounded<EmailMessage>();
         _mockLogger = new Mock<ILogger<MailKitEmailService>>();
@@ -30,11 +28,9 @@ public class MailKitEmailServiceEdgeTests
     #region EnqueueEmailAsync Edge Cases
 
     [Test]
-    public async Task EnqueueEmailAsync_ConEmailMuyLargo_EncolaCorrectamente()
-    {
+    public async Task EnqueueEmailAsync_ConEmailMuyLargo_EncolaCorrectamente() {
         var longBody = new string('A', 10000);
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Test Subject con cuerpo muy largo",
             Body = longBody,
@@ -49,10 +45,8 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ConAsuntoVacio_EncolaCorrectamente()
-    {
-        var emailMessage = new EmailMessage
-        {
+    public async Task EnqueueEmailAsync_ConAsuntoVacio_EncolaCorrectamente() {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "",
             Body = "Test Body",
@@ -67,11 +61,9 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ConBodyHtmlConTagsAnidados_EncolaCorrectamente()
-    {
+    public async Task EnqueueEmailAsync_ConBodyHtmlConTagsAnidados_EncolaCorrectamente() {
         var htmlBody = "<div><table><tr><td><h1>Título</h1></td></tr></table></div>";
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "HTML Email",
             Body = htmlBody,
@@ -86,11 +78,9 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ConBodyConCaracteresEspeciales_EncolaCorrectamente()
-    {
+    public async Task EnqueueEmailAsync_ConBodyConCaracteresEspeciales_EncolaCorrectamente() {
         var specialCharsBody = "Hola \"Mundo\" & 'Tierra'<script>alert('XSS')</script>";
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Special Chars",
             Body = specialCharsBody,
@@ -105,10 +95,8 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ConMultiplesDestinatarios_SoloTomaElPrimero()
-    {
-        var emailMessage = new EmailMessage
-        {
+    public async Task EnqueueEmailAsync_ConMultiplesDestinatarios_SoloTomaElPrimero() {
+        var emailMessage = new EmailMessage {
             To = "test1@example.com,test2@example.com",
             Subject = "Multiple Recipients",
             Body = "Test Body",
@@ -123,10 +111,8 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ConUnicodeEnSubject_EncolaCorrectamente()
-    {
-        var emailMessage = new EmailMessage
-        {
+    public async Task EnqueueEmailAsync_ConUnicodeEnSubject_EncolaCorrectamente() {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Asunto con caracteres Unicode: áéíóú ñü 🎉",
             Body = "Test Body",
@@ -141,11 +127,9 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_ConEmojiEnBody_EncolaCorrectamente()
-    {
+    public async Task EnqueueEmailAsync_ConEmojiEnBody_EncolaCorrectamente() {
         var emojiBody = "Hola mundo 🎉🚀✨";
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Emoji Test",
             Body = emojiBody,
@@ -160,10 +144,8 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task EnqueueEmailAsync_CanalLleno_NoBloquea()
-    {
-        var emailMessage = new EmailMessage
-        {
+    public async Task EnqueueEmailAsync_CanalLleno_NoBloquea() {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Test",
             Body = "Test"
@@ -181,12 +163,10 @@ public class MailKitEmailServiceEdgeTests
     #region SendEmailAsync Configuration Edge Cases
 
     [Test]
-    public async Task SendEmailAsync_SmtpHostVacio_OmiteEnvio()
-    {
+    public async Task SendEmailAsync_SmtpHostVacio_OmiteEnvio() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("");
 
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Test",
             Body = "Test Body"
@@ -205,12 +185,10 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task SendEmailAsync_SmtpHostNull_OmiteEnvio()
-    {
+    public async Task SendEmailAsync_SmtpHostNull_OmiteEnvio() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns((string?)null);
 
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Test",
             Body = "Test Body"
@@ -229,13 +207,11 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task SendEmailAsync_SmtpUsernameNull_OmiteEnvio()
-    {
+    public async Task SendEmailAsync_SmtpUsernameNull_OmiteEnvio() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
         _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns((string?)null);
 
-        var emailMessage = new EmailMessage
-        {
+        var emailMessage = new EmailMessage {
             To = "test@example.com",
             Subject = "Test",
             Body = "Test Body"
@@ -254,8 +230,7 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task SendEmailAsync_ConFromEmailNull_UsaUsername()
-    {
+    public async Task SendEmailAsync_ConFromEmailNull_UsaUsername() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns("587");
         _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns("user@test.com");
@@ -272,8 +247,7 @@ public class MailKitEmailServiceEdgeTests
     }
 
     [Test]
-    public async Task SendEmailAsync_ConFromNameNull_UsaValorPorDefecto()
-    {
+    public async Task SendEmailAsync_ConFromNameNull_UsaValorPorDefecto() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns("smtp.gmail.com");
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns("587");
         _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns("user@test.com");
@@ -294,8 +268,7 @@ public class MailKitEmailServiceEdgeTests
     #region Constructor Edge Cases
 
     [Test]
-    public void Constructor_ConConfiguracionVacia_NoLanzaExcepcion()
-    {
+    public void Constructor_ConConfiguracionVacia_NoLanzaExcepcion() {
         _mockConfiguration.Setup(c => c["Smtp:Host"]).Returns((string?)null);
         _mockConfiguration.Setup(c => c["Smtp:Port"]).Returns((string?)null);
         _mockConfiguration.Setup(c => c["Smtp:Username"]).Returns((string?)null);

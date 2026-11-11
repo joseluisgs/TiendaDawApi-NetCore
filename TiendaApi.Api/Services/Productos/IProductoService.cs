@@ -9,8 +9,7 @@ namespace TiendaApi.Api.Services.Productos;
 /// <summary>
 /// Contrato del servicio de productos.
 /// </summary>
-public interface IProductoService
-{
+public interface IProductoService {
     /// <summary>Obtiene todos los productos.</summary>
     /// <returns>Resultado con colección de productos.</returns>
     Task<Result<IEnumerable<ProductoDto>, DomainError>> FindAllAsync();

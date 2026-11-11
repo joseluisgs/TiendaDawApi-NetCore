@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Realtime.Common;
 /// <example>
 /// var notification = new PedidoNotificationDto { Type = "PEDIDO_ESTADO_ACTUALIZADO", PedidoId = "PED-001", Estado = "Enviado" };
 /// </example>
-public class PedidoNotificationDto
-{
+public class PedidoNotificationDto {
     /// <summary>Tipo de notificación.</summary>
     public string Type { get; set; } = string.Empty;
 
@@ -30,8 +29,7 @@ public class PedidoNotificationDto
 /// <summary>
 /// Tipos de notificación para pedidos.
 /// </summary>
-public static class PedidoNotificationType
-{
+public static class PedidoNotificationType {
     /// <summary>Pedido creado.</summary>
     public const string CREADO = "PEDIDO_CREADO";
 

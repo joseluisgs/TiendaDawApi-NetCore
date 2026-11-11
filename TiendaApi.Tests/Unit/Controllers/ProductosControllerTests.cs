@@ -15,19 +15,16 @@ using TiendaApi.Api.Services.Productos;
 
 namespace TiendaApi.Tests.Unit.Controllers;
 
-public class ProductosControllerTests
-{
+public class ProductosControllerTests {
     private readonly Mock<IProductoService> _mockService;
     private readonly ProductosController _controller;
 
-    public ProductosControllerTests()
-    {
+    public ProductosControllerTests() {
         _mockService = new Mock<IProductoService>();
         var mockLogger = new Mock<ILogger<ProductosController>>();
         // IHistorialService mockeado: estos tests no tocan el historial/vista (lo
         // cubren los tests unit e integration del historial).
-        _controller = new ProductosController(_mockService.Object, Mock.Of<IHistorialService>(), mockLogger.Object)
-        {
+        _controller = new ProductosController(_mockService.Object, Mock.Of<IHistorialService>(), mockLogger.Object) {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
     }
@@ -39,15 +36,12 @@ public class ProductosControllerTests
     /// Returns: 200 OK con lista de productos paginada
     /// </summary>
     [Test]
-    public async Task GetAll_ConProductosExistentes_RetornaOkConLista()
-    {
-        var productos = new List<ProductoDto>
-        {
+    public async Task GetAll_ConProductosExistentes_RetornaOkConLista() {
+        var productos = new List<ProductoDto> {
             new ProductoDto(1, "Laptop", "", 999.99m, 10, "", new CategoriaResumenDto(1, "Electrónica"), null, DateTime.UtcNow, DateTime.UtcNow),
             new ProductoDto(2, "Mouse", "", 29.99m, 50, "", new CategoriaResumenDto(1, "Electrónica"), null, DateTime.UtcNow, DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<ProductoDto>
-        {
+        var pagedResult = new PagedResult<ProductoDto> {
             Items = productos,
             TotalCount = 2,
             Page = 1,
@@ -69,10 +63,8 @@ public class ProductosControllerTests
     /// Returns: 200 OK con lista vacía
     /// </summary>
     [Test]
-    public async Task GetAll_SinProductos_RetornaOkConListaVacia()
-    {
-        var pagedResult = new PagedResult<ProductoDto>
-        {
+    public async Task GetAll_SinProductos_RetornaOkConListaVacia() {
+        var pagedResult = new PagedResult<ProductoDto> {
             Items = new List<ProductoDto>(),
             TotalCount = 0,
             Page = 1,
@@ -94,14 +86,11 @@ public class ProductosControllerTests
     /// Returns: 200 OK con lista filtrada
     /// </summary>
     [Test]
-    public async Task GetAll_ConFiltroCategoria_RetornaListaFiltrada()
-    {
-        var productos = new List<ProductoDto>
-        {
+    public async Task GetAll_ConFiltroCategoria_RetornaListaFiltrada() {
+        var productos = new List<ProductoDto> {
             new ProductoDto(1, "Laptop", "", 999.99m, 10, "", new CategoriaResumenDto(1, "Electrónica"), null, DateTime.UtcNow, DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<ProductoDto>
-        {
+        var pagedResult = new PagedResult<ProductoDto> {
             Items = productos,
             TotalCount = 1,
             Page = 1,
@@ -123,14 +112,11 @@ public class ProductosControllerTests
     /// Returns: 200 OK con lista filtrada
     /// </summary>
     [Test]
-    public async Task GetAll_ConFiltroPrecioMax_RetornaListaFiltrada()
-    {
-        var productos = new List<ProductoDto>
-        {
+    public async Task GetAll_ConFiltroPrecioMax_RetornaListaFiltrada() {
+        var productos = new List<ProductoDto> {
             new ProductoDto(1, "Mouse", "", 29.99m, 50, "", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<ProductoDto>
-        {
+        var pagedResult = new PagedResult<ProductoDto> {
             Items = productos,
             TotalCount = 1,
             Page = 1,
@@ -152,14 +138,11 @@ public class ProductosControllerTests
     /// Returns: 200 OK con lista filtrada
     /// </summary>
     [Test]
-    public async Task GetAll_ConFiltroStockMin_RetornaListaFiltrada()
-    {
-        var productos = new List<ProductoDto>
-        {
+    public async Task GetAll_ConFiltroStockMin_RetornaListaFiltrada() {
+        var productos = new List<ProductoDto> {
             new ProductoDto(1, "Laptop", "", 999.99m, 10, "", new CategoriaResumenDto(1, "Electrónica"), null, DateTime.UtcNow, DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<ProductoDto>
-        {
+        var pagedResult = new PagedResult<ProductoDto> {
             Items = productos,
             TotalCount = 1,
             Page = 1,
@@ -181,14 +164,11 @@ public class ProductosControllerTests
     /// Returns: 200 OK con página específica
     /// </summary>
     [Test]
-    public async Task GetAll_ConPaginacion_RetornaPaginaCorrecta()
-    {
-        var productos = new List<ProductoDto>
-        {
+    public async Task GetAll_ConPaginacion_RetornaPaginaCorrecta() {
+        var productos = new List<ProductoDto> {
             new ProductoDto(3, "Teclado", "", 49.99m, 30, "", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow)
         };
-        var pagedResult = new PagedResult<ProductoDto>
-        {
+        var pagedResult = new PagedResult<ProductoDto> {
             Items = productos,
             TotalCount = 15,
             Page = 2,
@@ -217,8 +197,7 @@ public class ProductosControllerTests
     /// Returns: 200 OK con producto encontrado
     /// </summary>
     [Test]
-    public async Task GetById_ConIdExistente_RetornaOkConProducto()
-    {
+    public async Task GetById_ConIdExistente_RetornaOkConProducto() {
         var producto = new ProductoDto(1, "Laptop", "", 999.99m, 10, "", new CategoriaResumenDto(1, "Electrónica"), null, DateTime.UtcNow, DateTime.UtcNow);
 
         _mockService.Setup(s => s.FindByIdAsync(1))
@@ -237,8 +216,7 @@ public class ProductosControllerTests
     /// Returns: 404 Not Found
     /// </summary>
     [Test]
-    public async Task GetById_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task GetById_ConIdNoExistente_RetornaNotFound() {
         var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.FindByIdAsync(999))
@@ -259,10 +237,8 @@ public class ProductosControllerTests
     /// Returns: 200 OK con lista de productos
     /// </summary>
     [Test]
-    public async Task GetByCategoria_ConCategoriaExistente_RetornaOkConLista()
-    {
-        var productos = new List<ProductoDto>
-        {
+    public async Task GetByCategoria_ConCategoriaExistente_RetornaOkConLista() {
+        var productos = new List<ProductoDto> {
             new ProductoDto(1, "Laptop", "", 999.99m, 10, "", new CategoriaResumenDto(1, "Electrónica"), null, DateTime.UtcNow, DateTime.UtcNow)
         };
 
@@ -282,8 +258,7 @@ public class ProductosControllerTests
     /// Returns: 404 Not Found
     /// </summary>
     [Test]
-    public async Task GetByCategoria_ConCategoriaNoExistente_RetornaNotFound()
-    {
+    public async Task GetByCategoria_ConCategoriaNoExistente_RetornaNotFound() {
         var error = new NotFoundError("Categoría no encontrada");
 
         _mockService.Setup(s => s.FindByCategoriaIdAsync(999))
@@ -304,10 +279,8 @@ public class ProductosControllerTests
     /// Returns: 201 Created con producto creado
     /// </summary>
     [Test]
-    public async Task Create_ConDtoValido_RetornaCreatedConProducto()
-    {
-        var requestDto = new ProductoRequestDto
-        {
+    public async Task Create_ConDtoValido_RetornaCreatedConProducto() {
+        var requestDto = new ProductoRequestDto {
             Nombre = "Nuevo Producto",
             Descripcion = "Descripción",
             Precio = 99.99m,
@@ -333,10 +306,8 @@ public class ProductosControllerTests
     /// Returns: 400 Bad Request
     /// </summary>
     [Test]
-    public async Task Create_ConPrecioNegativo_RetornaBadRequest()
-    {
-        var requestDto = new ProductoRequestDto
-        {
+    public async Task Create_ConPrecioNegativo_RetornaBadRequest() {
+        var requestDto = new ProductoRequestDto {
             Nombre = "Producto",
             Precio = -10m,
             Stock = 10
@@ -357,10 +328,8 @@ public class ProductosControllerTests
     /// Returns: 404 Not Found
     /// </summary>
     [Test]
-    public async Task Create_ConCategoriaNoExistente_RetornaNotFound()
-    {
-        var requestDto = new ProductoRequestDto
-        {
+    public async Task Create_ConCategoriaNoExistente_RetornaNotFound() {
+        var requestDto = new ProductoRequestDto {
             Nombre = "Producto",
             Precio = 99.99m,
             Stock = 10,
@@ -386,11 +355,9 @@ public class ProductosControllerTests
     /// Returns: 200 OK con producto actualizado
     /// </summary>
     [Test]
-    public async Task Update_ConIdValido_RetornaOkConProductoActualizado()
-    {
+    public async Task Update_ConIdValido_RetornaOkConProductoActualizado() {
         var id = 1L;
-        var requestDto = new ProductoRequestDto
-        {
+        var requestDto = new ProductoRequestDto {
             Nombre = "Producto Actualizado",
             Precio = 149.99m,
             Stock = 20
@@ -412,8 +379,7 @@ public class ProductosControllerTests
     /// Returns: 404 Not Found
     /// </summary>
     [Test]
-    public async Task Update_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task Update_ConIdNoExistente_RetornaNotFound() {
         var id = 999L;
         var requestDto = new ProductoRequestDto { Nombre = "Actualizado", Precio = 99.99m, Stock = 10 };
         var error = new NotFoundError("Producto no encontrado");
@@ -432,8 +398,7 @@ public class ProductosControllerTests
     /// Returns: 400 Bad Request
     /// </summary>
     [Test]
-    public async Task Update_ConStockNegativo_RetornaBadRequest()
-    {
+    public async Task Update_ConStockNegativo_RetornaBadRequest() {
         var id = 1L;
         var requestDto = new ProductoRequestDto { Nombre = "Producto", Precio = 99.99m, Stock = -5 };
         var error = ValidationError.Create("El stock no puede ser negativo");
@@ -456,8 +421,7 @@ public class ProductosControllerTests
     /// Returns: 204 No Content
     /// </summary>
     [Test]
-    public async Task Delete_ConIdExistente_RetornaNoContent()
-    {
+    public async Task Delete_ConIdExistente_RetornaNoContent() {
         _mockService.Setup(s => s.DeleteAsync(1))
             .ReturnsAsync(UnitResult.Success<DomainError>());
 
@@ -471,8 +435,7 @@ public class ProductosControllerTests
     /// Returns: 404 Not Found
     /// </summary>
     [Test]
-    public async Task Delete_ConIdNoExistente_RetornaNotFound()
-    {
+    public async Task Delete_ConIdNoExistente_RetornaNotFound() {
         var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.DeleteAsync(999))
@@ -489,8 +452,7 @@ public class ProductosControllerTests
     #region Tests Adicionales - Casos Borde
 
     [Test]
-    public async Task GetById_ConIdCero_RetornaNotFound()
-    {
+    public async Task GetById_ConIdCero_RetornaNotFound() {
         var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.FindByIdAsync(0))
@@ -502,8 +464,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task GetById_ConIdNegativo_RetornaNotFound()
-    {
+    public async Task GetById_ConIdNegativo_RetornaNotFound() {
         var error = new NotFoundError("Producto no encontrado");
 
         _mockService.Setup(s => s.FindByIdAsync(-1))
@@ -515,10 +476,8 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task Create_ConNombreVacio_RetornaBadRequest()
-    {
-        var requestDto = new ProductoRequestDto
-        {
+    public async Task Create_ConNombreVacio_RetornaBadRequest() {
+        var requestDto = new ProductoRequestDto {
             Nombre = "",
             Precio = 99.99m,
             Stock = 10
@@ -535,10 +494,8 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task Create_ConCategoriaIdCero_RetornaBadRequest()
-    {
-        var requestDto = new ProductoRequestDto
-        {
+    public async Task Create_ConCategoriaIdCero_RetornaBadRequest() {
+        var requestDto = new ProductoRequestDto {
             Nombre = "Producto",
             Precio = 99.99m,
             Stock = 10,
@@ -555,11 +512,9 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task Update_ConflictoDeStock_RetornaUnprocessableEntity()
-    {
+    public async Task Update_ConflictoDeStock_RetornaUnprocessableEntity() {
         var id = 1L;
-        var requestDto = new ProductoRequestDto
-        {
+        var requestDto = new ProductoRequestDto {
             Nombre = "Producto",
             Precio = 99.99m,
             Stock = 1000
@@ -577,10 +532,8 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task Create_ErrorInterno_Retorna500()
-    {
-        var requestDto = new ProductoRequestDto
-        {
+    public async Task Create_ErrorInterno_Retorna500() {
+        var requestDto = new ProductoRequestDto {
             Nombre = "Producto",
             Precio = 99.99m,
             Stock = 10
@@ -597,10 +550,8 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task GetByCategoria_ConCategoriaValida_RetornaOk()
-    {
-        var productos = new List<ProductoDto>
-        {
+    public async Task GetByCategoria_ConCategoriaValida_RetornaOk() {
+        var productos = new List<ProductoDto> {
             new(1, "Laptop", "", 999.99m, 10, "", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow),
             new(2, "Mouse", "", 29.99m, 50, "", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow)
         };
@@ -617,8 +568,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task GetByCategoria_CategoriaVacia_RetornaOkConListaVacia()
-    {
+    public async Task GetByCategoria_CategoriaVacia_RetornaOkConListaVacia() {
         _mockService.Setup(s => s.FindByCategoriaIdAsync(999))
             .ReturnsAsync(Result.Success<IEnumerable<ProductoDto>, DomainError>(new List<ProductoDto>()));
 
@@ -631,10 +581,8 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task Create_ConflictoPorDuplicado_Retorna409()
-    {
-        var requestDto = new ProductoRequestDto
-        {
+    public async Task Create_ConflictoPorDuplicado_Retorna409() {
+        var requestDto = new ProductoRequestDto {
             Nombre = "Producto Existente",
             Precio = 99.99m,
             Stock = 10
@@ -655,8 +603,7 @@ public class ProductosControllerTests
     #region UpdateImage Tests
 
     [Test]
-    public async Task UpdateImage_ConImagenValida_RetornaOkConProducto()
-    {
+    public async Task UpdateImage_ConImagenValida_RetornaOkConProducto() {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
         var productoDto = new ProductoDto(1, "Producto", "uploads/test.jpg", 0m, 0, "uploads/test.jpg", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow);
@@ -672,8 +619,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdateImage_SinArchivo_RetornaBadRequest()
-    {
+    public async Task UpdateImage_SinArchivo_RetornaBadRequest() {
         var result = await _controller.UpdateImage(1, null!);
 
         var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
@@ -681,8 +627,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdateImage_ConArchivoVacio_RetornaBadRequest()
-    {
+    public async Task UpdateImage_ConArchivoVacio_RetornaBadRequest() {
         var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 0);
 
         var result = await _controller.UpdateImage(1, mockFile);
@@ -691,8 +636,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdateImage_ConTipoNoPermitido_RetornaBadRequest()
-    {
+    public async Task UpdateImage_ConTipoNoPermitido_RetornaBadRequest() {
         var mockFile = CreateMockFormFile("test.pdf", "application/pdf", 1024);
 
         var result = await _controller.UpdateImage(1, mockFile);
@@ -702,8 +646,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdateImage_ConProductoNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateImage_ConProductoNoExistente_RetornaNotFound() {
         var id = 999L;
         var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
         var error = new NotFoundError("Producto no encontrado");
@@ -717,8 +660,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdateImage_ConErrorInterno_Retorna500()
-    {
+    public async Task UpdateImage_ConErrorInterno_Retorna500() {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.jpg", "image/jpeg", 1024);
         var error = new InternalError("Error al guardar imagen");
@@ -733,8 +675,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdateImage_ConImagenPng_RetornaOk()
-    {
+    public async Task UpdateImage_ConImagenPng_RetornaOk() {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.png", "image/png", 2048);
         var productoDto = new ProductoDto(1, "", "uploads/test.png", 0m, 0, "uploads/test.png", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow);
@@ -748,8 +689,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdateImage_ConImagenGif_RetornaOk()
-    {
+    public async Task UpdateImage_ConImagenGif_RetornaOk() {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.gif", "image/gif", 512);
         var productoDto = new ProductoDto(1, "", "uploads/test.gif", 0m, 0, "uploads/test.gif", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow);
@@ -763,8 +703,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdateImage_ConImagenWebp_RetornaOk()
-    {
+    public async Task UpdateImage_ConImagenWebp_RetornaOk() {
         var id = 1L;
         var mockFile = CreateMockFormFile("test.webp", "image/webp", 1024);
         var productoDto = new ProductoDto(1, "", "uploads/test.webp", 0m, 0, "uploads/test.webp", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow);
@@ -777,8 +716,7 @@ public class ProductosControllerTests
         result.Value.Should().NotBeNull();
     }
 
-    private static IFormFile CreateMockFormFile(string fileName, string contentType, long length)
-    {
+    private static IFormFile CreateMockFormFile(string fileName, string contentType, long length) {
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns(fileName);
         mockFile.Setup(f => f.ContentType).Returns(contentType);
@@ -792,8 +730,7 @@ public class ProductosControllerTests
     #region UpdatePartial Tests
 
     [Test]
-    public async Task UpdatePartial_ConCamposValidos_RetornaOkConProducto()
-    {
+    public async Task UpdatePartial_ConCamposValidos_RetornaOkConProducto() {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Nombre = "Nombre Actualizado" };
         var productoDto = new ProductoDto(1, "Nombre Actualizado", "", 99.99m, 0, "", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow);
@@ -809,8 +746,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdatePartial_SoloPrecio_RetornaOk()
-    {
+    public async Task UpdatePartial_SoloPrecio_RetornaOk() {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Precio = 199.99m };
         var productoDto = new ProductoDto(1, "Producto", "", 199.99m, 0, "", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow);
@@ -826,8 +762,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdatePartial_SoloStock_RetornaOk()
-    {
+    public async Task UpdatePartial_SoloStock_RetornaOk() {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Stock = 50 };
         var productoDto = new ProductoDto(1, "Producto", "", 0m, 50, "", new CategoriaResumenDto(1, ""), null, DateTime.UtcNow, DateTime.UtcNow);
@@ -843,8 +778,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdatePartial_ConProductoNoExistente_RetornaNotFound()
-    {
+    public async Task UpdatePartial_ConProductoNoExistente_RetornaNotFound() {
         var id = 999L;
         var patchDto = new ProductoPatchDto { Nombre = "Actualizado" };
         var error = new NotFoundError("Producto no encontrado");
@@ -858,8 +792,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdatePartial_ConPrecioNegativo_RetornaBadRequest()
-    {
+    public async Task UpdatePartial_ConPrecioNegativo_RetornaBadRequest() {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Precio = -10m };
         var error = ValidationError.Create("El precio debe ser mayor a 0");
@@ -873,8 +806,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdatePartial_ConStockNegativo_RetornaBadRequest()
-    {
+    public async Task UpdatePartial_ConStockNegativo_RetornaBadRequest() {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Stock = -5 };
         var error = ValidationError.Create("El stock no puede ser negativo");
@@ -888,8 +820,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdatePartial_ConErrorInterno_Retorna500()
-    {
+    public async Task UpdatePartial_ConErrorInterno_Retorna500() {
         var id = 1L;
         var patchDto = new ProductoPatchDto { Nombre = "Actualizado" };
         var error = new InternalError("Error en base de datos");
@@ -904,11 +835,9 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task UpdatePartial_ConMultiplesCampos_RetornaOk()
-    {
+    public async Task UpdatePartial_ConMultiplesCampos_RetornaOk() {
         var id = 1L;
-        var patchDto = new ProductoPatchDto
-        {
+        var patchDto = new ProductoPatchDto {
             Nombre = "Nuevo Nombre",
             Descripcion = "Nueva Descripción",
             Precio = 299.99m,
@@ -932,32 +861,28 @@ public class ProductosControllerTests
     #region Authorization Attribute Tests
 
     [Test]
-    public void GetAll_TieneAtributoAllowAnonymous()
-    {
+    public void GetAll_TieneAtributoAllowAnonymous() {
         var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.GetAll));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AllowAnonymousAttribute), true);
         attribute.Should().NotBeEmpty();
     }
 
     [Test]
-    public void GetById_TieneAtributoAllowAnonymous()
-    {
+    public void GetById_TieneAtributoAllowAnonymous() {
         var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.GetById));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AllowAnonymousAttribute), true);
         attribute.Should().NotBeEmpty();
     }
 
     [Test]
-    public void GetByCategoria_TieneAtributoAllowAnonymous()
-    {
+    public void GetByCategoria_TieneAtributoAllowAnonymous() {
         var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.GetByCategoria));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AllowAnonymousAttribute), true);
         attribute.Should().NotBeEmpty();
     }
 
     [Test]
-    public void Create_TieneAtributoAuthorizeAdmin()
-    {
+    public void Create_TieneAtributoAuthorizeAdmin() {
         var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.Create));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .Cast<AuthorizeAttribute>().FirstOrDefault();
@@ -966,8 +891,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public void Update_TieneAtributoAuthorizeAdmin()
-    {
+    public void Update_TieneAtributoAuthorizeAdmin() {
         var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.Update));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .Cast<AuthorizeAttribute>().FirstOrDefault();
@@ -976,8 +900,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public void Delete_TieneAtributoAuthorizeAdmin()
-    {
+    public void Delete_TieneAtributoAuthorizeAdmin() {
         var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.Delete));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .Cast<AuthorizeAttribute>().FirstOrDefault();
@@ -986,8 +909,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public void UpdateImage_TieneAtributoAuthorizeAdmin()
-    {
+    public void UpdateImage_TieneAtributoAuthorizeAdmin() {
         var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.UpdateImage));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .Cast<AuthorizeAttribute>().FirstOrDefault();
@@ -996,8 +918,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public void UpdatePartial_TieneAtributoAuthorizeAdmin()
-    {
+    public void UpdatePartial_TieneAtributoAuthorizeAdmin() {
         var methodInfo = typeof(ProductosController).GetMethod(nameof(ProductosController.UpdatePartial));
         var attribute = methodInfo!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
             .Cast<AuthorizeAttribute>().FirstOrDefault();
@@ -1010,8 +931,7 @@ public class ProductosControllerTests
     #region Error Handling Tests
 
     [Test]
-    public async Task GetAll_ConErrorInterno_Retorna500()
-    {
+    public async Task GetAll_ConErrorInterno_Retorna500() {
         var error = new InternalError("Error de conexión a base de datos");
 
         _mockService.Setup(s => s.FindAllPagedAsync(It.IsAny<ProductoFilterDto>()))
@@ -1024,8 +944,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task GetById_ConErrorInterno_Retorna500()
-    {
+    public async Task GetById_ConErrorInterno_Retorna500() {
         var error = new InternalError("Error inesperado");
 
         _mockService.Setup(s => s.FindByIdAsync(1))
@@ -1038,8 +957,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task GetByCategoria_ConErrorInterno_Retorna500()
-    {
+    public async Task GetByCategoria_ConErrorInterno_Retorna500() {
         var error = new InternalError("Error de base de datos");
 
         _mockService.Setup(s => s.FindByCategoriaIdAsync(1))
@@ -1052,8 +970,7 @@ public class ProductosControllerTests
     }
 
     [Test]
-    public async Task Delete_ConErrorInterno_Retorna500()
-    {
+    public async Task Delete_ConErrorInterno_Retorna500() {
         var error = new InternalError("Error al eliminar");
 
         _mockService.Setup(s => s.DeleteAsync(1))

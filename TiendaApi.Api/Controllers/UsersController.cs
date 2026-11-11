@@ -27,8 +27,7 @@ public class UsersController(
     IUserService service,
     IHistorialService historialService,
     ILogger<UsersController> logger
-) : ControllerBase
-{
+) : ControllerBase {
     /// <summary>
     /// Obtiene todos los usuarios paginados con filtros opcionales.
     /// </summary>
@@ -52,8 +51,7 @@ public class UsersController(
         [FromQuery] int page = 0,
         [FromQuery] int size = 10,
         [FromQuery] string sortBy = "id",
-        [FromQuery] string direction = "asc")
-    {
+        [FromQuery] string direction = "asc") {
         logger.LogInformation("Obteniendo todos los usuarios - Página: {Page}, Tamaño: {Size}", page, size);
 
         var filter = new UserFilterDto(
@@ -69,8 +67,7 @@ public class UsersController(
         var resultado = await service.FindAllPagedAsync(filter);
 
         return resultado.Match(
-            onSuccess: pagedResult =>
-            {
+            onSuccess: pagedResult => {
                 var linkHeader = PaginationLinksHelper.CreateLinkHeader(pagedResult, Request, sortBy, direction);
                 if (!string.IsNullOrEmpty(linkHeader))
                     Response.Headers.Append("Link", linkHeader);
@@ -91,8 +88,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> GetById(long id)
-    {
+    public async Task<ActionResult<UserDto>> GetById(long id) {
         logger.LogInformation("Obteniendo usuario con ID: {Id}", id);
 
         var resultado = await service.FindByIdAsync(id);
@@ -115,8 +111,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<UserDto>> Create([FromBody] RegisterDto dto)
-    {
+    public async Task<ActionResult<UserDto>> Create([FromBody] RegisterDto dto) {
         logger.LogInformation("Creando nuevo usuario: {Username}", dto.Username);
 
         var resultado = await service.CreateAsync(dto);
@@ -141,8 +136,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<UserDto>> Update(long id, [FromBody] UserUpdateDto dto)
-    {
+    public async Task<ActionResult<UserDto>> Update(long id, [FromBody] UserUpdateDto dto) {
         logger.LogInformation("Actualizando usuario con ID: {Id}", id);
 
         var resultado = await service.UpdateAsync(id, dto);
@@ -166,8 +160,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> UpdateAvatar(long id, [FromBody] AvatarUpdateDto dto)
-    {
+    public async Task<ActionResult<UserDto>> UpdateAvatar(long id, [FromBody] AvatarUpdateDto dto) {
         logger.LogInformation("Actualizando avatar de usuario con ID: {Id}", id);
 
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -198,8 +191,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> Delete(long id)
-    {
+    public async Task<ActionResult> Delete(long id) {
         logger.LogInformation("Eliminando usuario con ID: {Id}", id);
 
         var resultado = await service.DeleteAsync(id);
@@ -208,8 +200,7 @@ public class UsersController(
             return NoContent();
 
         var error = resultado.Error;
-        return error switch
-        {
+        return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
             BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),
@@ -226,8 +217,7 @@ public class UsersController(
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<UserDto>> GetMyProfile()
-    {
+    public async Task<ActionResult<UserDto>> GetMyProfile() {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
@@ -252,8 +242,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> UpdateMyProfile([FromBody] UserUpdateDto dto)
-    {
+    public async Task<ActionResult<UserDto>> UpdateMyProfile([FromBody] UserUpdateDto dto) {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
@@ -277,8 +266,7 @@ public class UsersController(
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> DeleteMyProfile()
-    {
+    public async Task<ActionResult> DeleteMyProfile() {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
@@ -292,8 +280,7 @@ public class UsersController(
             return NoContent();
 
         var error = resultado.Error;
-        return error switch
-        {
+        return error switch {
             NotFoundError => NotFound(new { message = error.Message }),
             ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
             BusinessRuleError => StatusCode(StatusCodes.Status422UnprocessableEntity, new { message = error.Message }),
@@ -314,8 +301,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> UpdateMyAvatar([FromBody] AvatarUpdateDto dto)
-    {
+    public async Task<ActionResult<UserDto>> UpdateMyAvatar([FromBody] AvatarUpdateDto dto) {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))
@@ -343,8 +329,7 @@ public class UsersController(
     [ProducesResponseType(typeof(IReadOnlyList<VistaFeedDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IReadOnlyList<VistaFeedDto>>> GetMyFeed(
-        [FromQuery] int limit = 20)
-    {
+        [FromQuery] int limit = 20) {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out var userId))

@@ -29,15 +29,13 @@ namespace TiendaApi.Tests.Unit.Services.Auth;
 [Category("Unit")]
 [Category("Service")]
 [Category("Auth")]
-public class IdentityAuthServiceTests
-{
+public class IdentityAuthServiceTests {
     private ServiceProvider _provider = null!;
     private IdentityAuthService _authService = null!;
     private Mock<IJwtService> _mockJwtService = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         var services = new ServiceCollection();
 
         services.AddLogging();
@@ -71,8 +69,7 @@ public class IdentityAuthServiceTests
     #region Tests SignUp
 
     [Test]
-    public async Task SignUpAsync_ConDatosValidos_DebeRetornarExito()
-    {
+    public async Task SignUpAsync_ConDatosValidos_DebeRetornarExito() {
         var result = await _authService.SignUpAsync(NewRegisterDto());
 
         result.IsSuccess.Should().BeTrue();
@@ -83,8 +80,7 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task SignUpAsync_ConDatosValidos_DebeGuardarHashPbkdf2NoBcrypt()
-    {
+    public async Task SignUpAsync_ConDatosValidos_DebeGuardarHashPbkdf2NoBcrypt() {
         var result = await _authService.SignUpAsync(NewRegisterDto());
 
         result.IsSuccess.Should().BeTrue(result.IsFailure
@@ -102,8 +98,7 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task SignUpAsync_ConUsuarioDuplicado_DebeRetornarConflict()
-    {
+    public async Task SignUpAsync_ConUsuarioDuplicado_DebeRetornarConflict() {
         await _authService.SignUpAsync(NewRegisterDto());
 
         var result = await _authService.SignUpAsync(NewRegisterDto());
@@ -113,8 +108,7 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task SignUpAsync_ConPoliticaPasswordInvalida_DebeRetornarBusinessRuleError()
-    {
+    public async Task SignUpAsync_ConPoliticaPasswordInvalida_DebeRetornarBusinessRuleError() {
         // "12345" incumple la política de Identity (sin mayúscula, sin dígito especial...)
         var result = await _authService.SignUpAsync(NewRegisterDto(password: "12345"));
 
@@ -127,12 +121,10 @@ public class IdentityAuthServiceTests
     #region Tests SignIn
 
     [Test]
-    public async Task SignInAsync_ConCredencialesValidas_DebeRetornarExito()
-    {
+    public async Task SignInAsync_ConCredencialesValidas_DebeRetornarExito() {
         await _authService.SignUpAsync(NewRegisterDto());
 
-        var result = await _authService.SignInAsync(new LoginDto
-        {
+        var result = await _authService.SignInAsync(new LoginDto {
             Username = "newuser",
             Password = "Password123!"
         });
@@ -143,13 +135,11 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task SignInAsync_ConEmailComoUsername_DebeRetornarExito()
-    {
+    public async Task SignInAsync_ConEmailComoUsername_DebeRetornarExito() {
         // Identity permite login por nombre O por email → el servicio intenta FindByName y luego FindByEmail
         await _authService.SignUpAsync(NewRegisterDto());
 
-        var result = await _authService.SignInAsync(new LoginDto
-        {
+        var result = await _authService.SignInAsync(new LoginDto {
             Username = "newuser@test.com",
             Password = "Password123!"
         });
@@ -159,10 +149,8 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task SignInAsync_ConUsuarioNoExistente_DebeRetornarUnauthorized()
-    {
-        var result = await _authService.SignInAsync(new LoginDto
-        {
+    public async Task SignInAsync_ConUsuarioNoExistente_DebeRetornarUnauthorized() {
+        var result = await _authService.SignInAsync(new LoginDto {
             Username = "nonexistent",
             Password = "Password123!"
         });
@@ -172,12 +160,10 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task SignInAsync_ConPasswordIncorrecto_DebeRetornarUnauthorized()
-    {
+    public async Task SignInAsync_ConPasswordIncorrecto_DebeRetornarUnauthorized() {
         await _authService.SignUpAsync(NewRegisterDto());
 
-        var result = await _authService.SignInAsync(new LoginDto
-        {
+        var result = await _authService.SignInAsync(new LoginDto {
             Username = "newuser",
             Password = "WrongPassword123!"
         });
@@ -191,8 +177,7 @@ public class IdentityAuthServiceTests
     #region Tests LoginExternal
 
     [Test]
-    public async Task LoginExternalAsync_UsuarioNuevo_DebeCrearYRetornarExito()
-    {
+    public async Task LoginExternalAsync_UsuarioNuevo_DebeCrearYRetornarExito() {
         var info = new ExternalLoginDto(
             LoginProvider: "Google",
             ProviderKey: "google-key-123",
@@ -220,8 +205,7 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task LoginExternalAsync_UsuarioExistente_NoDebeCrearDeNuevo()
-    {
+    public async Task LoginExternalAsync_UsuarioExistente_NoDebeCrearDeNuevo() {
         var info = new ExternalLoginDto("Google", "google-key-456", "existente@test.com", null, null);
 
         await _authService.LoginExternalAsync(info);
@@ -235,8 +219,7 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task LoginExternalAsync_LoginYaVinculado_NoDebeVincularOtraVez()
-    {
+    public async Task LoginExternalAsync_LoginYaVinculado_NoDebeVincularOtraVez() {
         var info = new ExternalLoginDto("GitHub", "github-key-789", "vinculado@test.com", null, null);
 
         await _authService.LoginExternalAsync(info);
@@ -253,8 +236,7 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task LoginExternalAsync_SinEmailDelProveedor_DebeRetornarBusinessRuleError()
-    {
+    public async Task LoginExternalAsync_SinEmailDelProveedor_DebeRetornarBusinessRuleError() {
         // Un proveedor sin email (posible en algunos flujos) no puede mapear a usuario
         var info = new ExternalLoginDto("GitHub", "github-key-no-email", null, "Solo Nombre", null);
 
@@ -266,14 +248,12 @@ public class IdentityAuthServiceTests
     }
 
     [Test]
-    public async Task LoginExternalAsync_UsuarioCreadoPorOAuth_NoDebePoderLoginConPassword()
-    {
+    public async Task LoginExternalAsync_UsuarioCreadoPorOAuth_NoDebePoderLoginConPassword() {
         // 🎓 El usuario OAuth no tiene contraseña → no debe autenticarse con password
         var info = new ExternalLoginDto("Google", "google-key-pw", "sinpassword@test.com", null, null);
         await _authService.LoginExternalAsync(info);
 
-        var result = await _authService.SignInAsync(new LoginDto
-        {
+        var result = await _authService.SignInAsync(new LoginDto {
             Username = "sinpassword@test.com",
             Password = "cualquiera123!"
         });

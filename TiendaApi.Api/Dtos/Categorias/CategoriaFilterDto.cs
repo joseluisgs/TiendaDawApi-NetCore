@@ -11,8 +11,7 @@ namespace TiendaApi.Api.Dtos.Categorias;
 /// - Consultas con múltiples criterios combinados
 /// </remarks>
 /// </summary>
-public record CategoriaFilterDto
-{
+public record CategoriaFilterDto {
     /// <summary>
     /// Filtrar categorías por nombre (búsqueda parcial, sensible a mayúsculas/minúsculas).
     /// Retorna categorías cuyo nombre contiene el texto especificado.

@@ -17,8 +17,7 @@ namespace TiendaApi.Tests.Unit.GraphQL;
 /// mismatch (campos expuestos que luego no existen en lo que se sirve).
 /// </summary>
 [TestFixture]
-public class SchemaTests
-{
+public class SchemaTests {
     private const string IntrospectionQuery = """
         {
           __schema {
@@ -30,8 +29,7 @@ public class SchemaTests
         }
         """;
 
-    private static async Task<JsonElement> GetSchemaAsync()
-    {
+    private static async Task<JsonElement> GetSchemaAsync() {
         var environment = new Mock<IWebHostEnvironment>();
         environment.Setup(e => e.EnvironmentName).Returns("Development");
 
@@ -64,10 +62,8 @@ public class SchemaTests
             .ToArray();
 
     /// <summary>Nombres de los campos de un tipo, o null si el tipo no existe.</summary>
-    private static string[]? CamposDe(JsonElement schema, string nombreTipo)
-    {
-        foreach (var t in schema.GetProperty("types").EnumerateArray())
-        {
+    private static string[]? CamposDe(JsonElement schema, string nombreTipo) {
+        foreach (var t in schema.GetProperty("types").EnumerateArray()) {
             if (t.GetProperty("name").GetString() != nombreTipo) continue;
             if (!t.TryGetProperty("fields", out var campos)) return Array.Empty<string>();
             return campos.EnumerateArray().Select(c => c.GetProperty("name").GetString()!).ToArray();
@@ -75,14 +71,11 @@ public class SchemaTests
         return null;
     }
 
-    private static string? TipoDeCampo(JsonElement schema, string nombreTipo, string nombreCampo)
-    {
-        foreach (var t in schema.GetProperty("types").EnumerateArray())
-        {
+    private static string? TipoDeCampo(JsonElement schema, string nombreTipo, string nombreCampo) {
+        foreach (var t in schema.GetProperty("types").EnumerateArray()) {
             if (t.GetProperty("name").GetString() != nombreTipo) continue;
             if (!t.TryGetProperty("fields", out var campos)) return null;
-            foreach (var c in campos.EnumerateArray())
-            {
+            foreach (var c in campos.EnumerateArray()) {
                 if (c.GetProperty("name").GetString() != nombreCampo) continue;
                 var tipo = c.GetProperty("type");
                 while (tipo.GetProperty("kind").GetString() is "NON_NULL" or "LIST")
@@ -94,8 +87,7 @@ public class SchemaTests
     }
 
     [Test]
-    public async Task Esquema_NoContieneTiposFantasmaDeEntidad()
-    {
+    public async Task Esquema_NoContieneTiposFantasmaDeEntidad() {
         var schema = await GetSchemaAsync();
         var tipos = NombresTipos(schema);
 
@@ -108,14 +100,12 @@ public class SchemaTests
     }
 
     [Test]
-    public async Task Esquema_ProductoDto_SoloExponeCamposDelContratoRest()
-    {
+    public async Task Esquema_ProductoDto_SoloExponeCamposDelContratoRest() {
         var schema = await GetSchemaAsync();
         var campos = CamposDe(schema, "ProductoDto");
 
         campos.Should().NotBeNull();
-        campos!.Should().BeEquivalentTo(new[]
-        {
+        campos!.Should().BeEquivalentTo(new[] {
             "id", "nombre", "descripcion", "precio", "stock", "imagen",
             "categoria", "proveedor", "createdAt", "updatedAt"
         }, "los campos de ProductoDto deben ser exactamente los del contrato REST");
@@ -125,8 +115,7 @@ public class SchemaTests
     }
 
     [Test]
-    public async Task Esquema_CategoriaDto_NoExponeNavegacionAProductosNiBorradoLogico()
-    {
+    public async Task Esquema_CategoriaDto_NoExponeNavegacionAProductosNiBorradoLogico() {
         var schema = await GetSchemaAsync();
         var campos = CamposDe(schema, "CategoriaDto");
 
@@ -137,27 +126,23 @@ public class SchemaTests
     }
 
     [Test]
-    public async Task Esquema_Raices_Completas()
-    {
+    public async Task Esquema_Raices_Completas() {
         var schema = await GetSchemaAsync();
 
-        CamposDeRaiz(schema, "queryType").Should().BeEquivalentTo(new[]
-        {
+        CamposDeRaiz(schema, "queryType").Should().BeEquivalentTo(new[] {
             "productos", "producto", "productosPaged", "categorias", "categoria", "categoriasPaged",
             "pedidos", "misPedidos"
         });
 
         CamposDeRaiz(schema, "mutationType").Should().BeEquivalentTo(new[] { "createProducto", "updateProducto", "deleteProducto" });
 
-        CamposDeRaiz(schema, "subscriptionType").Should().BeEquivalentTo(new[]
-        {
+        CamposDeRaiz(schema, "subscriptionType").Should().BeEquivalentTo(new[] {
             "onProductoCreado", "onProductoActualizado", "onProductoEliminado", "onStockBajo"
         });
     }
 
     [Test]
-    public async Task Esquema_ResumenDeCategoriaYProveedor_LlevanDescripcion()
-    {
+    public async Task Esquema_ResumenDeCategoriaYProveedor_LlevanDescripcion() {
         var schema = await GetSchemaAsync();
 
         // Ampliación aprobada: el resumen de categoría/proveedor dentro de un
@@ -167,12 +152,10 @@ public class SchemaTests
     }
 
     [Test]
-    public async Task Esquema_Pedidos_TiposCompletos()
-    {
+    public async Task Esquema_Pedidos_TiposCompletos() {
         var schema = await GetSchemaAsync();
 
-        CamposDe(schema, "PedidoDto")!.Should().BeEquivalentTo(new[]
-        {
+        CamposDe(schema, "PedidoDto")!.Should().BeEquivalentTo(new[] {
             "id", "userId", "destinatario", "items", "total", "estado", "direccionEnvio", "createdAt"
         });
 
@@ -187,8 +170,7 @@ public class SchemaTests
     }
 
     [Test]
-    public async Task Esquema_ProductoDto_UsaLongParaIds_NoDosConvenciones()
-    {
+    public async Task Esquema_ProductoDto_UsaLongParaIds_NoDosConvenciones() {
         var schema = await GetSchemaAsync();
 
         // Mismo identificador, una sola convención: Long (como en REST).

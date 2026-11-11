@@ -8,24 +8,20 @@ namespace TiendaApi.Api.Services.Auth;
 /// <summary>
 /// Implementación de IJwtTokenExtractor para extraer información de tokens JWT.
 /// </summary>
-public class JwtTokenExtractor : IJwtTokenExtractor
-{
+public class JwtTokenExtractor : IJwtTokenExtractor {
     private readonly ILogger<JwtTokenExtractor> _logger;
 
     /// <summary>
     /// Crea una instancia del extractor de tokens JWT.
     /// </summary>
     /// <param name="logger">Logger de la instancia.</param>
-    public JwtTokenExtractor(ILogger<JwtTokenExtractor> logger)
-    {
+    public JwtTokenExtractor(ILogger<JwtTokenExtractor> logger) {
         _logger = logger;
     }
 
     /// <inheritdoc />
-    public long? ExtractUserId(string token)
-    {
-        try
-        {
+    public long? ExtractUserId(string token) {
+        try {
             var jwtToken = ReadToken(token);
             if (jwtToken == null) return null;
 
@@ -34,25 +30,20 @@ public class JwtTokenExtractor : IJwtTokenExtractor
                 c.Type == JwtRegisteredClaimNames.Sub ||
                 c.Type == "nameid");
 
-            if (userIdClaim != null && long.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim != null && long.TryParse(userIdClaim.Value, out var userId)) {
                 return userId;
             }
 
             return null;
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             _logger.LogWarning(ex, "Error extrayendo userId del token");
             return null;
         }
     }
 
     /// <inheritdoc />
-    public string? ExtractRole(string token)
-    {
-        try
-        {
+    public string? ExtractRole(string token) {
+        try {
             var jwtToken = ReadToken(token);
             if (jwtToken == null) return null;
 
@@ -61,24 +52,20 @@ public class JwtTokenExtractor : IJwtTokenExtractor
                 c.Type == "role");
 
             return roleClaim?.Value;
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             _logger.LogWarning(ex, "Error extrayendo rol del token");
             return null;
         }
     }
 
     /// <inheritdoc />
-    public bool IsAdmin(string token)
-    {
+    public bool IsAdmin(string token) {
         var role = ExtractRole(token);
         return role?.Equals("admin", StringComparison.OrdinalIgnoreCase) ?? false;
     }
 
     /// <inheritdoc />
-    public (long? UserId, bool IsAdmin, string? Role) ExtractUserInfo(string token)
-    {
+    public (long? UserId, bool IsAdmin, string? Role) ExtractUserInfo(string token) {
         var userId = ExtractUserId(token);
         var role = ExtractRole(token);
         var isAdmin = role?.Equals("admin", StringComparison.OrdinalIgnoreCase) ?? false;
@@ -87,19 +74,14 @@ public class JwtTokenExtractor : IJwtTokenExtractor
     }
 
     /// <inheritdoc />
-    public ClaimsPrincipal? ExtractClaims(string token)
-    {
-        try
-        {
+    public ClaimsPrincipal? ExtractClaims(string token) {
+        try {
             var jwtToken = ReadToken(token);
             List<Claim> claims;
 
-            if (jwtToken != null && jwtToken.Claims.Any())
-            {
+            if (jwtToken != null && jwtToken.Claims.Any()) {
                 claims = jwtToken.Claims.Select(c => new Claim(NormalizeClaimType(c.Type), c.Value, c.ValueType, c.Issuer, c.OriginalIssuer)).ToList();
-            }
-            else
-            {
+            } else {
                 var parts = token.Split('.');
                 if (parts.Length != 3)
                     return null;
@@ -115,10 +97,8 @@ public class JwtTokenExtractor : IJwtTokenExtractor
 
                 claims = new List<Claim>();
 
-                foreach (var prop in root.EnumerateObject())
-                {
-                    if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
+                foreach (var prop in root.EnumerateObject()) {
+                    if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.String) {
                         var name = prop.Name;
                         var value = prop.Value.GetString() ?? "";
                         var claimType = NormalizeClaimType(name);
@@ -130,19 +110,15 @@ public class JwtTokenExtractor : IJwtTokenExtractor
 
             var identity = new ClaimsIdentity(claims, "jwt");
             return new ClaimsPrincipal(identity);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             _logger.LogWarning(ex, "Error extrayendo claims del token");
             return null;
         }
     }
 
-    private static string NormalizeClaimType(string type)
-    {
+    private static string NormalizeClaimType(string type) {
         var lower = type.ToLowerInvariant();
-        return lower switch
-        {
+        return lower switch {
             "nameid" or "sub" => ClaimTypes.NameIdentifier,
             "email" => ClaimTypes.Email,
             "role" or "roles" => ClaimTypes.Role,
@@ -152,10 +128,8 @@ public class JwtTokenExtractor : IJwtTokenExtractor
     }
 
     /// <inheritdoc />
-    public string? ExtractEmail(string token)
-    {
-        try
-        {
+    public string? ExtractEmail(string token) {
+        try {
             var jwtToken = ReadToken(token);
             if (jwtToken == null) return null;
 
@@ -164,22 +138,18 @@ public class JwtTokenExtractor : IJwtTokenExtractor
                 c.Type == ClaimTypes.Email);
 
             return emailClaim?.Value;
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             _logger.LogWarning(ex, "Error extrayendo email del token");
             return null;
         }
     }
 
     /// <inheritdoc />
-    public bool IsValidTokenFormat(string token)
-    {
+    public bool IsValidTokenFormat(string token) {
         if (string.IsNullOrWhiteSpace(token))
             return false;
 
-        try
-        {
+        try {
             var parts = token.Split('.');
             if (parts.Length != 3)
                 return false;
@@ -196,19 +166,15 @@ public class JwtTokenExtractor : IJwtTokenExtractor
 
             var headerJson = Base64UrlDecode(header);
             return headerJson.Contains("\"alg\":\"none\"") || headerJson.Contains("\"alg\" : \"none\"");
-        }
-        catch
-        {
+        } catch {
             return false;
         }
     }
 
-    private static string Base64UrlDecode(string input)
-    {
+    private static string Base64UrlDecode(string input) {
         var base64 = input.Replace('-', '+').Replace('_', '/');
 
-        switch (base64.Length % 4)
-        {
+        switch (base64.Length % 4) {
             case 2: base64 += "=="; break;
             case 3: base64 += "="; break;
         }
@@ -217,21 +183,16 @@ public class JwtTokenExtractor : IJwtTokenExtractor
         return Encoding.UTF8.GetString(bytes);
     }
 
-    private JwtSecurityToken? ReadToken(string token)
-    {
-        if (string.IsNullOrWhiteSpace(token))
-        {
+    private JwtSecurityToken? ReadToken(string token) {
+        if (string.IsNullOrWhiteSpace(token)) {
             _logger.LogDebug("Token vacío o nulo");
             return null;
         }
 
-        try
-        {
+        try {
             var handler = new JwtSecurityTokenHandler();
             return handler.ReadJwtToken(token);
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             _logger.LogDebug(ex, "Error al parsear token JWT");
             return null;
         }

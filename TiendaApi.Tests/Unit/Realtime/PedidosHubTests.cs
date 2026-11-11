@@ -12,8 +12,7 @@ namespace TiendaApi.Tests.Unit.Realtime;
 /// <summary>
 /// Tests unitarios para SignalR Hubs (PedidosHub).
 /// </summary>
-public class PedidosHubTests
-{
+public class PedidosHubTests {
     private Mock<ILogger<PedidosHub>> _loggerMock = null!;
     private Mock<IGroupManager> _groupManagerMock = null!;
     private ClaimsPrincipal _userAdmin = null!;
@@ -22,14 +21,12 @@ public class PedidosHubTests
     private HubCallerContext _contextRegular = null!;
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _loggerMock = new Mock<ILogger<PedidosHub>>();
         _groupManagerMock = new Mock<IGroupManager>();
 
         // Crear usuario Admin
-        var adminIdentity = new ClaimsIdentity(new[]
-        {
+        var adminIdentity = new ClaimsIdentity(new[] {
             new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimTypes.Name, "admin"),
             new Claim(ClaimTypes.Role, "Admin")
@@ -38,8 +35,7 @@ public class PedidosHubTests
         _userAdmin = new ClaimsPrincipal(adminIdentity);
 
         // Crear usuario Regular
-        var regularIdentity = new ClaimsIdentity(new[]
-        {
+        var regularIdentity = new ClaimsIdentity(new[] {
             new Claim(ClaimTypes.NameIdentifier, "2"),
             new Claim(ClaimTypes.Name, "userdaw"),
             new Claim(ClaimTypes.Role, "User")
@@ -61,8 +57,7 @@ public class PedidosHubTests
     #region OnConnectedAsync Tests
 
     [Test]
-    public async Task OnConnectedAsync_AdminUser_SeAñadeAGruposUserYAdmin()
-    {
+    public async Task OnConnectedAsync_AdminUser_SeAñadeAGruposUserYAdmin() {
         // Arrange
         var hub = new PedidosHub(_loggerMock.Object);
 
@@ -87,13 +82,11 @@ public class PedidosHubTests
     }
 
     [Test]
-    public async Task OnConnectedAsync_RolRealADMIN_SeAñadeAGrupoAdmins()
-    {
+    public async Task OnConnectedAsync_RolRealADMIN_SeAñadeAGrupoAdmins() {
         // 🎓 Regresión: el rol que emite el JWT es UserRoles.ADMIN = "ADMIN"
         // (no "Admin"). Con IsInRole("Admin") —comparación ordinal— los
         // administradores no entraban al grupo y no recibían nada por SignalR.
-        var adminRealIdentity = new ClaimsIdentity(new[]
-        {
+        var adminRealIdentity = new ClaimsIdentity(new[] {
             new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimTypes.Name, "admin"),
             new Claim(ClaimTypes.Role, "ADMIN")
@@ -125,8 +118,7 @@ public class PedidosHubTests
     }
 
     [Test]
-    public async Task OnConnectedAsync_RegularUser_SeAñadeSoloAGrupoUser()
-    {
+    public async Task OnConnectedAsync_RegularUser_SeAñadeSoloAGrupoUser() {
         // Arrange
         var hub = new PedidosHub(_loggerMock.Object);
         SetupHubContext(hub, _contextRegular);
@@ -147,11 +139,9 @@ public class PedidosHubTests
     }
 
     [Test]
-    public async Task OnConnectedAsync_UserSinId_NoSeAñadeAGrupo()
-    {
+    public async Task OnConnectedAsync_UserSinId_NoSeAñadeAGrupo() {
         // Arrange
-        var userWithoutId = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
+        var userWithoutId = new ClaimsPrincipal(new ClaimsIdentity(new[] {
             new Claim(ClaimTypes.Name, "anonymous")
         }, "TestAuthType"));
 
@@ -176,8 +166,7 @@ public class PedidosHubTests
     #region OnDisconnectedAsync Tests
 
     [Test]
-    public async Task OnDisconnectedAsync_SinError_NoLanzaExcepcion()
-    {
+    public async Task OnDisconnectedAsync_SinError_NoLanzaExcepcion() {
         // Arrange
         var hub = new PedidosHub(_loggerMock.Object);
         SetupHubContext(hub, _contextAdmin);
@@ -190,8 +179,7 @@ public class PedidosHubTests
     }
 
     [Test]
-    public async Task OnDisconnectedAsync_ConError_NoLanzaExcepcion()
-    {
+    public async Task OnDisconnectedAsync_ConError_NoLanzaExcepcion() {
         // Arrange
         var hub = new PedidosHub(_loggerMock.Object);
         SetupHubContext(hub, _contextAdmin);
@@ -209,8 +197,7 @@ public class PedidosHubTests
     #region GetConnectionInfo Tests
 
     [Test]
-    public void GetConnectionInfo_AdminUser_RetornaInformacionCorrecta()
-    {
+    public void GetConnectionInfo_AdminUser_RetornaInformacionCorrecta() {
         // Arrange
         var hub = new PedidosHub(_loggerMock.Object);
         SetupHubContext(hub, _contextAdmin);
@@ -233,8 +220,7 @@ public class PedidosHubTests
     }
 
     [Test]
-    public void GetConnectionInfo_RegularUser_RetornaInformacionCorrecta()
-    {
+    public void GetConnectionInfo_RegularUser_RetornaInformacionCorrecta() {
         // Arrange
         var hub = new PedidosHub(_loggerMock.Object);
         SetupHubContext(hub, _contextRegular);
@@ -261,8 +247,7 @@ public class PedidosHubTests
     #region Attribute Tests
 
     [Test]
-    public void PedidosHub_TieneAuthorizeAttribute_Clase()
-    {
+    public void PedidosHub_TieneAuthorizeAttribute_Clase() {
         // Arrange & Act
         var attribute = typeof(PedidosHub)
             .GetCustomAttributes(typeof(AuthorizeAttribute), true)
@@ -273,8 +258,7 @@ public class PedidosHubTests
     }
 
     [Test]
-    public void GetConnectionInfo_TieneAuthorizeAttribute_Metodo()
-    {
+    public void GetConnectionInfo_TieneAuthorizeAttribute_Metodo() {
         // Arrange & Act
         var methodInfo = typeof(PedidosHub).GetMethod("GetConnectionInfo");
         var attribute = methodInfo?
@@ -289,8 +273,7 @@ public class PedidosHubTests
 
     #region Helper Methods
 
-    private void SetupHubContext(PedidosHub hub, HubCallerContext context)
-    {
+    private void SetupHubContext(PedidosHub hub, HubCallerContext context) {
         var field = typeof(Hub).GetField("_context", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         field?.SetValue(hub, context);
 

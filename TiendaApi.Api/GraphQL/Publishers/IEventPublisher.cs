@@ -3,8 +3,7 @@ namespace TiendaApi.Api.GraphQL.Publishers;
 /// <summary>
 /// Interfaz para publicar eventos en el bus de eventos de GraphQL.
 /// </summary>
-public interface IEventPublisher
-{
+public interface IEventPublisher {
     /// <summary>
     /// Publica un evento en el bus de eventos.
     /// </summary>

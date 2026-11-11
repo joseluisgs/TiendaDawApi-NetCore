@@ -6,10 +6,8 @@ using TiendaApi.Api.Models;
 
 namespace TiendaApi.Tests.Unit.Repositories.Productos;
 
-public class ProductoRepositoryInMemoryTests
-{
-    private TiendaDbContext CreateContext(string dbName)
-    {
+public class ProductoRepositoryInMemoryTests {
+    private TiendaDbContext CreateContext(string dbName) {
         var options = new DbContextOptionsBuilder<TiendaDbContext>()
             .UseInMemoryDatabase(databaseName: dbName)
             .Options;
@@ -20,8 +18,7 @@ public class ProductoRepositoryInMemoryTests
     private static byte[] NewRowVersion() => new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
 
     [Test]
-    public async Task ExistsAsync_Existe_RetornaTrue()
-    {
+    public async Task ExistsAsync_Existe_RetornaTrue() {
         using var context = CreateContext(nameof(ExistsAsync_Existe_RetornaTrue));
 
         context.Productos.Add(new Producto { Id = 1, Nombre = "Laptop", RowVersion = NewRowVersion() });
@@ -33,8 +30,7 @@ public class ProductoRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task ExistsAsync_NoExiste_RetornaFalse()
-    {
+    public async Task ExistsAsync_NoExiste_RetornaFalse() {
         using var context = CreateContext(nameof(ExistsAsync_NoExiste_RetornaFalse));
 
         var result = await context.Productos.AnyAsync(p => p.Id == 999);
@@ -43,8 +39,7 @@ public class ProductoRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task SaveAsync_NuevoProducto_RetornaConId()
-    {
+    public async Task SaveAsync_NuevoProducto_RetornaConId() {
         using var context = CreateContext(nameof(SaveAsync_NuevoProducto_RetornaConId));
 
         var producto = new Producto { Id = 100, Nombre = "Tablet", Precio = 299.99m, Stock = 20, CategoriaId = 1, RowVersion = NewRowVersion() };
@@ -57,8 +52,7 @@ public class ProductoRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task UpdateAsync_Existente_ActualizaPrecioYStock()
-    {
+    public async Task UpdateAsync_Existente_ActualizaPrecioYStock() {
         using var context = CreateContext(nameof(UpdateAsync_Existente_ActualizaPrecioYStock));
 
         context.Productos.Add(new Producto { Id = 1, Nombre = "Laptop", Precio = 999.99m, Stock = 10, RowVersion = NewRowVersion() });
@@ -77,8 +71,7 @@ public class ProductoRepositoryInMemoryTests
     }
 
     [Test]
-    public async Task DeleteAsync_Existente_MarcaIsDeleted()
-    {
+    public async Task DeleteAsync_Existente_MarcaIsDeleted() {
         using var context = CreateContext(nameof(DeleteAsync_Existente_MarcaIsDeleted));
 
         context.Productos.Add(new Producto { Id = 1, Nombre = "Para Borrar", RowVersion = NewRowVersion() });
@@ -101,15 +94,12 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que la paginación retorna el número correcto de elementos.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_Con20Elementos_Pagina1_Size10_Retorna10()
-    {
+    public async Task FindAllPagedAsync_Con20Elementos_Pagina1_Size10_Retorna10() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
-        for (int i = 1; i <= 20; i++)
-        {
-            context.Productos.Add(new Producto
-            {
+        for (int i = 1; i <= 20; i++) {
+            context.Productos.Add(new Producto {
                 Id = i,
                 Nombre = $"Producto {i}",
                 Precio = 100m + i,
@@ -134,15 +124,12 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que la paginación retorna la página correcta.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_Pagina2_Size5_RetornaElementos11a15()
-    {
+    public async Task FindAllPagedAsync_Pagina2_Size5_RetornaElementos11a15() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
-        for (int i = 1; i <= 20; i++)
-        {
-            context.Productos.Add(new Producto
-            {
+        for (int i = 1; i <= 20; i++) {
+            context.Productos.Add(new Producto {
                 Id = i,
                 Nombre = $"Producto {i}",
                 Precio = 100m,
@@ -168,8 +155,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que el filtro por nombre funciona correctamente.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroNombre_RetornaSoloCoincidentes()
-    {
+    public async Task FindAllPagedAsync_ConFiltroNombre_RetornaSoloCoincidentes() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -193,8 +179,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que el filtro por precio máximo funciona correctamente.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroPrecioMax_RetornaProductosBaratos()
-    {
+    public async Task FindAllPagedAsync_ConFiltroPrecioMax_RetornaProductosBaratos() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -218,8 +203,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que el filtro por stock mínimo funciona correctamente.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroStockMin_RetornaProductosConStock()
-    {
+    public async Task FindAllPagedAsync_ConFiltroStockMin_RetornaProductosConStock() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -243,8 +227,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que el filtro IsDeleted funciona correctamente.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados()
-    {
+    public async Task FindAllPagedAsync_ConFiltroIsDeleted_RetornaSoloEliminados() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -268,8 +251,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que la ordenación descendente funciona correctamente.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso()
-    {
+    public async Task FindAllPagedAsync_OrdenacionDescendente_RetornaOrdenInverso() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -293,8 +275,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que la ordenación por precio funciona correctamente.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_OrdenacionPorPrecio_RetornaOrdenadoPorPrecio()
-    {
+    public async Task FindAllPagedAsync_OrdenacionPorPrecio_RetornaOrdenadoPorPrecio() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -319,8 +300,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que página vacía retorna cero elementos.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos()
-    {
+    public async Task FindAllPagedAsync_PaginaVacia_RetornaCeroElementos() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -343,8 +323,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que el TotalCount es correcto con filtros combinados.
     /// </summary>
     [Test]
-    public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto()
-    {
+    public async Task FindAllPagedAsync_FiltrosCombinados_TotalCountEsCorrecto() {
         var dbName = Guid.NewGuid().ToString();
         using var context = CreateContext(dbName);
 
@@ -374,12 +353,10 @@ public class ProductoRepositoryInMemoryTests
     private static async Task<(IEnumerable<Producto> Items, int TotalCount)> GetPagedResult(
         IQueryable<Producto> query,
         ProductoFilterDto filter,
-        bool applyFilters = true)
-    {
+        bool applyFilters = true) {
         var filteredQuery = query.AsQueryable();
 
-        if (applyFilters)
-        {
+        if (applyFilters) {
             if (!string.IsNullOrWhiteSpace(filter.Nombre))
                 filteredQuery = filteredQuery.Where(p => p.Nombre.ToLower().Contains(filter.Nombre.ToLower()));
 
@@ -405,12 +382,10 @@ public class ProductoRepositoryInMemoryTests
         return (items, totalCount);
     }
 
-    private static IQueryable<Producto> ApplySorting(IQueryable<Producto> query, string sortBy, string direction)
-    {
+    private static IQueryable<Producto> ApplySorting(IQueryable<Producto> query, string sortBy, string direction) {
         var isDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
 
-        query = sortBy.ToLower() switch
-        {
+        query = sortBy.ToLower() switch {
             "nombre" => isDescending ? query.OrderByDescending(p => p.Nombre) : query.OrderBy(p => p.Nombre),
             "precio" => isDescending ? query.OrderByDescending(p => p.Precio) : query.OrderBy(p => p.Precio),
             "stock" => isDescending ? query.OrderByDescending(p => p.Stock) : query.OrderBy(p => p.Stock),
@@ -427,8 +402,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que con productos en la base de datos retorna la cantidad correcta.
     /// </summary>
     [Test]
-    public async Task GetRecentlyCreatedAsync_ConProductosEnBD_RetornaLosMismos()
-    {
+    public async Task GetRecentlyCreatedAsync_ConProductosEnBD_RetornaLosMismos() {
         using var context = CreateContext(nameof(GetRecentlyCreatedAsync_ConProductosEnBD_RetornaLosMismos));
 
         context.Productos.AddRange(
@@ -450,8 +424,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que excluye productos eliminados lógicamente.
     /// </summary>
     [Test]
-    public async Task GetRecentlyCreatedAsync_ConProductoEliminado_ExcluyeProducto()
-    {
+    public async Task GetRecentlyCreatedAsync_ConProductoEliminado_ExcluyeProducto() {
         using var context = CreateContext(nameof(GetRecentlyCreatedAsync_ConProductoEliminado_ExcluyeProducto));
 
         context.Productos.AddRange(
@@ -472,8 +445,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que productos eliminados lógicamente no son incluidos.
     /// </summary>
     [Test]
-    public async Task GetRecentlyCreatedAsync_MultiplesEliminados_ExcluyeTodos()
-    {
+    public async Task GetRecentlyCreatedAsync_MultiplesEliminados_ExcluyeTodos() {
         using var context = CreateContext(nameof(GetRecentlyCreatedAsync_MultiplesEliminados_ExcluyeTodos));
 
         context.Productos.AddRange(
@@ -494,8 +466,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que productos activos son retornados.
     /// </summary>
     [Test]
-    public async Task GetRecentlyCreatedAsync_ConProductosActivos_RetornaTodos()
-    {
+    public async Task GetRecentlyCreatedAsync_ConProductosActivos_RetornaTodos() {
         using var context = CreateContext(nameof(GetRecentlyCreatedAsync_ConProductosActivos_RetornaTodos));
 
         context.Productos.AddRange(
@@ -516,8 +487,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que con un solo producto retorna ese producto.
     /// </summary>
     [Test]
-    public async Task GetRecentlyCreatedAsync_UnProducto_RetornaEseProducto()
-    {
+    public async Task GetRecentlyCreatedAsync_UnProducto_RetornaEseProducto() {
         using var context = CreateContext(nameof(GetRecentlyCreatedAsync_UnProducto_RetornaEseProducto));
 
         context.Productos.Add(new Producto { Id = 1, Nombre = "Único", RowVersion = NewRowVersion() });
@@ -535,8 +505,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que sin productos retorna lista vacía.
     /// </summary>
     [Test]
-    public async Task GetRecentlyCreatedAsync_SinProductos_RetornaListaVacia()
-    {
+    public async Task GetRecentlyCreatedAsync_SinProductos_RetornaListaVacia() {
         using var context = CreateContext(nameof(GetRecentlyCreatedAsync_SinProductos_RetornaListaVacia));
 
         var productos = await context.Productos
@@ -550,8 +519,7 @@ public class ProductoRepositoryInMemoryTests
     /// Verifica que con productos mixtos (activos y eliminados) solo retorna activos.
     /// </summary>
     [Test]
-    public async Task GetRecentlyCreatedAsync_ProductosMixtos_RetornaSoloActivos()
-    {
+    public async Task GetRecentlyCreatedAsync_ProductosMixtos_RetornaSoloActivos() {
         using var context = CreateContext(nameof(GetRecentlyCreatedAsync_ProductosMixtos_RetornaSoloActivos));
 
         context.Productos.AddRange(

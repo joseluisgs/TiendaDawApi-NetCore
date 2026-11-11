@@ -9,8 +9,7 @@ namespace TiendaApi.Api.Infrastructures;
 /// <summary>
 /// Configuración de la conexión a Cassandra.
 /// </summary>
-public static class CassandraConfig
-{
+public static class CassandraConfig {
     /// <summary>
     /// Registra el cluster y la sesión de Cassandra en el contenedor de dependencias.
     ///
@@ -25,8 +24,7 @@ public static class CassandraConfig
     /// <returns>IServiceCollection para encadenar.</returns>
     public static IServiceCollection AddCassandra(
         this IServiceCollection services,
-        IConfiguration configuration)
-    {
+        IConfiguration configuration) {
         var settings = configuration
             .GetSection(CassandraSettings.SectionName)
             .Get<CassandraSettings>() ?? new CassandraSettings();

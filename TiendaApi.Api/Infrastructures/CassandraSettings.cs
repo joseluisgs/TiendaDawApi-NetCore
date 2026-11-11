@@ -7,8 +7,7 @@ namespace TiendaApi.Api.Infrastructures;
 /// PostgreSQL (fuente de verdad), MongoDB (read model), Redis (caché) y
 /// Cassandra (histórico de precios y actividad con TTL).
 /// </summary>
-public class CassandraSettings
-{
+public class CassandraSettings {
     /// <summary>Nombre de la sección en appsettings.json.</summary>
     public const string SectionName = "Cassandra";
 

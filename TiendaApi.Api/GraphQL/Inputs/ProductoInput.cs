@@ -3,8 +3,7 @@ namespace TiendaApi.Api.GraphQL.Inputs;
 /// <summary>
 /// Datos de entrada para crear un producto.
 /// </summary>
-public record CreateProductoInput
-{
+public record CreateProductoInput {
     /// <summary>
     /// Nombre del producto. Obligatorio y único.
     /// </summary>
@@ -52,8 +51,7 @@ public record CreateProductoInput
 /// <summary>
 /// Datos de entrada para actualizar un producto.
 /// </summary>
-public record UpdateProductoInput
-{
+public record UpdateProductoInput {
     /// <summary>
     /// Nuevo nombre del producto (opcional).
     /// Si es null, no se modifica el nombre actual.

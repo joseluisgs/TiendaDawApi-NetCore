@@ -19,8 +19,7 @@ namespace TiendaApi.Tests.Integration.TestContainers.ErrorShape;
 [TestFixture]
 [Category("Integration")]
 [NonParallelizable]
-public class ErrorShapeApiTests
-{
+public class ErrorShapeApiTests {
     private const string DatabaseName = "it_error_shape";
     private const string AdminUsuario = "admin";
     // Credenciales unificadas: las MISMAS en Custom e Identity (SeedCredentials).
@@ -32,8 +31,7 @@ public class ErrorShapeApiTests
     private string _adminToken = string.Empty;
 
     [OneTimeSetUp]
-    public async Task OneTimeSetup()
-    {
+    public async Task OneTimeSetup() {
         var connectionString = await AssemblyContainerFixture.CreatePostgresDatabaseAsync(DatabaseName);
         var mongoConnectionString = AssemblyContainerFixture.MongoConnectionString;
 
@@ -45,13 +43,10 @@ public class ErrorShapeApiTests
         Environment.SetEnvironmentVariable(
             "MongoDbSettings__DatabaseName", DatabaseName);
 
-        _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
-        {
+        _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder => {
             builder.UseEnvironment("Development");
-            builder.ConfigureAppConfiguration((_, config) =>
-            {
-                config.AddInMemoryCollection(new Dictionary<string, string?>
-                {
+            builder.ConfigureAppConfiguration((_, config) => {
+                config.AddInMemoryCollection(new Dictionary<string, string?> {
                     { "ConnectionStrings:DefaultConnection", connectionString },
                     { "MongoDbSettings:ConnectionString", mongoConnectionString },
                     { "MongoDbSettings:DatabaseName", DatabaseName },
@@ -76,11 +71,9 @@ public class ErrorShapeApiTests
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
+    public async Task OneTimeTearDown() {
         _client.Dispose();
-        if (_factory is not null)
-        {
+        if (_factory is not null) {
             await _factory.DisposeAsync();
         }
 
@@ -89,8 +82,7 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task Version_devuelve_200_con_metadatos()
-    {
+    public async Task Version_devuelve_200_con_metadatos() {
         var response = await _client.GetAsync("/version");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -103,8 +95,7 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task Health_devuelve_200_con_checks_de_postgres_y_mongo()
-    {
+    public async Task Health_devuelve_200_con_checks_de_postgres_y_mongo() {
         var response = await _client.GetAsync("/health");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -121,8 +112,7 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task HealthLive_devuelve_OK_sin_dependencias()
-    {
+    public async Task HealthLive_devuelve_OK_sin_dependencias() {
         var response = await _client.GetAsync("/health/live");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -132,8 +122,7 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task HealthReady_devuelve_OK_con_dependencias_listas()
-    {
+    public async Task HealthReady_devuelve_OK_con_dependencias_listas() {
         var response = await _client.GetAsync("/health/ready");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -147,8 +136,7 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task Recurso_inexistente_devuelve_404_con_shape_de_dominio()
-    {
+    public async Task Recurso_inexistente_devuelve_404_con_shape_de_dominio() {
         var response = await _client.GetAsync("/api/v1/categorias/999999");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -159,8 +147,7 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task Endpoint_protegido_sin_token_devuelve_401_con_www_authenticate()
-    {
+    public async Task Endpoint_protegido_sin_token_devuelve_401_con_www_authenticate() {
         var response = await _client.GetAsync("/api/v1/pedidos");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -169,8 +156,7 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task Cuerpo_invalido_devuelve_400_con_problem_details()
-    {
+    public async Task Cuerpo_invalido_devuelve_400_con_problem_details() {
         var response = await _client.PostAsJsonAsync(
             "/api/v1/auth/signin",
             new Dictionary<string, string>());
@@ -187,8 +173,7 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task Credenciales_invalidas_devuelve_401_con_shape_de_dominio()
-    {
+    public async Task Credenciales_invalidas_devuelve_401_con_shape_de_dominio() {
         var response = await _client.PostAsJsonAsync(
             "/api/v1/auth/signin",
             new { username = "usuario_que_no_existe", password = "noimporta" });
@@ -203,10 +188,8 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task Recurso_duplicado_devuelve_409_con_shape_de_dominio()
-    {
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/categorias")
-        {
+    public async Task Recurso_duplicado_devuelve_409_con_shape_de_dominio() {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/categorias") {
             Content = JsonContent.Create(new { nombre = "Electrónica" })
         };
         request.Headers.Authorization =
@@ -223,27 +206,21 @@ public class ErrorShapeApiTests
     }
 
     [Test]
-    public async Task Limite_de_peticiones_devuelve_429_con_headers_y_cuerpo()
-    {
+    public async Task Limite_de_peticiones_devuelve_429_con_headers_y_cuerpo() {
         using var client = _factory!.CreateClient();
         HttpResponseMessage? rechazada = null;
         HttpResponseMessage? permitida = null;
 
-        for (var i = 0; i < 12 && rechazada is null; i++)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/auth/signin")
-            {
+        for (var i = 0; i < 12 && rechazada is null; i++) {
+            var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/auth/signin") {
                 Content = JsonContent.Create(new { username = "sonda_rate_limit", password = "noimporta" })
             };
             request.Headers.Add("X-Forwarded-For", IpRateLimit);
 
             var response = await client.SendAsync(request);
-            if (response.StatusCode == HttpStatusCode.TooManyRequests)
-            {
+            if (response.StatusCode == HttpStatusCode.TooManyRequests) {
                 rechazada = response;
-            }
-            else
-            {
+            } else {
                 permitida ??= response;
             }
         }

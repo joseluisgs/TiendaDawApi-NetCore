@@ -14,13 +14,11 @@ namespace TiendaApi.Api.Infrastructures;
 /// <summary>
 /// Extensiones de configuración de GraphQL con HotChocolate.
 /// </summary>
-public static class GraphQLConfig
-{
+public static class GraphQLConfig {
     /// <summary>
     /// Configura GraphQL con queries de productos y categorías.
     /// </summary>
-    public static IRequestExecutorBuilder AddGraphQL(this IServiceCollection services, IWebHostEnvironment environment)
-    {
+    public static IRequestExecutorBuilder AddGraphQL(this IServiceCollection services, IWebHostEnvironment environment) {
         Log.Information("🔍 Configurando GraphQL con HotChocolate...");
 
         services.AddGraphQLPubSub();
@@ -52,16 +50,14 @@ public static class GraphQLConfig
             .AddMaxExecutionDepthRule(
                 maxAllowedExecutionDepth: 10,
                 skipIntrospectionFields: true)
-            .ModifyRequestOptions(opt =>
-            {
+            .ModifyRequestOptions(opt => {
                 opt.IncludeExceptionDetails = environment.IsDevelopment();
             });
 
         // 🛡️ Introspección: solo en desarrollo. En producción permite
         // descubrir el esquema completo del API (query/mutation names,
         // tipos, argumentos), lo que facilita ataques dirigidos.
-        if (!environment.IsDevelopment())
-        {
+        if (!environment.IsDevelopment()) {
             builder.DisableIntrospection();
         }
 
@@ -71,8 +67,7 @@ public static class GraphQLConfig
     /// <summary>
     /// Configura los endpoints de GraphQL incluyendo WebSocket para suscripciones.
     /// </summary>
-    public static void MapGraphQLEndpoints(this WebApplication app)
-    {
+    public static void MapGraphQLEndpoints(this WebApplication app) {
         app.MapGraphQL();
         app.MapGraphQLWebSocket();
     }

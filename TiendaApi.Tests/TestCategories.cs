@@ -3,8 +3,7 @@ namespace TiendaApi.Tests;
 /// <summary>
 /// Categorías de tests para filtrado y reporting.
 /// </summary>
-public static class TestCategories
-{
+public static class TestCategories {
     /// <summary>Tests unitarios - rápidos, sin dependencias externas</summary>
     public const string Unit = "Unit";
 
@@ -61,8 +60,7 @@ public static class TestCategories
 /// Atributo para tests unitarios.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-public class UnitTestAttribute : CategoryAttribute
-{
+public class UnitTestAttribute : CategoryAttribute {
     public UnitTestAttribute() : base(TestCategories.Unit) { }
 }
 
@@ -70,7 +68,6 @@ public class UnitTestAttribute : CategoryAttribute
 /// Atributo para tests de integración.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-public class IntegrationTestCategoryAttribute : CategoryAttribute
-{
+public class IntegrationTestCategoryAttribute : CategoryAttribute {
     public IntegrationTestCategoryAttribute() : base(TestCategories.Integration) { }
 }

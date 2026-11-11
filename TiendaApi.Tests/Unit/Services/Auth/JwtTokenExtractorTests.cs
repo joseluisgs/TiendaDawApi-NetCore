@@ -11,13 +11,11 @@ namespace TiendaApi.Tests.Unit.Services.Auth;
 /// Tests unitarios para JwtTokenExtractor.
 /// Verifica la extracción de información de tokens JWT.
 /// </summary>
-public class JwtTokenExtractorTests
-{
+public class JwtTokenExtractorTests {
     private readonly Mock<ILogger<JwtTokenExtractor>> _mockLogger;
     private readonly JwtTokenExtractor _extractor;
 
-    public JwtTokenExtractorTests()
-    {
+    public JwtTokenExtractorTests() {
         _mockLogger = new Mock<ILogger<JwtTokenExtractor>>();
         _extractor = new JwtTokenExtractor(_mockLogger.Object);
     }
@@ -25,8 +23,7 @@ public class JwtTokenExtractorTests
     #region ExtractUserId Tests
 
     [Test]
-    public void ExtractUserId_WithValidToken_ReturnsUserId()
-    {
+    public void ExtractUserId_WithValidToken_ReturnsUserId() {
         // Arrange
         var token = CreateToken(userId: 123L, role: "cliente");
 
@@ -38,8 +35,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractUserId_WithInvalidToken_ReturnsNull()
-    {
+    public void ExtractUserId_WithInvalidToken_ReturnsNull() {
         // Arrange
         var token = "invalid.token";
 
@@ -51,8 +47,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractUserId_WithEmptyToken_ReturnsNull()
-    {
+    public void ExtractUserId_WithEmptyToken_ReturnsNull() {
         // Arrange
         var token = "";
 
@@ -64,8 +59,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractUserId_WithNullToken_ReturnsNull()
-    {
+    public void ExtractUserId_WithNullToken_ReturnsNull() {
         // Act
         var userId = _extractor.ExtractUserId(null!);
 
@@ -78,8 +72,7 @@ public class JwtTokenExtractorTests
     #region ExtractRole Tests
 
     [Test]
-    public void ExtractRole_WithAdminRole_ReturnsAdmin()
-    {
+    public void ExtractRole_WithAdminRole_ReturnsAdmin() {
         // Arrange
         var token = CreateToken(userId: 1L, role: "admin");
 
@@ -91,8 +84,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractRole_WithClientRole_ReturnsCliente()
-    {
+    public void ExtractRole_WithClientRole_ReturnsCliente() {
         // Arrange
         var token = CreateToken(userId: 123L, role: "cliente");
 
@@ -104,8 +96,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractRole_WithMissingRole_ReturnsNull()
-    {
+    public void ExtractRole_WithMissingRole_ReturnsNull() {
         // Arrange
         var token = CreateTokenWithoutRole(userId: 123L);
 
@@ -117,8 +108,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractRole_WithInvalidToken_ReturnsNull()
-    {
+    public void ExtractRole_WithInvalidToken_ReturnsNull() {
         // Arrange
         var token = "invalid.token";
 
@@ -134,8 +124,7 @@ public class JwtTokenExtractorTests
     #region IsAdmin Tests
 
     [Test]
-    public void IsAdmin_WithAdminRole_ReturnsTrue()
-    {
+    public void IsAdmin_WithAdminRole_ReturnsTrue() {
         // Arrange
         var token = CreateToken(userId: 1L, role: "admin");
 
@@ -147,8 +136,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsAdmin_WithAdminRoleUppercase_ReturnsTrue()
-    {
+    public void IsAdmin_WithAdminRoleUppercase_ReturnsTrue() {
         // Arrange
         var token = CreateToken(userId: 1L, role: "ADMIN");
 
@@ -160,8 +148,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsAdmin_WithClientRole_ReturnsFalse()
-    {
+    public void IsAdmin_WithClientRole_ReturnsFalse() {
         // Arrange
         var token = CreateToken(userId: 123L, role: "cliente");
 
@@ -173,8 +160,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsAdmin_WithMissingRole_ReturnsFalse()
-    {
+    public void IsAdmin_WithMissingRole_ReturnsFalse() {
         // Arrange
         var token = CreateTokenWithoutRole(userId: 123L);
 
@@ -186,8 +172,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsAdmin_WithInvalidToken_ReturnsFalse()
-    {
+    public void IsAdmin_WithInvalidToken_ReturnsFalse() {
         // Arrange
         var token = "invalid.token";
 
@@ -203,8 +188,7 @@ public class JwtTokenExtractorTests
     #region ExtractUserInfo Tests
 
     [Test]
-    public void ExtractUserInfo_WithValidToken_ReturnsAllInfo()
-    {
+    public void ExtractUserInfo_WithValidToken_ReturnsAllInfo() {
         // Arrange
         var token = CreateToken(userId: 123L, role: "admin");
 
@@ -218,8 +202,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractUserInfo_WithInvalidToken_ReturnsNullUserId()
-    {
+    public void ExtractUserInfo_WithInvalidToken_ReturnsNullUserId() {
         // Arrange
         var token = "invalid.token";
 
@@ -233,8 +216,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractUserInfo_WithMissingRole_ReturnsCorrectInfo()
-    {
+    public void ExtractUserInfo_WithMissingRole_ReturnsCorrectInfo() {
         // Arrange
         var token = CreateTokenWithoutRole(userId: 456L);
 
@@ -252,8 +234,7 @@ public class JwtTokenExtractorTests
     #region ExtractClaims Tests
 
     [Test]
-    public void ExtractClaims_WithValidToken_ReturnsClaimsPrincipal()
-    {
+    public void ExtractClaims_WithValidToken_ReturnsClaimsPrincipal() {
         // Arrange
         var token = CreateToken(userId: 123L, role: "admin", email: "test@example.com");
 
@@ -269,8 +250,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractClaims_WithInvalidToken_ReturnsNull()
-    {
+    public void ExtractClaims_WithInvalidToken_ReturnsNull() {
         // Arrange
         var token = "invalid.token";
 
@@ -282,8 +262,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractClaims_WithEmptyToken_ReturnsNull()
-    {
+    public void ExtractClaims_WithEmptyToken_ReturnsNull() {
         // Arrange
         var token = "";
 
@@ -299,8 +278,7 @@ public class JwtTokenExtractorTests
     #region ExtractEmail Tests
 
     [Test]
-    public void ExtractEmail_WithValidToken_ReturnsEmail()
-    {
+    public void ExtractEmail_WithValidToken_ReturnsEmail() {
         // Arrange
         var token = CreateToken(userId: 123L, role: "cliente", email: "user@example.com");
 
@@ -312,8 +290,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractEmail_WithMissingEmail_ReturnsNull()
-    {
+    public void ExtractEmail_WithMissingEmail_ReturnsNull() {
         // Arrange
         var token = CreateToken(userId: 123L, role: "cliente");
 
@@ -325,8 +302,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void ExtractEmail_WithInvalidToken_ReturnsNull()
-    {
+    public void ExtractEmail_WithInvalidToken_ReturnsNull() {
         // Arrange
         var token = "invalid.token";
 
@@ -342,8 +318,7 @@ public class JwtTokenExtractorTests
     #region IsValidTokenFormat Tests
 
     [Test]
-    public void IsValidTokenFormat_WithValidToken_ReturnsTrue()
-    {
+    public void IsValidTokenFormat_WithValidToken_ReturnsTrue() {
         // Arrange
         var token = CreateToken(userId: 123L, role: "cliente");
 
@@ -355,8 +330,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsValidTokenFormat_WithInvalidToken_ReturnsFalse()
-    {
+    public void IsValidTokenFormat_WithInvalidToken_ReturnsFalse() {
         // Arrange
         var token = "invalid.token";
 
@@ -368,8 +342,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsValidTokenFormat_WithEmptyToken_ReturnsFalse()
-    {
+    public void IsValidTokenFormat_WithEmptyToken_ReturnsFalse() {
         // Arrange
         var token = "";
 
@@ -381,8 +354,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsValidTokenFormat_WithNullToken_ReturnsFalse()
-    {
+    public void IsValidTokenFormat_WithNullToken_ReturnsFalse() {
         // Act
         var isValid = _extractor.IsValidTokenFormat(null!);
 
@@ -391,8 +363,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsValidTokenFormat_WithOnlyTwoParts_ReturnsFalse()
-    {
+    public void IsValidTokenFormat_WithOnlyTwoParts_ReturnsFalse() {
         // Arrange
         var token = "header.payload"; // Solo 2 partes
 
@@ -404,8 +375,7 @@ public class JwtTokenExtractorTests
     }
 
     [Test]
-    public void IsValidTokenFormat_WithFourParts_ReturnsFalse()
-    {
+    public void IsValidTokenFormat_WithFourParts_ReturnsFalse() {
         // Arrange
         var token = "header.payload.signature.extra"; // 4 partes
 
@@ -420,22 +390,18 @@ public class JwtTokenExtractorTests
 
     #region Helpers
 
-    private static string CreateToken(long userId, string role, string? email = null)
-    {
+    private static string CreateToken(long userId, string role, string? email = null) {
         var handler = new JwtSecurityTokenHandler();
-        var claims = new List<Claim>
-        {
+        var claims = new List<Claim> {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Role, role)
         };
 
-        if (email != null)
-        {
+        if (email != null) {
             claims.Add(new Claim(ClaimTypes.Email, email));
         }
 
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
+        var tokenDescriptor = new SecurityTokenDescriptor {
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddHours(1)
         };
@@ -444,13 +410,10 @@ public class JwtTokenExtractorTests
         return handler.WriteToken(token);
     }
 
-    private static string CreateTokenWithoutRole(long userId)
-    {
+    private static string CreateTokenWithoutRole(long userId) {
         var handler = new JwtSecurityTokenHandler();
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
+        var tokenDescriptor = new SecurityTokenDescriptor {
+            Subject = new ClaimsIdentity(new[] {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString())
             }),
             Expires = DateTime.UtcNow.AddHours(1)

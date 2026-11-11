@@ -6,8 +6,7 @@ namespace TiendaApi.Api.Realtime.Common;
 /// <example>
 /// var notification = new ProductoNotificationDto { Type = "CREATED", ProductoId = 123, ProductoNombre = "Laptop" };
 /// </example>
-public class ProductoNotificationDto
-{
+public class ProductoNotificationDto {
     /// <summary>Tipo de notificación (CREATED, UPDATED, DELETED).</summary>
     public string Type { get; set; } = string.Empty;
 
@@ -27,8 +26,7 @@ public class ProductoNotificationDto
 /// <summary>
 /// Tipos de notificación para productos.
 /// </summary>
-public static class NotificationType
-{
+public static class NotificationType {
     /// <summary>Producto creado.</summary>
     public const string CREATED = "CREATED";
 

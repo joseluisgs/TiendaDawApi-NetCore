@@ -14,10 +14,9 @@ namespace ClientBlazor.Cliente.Infrastructures.Handlers;
 /// 2. Monitoriza las respuestas con código 401 (Unauthorized) para gestionar sesiones expiradas de forma proactiva.
 /// </remarks>
 public class AuthHeaderHandler(
-    IAuthStore authStore, 
+    IAuthStore authStore,
     INotificationStore notificationStore,
-    ILocalStorageService storage) : DelegatingHandler
-{
+    ILocalStorageService storage) : DelegatingHandler {
     private const string AuthStorageKey = "auth_session";
 
     /// <summary>
@@ -26,18 +25,15 @@ public class AuthHeaderHandler(
     /// <param name="request">La instancia de <see cref="HttpRequestMessage"/> que se va a enviar.</param>
     /// <param name="cancellationToken">Token para cancelar la operación asíncrona.</param>
     /// <returns>La instancia de <see cref="HttpResponseMessage"/> recibida del servidor.</returns>
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
         var authState = authStore.GetState();
-        if (!string.IsNullOrEmpty(authState.Token))
-        {
+        if (!string.IsNullOrEmpty(authState.Token)) {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authState.Token);
         }
 
         var response = await base.SendAsync(request, cancellationToken);
 
-        if (response.StatusCode == HttpStatusCode.Unauthorized && authState.IsAuthenticated)
-        {
+        if (response.StatusCode == HttpStatusCode.Unauthorized && authState.IsAuthenticated) {
             await HandleExpiredSession();
         }
 
@@ -48,12 +44,11 @@ public class AuthHeaderHandler(
     /// Gestiona el flujo de cierre de sesión cuando el servidor detecta un token inválido o expirado.
     /// </summary>
     /// <returns>Una tarea que representa la operación de limpieza.</returns>
-    private async Task HandleExpiredSession()
-    {
+    private async Task HandleExpiredSession() {
         authStore.Logout();
         await storage.RemoveItemAsync(AuthStorageKey);
         notificationStore.Error(
-            "Su sesión ha expirado o el token no es válido. Por favor, inicie sesión de nuevo.", 
+            "Su sesión ha expirado o el token no es válido. Por favor, inicie sesión de nuevo.",
             "Sesión Expirada"
         );
     }

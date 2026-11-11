@@ -30,8 +30,7 @@ namespace TiendaApi.Tests.Unit.Services.Pedidos;
 /// <summary>
 /// Tests unitarios para PedidosService usando enfoque híbrido: Serializable + Retry
 /// </summary>
-public class PedidosServiceTests
-{
+public class PedidosServiceTests {
     private Mock<IPedidosRepository> _mockPedidosRepo = null!;
     private Mock<IProductoRepository> _mockProductoRepo = null!;
     private Mock<ILogger<PedidosService>> _mockLogger = null!;
@@ -45,8 +44,7 @@ public class PedidosServiceTests
     private Mock<IHubContext<PedidosHub>> _mockHubContext = null!;
     private IPedidosService _service = null!;
 
-    private void CreateService()
-    {
+    private void CreateService() {
         _service = new PedidosService(
             _mockPedidosRepo.Object,
             _mockProductoRepo.Object,
@@ -60,8 +58,7 @@ public class PedidosServiceTests
     }
 
     [SetUp]
-    public void Setup()
-    {
+    public void Setup() {
         _mockPedidosRepo = new Mock<IPedidosRepository>();
         _mockProductoRepo = new Mock<IProductoRepository>();
         _mockLogger = new Mock<ILogger<PedidosService>>();
@@ -110,10 +107,8 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindAllAsync_DebeRetornarTodosLosPedidos()
-    {
-        var pedidos = new List<Pedido>
-        {
+    public async Task FindAllAsync_DebeRetornarTodosLosPedidos() {
+        var pedidos = new List<Pedido> {
             new() { UserId = 1, Total = 100 },
             new() { UserId = 2, Total = 200 }
         };
@@ -128,30 +123,24 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConItemsValidos_DebeRetornarPedidoCreado()
-    {
+    public async Task CreateAsync_ConItemsValidos_DebeRetornarPedidoCreado() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
             Stock = 10
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
             },
             Total = 100,
@@ -173,17 +162,14 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConItemsVacios_DebeRetornarErrorValidacion()
-    {
+    public async Task CreateAsync_ConItemsVacios_DebeRetornarErrorValidacion() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
+        var pedidoDto = new PedidoRequestDto {
             Items = new List<PedidoItemRequestDto>()
         };
 
         _mockPedidoValidator.Setup(v => v.ValidateAsync(pedidoDto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new[]
-            {
+            .ReturnsAsync(new ValidationResult(new[] {
                 new ValidationFailure("Items", "El pedido debe contener al menos un artículo")
             }));
 
@@ -205,20 +191,16 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConCantidadInvalida_DebeRetornarErrorValidacion()
-    {
+    public async Task CreateAsync_ConCantidadInvalida_DebeRetornarErrorValidacion() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 0 }
             }
         };
 
         _mockItemValidator.Setup(v => v.ValidateAsync(pedidoDto.Items[0], It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new[]
-            {
+            .ReturnsAsync(new ValidationResult(new[] {
                 new ValidationFailure("Cantidad", "La cantidad debe ser mayor a 0")
             }));
 
@@ -240,13 +222,10 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConProductoNoExistente_DebeRetornarNotFound()
-    {
+    public async Task CreateAsync_ConProductoNoExistente_DebeRetornarNotFound() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 999, Cantidad = 2 }
             }
         };
@@ -262,19 +241,15 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConStockInsuficiente_DebeRetornarBusinessRule()
-    {
+    public async Task CreateAsync_ConStockInsuficiente_DebeRetornarBusinessRule() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 20 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
@@ -292,19 +267,15 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ErrorDeSerializacion_DebeRetornarConflictTrasMaximosReintentos()
-    {
+    public async Task CreateAsync_ErrorDeSerializacion_DebeRetornarConflictTrasMaximosReintentos() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
@@ -329,30 +300,24 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ReintentoExitosoTrasErrorDeSerializacion_DebeRetornarPedido()
-    {
+    public async Task CreateAsync_ReintentoExitosoTrasErrorDeSerializacion_DebeRetornarPedido() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
             Stock = 10
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
             },
             Total = 100,
@@ -380,39 +345,32 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_MultiplesItems_DebeDecrementarStockParaCadaUno()
-    {
+    public async Task CreateAsync_MultiplesItems_DebeDecrementarStockParaCadaUno() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 },
                 new() { ProductoId = 2, Cantidad = 3 }
             }
         };
 
-        var producto1 = new Producto
-        {
+        var producto1 = new Producto {
             Id = 1,
             Nombre = "Product 1",
             Precio = 50,
             Stock = 10
         };
 
-        var producto2 = new Producto
-        {
+        var producto2 = new Producto {
             Id = 2,
             Nombre = "Product 2",
             Precio = 25,
             Stock = 20
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Product 1", Cantidad = 2, Precio = 50, Subtotal = 100 },
                 new() { ProductoId = 2, NombreProducto = "Product 2", Cantidad = 3, Precio = 25, Subtotal = 75 }
             },
@@ -435,18 +393,15 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_ConEstadoValido_DebeRetornarPedidoActualizado()
-    {
+    public async Task UpdateEstadoAsync_ConEstadoValido_DebeRetornarPedidoActualizado() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             UserId = 1,
             Total = 100,
             Estado = PedidoEstado.PENDIENTE
         };
 
-        var pedidoActualizado = new Pedido
-        {
+        var pedidoActualizado = new Pedido {
             UserId = 1,
             Total = 100,
             Estado = PedidoEstado.ENVIADO
@@ -464,8 +419,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_ConEstadoInvalido_DebeRetornarErrorValidacion()
-    {
+    public async Task UpdateEstadoAsync_ConEstadoInvalido_DebeRetornarErrorValidacion() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
 
         var result = await _service.UpdateEstadoAsync(pedidoId, "ESTADO_INVALIDO");
@@ -475,8 +429,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateEstadoAsync_ConPedidoNoExistente_DebeRetornarNotFound()
-    {
+    public async Task UpdateEstadoAsync_ConPedidoNoExistente_DebeRetornarNotFound() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
 
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
@@ -491,19 +444,15 @@ public class PedidosServiceTests
     #region Tests de Deteccion de Errores 40001
 
     [Test]
-    public async Task CreateAsync_DbUpdateExceptionCon40001_DebeReintentar()
-    {
+    public async Task CreateAsync_DbUpdateExceptionCon40001_DebeReintentar() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
@@ -513,11 +462,9 @@ public class PedidosServiceTests
         var npgsqlException = new NpgsqlException("40001: could not serialize");
         var dbUpdateException = new DbUpdateException("Error", npgsqlException);
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
             },
             Total = 100,
@@ -542,30 +489,24 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_NpgsqlExceptionConSerializacionIngles_DebeReintentar()
-    {
+    public async Task CreateAsync_NpgsqlExceptionConSerializacionIngles_DebeReintentar() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
             Stock = 10
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
             },
             Total = 100,
@@ -591,30 +532,24 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_NpgsqlExceptionConSerializacionEspanol_DebeReintentar()
-    {
+    public async Task CreateAsync_NpgsqlExceptionConSerializacionEspanol_DebeReintentar() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
             Stock = 10
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
-            Items = new List<PedidoItem>
-            {
+            Items = new List<PedidoItem> {
                 new() { ProductoId = 1, NombreProducto = "Test Product", Cantidad = 2, Precio = 50, Subtotal = 100 }
             },
             Total = 100,
@@ -644,27 +579,22 @@ public class PedidosServiceTests
     #region Tests de Comportamiento de Transaccion
 
     [Test]
-    public async Task CreateAsync_Exito_DebeLlamarCommit()
-    {
+    public async Task CreateAsync_Exito_DebeLlamarCommit() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
             Stock = 10
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
             Total = 100,
             Estado = PedidoEstado.PENDIENTE
@@ -684,17 +614,14 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ValidationFails_DebeLlamarRollback()
-    {
+    public async Task CreateAsync_ValidationFails_DebeLlamarRollback() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
+        var pedidoDto = new PedidoRequestDto {
             Items = new List<PedidoItemRequestDto>()
         };
 
         _mockPedidoValidator.Setup(v => v.ValidateAsync(pedidoDto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new[]
-            {
+            .ReturnsAsync(new ValidationResult(new[] {
                 new ValidationFailure("Items", "El pedido debe contener al menos un artículo")
             }));
 
@@ -717,13 +644,10 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ProductoNoExiste_DebeLlamarRollback()
-    {
+    public async Task CreateAsync_ProductoNoExiste_DebeLlamarRollback() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 999, Cantidad = 2 }
             }
         };
@@ -738,19 +662,15 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_StockInsuficiente_DebeLlamarRollback()
-    {
+    public async Task CreateAsync_StockInsuficiente_DebeLlamarRollback() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 100 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
@@ -771,27 +691,22 @@ public class PedidosServiceTests
     #region Tests de Retry con Diferentes Intentos
 
     [Test]
-    public async Task CreateAsync_PrimerIntentoFalla_SegundoExito_RetornaPedido()
-    {
+    public async Task CreateAsync_PrimerIntentoFalla_SegundoExito_RetornaPedido() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
             Stock = 10
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
             Total = 100,
             Estado = PedidoEstado.PENDIENTE
@@ -818,27 +733,22 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_DosIntentosFallan_TerceroExito_RetornaPedido()
-    {
+    public async Task CreateAsync_DosIntentosFallan_TerceroExito_RetornaPedido() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
             Stock = 10
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
             Total = 100,
             Estado = PedidoEstado.PENDIENTE
@@ -870,13 +780,10 @@ public class PedidosServiceTests
     #region Tests de Multiples Items con Fallo
 
     [Test]
-    public async Task CreateAsync_TercerItemFalla_TransaccionHaceRollback()
-    {
+    public async Task CreateAsync_TercerItemFalla_TransaccionHaceRollback() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 },
                 new() { ProductoId = 2, Cantidad = 3 },
                 new() { ProductoId = 3, Cantidad = 100 }
@@ -901,13 +808,10 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_TodosItemsExito_DecrementaStockCorrectamente()
-    {
+    public async Task CreateAsync_TodosItemsExito_DecrementaStockCorrectamente() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 },
                 new() { ProductoId = 2, Cantidad = 1 }
             }
@@ -916,8 +820,7 @@ public class PedidosServiceTests
         var producto1 = new Producto { Id = 1, Nombre = "Product 1", Precio = 50, Stock = 10 };
         var producto2 = new Producto { Id = 2, Nombre = "Product 2", Precio = 25, Stock = 5 };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
             Total = 125,
             Estado = PedidoEstado.PENDIENTE
@@ -943,27 +846,22 @@ public class PedidosServiceTests
     #region Tests de Casos Borde
 
     [Test]
-    public async Task CreateAsync_ItemConCantidadExactaStock_Exito()
-    {
+    public async Task CreateAsync_ItemConCantidadExactaStock_Exito() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 5 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
             Stock = 5
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
             Total = 250,
             Estado = PedidoEstado.PENDIENTE
@@ -983,27 +881,22 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_UnSoloItem_DebeFuncionarCorrectamente()
-    {
+    public async Task CreateAsync_UnSoloItem_DebeFuncionarCorrectamente() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 1 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Single Item Product",
             Precio = 99.99m,
             Stock = 100
         };
 
-        var pedidoGuardado = new Pedido
-        {
+        var pedidoGuardado = new Pedido {
             UserId = userId,
             Total = 99.99m,
             Estado = PedidoEstado.PENDIENTE
@@ -1024,19 +917,15 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ErrorNoDeSerializacion_NoReintenta()
-    {
+    public async Task CreateAsync_ErrorNoDeSerializacion_NoReintenta() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
@@ -1062,19 +951,15 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_MaxRetriesConDiferentesDelays_EsperaCorrectamente()
-    {
+    public async Task CreateAsync_MaxRetriesConDiferentesDelays_EsperaCorrectamente() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Items = new List<PedidoItemRequestDto>
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
@@ -1112,10 +997,8 @@ public class PedidosServiceTests
     #region Tests de FindAllPagedAsync (Admin)
 
     [Test]
-    public async Task FindAllPagedAsync_ConParametrosValidos_RetornaPedidosPaginados()
-    {
-        var pedidos = new List<Pedido>
-        {
+    public async Task FindAllPagedAsync_ConParametrosValidos_RetornaPedidosPaginados() {
+        var pedidos = new List<Pedido> {
             new() { UserId = 1, Total = 100 },
             new() { UserId = 2, Total = 200 },
             new() { UserId = 3, Total = 300 }
@@ -1135,10 +1018,8 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_Pagina2_RetornaItemsCorrectos()
-    {
-        var pedidos = new List<Pedido>
-        {
+    public async Task FindAllPagedAsync_Pagina2_RetornaItemsCorrectos() {
+        var pedidos = new List<Pedido> {
             new() { UserId = 1, Total = 100 },
             new() { UserId = 2, Total = 200 },
             new() { UserId = 3, Total = 300 }
@@ -1156,8 +1037,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindAllPagedAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindAllPagedAsync_SinPedidos_RetornaListaVacia() {
         (IEnumerable<Pedido> Items, int TotalCount) paged = (new List<Pedido>(), 0);
         _mockPedidosRepo.Setup(r => r.FindAllPagedAsync(0, 10))
             .ReturnsAsync(paged);
@@ -1174,10 +1054,8 @@ public class PedidosServiceTests
     #region Tests de FindByUserIdAsync (User - Sin paginación)
 
     [Test]
-    public async Task FindByUserIdAsync_ConPedidos_RetornaLista()
-    {
-        var pedidos = new List<Pedido>
-        {
+    public async Task FindByUserIdAsync_ConPedidos_RetornaLista() {
+        var pedidos = new List<Pedido> {
             new() { UserId = 1, Total = 100 },
             new() { UserId = 1, Total = 200 }
         };
@@ -1192,8 +1070,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia()
-    {
+    public async Task FindByUserIdAsync_SinPedidos_RetornaListaVacia() {
         _mockPedidosRepo.Setup(r => r.FindByUserIdAsync(1))
             .ReturnsAsync(new List<Pedido>());
 
@@ -1208,10 +1085,8 @@ public class PedidosServiceTests
     #region Tests de FindMyPedidosAsync (User - Paginado)
 
     [Test]
-    public async Task FindMyPedidosAsync_ConParametros_RetornaPagedResult()
-    {
-        var pedidos = new List<Pedido>
-        {
+    public async Task FindMyPedidosAsync_ConParametros_RetornaPagedResult() {
+        var pedidos = new List<Pedido> {
             new() { UserId = 1, Total = 100 },
             new() { UserId = 1, Total = 200 }
         };
@@ -1233,11 +1108,9 @@ public class PedidosServiceTests
     #region Tests de FindMyPedidoAsync (User)
 
     [Test]
-    public async Task FindMyPedidoAsync_Propietario_RetornaPedido()
-    {
+    public async Task FindMyPedidoAsync_Propietario_RetornaPedido() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1254,11 +1127,9 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindMyPedidoAsync_NoPropietario_RetornaForbidden()
-    {
+    public async Task FindMyPedidoAsync_NoPropietario_RetornaForbidden() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedido = new Pedido
-        {
+        var pedido = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1275,8 +1146,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task FindMyPedidoAsync_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task FindMyPedidoAsync_PedidoNoExistente_RetornaNotFound() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
 
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
@@ -1293,11 +1163,9 @@ public class PedidosServiceTests
     #region Tests de UpdateAdminAsync (Admin)
 
     [Test]
-    public async Task UpdateAdminAsync_PedidoExistente_RetornaOk()
-    {
+    public async Task UpdateAdminAsync_PedidoExistente_RetornaOk() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1318,8 +1186,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task UpdateAdminAsync_PedidoNoExistente_RetornaNotFound() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
         var updateDto = new UpdatePedidoDto();
 
@@ -1337,11 +1204,9 @@ public class PedidosServiceTests
     #region Tests de UpdateMyPedidoAsync (User)
 
     [Test]
-    public async Task UpdateMyPedidoAsync_PropietarioYPendiente_RetornaOk()
-    {
+    public async Task UpdateMyPedidoAsync_PropietarioYPendiente_RetornaOk() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1361,11 +1226,9 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateMyPedidoAsync_NoPropietario_RetornaForbidden()
-    {
+    public async Task UpdateMyPedidoAsync_NoPropietario_RetornaForbidden() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1384,11 +1247,9 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task UpdateMyPedidoAsync_PedidoNoPendiente_RetornaValidationError()
-    {
+    public async Task UpdateMyPedidoAsync_PedidoNoPendiente_RetornaValidationError() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1411,11 +1272,9 @@ public class PedidosServiceTests
     #region Tests de DeleteAdminAsync (Admin)
 
     [Test]
-    public async Task DeleteAdminAsync_PedidoExistente_RetornaOk()
-    {
+    public async Task DeleteAdminAsync_PedidoExistente_RetornaOk() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1433,8 +1292,7 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound()
-    {
+    public async Task DeleteAdminAsync_PedidoNoExistente_RetornaNotFound() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
 
         _mockPedidosRepo.Setup(r => r.FindByIdAsync(pedidoId))
@@ -1451,11 +1309,9 @@ public class PedidosServiceTests
     #region Tests de DeleteMyPedidoAsync (User)
 
     [Test]
-    public async Task DeleteMyPedidoAsync_PropietarioYPendiente_RetornaOk()
-    {
+    public async Task DeleteMyPedidoAsync_PropietarioYPendiente_RetornaOk() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1473,11 +1329,9 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task DeleteMyPedidoAsync_NoPropietario_RetornaForbidden()
-    {
+    public async Task DeleteMyPedidoAsync_NoPropietario_RetornaForbidden() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1494,11 +1348,9 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task DeleteMyPedidoAsync_PedidoNoPendiente_RetornaValidationError()
-    {
+    public async Task DeleteMyPedidoAsync_PedidoNoPendiente_RetornaValidationError() {
         var pedidoId = ObjectId.GenerateNewId().ToString();
-        var pedidoExistente = new Pedido
-        {
+        var pedidoExistente = new Pedido {
             Id = ObjectId.Parse(pedidoId),
             UserId = 1,
             Total = 100,
@@ -1519,32 +1371,26 @@ public class PedidosServiceTests
     #region Tests de Create con Destinatario
 
     [Test]
-    public async Task CreateAsync_ConDestinatario_DebeGuardarDestinatario()
-    {
+    public async Task CreateAsync_ConDestinatario_DebeGuardarDestinatario() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "María García",
                 Email = "maria@email.com",
                 Telefono = "+34612345678",
-                Direccion = new DireccionDto
-                {
+                Direccion = new DireccionDto {
                     Calle = "Gran Vía",
                     Numero = "42",
                     Ciudad = "Madrid",
                     CodigoPostal = "28013"
                 }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
@@ -1571,25 +1417,20 @@ public class PedidosServiceTests
     }
 
     [Test]
-    public async Task CreateAsync_ConDestinatario_DebeTenerDestinatario()
-    {
+    public async Task CreateAsync_ConDestinatario_DebeTenerDestinatario() {
         long userId = 1;
-        var pedidoDto = new PedidoRequestDto
-        {
-            Destinatario = new DestinatarioDto
-            {
+        var pedidoDto = new PedidoRequestDto {
+            Destinatario = new DestinatarioDto {
                 NombreCompleto = "Test Destinatario",
                 Email = "test@test.com",
                 Direccion = new DireccionDto { Calle = "Calle Test", Ciudad = "Madrid", Pais = "España" }
             },
-            Items = new List<PedidoItemRequestDto>
-            {
+            Items = new List<PedidoItemRequestDto> {
                 new() { ProductoId = 1, Cantidad = 2 }
             }
         };
 
-        var producto = new Producto
-        {
+        var producto = new Producto {
             Id = 1,
             Nombre = "Test Product",
             Precio = 50,
