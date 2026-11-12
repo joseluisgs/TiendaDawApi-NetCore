@@ -21,7 +21,8 @@ auth:bearer {
 body:json {
   {
       "nombre": "{{provNombreOriginal}}",
-      "descripcion": "{{provDescOriginal}}"
+      "descripcion": "{{provDescOriginal}}",
+      "contacto": "{{provContactoOriginal}}"
   }
 }
 
@@ -35,6 +36,11 @@ script:post-response {
       expect(d.nombre).to.equal(bru.getVar("provNombreOriginal"));
       expect(d.codigo).to.equal('Distribuc01');
   });
+
+  test("RenameRestore - Conserva el contacto original", function () {
+      const d = res.getBody();
+      expect(d.contacto ?? "").to.equal(bru.getVar("provContactoOriginal"));
+  });
 }
 
 settings {
@@ -42,6 +48,6 @@ settings {
 }
 
 docs {
-  Paso 4: restaura el nombre original del proveedor para no dejar la semilla
-  alterada (el resto de la suite no debe notar el renombrado).
+  Paso 4: restaura nombre, descripcion Y contacto del proveedor (PUT de
+  reemplazo completo) para no dejar la semilla alterada.
 }
