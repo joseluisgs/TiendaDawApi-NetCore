@@ -2343,15 +2343,15 @@
           "protocolProfileBehavior": {}
         },
         {
-          "name": "[099b] GET - Producto con Distribuc01 (setup)",
+          "name": "[099b] GET - Proveedor Distribuc01 (setup)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
                   "pm.test('RenameSetup - Status 200 OK', function () { pm.response.to.have.status(200); });",
-                  "pm.test('RenameSetup - El producto 1 tiene el proveedor Distribuc01', function () { const d = pm.response.json(); pm.expect(d.proveedor).to.be.an('object'); pm.expect(d.proveedor.codigo).to.equal('Distribuc01'); pm.expect(d.proveedor.nombre).to.be.a('string'); });",
-                  "if (pm.response.code === 200) { const d = pm.response.json(); pm.environment.set('provNombreOriginal', d.proveedor.nombre); pm.environment.set('provDescOriginal', d.proveedor.descripcion ?? ''); }"
+                  "pm.test('RenameSetup - El proveedor de la semilla es Distribuc01', function () { const d = pm.response.json(); pm.expect(d.codigo).to.equal('Distribuc01'); pm.expect(d.nombre).to.be.a('string'); pm.expect(d.contacto).to.be.a('string'); });",
+                  "if (pm.response.code === 200) { const d = pm.response.json(); pm.environment.set('provNombreOriginal', d.nombre); pm.environment.set('provDescOriginal', d.descripcion ?? ''); pm.environment.set('provContactoOriginal', d.contacto ?? ''); }"
                 ],
                 "type": "text/javascript"
               }
@@ -2359,16 +2359,26 @@
           ],
           "request": {
             "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/productos/1",
+              "raw": "{{baseUrl}}/api/v1/proveedores/Distribuc01",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "productos",
-                "1"
+                "proveedores",
+                "Distribuc01"
               ]
             }
           },
@@ -2464,7 +2474,8 @@
               "script": {
                 "exec": [
                   "pm.test('RenameRestore - Status 200 OK', function () { pm.response.to.have.status(200); });",
-                  "pm.test('RenameRestore - Volvio al nombre original', function () { const x = pm.response.json(); pm.expect(x.nombre).to.equal(pm.environment.get('provNombreOriginal')); pm.expect(x.codigo).to.equal('Distribuc01'); });"
+                  "pm.test('RenameRestore - Volvio al nombre original', function () { const d = pm.response.json(); pm.expect(d.nombre).to.equal(pm.environment.get('provNombreOriginal')); pm.expect(d.codigo).to.equal('Distribuc01'); });",
+                  "pm.test('RenameRestore - Conserva el contacto original', function () { const d = pm.response.json(); pm.expect(d.contacto ?? '').to.equal(pm.environment.get('provContactoOriginal')); });"
                 ],
                 "type": "text/javascript"
               }
@@ -2472,18 +2483,6 @@
           ],
           "request": {
             "method": "PUT",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/proveedores/Distribuc01",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "proveedores",
-                "Distribuc01"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2502,7 +2501,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"{{provNombreOriginal}}\",\n  \"descripcion\": \"{{provDescOriginal}}\"\n}"
+              "raw": "{\n  \"nombre\": \"{{provNombreOriginal}}\",\n  \"descripcion\": \"{{provDescOriginal}}\",\n  \"contacto\": \"{{provContactoOriginal}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proveedores/Distribuc01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proveedores",
+                "Distribuc01"
+              ]
             }
           },
           "response": []
