@@ -565,17 +565,23 @@ let imagenProductoUrl = null;
 
   await test("Proveedores: renombrar Distribuc01 → el producto lo refleja → restaurar", async () => {
     // Regresión: el producto lleva el proveedor embebido; al renombrarlo, el
-    // producto debe devolver el nombre nuevo (y al final se restaura la semilla).
+    // producto debe devolver el nombre nuevo. El PUT es de reemplazo completo:
+    // se captura y restaura también el CONTACTO (si no, UpdateEntity lo limpia
+    // y el round-trip de backup lo detecta como cambio).
     const antes = await req("GET", "/api/v1/productos/1");
     assertEq(st(antes), 200, "GET producto");
     assertEq(antes.json?.proveedor?.codigo, "Distribuc01", "producto 1 -> Distribuc01");
-    const original = antes.json?.proveedor?.nombre;
-    const originalDesc = antes.json?.proveedor?.descripcion ?? "";
+
+    const antesProv = await req("GET", "/api/v1/proveedores/Distribuc01", { token: adminToken });
+    assertEq(st(antesProv), 200, "GET proveedor");
+    const original = antesProv.json?.nombre;
+    const originalDesc = antesProv.json?.descripcion ?? "";
+    const originalContacto = antesProv.json?.contacto ?? "";
     const nuevo = "Distri E2E Renombrada";
 
     const put = await req("PUT", "/api/v1/proveedores/Distribuc01", {
       token: adminToken,
-      body: { nombre: nuevo, descripcion: "Renombrada por la suite E2E" },
+      body: { nombre: nuevo, descripcion: "Renombrada por la suite E2E", contacto: originalContacto },
     });
     assertEq(st(put), 200, "PUT renombrar");
 
@@ -585,9 +591,10 @@ let imagenProductoUrl = null;
 
     const rest = await req("PUT", "/api/v1/proveedores/Distribuc01", {
       token: adminToken,
-      body: { nombre: original, descripcion: originalDesc },
+      body: { nombre: original, descripcion: originalDesc, contacto: originalContacto },
     });
     assertEq(st(rest), 200, "PUT restaurar");
+    assertEq(rest.json?.contacto ?? "", originalContacto, "contacto restaurado");
     const final = await req("GET", "/api/v1/productos/1");
     assertEq(final.json?.proveedor?.nombre, original, "restauración del nombre original");
   });

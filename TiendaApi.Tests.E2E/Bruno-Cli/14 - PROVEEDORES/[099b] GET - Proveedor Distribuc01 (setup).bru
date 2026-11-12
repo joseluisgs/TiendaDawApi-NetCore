@@ -1,0 +1,48 @@
+meta {
+  name: [099b] GET - Proveedor Distribuc01 (setup)
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/v1/proveedores/Distribuc01
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  test("RenameSetup - Status 200 OK", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("RenameSetup - El proveedor de la semilla es Distribuc01", function () {
+      const d = res.getBody();
+      expect(d.codigo).to.equal('Distribuc01');
+      expect(d.nombre).to.be.a('string');
+      expect(d.contacto).to.be.a('string');
+  });
+
+  // Guardar nombre, descripcion y CONTACTO originales para restaurarlos al final:
+  // el PUT es de reemplazo completo y sin contacto UpdateEntity lo pondría a null
+  // (el round-trip de backup lo detectaria como cambio).
+  if (res.getStatus() === 200) {
+      const d = res.getBody();
+      bru.setVar("provNombreOriginal", d.nombre);
+      bru.setVar("provDescOriginal", d.descripcion ?? "");
+      bru.setVar("provContactoOriginal", d.contacto ?? "");
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Paso 1 de la regresion de renombrado: toma los datos COMPLETOS del proveedor
+  Distribuc01 (tiene productos en la semilla). Se guarda tambien el contacto
+  porque el PUT de restauracion es de reemplazo completo.
+}
